@@ -33,6 +33,11 @@ func (m *mockReaderWriter) CompareFiles(ctx context.Context, base, ref string) (
 	return m.MockVersioned.CompareFiles(ctx, base, ref)
 }
 
+func (m *mockReaderWriter) Move(ctx context.Context, oldPath, newPath, ref, message string) error {
+	args := m.MockRepository.Called(ctx, oldPath, newPath, ref, message)
+	return args.Error(0)
+}
+
 func TestSyncer_Sync(t *testing.T) {
 	tests := []struct {
 		name             string

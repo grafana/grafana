@@ -1,3 +1,5 @@
+import { SortColumn } from 'react-data-grid';
+
 import {
   createDataFrame,
   DataFrame,
@@ -13,6 +15,8 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode } from '@grafana/sc
 
 import { TableCellDisplayMode } from '../types';
 
+import { COLUMN, TABLE } from './constants';
+import { LineCounterEntry } from './types';
 import {
   extractPixelValue,
   frameToRecords,
@@ -26,7 +30,14 @@ import {
   getJustifyContent,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
-  getMaxWrapCell,
+  computeColWidths,
+  getRowHeight,
+  buildRowLineCounters,
+  buildHeaderLineCounters,
+  getTextLineEstimator,
+  createTypographyContext,
+  applySort,
+  SINGLE_LINE_ESTIMATE_THRESHOLD,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -941,116 +952,407 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('getMaxWrapCell', () => {
-    it('should return the maximum wrap cell length from field state', () => {
-      const field1: Field = {
-        name: 'field1',
-        type: FieldType.string,
-        config: {},
-        values: ['beep boop', 'foo bar baz', 'lorem ipsum dolor sit amet'],
-      };
+  describe('getDefaultRowHeight', () => {
+    const theme = createTheme();
 
-      const field2: Field = {
-        name: 'field2',
-        type: FieldType.string,
-        config: {},
-        values: ['asdfasdf asdfasdf asdfasdf', 'asdf asdf asdf asdf asdf', ''],
-      };
-
-      const field3: Field = {
-        name: 'field3',
-        type: FieldType.string,
-        config: {},
-        values: ['foo', 'bar', 'baz'],
-        // No alignmentFactors in state
-      };
-
-      const fields = [field1, field2, field3];
-
-      const result = getMaxWrapCell(fields, 0, {
-        colWidths: [30, 50, 100],
-        avgCharWidth: 5,
-        wrappedColIdxs: [true, true, true],
-      });
-      expect(result).toEqual({
-        text: 'asdfasdf asdfasdf asdfasdf',
-        idx: 1,
-        numLines: 2.6,
-      });
+    it('returns correct height for TableCellHeight.Sm', () => {
+      const result = getDefaultRowHeight(theme, TableCellHeight.Sm);
+      expect(result).toBe(36);
     });
 
-    it('should take colWidths into account when calculating max wrap cell', () => {
+    it('returns correct height for TableCellHeight.Md', () => {
+      const result = getDefaultRowHeight(theme, TableCellHeight.Md);
+      expect(result).toBe(42);
+    });
+
+    it('returns correct height for TableCellHeight.Lg', () => {
+      const result = getDefaultRowHeight(theme, TableCellHeight.Lg);
+      expect(result).toBe(TABLE.MAX_CELL_HEIGHT);
+    });
+
+    it('calculates height based on theme when cellHeight is undefined', () => {
+      const result = getDefaultRowHeight(theme, undefined as unknown as TableCellHeight);
+
+      // Calculate the expected result based on the theme values
+      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe('createTypographyCtx', () => {
+    // we can't test the effectiveness of this typography context in unit tests, only that it
+    // actually executed the JS correctly. If you called `count` with a sensible value and width,
+    // it wouldn't give you a very reasonable answer in Jest's DOM environment for some reason.
+    it('creates the context using uwrap', () => {
+      const ctx = createTypographyContext(14, 'sans-serif', 0.15);
+      expect(ctx).toEqual(
+        expect.objectContaining({
+          font: '14px sans-serif',
+          ctx: expect.any(CanvasRenderingContext2D),
+          wrappedCount: expect.any(Function),
+          estimateLines: expect.any(Function),
+          avgCharWidth: expect.any(Number),
+        })
+      );
+      expect(ctx.wrappedCount('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
+      expect(ctx.estimateLines('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
+    });
+  });
+
+  describe('getTextLineEstimator', () => {
+    const counter = getTextLineEstimator(10);
+
+    it('returns -1 if there are no strings or dashes within the string', () => {
+      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5)).toBe(-1);
+    });
+
+    it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
+      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200)).toBe(2.5);
+    });
+  });
+
+  describe('buildHeaderLineCounters', () => {
+    const ctx = {
+      font: '14px sans-serif',
+      ctx: {} as CanvasRenderingContext2D,
+      count: jest.fn(() => 2),
+      avgCharWidth: 7,
+      wrappedCount: jest.fn(() => 2),
+      estimateLines: jest.fn(() => 2),
+    };
+
+    it('returns an array of line counters for each column', () => {
       const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapHeaderText: true } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
+      ];
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].fieldIdxs).toEqual([0, 1]);
+    });
+
+    it('does not return the index of columns which are not wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
+      ];
+
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters![0].fieldIdxs).toEqual([1]);
+    });
+
+    it('returns undefined if no columns are wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
+      ];
+
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters).toBeUndefined();
+    });
+  });
+
+  describe('buildRowLineCounters', () => {
+    const ctx = {
+      font: '14px sans-serif',
+      ctx: {} as CanvasRenderingContext2D,
+      count: jest.fn(() => 2),
+      wrappedCount: jest.fn(() => 2),
+      estimateLines: jest.fn(() => 2),
+      avgCharWidth: 7,
+    };
+
+    it('returns an array of line counters for each column', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
         {
-          name: 'field',
+          name: 'Address',
           type: FieldType.string,
-          config: {},
-          values: ['short', 'a bit longer text'],
+          values: [],
+          config: { custom: { cellOptions: { wrapText: true } } },
         },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].fieldIdxs).toEqual([0, 1]);
+    });
+
+    it('does not return the index of columns which are not wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
         {
-          name: 'field',
+          name: 'Address',
           type: FieldType.string,
-          config: {},
-          values: ['short', 'quite a bit longer text'],
-        },
-        {
-          name: 'field',
-          type: FieldType.string,
-          config: {},
-          values: ['short', 'less text'],
+          values: [],
+          config: { custom: { cellOptions: { wrapText: true } } },
         },
       ];
 
-      // Simulate a narrow column width that would cause wrapping
-      const colWidths = [50, 1000, 30]; // 50px width
-      const avgCharWidth = 5; // Assume average character width is 5px
-
-      const result = getMaxWrapCell(fields, 1, { colWidths, avgCharWidth, wrappedColIdxs: [true, true, true] });
-
-      // With a 50px width and 5px per character, we can fit 10 characters per line
-      // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
-      expect(result).toEqual({
-        idx: 0,
-        numLines: 1.7,
-        text: 'a bit longer text',
-      });
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters![0].fieldIdxs).toEqual([1]);
     });
 
-    it('should use the display name if the rowIdx is -1 (which is used to calc header height in wrapped rows)', () => {
+    it('does not enable text counting for non-string fields', () => {
       const fields: Field[] = [
-        {
-          name: 'Field with a very long name',
-          type: FieldType.string,
-          config: {},
-          values: ['short', 'a bit longer text'],
-        },
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+      ];
+
+      const counters = buildRowLineCounters(fields, ctx);
+      // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
+      expect(counters).toEqual([]);
+    });
+
+    it('returns an undefined if no columns are wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
+      ];
+
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters).toBeUndefined();
+    });
+  });
+
+  describe('getRowHeight', () => {
+    let fields: Field[];
+    let counters: LineCounterEntry[];
+
+    beforeEach(() => {
+      fields = [
         {
           name: 'Name',
           type: FieldType.string,
-          config: {},
-          values: ['short', 'quite a bit longer text'],
+          values: ['foo', 'bar', 'baz', 'longer one here', 'shorter'],
+          config: { custom: { cellOptions: { wrapText: true } } },
         },
         {
-          name: 'Another field',
-          type: FieldType.string,
-          config: {},
-          values: ['short', 'less text'],
+          name: 'Age',
+          type: FieldType.number,
+          values: [1, 2, 3, 123456, 789122349932],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
+      ];
+      counters = [
+        { counter: jest.fn((value, _length: number) => String(value).split(' ').length), fieldIdxs: [0] }, // Mocked to count words as lines
+        { counter: jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)), fieldIdxs: [1] }, // Mocked to return a line for every 3 digits of a number
+      ];
+    });
+
+    it('should use the default height for single-line rows', () => {
+      // 1 line @ 20px, 10px vertical padding = 30, minimum is 36
+      expect(getRowHeight(fields, 0, [30, 30], 36, counters, 20, 10)).toBe(36);
+    });
+
+    it('should use the default height for multi-line rows which are shorter than the default height', () => {
+      // 3 lines @ 5px, 5px vertical padding = 20, minimum is 36
+      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 5, 5)).toBe(36);
+    });
+
+    it('should return the row height using line counters for multi-line', () => {
+      // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding
+      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(70);
+
+      // 4 lines @ 15px (789 122 349 932), 15px vertical padding
+      expect(getRowHeight(fields, 4, [30, 30], 36, counters, 15, 15)).toBe(75);
+    });
+
+    it('should take colWidths into account when calculating max wrap cell', () => {
+      getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
+      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50);
+      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60);
+    });
+
+    // this is used to calc wrapped header height
+    it('should use the display name if the rowIdx is -1', () => {
+      getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
+      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50);
+      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60);
+    });
+
+    it('should ignore columns which do not have line counters', () => {
+      const height = getRowHeight(fields, 3, [30, 30], 36, [counters[1]], 20, 10);
+      // 2 lines @ 20px, 10px vertical padding (not 3 lines, since we don't line count Name)
+      expect(height).toBe(50);
+    });
+
+    it('should return the default height if there are no counters to apply', () => {
+      const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
+      expect(height).toBe(36);
+    });
+
+    describe('estimations vs. precise counts', () => {
+      beforeEach(() => {
+        counters = [
+          { counter: jest.fn((value, _length: number) => String(value).split(' ').length), fieldIdxs: [0] }, // Mocked to count words as lines
+          {
+            estimate: jest.fn((value) => String(value).length), // Mocked to return a line for every digits of a number
+            counter: jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)),
+            fieldIdxs: [1],
+          },
+        ];
+      });
+
+      // 2 lines @ 20px (123,456), 10px vertical padding. when we did this before, 'longer one here' would win, making it 70px.
+      // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `counter` function is used
+      // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
+      it('uses the estimate value rather than the precise value to select the row height', () => {
+        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
+      });
+
+      it('returns doesnt bother getting the precise count if the estimates are all below the threshold', () => {
+        jest.mocked(counters[0].counter).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
+        jest.mocked(counters[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
+
+        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(36);
+
+        // this is what we really care about - we want to save on performance by not calling the counter in this case.
+        expect(counters[1].counter).not.toHaveBeenCalled();
+      });
+
+      it('uses the precise count if the estimate is above the threshold, even if its below 1', () => {
+        // NOTE: if this fails, just change the test to use a different value besides 0.1
+        expect(SINGLE_LINE_ESTIMATE_THRESHOLD + 0.1).toBeLessThan(1);
+
+        jest.mocked(counters[0].counter).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
+        jest.mocked(counters[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + 0.1);
+
+        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
+      });
+    });
+  });
+
+  describe('computeColWidths', () => {
+    it('returns the configured widths if all columns set them', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 100 } },
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 200 } },
+            },
+          ],
+          500
+        )
+      ).toEqual([100, 200]);
+    });
+
+    it('fills the available space if a column has no width set', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 200 } },
+            },
+          ],
+          500
+        )
+      ).toEqual([300, 200]);
+    });
+
+    it('applies minimum width when auto width would dip below it', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { minWidth: 100 } },
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { minWidth: 100 } },
+            },
+          ],
+          100
+        )
+      ).toEqual([100, 100]);
+    });
+
+    it('should use the global column default width when nothing is set', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+          ],
+          // we have two columns but have set the table to the width of one default column.
+          COLUMN.DEFAULT_WIDTH
+        )
+      ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
+    });
+  });
+
+  describe('displayJsonValue', () => {
+    it.todo('should parse and then stringify string values');
+    it.todo('should not throw for non-serializable string values');
+    it.todo('should stringify non-string values');
+    it.todo('should not throw for non-serializable non-string values');
+  });
+
+  describe('applySort', () => {
+    it('sorts by nanos', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2], nanos: [100, 99, 0] },
+          { name: 'value', values: [10, 20, 30] },
+        ],
+      });
+
+      const sortColumns: SortColumn[] = [
+        {
+          columnKey: 'time',
+          direction: 'ASC',
         },
       ];
 
-      // Simulate a narrow column width that would cause wrapping
-      const colWidths = [50, 1000, 30]; // 50px width
-      const avgCharWidth = 5; // Assume average character width is 5px
+      const records = applySort(frameToRecords(frame), frame.fields, sortColumns);
 
-      const result = getMaxWrapCell(fields, -1, { colWidths, avgCharWidth, wrappedColIdxs: [true, true, true] });
-
-      // With a 50px width and 5px per character, we can fit 10 characters per line
-      // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
-      expect(result).toEqual({ idx: 0, numLines: 2.7, text: 'Field with a very long name' });
+      expect(records).toMatchObject([
+        {
+          time: 1,
+          value: 20,
+        },
+        {
+          time: 1,
+          value: 10,
+        },
+        {
+          time: 2,
+          value: 30,
+        },
+      ]);
     });
-
-    it.todo('should ignore columns which are not wrapped');
-
-    it.todo('should only apply wrapping on idiomatic break characters (space, -, etc)');
   });
 });

@@ -262,14 +262,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "pluginsDetailsRightPanel",
-			Description:  "Enables right panel for the plugins details page",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true",
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:              "sqlDatasourceDatabaseSelection",
 			Description:       "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly:      true,
@@ -478,25 +470,11 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
-			Name:            "kubernetesLibraryPanelConnections",
-			Description:     "Routes library panel connections requests from /api to using search",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-		},
-		{
 			Name:         "kubernetesDashboards",
 			Description:  "Use the kubernetes API in the frontend for dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "kubernetesClientDashboardsFolders",
-			Description: "Route the folder and dashboard service requests to k8s",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "dashboardDisableSchemaValidationV1",
@@ -515,6 +493,12 @@ var (
 			Description: "Log schema validation errors so they can be analyzed later",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "scanRowInvalidDashboardParseFallbackEnabled",
+			Description: "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:            "datasourceQueryTypes",
@@ -668,6 +652,13 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "timeComparison",
+			Description:  "Enables time comparison option in supported panels",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:         "logsInfiniteScrolling",
 			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
 			Stage:        FeatureStageGeneralAvailability,
@@ -777,6 +768,16 @@ var (
 			Owner:             grafanaAppPlatformSquad,
 			HideFromAdminPage: true,
 			Expression:        "false",
+		},
+		{
+			Name:              "useScopeSingleNodeEndpoint",
+			Description:       "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaOperatorExperienceSquad,
+			Expression:        "false",
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "promQLScope",
@@ -1664,6 +1665,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "postgresDSUsePGX",
+			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
 			Name:         "tempoAlerting",
 			Description:  "Enables creating alerts from Tempo data source",
 			Stage:        FeatureStageExperimental,
@@ -1711,6 +1718,14 @@ var (
 		{
 			Name:              "kubernetesAuthzApis",
 			Description:       "Registers AuthZ /apis endpoint",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "kubernetesAuthnMutation",
+			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
@@ -1848,6 +1863,29 @@ var (
 		{
 			Name:         "dashboardDsAdHocFiltering",
 			Description:  "Enables adhoc filtering support for the dashboard datasource",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "dashboardLevelTimeMacros",
+			Description:  "Supports __from and __to macros that always use the dashboard level time range",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:              "alertmanagerRemoteSecondaryWithRemoteState",
+			Description:       "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:         "adhocFiltersInTooltips",
+			Description:  "Enable adhoc filter buttons in visualization tooltips",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,

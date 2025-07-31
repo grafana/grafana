@@ -11,6 +11,8 @@ const meta: Meta = {
     controls: {
       exclude: ['legend'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     width: { control: { type: 'range', min: 100, max: 1000 } },

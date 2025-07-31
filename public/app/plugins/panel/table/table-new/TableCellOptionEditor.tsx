@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { merge } from 'lodash';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TableCellOptions } from '@grafana/schema';
-import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
@@ -27,72 +27,34 @@ interface Props {
 }
 
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
-  const cellDisplayModes: Record<TableCellOptions['type'], SelectableValue<TableCellOptions>> = useMemo(
-    () => ({
-      [TableCellDisplayMode.Auto]: {
-        value: { type: TableCellDisplayMode.Auto },
-        label: t('grafana-ui.table.cell-type.auto', 'Auto'),
-      },
-      [TableCellDisplayMode.Sparkline]: {
-        value: { type: TableCellDisplayMode.Sparkline },
-        label: t('grafana-ui.table.cell-type.sparkline', 'Sparkline'),
-      },
-      [TableCellDisplayMode.ColorText]: {
-        value: { type: TableCellDisplayMode.ColorText },
-        label: t('grafana-ui.table.cell-type.color-text', 'Colored text'),
-      },
-      [TableCellDisplayMode.ColorBackground]: {
-        value: { type: TableCellDisplayMode.ColorBackground },
-        label: t('grafana-ui.table.cell-type.color-background', 'Colored background'),
-      },
-      [TableCellDisplayMode.Gauge]: {
-        value: { type: TableCellDisplayMode.Gauge },
-        label: t('grafana-ui.table.cell-type.gauge', 'Gauge'),
-      },
-      [TableCellDisplayMode.DataLinks]: {
-        value: { type: TableCellDisplayMode.DataLinks },
-        label: t('grafana-ui.table.cell-type.data-links', 'Data links'),
-      },
-      [TableCellDisplayMode.JSONView]: {
-        value: { type: TableCellDisplayMode.JSONView },
-        label: t('grafana-ui.table.cell-type.json', 'JSON View'),
-      },
-      [TableCellDisplayMode.Image]: {
-        value: { type: TableCellDisplayMode.Image },
-        label: t('grafana-ui.table.cell-type.image', 'Image'),
-      },
-      [TableCellDisplayMode.Actions]: {
-        value: { type: TableCellDisplayMode.Actions },
-        label: t('grafana-ui.table.cell-type.actions', 'Actions'),
-      },
-      [TableCellDisplayMode.Pill]: {
-        value: { type: TableCellDisplayMode.Pill },
-        label: t('grafana-ui.table.cell-type.pill', 'Pill'),
-      },
-      [TableCellDisplayMode.Markdown]: {
-        value: { type: TableCellDisplayMode.Markdown },
-        label: t('grafana-ui.table.cell-type.markdown', 'Markdown'),
-      },
-    }),
-    []
-  );
-
-  const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = useMemo(
-    () => Object.values(cellDisplayModes),
-    [cellDisplayModes]
-  );
-
   const cellType = value.type;
   const styles = useStyles2(getStyles);
-  const currentMode = cellDisplayModes[cellType];
+  const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
+    { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
+    { value: TableCellDisplayMode.ColorText, label: t('table.cell-types.color-text', 'Colored text') },
+    {
+      value: TableCellDisplayMode.ColorBackground,
+      label: t('table.cell-types.color-background', 'Colored background'),
+    },
+    { value: TableCellDisplayMode.DataLinks, label: t('table.cell-types.data-links', 'Data links') },
+    { value: TableCellDisplayMode.Gauge, label: t('table.cell-types.gauge', 'Gauge') },
+    { value: TableCellDisplayMode.Sparkline, label: t('table.cell-types.sparkline', 'Sparkline') },
+    { value: TableCellDisplayMode.JSONView, label: t('table.cell-types.json', 'JSON View') },
+    { value: TableCellDisplayMode.Pill, label: t('table.cell-types.pill', 'Pill') },
+    { value: TableCellDisplayMode.Pill, label: t('table.cell-types.markdown', 'Markdown + HTML') },
+    { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
+    { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
+  ];
+  const currentMode = cellDisplayModeOptions.find((o) => o.value === cellType)!;
+
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
   // Update display mode on change
-  const onCellTypeChange = (v: SelectableValue<TableCellOptions>) => {
-    if (v.value !== undefined) {
+  const onCellTypeChange = (v: ComboboxOption<TableCellOptions['type']>) => {
+    if (v !== null) {
       // Set the new type of cell starting
       // with default settings
-      value = v.value;
+      value = { type: v.value };
 
       // When changing cell type see if there were previously stored
       // settings and merge those with the changed value
@@ -116,7 +78,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   return (
     <div className={styles.fixBottomMargin}>
       <Field>
-        <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
+        <Combobox options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {(cellType === TableCellDisplayMode.Auto || cellType === TableCellDisplayMode.ColorText) && (
         <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
@@ -139,6 +101,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   fixBottomMargin: css({
+    position: 'relative',
     marginBottom: theme.spacing(-2),
   }),
 });

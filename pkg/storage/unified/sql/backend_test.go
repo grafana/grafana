@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/mattn/go-sqlite3"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -242,7 +242,7 @@ func TestBackend_create(t *testing.T) {
 		)
 		b.SQLMock.ExpectCommit()
 		b.SQLMock.ExpectBegin()
-		b.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite3.Error{Code: sqlite3.ErrConstraint, ExtendedCode: sqlite3.ErrConstraintUnique})
+		b.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite.TestErrUniqueConstraintViolation)
 		b.SQLMock.ExpectRollback()
 
 		// First we insert the resource successfully. This is what the happy path test does as well.

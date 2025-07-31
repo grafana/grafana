@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1547,11 +1548,11 @@
       "group-not-editable": "A kijelölt csoport nem szerkeszthető",
       "group-not-editable-description": "Ez a csoport olyan adatforráshoz tartozik, amely nem támogatja a szerkesztést.",
       "page-title": "Szabálycsoport szerkesztése",
-      "rule-group-error": "Hiba történt a szabálycsoport betöltésekor",
-      "title": "Értékelési csoport szerkesztése"
+      "rule-group-error": "Hiba történt a szabálycsoport betöltésekor"
     },
     "group-loader": {
-      "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben"
+      "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "A csoport törlése folyamatban van"
@@ -1581,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Futtasson pingelést, DNS-, HTTP/S- és TCP-ellenőrzéseket minden hálózati rétegben.",
       "synthetic-monitoring-card-item-3": "Használhat több mint 20 globális szondát vagy privát szondát a tűzfal mögött.",
       "synthetic-monitoring-card-item-4": "Kövesse nyomon az SLO-kat beépített Prometheus-stílusú riasztásokkal – közvetlenül a felhasználói felületről.",
-      "synthetic-monitoring-card-title": "Szintetikus megfigyelés",
-      "title-alerting": "Riasztás"
+      "synthetic-monitoring-card-title": "Szintetikus megfigyelés"
     },
     "import-to-gma": {
       "action-button": "Importálás",
@@ -2466,7 +2466,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurálás",
-      "draft-new-rule": "Új szabály felvázolása",
       "ds-error": {
         "title": "Nem lehet betölteni a szabályokat ehhez az adatforráshoz"
       },
@@ -2492,6 +2491,7 @@
       "new-alert-rule": "Új riasztási szabály",
       "new-datasource-recording-rule": "Új adatforrás-felvételkészítési szabály",
       "new-grafana-recording-rule": "Új Grafana-felvételkészítési szabály",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Továbbiak megjelenítése…"
       },
@@ -2802,6 +2802,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Előnézet frissítése",
+      "empty-state": "",
       "label-preview": "Előnézet",
       "refresh": "Frissítés"
     },
@@ -3479,6 +3480,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Mégse",
       "cannot-move-folders": "A mappák nem helyezhetők át",
       "confirmation-text": "Törlés",
@@ -3512,6 +3514,10 @@
       "this-folder-is-empty": "A mappa üres"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3519,15 +3525,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} riasztási szabály",
@@ -3725,6 +3738,7 @@
     "category-selected-connection": "Kiválasztott kapcsolat",
     "category-selected-element": "Kiválasztott elem ({{element}})",
     "category-size": "Méret",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Felhő",
       "label": {
@@ -3967,6 +3981,13 @@
       "name-vertical-align": "Függőleges igazítás",
       "placeholder": {
         "auto": "Automatikus"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4563,6 +4584,11 @@
     },
     "edit-actions": {
       "add": "{{typeName}} hozzáadása",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "{{typeName}} áthelyezése",
       "panel-background": "Panel hátterének módosítása",
       "panel-description": "Panel leírásának módosítása",
@@ -4577,6 +4603,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Irányítópult",
+        "element": "",
         "local-variable": "Helyi változó",
         "multiple-elements": "Több elem",
         "multiple-elements-delete-text": "Biztosan törli ezeket az elemeket?",
@@ -5347,6 +5374,20 @@
       "tags-expected-array": "címke tömböt várt",
       "tags-expected-strings": "címke karakterláncok tömbjét várta"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Visszaállítás erre a verzióra: {{version}}",
       "label-view-json-diff": "JSON-diff megtekintése",
@@ -5786,7 +5827,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6972,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": " Tipp: Adatforrásokat konfigurációs fájlokon keresztül is definiálhat. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Előző",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Lekérdezés nélkül"
@@ -7157,6 +7200,7 @@
           "start-time": "Kezdés időpontja:"
         }
       },
+      "share-span": "",
       "warnings": "Figyelmeztetések"
     },
     "span-filters": {
@@ -7237,18 +7281,24 @@
       "split-tooltip": "Ablaktábla felosztása",
       "split-widen": "Ablaktábla szélesítése"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Visszajelzés küldése",
-      "label-copied": "Kimásolva!",
-      "label-export": "Exportálás",
-      "label-trace-id": "Nyomkövetési azonosító",
-      "title-share-thoughts-about-tracing-grafana": "Ossza meg gondolatait a Grafanában elérhető nyomon követésről."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Részleges nyomvonal",
-      "tooltip-url": "{{url}}, vagy {{target}}, vagy {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Szűrők törlése gomb",
@@ -7504,6 +7554,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7563,6 +7614,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8262,6 +8314,9 @@
     "card": {
       "option": "opció"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Kijelölés törlése"
     },
@@ -8274,6 +8329,7 @@
       "aria-label-selected-color": "{{colorLabel}} szín"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Mégse",
       "confirmText-delete": ""
     },
@@ -8597,7 +8653,10 @@
         "no-data": ""
       },
       "no-values-label": "Nincsenek értékek",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Címkék"
@@ -8697,6 +8756,7 @@
       "footer-add-annotation": "Jegyzet hozzáadása",
       "footer-click-to-action": "Kattintson ehhez: {{actionTitle}}",
       "footer-click-to-navigate": "Kattintson a következő megnyitásához: {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Időbélyeg"
     },
     "week-start-picker": {
@@ -9330,6 +9390,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Nincs megjeleníthető mező.",
+      "open-assistant": "",
       "pin-line": "Napló kitűzése",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9409,9 @@
       "copy-log": "Naplósor másolása",
       "hide-details": "Napló részleteinek megjelenítése",
       "icon-label": "Naplómenü",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Napló rögzítése",
       "show-context": "Kontextus megjelenítése",
       "show-details": "Napló részleteinek elrejtése",
@@ -10941,15 +11005,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11123,10 @@
       "title-instant-updates-requests-webhooks": "Azonnali frissítések és lekérések webkapcsokkal.",
       "title-visual-previews-in-pull-requests": "Vizuális előnézetek a lekérésekben képalkotással"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Feladat részletei",
-      "summary": "Összegzés",
-      "title-error": "Hiba"
+      "summary": "Összegzés"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11271,13 @@
       "starting": "Kezdés…",
       "status": {
         "title-error-running-job": "Hiba történt a feladat futtatásakor",
-        "title-job-completed-successfully": "A feladat sikeresen befejeződött"
+        "title-success-running-job": "",
+        "title-warning-running-job": ""
       },
-      "summary": "Összegzés"
+      "summary": "Összegzés",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11352,6 +11420,7 @@
       "label-current-step": "Jelenlegi lépés",
       "label-pending-step": "Függőben lévő lépés"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11375,6 +11444,7 @@
       "go-to": "Tovább ide:",
       "make-sure": "Mindenképpen foglalja bele ezeket az engedélyeket"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "A folyamat során nem lehet erőforrásokat létrehozni, szerkeszteni vagy törölni. Az utolsó lépésben el fognak tűnni.",
       "alert-point-2": "A kiépítés befejezése után az erőforrások újra megjelennek, és külső tárolóeszközön keresztül kezelhetők.",
@@ -11383,6 +11453,12 @@
       "alert-title": "Fontos: Egyetlen adat vagy konfiguráció sem fog elveszni, de az irányítópultok néhány percig átmenetileg nem lesznek elérhetők.",
       "button-next": "Befejezés",
       "button-start": "Szinkronizálás indítása",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Válassza ki, mit szeretne szinkronizálni",
       "step-connect": "Kapcsolódás",
       "step-finish": "Válassza ki a további beállításokat",
@@ -11397,6 +11473,7 @@
     "wizard-content": {
       "button-cancel": "Mégse",
       "button-cancelling": "Megszakítás…",
+      "button-previous": "",
       "button-submitting": "Küldés…",
       "error-instance-repository-exists": "A példánytár már létezik"
     }
@@ -13424,7 +13501,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13446,6 +13523,9 @@
         }
       },
       "regression": "regresszió",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Előre jelzendő X,Y pontok száma"
     },
     "rename-by-regex-transformer": {
