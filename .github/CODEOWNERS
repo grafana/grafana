@@ -724,7 +724,14 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
+/public/app/core/components/Upgrade/ @grafana/grafana-operator-experience-squad
+/public/app/core/components/ValidationLabels/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/VersionHistoryComparison/ @grafana/dashboards-squad
+/public/app/core/config.ts @grafana/grafana-frontend-platform
+/public/app/core/constants.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
+/public/app/core/copy/appNotification.ts @grafana/grafana-search-navigate-organise
+/public/app/core/core.ts @grafana/grafana-frontend-platform
 /public/app/core/crash/ @grafana/observability-traces-and-profiling
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform
@@ -733,6 +740,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-search-navigate-organise
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
 /public/app/core/icons/ @grafana/grafana-frontend-platform
+/public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
+/public/app/core/log_events.ts @grafana/dashboards-squad
 /public/app/core/navigation/ @grafana/grafana-search-navigate-organise
 /public/app/core/reducers/ @grafana/grafana-frontend-platform
 /public/app/core/selectors/ @grafana/grafana-frontend-platform
@@ -776,9 +785,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/urlToken.ts @grafana/identity-access-team
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
-# Temp owners until Enterprise team takes over
-/public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
-
 /public/app/features/actions/ @grafana/dataviz-squad
 /public/app/features/admin/ @grafana/identity-access-team
 /public/app/features/auth-config/ @grafana/identity-squad
@@ -804,6 +810,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/live/ @grafana/dashboards-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
+/public/app/features/migrate-to-cloud @grafana/grafana-operator-experience-squad
 /public/app/features/notifications/ @grafana/grafana-search-navigate-organise
 /public/app/features/org/ @grafana/grafana-search-navigate-organise
 /public/app/features/panel/ @grafana/dashboards-squad
