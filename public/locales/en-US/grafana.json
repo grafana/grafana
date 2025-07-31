@@ -9363,7 +9363,7 @@
       "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-line-context": {
-      "center-matched-line": "Center matched line",
+      "center-matched-line": "Center",
       "newer-logs": "newer",
       "no-more-logs-available": "No more logs available.",
       "older-logs": "older",

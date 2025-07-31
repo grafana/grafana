@@ -83,6 +83,7 @@ export const LogLineContext = memo(
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
     const eventBusRef = useRef(new EventBusSrv());
+    const centerButtonRef = useRef<HTMLButtonElement | null>(null);
 
     const dispatch = useDispatch();
     const theme = useTheme2();
@@ -202,12 +203,26 @@ export const LogLineContext = memo(
       [allLogs, loadMore]
     );
 
-    const onScrollCenterClick = useCallback(() => {
-      eventBusRef.current.publish(
-        new ScrollToLogsEvent({
-          scrollTo: log.uid,
-        })
-      );
+    useEffect(() => {
+      const button = centerButtonRef.current;
+      if (!button) {
+        return;
+      }
+      function onScrollCenterClick(e: Event) {
+        e.stopImmediatePropagation();
+        eventBusRef.current.publish(
+          new ScrollToLogsEvent({
+            scrollTo: log.uid,
+          })
+        );
+      }
+      if (button) {
+        // Manual event listener, otherwise the collapsible catches the event first
+        button.addEventListener('click', onScrollCenterClick);
+      }
+      return () => {
+        button.removeEventListener('click', onScrollCenterClick);
+      };
     }, [log.uid]);
 
     return (
@@ -225,7 +240,14 @@ export const LogLineContext = memo(
           collapsible={true}
           isOpen={showLog}
           onToggle={() => setShowLog(!showLog)}
-          label={t('logs.log-line-context.title-log-line', 'Referenced log line')}
+          label={
+            <div className={styles.collapseLabel}>
+              <div>{t('logs.log-line-context.title-log-line', 'Referenced log line')}</div>
+              <Button variant="secondary" ref={centerButtonRef} size="sm">
+                <Trans i18nKey="logs.log-line-context.center-matched-line">Center</Trans>
+              </Button>
+            </div>
+          }
         >
           <div>{log.entry}</div>
         </Collapse>
@@ -289,9 +311,6 @@ export const LogLineContext = memo(
         </div>
 
         <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onScrollCenterClick}>
-            <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
-          </Button>
           {contextQuery?.datasource?.uid && (
             <Button
               variant="secondary"
@@ -374,6 +393,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       width: '75vw',
       whiteSpace: 'nowrap',
+    }),
+    collapseLabel: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      paddingRight: theme.spacing(1),
+      width: '100%',
     }),
   };
 };
