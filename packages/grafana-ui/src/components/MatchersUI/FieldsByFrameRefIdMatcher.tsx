@@ -152,8 +152,9 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
     }
 
     const newRefIds = [...extractedRefIds].map(toOption);
+    const recoveredRefIDs = recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value);
 
-    return recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value);
+    return !recoveredRefIDs || recoveredRefIDs.length === 0 ? newRefIds : recoveredRefIDs;
   }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(
