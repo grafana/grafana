@@ -33,7 +33,6 @@ export function GrafanaRuleListItem({
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
 
-  // Construct group URL for Grafana rules
   const groupUrl = groups.detailsPageLink(
     GRAFANA_RULES_SOURCE_NAME,
     groupIdentifier.namespace.uid,

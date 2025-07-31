@@ -47,7 +47,6 @@ export function DataSourceRuleListItem({
   const ruleName = rulerRule ? getRuleName(rulerRule) : rule.name;
   const labels = rulerRule ? rulerRule.labels : rule.labels;
 
-  // Construct group URL for datasource rules
   const groupUrl = groups.detailsPageLink(rulesSource.uid, namespace.name, groupName);
 
   const commonProps: RuleListItemCommonProps = {
