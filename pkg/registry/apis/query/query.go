@@ -234,21 +234,9 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		jsonQueries = append(jsonQueries, sjQuery)
 	}
 
-	from := "now-1h"
-	to := "now"
-
-	//Alerting does not send top level `From` or `To` values.
-	if raw.From != "" {
-		from = raw.From
-	}
-
-	if raw.To != "" {
-		to = raw.To
-	}
-
 	mReq := dtos.MetricRequest{
-		From:    from,
-		To:      to,
+		From:    raw.From,
+		To:      raw.To,
 		Queries: jsonQueries,
 	}
 
