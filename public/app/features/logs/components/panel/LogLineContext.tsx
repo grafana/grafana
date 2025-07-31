@@ -356,6 +356,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '80%',
       [theme.breakpoints.down('md')]: {
         width: '100%',
+        minHeight: '100%',
       },
       top: '50%',
       left: '50%',
