@@ -1,5 +1,5 @@
-import { Component } from 'react';
 import * as React from 'react';
+import { Component } from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
@@ -8,7 +8,6 @@ import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas/frame';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { SetBackground } from './components/SetBackground';
@@ -63,22 +62,9 @@ export class CanvasPanel extends Component<Props, State> {
       moveableAction: false,
     };
 
-    // TODO: Will need to update this approach for dashboard scenes
-    // migration (new dashboard edit experience)
-    const dashboard = getDashboardSrv().getCurrent();
-    const allowEditing = this.props.options.inlineEditing && dashboard?.editable;
-
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
-    this.scene = new Scene(
-      this.props.options.root,
-      allowEditing,
-      this.props.options.showAdvancedTypes,
-      this.props.options.panZoom,
-      this.props.options.infinitePan,
-      this.onUpdateScene,
-      this
-    );
+    this.scene = new Scene(this.props.options, this.onUpdateScene, this);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
     this.scene.inlineEditingCallback = this.openInlineEdit;
@@ -239,12 +225,14 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
     const panZoomSwitched = this.props.options.panZoom !== nextProps.options.panZoom;
     const infinitePanSwitched = this.props.options.infinitePan !== nextProps.options.infinitePan;
+    const tooltipModeSwitched = this.props.options.tooltip?.mode !== nextProps.options.tooltip?.mode;
     if (
       this.needsReload ||
       inlineEditingSwitched ||
       shouldShowAdvancedTypesSwitched ||
       panZoomSwitched ||
-      infinitePanSwitched
+      infinitePanSwitched ||
+      tooltipModeSwitched
     ) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
@@ -252,13 +240,7 @@ export class CanvasPanel extends Component<Props, State> {
       }
 
       this.needsReload = false;
-      this.scene.load(
-        nextProps.options.root,
-        nextProps.options.inlineEditing,
-        nextProps.options.showAdvancedTypes,
-        nextProps.options.panZoom,
-        nextProps.options.infinitePan
-      );
+      this.scene.load(nextProps.options, nextProps.options.inlineEditing);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
@@ -294,7 +276,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   tooltipCallback = (tooltip: CanvasTooltipPayload | undefined) => {
-    this.scene.tooltip = tooltip;
+    this.scene.tooltipPayload = tooltip;
     this.forceUpdate();
   };
 
