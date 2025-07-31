@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Mutation hook that will update secure values
@@ -93,20 +92,20 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 
 	owner := utils.ToObjectReference(obj)
 	for _, v := range secure {
-		if err = store.DeleteInline(ctx, owner, v.Name); err != nil {
+		if err = store.DeleteWhenOwnedByResource(ctx, owner, v.Name); err != nil {
 			return err
 		}
 	}
 	return obj.SetSecureValues(nil) // remove them from the object
 }
 
-func (s *Storage) post(ctx context.Context, v *objectForStorage, err error, rsp *resourcepb.CreateResponse) {
-	if len(v.createdSecureValues) == 0 {
-		return // no need to create values
-	}
-	if err != nil || (rsp != nil && rsp.Error != nil) {
-		// for _, k := range v.createdSecureValues {
-		// 	s.opts.SecureValues.DeleteInline()
-		// }
-	}
-}
+// func (s *Storage) post(ctx context.Context, v *objectForStorage, err error, rsp *resourcepb.CreateResponse) {
+// 	if len(v.createdSecureValues) == 0 {
+// 		return // no need to create values
+// 	}
+// 	if err != nil || (rsp != nil && rsp.Error != nil) {
+// 		// for _, k := range v.createdSecureValues {
+// 		// 	s.opts.SecureValues.DeleteInline()
+// 		// }
+// 	}
+// }

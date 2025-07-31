@@ -128,12 +128,12 @@ func (_c *MockInlineSecureValueSupport_CreateInline_Call) RunAndReturn(run func(
 	return _c
 }
 
-// DeleteInline provides a mock function with given fields: ctx, owner, name
-func (_m *MockInlineSecureValueSupport) DeleteInline(ctx context.Context, owner v0alpha1.ObjectReference, name string) error {
+// DeleteWhenOwnedByResource provides a mock function with given fields: ctx, owner, name
+func (_m *MockInlineSecureValueSupport) DeleteWhenOwnedByResource(ctx context.Context, owner v0alpha1.ObjectReference, name string) error {
 	ret := _m.Called(ctx, owner, name)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteInline")
+		panic("no return value specified for DeleteWhenOwnedByResource")
 	}
 
 	var r0 error
@@ -146,32 +146,32 @@ func (_m *MockInlineSecureValueSupport) DeleteInline(ctx context.Context, owner 
 	return r0
 }
 
-// MockInlineSecureValueSupport_DeleteInline_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteInline'
-type MockInlineSecureValueSupport_DeleteInline_Call struct {
+// MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteWhenOwnedByResource'
+type MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call struct {
 	*mock.Call
 }
 
-// DeleteInline is a helper method to define mock.On call
+// DeleteWhenOwnedByResource is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner v0alpha1.ObjectReference
 //   - name string
-func (_e *MockInlineSecureValueSupport_Expecter) DeleteInline(ctx interface{}, owner interface{}, name interface{}) *MockInlineSecureValueSupport_DeleteInline_Call {
-	return &MockInlineSecureValueSupport_DeleteInline_Call{Call: _e.mock.On("DeleteInline", ctx, owner, name)}
+func (_e *MockInlineSecureValueSupport_Expecter) DeleteWhenOwnedByResource(ctx interface{}, owner interface{}, name interface{}) *MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call {
+	return &MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call{Call: _e.mock.On("DeleteWhenOwnedByResource", ctx, owner, name)}
 }
 
-func (_c *MockInlineSecureValueSupport_DeleteInline_Call) Run(run func(ctx context.Context, owner v0alpha1.ObjectReference, name string)) *MockInlineSecureValueSupport_DeleteInline_Call {
+func (_c *MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call) Run(run func(ctx context.Context, owner v0alpha1.ObjectReference, name string)) *MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(v0alpha1.ObjectReference), args[2].(string))
 	})
 	return _c
 }
 
-func (_c *MockInlineSecureValueSupport_DeleteInline_Call) Return(_a0 error) *MockInlineSecureValueSupport_DeleteInline_Call {
+func (_c *MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call) Return(_a0 error) *MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockInlineSecureValueSupport_DeleteInline_Call) RunAndReturn(run func(context.Context, v0alpha1.ObjectReference, string) error) *MockInlineSecureValueSupport_DeleteInline_Call {
+func (_c *MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call) RunAndReturn(run func(context.Context, v0alpha1.ObjectReference, string) error) *MockInlineSecureValueSupport_DeleteWhenOwnedByResource_Call {
 	_c.Call.Return(run)
 	return _c
 }

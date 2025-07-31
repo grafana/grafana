@@ -3244,6 +3244,22 @@
     },
     {
       "metadata": {
+        "name": "useScopeSingleNodeEndpoint",
+        "resourceVersion": "1753960766702",
+        "creationTimestamp": "2025-07-31T11:19:26Z"
+      },
+      "spec": {
+        "description": "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "useScopesNavigationEndpoint",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-03-31T15:20:00Z"
