@@ -90,7 +90,6 @@ func (_m *FakeDashboardStore) CountInOrg(ctx context.Context, orgID int64, isFol
 	return r0, r1
 }
 
-
 // DeleteDashboard provides a mock function with given fields: ctx, cmd
 func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error {
 	ret := _m.Called(ctx, cmd)
@@ -126,7 +125,6 @@ func (_m *FakeDashboardStore) DeleteDashboardsInFolders(ctx context.Context, req
 
 	return r0
 }
-
 
 // FindDashboards provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
