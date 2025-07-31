@@ -129,12 +129,25 @@ func NewEmptyFolderTree() FolderTree {
 
 // NewEmptyFolderWithRoot creates a folder tree with an optional root folder.
 // If rootFolder is not empty, resources with empty parent folders will use it as their parent.
+// The root folder itself is automatically added to the tree.
 func NewEmptyFolderWithRoot(rootFolder string) FolderTree {
-	return &folderTree{
+	tree := &folderTree{
 		tree:       make(map[string]string, 0),
 		folders:    make(map[string]Folder, 0),
 		rootFolder: rootFolder,
 	}
+	
+	// Add the root folder to the tree if it's specified
+	if rootFolder != "" {
+		tree.tree[rootFolder] = "" // Root folder has no parent (empty string)
+		tree.folders[rootFolder] = Folder{
+			ID:    rootFolder,
+			Title: rootFolder,
+		}
+		tree.count++
+	}
+	
+	return tree
 }
 
 func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {

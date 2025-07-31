@@ -96,6 +96,11 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
+	// HACK: this should be somewhere else
+	if folder == "" {
+		folder = rootFolder
+	}
+
 	fid, ok := r.folders.Tree().DirPath(folder, rootFolder)
 	if !ok {
 		return "", fmt.Errorf("folder not found in tree: %s, root folder: %s", folder, rootFolder)

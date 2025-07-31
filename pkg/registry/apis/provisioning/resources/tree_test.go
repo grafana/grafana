@@ -129,7 +129,8 @@ func TestNewEmptyFolderWithRoot(t *testing.T) {
 		ft, ok := tree.(*folderTree)
 		require.True(t, ok, "should return a folderTree instance")
 		assert.Equal(t, rootFolder, ft.rootFolder, "should set the root folder")
-		assert.Equal(t, 0, tree.Count(), "should start with zero folders")
+		assert.Equal(t, 1, tree.Count(), "should start with one folder (the root folder)")
+		assert.True(t, tree.In(rootFolder), "root folder should be in the tree")
 	})
 
 	t.Run("creates folder tree without root folder when empty string", func(t *testing.T) {
@@ -166,7 +167,7 @@ func TestAddUnstructuredWithRootFolder(t *testing.T) {
 		// Verify the folder was added with the root folder as parent
 		ft := tree.(*folderTree)
 		assert.Equal(t, rootFolder, ft.tree["test-folder"], "should use root folder as parent")
-		assert.Equal(t, 1, tree.Count(), "should have one folder")
+		assert.Equal(t, 2, tree.Count(), "should have two folders (root + added)")
 		assert.True(t, tree.In("test-folder"), "should contain the added folder")
 	})
 
@@ -197,7 +198,7 @@ func TestAddUnstructuredWithRootFolder(t *testing.T) {
 		// Verify the folder was added with the existing parent, not the root folder
 		ft := tree.(*folderTree)
 		assert.Equal(t, "existing-parent", ft.tree["test-folder"], "should preserve existing parent folder")
-		assert.Equal(t, 1, tree.Count(), "should have one folder")
+		assert.Equal(t, 2, tree.Count(), "should have two folders (root + added)")
 	})
 
 	t.Run("works without root folder set", func(t *testing.T) {
@@ -269,7 +270,7 @@ func TestAddUnstructuredWithRootFolder(t *testing.T) {
 		ft := tree.(*folderTree)
 		assert.Equal(t, rootFolder, ft.tree["folder1"], "folder1 should use root folder as parent")
 		assert.Equal(t, "folder1", ft.tree["folder2"], "folder2 should use folder1 as parent")
-		assert.Equal(t, 2, tree.Count(), "should have two folders")
+		assert.Equal(t, 3, tree.Count(), "should have three folders (root + folder1 + folder2)")
 	})
 }
 
