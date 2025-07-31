@@ -12,6 +12,10 @@ test.use({
   },
 });
 
+test.use({
+  viewport: { width: 1920, height: 1080 },
+});
+
 test.describe(
   'Dashboard Panel Layouts',
   {
@@ -170,6 +174,10 @@ test.describe(
 
     test('can change max columns in auto grid layout', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Set max columns');
+
+      await await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first()
+      ).toBeVisible();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
