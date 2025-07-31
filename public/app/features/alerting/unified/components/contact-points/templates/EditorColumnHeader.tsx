@@ -1,22 +1,40 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { type MergeExclusive } from 'type-fest';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Label, Stack, useStyles2 } from '@grafana/ui';
 
-type Props = { label: string; actions?: React.ReactNode; id?: string };
+interface BaseProps {
+  id?: string;
+}
 
-export function EditorColumnHeader({ label, actions, id }: Props) {
+interface ChildrenProps extends BaseProps {
+  children: React.ReactNode;
+}
+
+interface LabelActionsProps extends BaseProps {
+  label: string;
+  actions?: React.ReactNode;
+}
+
+type Props = MergeExclusive<ChildrenProps, LabelActionsProps>;
+
+export function EditorColumnHeader({ label, actions, id, children }: Props) {
   const styles = useStyles2(editorColumnStyles);
 
   return (
     <div className={styles.container}>
-      <Label className={styles.label} id={id}>
-        {label}
-      </Label>
-      <Stack direction="row" gap={1}>
-        {actions}
-      </Stack>
+      {children ?? (
+        <>
+          <Label className={styles.label} id={id}>
+            {label}
+          </Label>
+          <Stack direction="row" gap={1}>
+            {actions}
+          </Stack>
+        </>
+      )}
     </div>
   );
 }

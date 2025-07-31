@@ -1,20 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { subHours } from 'date-fns';
+import { scaleUtc } from 'd3-scale';
+import { subDays } from 'date-fns';
 import { times } from 'lodash';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
+import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, TextLink, useSplitter, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Icon, Stack, Text, TextLink, useSplitter, useStyles2, withErrorBoundary } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EditorColumnHeader } from '../components/contact-points/templates/EditorColumnHeader';
 
+type Domain = [Date, Date];
+
 export const TriagePage = () => {
-  const window: RawTimeRange = {
-    from: subHours(new Date(), 1).toISOString(),
-    to: new Date().toISOString(),
-  };
+  const domain = [subDays(new Date(), 7), new Date()];
 
   return (
     <AlertingPageWrapper
@@ -25,19 +26,19 @@ export const TriagePage = () => {
         text: t('alerting.pages.triage.title', 'Triage'),
       }}
     >
-      <Workbench window={window} />
+      <Workbench domain={domain} />
     </AlertingPageWrapper>
   );
 };
 
 type WorkbenchProps = {
-  window: RawTimeRange;
+  domain: Domain;
   groupBy?: string[]; // @TODO proper type
 };
 
 const initialSize = 1 / 3;
 
-function Workbench({ window }: WorkbenchProps) {
+function Workbench({ domain }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
   const [flexSize, setFlexSize] = useState<number>(initialSize);
 
@@ -47,30 +48,12 @@ function Workbench({ window }: WorkbenchProps) {
     // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
     initialSize: initialSize,
     dragPosition: 'middle',
-    onResizing: (flexSize) => {
-      // by updating the flex size on resize, we can force all of the splitter props to be updated for all divs below
-      // this is a pretty ugly hack but the best we can do for now
-      setFlexSize(flexSize);
-    },
+    // by updating the flex size on resize, we can force all of the splitter props to be updated for all divs below
+    // this is a pretty ugly hack but the best we can do for now
+    // @TODO this might make the UI very slow, we'll figure that out later
+    onResizing: (flexSize) => setFlexSize(flexSize),
+    onSizeChanged: (flexSize) => setFlexSize(flexSize),
   });
-
-  const exampleGroup = (
-    <div className={styles.groupItemWrapper}>
-      <div style={{ minWidth: 'min-content', flexGrow: flexSize }} className={cx(styles.leftColumn, styles.column)}>
-        <div className={styles.columnContent}>
-          <GroupedItem label="My Service" />
-        </div>
-      </div>
-      <div
-        style={{ minWidth: 'min-content', flexGrow: 1 - flexSize }}
-        className={cx(styles.rightColumn, styles.column)}
-      >
-        <div className={styles.columnContent}>
-          <Trans i18nKey="alerting.workbench.right">right</Trans>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
@@ -84,18 +67,55 @@ function Workbench({ window }: WorkbenchProps) {
         <div {...splitter.splitterProps} />
         <div {...splitter.secondaryProps}>
           <div className={cx(styles.containerWithBorderAndRadius, styles.flexFull, styles.minColumnWidth)}>
-            <EditorColumnHeader label={t('alerting.right-column.label-state', 'State')} />
+            <EditorColumnHeader>
+              <TimelineHeader domain={domain} />
+            </EditorColumnHeader>
           </div>
         </div>
       </div>
 
       {/* groups go here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-        {times(50, () => exampleGroup)}
+        {times(50, () => (
+          <GroupWrapper flexSize={flexSize} />
+        ))}
       </div>
     </div>
   );
 }
+
+interface GroupWrapperProps {
+  flexSize: number;
+}
+
+const GroupWrapper = ({ flexSize }: GroupWrapperProps) => {
+  const styles = useStyles2(getStyles);
+
+  // we have to set the flex size on both left and right columns for the column splitter to work properly
+  const leftColumnFlex = flexSize;
+  const rightColumnFlex = 1 - flexSize;
+
+  return (
+    <div className={styles.groupItemWrapper}>
+      <div
+        style={{ minWidth: 'min-content', flexGrow: leftColumnFlex }}
+        className={cx(styles.leftColumn, styles.column)}
+      >
+        <div className={styles.columnContent}>
+          <GroupedItem label={t('alerting.group-wrapper.label-my-service', 'My Service')} />
+        </div>
+      </div>
+      <div
+        style={{ minWidth: 'min-content', flexGrow: rightColumnFlex }}
+        className={cx(styles.rightColumn, styles.column)}
+      >
+        <div className={styles.columnContent}>
+          <Trans i18nKey="alerting.workbench.right">right</Trans>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface GroupedItemProps {
   label: ReactNode;
@@ -108,6 +128,35 @@ const GroupedItem = ({ label }: GroupedItemProps) => {
         <Icon name="angle-down" /> {label}
       </Stack>
     </TextLink>
+  );
+};
+
+interface TimelineProps {
+  domain: Domain;
+}
+
+const TimelineHeader = ({ domain }: TimelineProps) => {
+  const [ref, { width }] = useMeasure<HTMLDivElement>();
+  console.log(width);
+
+  const ticks = useMemo(() => {
+    const xScale = scaleUtc().domain(domain).range([0, width]);
+    const tickFormatter = xScale.tickFormat();
+
+    return xScale.ticks(12).map((value) => ({
+      value: tickFormatter(value),
+      xOffset: xScale(value),
+    }));
+  }, [domain, width]);
+
+  return (
+    <div ref={ref} style={{ width: '100%' }}>
+      <Stack flex={1} direction="row" justifyContent="space-between">
+        {ticks.map((tick) => (
+          <Text variant="bodySmall">{tick.value}</Text>
+        ))}
+      </Stack>
+    </div>
   );
 };
 
