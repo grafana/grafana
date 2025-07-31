@@ -1,5 +1,6 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
+import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { isSharedWithMe } from '../components/utils';
@@ -95,6 +96,11 @@ export function setItemSelectionState(
     return;
   }
 
+  // Prevent selection of root provisioned folders (but allow subitems)
+  if (item.managedBy === ManagerKind.Repo && !item.parentUID) {
+    return;
+  }
+
   // Selecting a folder selects all children, and unselecting a folder deselects all children
   // so propagate the new selection state to all descendants
   function markChildren(kind: DashboardViewItemKind, uid: string) {
@@ -174,6 +180,11 @@ export function setAllSelection(
       for (const child of collection.items) {
         // Don't traverse into the sharedwithme folder
         if (isSharedWithMe(child.uid)) {
+          continue;
+        }
+
+        // Skip entire provisioned repository tree during "select all"
+        if (child.managedBy === ManagerKind.Repo && !child.parentUID) {
           continue;
         }
 

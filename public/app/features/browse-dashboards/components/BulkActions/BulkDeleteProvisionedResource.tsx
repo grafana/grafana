@@ -202,6 +202,8 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkActionProvisionResourceProps) {
+  // repo name
+
   const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
@@ -213,6 +215,9 @@ export function BulkDeleteProvisionedResource({
     ref: `bulk-delete/${timestamp}`,
     workflow: getDefaultWorkflow(repository),
   };
+
+  console.log('selectedItems', selectedItems);
+  console.log(repository, folderUid, folder);
 
   if (!repository) {
     return null;

@@ -17,6 +17,7 @@ export function useSelectionProvisioningStatus(
   isParentProvisioned: boolean
 ) {
   const browseState = useSelector((state) => state.browseDashboards);
+
   const isProvisionedInstance = useIsProvisionedInstance();
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
@@ -37,6 +38,60 @@ export function useSelectionProvisioningStatus(
       }),
     []
   );
+
+  // Simplified: Get root folder for any item using existing browse state
+  const getItemRootFolder = useCallback(
+    (item: { uid: string; parentUID?: string; kind?: string }): string | undefined => {
+      const rootItems = browseState.rootItems?.items || [];
+      // If it's already a root-level item, return its UID (only for folders)
+      if (!item.parentUID) {
+        return item.kind === 'folder' ? item.uid : undefined;
+      }
+
+      // For nested items, find the top-level parent using existing findItem
+      let currentUID = item.parentUID;
+      while (currentUID) {
+        const parent = findItem(rootItems, browseState.childrenByParentUID, currentUID);
+        if (!parent?.parentUID) {
+          // Found the root folder
+          return parent?.uid;
+        }
+        currentUID = parent.parentUID;
+      }
+
+      return undefined;
+    },
+    [browseState]
+  );
+
+  // Simplified: Get first selected root folder from current selection
+  const firstSelectedRootFolder = useMemo(() => {
+    const folders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+    const dashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+
+    const allItems = [
+      ...folders.map((uid) => ({ uid, kind: 'folder' as const })),
+      ...dashboards.map((uid) => ({ uid, kind: 'dashboard' as const })),
+    ];
+
+    const rootItems = browseState.rootItems?.items || [];
+
+    for (const item of allItems) {
+      const itemFromState = findItem(rootItems, browseState.childrenByParentUID, item.uid);
+      if (itemFromState) {
+        const rootFolder = getItemRootFolder({
+          uid: item.uid,
+          parentUID: itemFromState.parentUID,
+          kind: item.kind,
+        });
+        if (rootFolder) {
+          return rootFolder;
+        }
+      }
+    }
+
+    return null;
+  }, [selectedItems, browseState, getItemRootFolder]);
 
   const findItemInState = useCallback(
     (uid: string) => {
@@ -93,7 +148,7 @@ export function useSelectionProvisioningStatus(
         return item?.managedBy === ManagerKind.Repo;
       }
 
-      // Check parent folder first
+      // Check parent folder first for dashboards
       const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
       if (parent?.managedBy === ManagerKind.Repo) {
         return true;
@@ -106,7 +161,7 @@ export function useSelectionProvisioningStatus(
 
   useEffect(() => {
     const checkProvisioningStatus = async () => {
-      // If the instance is provisioned or the parent folder is provisioned, we can skip checking individual items
+      // Early returns for simple cases
       if (isProvisionedInstance || isParentProvisioned) {
         setStatus({ hasProvisioned: true, hasNonProvisioned: false });
         return;
@@ -120,6 +175,12 @@ export function useSelectionProvisioningStatus(
       const folders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
       const dashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
 
+      // If no items selected
+      if (folders.length === 0 && dashboards.length === 0) {
+        setStatus({ hasProvisioned: false, hasNonProvisioned: false });
+        return;
+      }
+
       let hasProvisioned = false;
       let hasNonProvisioned = false;
 
@@ -127,11 +188,18 @@ export function useSelectionProvisioningStatus(
         ...folders.map((uid) => ({ uid, isFolder: true })),
         ...dashboards.map((uid) => ({ uid, isFolder: false })),
       ];
+
       for (const { uid, isFolder } of allItems) {
         const isProvisioned = await checkItemProvisioning(uid, isFolder);
-        isProvisioned ? (hasProvisioned = true) : (hasNonProvisioned = true);
+
+        if (isProvisioned) {
+          hasProvisioned = true;
+        } else {
+          hasNonProvisioned = true;
+        }
+
         if (hasProvisioned && hasNonProvisioned) {
-          // If we have both provisioned and non-provisioned items, we can stop checking
+          // If we have both, we can stop checking
           break;
         }
       }
@@ -140,15 +208,12 @@ export function useSelectionProvisioningStatus(
     };
 
     checkProvisioningStatus();
-  }, [
-    selectedItems,
-    isProvisionedInstance,
-    isParentProvisioned,
-    isSearching,
-    findItemInState,
-    checkItemProvisioning,
-    provisioningEnabled,
-  ]);
+  }, [selectedItems, isProvisionedInstance, isParentProvisioned, checkItemProvisioning, provisioningEnabled]);
 
-  return status;
+  return {
+    hasProvisioned: status.hasProvisioned,
+    hasNonProvisioned: status.hasNonProvisioned,
+    firstSelectedRootFolder,
+    getItemRootFolder,
+  };
 }
