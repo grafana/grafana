@@ -583,7 +583,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 // Will render anything only if query library is enabled
 function MaybeQueryLibrarySaveButton(props: { query: DataQuery; app?: CoreApp; queryLibraryRef?: string }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app);
+  return renderSaveQueryButton(props.query, props.app, props.queryLibraryRef);
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
