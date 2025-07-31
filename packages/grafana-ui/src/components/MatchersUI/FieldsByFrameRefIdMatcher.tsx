@@ -129,7 +129,6 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
 
   const currentValue = useMemo(() => {
     let extractedRefIds = new Set<string>();
-
     if (value) {
       if (value.startsWith('/^')) {
         try {
@@ -153,8 +152,13 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
 
     const newRefIds = [...extractedRefIds].map(toOption);
     const recoveredRefIDs = recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value);
-
-    return !recoveredRefIDs || recoveredRefIDs.length === 0 ? newRefIds : recoveredRefIDs;
+    if (recoveredRefIDs && recoveredRefIDs.length > 0) {
+      return recoveredRefIDs;
+    } else if (newRefIds && newRefIds.length > 0) {
+      return newRefIds;
+    } else {
+      return;
+    }
   }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(
