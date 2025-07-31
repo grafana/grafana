@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"reflect"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -449,6 +450,29 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
+	event := &WriteEvent{
+		Value:  value,
+		Key:    key,
+		Object: obj,
+		GUID:   uuid.New().String(),
+	}
+
+	if oldValue == nil {
+		event.Type = resourcepb.WatchEvent_ADDED
+	} else {
+		event.Type = resourcepb.WatchEvent_MODIFIED
+
+		temp := &unstructured.Unstructured{}
+		err = temp.UnmarshalJSON(oldValue)
+		if err != nil {
+			return nil, AsErrorResult(err)
+		}
+		event.ObjectOld, err = utils.MetaAccessor(temp)
+		if err != nil {
+			return nil, AsErrorResult(err)
+		}
+	}
+
 	// Verify that this resource can reference secure values
 	secure, err := obj.GetSecureValues()
 	if err != nil {
@@ -470,31 +494,18 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		if s.secure == nil {
 			return nil, AsErrorResult(fmt.Errorf("secure value store not configured"))
 		}
-		if err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), secure); err != nil {
-			return nil, AsErrorResult(err)
+
+		// The "CanReference" check exists to avoid writing references to secrets
+		// the user should not allow granting access.  We only check it when the value changes
+		secureValuesChanged := event.ObjectOld == nil
+		if event.ObjectOld != nil {
+			oldSecureValues, _ := obj.GetSecureValues()
+			secureValuesChanged = reflect.DeepEqual(secure, oldSecureValues)
 		}
-	}
-
-	event := &WriteEvent{
-		Value:  value,
-		Key:    key,
-		Object: obj,
-		GUID:   uuid.New().String(),
-	}
-
-	if oldValue == nil {
-		event.Type = resourcepb.WatchEvent_ADDED
-	} else {
-		event.Type = resourcepb.WatchEvent_MODIFIED
-
-		temp := &unstructured.Unstructured{}
-		err = temp.UnmarshalJSON(oldValue)
-		if err != nil {
-			return nil, AsErrorResult(err)
-		}
-		event.ObjectOld, err = utils.MetaAccessor(temp)
-		if err != nil {
-			return nil, AsErrorResult(err)
+		if secureValuesChanged {
+			if err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), secure); err != nil {
+				return nil, AsErrorResult(err)
+			}
 		}
 	}
 
