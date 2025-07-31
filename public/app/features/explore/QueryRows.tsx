@@ -11,6 +11,7 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
+import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { changeDatasource } from './state/datasource';
 import { updateQueryLibraryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
@@ -39,6 +40,7 @@ const makeSelectors = (exploreId: string) => {
 
 export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const dispatch = useDispatch();
+  const { openDrawer } = useQueryLibraryContext();
   const {
     getQueries,
     getDatasourceInstanceSettings,
@@ -97,7 +99,21 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   };
 
   const onCancelQueryLibraryEdit = () => {
+    // Store the current queryLibraryRef before clearing it
+    const originalQueryRef = queryLibraryRef;
+
+    // Clear the queryLibraryRef to exit editing mode
     dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined }));
+
+    // Open drawer with the original query highlighted
+    // Note: This assumes highlightedQuery support is available in PR #9166
+    if (originalQueryRef) {
+      openDrawer([], () => {}, {
+        context: 'explore',
+        //@ts-ignore  TODO: remove when PR is merged
+        highlightedQuery: originalQueryRef,
+      });
+    }
   };
 
   const onQueryOpenChanged = () => {
