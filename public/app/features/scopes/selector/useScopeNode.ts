@@ -7,8 +7,7 @@ import { useScopesServices } from '../ScopesContextProvider';
 // Light wrapper around the scopesSelectorService.getScopeNode to make it easier to use in the UI.
 export function useScopeNode(scopeNodeId?: string) {
   const [node, setNode] = useState<ScopeNode | undefined>(undefined);
-  // Initializse to true to prevent flickering
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const scopesSelectorService = useScopesServices()?.scopesSelectorService;
 
   useEffect(() => {
