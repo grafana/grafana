@@ -172,6 +172,7 @@ compilation-stats.json
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
 /e2e/extensions
+!/e2e/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
