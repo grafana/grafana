@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
@@ -41,8 +40,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	}
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -276,10 +274,9 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		DashboardOrgQuota:    &dashboardQuota,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous:  true,
+		EnableQuota:       true,
+		DashboardOrgQuota: &dashboardQuota,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -337,8 +334,7 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
 	})
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
@@ -491,8 +487,7 @@ providers:
 func TestIntegrationCreate(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -647,8 +642,7 @@ func intPtr(n int) *int {
 
 func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -738,8 +732,7 @@ func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 
 func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -996,8 +989,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	}
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{

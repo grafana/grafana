@@ -3078,11 +3078,12 @@
         "type": "object",
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
+            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
             "type": "string",
             "enum": [
               "delete",
               "migrate",
+              "move",
               "pr",
               "pull",
               "push"
@@ -3101,6 +3102,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions"
+              }
+            ]
+          },
+          "move": {
+            "description": "Move when the action is `move`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MoveJobOptions"
               }
             ]
           },
@@ -3225,6 +3234,39 @@
           },
           "message": {
             "description": "Message to use when committing the changes in a single commit",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MoveJobOptions": {
+        "type": "object",
+        "properties": {
+          "paths": {
+            "description": "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "ref": {
+            "description": "Ref to the branch or commit hash that should move",
+            "type": "string"
+          },
+          "resources": {
+            "description": "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceRef"
+                }
+              ]
+            }
+          },
+          "targetPath": {
+            "description": "Destination path for the move (e.g. \"new-location/\")",
             "type": "string"
           }
         }
