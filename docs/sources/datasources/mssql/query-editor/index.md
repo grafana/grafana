@@ -39,64 +39,96 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Microsoft SQL Server query editor
 
-You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
+Grafana provides a query editor for the Microsoft SQL Server data source, which is located on the [Explore page](ref:explore). You can also access the MSSQL query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
 
-This topic explains querying specific to the MS SQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+This topic explains querying specific to the MSSQL data source.
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data). For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
 
-## Choose a query editing mode
+For more information on writing Transact-SQL statements, refer to [Write Transact-SQL statements](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements?view=sql-server-ver17) and [Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) in the Microsoft SQL Server documentation.
 
-You can switch the query editor between two modes:
+The Microsoft SQL Server query editor has two modes:
 
-- [Code mode](#code-mode), which provides a feature-rich editor for writing queries
-- [Builder mode](#builder-mode), which provides a visual query designer
+- [Builder mode](#builder-mode)
+- [Code mode](#code-mode)
 
-To switch between the editor modes, select the corresponding **Builder** and **Code** tabs above the editor.
+To switch between the editor modes, select the corresponding **Builder** and **Code** tabs in the upper right.
 
-To run a query, select **Run query** located at the top right corner of the editor.
+![MSSQL query builder](/media/mssql/mssql-query-editor-v12.png)
 
-The query editor also provides:
+{{< admonition type="warning" >}}
+When switching from **Code** mode to **Builder** mode, any changes made to your SQL query aren't saved and will not be shown in the builder interface. You can choose to copy your code to the clipboard or discard the changes.
+{{< /admonition >}}
 
-- [Macros](#use-macros)
+To run a query, select **Run query** in the upper right of the editor.
+
+In addition to writing queries, the query editor also allows you to create and use:
+
+- [Macros](#macros)
 - [Annotations](#apply-annotations)
 - [Stored procedures](#use-stored-procedures)
 
-## Configure common options
+## Builder mode
 
-You can configure a MS SQL-specific response format in the query editor regardless of its mode.
+**Builder mode** allows you to build queries using a visual interface. This mode is great for users who prefer a guided query experience or are just getting started with SQL.
 
-### Choose a response format
+{{< figure alt="MSSQL builder mode>"  src="/media/docs/mssql/mssql-builder-mode-v12.png" class="docs-image--no-shadow" >}}
 
-Grafana can format the response from MS SQL as either a table or as a time series.
+The following components will help you build a T-SQL query:
 
-To choose a response format, select either the **Table** or **Time series** formats from the **Format** dropdown.
+- **Format** - Select a format response from the drop-down for the MSSQL query. The default is **Table**. Refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries) for more information and examples. If you select the **Time series** format option, you must include a `time` column.
 
-To use the time series format, you must name one of the MS SQL columns `time`.
-You can use time series queries, but not table queries, in alerting conditions.
+- **Dataset** - Select a database to query from the drop-down. Grafana automatically populates the drop-down with all databases the user has access to. If a default database is configured in the Data Source Configuration page or via a provisioning file, users will be limited to querying only that predefined database.
 
-For details about using these formats, refer to [Use table queries](#use-table-queries) and [Use time series queries](#use-time-series-queries).
+  Note that `tempdb`, `model`, `msdb`, and `master` system databases are not included in the query editor drop-down.
+
+- **Table** - Select a table from the drop-down. After selecting a database, the next drop-down displays all available tables in that database.
+
+- **Data operations** - _Optional_. Select an aggregation or a macro from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **garbage can icon** to remove data operations.
+
+  - **Column** - Select a column on which to run the aggregation.
+  - **Interval** - Select an interval from the drop-down. You'll see this option when you choose a `time group` macro from the drop-down.
+  - **Fill** - _Optional_. Add a `FILL` method to populate missing time intervals with default values (such as NULL, 0, or a specified value) when no data exists for those intervals. This ensures continuity in the time series, avoiding gaps in visualizations.
+  - **Alias** - _Optional_. Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
+
+- **Filter** - Toggle to add filters.
+
+  - **Filter by column value** - _Optional_. If you toggle **Filter** you can add a column to filter by from the drop-down. To filter by additional columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added, use the `AND` or `OR` operators to define how conditions are evaluated. `AND` requires all conditions to be true, while `OR` requires any condition to be true. Use the second drop-down to select the filter value. To remove a filter, click the **X icon** next to it. If you select a `date-type` column, you can use macros from the operator list and choose `timeFilter` to insert the `$\_\_timeFilter` macro into your query with the selected date column.
+
+    After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the `$\_\_timeFilter` macro to the query with the selected date column. Refer to [Macros](#macros) for more information.
+
+- **Group** - Toggle to add a `GROUP BY` column.
+  - **Group by column** - Select a column to filter by from the drop-down. Click the **+sign** to filter by multiple columns. Click the **X** to remove a filter.
+- **Order** - Toggle to add an `ORDER BY` statement.
+  - **Order by** - Select a column to order by from the drop-down. Select ascending (`ASC`) or descending (`DESC`) order.
+  - **Limit** - You can add an optional limit on the number of retrieved results. Default is 50.
+- **Preview** - Toggle for a preview of the SQL query generated by the query builder. Preview is toggled on by default.
+
+For additional detail about using formats, refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries).
 
 ## Code mode
 
 {{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
-In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
+**Code mode** lets you build complex queries using a text editor with helpful features like autocompletion and syntax highlighting.
 
-For more information about Transact-SQL (T-SQL), the query language used by Microsoft SQL Server, refer to the [Transact-SQL tutorial](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements).
+This mode is ideal for advanced users who need full control over the SQL query or want to use features not available in visual query mode. It’s especially useful for writing subqueries, using macros, or applying advanced filtering and formatting. You can switch back to visual mode, but note that some custom queries may not be fully compatible.
 
-### Use toolbar features
+### Code mode toolbar features
 
 Code mode has several features in a toolbar located in the editor's lower-right corner.
 
-To reformat the query, click the brackets button (`{}`).
-
-To expand the code editor, click the chevron button pointing downward.
-
-To run the query, click the **Run query** button or use the keyboard shortcut <key>Ctrl</key>/<key>Cmd</key> + <key>Enter</key>/<key>Return</key>.
+- To reformat the query, click the brackets button (`{}`).
+- To expand the code editor, click the chevron button pointing downward.
+- To run the query, click the **Run query** button or use the keyboard shortcut **<key>Ctrl</key>/<key>Cmd</key> + <key>Enter</key>/<key>Return</key>**.
 
 ### Use autocompletion
 
@@ -105,94 +137,47 @@ To manually trigger autocompletion, use the keyboard shortcut <key>Ctrl</key>/<k
 
 Code mode supports autocompletion of tables, columns, SQL keywords, standard SQL functions, Grafana template variables, and Grafana macros.
 
-> **Note:** You can't autocomplete columns until you've specified a table.
+{{< admonition type="note" >}}
+You can't autocomplete columns until you've specified a table.
+{{< /admonition >}}
 
-## Builder mode
-
-{{< figure src="/static/img/docs/v92/mssql_query_builder.png" class="docs-image--no-shadow" >}}
-
-In **Builder mode**, you can build queries using a visual interface.
-
-### Dataset and table selection
-
-In the **Dataset** dropdown, select the MSSQL database to query. Grafana populates the dropdown with all databases that the user can access.
-Once you select a database, Grafana populates the dropdown with all available tables.
-
-**Note:** If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single preconfigured database for querying.
-
-We don't include `tempdb`,`model`,`msdb`,`master` databases in the query editor dropdown.
-
-### Select columns and aggregation functions (SELECT)
-
-Select a column from the **Column** dropdown to include it in the data.
-You can select an optional aggregation function for the column in the **Aggregation** dropdown.
-
-To add more value columns, click the plus (`+`) button to the right of the column's row.
-
-{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
-
-### Filter data (WHERE)
-
-To add a filter, toggle the **Filter** switch at the top of the editor.
-This reveals a **Filter by column value** section with two dropdown selectors.
-
-Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
-Use the second dropdown to choose a filter.
-
-To filter on more columns, click the plus (`+`) button to the right of the condition dropdown.
-
-To remove a filter, click the `x` button next to that filter's dropdown.
-
-After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column.
-
-### Group results
-
-To group results by column, toggle the **Group** switch at the top of the editor.
-This reveals a **Group by column** dropdown where you can select which column to group the results by.
-
-To remove the group-by clause, click the `x` button.
-
-### Preview the query
-
-To preview the SQL query generated by Builder mode, toggle the **Preview** switch at the top of the editor.
-This reveals a preview pane containing the query, and an copy icon at the top right that copies the query to your clipboard.
-
-## Use macros
+## Macros
 
 To simplify syntax and to allow for dynamic components, such as date range filters, you can add macros to your query.
 
-| Macro example                                         | Replaced by                                                                                                                                                                                                                                                            |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `$__time(dateColumn)`                                 | An expression to rename the column to _time_. For example, _dateColumn as time_                                                                                                                                                                                        |
-| `$__timeEpoch(dateColumn)`                            | An expression to convert a DATETIME column type to Unix timestamp and rename it to _time_.<br/>For example, _DATEDIFF(second, '1970-01-01', dateColumn) AS time_                                                                                                       |
-| `$__timeFilter(dateColumn)`                           | A time range filter using the specified column name.<br/>For example, _dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'_                                                                                                                           |
-| `$__timeFrom()`                                       | The start of the currently active time selection. For example, _'2017-04-21T05:01:17Z'_                                                                                                                                                                                |
-| `$__timeTo()`                                         | The end of the currently active time selection. For example, _'2017-04-21T05:06:17Z'_                                                                                                                                                                                  |
-| `$__timeGroup(dateColumn,'5m'[, fillvalue])`          | An expression usable in GROUP BY clause. Providing a _fillValue_ of _NULL_ or _floating value_ will automatically fill empty series in timerange with that value.<br/>For example, _CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)\*300_. |
-| `$__timeGroup(dateColumn,'5m', 0)`                    | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.                                                                                                                                         |
-| `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as above but NULL will be used as value for missing points.                                                                                                                                                                                                       |
-| `$__timeGroup(dateColumn,'5m', previous)`             | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used.                                                                                                                                        |
-| `$__timeGroupAlias(dateColumn,'5m')`                  | Same as `$__timeGroup` but with an added column alias.                                                                                                                                                                                                                 |
-| `$__unixEpochFilter(dateColumn)`                      | A time range filter using the specified column name with times represented as Unix timestamp. For example, _dateColumn > 1494410783 AND dateColumn < 1494497183_                                                                                                       |
-| `$__unixEpochFrom()`                                  | The start of the currently active time selection as Unix timestamp. For example, _1494410783_                                                                                                                                                                          |
-| `$__unixEpochTo()`                                    | The end of the currently active time selection as Unix timestamp. For example, _1494497183_                                                                                                                                                                            |
-| `$__unixEpochNanoFilter(dateColumn)`                  | A time range filter using the specified column name with times represented as nanosecond timestamp. For example, _dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872_                                                                               |
-| `$__unixEpochNanoFrom()`                              | The start of the currently active time selection as nanosecond timestamp. For example, _1494410783152415214_                                                                                                                                                           |
-| `$__unixEpochNanoTo()`                                | The end of the currently active time selection as nanosecond timestamp. For example, _1494497183142514872_                                                                                                                                                             |
-| `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as `$__timeGroup` but for times stored as Unix timestamp.                                                                                                                                                                                                         |
-| `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias.                                                                                                                                                                                                                            |
+Use macros in the `SELECT` clause to simplify the creation of time series queries.
+From the **Data operations** drop-down, choose a macro such as `$\_\_timeGroup` or `$\_\_timeGroupAlias`. Then, select a time column from the **Column** drop-down and a time interval from the **Interval** drop-down. This generates a time-series query based on your selected time grouping.
+
+| **Macro**                                              | **Description**                                                                                                                                                                                                                          |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$__time(dateColumn)`                                  | Renames the specified column to `_time`. <br/>Example: `dateColumn AS time`                                                                                                                                                              |
+| `$__timeEpoch(dateColumn)`                             | Converts a `DATETIME` column to a Unix timestamp and renames it to `_time`. <br/>Example: `DATEDIFF(second, '1970-01-01', dateColumn) AS time`                                                                                           |
+| `$__timeFilter(dateColumn)`                            | Adds a time range filter for the specified column. <br/>Example: `dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'`                                                                                                  |
+| `$__timeFrom()`                                        | Returns the start of the current time range. <br/>Example: `'2017-04-21T05:01:17Z'`                                                                                                                                                      |
+| `$__timeTo()`                                          | Returns the end of the current time range. <br/>Example: `'2017-04-21T05:06:17Z'`                                                                                                                                                        |
+| `$__timeGroup(dateColumn, '5m'[, fillValue])`          | Groups the specified time column into intervals (e.g., 5 minutes). Optionally fills gaps with a value like `0`, `NULL`, or `previous`. <br/>Example: `CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) AS bigint) * 300` |
+| `$__timeGroup(dateColumn, '5m', 0)`                    | Same as above, with `0` used to fill missing data points.                                                                                                                                                                                |
+| `$__timeGroup(dateColumn, '5m', NULL)`                 | Same as above, with `NULL` used for missing data points.                                                                                                                                                                                 |
+| `$__timeGroup(dateColumn, '5m', previous)`             | Same as above, using the previous value to fill gaps. If no previous value exists, `NULL` is used.                                                                                                                                       |
+| `$__timeGroupAlias(dateColumn, '5m')`                  | Same as `$__timeGroup`, but also adds an alias to the resulting column.                                                                                                                                                                  |
+| `$__unixEpochFilter(dateColumn)`                       | Adds a time range filter using Unix timestamps. <br/>Example: `dateColumn > 1494410783 AND dateColumn < 1494497183`                                                                                                                      |
+| `$__unixEpochFrom()`                                   | Returns the start of the current time range as a Unix timestamp. <br/>Example: `1494410783`                                                                                                                                              |
+| `$__unixEpochTo()`                                     | Returns the end of the current time range as a Unix timestamp. <br/>Example: `1494497183`                                                                                                                                                |
+| `$__unixEpochNanoFilter(dateColumn)`                   | Adds a time range filter using nanosecond-precision Unix timestamps. <br/>Example: `dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872`                                                                               |
+| `$__unixEpochNanoFrom()`                               | Returns the start of the current time range as a nanosecond Unix timestamp. <br/>Example: `1494410783152415214`                                                                                                                          |
+| `$__unixEpochNanoTo()`                                 | Returns the end of the current time range as a nanosecond Unix timestamp. <br/>Example: `1494497183142514872`                                                                                                                            |
+| `$__unixEpochGroup(dateColumn, '5m', [fillMode])`      | Same as `$__timeGroup`, but for Unix timestamps. Optional `fillMode` controls how to handle missing points.                                                                                                                              |
+| `$__unixEpochGroupAlias(dateColumn, '5m', [fillMode])` | Same as above, but adds an alias to the grouped column.                                                                                                                                                                                  |
 
 ### View the interpolated query
 
-The query editor also includes a link named **Generated SQL** that appears after running a query while in panel edit mode.
-To display the raw interpolated SQL string that the data source executed, click on this link.
+The query editor includes a **Generated SQL** link that appears after you run a query while editing a panel. Click this link to view the raw interpolated SQL that Grafana executed, including any macros that were expanded during query processing.
 
-## Use table queries
+## Table queries
 
-If the **Format** query option is set to **Table** for a [Table panel](ref:table), you can enter any type of SQL query.
-The Table panel then displays the query results with whatever columns and rows are returned.
+To create a Table query, set the **Format** option in the query editor to [**Table**](ref:table). This allows you to write any valid SQL query, and the Table panel will display the results using the returned columns and rows.
 
-**Example database table:**
+**Example:**
 
 ```sql
 CREATE TABLE [event] (
@@ -220,43 +205,43 @@ SELECT
   GETDATE(), CAST(GETDATE() AS DATETIME2), CAST(GETDATE() AS SMALLDATETIME), CAST(GETDATE() AS DATE), CAST(GETDATE() AS TIME), SWITCHOFFSET(CAST(GETDATE() AS DATETIMEOFFSET), '-07:00')
 ```
 
-Query editor with example query:
-
-{{< figure src="/static/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
-
-The query:
+**Example query with output:**
 
 ```sql
 SELECT * FROM [mssql_types]
 ```
 
-To control the name of the Table panel columns, use the standard `AS` SQL column selection syntax.
+{{< figure src="/static/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-For example:
+Use the keyword `AS` to define an alias in your query to rename a column or table.
+
+**Example query with output:**
 
 ```sql
 SELECT
-  c_bit as [column1], c_tinyint as [column2]
+  c_bit AS [column1], c_tinyint AS [column2]
 FROM
   [mssql_types]
 ```
 
-The resulting table panel:
-
 {{< figure src="/static/img/docs/v51/mssql_table_result.png" max-width="1489px" class="docs-image--no-shadow" >}}
 
-## Use time series queries
+## Time series queries
 
 {{< admonition type="note" >}}
 Store timestamps in UTC to avoid issues with time shifts in Grafana when using non-UTC timezones.
 {{< /admonition >}}
 
-If you set the **Format** setting in the query editor to **Time series**, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds.
-Result sets of time series queries must also be sorted by time for panels to properly visualize the result.
+To create a time series query, set the **Format** option in the query editor to **Time series**. The query must include a column named `time`, which should contain either a SQL `datetime` value or a numeric value representing Unix epoch time in seconds. The result set must be sorted by the `time` column for panels to visualize the data correctly.
 
-A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format).
-Any column except time or of type string transforms into value fields in the data frame query result.
-Any string column transforms into field labels in the data frame query result.
+A time series query returns results[wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format).
+
+- Any column except `time` or of the type `string` transforms into value fields in the data frame query result.
+- Any string column transforms into field labels in the data frame query result.
+
+You can enable macro support in the `SELECT` clause to create time series queries more easily. Use the **Data operations** drop-down to choose a macro such as `$\_\_timeGroup` or `$\_\_timeGroupAlias`, then select a time column from the Column drop-down and a time interval from the Interval drop-down. This generates a time-series query based on your selected time grouping.
+
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
 
 ### Create a metric query
 
@@ -294,7 +279,7 @@ Data frame result:
 
 ### Time series query examples
 
-**Using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
+**Use the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
@@ -325,7 +310,7 @@ Data frame result:
 +---------------------+---------------------------+---------------------------+
 ```
 
-**Using multiple columns:**
+**Use multiple columns:**
 
 ```sql
 SELECT
@@ -354,16 +339,16 @@ Data frame result:
 ## Apply annotations
 
 [Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
-You can add annotation queries in the Dashboard menu's Annotations view.
+You can add annotation queries in the Dashboard menu's **Annotations** view.
 
 **Columns:**
 
 | Name      | Description                                                                                                       |
 | --------- | ----------------------------------------------------------------------------------------------------------------- |
-| `time`    | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.          |
-| `timeend` | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. |
-| `text`    | Event description field.                                                                                          |
-| `tags`    | Optional field name to use for event tags as a comma separated string.                                            |
+| `time`    | The name of the date/time field. Can be a column with a native SQL date/time data type or epoch value.            |
+| `timeend` | _Optional_ name of the end date/time field. Can be a column with a native SQL date/time data type or epoch value. |
+| `text`    | Field containing the event description.                                                                           |
+| `tags`    | _Optional_ field used for event tags, formatted as a comma-separated string.                                      |
 
 **Example database tables:**
 
@@ -375,7 +360,7 @@ CREATE TABLE [events] (
 )
 ```
 
-We also use the database table defined in [Time series queries](#time-series-queries).
+The following example also uses the database table defined in the [Time series queries](#time-series-queries) section.
 
 **Example query using time column with epoch values:**
 
@@ -422,16 +407,17 @@ ORDER BY 1
 
 ## Use stored procedures
 
-Stored procedures have been verified to work.
-However, please note that we haven't done anything special to support this, so there might be edge cases where it won't work as you would expect.
-Stored procedures should be supported in table, time series and annotation queries as long as you use the same naming of columns and return data in the same format as describe above under respective section.
+Stored procedures have been verified to work with Grafana queries. However, note that there is no special handling or extended support for stored procedures, so some edge cases may not behave as expected.
 
-Please note that any macro function will not work inside a stored procedure.
+Stored procedures can be used in table, time series, and annotation queries, provided that the returned data matches the expected column names and formats described in the relevant previous sections in this document.
 
-### Examples
+{{< admonition type="note" >}}
+Grafana macro functions do not work inside stored procedures.
+{{< /admonition >}}
 
 {{< figure src="/static/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
-For the following examples, the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize four series in a graph panel, such as all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this, we need to use two queries:
+
+For the following examples, the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize four series in a graph panel, such as all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this, you need to use two queries:
 
 **First query:**
 
@@ -465,14 +451,13 @@ GROUP BY
 ORDER BY 1
 ```
 
-#### Stored procedure using time in epoch format
+### Stored procedure with epoch time format
 
-We can define a stored procedure that will return all data we need to render 4 series in a graph panel like above.
-In this case the stored procedure accepts two parameters `@from` and `@to` of `int` data types which should be a timerange (from-to) in epoch format
-which will be used to filter the data to return from the stored procedure.
+You can define a stored procedure to return all the data needed to render multiple series (for example, 4) in a graph panel.
 
-We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions, and that's why there are a lot of lengthy expressions needed -
-these could be extracted to MS SQL functions, if wanted.
+In the following example, the stored procedure accepts two parameters, `@from` and `@to`, both of type `int`. These parameters represent a time range (from–to) in epoch time format and are used to filter the results returned by the procedure.
+
+The query inside the procedure simulates the behavior of `$__timeGroup(time, '5m')` by grouping timestamps into 5-minute intervals. While the expressions for time grouping are somewhat verbose, they can be extracted into reusable SQL Server functions to simplify the procedure.
 
 ```sql
 CREATE PROCEDURE sp_test_epoch(
@@ -507,7 +492,7 @@ BEGIN
 END
 ```
 
-Then we can use the following query for our graph panel.
+Then, in your graph panel, you can use the following query to call the stored procedure with the time range dynamically populated by Grafana:
 
 ```sql
 DECLARE
@@ -517,14 +502,15 @@ DECLARE
 EXEC dbo.sp_test_epoch @from, @to
 ```
 
-#### Stored procedure using time in datetime format
+This uses Grafana built-in macros to convert the selected time range into epoch time ($**unixEpochFrom() and $**unixEpochTo()), which are passed to the stored procedure as input parameters.
 
-We can define a stored procedure that will return all data we need to render 4 series in a graph panel like above.
-In this case the stored procedure accepts two parameters `@from` and `@to` of `datetime` data types which should be a timerange (from-to)
-which will be used to filter the data to return from the stored procedure.
+### Stored procedure with `datetime` format
 
-We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions and that's why there's a lot of lengthy expressions needed -
-these could be extracted to MS SQL functions, if wanted.
+You can define a stored procedure to return all the data needed to render four series in a graph panel.
+
+In the following example, the stored procedure accepts two parameters, `@from` and `@to`, of the type `datetime`. These parameters represent the selected time range and are used to filter the returned data.
+
+The query within the procedure mimics the behavior of `$__timeGroup(time, '5m')` by grouping data into 5-minute intervals. These expressions can be verbose, but you may extract them into reusable SQL Server functions for improved readability and maintainability.
 
 ```sql
 CREATE PROCEDURE sp_test_datetime(
@@ -560,7 +546,7 @@ END
 
 ```
 
-Then we can use the following query for our graph panel.
+To call this stored procedure from a graph panel, use the following query with Grafana built-in macros to populate the time range dynamically:
 
 ```sql
 DECLARE
