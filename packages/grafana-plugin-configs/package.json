@@ -9,7 +9,7 @@
   "type": "module",
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "@swc/core": "1.10.12",
+    "@swc/core": "1.13.3",
     "@swc/helpers": "^0.5.0",
     "@swc/jest": "^0.2.26",
     "@types/eslint": "9.6.1",
