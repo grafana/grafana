@@ -128,7 +128,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
       <div className={styles.resultsFooter}>
         <Pagination
           currentPage={pagination.pageNum > pagination.totalPageNum ? 1 : pagination.pageNum}
-          numberOfPages={Array.from({ length: pagination.totalPageNum }, (_, i) => i + 1).length}
+          numberOfPages={pagination.totalPageNum}
           onNavigate={(val: number) => setPagination({ ...pagination, pageNum: val ?? 1 })}
         />
       </div>

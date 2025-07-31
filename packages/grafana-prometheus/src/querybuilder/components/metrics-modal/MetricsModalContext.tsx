@@ -95,7 +95,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     const totalPageNum =
       filteredMetricsData.length === 0 ? 1 : Math.ceil(filteredMetricsData.length / pagination.resultsPerPage);
     const pageNum = pagination.pageNum > totalPageNum ? 1 : pagination.pageNum;
-    
+
     setPagination((prevPagination) => ({
       ...prevPagination,
       totalPageNum,

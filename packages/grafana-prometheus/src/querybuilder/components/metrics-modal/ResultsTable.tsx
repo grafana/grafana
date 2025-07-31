@@ -28,10 +28,11 @@ export function ResultsTable(props: ResultsTableProps) {
     searchedText,
   } = useMetricsModal();
 
-  const slicedMetrics = useMemo(
-    () => filteredMetricsData.slice((pageNum - 1) * resultsPerPage, (pageNum - 1) * resultsPerPage + resultsPerPage),
-    [filteredMetricsData, pageNum, resultsPerPage]
-  );
+  const slicedMetrics = useMemo(() => {
+    const startIndex = (pageNum - 1) * resultsPerPage;
+    const endIndex = startIndex + resultsPerPage;
+    return filteredMetricsData.slice(startIndex, endIndex);
+  }, [filteredMetricsData, pageNum, resultsPerPage]);
 
   const styles = useStyles2(getResultsTableStyles);
 
