@@ -383,7 +383,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             isOpen={isWarningsOpen}
             onlyValues={true}
             onToggle={() => warningsToggle(spanID)}
-            label={t('explore.span-detail.label-warnings', 'Warnings')}
+            label={t('explore.span-detail.warnings', 'Warnings')}
           />
         )}
 
