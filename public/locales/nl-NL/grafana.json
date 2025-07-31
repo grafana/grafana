@@ -1548,8 +1548,7 @@
       "group-not-editable": "Geselecteerde groep kan niet worden bewerkt",
       "group-not-editable-description": "Deze groep behoort tot een gegevensbron die geen bewerking ondersteunt.",
       "page-title": "Regelgroep bewerken",
-      "rule-group-error": "Er is een fout opgetreden bij het laden van de regelgroep",
-      "title": "Evaluatiegroep bewerken"
+      "rule-group-error": "Er is een fout opgetreden bij het laden van de regelgroep"
     },
     "group-loader": {
       "group-load-failed": "Kan regels uit groep {{ groupName }} in {{ namespaceName }} niet laden",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Voer ping-, DNS-, HTTP/S- en TCP-checks uit op elk netwerklaag.",
       "synthetic-monitoring-card-item-3": "Gebruik meer dan 20 wereldwijde probes of eigen probes achter je firewall.",
       "synthetic-monitoring-card-item-4": "Volg SLO’s met ingebouwde waarschuwingen in Prometheus-stijl, direct vanuit de UI.",
-      "synthetic-monitoring-card-title": "Synthetische monitoring",
-      "title-alerting": "Alerting"
+      "synthetic-monitoring-card-title": "Synthetische monitoring"
     },
     "import-to-gma": {
       "action-button": "Importeren",
@@ -3740,6 +3738,7 @@
     "category-selected-connection": "Geselecteerde verbinding",
     "category-selected-element": "Geselecteerd element ({{element}})",
     "category-size": "Grootte",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3982,6 +3981,13 @@
       "name-vertical-align": "Verticaal uitlijnen",
       "placeholder": {
         "auto": "Automatisch"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -7006,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": "ProTip: je kunt ook gegevensbronnen definiëren via configuratiebestanden. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Vorige",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Zonder query's"
@@ -7272,18 +7281,24 @@
       "split-tooltip": "Deelvenster splitsen",
       "split-widen": "Deelvenster verbreden"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Feedback geven",
-      "label-copied": "Gekopieerd.",
-      "label-export": "Exporteren",
-      "label-trace-id": "Tracering-id",
-      "title-share-thoughts-about-tracing-grafana": "Deel je mening over tracing in Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Gedeeltelijk spoor",
-      "tooltip-url": "{{url}} of {{target}} of {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Knop Filters wissen",
