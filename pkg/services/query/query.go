@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"golang.org/x/sync/errgroup"
 
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -303,23 +301,24 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		return s.pluginClient.QueryData(ctx, req)
 	} else { // multi tenant flow
 		// transform request from backend.QueryDataRequest to k8s request
-		k8sReq := &data.QueryDataRequest{
-			TimeRange: data.TimeRange{
-				From: req.Queries[0].TimeRange.From.Format(time.RFC3339),
-				To:   req.Queries[0].TimeRange.To.Format(time.RFC3339),
-			},
-		}
-		for _, q := range req.Queries {
-			var dataQuery data.DataQuery
-			err := json.Unmarshal(q.JSON, &dataQuery)
-			if err != nil {
-				return nil, err
-			}
-
-			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
+		k8sReq, err := expr.ConvertBackendRequestToDataRequest(req)
+		if err != nil {
+			return nil, err
 		}
 		return mtDsClient.QueryData(ctx, *k8sReq)
 	}
+}
+
+func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) gtime.TimeRange {
+	from := query.Get("timeRange").Get("from").MustString("")
+	to := query.Get("timeRange").Get("to").MustString("")
+
+	if (from == "") && (to == "") {
+		from = globalFrom
+		to = globalTo
+	}
+
+	return gtime.NewTimeRange(from, to)
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
@@ -328,7 +327,6 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 		return nil, ErrNoQueriesFound
 	}
 
-	timeRange := gtime.NewTimeRange(reqDTO.From, reqDTO.To)
 	req := &parsedRequest{
 		hasExpression: false,
 		parsedQueries: make(map[string][]parsedQuery),
@@ -356,6 +354,8 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 		if _, ok := req.parsedQueries[ds.UID]; !ok {
 			req.parsedQueries[ds.UID] = []parsedQuery{}
 		}
+
+		timeRange := getTimeRange(query, reqDTO.From, reqDTO.To)
 
 		modelJSON, err := query.MarshalJSON()
 		if err != nil {
