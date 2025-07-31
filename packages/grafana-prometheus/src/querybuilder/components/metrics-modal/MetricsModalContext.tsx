@@ -28,6 +28,7 @@ export const DEFAULT_RESULTS_PER_PAGE = 25;
 type Pagination = {
   pageNum: number;
   resultsPerPage: number;
+  totalPageNum: number;
 };
 
 type MetricsModalContextValue = {
@@ -61,6 +62,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
   const [metricsData, setMetricsData] = useState<MetricsData>([]);
   const [pagination, setPagination] = useState<Pagination>({
     pageNum: 1,
+    totalPageNum: 1,
     resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
   });
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
@@ -88,6 +90,18 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
       });
     });
   }, [metricsData, selectedTypes]);
+
+  useEffect(() => {
+    const totalPageNum =
+      filteredMetricsData.length === 0 ? 1 : Math.ceil(filteredMetricsData.length / pagination.resultsPerPage);
+    const pageNum = pagination.pageNum > totalPageNum ? 1 : pagination.pageNum;
+    
+    setPagination((prevPagination) => ({
+      ...prevPagination,
+      totalPageNum,
+      pageNum,
+    }));
+  }, [filteredMetricsData.length, pagination.resultsPerPage, pagination.pageNum]);
 
   // Track the latest search ID to handle race conditions
   const latestSearchIdRef = useRef<number>(0);

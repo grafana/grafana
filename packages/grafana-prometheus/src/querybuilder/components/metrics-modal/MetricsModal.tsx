@@ -12,7 +12,7 @@ import { PromVisualQuery } from '../../types';
 import { FeedbackLink } from './FeedbackLink';
 import { MetricsModalContextProvider, useMetricsModal } from './MetricsModalContext';
 import { ResultsTable } from './ResultsTable';
-import { calculatePageList, getPlaceholders, getPromTypes } from './helpers';
+import { getPlaceholders, getPromTypes } from './helpers';
 import { getMetricsModalStyles } from './styles';
 import { metricsModaltestIds } from './testIds';
 import { PromFilterOption } from './types';
@@ -40,7 +40,6 @@ const MetricsModalContent = (props: MetricsModalProps) => {
     searchedText,
     setSearchedText,
   } = useMetricsModal();
-
   const styles = useStyles2(getMetricsModalStyles);
   const placeholders = getPlaceholders();
   const promTypes = getPromTypes();
@@ -128,8 +127,8 @@ const MetricsModalContent = (props: MetricsModalProps) => {
       </div>
       <div className={styles.resultsFooter}>
         <Pagination
-          currentPage={pagination.pageNum ?? 1}
-          numberOfPages={calculatePageList(filteredMetricsData, pagination.resultsPerPage).length}
+          currentPage={pagination.pageNum > pagination.totalPageNum ? 1 : pagination.pageNum}
+          numberOfPages={Array.from({ length: pagination.totalPageNum }, (_, i) => i + 1).length}
           onNavigate={(val: number) => setPagination({ ...pagination, pageNum: val ?? 1 })}
         />
       </div>

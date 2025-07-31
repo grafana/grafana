@@ -79,6 +79,7 @@ describe('MetricsModalContext', () => {
       expect(result.current.filteredMetricsData).toEqual([]);
       expect(result.current.pagination).toEqual({
         pageNum: 1,
+        totalPageNum: 1,
         resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
       });
       expect(result.current.selectedTypes).toEqual([]);
@@ -92,13 +93,13 @@ describe('MetricsModalContext', () => {
         wrapper: createWrapper(),
       });
 
-      const newPagination = { pageNum: 2, resultsPerPage: 50 };
+      const expectedPagination = { pageNum: 1, resultsPerPage: 50, totalPageNum: 1 };
 
       act(() => {
-        result.current.setPagination(newPagination);
+        result.current.setPagination({ pageNum: 2, resultsPerPage: 50, totalPageNum: 3 });
       });
 
-      expect(result.current.pagination).toEqual(newPagination);
+      expect(result.current.pagination).toEqual(expectedPagination);
     });
 
     it('should update selected types', () => {
