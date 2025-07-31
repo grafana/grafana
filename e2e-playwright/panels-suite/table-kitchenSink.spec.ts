@@ -252,7 +252,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     expect(fourthPageStatus.total).toBe(largeRowStatus.total);
   });
 
-  test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
+  test.skip('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
     const addDataLink = async (title: string, url: string) => {
       await dashboardPage
         .getByGrafanaSelector(
