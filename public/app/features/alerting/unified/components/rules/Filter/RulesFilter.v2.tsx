@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
+import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -18,6 +19,8 @@ import {
   Stack,
   useStyles2,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
@@ -29,6 +32,9 @@ import { PopupCard } from '../../HoverCard';
 
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 import { emptyAdvancedFilters, formAdvancedFiltersToRuleFilter, searchQueryToDefaultValues } from './utils';
+
+// Contact point selector permission check
+const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 /**
  * Custom hook that creates a DOM container for rendering dropdowns outside of popup stacking contexts.
@@ -395,6 +401,39 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
               />
             )}
           />
+          {canRenderContactPointSelector && (
+            <>
+              <Label>
+                <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+              </Label>
+              <Controller
+                name="contactPoint"
+                control={control}
+                render={({ field }) => {
+                  // Debug logging to understand what's happening with contact points
+                  console.log('ContactPointSelector debug:', {
+                    value: field.value,
+                    // Add any other relevant info for debugging
+                  });
+
+                  return (
+                    <ContactPointSelector
+                      value={field.value ?? null}
+                      placeholder={t(
+                        'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                        'Choose a contact point'
+                      )}
+                      isClearable
+                      onChange={(contactPoint) => {
+                        console.log('ContactPointSelector onChange:', contactPoint);
+                        field.onChange(contactPoint?.spec.title ?? null);
+                      }}
+                    />
+                  );
+                }}
+              />
+            </>
+          )}
           <Label>
             <Trans i18nKey="alerting.search.property.state">State</Trans>
           </Label>
