@@ -807,8 +807,6 @@ describe('TableNG utils', () => {
       // Calculate the expected result based on the theme values
       const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
 
-      theme.colors.border.medium;
-
       expect(result).toBe(expected);
     });
   });
