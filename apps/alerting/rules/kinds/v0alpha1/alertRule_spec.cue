@@ -7,6 +7,8 @@ ExecErrState: *"Error" | "Ok" | "Alerting" | "KeepLast"
 
 #TimeIntervalRef: string // TODO(@moustafab): validate regex for time interval ref
 
+// FIXME: the For and KeepFiringFor types should be using the AlertRulePromDuration type, but there seems to be an issue with the generator
+
 AlertRuleSpec: #RuleSpec & {
 	noDataState:                  NoDataState
 	execErrState:                 ExecErrState
