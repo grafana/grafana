@@ -84,8 +84,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
       return node;
     } catch (error) {
-      console.error('Failed to load node', error);
-      return undefined;
+      throw new Error(`Failed to load node ${scopeNodeId}` + error);
     }
   };
 
@@ -255,11 +254,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // Apply the scopes right away even though we don't have the metadata yet.
     this.updateState({ appliedScopes: scopes, selectedScopes: scopes, loading: scopes.length > 0 });
-
-    // Fetch parent node if it is not already loaded
-    if (scopes[0]?.parentNodeId && !this.state.nodes[scopes[0].parentNodeId]) {
-      this.getScopeNode(scopes[0].parentNodeId);
-    }
 
     // Fetches both dashboards and scope navigations
     // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.

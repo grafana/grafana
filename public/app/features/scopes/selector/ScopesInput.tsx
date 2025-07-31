@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -34,7 +35,7 @@ export function ScopesInput({
   const [tooltipVisible, setTooltipVisible] = useState(false);
 
   const parentNodeId = appliedScopes[0]?.parentNodeId;
-  const parentNode = useScopeNode(parentNodeId);
+  const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
   const parentNodeTitle = parentNode?.spec.title;
 
   useEffect(() => {
@@ -56,6 +57,16 @@ export function ScopesInput({
     [appliedScopes, scopes]
   );
 
+  const parentNodePrefix = useMemo(
+    () =>
+      parentNodeLoading ? (
+        <Skeleton width={30} height={14} />
+      ) : parentNodeTitle ? (
+        <span>{parentNodeTitle}:</span>
+      ) : undefined,
+    [parentNodeLoading, parentNodeTitle]
+  );
+
   const input = useMemo(
     () => (
       <Input
@@ -66,7 +77,7 @@ export function ScopesInput({
         value={scopesTitles}
         aria-label={t('scopes.selector.input.placeholder', 'Select scopes...')}
         data-testid="scopes-selector-input"
-        prefix={parentNodeTitle ? <span>{parentNodeTitle}:</span> : undefined}
+        prefix={parentNodePrefix}
         suffix={
           appliedScopes.length > 0 && !disabled ? (
             <IconButton
@@ -86,7 +97,7 @@ export function ScopesInput({
         }}
       />
     ),
-    [disabled, loading, onInputClick, onRemoveAllClick, appliedScopes, scopesTitles, parentNodeTitle]
+    [disabled, loading, onInputClick, onRemoveAllClick, appliedScopes, scopesTitles, parentNodePrefix]
   );
 
   return (
