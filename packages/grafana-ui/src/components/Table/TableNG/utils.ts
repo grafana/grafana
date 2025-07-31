@@ -167,6 +167,8 @@ const PILLS_SPACING = 12; // 6px horizontal padding on each side
 const PILLS_GAP = 4; // gap between pills
 
 export function getPillLineCounter(measureWidth: (value: string) => number): LineCounter {
+  const widthCache: Record<string, number> = {};
+
   return (value, width) => {
     if (value == null) {
       return 0;
@@ -181,7 +183,11 @@ export function getPillLineCounter(measureWidth: (value: string) => number): Lin
     let currentLineUse = width;
 
     for (const pillValue of pillValues) {
-      const rawWidth = measureWidth(pillValue);
+      let rawWidth = widthCache[pillValue];
+      if (rawWidth === undefined) {
+        rawWidth = measureWidth(pillValue);
+        widthCache[pillValue] = rawWidth;
+      }
       const pillWidth = rawWidth + PILLS_SPACING;
 
       if (currentLineUse + pillWidth + PILLS_GAP > width) {
@@ -246,19 +252,9 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
             typographyCtx.letterSpacing
           );
 
-          // when using pills, there's a common-sense assumption that values will be repeated.
-          // cache the results of width calculations to try to limit some of the measureText cost.
-          const preciseWidthCache: Record<string, number> = {};
-
           result.pillCounter = {
             estimate: getPillLineCounter((value) => value.length * pillTypographyCtx.avgCharWidth),
-            counter: getPillLineCounter((value) => {
-              if (preciseWidthCache[value] === undefined) {
-                const width = pillTypographyCtx.ctx.measureText(value).width;
-                preciseWidthCache[value] = width;
-              }
-              return preciseWidthCache[value];
-            }),
+            counter: getPillLineCounter((value) => pillTypographyCtx.ctx.measureText(value).width),
             fieldIdxs: [],
           };
         }
