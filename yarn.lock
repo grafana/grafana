@@ -3293,7 +3293,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     tinycolor2: "npm:1.6.0"
-    ts-jest: "npm:29.2.5"
+    ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.8.3"
@@ -3406,7 +3406,7 @@ __metadata:
     react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
-    ts-jest: "npm:29.2.5"
+    ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.8.3"
@@ -3700,7 +3700,7 @@ __metadata:
     react-virtualized-auto-sizer: "npm:1.0.26"
     rxjs: "npm:7.8.2"
     sql-formatter-plus: "npm:^1.3.6"
-    ts-jest: "npm:29.2.5"
+    ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.8.3"
@@ -18624,7 +18624,7 @@ __metadata:
     testing-library-selector: "npm:0.3.1"
     tinycolor2: "npm:1.6.0"
     tracelib: "npm:1.0.1"
-    ts-jest: "npm:29.2.5"
+    ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     tween-functions: "npm:^1.2.0"
@@ -31219,6 +31219,46 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ts-jest@npm:29.4.0":
+  version: 29.4.0
+  resolution: "ts-jest@npm:29.4.0"
+  dependencies:
+    bs-logger: "npm:^0.2.6"
+    ejs: "npm:^3.1.10"
+    fast-json-stable-stringify: "npm:^2.1.0"
+    json5: "npm:^2.2.3"
+    lodash.memoize: "npm:^4.1.2"
+    make-error: "npm:^1.3.6"
+    semver: "npm:^7.7.2"
+    type-fest: "npm:^4.41.0"
+    yargs-parser: "npm:^21.1.1"
+  peerDependencies:
+    "@babel/core": ">=7.0.0-beta.0 <8"
+    "@jest/transform": ^29.0.0 || ^30.0.0
+    "@jest/types": ^29.0.0 || ^30.0.0
+    babel-jest: ^29.0.0 || ^30.0.0
+    jest: ^29.0.0 || ^30.0.0
+    jest-util: ^29.0.0 || ^30.0.0
+    typescript: ">=4.3 <6"
+  peerDependenciesMeta:
+    "@babel/core":
+      optional: true
+    "@jest/transform":
+      optional: true
+    "@jest/types":
+      optional: true
+    babel-jest:
+      optional: true
+    esbuild:
+      optional: true
+    jest-util:
+      optional: true
+  bin:
+    ts-jest: cli.js
+  checksum: 10/fe501f3d9946ec52db78ae0ac6cfd72942b1c1f5d657c12db321c9d570f0f499e83eb6c7e26074cd11dfe534a6a09c676947e7a63ee08fcda552aabcdeb6c592
+  languageName: node
+  linkType: hard
+
 "ts-mixer@npm:^6.0.3, ts-mixer@npm:^6.0.4":
   version: 6.0.4
   resolution: "ts-mixer@npm:6.0.4"
@@ -31439,10 +31479,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^4.18.2, type-fest@npm:^4.26.1, type-fest@npm:^4.40.0":
-  version: 4.40.0
-  resolution: "type-fest@npm:4.40.0"
-  checksum: 10/dbca20979d18c6b8c87ca28cd999d9ae6b34e0c54c3a87ac65530a32f7a178d38d3788044a589f47c9fde3f3c81422e7b021ec1455f7242b724a2d9c642ce8b8
+"type-fest@npm:^4.18.2, type-fest@npm:^4.26.1, type-fest@npm:^4.40.0, type-fest@npm:^4.41.0":
+  version: 4.41.0
+  resolution: "type-fest@npm:4.41.0"
+  checksum: 10/617ace794ac0893c2986912d28b3065ad1afb484cad59297835a0807dc63286c39e8675d65f7de08fafa339afcb8fe06a36e9a188b9857756ae1e92ee8bda212
   languageName: node
   linkType: hard
 
