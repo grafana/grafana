@@ -1560,8 +1560,7 @@
       "group-not-editable": "Выбранную группу нельзя редактировать",
       "group-not-editable-description": "Эта группа принадлежит к источнику данных, который не поддерживает редактирование.",
       "page-title": "Редактирование группы правил",
-      "rule-group-error": "Ошибка при загрузке группы правил",
-      "title": "Редактирование группы оценки"
+      "rule-group-error": "Ошибка при загрузке группы правил"
     },
     "group-loader": {
       "group-load-failed": "Не удалось загрузить правила из группы {{ groupName }} в {{ namespaceName }}",
@@ -1595,8 +1594,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Оповещение"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Импорт",
@@ -3508,6 +3506,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Отмена",
       "cannot-move-folders": "Папки нельзя перемещать",
       "confirmation-text": "Удалить",
@@ -3541,6 +3540,10 @@
       "this-folder-is-empty": "Папка пуста"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_few": "",
       "failed-alert_many": "",
@@ -3550,15 +3553,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} правило оповещения",
@@ -3766,6 +3776,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -4008,6 +4019,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Авто"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4605,6 +4623,7 @@
     "edit-actions": {
       "add": "Добавить {{typeName}}",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5394,6 +5413,20 @@
       "invalid-json": "Неверный JSON-файл",
       "tags-expected-array": "ожидаемый массив тегов",
       "tags-expected-strings": "ожидаемый массив строк тегов"
+    },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
     },
     "version-history-comparison": {
       "button-restore": "Восстановить до версии {{version}} ",
@@ -7023,6 +7056,9 @@
         "pro-tip-define-sources-through-configuration-files": "Совет. Источники данных можно также задавать в файлах конфигурации. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Назад",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Не выполнять запрос"
@@ -7289,18 +7325,24 @@
       "split-tooltip": "Разделить область",
       "split-widen": "Расширить область"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Отправить отзыв",
-      "label-copied": "Скопировано",
-      "label-export": "Экспорт",
-      "label-trace-id": "Идентификатор трассировки",
-      "title-share-thoughts-about-tracing-grafana": "Ваше мнение о трассировке в Grafana"
-    },
     "trace-page-header": {
-      "text-partial-trace": "Частичная трассировка",
-      "tooltip-url": "{{url}} или {{target}}, или {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Кнопка очистки фильтров",
@@ -8316,6 +8358,9 @@
     "card": {
       "option": "параметр"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Очистить выбор"
     },
@@ -8328,6 +8373,7 @@
       "aria-label-selected-color": "{{colorLabel}} цвет"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Отмена",
       "confirmText-delete": ""
     },
@@ -8754,6 +8800,7 @@
       "footer-add-annotation": "Добавить аннотацию",
       "footer-click-to-action": "Нажмите, чтобы {{actionTitle}}",
       "footer-click-to-navigate": "Нажмите, чтобы открыть {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Метка времени"
     },
     "week-start-picker": {
@@ -11296,6 +11343,7 @@
       "starting": "Запуск...",
       "status": {
         "title-error-running-job": "Ошибка при выполнении задания",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Сводка",
@@ -11444,6 +11492,7 @@
       "label-current-step": "Текущий шаг",
       "label-pending-step": "Предстоящий шаг"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11476,6 +11525,12 @@
       "alert-title": "Важно. Данные и конфигурация не будут потеряны, однако дашборды будут недоступны в течение нескольких минут.",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Выберите, что синхронизировать",
       "step-connect": "Подключить",
       "step-finish": "Выберите дополнительные параметры",
@@ -11490,6 +11545,7 @@
     "wizard-content": {
       "button-cancel": "Отмена",
       "button-cancelling": "Отмена...",
+      "button-previous": "",
       "button-submitting": "Отправка...",
       "error-instance-repository-exists": "Репозиторий экземпляров уже существует"
     }
