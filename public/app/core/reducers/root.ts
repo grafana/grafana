@@ -2,6 +2,7 @@ import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
+import { rulesAPIv0alpha1 } from 'app/api/clients/rules/v0alpha1';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -71,6 +72,7 @@ const rootReducers = {
   [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
   [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
   [advisorAPIv0alpha1.reducerPath]: advisorAPIv0alpha1.reducer,
+  [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,
   // PLOP_INJECT_REDUCER
   // Used by the API client generator
 };

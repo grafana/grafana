@@ -1602,8 +1602,8 @@ github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNc
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
 github.com/grafana/grafana-app-sdk v0.40.2 h1:j2ftFuqhX+exYUipfEjeWDs3i7oiJkweTF8gFLL7wWU=
 github.com/grafana/grafana-app-sdk v0.40.2/go.mod h1:BbNXPNki3mtbkWxYqJsyA1Cj9AShSyaY33z8WkyfVv0=
-github.com/grafana/grafana-app-sdk/logging v0.40.1 h1:ru+GqbaQk6jthA5l2Yo1WI/JbNXKNQmLiqNrxz7HGP4=
-github.com/grafana/grafana-app-sdk/logging v0.40.1/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
+github.com/grafana/grafana-app-sdk/logging v0.40.2 h1:HQ1+y9Od92iMbWWB54QxiYpNtCvYGUVpyxvxZ7ywB1k=
+github.com/grafana/grafana-app-sdk/logging v0.40.2/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
 github.com/grafana/grafana-aws-sdk v1.0.4 h1:D14UAehsOqpjliHmHzveRQ1p43KCsMzdmb7GovWj+SY=
 github.com/grafana/grafana-aws-sdk v1.0.4/go.mod h1:hO7q7yWV+t6dmiyJjMa3IbuYnYkBua+G/IAlOPVIYKE=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 h1:0TYrkzAc3u0HX+9GK86cGrLTUAcmQfl3/LEB3tL+SOA=
@@ -1620,6 +1620,8 @@ github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b h1:8o
 github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:q+h3HbmqU/PposW6lq8cMle1v8vuyX1LCMrGzbabHxc=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b h1:jr+C3epmjhd5Yyob4P1Z/dPaW4LRTkU5UJLXsI4eaeM=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:WpI7TCck4P2wKTO2WJLBRcfOWvUGvTdxYu3QqS3z7jM=
+github.com/grafana/grafana/apps/alerting/rules v0.0.0-20250731223157-26b18dda3364 h1:MTe9ittZVMFayWTF790oWasn5eOIGT3/WnthxI8Lj9k=
+github.com/grafana/grafana/apps/alerting/rules v0.0.0-20250731223157-26b18dda3364/go.mod h1:wi4njPm5mJ8IpK13h57be8sWoxOhqr1UQOwmXhRM9Gk=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017 h1:Niy+KRDWHsUVqfhZQg0oZbAQFO6QcO6a4l9V/ouDEEs=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b h1:31MwoIKKT9Ay0ZjbT4lkfcPijiWogUWzXs2EjrCgodI=
