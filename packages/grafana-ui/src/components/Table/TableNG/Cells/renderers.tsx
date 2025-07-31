@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame, Table } from '@grafana/data';
+import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
 import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
 import { TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';

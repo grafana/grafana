@@ -1,4 +1,3 @@
-import { Property } from 'csstype';
 import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
