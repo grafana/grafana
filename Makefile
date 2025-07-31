@@ -276,7 +276,7 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
 .PHONY: run-bra
-run-air: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
+run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
 	$(bra) run
 
 .PHONY: frontend-service-check
