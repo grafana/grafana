@@ -3498,12 +3498,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/influxdb/response_parser.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/jaeger/_importedDependencies/model/transform-trace-data.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/jaeger/_importedDependencies/types/index.tsx:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./trace\`)", "0"]
-    ],
     "public/app/plugins/datasource/jaeger/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
