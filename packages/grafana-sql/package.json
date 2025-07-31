@@ -51,7 +51,7 @@
     "@types/uuid": "10.0.0",
     "i18next-parser": "9.3.0",
     "jest": "^29.6.4",
-    "ts-jest": "29.2.5",
+    "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
     "typescript": "5.8.3"
   },
