@@ -1,11 +1,16 @@
 package jwt
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -165,6 +170,78 @@ func TestIntegrationVerifyUsingJWKSetURL(t *testing.T) {
 	jwkHTTPScenario(t, "rejects a token signed with a key not from the set", func(t *testing.T, sc scenarioContext) {
 		token := sign(t, jwKeys[2], jwt.Claims{Subject: subject}, nil)
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.Error(t, err)
+	})
+}
+
+// test that caCert and bearer token files have been read and configured and an error is thrown when the file does not exist or is empty
+func TestIntegrationCustomRootCAJWKHTTPSClient(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	urlConfigure := func(t *testing.T, cfg *setting.Cfg) {
+		cfg.JWTAuth.JWKSetURL = "https://example.com/.well-known/jwks.json"
+	}
+
+	t.Run("tls_client_ca being empty returns nil RootCAs", func(t *testing.T) {
+		s, err := initAuthService(t, urlConfigure)
+		require.NoError(t, err)
+
+		ks := s.keySet.(*keySetHTTP)
+		assert.Nil(t, ks.client.Transport.(*http.Transport).TLSClientConfig.RootCAs)
+	})
+
+	t.Run("tls_client_ca path is read and added to client.RootCAs", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			file, err := os.CreateTemp(os.TempDir(), "ca-*.crt")
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				if err := os.Remove(file.Name()); err != nil {
+					panic(err)
+				}
+			})
+			_ = createTestRootCAFile(t, file.Name())
+
+			cfg.JWTAuth.TlsClientCa = file.Name()
+		}
+
+		s, err := initAuthService(t, urlConfigure, configure)
+		require.NoError(t, err)
+
+		ks := s.keySet.(*keySetHTTP)
+		rootCAs := ks.client.Transport.(*http.Transport).TLSClientConfig.RootCAs
+		assert.NotNil(t, rootCAs)
+	})
+
+	t.Run("error when tls_client_ca file does not exist", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			// Create and remove tmp file to guarantee the path does not exist
+			file, err := os.CreateTemp(os.TempDir(), "ca-*.crt")
+			require.NoError(t, err)
+			require.NoError(t, os.Remove(file.Name()))
+
+			cfg.JWTAuth.TlsClientCa = file.Name()
+		}
+
+		_, err := initAuthService(t, urlConfigure, configure)
+		require.Error(t, err)
+	})
+
+	t.Run("error when tls_client_ca path does not contain PEM certs", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			file, err := os.CreateTemp(os.TempDir(), "ca-*.crt")
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				if err := os.Remove(file.Name()); err != nil {
+					panic(err)
+				}
+			})
+
+			cfg.JWTAuth.TlsClientCa = file.Name()
+		}
+
+		_, err := initAuthService(t, urlConfigure, configure)
 		require.Error(t, err)
 	})
 }
@@ -464,4 +541,44 @@ func configurePKIXPublicKeyFile(t *testing.T, cfg *setting.Cfg) {
 	require.NoError(t, file.Close())
 
 	cfg.JWTAuth.KeyFile = file.Name()
+}
+
+// Copied from pkg/setting/setting_secure_socks_proxy_test.go and modified key size for faster generation
+func createTestRootCAFile(t *testing.T, path string) string {
+	t.Helper()
+
+	ca := &x509.Certificate{
+		SerialNumber: big.NewInt(2019),
+		Subject: pkix.Name{
+			Organization: []string{"Grafana Labs"},
+			CommonName:   "Grafana",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		IsCA:                  true,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		BasicConstraintsValid: true,
+	}
+	caPrivKey, err := rsa.GenerateKey(rand.Reader, 1024) //nolint:gosec
+	require.NoError(t, err)
+	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
+	require.NoError(t, err)
+
+	// nolint:gosec
+	caCertFile, err := os.Create(path)
+	require.NoError(t, err)
+
+	block := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: caBytes,
+	}
+	err = pem.Encode(caCertFile, block)
+	require.NoError(t, err)
+
+	buf := new(bytes.Buffer)
+	err = pem.Encode(buf, block)
+	require.NoError(t, err)
+
+	return buf.String()
 }

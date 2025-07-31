@@ -70,6 +70,8 @@ func (s *AuthService) checkKeySetConfiguration() error {
 	return nil
 }
 
+// Initialize a provider for JWKSet, either file, or https
+// nolint:gocyclo
 func (s *AuthService) initKeySet() error {
 	if err := s.checkKeySetConfiguration(); err != nil {
 		return err
@@ -155,6 +157,23 @@ func (s *AuthService) initKeySet() error {
 		if urlParsed.Scheme != "https" && s.Cfg.Env != setting.Dev {
 			return ErrJWTSetURLMustHaveHTTPSScheme
 		}
+		var caCertPool *x509.CertPool
+		if s.Cfg.JWTAuth.TlsClientCa != "" {
+			s.log.Debug("reading ca from TlsClientCa path")
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `tlsClientCa` comes from grafana configuration file
+			caCert, err := os.ReadFile(s.Cfg.JWTAuth.TlsClientCa)
+			if err != nil {
+				s.log.Error("Failed to read TlsClientCa", "path", s.Cfg.JWTAuth.TlsClientCa, "error", err)
+				return fmt.Errorf("failed to read TlsClientCa: %w", err)
+			}
+
+			caCertPool = x509.NewCertPool()
+			if !caCertPool.AppendCertsFromPEM(caCert) {
+				s.log.Error("failed to decode provided PEM certs", "path", s.Cfg.JWTAuth.TlsClientCa)
+				return fmt.Errorf("failed to decode provided PEM certs file from TlsClientCa")
+			}
+		}
 		s.keySet = &keySetHTTP{
 			url: urlStr,
 			log: s.log,
@@ -163,6 +182,7 @@ func (s *AuthService) initKeySet() error {
 					TLSClientConfig: &tls.Config{
 						Renegotiation:      tls.RenegotiateFreelyAsClient,
 						InsecureSkipVerify: s.Cfg.JWTAuth.TlsSkipVerify,
+						RootCAs:            caCertPool,
 					},
 					Proxy: http.ProxyFromEnvironment,
 					DialContext: (&net.Dialer{
