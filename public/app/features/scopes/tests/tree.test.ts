@@ -93,7 +93,7 @@ describe('Tree', () => {
     await selectResultApplicationsMimir();
     await selectResultApplicationsCloud();
     await applyScopes();
-    expectScopesSelectorValue('Grafana, Mimir, Cloud');
+    expectScopesSelectorValue('Grafana + Mimir + Cloud');
   });
 
   it('Can select a node from an inner level', async () => {
@@ -215,7 +215,7 @@ describe('Tree', () => {
 
     await selectResultApplicationsGrafana();
     await applyScopes();
-    expectScopesSelectorValue('Mimir, Grafana');
+    expectScopesSelectorValue('Mimir + Grafana');
   });
 
   it('Deselects a persisted scope', async () => {
@@ -227,7 +227,7 @@ describe('Tree', () => {
 
     await selectResultApplicationsGrafana();
     await applyScopes();
-    expectScopesSelectorValue('Mimir, Grafana');
+    expectScopesSelectorValue('Mimir + Grafana');
 
     await openSelector();
     await selectPersistedApplicationsMimir();
