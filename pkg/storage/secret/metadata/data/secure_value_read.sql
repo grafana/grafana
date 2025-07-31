@@ -14,7 +14,11 @@ SELECT
   {{ .Ident "ref" }},
   {{ .Ident "external_id" }},
   {{ .Ident "active" }},
-  {{ .Ident "version" }}
+  {{ .Ident "version" }},
+  {{ .Ident "owner_reference_api_group" }},
+  {{ .Ident "owner_reference_api_version" }},
+  {{ .Ident "owner_reference_kind" }},
+  {{ .Ident "owner_reference_name" }}
 FROM
   {{ .Ident "secret_secure_value" }}
 WHERE 
