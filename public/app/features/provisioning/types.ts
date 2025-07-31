@@ -90,7 +90,7 @@ export type HistoryListResponse = {
   items?: HistoryItem[];
 };
 
-export interface ProvisioningErrorInfo {
+export interface StatusInfo {
   title?: string;
   message?: string | string[];
 }

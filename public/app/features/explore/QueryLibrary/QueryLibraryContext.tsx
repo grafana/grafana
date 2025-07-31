@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext } from 'react';
 
+import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import { OnSelectQueryType } from './types';
@@ -17,7 +18,7 @@ export type QueryLibraryContextType = {
    * @param datasourceFilters Data source names that will be used for initial filter in the library.
    * @param queryActionButton Action button will be shown in the library next to the query and can implement context
    *   specific actions with the library, like running the query or updating some query in the current app.
-   * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
+   * @param options.context Used for QueryEditor. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
    */
   openDrawer: (
@@ -32,7 +33,7 @@ export type QueryLibraryContextType = {
    * Opens a modal for adding a query to the library.
    * @param query Query to be saved
    * @param options.onSave Callback that will be called after the query is saved.
-   * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
+   * @param options.context Used for rendering QueryEditor. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
    * @param options.title Default title for the modal, can be overridden by the query title.
    */
@@ -46,8 +47,9 @@ export type QueryLibraryContextType = {
    * Returns a predefined small button that can be used to save a query to the library.
    * @param query
    */
-  renderSaveQueryButton: (query: DataQuery) => ReactNode;
+  renderSaveQueryButton: (query: DataQuery, app?: CoreApp) => ReactNode;
   queryLibraryEnabled: boolean;
+  context: string;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -63,6 +65,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   },
 
   queryLibraryEnabled: false,
+  context: 'unknown',
 });
 
 export function useQueryLibraryContext() {
