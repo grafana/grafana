@@ -392,7 +392,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             </Button>
             {queryLibraryEnabled && (
               <Button
-                icon="ai"
+                icon="plus"
                 onClick={() =>
                   openQueryLibraryDrawer(getDatasourceNames(datasource, queries), onSelectQueryFromLibrary, {
                     context: CoreApp.PanelEditor,
