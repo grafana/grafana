@@ -22,23 +22,26 @@ type FolderPermissionsService struct {
 	*resourcepermissions.Service
 }
 
-var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
-var FolderEditActions = append(FolderViewActions, []string{
-	dashboards.ActionFoldersWrite,
-	dashboards.ActionFoldersDelete,
-	dashboards.ActionDashboardsCreate,
-	accesscontrol.ActionAlertingRuleCreate,
-	accesscontrol.ActionAlertingRuleUpdate,
-	accesscontrol.ActionAlertingRuleDelete,
-	accesscontrol.ActionAlertingSilencesCreate,
-	accesscontrol.ActionAlertingSilencesWrite,
-	libraryelements.ActionLibraryPanelsCreate,
-	libraryelements.ActionLibraryPanelsWrite,
-	libraryelements.ActionLibraryPanelsDelete,
-}...)
+var (
+	FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
+	FolderEditActions = append(FolderViewActions, []string{
+		dashboards.ActionFoldersWrite,
+		dashboards.ActionFoldersDelete,
+		dashboards.ActionDashboardsCreate,
+		accesscontrol.ActionAlertingRuleCreate,
+		accesscontrol.ActionAlertingRuleUpdate,
+		accesscontrol.ActionAlertingRuleDelete,
+		accesscontrol.ActionAlertingSilencesCreate,
+		accesscontrol.ActionAlertingSilencesWrite,
+		libraryelements.ActionLibraryPanelsCreate,
+		libraryelements.ActionLibraryPanelsWrite,
+		libraryelements.ActionLibraryPanelsDelete,
+	}...)
+)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
-func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+func registerFolderRoles(settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+	cfg := settingsProvider.Get()
 	if !cfg.RBAC.PermissionsWildcardSeed("folder") {
 		return nil
 	}
@@ -83,11 +86,11 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 }
 
 func ProvideFolderPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
+	settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*FolderPermissionsService, error) {
-	if err := registerFolderRoles(cfg, features, service); err != nil {
+	if err := registerFolderRoles(settingsProvider, features, service); err != nil {
 		return nil, err
 	}
 
@@ -104,7 +107,6 @@ func ProvideFolderPermissions(
 				OrgID:        orgID,
 				SignedInUser: ident,
 			})
-
 			if err != nil {
 				return err
 			}
@@ -130,7 +132,7 @@ func ProvideFolderPermissions(
 		WriterRoleName: "Permission writer",
 		RoleGroup:      "Folders",
 	}
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(settingsProvider, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}

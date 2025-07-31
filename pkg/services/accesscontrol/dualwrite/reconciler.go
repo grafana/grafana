@@ -20,8 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator")
-var reconcilerLogger = log.New("zanzana.reconciler")
+var (
+	tracer           = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator")
+	reconcilerLogger = log.New("zanzana.reconciler")
+)
 
 // ZanzanaReconciler is a component to reconcile RBAC permissions to zanzana.
 // We should rewrite the migration after we have "migrated" all possible actions
@@ -212,7 +214,6 @@ func getOrgByName(ctx context.Context, store db.DB, name string) (*org.Org, erro
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

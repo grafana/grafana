@@ -18,12 +18,12 @@ import (
 )
 
 func TestConvertDataFramesToResults(t *testing.T) {
-	cfg := setting.ProvideService(setting.NewCfg())
+	settingsProvider := setting.ProvideService(setting.NewCfg())
 	s := &Service{
-		cfg:      cfg,
-		features: featuremgmt.WithFeatures(),
-		tracer:   tracing.InitializeTracerForTest(),
-		metrics:  metrics.NewSSEMetrics(nil),
+		settingsProvider: settingsProvider,
+		features:         featuremgmt.WithFeatures(),
+		tracer:           tracing.InitializeTracerForTest(),
+		metrics:          metrics.NewSSEMetrics(nil),
 	}
 	converter := &ResultConverter{Features: s.features, Tracer: s.tracer}
 

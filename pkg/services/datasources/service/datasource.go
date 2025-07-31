@@ -42,7 +42,7 @@ type Service struct {
 	SQLStore                  Store
 	SecretsStore              kvstore.SecretsKVStore
 	SecretsService            secrets.Service
-	cfg                       *setting.Cfg
+	settingsProvider          setting.SettingsProvider
 	features                  featuremgmt.FeatureToggles
 	permissionsService        accesscontrol.DatasourcePermissionsService
 	ac                        accesscontrol.AccessControl
@@ -66,7 +66,7 @@ type cachedRoundTripper struct {
 }
 
 func ProvideService(
-	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
+	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	basePluginContextProvider plugincontext.BasePluginContextProvider,
@@ -80,7 +80,7 @@ func ProvideService(
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
 		},
-		cfg:                       cfg,
+		settingsProvider:          settingsProvider,
 		features:                  features,
 		permissionsService:        datasourcePermissionsService,
 		ac:                        ac,
@@ -94,7 +94,7 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
 	ac.RegisterScopeAttributeResolver(NewIDScopeResolver(store))
 
-	defaultLimits, err := readQuotaConfig(cfg)
+	defaultLimits, err := readQuotaConfig(settingsProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return err
 		}
 
-		if s.cfg.RBAC.PermissionsOnCreation("datasource") {
+		if s.settingsProvider.Get().RBAC.PermissionsOnCreation("datasource") {
 			// This belongs in Data source permissions, and we probably want
 			// to do this with a hook in the store and rollback on fail.
 			// We can't use events, because there's no way to communicate
@@ -590,7 +590,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 }
 
 func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider,
-	customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
+	customMiddlewares ...sdkhttpclient.Middleware,
+) (http.RoundTripper, error) {
 	s.ptc.Lock()
 	defer s.ptc.Unlock()
 
@@ -746,6 +747,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		}
 	}
 
+	cfg := s.settingsProvider.Get()
 	if ds.IsSecureSocksDSProxyEnabled() {
 		proxyOpts := &sdkproxy.Options{
 			Enabled: true,
@@ -754,15 +756,15 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCertFilePath,
-				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKeyFilePath,
-				RootCAs:       s.cfg.SecureSocksDSProxy.RootCAFilePaths,
-				ClientCertVal: s.cfg.SecureSocksDSProxy.ClientCert,
-				ClientKeyVal:  s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCAsVals:   s.cfg.SecureSocksDSProxy.RootCAs,
-				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
-				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
-				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,
+				ClientCert:    cfg.SecureSocksDSProxy.ClientCertFilePath,
+				ClientKey:     cfg.SecureSocksDSProxy.ClientKeyFilePath,
+				RootCAs:       cfg.SecureSocksDSProxy.RootCAFilePaths,
+				ClientCertVal: cfg.SecureSocksDSProxy.ClientCert,
+				ClientKeyVal:  cfg.SecureSocksDSProxy.ClientKey,
+				RootCAsVals:   cfg.SecureSocksDSProxy.RootCAs,
+				ProxyAddress:  cfg.SecureSocksDSProxy.ProxyAddress,
+				ServerName:    cfg.SecureSocksDSProxy.ServerName,
+				AllowInsecure: cfg.SecureSocksDSProxy.AllowInsecure,
 			},
 		}
 
@@ -779,7 +781,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		opts.ProxyOptions = proxyOpts
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && s.cfg.SigV4AuthEnabled {
+	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && cfg.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
 			Service:       awsServiceNamespace(ds.Type, ds.JsonData),
 			Region:        ds.JsonData.Get("sigV4Region").MustString(),
@@ -899,7 +901,8 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 		// skip a header with name that corresponds to auth proxy header's name
 		// to make sure that data source proxy isn't used to circumvent auth proxy.
 		// For more context take a look at CVE-2022-35957
-		if s.cfg.AuthProxy.Enabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(s.cfg.AuthProxy.HeaderName) {
+		cfg := s.settingsProvider.Get()
+		if cfg.AuthProxy.Enabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(cfg.AuthProxy.HeaderName) {
 			continue
 		}
 
@@ -957,9 +960,14 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	return nil
 }
 
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+func readQuotaConfig(settingsProvider setting.SettingsProvider) (*quota.Map, error) {
 	limits := &quota.Map{}
 
+	if settingsProvider == nil {
+		return limits, nil
+	}
+
+	cfg := settingsProvider.Get()
 	if cfg == nil {
 		return limits, nil
 	}

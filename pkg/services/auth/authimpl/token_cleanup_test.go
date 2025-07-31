@@ -21,8 +21,9 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 		ctx := createTestContext(t)
 		maxInactiveLifetime, _ := time.ParseDuration("168h")
 		maxLifetime, _ := time.ParseDuration("720h")
-		ctx.tokenService.cfg.LoginMaxInactiveLifetime = maxInactiveLifetime
-		ctx.tokenService.cfg.LoginMaxLifetime = maxLifetime
+		cfg := ctx.tokenService.settingsProvider.Get()
+		cfg.LoginMaxInactiveLifetime = maxInactiveLifetime
+		cfg.LoginMaxLifetime = maxLifetime
 		return ctx
 	}
 

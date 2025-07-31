@@ -56,7 +56,7 @@ func setupTestServer(
 	// build api, this will mount the routes at the same time if the feature is enabled
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", publicdashboardModels.FeaturePublicDashboardsEmailSharing).Return(false)
-	ProvideApi(service, rr, ac, features, &Middleware{}, cfg, license)
+	ProvideApi(service, rr, ac, features, &Middleware{}, setting.ProvideService(cfg), license)
 
 	// connect routes to mux
 	rr.Register(m.Router)

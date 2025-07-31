@@ -34,7 +34,7 @@ func TestPublicDashboardsAPI(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	adminUsername := fmt.Sprintf("testadmin-%d", time.Now().UnixNano())
-	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          adminUsername,
 		Password:       "admin",
@@ -336,7 +336,7 @@ func TestPublicDashboardsAPI(t *testing.T) {
 
 		t.Run("user with access to just one dashboard should see only that dashboard", func(t *testing.T) {
 			limitedUserUsername := fmt.Sprintf("limiteduser-%d", time.Now().UnixNano())
-			limitedUserID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			limitedUserID := tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 				DefaultOrgRole: string(org.RoleNone),
 				Login:          limitedUserUsername,
 				Password:       "password",

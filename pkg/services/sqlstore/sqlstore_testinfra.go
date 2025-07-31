@@ -157,7 +157,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 		panic("unreachable")
 	}
 
-	cfg, err := newTestCfg(options.Cfg, features, testDB)
+	settingsProvider, err := newTestCfg(options.Cfg, features, testDB)
 	if err != nil {
 		tb.Fatalf("failed to create a test cfg: %v", err)
 		panic("unreachable")
@@ -174,11 +174,12 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	engine.DatabaseTZ = time.UTC
 	engine.TZLocation = time.UTC
 
+	cfg := settingsProvider.Get()
 	cfgDBSec := cfg.Raw.Section("database")
 	shouldEnsure := fmt.Sprintf("%t", !options.NoDefaultUserOrg && !options.Truncate)
 	cfgDBSec.Key("ensure_default_org_and_user").SetValue(shouldEnsure)
 
-	store, err := newStore(cfg, engine, features, options.MigratorFactory(features),
+	store, err := newStore(settingsProvider, engine, features, options.MigratorFactory(features),
 		options.Bus, options.Tracer)
 	if err != nil {
 		tb.Fatalf("failed to create a new SQLStore: %v", err)
@@ -222,7 +223,7 @@ func newTestCfg(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	testDB *testDB,
-) (*setting.Cfg, error) {
+) (setting.SettingsProvider, error) {
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
@@ -243,7 +244,7 @@ func newTestCfg(
 		return nil, fmt.Errorf("failed to set database.path: %w", err)
 	}
 
-	return cfg, nil
+	return setting.ProvideService(cfg), nil
 }
 
 type testDB struct {

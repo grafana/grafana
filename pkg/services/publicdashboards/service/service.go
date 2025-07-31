@@ -37,7 +37,7 @@ import (
 // automatically
 type PublicDashboardServiceImpl struct {
 	log                log.Logger
-	cfg                *setting.Cfg
+	settingsProvider   setting.SettingsProvider
 	features           featuremgmt.FeatureToggles
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
@@ -49,8 +49,10 @@ type PublicDashboardServiceImpl struct {
 	license            licensing.Licensing
 }
 
-var LogPrefix = "publicdashboards.service"
-var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/publicdashboards/service")
+var (
+	LogPrefix = "publicdashboards.service"
+	tracer    = otel.Tracer("github.com/grafana/grafana/pkg/services/publicdashboards/service")
+)
 
 // Gives us compile time error if the service does not adhere to the contract of
 // the interface
@@ -59,7 +61,7 @@ var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 // ProvideService Factory for method used by wire to inject dependencies.
 // builds the service, and api, and configures routes
 func ProvideService(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	store publicdashboards.Store,
 	qds query.Service,
@@ -71,7 +73,7 @@ func ProvideService(
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
-		cfg:                cfg,
+		settingsProvider:   settingsProvider,
 		features:           features,
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
@@ -261,7 +263,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		return nil, ErrInternalServerError.Errorf("Create: failed to create a database entry for public dashboard with Uid %s. 0 rows changed, no error reported.", publicDashboard.Uid)
 	}
 
-	//Get latest public dashboard to return
+	// Get latest public dashboard to return
 	newPubdash, err := pd.store.Find(ctx, publicDashboard.Uid)
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("Create: failed to find the public dashboard: %w", err)
@@ -533,7 +535,7 @@ func GenerateAccessToken() (string, error) {
 func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.newCreatePublicDashboard")
 	defer span.End()
-	//Check if uid already exists, if none then auto generate
+	// Check if uid already exists, if none then auto generate
 	var err error
 	uid := dto.PublicDashboard.Uid
 
@@ -549,7 +551,7 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 		}
 	}
 
-	//Check if accessToken already exists, if none then auto generate
+	// Check if accessToken already exists, if none then auto generate
 	accessToken := dto.PublicDashboard.AccessToken
 	if accessToken != "" {
 		existingPubdash, _ := pd.store.FindByAccessToken(ctx, accessToken)

@@ -35,18 +35,19 @@ const (
 )
 
 type Service struct {
-	cfg       *setting.Cfg
-	store     store
-	dashSvc   dashboards.DashboardService
-	k8sclient client.K8sHandler
-	features  featuremgmt.FeatureToggles
-	log       log.Logger
+	settingsProvider setting.SettingsProvider
+	store            store
+	dashSvc          dashboards.DashboardService
+	k8sclient        client.K8sHandler
+	features         featuremgmt.FeatureToggles
+	log              log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, features featuremgmt.FeatureToggles,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient, dual dualwrite.Service, sorter sort.Service) dashver.Service {
+func ProvideService(settingsProvider setting.SettingsProvider, db db.DB, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, features featuremgmt.FeatureToggles,
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient, dual dualwrite.Service, sorter sort.Service,
+) dashver.Service {
 	return &Service{
-		cfg: cfg,
+		settingsProvider: settingsProvider,
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
@@ -54,7 +55,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 		features: features,
 		k8sclient: client.NewK8sHandler(
 			dual,
-			request.GetNamespaceMapper(cfg),
+			request.GetNamespaceMapper(settingsProvider),
 			dashv0.DashboardResourceInfo.GroupVersionResource(),
 			restConfigProvider.GetRestConfig,
 			dashboardStore,
@@ -106,7 +107,8 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 }
 
 func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
-	versionsToKeep := s.cfg.DashboardVersionsToKeep
+	cfg := s.settingsProvider.Get()
+	versionsToKeep := cfg.DashboardVersionsToKeep
 	if versionsToKeep < 1 {
 		versionsToKeep = 1
 	}

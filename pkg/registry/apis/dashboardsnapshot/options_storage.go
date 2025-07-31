@@ -24,7 +24,8 @@ var (
 
 type sharingOptionsGetter = func(namespace string) (*dashboardsnapshot.SharingOptions, error)
 
-func newSharingOptionsGetter(cfg *setting.Cfg) sharingOptionsGetter {
+func newSharingOptionsGetter(settingsProvider setting.SettingsProvider) sharingOptionsGetter {
+	cfg := settingsProvider.Get()
 	s := &dashboardsnapshot.SharingOptions{
 		ObjectMeta: metav1.ObjectMeta{
 			CreationTimestamp: metav1.Now(),

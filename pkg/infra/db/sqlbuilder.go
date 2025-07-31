@@ -8,15 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewSqlBuilder(cfg *setting.Cfg, features featuremgmt.FeatureToggles, dialect migrator.Dialect, recursiveQueriesAreSupported bool) SQLBuilder {
-	return SQLBuilder{cfg: cfg, features: features, dialect: dialect, recursiveQueriesAreSupported: recursiveQueriesAreSupported}
+func NewSqlBuilder(features featuremgmt.FeatureToggles, dialect migrator.Dialect, recursiveQueriesAreSupported bool) SQLBuilder {
+	return SQLBuilder{features: features, dialect: dialect, recursiveQueriesAreSupported: recursiveQueriesAreSupported}
 }
 
 type SQLBuilder struct {
-	cfg                          *setting.Cfg
 	features                     featuremgmt.FeatureToggles
 	sql                          bytes.Buffer
 	params                       []any

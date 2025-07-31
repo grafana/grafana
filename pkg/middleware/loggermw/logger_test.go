@@ -116,7 +116,7 @@ func Test_prepareLog(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RouterLogging = tc.opts.RouterLogging
-			l := Provide(cfg, featuremgmt.WithFeatures(tc.opts.Features...))
+			l := Provide(setting.ProvideService(cfg), featuremgmt.WithFeatures(tc.opts.Features...))
 
 			service, ok := l.(*loggerImpl)
 			require.Truef(t, ok, "expected service to be of type (*loggerImpl), got (%T)", l)
@@ -171,6 +171,7 @@ type mockResponseWriter struct {
 func (m mockResponseWriter) Status() int {
 	return m.status
 }
+
 func (m mockResponseWriter) Size() int {
 	return m.size
 }

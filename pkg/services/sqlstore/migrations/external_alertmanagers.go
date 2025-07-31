@@ -77,7 +77,7 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 				ds.BasicAuth = true
 				ds.BasicAuthUser = u.User.Username()
 				if password, ok := u.User.Password(); ok {
-					ds.SecureJsonData = getEncryptedJsonData(mg.Cfg, map[string]string{
+					ds.SecureJsonData = getEncryptedJsonData(mg.SettingsProvider, map[string]string{
 						"basicAuthPassword": password,
 					}, log.New("securejsondata"))
 				}
@@ -131,7 +131,8 @@ func generateNewDatasourceUid(sess *xorm.Session, orgId int64) (string, error) {
 type secureJsonData map[string][]byte
 
 // getEncryptedJsonData returns map where all keys are encrypted.
-func getEncryptedJsonData(cfg *setting.Cfg, sjd map[string]string, log log.Logger) secureJsonData {
+func getEncryptedJsonData(settingsProvider setting.SettingsProvider, sjd map[string]string, log log.Logger) secureJsonData {
+	cfg := settingsProvider.Get()
 	encrypted := make(secureJsonData)
 	for key, data := range sjd {
 		encryptedData, err := util.Encrypt([]byte(data), cfg.SecretKey)

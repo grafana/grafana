@@ -39,9 +39,7 @@ const (
 	allowedOrganizationsKey = "allowed_organizations"
 )
 
-var (
-	errMissingGroupMembership = &SocialError{"user not a member of one of the required groups"}
-)
+var errMissingGroupMembership = &SocialError{"user not a member of one of the required groups"}
 
 type httpGetResponse struct {
 	Body    []byte
@@ -212,7 +210,6 @@ func createOAuthInfoFromKeyValues(settingsKV map[string]any, parsingWarns *[]err
 		Result:           &oauthInfo,
 		WeaklyTypedInput: true,
 	})
-
 	if err != nil {
 		return nil, err
 	}

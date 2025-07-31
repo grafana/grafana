@@ -99,7 +99,6 @@ func (c *ContextCommandLine) Config() (*setting.Cfg, error) {
 
 func (c *ContextCommandLine) GcomToken() string {
 	cfg, err := c.Config()
-
 	if err != nil {
 		logger.Debug("Could not parse config file", err)
 		return ""

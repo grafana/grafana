@@ -188,7 +188,7 @@ func TestHTTPServer_RotateUserAuthTokenRedirect(t *testing.T) {
 						cfg := setting.NewCfg()
 						cfg.LoginCookieName = "grafana_session"
 						cfg.LoginMaxLifetime = 10 * time.Hour
-						hs.Cfg = cfg
+						hs.Cfg = setting.ProvideService(cfg)
 						hs.log = log.New()
 						hs.AuthTokenService = &authtest.FakeUserAuthTokenService{
 							RotateTokenProvider: func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
@@ -287,9 +287,8 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 				cfg := setting.NewCfg()
 				cfg.LoginCookieName = "grafana_session"
 				cfg.LoginMaxLifetime = 10 * time.Hour
-				hs.Cfg = cfg
+				hs.Cfg = setting.ProvideService(cfg)
 				hs.log = log.New()
-				hs.Cfg.LoginCookieName = "grafana_session"
 				hs.AuthTokenService = &authtest.FakeUserAuthTokenService{
 					RotateTokenProvider: func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
 						return tt.rotatedToken, tt.rotatedErr
@@ -332,7 +331,8 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 }
 
 func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd auth.RevokeAuthTokenCmd,
-	userId int64, fn scenarioFunc, userService user.Service) {
+	userId int64, fn scenarioFunc, userService user.Service,
+) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
@@ -409,7 +409,8 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 }
 
 func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd auth.RevokeAuthTokenCmd, userId int64,
-	token *auth.UserToken, fn scenarioFunc, userService user.Service) {
+	token *auth.UserToken, fn scenarioFunc, userService user.Service,
+) {
 	t.Run(desc, func(t *testing.T) {
 		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 

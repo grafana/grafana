@@ -14,7 +14,8 @@ type Service struct {
 	cfg *setting.Cfg
 }
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService(settingsProvider setting.SettingsProvider) *Service {
+	cfg := settingsProvider.Get()
 	return &Service{
 		cfg: cfg,
 	}

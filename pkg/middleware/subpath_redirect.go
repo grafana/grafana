@@ -10,8 +10,9 @@ import (
 )
 
 // SubPathRedirect Redirects URLs that are missing the configured subpath to an URL that contains the subpath.
-func SubPathRedirect(cfg *setting.Cfg) web.Middleware {
+func SubPathRedirect(settingsProvider setting.SettingsProvider) web.Middleware {
 	return func(next http.Handler) http.Handler {
+		cfg := settingsProvider.Get()
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			// Direct to url with subpath if the request is missing the subpath and is not an API request.
 			if !strings.HasPrefix(req.RequestURI, cfg.AppSubURL) && !strings.HasPrefix(req.RequestURI, "/api") {

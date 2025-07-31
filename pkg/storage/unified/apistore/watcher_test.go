@@ -51,8 +51,10 @@ const (
 	StorageTypeUnified StorageType = "unified"
 )
 
-var scheme = runtime.NewScheme()
-var codecs = serializer.NewCodecFactory(scheme)
+var (
+	scheme = runtime.NewScheme()
+	codecs = serializer.NewCodecFactory(scheme)
+)
 
 func init() {
 	metav1.AddToGroupVersion(scheme, metav1.SchemeGroupVersion)
@@ -81,6 +83,7 @@ func withDefaults(options *setupOptions, t testing.TB) {
 	options.groupResource = schema.GroupResource{Resource: "pods"}
 	options.storageType = StorageTypeFile
 }
+
 func withStorageType(storageType StorageType) setupOption {
 	return func(options *setupOptions, t testing.TB) {
 		options.storageType = storageType
@@ -139,7 +142,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		dbstore := infraDB.InitTestDB(t)
 		cfg := setting.NewCfg()
 
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
+		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.ProvideService(cfg), nil)
 		require.NoError(t, err)
 		require.NotNil(t, eDB)
 

@@ -123,10 +123,10 @@ func RemoveForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
-func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *contextmodel.ReqContext) {
+func CanAdminPlugins(settingsProvider setting.SettingsProvider, accessControl ac.AccessControl) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		hasAccess := ac.HasAccess(accessControl, c)
-		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) && !hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
+		if !pluginaccesscontrol.ReqCanAdminPlugins(settingsProvider)(c) && !hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 			accessForbidden(c)
 			return
 		}
@@ -234,8 +234,9 @@ func Auth(options *AuthOptions) web.Handler {
 
 // SnapshotPublicModeOrCreate creates a middleware that allows access
 // if snapshot public mode is enabled or if user has creation permission.
-func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
+func SnapshotPublicModeOrCreate(settingsProvider setting.SettingsProvider, ac2 ac.AccessControl) web.Handler {
 	return func(c *contextmodel.ReqContext) {
+		cfg := settingsProvider.Get()
 		if cfg.SnapshotPublicMode {
 			return
 		}
@@ -251,8 +252,9 @@ func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Hand
 
 // SnapshotPublicModeOrDelete creates a middleware that allows access
 // if snapshot public mode is enabled or if user has delete permission.
-func SnapshotPublicModeOrDelete(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
+func SnapshotPublicModeOrDelete(settingsProvider setting.SettingsProvider, ac2 ac.AccessControl) web.Handler {
 	return func(c *contextmodel.ReqContext) {
+		cfg := settingsProvider.Get()
 		if cfg.SnapshotPublicMode {
 			return
 		}

@@ -21,7 +21,8 @@ import (
 var _ authn.ContextAwareClient = new(Session)
 
 func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
-	authInfoService login.AuthInfoService, tracer trace.Tracer) *Session {
+	authInfoService login.AuthInfoService, tracer trace.Tracer,
+) *Session {
 	return &Session{
 		cfg:             cfg,
 		log:             log.New(authn.ClientSession),

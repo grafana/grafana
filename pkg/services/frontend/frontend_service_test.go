@@ -19,7 +19,7 @@ import (
 )
 
 // Helper function to create a test service with minimal configuration
-func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
+func createTestService(t *testing.T, settingsProvider setting.SettingsProvider) *frontendService {
 	t.Helper()
 
 	features := featuremgmt.WithFeatures()
@@ -28,7 +28,7 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 	var promRegister prometheus.Registerer = prometheus.NewRegistry()
 	promGatherer := promRegister.(*prometheus.Registry)
 
-	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license)
+	service, err := ProvideFrontendService(settingsProvider, features, promGatherer, promRegister, license)
 	require.NoError(t, err)
 
 	return service
@@ -41,7 +41,7 @@ func TestFrontendService_ServerCreation(t *testing.T) {
 			HTTPPort:       "1234",
 			StaticRootPath: publicDir,
 		}
-		service := createTestService(t, cfg)
+		service := createTestService(t, setting.ProvideService(cfg))
 
 		ctx := context.Background()
 		server := service.newFrontendServer(ctx)
@@ -59,7 +59,7 @@ func TestFrontendService_Routes(t *testing.T) {
 		HTTPPort:       "3000",
 		StaticRootPath: publicDir,
 	}
-	service := createTestService(t, cfg)
+	service := createTestService(t, setting.ProvideService(cfg))
 
 	// Create a test mux to verify route registration
 	mux := web.New()
@@ -126,7 +126,7 @@ func TestFrontendService_Middleware(t *testing.T) {
 	}
 
 	t.Run("should register route prom metrics", func(t *testing.T) {
-		service := createTestService(t, cfg)
+		service := createTestService(t, setting.ProvideService(cfg))
 		mux := web.New()
 		service.addMiddlewares(mux)
 		service.registerRoutes(mux)
@@ -148,7 +148,7 @@ func TestFrontendService_Middleware(t *testing.T) {
 	})
 
 	t.Run("should add context middleware", func(t *testing.T) {
-		service := createTestService(t, cfg)
+		service := createTestService(t, setting.ProvideService(cfg))
 		mux := web.New()
 		service.addMiddlewares(mux)
 

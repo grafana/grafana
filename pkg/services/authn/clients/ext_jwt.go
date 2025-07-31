@@ -42,7 +42,8 @@ var (
 	)
 )
 
-func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
+func ProvideExtendedJWT(settingsProvider setting.SettingsProvider, tracer trace.Tracer) *ExtendedJWT {
+	cfg := settingsProvider.Get()
 	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	})
@@ -58,7 +59,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 	return &ExtendedJWT{
 		cfg:                 cfg,
 		log:                 log.New(authn.ClientExtendedJWT),
-		namespaceMapper:     request.GetNamespaceMapper(cfg),
+		namespaceMapper:     request.GetNamespaceMapper(settingsProvider),
 		accessTokenVerifier: accessTokenVerifier,
 		idTokenVerifier:     idTokenVerifier,
 		tracer:              tracer,

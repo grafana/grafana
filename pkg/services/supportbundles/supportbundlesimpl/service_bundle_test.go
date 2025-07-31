@@ -40,7 +40,7 @@ func TestService_bundleCreate(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	collector := basicCollector(cfg)
-	disabledCollector := settingsCollector(setting.ProvideProvider(cfg))
+	disabledCollector := settingsCollector(setting.ProvideProvider(setting.ProvideService(cfg)))
 	disabledCollector.EnabledFn = func() bool { return false }
 
 	s.bundleRegistry.RegisterSupportItemCollector(collector)

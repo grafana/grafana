@@ -267,7 +267,7 @@ func TestPluginProxy(t *testing.T) {
 			SecureJSONData: map[string][]byte{},
 		}
 		cfg := &setting.Cfg{}
-		proxy, err := NewPluginProxy(ps, routes, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+		proxy, err := NewPluginProxy(ps, routes, ctx, "", setting.ProvideService(cfg), secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
@@ -423,12 +423,11 @@ func TestPluginProxyRoutes(t *testing.T) {
 				SecureJSONData: map[string][]byte{},
 			}
 			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(tc.withFeatures...))
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, setting.ProvideService(cfg), secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(tc.withFeatures...))
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
 			for !requestHandled && !ctx.Resp.Written() {
-
 			}
 
 			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
@@ -555,12 +554,11 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 				SecureJSONData: map[string][]byte{},
 			}
 			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, setting.ProvideService(cfg), secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
 			for !requestHandled && !ctx.Resp.Written() {
-
 			}
 
 			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
@@ -584,7 +582,7 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsServic
 			ReqRole: org.RoleEditor,
 		}
 	}
-	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", setting.ProvideService(cfg), secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)

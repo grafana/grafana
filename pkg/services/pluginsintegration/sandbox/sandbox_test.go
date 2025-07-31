@@ -12,7 +12,7 @@ func TestService_Plugins(t *testing.T) {
 	cfg := &setting.Cfg{
 		EnableFrontendSandboxForPlugins: []string{"plugin1", "plugin2"},
 	}
-	service := ProvideService(cfg)
+	service := ProvideService(setting.ProvideService(cfg))
 
 	plugins, err := service.Plugins(context.Background())
 	assert.NoError(t, err)

@@ -16,7 +16,8 @@ import (
 type NamespaceMapper = claims.NamespaceFormatter
 
 // GetNamespaceMapper returns a function that will convert orgIds into a consistent namespace
-func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
+func GetNamespaceMapper(settingsProvider setting.SettingsProvider) NamespaceMapper {
+	cfg := settingsProvider.Get()
 	if cfg != nil && cfg.StackID != "" {
 		stackId, err := strconv.ParseInt(cfg.StackID, 10, 64)
 		if err != nil {

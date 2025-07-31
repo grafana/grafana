@@ -26,12 +26,12 @@ type Api struct {
 	PublicDashboardService publicdashboards.Service
 	Middleware             publicdashboards.Middleware
 
-	accessControl accesscontrol.AccessControl
-	cfg           *setting.Cfg
-	features      featuremgmt.FeatureToggles
-	license       licensing.Licensing
-	log           log.Logger
-	routeRegister routing.RouteRegister
+	accessControl    accesscontrol.AccessControl
+	settingsProvider setting.SettingsProvider
+	features         featuremgmt.FeatureToggles
+	license          licensing.Licensing
+	log              log.Logger
+	routeRegister    routing.RouteRegister
 }
 
 func ProvideApi(
@@ -40,14 +40,15 @@ func ProvideApi(
 	ac accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
 	md publicdashboards.Middleware,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	license licensing.Licensing,
 ) *Api {
+	cfg := settingsProvider.Get()
 	api := &Api{
 		PublicDashboardService: pd,
 		Middleware:             md,
 		accessControl:          ac,
-		cfg:                    cfg,
+		settingsProvider:       settingsProvider,
 		features:               features,
 		license:                license,
 		log:                    log.New("publicdashboards.api"),
@@ -128,7 +129,6 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 		Limit: perPage,
 		User:  c.SignedInUser,
 	})
-
 	if err != nil {
 		return response.Err(err)
 	}
@@ -190,13 +190,13 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
 	}
 
-	//validate uid
+	// validate uid
 	uid := pdDTO.Uid
 	if uid != "" && !validation.IsValidShortUID(uid) {
 		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", uid))
 	}
 
-	//validate accessToken
+	// validate accessToken
 	accessToken := pdDTO.AccessToken
 	if accessToken != "" && !validation.IsValidAccessToken(accessToken) {
 		return response.Err(ErrInvalidAccessToken.Errorf("CreatePublicDashboard: invalid Access Token %s", accessToken))
@@ -210,7 +210,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		PublicDashboard: pdDTO,
 	}
 
-	//Create the public dashboard
+	// Create the public dashboard
 	pd, err := api.PublicDashboardService.Create(c.Req.Context(), c.SignedInUser, dto)
 	if err != nil {
 		return response.Err(err)

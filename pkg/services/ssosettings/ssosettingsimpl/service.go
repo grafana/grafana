@@ -48,7 +48,8 @@ type Service struct {
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer,
-	settingsProvider setting.Provider, licensing licensing.Licensing) *Service {
+	settingsProvider setting.Provider, licensing licensing.Licensing,
+) *Service {
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		strategies.NewLDAPStrategy(cfg),
@@ -138,7 +139,6 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	result := make([]*models.SSOSettings, 0, len(s.providersList))
 	storedSettings, err := s.store.List(ctx)
-
 	if err != nil {
 		return nil, err
 	}

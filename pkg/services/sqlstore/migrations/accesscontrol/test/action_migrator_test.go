@@ -210,7 +210,7 @@ func TestActionMigration(t *testing.T) {
 			}
 
 			// Run RBAC action name migration
-			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+			acmigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("acmigration.test")}))
 			acmig.AddActionNameMigrator(acmigrator)
 
 			errRunningMig := acmigrator.Start(false, 0)

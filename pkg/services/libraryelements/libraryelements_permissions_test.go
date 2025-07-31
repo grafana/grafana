@@ -32,26 +32,26 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	quotaService := quotaimpl.ProvideService(env.SQLStore, env.Cfg)
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(env.SQLStore, env.SettingsProvider)
+	orgService, err := orgimpl.ProvideService(env.SQLStore, env.SettingsProvider, quotaService)
 	require.NoError(t, err)
 
 	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 	require.NoError(t, err)
 
-	createUserInOrg(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUserInOrg(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 		OrgID:          sharedOrg.ID,
 	})
-	createUserInOrg(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUserInOrg(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 		OrgID:          sharedOrg.ID,
 	})
-	createUserInOrg(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUserInOrg(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin2",
@@ -138,20 +138,20 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	quotaService := quotaimpl.ProvideService(env.SQLStore, env.Cfg)
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(env.SQLStore, env.SettingsProvider)
+	orgService, err := orgimpl.ProvideService(env.SQLStore, env.SettingsProvider, quotaService)
 	require.NoError(t, err)
 
 	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 	require.NoError(t, err)
 
-	userID := createUserInOrg(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	userID := createUserInOrg(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "granular-viewer",
 		Login:          "granular-viewer",
 		OrgID:          sharedOrg.ID,
 	})
-	createUserInOrg(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUserInOrg(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin2",
@@ -351,17 +351,18 @@ func makeHTTPRequest(t *testing.T, method, url string, body interface{}, expecte
 	return respBody
 }
 
-func createUserInOrg(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+func createUserInOrg(t *testing.T, db db.DB, settingsProvider setting.SettingsProvider, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
+	cfg := settingsProvider.Get()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, settingsProvider)
+	orgService, err := orgimpl.ProvideService(db, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

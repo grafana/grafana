@@ -26,11 +26,12 @@ const (
 	pluginSettingsCachePrefix = "plugin-setting-"
 )
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
+func ProvideService(settingsProvider setting.SettingsProvider, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService,
-	pluginSettingsService pluginsettings.Service, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *Provider {
+	pluginSettingsService pluginsettings.Service, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider,
+) *Provider {
 	return &Provider{
-		BaseProvider:          newBaseProvider(cfg, pluginRequestConfigProvider),
+		BaseProvider:          newBaseProvider(settingsProvider, pluginRequestConfigProvider),
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceCache:       dataSourceCache,

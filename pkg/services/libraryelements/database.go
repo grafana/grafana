@@ -142,7 +142,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// folderUID *string will be changed to string
-	var folderUID = ""
+	folderUID := ""
 	if cmd.FolderUID != nil {
 		folderUID = *cmd.FolderUID
 	}
@@ -203,12 +203,12 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 				Id:        element.CreatedBy,
 				Name:      signedInUser.GetLogin(),
-				AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
+				AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, signedInUser.GetEmail()),
 			},
 			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 				Id:        element.UpdatedBy,
 				Name:      signedInUser.GetLogin(),
-				AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
+				AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, signedInUser.GetEmail()),
 			},
 		},
 	}
@@ -242,7 +242,6 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			DashboardIds: dashboardIDs,
 			SignedInUser: serviceIdent,
 		})
-
 		if err != nil {
 			return err
 		}
@@ -288,7 +287,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 }
 
 // getLibraryElements gets a Library Element where param == value
-func (l *LibraryElementService) getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser identity.Requester, params []Pair, features featuremgmt.FeatureToggles, cmd model.GetLibraryElementCommand) ([]model.LibraryElementDTO, error) {
+func (l *LibraryElementService) getLibraryElements(c context.Context, store db.DB, settingsProvider setting.SettingsProvider, signedInUser identity.Requester, params []Pair, features featuremgmt.FeatureToggles, cmd model.GetLibraryElementCommand) ([]model.LibraryElementDTO, error) {
 	if len(params) < 1 {
 		return nil, fmt.Errorf("expected at least one parameter pair")
 	}
@@ -300,7 +299,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 	}
 
 	err = store.WithDbSession(c, func(session *db.Session) error {
-		builder := db.NewSqlBuilder(cfg, features, store.GetDialect(), recursiveQueriesAreSupported)
+		builder := db.NewSqlBuilder(features, store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
@@ -366,12 +365,12 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.CreatedBy,
 					Name:      libraryElement.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, libraryElement.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, libraryElement.CreatedByEmail),
 				},
 				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      libraryElement.UpdatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, libraryElement.UpdatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, libraryElement.UpdatedByEmail),
 				},
 			},
 		}
@@ -382,7 +381,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 
 // getLibraryElementByUid gets a Library Element by uid.
 func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
-	libraryElements, err := l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.GetOrgID()}, {key: "uid", value: cmd.UID}}, l.features, cmd)
+	libraryElements, err := l.getLibraryElements(c, l.SQLStore, l.SettingsProvider, signedInUser, []Pair{{key: "org_id", value: signedInUser.GetOrgID()}, {key: "uid", value: cmd.UID}}, l.features, cmd)
 	if err != nil {
 		return model.LibraryElementDTO{}, err
 	}
@@ -395,7 +394,7 @@ func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signed
 
 // getLibraryElementByName gets a Library Element by name.
 func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser identity.Requester, name string) ([]model.LibraryElementDTO, error) {
-	return l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.GetOrgID()}, {"name", name}}, l.features,
+	return l.getLibraryElements(c, l.SQLStore, l.SettingsProvider, signedInUser, []Pair{{"org_id", signedInUser.GetOrgID()}, {"name", name}}, l.features,
 		model.GetLibraryElementCommand{
 			FolderName: dashboards.RootFolderName,
 			Name:       name,
@@ -432,7 +431,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		return model.LibraryElementSearchResult{}, err
 	}
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
+		builder := db.NewSqlBuilder(l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		if folderFilter.includeGeneralFolder {
 			builder.Write(selectLibraryElementDTOWithMeta)
 			builder.Write(", '' as folder_uid ")
@@ -475,7 +474,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			return err
 		}
 		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
-		var folderUIDS = []string{"general", ""}
+		folderUIDS := []string{"general", ""}
 		folderMap := map[string]string{}
 		for _, f := range fs {
 			folderUIDS = append(folderUIDS, f.UID)
@@ -512,12 +511,12 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, element.CreatedByEmail),
 					},
 					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, element.UpdatedByEmail),
 					},
 				},
 			})
@@ -565,7 +564,8 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 }
 
 func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, elementToPatch *model.LibraryElement,
-	fromFolderID int64, toFolderID int64, user identity.Requester) error {
+	fromFolderID int64, toFolderID int64, user identity.Requester,
+) error {
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
 		toFolderID = fromFolderID
@@ -614,7 +614,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		}
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		var libraryElement = model.LibraryElement{
+		libraryElement := model.LibraryElement{
 			ID:          elementInDB.ID,
 			OrgID:       signedInUser.GetOrgID(),
 			FolderID:    cmd.FolderID, // nolint:staticcheck
@@ -673,12 +673,12 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        elementInDB.CreatedBy,
 					Name:      elementInDB.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, elementInDB.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, elementInDB.CreatedByEmail),
 				},
 				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      signedInUser.GetLogin(),
-					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
+					AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, signedInUser.GetEmail()),
 				},
 			},
 		}
@@ -698,7 +698,7 @@ func (l *LibraryElementService) getConnectionIDs(c context.Context, signedInUser
 
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		var libraryElementConnections []model.LibraryElementConnectionWithMeta
-		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
+		builder := db.NewSqlBuilder(l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write("SELECT lec.id, lec.element_id, lec.connection_id")
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec ")
 		builder.Write(" INNER JOIN " + model.LibraryElementTableName + " AS le ON le.id = element_id")
@@ -764,12 +764,12 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, element.CreatedByEmail),
 					},
 					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.SettingsProvider, element.UpdatedByEmail),
 					},
 				},
 			}

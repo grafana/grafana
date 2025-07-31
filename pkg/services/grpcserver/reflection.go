@@ -12,7 +12,7 @@ import (
 // ReflectionService implements the gRPC Server Reflection Protocol:
 // https://github.com/grpc/grpc/blob/master/doc/server-reflection.md
 type ReflectionService struct {
-	cfg              *setting.Cfg
+	settingsProvider setting.SettingsProvider
 	reflectionServer *reflectionServer
 }
 
@@ -25,11 +25,11 @@ func (s *reflectionServer) AuthFuncOverride(ctx context.Context, _ string) (cont
 	return ctx, nil
 }
 
-func ProvideReflectionService(cfg *setting.Cfg, grpcServerProvider Provider) (*ReflectionService, error) {
+func ProvideReflectionService(settingsProvider setting.SettingsProvider, grpcServerProvider Provider) (*ReflectionService, error) {
 	re := &reflectionServer{reflection.NewServer(reflection.ServerOptions{Services: grpcServerProvider.GetServer()})}
 	grpc_reflection_v1alpha.RegisterServerReflectionServer(grpcServerProvider.GetServer(), re)
 	return &ReflectionService{
-		cfg:              cfg,
+		settingsProvider: settingsProvider,
 		reflectionServer: re,
 	}, nil
 }

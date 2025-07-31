@@ -36,13 +36,13 @@ import (
 )
 
 type Options struct {
-	Cfg      *setting.Cfg
-	Features featuremgmt.FeatureToggles
-	DB       infraDB.DB
-	Tracer   tracing.Tracer
-	Reg      prometheus.Registerer
-	Authzc   types.AccessClient
-	Docs     resource.DocumentBuilderSupplier
+	SettingsProvider setting.SettingsProvider
+	Features         featuremgmt.FeatureToggles
+	DB               infraDB.DB
+	Tracer           tracing.Tracer
+	Reg              prometheus.Registerer
+	Authzc           types.AccessClient
+	Docs             resource.DocumentBuilderSupplier
 }
 
 type clientMetrics struct {
@@ -56,15 +56,16 @@ func ProvideUnifiedStorageClient(opts *Options,
 	indexMetrics *resource.BleveIndexMetrics,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.applyAPIServerConfig(cfg, features, o)
-	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	cfg := opts.SettingsProvider.Get()
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:         options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:            apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
+		DataPath:            apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
 		Address:             apiserverCfg.Key("address").MustString(""),
 		SearchServerAddress: apiserverCfg.Key("search_server_address").MustString(""),
 		BlobStoreURL:        apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:  apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
+	}, opts.SettingsProvider, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
@@ -77,7 +78,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 }
 
 func newClient(opts options.StorageOptions,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	tracer tracing.Tracer,
@@ -89,6 +90,7 @@ func newClient(opts options.StorageOptions,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
+	cfg := settingsProvider.Get()
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {
@@ -137,7 +139,6 @@ func newClient(opts options.StorageOptions,
 
 		if opts.SearchServerAddress != "" {
 			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features)
-
 			if err != nil {
 				return nil, err
 			}
@@ -153,21 +154,21 @@ func newClient(opts options.StorageOptions,
 		return client, nil
 
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
+		searchOptions, err := search.NewSearchOptions(features, settingsProvider, tracer, docs, indexMetrics)
 		if err != nil {
 			return nil, err
 		}
 
 		serverOptions := sql.ServerOptions{
-			DB:             db,
-			Cfg:            cfg,
-			Tracer:         tracer,
-			Reg:            reg,
-			AccessClient:   authzc,
-			SearchOptions:  searchOptions,
-			StorageMetrics: storageMetrics,
-			IndexMetrics:   indexMetrics,
-			Features:       features,
+			DB:               db,
+			SettingsProvider: settingsProvider,
+			Tracer:           tracer,
+			Reg:              reg,
+			AccessClient:     authzc,
+			SearchOptions:    searchOptions,
+			StorageMetrics:   storageMetrics,
+			IndexMetrics:     indexMetrics,
+			Features:         features,
 		}
 
 		if cfg.QOSEnabled {

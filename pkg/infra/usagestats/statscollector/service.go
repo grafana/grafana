@@ -32,7 +32,7 @@ const (
 )
 
 type Service struct {
-	cfg                *setting.Cfg
+	settingsProvider   setting.SettingsProvider
 	sqlstore           db.DB
 	plugins            pluginstore.Store
 	usageStats         usagestats.Service
@@ -55,7 +55,7 @@ func ProvideService(
 	us usagestats.Service,
 	validator validator.Service,
 	statsService stats.Service,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	store db.DB,
 	social social.Service,
 	plugins pluginstore.Store,
@@ -66,7 +66,7 @@ func ProvideService(
 	advisor advisor.AdvisorStats,
 ) *Service {
 	s := &Service{
-		cfg:                cfg,
+		settingsProvider:   settingsProvider,
 		sqlstore:           store,
 		plugins:            plugins,
 		usageStats:         us,
@@ -111,7 +111,8 @@ func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageS
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	sendInterval := time.Second * time.Duration(s.cfg.MetricsTotalStatsIntervalSeconds)
+	cfg := s.settingsProvider.Get()
+	sendInterval := time.Second * time.Duration(cfg.MetricsTotalStatsIntervalSeconds)
 	nextSendInterval := time.Duration(rand.Intn(maxDelay-minDelay)+minDelay) * time.Second
 	s.log.Debug("usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
 	updateStatsTicker := time.NewTicker(nextSendInterval)
@@ -199,7 +200,8 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
-	if s.cfg.IsEnterprise {
+	cfg := s.settingsProvider.Get()
+	if cfg.IsEnterprise {
 		enterpriseEditionCount = 1
 		ossEditionCount = 0
 	}
@@ -213,8 +215,8 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	}
 
 	m["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
-	m["stats.packaging."+s.cfg.Packaging+".count"] = 1
-	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
+	m["stats.packaging."+cfg.Packaging+".count"] = 1
+	m["stats.distributor."+cfg.ReportingDistributor+".count"] = 1
 
 	m["stats.uptime"] = int64(time.Since(s.startTime).Seconds())
 
@@ -310,7 +312,8 @@ func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]any, 
 }
 
 func (s *Service) updateTotalStats(ctx context.Context) bool {
-	if !s.cfg.MetricsEndpointEnabled || s.cfg.MetricsEndpointDisableTotalStats {
+	cfg := s.settingsProvider.Get()
+	if !cfg.MetricsEndpointEnabled || cfg.MetricsEndpointDisableTotalStats {
 		return false
 	}
 

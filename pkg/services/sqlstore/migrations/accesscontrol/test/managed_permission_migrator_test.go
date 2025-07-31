@@ -78,10 +78,10 @@ func inheritanceTestCases() []inheritanceTestCase {
 						{Action: "teams.permissions:read", Scope: team1Scope},
 						{Action: "teams.permissions:write", Scope: team2Scope},
 					},
-					"managed:builtins:admin:permissions": {}, //Role existed with no permission
+					"managed:builtins:admin:permissions": {}, // Role existed with no permission
 				},
 				4: {
-					"managed:builtins:admin:permissions": {}, //Role existed with no permission
+					"managed:builtins:admin:permissions": {}, // Role existed with no permission
 				},
 			},
 			wantRolePerms: map[int64]map[string][]rawPermission{
@@ -131,7 +131,7 @@ func inheritanceTestCases() []inheritanceTestCase {
 					},
 				},
 				4: {
-					"managed:builtins:admin:permissions": {}, //Role existed with no permission
+					"managed:builtins:admin:permissions": {}, // Role existed with no permission
 				},
 			},
 		},
@@ -156,7 +156,7 @@ func TestManagedPermissionsMigration(t *testing.T) {
 			putTestPermissions(t, x, tc.putRolePerms)
 
 			// Run accesscontrol migration (permissions insertion should not have conflicted)
-			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+			acmigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("acmigration.test")}))
 			acmig.AddManagedPermissionsMigration(acmigrator, acmig.ManagedPermissionsMigrationID)
 
 			errRunningMig := acmigrator.Start(false, 0)
@@ -214,7 +214,7 @@ func TestManagedPermissionsMigrationRunTwice(t *testing.T) {
 				}
 
 				// Run accesscontrol migration (permissions insertion should not have conflicted)
-				acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+				acmigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("acmigration.test")}))
 				acmig.AddManagedPermissionsMigration(acmigrator, acmig.ManagedPermissionsMigrationID+fmt.Sprint(i))
 
 				errRunningMig := acmigrator.Start(false, 0)

@@ -86,7 +86,8 @@ func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, 
 	return &auth.ExternalService{
 		ClientID:     extSvc.ID,
 		ClientSecret: extSvc.Secret,
-		PrivateKey:   privateKey}, nil
+		PrivateKey:   privateKey,
+	}, nil
 }
 
 func toAccessControlPermissions(ps []auth.Permission) []accesscontrol.Permission {

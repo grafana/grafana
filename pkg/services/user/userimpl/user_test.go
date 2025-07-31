@@ -31,7 +31,7 @@ func TestUserService(t *testing.T) {
 		tracer:       tracing.InitializeTracerForTest(),
 		db:           db.InitTestDB(t),
 	}
-	userService.cfg = setting.NewCfg()
+	userService.settingsProvider = setting.ProvideService(setting.NewCfg())
 
 	t.Run("create user", func(t *testing.T) {
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
@@ -53,7 +53,7 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("get user by ID", func(t *testing.T) {
-		userService.cfg = setting.NewCfg()
+		userService.settingsProvider = setting.ProvideService(setting.NewCfg())
 		userStore.ExpectedUser = &user.User{ID: 1, Email: "email", Login: "login", Name: "name"}
 		u, err := userService.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 1})
 		require.NoError(t, err)
@@ -184,7 +184,7 @@ func TestService_Update(t *testing.T) {
 		service := setup(func(svc *Service) {
 			stored, err := user.Password("test").Hash("salt")
 			require.NoError(t, err)
-			svc.cfg = setting.NewCfg()
+			svc.settingsProvider = setting.ProvideService(setting.NewCfg())
 			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
 		})
 
@@ -224,8 +224,9 @@ func TestUpdateLastSeenAt(t *testing.T) {
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
 	}
-	userService.cfg = setting.NewCfg()
-	userService.cfg.UserLastSeenUpdateInterval = 5 * time.Minute
+	userService.settingsProvider = setting.ProvideService(setting.NewCfg())
+	cfg := userService.settingsProvider.Get()
+	cfg.UserLastSeenUpdateInterval = 5 * time.Minute
 
 	t.Run("update last seen at", func(t *testing.T) {
 		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-20 * time.Minute)}
@@ -257,8 +258,9 @@ func TestMetrics(t *testing.T) {
 	t.Run("update user with role None", func(t *testing.T) {
 		userStore.ExpectedCountUserAccountsWithEmptyRoles = int64(1)
 
-		userService.cfg = setting.NewCfg()
-		userService.cfg.BasicAuthStrongPasswordPolicy = true
+		userService.settingsProvider = setting.ProvideService(setting.NewCfg())
+		cfg := userService.settingsProvider.Get()
+		cfg.BasicAuthStrongPasswordPolicy = true
 
 		stats := userService.GetUsageStats(context.Background())
 		assert.NotEmpty(t, stats)
@@ -277,10 +279,10 @@ func TestIntegrationCreateUser(t *testing.T) {
 	cfg := setting.NewCfg()
 	ss := db.InitTestDB(t)
 	userStore := &sqlStore{
-		db:      ss,
-		dialect: ss.GetDialect(),
-		logger:  log.NewNopLogger(),
-		cfg:     cfg,
+		db:               ss,
+		dialect:          ss.GetDialect(),
+		logger:           log.NewNopLogger(),
+		settingsProvider: setting.ProvideService(cfg),
 	}
 
 	t.Run("create user should roll back created user if OrgUser cannot be created", func(t *testing.T) {
@@ -289,11 +291,11 @@ func TestIntegrationCreateUser(t *testing.T) {
 			orgService: &orgtest.FakeOrgService{InsertOrgUserFn: func(ctx context.Context, orgUser *org.OrgUser) (int64, error) {
 				return 0, errors.New("some error")
 			}},
-			cacheService: localcache.ProvideService(),
-			teamService:  &teamtest.FakeService{},
-			tracer:       tracing.InitializeTracerForTest(),
-			cfg:          setting.NewCfg(),
-			db:           ss,
+			cacheService:     localcache.ProvideService(),
+			teamService:      &teamtest.FakeService{},
+			tracer:           tracing.InitializeTracerForTest(),
+			settingsProvider: setting.ProvideService(setting.NewCfg()),
+			db:               ss,
 		}
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
 			Email: "email",

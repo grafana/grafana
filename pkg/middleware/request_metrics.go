@@ -17,14 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var (
-	// DefBuckets are histogram buckets for the response time (in seconds)
-	// of a network service, including one that is responding very slowly.
-	defBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
-)
+// DefBuckets are histogram buckets for the response time (in seconds)
+// of a network service, including one that is responding very slowly.
+var defBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
 
 // RequestMetrics is a middleware handler that instruments the request.
-func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promRegister prometheus.Registerer) web.Middleware {
+func RequestMetrics(features featuremgmt.FeatureToggles, settingsProvider setting.SettingsProvider, promRegister prometheus.Registerer) web.Middleware {
+	cfg := settingsProvider.Get()
 	log := log.New("middleware.request-metrics")
 
 	httpRequestsInFlight := prometheus.NewGauge(

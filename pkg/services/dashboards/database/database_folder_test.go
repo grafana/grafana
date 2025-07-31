@@ -26,15 +26,15 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	}
 	t.Run("Testing DB", func(t *testing.T) {
 		var sqlStore db.DB
-		var cfg *setting.Cfg
+		var settingsProvider setting.SettingsProvider
 		var flder, dashInRoot, childDash *dashboards.Dashboard
 		var currentUser *user.SignedInUser
 		var dashboardStore dashboards.Store
 
 		setup := func() {
-			sqlStore, cfg = db.InitTestDBWithCfg(t)
+			sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
 			var err error
-			dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+			dashboardStore, err = ProvideDashboardStore(sqlStore, settingsProvider, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
 			flder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod", "webapp")
@@ -51,8 +51,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			setup()
 
 			t.Run("and user can read folders and dashboards", func(t *testing.T) {
-				currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
-					dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}}}
+				currentUser.Permissions = map[int64]map[string][]string{1: {
+					dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
+					dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
+				}}
 				actest.AddUserPermissionToDB(t, sqlStore, currentUser)
 
 				t.Run("should return all dashboards and folders", func(t *testing.T) {
@@ -129,7 +131,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var currentUser *user.SignedInUser
 
 			setup2 := func() {
-				sqlStore, cfg = db.InitTestDBWithCfg(t)
+				sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
 				var err error
 				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod")
@@ -215,7 +217,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 }
 
 func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, dashboard *simplejson.Json,
-	newFolderId int64, newFolderUID string) *dashboards.Dashboard {
+	newFolderId int64, newFolderUID string,
+) *dashboards.Dashboard {
 	t.Helper()
 
 	cmd := dashboards.SaveDashboardCommand{

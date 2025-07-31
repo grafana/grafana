@@ -14,10 +14,10 @@ type Service struct {
 
 func ProvideService(
 	db db.DB,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 ) tempuser.Service {
 	return &Service{
-		store: &xormStore{db: db, cfg: cfg},
+		store: &xormStore{db: db, settingsProvider: settingsProvider},
 	}
 }
 

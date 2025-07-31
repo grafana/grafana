@@ -46,7 +46,7 @@ func TestAPIEndpoint_GetCurrentOrg(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			})
 
@@ -135,7 +135,7 @@ func TestAPIEndpoint_UpdateOrg(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedSignedInUser: &user.SignedInUser{OrgID: tt.targetOrgID},
@@ -180,7 +180,7 @@ func TestAPIEndpoint_CreateOrgs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 				hs.accesscontrolService = actest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
@@ -227,7 +227,7 @@ func TestAPIEndpoint_DeleteOrgs(t *testing.T) {
 			}
 
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 				hs.orgDeletionService = &orgtest.FakeOrgDeletionService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
@@ -279,7 +279,7 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 			}
 
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
 				hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: tt.permissions}

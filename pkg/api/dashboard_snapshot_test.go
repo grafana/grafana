@@ -34,7 +34,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 		return SetupAPITestServer(t, func(hs *HTTPServer) {
 			cfg := setting.NewCfg()
 			cfg.SnapshotEnabled = true
-			hs.Cfg = cfg
+			hs.Cfg = setting.ProvideService(cfg)
 			hs.dashboardsnapshotsService = setUpSnapshotTest(t, userID, deleteURL)
 
 			hs.DashboardService = svc
@@ -374,13 +374,14 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 func buildHttpServer(d dashboardsnapshots.Service, snapshotEnabled bool) *HTTPServer {
 	hs := &HTTPServer{
 		dashboardsnapshotsService: d,
-		Cfg: &setting.Cfg{
+		Cfg: setting.ProvideService(&setting.Cfg{
 			SnapshotEnabled: snapshotEnabled,
-		},
+		}),
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 	return hs
 }
+
 func setUpSnapshotTest(t *testing.T, userId int64, deleteUrl string) dashboardsnapshots.Service {
 	t.Helper()
 

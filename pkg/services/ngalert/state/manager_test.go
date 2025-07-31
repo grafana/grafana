@@ -55,7 +55,8 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, settingsProvider)
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
@@ -76,7 +77,8 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			ResolvedAt:         util.Pointer(evaluationTime),
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
 			ResultFingerprint:  data.Fingerprint(math.MaxUint64),
-		}, {
+		},
+		{
 			AlertRuleUID:       rule.UID,
 			OrgID:              rule.OrgID,
 			Labels:             data.Labels{"test2": "testValue2"},
@@ -1417,7 +1419,7 @@ func TestProcessEvalResults(t *testing.T) {
 		st := state.NewManager(cfg, statePersister)
 		rule := models.RuleGen.GenerateRef()
 		now := clk.Now()
-		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(now)))
+		results := eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(now)))
 
 		states := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
@@ -1467,7 +1469,8 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, settingsProvider)
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
@@ -1755,7 +1758,8 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, settingsProvider)
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
@@ -1904,7 +1908,8 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, settingsProvider)
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)

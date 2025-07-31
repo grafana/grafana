@@ -20,8 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ builder.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
-var _ builder.APIGroupRouteProvider = (*FeatureFlagAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder       = (*FeatureFlagAPIBuilder)(nil)
+	_ builder.APIGroupRouteProvider = (*FeatureFlagAPIBuilder)(nil)
+)
 
 var gv = v0alpha1.SchemeGroupVersion
 

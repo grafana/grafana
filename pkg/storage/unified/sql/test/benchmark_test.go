@@ -22,7 +22,7 @@ import (
 
 func newTestBackend(b testing.TB) resource.StorageBackend {
 	dbstore := db.InitTestDB(b)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.ProvideService(setting.NewCfg()), nil)
 	require.NoError(b, err)
 	require.NotNil(b, eDB)
 
@@ -77,7 +77,7 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 
 	// Create a new resource backend
 	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.ProvideService(setting.NewCfg()), nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
 

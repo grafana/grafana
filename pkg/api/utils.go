@@ -15,7 +15,8 @@ import (
 )
 
 func (hs *HTTPServer) GetRedirectURL(c *contextmodel.ReqContext) string {
-	redirectURL := hs.Cfg.AppSubURL + "/"
+	cfg := hs.Cfg.Get()
+	redirectURL := cfg.AppSubURL + "/"
 	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			redirectURL = redirectTo

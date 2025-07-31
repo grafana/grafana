@@ -247,7 +247,6 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 					},
 					Body: []byte("msg 1\r\n"),
 				})
-
 				if err != nil {
 					return err
 				}
@@ -480,7 +479,8 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 		})
 	}
 	tsCtx.grafanaListeningAddr = grafanaListeningAddr
-	testEnv.Cfg.LoginCookieName = loginCookieName
+	cfg := testEnv.SettingsProvider.Get()
+	cfg.LoginCookieName = loginCookieName
 	tsCtx.testEnv = testEnv
 	ctx := context.Background()
 
@@ -590,6 +590,7 @@ func createExpressionQuery(t *testing.T, tsCtx *testScenarioContext) dtos.Metric
 }
 
 func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricRequest, callback func(req *backend.QueryDataRequest)) {
+	cfg := tsCtx.testEnv.SettingsProvider.Get()
 	t.Run("When calling /api/ds/query should set expected headers on outgoing QueryData and HTTP request", func(t *testing.T) {
 		var received *backend.QueryDataRequest
 		tsCtx.backendTestPlugin.QueryDataHandler = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -606,13 +607,13 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 			}
 			defer func() {
 				if err := resp.Body.Close(); err != nil {
-					tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
+					cfg.Logger.Error("Failed to close body", "error", err)
 				}
 			}()
 
 			_, err = io.Copy(io.Discard, resp.Body)
 			if err != nil {
-				tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
+				cfg.Logger.Error("Failed to discard body", "error", err)
 			}
 
 			return &backend.QueryDataResponse{}, nil
@@ -638,13 +639,14 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 		require.NoError(t, err)
 
 		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
-		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		callback(received)
 	})
 }
 
 func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func(req *backend.CheckHealthRequest)) {
+	cfg := tsCtx.testEnv.SettingsProvider.Get()
 	t.Run("When calling /api/datasources/uid/:uid/health should set expected headers on outgoing CheckHealth and HTTP request", func(t *testing.T) {
 		var received *backend.CheckHealthRequest
 		tsCtx.backendTestPlugin.CheckHealthHandler = backend.CheckHealthHandlerFunc(func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -661,13 +663,13 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func
 			}
 			defer func() {
 				if err := resp.Body.Close(); err != nil {
-					tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
+					cfg.Logger.Error("Failed to close body", "error", err)
 				}
 			}()
 
 			_, err = io.Copy(io.Discard, resp.Body)
 			if err != nil {
-				tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
+				cfg.Logger.Error("Failed to discard body", "error", err)
 			}
 
 			return &backend.CheckHealthResult{
@@ -696,13 +698,14 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func
 		require.NoError(t, err)
 
 		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
-		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		callback(received)
 	})
 }
 
 func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback func(req *backend.CallResourceRequest, resp *http.Response)) {
+	cfg := tsCtx.testEnv.SettingsProvider.Get()
 	t.Run("When calling /api/datasources/uid/:uid/resources should set expected headers on outgoing CallResource and HTTP request", func(t *testing.T) {
 		var received *backend.CallResourceRequest
 		tsCtx.backendTestPlugin.CallResourceHandler = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -725,13 +728,13 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 			}
 			defer func() {
 				if err := resp.Body.Close(); err != nil {
-					tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
+					cfg.Logger.Error("Failed to close body", "error", err)
 				}
 			}()
 
 			_, err = io.Copy(io.Discard, resp.Body)
 			if err != nil {
-				tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
+				cfg.Logger.Error("Failed to discard body", "error", err)
 			}
 
 			return tsCtx.modifyCallResourceResponse(sender)
@@ -771,7 +774,7 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 		require.Empty(t, tsCtx.outgoingRequest.Header.Get("X-Some-Conn-Header"))
 		require.Empty(t, tsCtx.outgoingRequest.Header.Get("Proxy-Connection"))
 		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
-		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		callback(received, resp)
 	})

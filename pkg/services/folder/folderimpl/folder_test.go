@@ -58,9 +58,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var orgID = int64(1)
-var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
-var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+var (
+	orgID     = int64(1)
+	usr       = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
+	noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+)
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {
@@ -86,7 +88,8 @@ func TestIntegrationFolderService(t *testing.T) {
 	}
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
-		db, cfg := sqlstore.InitTestDB(t)
+		db, settingsProvider := sqlstore.InitTestDB(t)
+		cfg := settingsProvider.Get()
 		nestedFolderStore := ProvideStore(db)
 
 		folderStore := foldertest.NewFakeFolderStore(t)
@@ -362,13 +365,14 @@ func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := sqlstore.InitTestDB(t)
+	db, settingsProvider := sqlstore.InitTestDB(t)
+	cfg := settingsProvider.Get()
 	cfg.UnifiedAlerting.BaseInterval = time.Second
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOn, tagimpl.ProvideService(db))
+	dashStore, err := database.ProvideDashboardStore(db, settingsProvider, featuresFlagOn, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
 	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -427,7 +431,7 @@ func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 		t.Run("With nested folder feature flag on", func(t *testing.T) {
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, actest.FakeService{}, serviceWithFlagOn, nil,
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(settingsProvider, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, actest.FakeService{}, serviceWithFlagOn, nil,
 				client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 				serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 				kvstore.NewFakeKVStore(),
@@ -435,11 +439,11 @@ func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 			require.NoError(t, err)
 			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac, b)
+			alertStore, err := ngstore.ProvideDBStore(settingsProvider, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac, b)
 			require.NoError(t, err)
 
-			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac, dashSrv, nil, nil)
-			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOn)
+			elementService := libraryelements.ProvideService(settingsProvider, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac, dashSrv, nil, nil)
+			lps, err := librarypanels.ProvideService(settingsProvider, db, routeRegister, elementService, serviceWithFlagOn)
 			require.NoError(t, err)
 
 			ancestors := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOn", createCmd, true)
@@ -487,7 +491,7 @@ func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 		})
 		t.Run("With nested folder feature flag off", func(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
-			dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
+			dashStore, err := database.ProvideDashboardStore(db, settingsProvider, featuresFlagOff, tagimpl.ProvideService(db))
 			require.NoError(t, err)
 			nestedFolderStore := ProvideStore(db)
 
@@ -507,18 +511,18 @@ func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(settingsProvider, dashStore, folderStore, featuresFlagOff,
 				folderPermissions, ac, actest.FakeService{}, serviceWithFlagOff, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 				serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 				kvstore.NewFakeKVStore(),
 			)
 			require.NoError(t, err)
 			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
+			alertStore, err := ngstore.ProvideDBStore(settingsProvider, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
 			require.NoError(t, err)
 
-			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac, dashSrv, nil, nil)
-			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOff)
+			elementService := libraryelements.ProvideService(settingsProvider, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac, dashSrv, nil, nil)
+			lps, err := librarypanels.ProvideService(settingsProvider, db, routeRegister, elementService, serviceWithFlagOff)
 			require.NoError(t, err)
 
 			ancestors := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOff", createCmd, true)
@@ -639,14 +643,14 @@ func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
-				dashStore, err := database.ProvideDashboardStore(db, cfg, tc.featuresFlag, tagimpl.ProvideService(db))
+				dashStore, err := database.ProvideDashboardStore(db, settingsProvider, tc.featuresFlag, tagimpl.ProvideService(db))
 				require.NoError(t, err)
 				nestedFolderStore := ProvideStore(db)
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 				publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, actest.FakeService{}, tc.service,
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(settingsProvider, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, actest.FakeService{}, tc.service,
 					nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil,
 					dualwrite.ProvideTestService(), sort.ProvideService(),
 					serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
@@ -655,11 +659,11 @@ func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 				require.NoError(t, err)
 				dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
-				elementService := libraryelements.ProvideService(cfg, db, routeRegister, tc.service, tc.featuresFlag, ac, dashSrv, nil, nil)
-				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
+				elementService := libraryelements.ProvideService(settingsProvider, db, routeRegister, tc.service, tc.featuresFlag, ac, dashSrv, nil, nil)
+				lps, err := librarypanels.ProvideService(settingsProvider, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
-				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac, b)
+				alertStore, err := ngstore.ProvideDBStore(settingsProvider, tc.featuresFlag, db, tc.service, dashSrv, ac, b)
 				require.NoError(t, err)
 
 				ancestors := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, tc.depth, tc.prefix, createCmd, true)
@@ -764,12 +768,11 @@ func TestIntegrationFolderServiceDualWrite(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	db, _ := sqlstore.InitTestDB(t)
-	cfg := setting.NewCfg()
+	db, settingsProvider := sqlstore.InitTestDB(t)
 	features := featuremgmt.WithFeatures()
 	nestedFolderStore := ProvideStore(db)
 
-	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
+	dashStore, err := database.ProvideDashboardStore(db, settingsProvider, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 
 	dashboardFolderStore := ProvideDashboardFolderStore(db)
@@ -1065,7 +1068,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		t.Run("move without the right permissions should fail", func(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-			//dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
+			// dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
 			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
@@ -1263,7 +1266,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			}
 
 			nestedFolderStore := folder.NewFakeStore()
-			//nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			// nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			nestedFolderStore.ExpectedParentFolders = parents
 
 			db, _ := sqlstore.InitTestDB(t)
@@ -1719,7 +1722,7 @@ func TestIntegrationFolderServiceGetFolder(t *testing.T) {
 		cfg := setting.NewCfg()
 
 		featuresFlagOff := featuremgmt.WithFeatures()
-		dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
+		dashStore, err := database.ProvideDashboardStore(db, setting.ProvideService(cfg), featuresFlagOff, tagimpl.ProvideService(db))
 		require.NoError(t, err)
 		nestedFolderStore := ProvideStore(db)
 		tracer := noop.NewTracerProvider().Tracer("TestFolderServiceGetFolder")
@@ -2029,7 +2032,8 @@ func TestIntegrationGetChildrenFilterByPermission(t *testing.T) {
 			expectedFolders: []string{
 				"Shared with me",
 				"no edit permission",
-				"with edit permission"},
+				"with edit permission",
+			},
 		},
 		{
 			name: "should return subfolders with view permission",
@@ -2040,7 +2044,8 @@ func TestIntegrationGetChildrenFilterByPermission(t *testing.T) {
 			},
 			expectedFolders: []string{
 				"subfolder under no edit permission",
-				"subfolder under no edit permission with edit permission"},
+				"subfolder under no edit permission with edit permission",
+			},
 		},
 		{
 			name: "should return shared with me folders with view permission",
@@ -2051,7 +2056,8 @@ func TestIntegrationGetChildrenFilterByPermission(t *testing.T) {
 			},
 			expectedFolders: []string{
 				"subfolder under no view permission with view permission",
-				"subfolder under no view permission with view permission and with edit permission"},
+				"subfolder under no view permission with view permission and with edit permission",
+			},
 		},
 		{
 			name: "should return root folders with edit permission",
@@ -2062,7 +2068,8 @@ func TestIntegrationGetChildrenFilterByPermission(t *testing.T) {
 			},
 			expectedFolders: []string{
 				"Shared with me",
-				"with edit permission"},
+				"with edit permission",
+			},
 		},
 		{
 			name: "should fail returning subfolders with edit permission when parent folder has no edit permission",

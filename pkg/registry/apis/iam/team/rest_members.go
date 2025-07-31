@@ -103,7 +103,7 @@ func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
 				Name: m.UserUID,
 			},
 			DisplayName: m.Name,
-			AvatarURL:   dtos.GetGravatarUrlWithDefault(cfg, m.Email, m.Name),
+			AvatarURL:   dtos.GetGravatarUrlWithDefault(setting.ProvideService(cfg), m.Email, m.Name),
 			InternalID:  m.UserID,
 		},
 		External:   m.External,

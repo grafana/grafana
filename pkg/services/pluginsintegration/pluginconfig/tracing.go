@@ -10,8 +10,8 @@ import (
 
 // newTracingCfg creates a plugins tracing configuration based on the provided Grafana tracing config.
 // If OpenTelemetry (OTLP) is disabled, a zero-value OpenTelemetryCfg is returned.
-func newTracingCfg(grafanaCfg *setting.Cfg) (pCfg.Tracing, error) {
-	tracingCfg, err := tracing.ParseTracingConfig(grafanaCfg)
+func newTracingCfg(settingsProvider setting.SettingsProvider) (pCfg.Tracing, error) {
+	tracingCfg, err := tracing.ParseTracingConfig(settingsProvider)
 	if err != nil {
 		return pCfg.Tracing{}, fmt.Errorf("parse settings: %w", err)
 	}

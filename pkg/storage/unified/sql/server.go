@@ -28,25 +28,26 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
-	DB             infraDB.DB
-	Cfg            *setting.Cfg
-	Tracer         trace.Tracer
-	Reg            prometheus.Registerer
-	AccessClient   types.AccessClient
-	SearchOptions  resource.SearchOptions
-	StorageMetrics *resource.StorageMetrics
-	IndexMetrics   *resource.BleveIndexMetrics
-	Features       featuremgmt.FeatureToggles
-	QOSQueue       QOSEnqueueDequeuer
-	Ring           *ring.Ring
-	RingLifecycler *ring.BasicLifecycler
+	DB               infraDB.DB
+	SettingsProvider setting.SettingsProvider
+	Tracer           trace.Tracer
+	Reg              prometheus.Registerer
+	AccessClient     types.AccessClient
+	SearchOptions    resource.SearchOptions
+	StorageMetrics   *resource.StorageMetrics
+	IndexMetrics     *resource.BleveIndexMetrics
+	Features         featuremgmt.FeatureToggles
+	QOSQueue         QOSEnqueueDequeuer
+	Ring             *ring.Ring
+	RingLifecycler   *ring.BasicLifecycler
 }
 
 // Creates a new ResourceServer
 func NewResourceServer(
 	opts ServerOptions,
 ) (resource.ResourceServer, error) {
-	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	cfg := opts.SettingsProvider.Get()
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	serverOptions := resource.ResourceServerOptions{
 		Tracer: opts.Tracer,
 		Blob: resource.BlobConfig{
@@ -59,8 +60,8 @@ func NewResourceServer(
 	}
 	// Support local file blob
 	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
-		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
+		dir := strings.Replace(serverOptions.Blob.URL, "./data", cfg.DataPath, 1)
+		err := os.MkdirAll(dir, 0o700)
 		if err != nil {
 			return nil, err
 		}
@@ -69,17 +70,17 @@ func NewResourceServer(
 
 	// This is mostly for testing, being able to influence when we paginate
 	// based on the page size during tests.
-	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
+	unifiedStorageCfg := cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
 
-	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.SettingsProvider, opts.Tracer)
 	if err != nil {
 		return nil, err
 	}
 
-	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-		opts.Cfg.SectionWithEnvOverrides("resource_api"))
+	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"),
+		cfg.SectionWithEnvOverrides("resource_api"))
 	withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
 
 	store, err := NewBackend(BackendOptions{

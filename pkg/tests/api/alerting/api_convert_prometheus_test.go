@@ -195,7 +195,7 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleViewer),
 			Password:       "password",
 			Login:          "viewer",
@@ -403,7 +403,7 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleViewer),
 			Password:       "password",
 			Login:          "viewer",
@@ -486,7 +486,7 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleViewer),
 			Password:       "password",
 			Login:          "viewer",
@@ -891,7 +891,7 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		adminClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Password:       "password",
 			Login:          "editor",
@@ -899,7 +899,7 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 		editorClient := newAlertingApiClient(grafanaListedAddr, "editor", "password")
 		editorClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleViewer),
 			Password:       "password",
 			Login:          "viewer",
@@ -908,7 +908,7 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 		viewerClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		// Create a user with no access
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleNone),
 			Password:       "password",
 			Login:          "no-role-user",

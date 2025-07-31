@@ -51,7 +51,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			c := Anonymous{
-				cfg:               tt.cfg,
+				settingsProvider:  setting.ProvideService(tt.cfg),
 				log:               log.NewNopLogger(),
 				orgService:        &orgtest.FakeOrgService{ExpectedOrg: tt.org, ExpectedError: tt.err},
 				anonDeviceService: anontest.NewFakeService(),
@@ -129,7 +129,7 @@ func TestAnonymous_ResolveIdentity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			c := Anonymous{
-				cfg:               tt.cfg,
+				settingsProvider:  setting.ProvideService(tt.cfg),
 				log:               log.NewNopLogger(),
 				orgService:        &orgtest.FakeOrgService{ExpectedOrg: tt.org, ExpectedError: tt.orgErr},
 				anonDeviceService: anontest.NewFakeService(),

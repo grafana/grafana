@@ -36,7 +36,7 @@ func TestShortURL(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	username, password := "viewer", "viewer"
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       user.Password(password),
 		Login:          username,
@@ -80,17 +80,18 @@ func TestShortURL(t *testing.T) {
 	require.Equal(t, http.StatusPermanentRedirect, res.StatusCode)
 }
 
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+func createUser(t *testing.T, db db.DB, settingsProvider setting.SettingsProvider, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
+	cfg := settingsProvider.Get()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, settingsProvider)
+	orgService, err := orgimpl.ProvideService(db, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

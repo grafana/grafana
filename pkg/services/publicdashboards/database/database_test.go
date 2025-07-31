@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-
 	"testing"
 	"time"
 
@@ -47,7 +46,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	}
 
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 
 	var aDash *dashboards.Dashboard
 	var bDash *dashboards.Dashboard
@@ -62,10 +61,10 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	var publicdashboardStore *PublicDashboardStoreImpl
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 
 		bDash = insertTestDashboard(t, dashboardStore, "b", orgId, "", false)
 		aDash = insertTestDashboard(t, dashboardStore, "a", orgId, "", false)
@@ -120,17 +119,17 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
+		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 	}
 	t.Run("ExistsEnabledByAccessToken will return true when at least one public dashboard has a matching access token", func(t *testing.T) {
@@ -192,17 +191,17 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
+		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 	}
 
@@ -256,17 +255,17 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
+		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 	}
 
@@ -323,17 +322,17 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
+		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 	}
 
@@ -391,18 +390,18 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 	var savedDashboard2 *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 		savedDashboard2 = insertTestDashboard(t, dashboardStore, "testDashie2", 1, "", true)
 		insertPublicDashboard(t, publicdashboardStore, savedDashboard2.UID, savedDashboard2.OrgID, false, PublicShareType)
@@ -469,7 +468,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
@@ -477,10 +476,10 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 		anotherSavedDashboard = insertTestDashboard(t, dashboardStore, "test another Dashie", 1, "", true)
 	}
@@ -573,17 +572,17 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
+		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 	}
 	t.Run("GetOrgIdByAccessToken will OrgId when enabled", func(t *testing.T) {
@@ -644,7 +643,7 @@ func TestIntegrationDelete(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
@@ -652,10 +651,10 @@ func TestIntegrationDelete(t *testing.T) {
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
+		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 		savedPublicDashboard = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, PublicShareType)
 	}
@@ -687,18 +686,18 @@ func TestIntegrationDeleteByDashboardUIDs(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
-	//var savedPublicDashboard *PublicDashboard
+	// var savedPublicDashboard *PublicDashboard
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
+		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
 		_ = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, PublicShareType)
 	}
@@ -706,7 +705,7 @@ func TestIntegrationDeleteByDashboardUIDs(t *testing.T) {
 	t.Run("returns nil when dashboardUIDs is empty", func(t *testing.T) {
 		setup()
 		var dashboardUIDs []string
-		store := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		store := ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		err := store.DeleteByDashboardUIDs(context.Background(), 1, dashboardUIDs)
 
 		require.NoError(t, err)
@@ -740,7 +739,7 @@ func TestIntegrationGetMetrics(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
@@ -749,11 +748,11 @@ func TestIntegrationGetMetrics(t *testing.T) {
 	var savedDashboard4 *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", false)
 		savedDashboard2 = insertTestDashboard(t, dashboardStore, "testDashie2", 1, "", false)
 		savedDashboard3 = insertTestDashboard(t, dashboardStore, "testDashie3", 2, "", false)
@@ -799,7 +798,8 @@ func TestIntegrationGetMetrics(t *testing.T) {
 
 // helper function to insert a dashboard
 func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgID int64,
-	folderUID string, isFolder bool, tags ...any) *dashboards.Dashboard {
+	folderUID string, isFolder bool, tags ...any,
+) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgID,

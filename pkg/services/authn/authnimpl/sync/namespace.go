@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideNamespaceSync(cfg *setting.Cfg) *NamespaceSync {
+func ProvideNamespaceSync(settingsProvider setting.SettingsProvider) *NamespaceSync {
 	return &NamespaceSync{
-		mapper: request.GetNamespaceMapper(cfg),
+		mapper: request.GetNamespaceMapper(settingsProvider),
 	}
 }
 

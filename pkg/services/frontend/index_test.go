@@ -22,7 +22,7 @@ func setupTestWebAssets(tb testing.TB) string {
 
 	// Create build directory
 	buildDir := filepath.Join(publicDir, "build")
-	err := os.MkdirAll(buildDir, 0750)
+	err := os.MkdirAll(buildDir, 0o750)
 	require.NoError(tb, err)
 
 	// Create test assets manifest
@@ -64,7 +64,7 @@ func setupTestWebAssets(tb testing.TB) string {
 		}
 	}`
 
-	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifest), 0644)
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifest), 0o644)
 	require.NoError(tb, err)
 
 	return publicDir
@@ -78,7 +78,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 			StaticRootPath: publicDir,
 			Env:            setting.Dev, // needs to be dev to bypass the cache
 		}
-		service := createTestService(t, cfg)
+		service := createTestService(t, setting.ProvideService(cfg))
 
 		mux := web.New()
 		service.addMiddlewares(mux)
@@ -105,7 +105,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 			StaticRootPath: "/dev/null", // No build directory or manifest
 			Env:            setting.Dev, // needs to be dev to bypass the cache
 		}
-		service := createTestService(t, cfg)
+		service := createTestService(t, setting.ProvideService(cfg))
 
 		mux := web.New()
 		service.addMiddlewares(mux)

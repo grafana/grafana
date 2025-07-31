@@ -31,18 +31,18 @@ var (
 
 type PlaylistAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg     *setting.Cfg
-	service playlistsvc.Service
+	settingsProvider setting.SettingsProvider
+	service          playlistsvc.Service
 }
 
 func RegisterAppInstaller(
 	p playlistsvc.Service,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 ) (*PlaylistAppInstaller, error) {
 	installer := &PlaylistAppInstaller{
-		cfg:     cfg,
-		service: p,
+		settingsProvider: settingsProvider,
+		service:          p,
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
 		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
@@ -75,7 +75,7 @@ func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 	}
 	legacyStore := &legacyStorage{
 		service:    p.service,
-		namespacer: request.GetNamespaceMapper(p.cfg),
+		namespacer: request.GetNamespaceMapper(p.settingsProvider),
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),

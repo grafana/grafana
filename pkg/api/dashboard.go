@@ -93,6 +93,7 @@ func dashboardGuardianResponse(err error) response.Response {
 //
 //nolint:gocyclo
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboard")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
@@ -115,7 +116,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	)
 
 	// If public dashboards is enabled and we have a public dashboard, update meta values
-	if hs.Cfg.PublicDashboardsEnabled {
+	if cfg.PublicDashboardsEnabled {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
@@ -150,7 +151,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	canSave, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, writeEvaluator)
 	canEdit := canSave
 	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-	if hs.Cfg.ViewersCanEdit {
+	if cfg.ViewersCanEdit {
 		canEdit = true
 	}
 	deleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashScope)
@@ -563,6 +564,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	ctx, span := tracer.Start(c.Req.Context(), "api.GetHomeDashboard")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
@@ -573,7 +575,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	}
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.GetOrgID(), UserID: userID, Teams: c.GetTeams()}
-	homePage := hs.Cfg.HomePage
+	homePage := cfg.HomePage
 
 	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
@@ -595,9 +597,9 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		hs.log.Warn("Failed to get slug from database", "err", err)
 	}
 
-	filePath := hs.Cfg.DefaultHomeDashboardPath
+	filePath := cfg.DefaultHomeDashboardPath
 	if filePath == "" {
-		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
+		filePath = filepath.Join(cfg.StaticRootPath, "dashboards/home.json")
 	}
 
 	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
@@ -629,6 +631,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 }
 
 func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqContext, dash *simplejson.Json) {
+	cfg := hs.Cfg.Get()
 	ctx, span := tracer.Start(c.Req.Context(), "api.addGettingStartedPanelToHomeDashboard")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
@@ -637,7 +640,7 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 	// and if a custom default home dashboard hasn't been configured
 	if !c.HasUserRole(org.RoleAdmin) ||
 		c.HasHelpFlag(user.HelpFlagGettingStartedPanelDismissed) ||
-		hs.Cfg.DefaultHomeDashboardPath != "" {
+		cfg.DefaultHomeDashboardPath != "" {
 		return
 	}
 

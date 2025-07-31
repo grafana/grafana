@@ -24,10 +24,10 @@ type Service struct {
 	tracer tracing.Tracer
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+func ProvideService(db db.DB, settingsProvider setting.SettingsProvider, tracer tracing.Tracer) (team.Service, error) {
 	return &Service{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
-		store:  &xormStore{db: db, cfg: cfg, deletes: []string{}},
+		store:  &xormStore{db: db, settingsProvider: settingsProvider, deletes: []string{}},
 		tracer: tracer,
 	}, nil
 }

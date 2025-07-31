@@ -21,10 +21,10 @@ func TestDeletionService_Delete(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	dashSvc := dashboards.NewFakeDashboardService(t)
 	svc := &DeletionService{
-		store:   store,
-		cfg:     setting.NewCfg(),
-		dashSvc: dashSvc,
-		ac:      ac,
+		store:            store,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashSvc:          dashSvc,
+		ac:               ac,
 	}
 
 	// if a user has access to delete orgs, then the dashboards should be deleted with a service identity

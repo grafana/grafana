@@ -14,8 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
-var mlog = log.New("models")
+var (
+	regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
+	mlog               = log.New("models")
+)
 
 type AnyId struct {
 	Id int64 `json:"id"`
@@ -110,7 +112,8 @@ func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequ
 	}
 }
 
-func GetGravatarUrl(cfg *setting.Cfg, text string) string {
+func GetGravatarUrl(settingsProvider setting.SettingsProvider, text string) string {
+	cfg := settingsProvider.Get()
 	if cfg.DisableGravatar {
 		return cfg.AppSubURL + "/public/img/user_profile.png"
 	}
@@ -135,17 +138,18 @@ func GetGravatarHash(text string) ([]byte, bool) {
 	return hasher.Sum(nil), true
 }
 
-func GetGravatarUrlWithDefault(cfg *setting.Cfg, text string, defaultText string) string {
+func GetGravatarUrlWithDefault(settingsProvider setting.SettingsProvider, text string, defaultText string) string {
 	if text != "" {
-		return GetGravatarUrl(cfg, text)
+		return GetGravatarUrl(settingsProvider, text)
 	}
 
 	text = regNonAlphaNumeric.ReplaceAllString(defaultText, "") + "@localhost"
 
-	return GetGravatarUrl(cfg, text)
+	return GetGravatarUrl(settingsProvider, text)
 }
 
-func IsHiddenUser(userLogin string, signedInUser identity.Requester, cfg *setting.Cfg) bool {
+func IsHiddenUser(userLogin string, signedInUser identity.Requester, settingsProvider setting.SettingsProvider) bool {
+	cfg := settingsProvider.Get()
 	if userLogin == "" || signedInUser.GetIsGrafanaAdmin() || userLogin == signedInUser.GetLogin() {
 		return false
 	}

@@ -32,7 +32,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 
 		if len(event.Logs) > 0 {
 			for _, logEntry := range event.Logs {
-				var ctx = frontendlogging.CtxVector{}
+				ctx := frontendlogging.CtxVector{}
 				ctx = event.AddMetaToContext(ctx)
 				ctx = append(ctx, "kind", "log", "original_timestamp", logEntry.Timestamp)
 
@@ -67,7 +67,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		if len(event.Measurements) > 0 {
 			for _, measurementEntry := range event.Measurements {
 				for measurementName, measurementValue := range measurementEntry.Values {
-					var ctx = frontendlogging.CtxVector{}
+					ctx := frontendlogging.CtxVector{}
 					ctx = event.AddMetaToContext(ctx)
 					ctx = append(ctx, measurementName, measurementValue)
 					ctx = append(ctx, "kind", "measurement", "original_timestamp", measurementEntry.Timestamp)
@@ -77,7 +77,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		}
 		if len(event.Exceptions) > 0 {
 			for _, exception := range event.Exceptions {
-				var ctx = frontendlogging.CtxVector{}
+				ctx := frontendlogging.CtxVector{}
 				ctx = event.AddMetaToContext(ctx)
 				exception := exception
 				transformedException := frontendlogging.TransformException(c.Req.Context(), &exception, store)
@@ -99,7 +99,8 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 // this is to avoid reporting errors in case config was changes but there are browser
 // sessions still open with older config
 func (hs *HTTPServer) frontendLogEndpoints() web.Handler {
-	if !(hs.Cfg.GrafanaJavascriptAgent.Enabled) {
+	cfg := hs.Cfg.Get()
+	if !(cfg.GrafanaJavascriptAgent.Enabled) {
 		return func(ctx *web.Context) {
 			if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == grafanaJavascriptAgentEndpointPath {
 				ctx.Resp.WriteHeader(http.StatusAccepted)
@@ -112,7 +113,7 @@ func (hs *HTTPServer) frontendLogEndpoints() web.Handler {
 	}
 
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)
-	rateLimiter := rate.NewLimiter(rate.Limit(hs.Cfg.GrafanaJavascriptAgent.EndpointRPS), hs.Cfg.GrafanaJavascriptAgent.EndpointBurst)
+	rateLimiter := rate.NewLimiter(rate.Limit(cfg.GrafanaJavascriptAgent.EndpointRPS), cfg.GrafanaJavascriptAgent.EndpointBurst)
 	handler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
 	return func(ctx *web.Context) {

@@ -24,7 +24,7 @@ func ProvideTestEnv(
 	},
 	server *Server,
 	db db.DB,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	ns *notifications.NotificationServiceMock,
 	grpcServer grpcserver.Provider,
 	pluginRegistry registry.Service,
@@ -40,7 +40,7 @@ func ProvideTestEnv(
 		TestingT:            testingT,
 		Server:              server,
 		SQLStore:            db,
-		Cfg:                 cfg,
+		SettingsProvider:    settingsProvider,
 		NotificationService: ns,
 		GRPCServer:          grpcServer,
 		PluginRegistry:      pluginRegistry,
@@ -61,7 +61,7 @@ type TestEnv struct {
 	}
 	Server              *Server
 	SQLStore            db.DB
-	Cfg                 *setting.Cfg
+	SettingsProvider    setting.SettingsProvider
 	NotificationService *notifications.NotificationServiceMock
 	GRPCServer          grpcserver.Provider
 	PluginRegistry      registry.Service

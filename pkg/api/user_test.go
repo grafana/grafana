@@ -61,10 +61,10 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{SettingsProvider: settingsProvider})
 	hs := &HTTPServer{
-		Cfg:           settings,
+		Cfg:           settingsProvider,
 		SQLStore:      sqlStore,
 		AccessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 	}
@@ -86,10 +86,10 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		srv := authinfoimpl.ProvideService(
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(sqlStore, settingsProvider, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			sqlStore, orgSvc, sc.settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 		)
 		require.NoError(t, err)
@@ -161,10 +161,10 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "admin",
 			IsAdmin: true,
 		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.settingsProvider, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			sqlStore, orgSvc, sc.settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 		)
 		require.NoError(t, err)
@@ -188,7 +188,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.settingsProvider, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -201,7 +201,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.settingsProvider, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
@@ -214,7 +214,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.settingsProvider, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -230,7 +230,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.settingsProvider, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
@@ -362,7 +362,8 @@ func Test_GetUserByID(t *testing.T) {
 				},
 				EnabledClients: []string{},
 			}
-			cfg := setting.NewCfg()
+			settingsProvider := setting.ProvideService(setting.NewCfg())
+			cfg := settingsProvider.Get()
 
 			switch tc.authModule {
 			case login.GenericOAuthModule:
@@ -380,7 +381,7 @@ func Test_GetUserByID(t *testing.T) {
 			}
 
 			hs := &HTTPServer{
-				Cfg:             cfg,
+				Cfg:             settingsProvider,
 				authInfoService: authInfoService,
 				SocialService:   socialService,
 				userService:     userService,
@@ -411,11 +412,11 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	settings := setting.NewCfg()
+	settingsProvider := setting.ProvideService(setting.NewCfg())
 	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
-		Cfg:           settings,
+		Cfg:           settingsProvider,
 		SQLStore:      sqlStore,
 		AccessControl: acmock.New(),
 		SocialService: &socialtest.FakeSocialService{ExpectedAuthInfoProvider: &social.OAuthInfo{Enabled: true}},
@@ -445,16 +446,16 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 	}, hs)
 }
 
-func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
+func setupUpdateEmailTests(t *testing.T, settingsProvider setting.SettingsProvider) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
 	t.Helper()
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{SettingsProvider: settingsProvider})
 
-	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
+	tempUserService := tempuserimpl.ProvideService(sqlStore, settingsProvider)
+	orgSvc, err := orgimpl.ProvideService(sqlStore, settingsProvider, quotatest.New(false, nil))
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
-		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		sqlStore, orgSvc, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -471,10 +472,10 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	require.NoError(t, err)
 
 	nsMock := notifications.MockNotificationService()
-	verifier := userimpl.ProvideVerifier(cfg, userSvc, tempUserService, nsMock, &idtest.FakeService{})
+	verifier := userimpl.ProvideVerifier(settingsProvider, userSvc, tempUserService, nsMock, &idtest.FakeService{})
 
 	hs := &HTTPServer{
-		Cfg:                 cfg,
+		Cfg:                 settingsProvider,
 		SQLStore:            sqlStore,
 		userService:         userSvc,
 		tempUserService:     tempUserService,
@@ -527,11 +528,12 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 					},
 				}
 				for _, ttt := range tests {
-					settings := setting.NewCfg()
+					settingsProvider := setting.ProvideService(setting.NewCfg())
+					settings := settingsProvider.Get()
 					settings.Smtp.Enabled = ttt.smtpConfigured
 					settings.VerifyEmailEnabled = ttt.verifyEmailEnabled
 
-					usr, hs, nsMock := setupUpdateEmailTests(t, settings)
+					usr, hs, nsMock := setupUpdateEmailTests(t, settingsProvider)
 
 					updateUserCommand := user.UpdateUserCommand{
 						Email:  usr.Email,
@@ -617,7 +619,8 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		client := &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
-			}}
+			},
+		}
 		return client.Do(r)
 	}
 
@@ -669,37 +672,37 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		require.Equal(t, usr.Name, checkUsr.Name)
 	}
 
-	setupScenario := func(cfg *setting.Cfg) (*webtest.Server, user.Service, tempuser.Service, *notifications.NotificationServiceMock) {
-		settings := setting.NewCfg()
-		settings.Smtp.Enabled = true
-		settings.VerificationEmailMaxLifetime = 1 * time.Hour
-		settings.VerifyEmailEnabled = true
+	setupScenario := func(settingsProvider setting.SettingsProvider) (*webtest.Server, user.Service, tempuser.Service, *notifications.NotificationServiceMock) {
+		cfg := settingsProvider.Get()
+		cfg.Smtp.Enabled = true
+		cfg.VerificationEmailMaxLifetime = 1 * time.Hour
+		cfg.VerifyEmailEnabled = true
 
 		if cfg != nil {
-			settings = cfg
+			cfg = cfg
 		}
 
 		nsMock := notifications.MockNotificationService()
-		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{SettingsProvider: settingsProvider})
 
-		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settingsProvider)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, settingsProvider, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
+			sqlStore, orgSvc, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 		)
 		require.NoError(t, err)
 
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = settings
+			hs.Cfg = settingsProvider
 
 			hs.SQLStore = sqlStore
 			hs.userService = userSvc
 			hs.tempUserService = tempUserSvc
 			hs.NotificationService = nsMock
 			hs.SecretsService = fakes.NewFakeSecretsService()
-			hs.userVerifier = userimpl.ProvideVerifier(settings, userSvc, tempUserSvc, nsMock, &idtest.FakeService{})
+			hs.userVerifier = userimpl.ProvideVerifier(settingsProvider, userSvc, tempUserSvc, nsMock, &idtest.FakeService{})
 			// User is internal
 			hs.authInfoService = &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
 		})
@@ -947,12 +950,13 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 	})
 
 	t.Run("Email verification should expire", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		settingsProvider := setting.ProvideService(setting.NewCfg())
+		cfg := settingsProvider.Get()
 		cfg.Smtp.Enabled = true
 		cfg.VerificationEmailMaxLifetime = 0 // Expire instantly
 		cfg.VerifyEmailEnabled = true
 
-		server, userSvc, tempUserSvc, nsMock := setupScenario(cfg)
+		server, userSvc, tempUserSvc, nsMock := setupScenario(settingsProvider)
 
 		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
 
@@ -1166,11 +1170,11 @@ func TestIntegrationHTTPServer_UpdateSignedInUser(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{SettingsProvider: settingsProvider})
 
 	hs := &HTTPServer{
-		Cfg:           settings,
+		Cfg:           settingsProvider,
 		SQLStore:      sqlStore,
 		AccessControl: acmock.New(),
 		SocialService: &socialtest.FakeSocialService{},

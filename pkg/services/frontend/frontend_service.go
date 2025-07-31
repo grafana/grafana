@@ -26,34 +26,34 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/frontend")
 
 type frontendService struct {
 	*services.BasicService
-	cfg          *setting.Cfg
-	httpServ     *http.Server
-	features     featuremgmt.FeatureToggles
-	log          log.Logger
-	errChan      chan error
-	promGatherer prometheus.Gatherer
-	promRegister prometheus.Registerer
-	tracer       trace.Tracer
-	license      licensing.Licensing
+	settingsProvider setting.SettingsProvider
+	httpServ         *http.Server
+	features         featuremgmt.FeatureToggles
+	log              log.Logger
+	errChan          chan error
+	promGatherer     prometheus.Gatherer
+	promRegister     prometheus.Registerer
+	tracer           trace.Tracer
+	license          licensing.Licensing
 
 	index *IndexProvider
 }
 
-func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
-	index, err := NewIndexProvider(cfg, license)
+func ProvideFrontendService(settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
+	index, err := NewIndexProvider(settingsProvider, license)
 	if err != nil {
 		return nil, err
 	}
 
 	s := &frontendService{
-		cfg:          cfg,
-		features:     features,
-		log:          log.New("frontend-server"),
-		promGatherer: promGatherer,
-		promRegister: promRegister,
-		tracer:       tracer,
-		license:      license,
-		index:        index,
+		settingsProvider: settingsProvider,
+		features:         features,
+		log:              log.New("frontend-server"),
+		promGatherer:     promGatherer,
+		promRegister:     promRegister,
+		tracer:           tracer,
+		license:          license,
+		index:            index,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -88,7 +88,8 @@ func (s *frontendService) stop(failureReason error) error {
 }
 
 func (s *frontendService) newFrontendServer(ctx context.Context) *http.Server {
-	s.log.Info("starting frontend server", "addr", ":"+s.cfg.HTTPPort)
+	cfg := s.settingsProvider.Get()
+	s.log.Info("starting frontend server", "addr", ":"+cfg.HTTPPort)
 
 	// Use the same web.Mux as the main grafana server for consistency + middleware reuse
 	handler := web.New()
@@ -98,7 +99,7 @@ func (s *frontendService) newFrontendServer(ctx context.Context) *http.Server {
 	server := &http.Server{
 		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
 		ReadHeaderTimeout: 5 * time.Second,
-		Addr:              ":" + s.cfg.HTTPPort,
+		Addr:              ":" + cfg.HTTPPort,
 		Handler:           handler,
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
@@ -113,16 +114,16 @@ func (s *frontendService) routeGet(m *web.Mux, pattern string, h ...web.Handler)
 
 // Apply the same middleware patterns as the main HTTP server
 func (s *frontendService) addMiddlewares(m *web.Mux) {
-	loggermiddleware := loggermw.Provide(s.cfg, s.features)
+	loggermiddleware := loggermw.Provide(s.settingsProvider, s.features)
 
 	m.Use(requestmeta.SetupRequestMetadata())
 	m.UseMiddleware(s.contextMiddleware())
 
 	m.Use(middleware.RequestTracing(s.tracer, middleware.TraceAllPaths))
-	m.Use(middleware.RequestMetrics(s.features, s.cfg, s.promRegister))
+	m.Use(middleware.RequestMetrics(s.features, s.settingsProvider, s.promRegister))
 	m.UseMiddleware(loggermiddleware.Middleware())
 
-	m.UseMiddleware(middleware.Recovery(s.cfg, s.license))
+	m.UseMiddleware(middleware.Recovery(s.settingsProvider, s.license))
 }
 
 func (s *frontendService) registerRoutes(m *web.Mux) {

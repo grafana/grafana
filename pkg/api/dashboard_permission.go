@@ -234,6 +234,7 @@ func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Request
 }
 
 func (hs *HTTPServer) filterHiddenACL(user identity.Requester, acl []*dashboards.DashboardACLInfoDTO) []*dashboards.DashboardACL {
+	cfg := hs.Cfg.Get()
 	var hiddenACL []*dashboards.DashboardACL
 
 	if user.GetIsGrafanaAdmin() {
@@ -245,7 +246,7 @@ func (hs *HTTPServer) filterHiddenACL(user identity.Requester, acl []*dashboards
 			continue
 		}
 
-		if _, hidden := hs.Cfg.HiddenUsers[item.UserLogin]; hidden {
+		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
 			hiddenACL = append(hiddenACL, &dashboards.DashboardACL{
 				OrgID:       item.OrgID,
 				DashboardID: item.DashboardID,

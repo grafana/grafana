@@ -117,9 +117,9 @@ func TestInitEngine_ParseTimeInConnectionString(t *testing.T) {
 			ftMgr := featuremgmt.WithFeatures()
 
 			ss := &SQLStore{
-				cfg: &setting.Cfg{
+				settingsProvider: setting.ProvideService(&setting.Cfg{
 					Raw: raw,
-				},
+				}),
 				features: ftMgr,
 				log:      log.New(),
 			}

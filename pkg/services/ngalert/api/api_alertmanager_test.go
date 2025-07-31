@@ -243,7 +243,7 @@ func TestGetAlertmanagerConfiguration_NewSecretField(t *testing.T) {
 
 	// Simulates FE-API interaction, "integrationKey" is not sent in Settings as the caller.
 	// Instead, it leaves it out of "SecureSettings" to indicate the API should keep the existing value.
-	var postWithoutChanges = `{
+	postWithoutChanges := `{
 	"alertmanager_config": {
 		"route": {
 			"receiver": "configWithNewlySecretSetting"
@@ -599,7 +599,7 @@ func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertC
 	}
 
 	mam, err := notifier.NewMultiOrgAlertmanager(
-		cfg,
+		setting.ProvideService(cfg),
 		configStore,
 		orgStore,
 		kvStore,

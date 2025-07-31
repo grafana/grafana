@@ -27,7 +27,7 @@ import (
 )
 
 func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
-	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(setting.NewCfg())
 	userSvc := &usertest.FakeUserService{}
 	testUser := &user.User{
 		ID:    1,
@@ -55,7 +55,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	dashboardsSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, "test-panel-uid", int64(1)).Return([]*dashboards.DashboardRef{testDashboard}, nil)
 
 	handler := &libraryElementsK8sHandler{
-		cfg:               cfg,
+		settingsProvider:  settingsProvider,
 		folderService:     folderSvc,
 		dashboardsService: dashboardsSvc,
 		userService:       userSvc,
@@ -149,11 +149,11 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	require.Equal(t, creationTimestamp.Format(time.RFC3339), result.Meta.Created.Format(time.RFC3339))
 	require.Equal(t, testUser.ID, result.Meta.CreatedBy.Id)
 	require.Equal(t, testUser.Login, result.Meta.CreatedBy.Name)
-	require.Equal(t, dtos.GetGravatarUrl(cfg, testUser.Email), result.Meta.CreatedBy.AvatarUrl)
+	require.Equal(t, dtos.GetGravatarUrl(settingsProvider, testUser.Email), result.Meta.CreatedBy.AvatarUrl)
 	require.Equal(t, creationTimestamp.Format(time.RFC3339), result.Meta.Updated.Format(time.RFC3339))
 	require.Equal(t, testUser.ID, result.Meta.UpdatedBy.Id)
 	require.Equal(t, testUser.Login, result.Meta.UpdatedBy.Name)
-	require.Equal(t, dtos.GetGravatarUrl(cfg, testUser.Email), result.Meta.UpdatedBy.AvatarUrl)
+	require.Equal(t, dtos.GetGravatarUrl(settingsProvider, testUser.Email), result.Meta.UpdatedBy.AvatarUrl)
 
 	var modelMap map[string]interface{}
 	err = json.Unmarshal(result.Model, &modelMap)

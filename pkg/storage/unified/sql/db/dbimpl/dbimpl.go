@@ -37,11 +37,11 @@ var errGrafanaDBInstrumentedNotSupported = errors.New("the Resource API is " +
 	" `instrument_queries` is enabled in [database], and that" +
 	" setup is currently unsupported. Please, consider disabling that flag")
 
-func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (db.DBProvider, error) {
+func ProvideResourceDB(grafanaDB infraDB.DB, settingsProvider setting.SettingsProvider, tracer trace.Tracer) (db.DBProvider, error) {
 	if tracer == nil {
 		tracer = noop.NewTracerProvider().Tracer("test-tracer")
 	}
-	p, err := newResourceDBProvider(grafanaDB, cfg, tracer)
+	p, err := newResourceDBProvider(grafanaDB, settingsProvider, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("provide Resource DB: %w", err)
 	}
@@ -49,34 +49,35 @@ func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Trac
 }
 
 type resourceDBProvider struct {
-	engine          *xorm.Engine
-	cfg             *setting.Cfg
-	log             log.Logger
-	migrateFunc     func(context.Context, *xorm.Engine, *setting.Cfg) error
-	tracer          trace.Tracer
-	registerMetrics bool
-	logQueries      bool
+	engine           *xorm.Engine
+	settingsProvider setting.SettingsProvider
+	log              log.Logger
+	migrateFunc      func(context.Context, *xorm.Engine, setting.SettingsProvider) error
+	tracer           trace.Tracer
+	registerMetrics  bool
+	logQueries       bool
 
 	once       sync.Once
 	resourceDB db.DB
 	initErr    error
 }
 
-func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (*resourceDBProvider, error) {
+func newResourceDBProvider(grafanaDB infraDB.DB, settingsProvider setting.SettingsProvider, tracer trace.Tracer) (*resourceDBProvider, error) {
 	logger := log.New("resource-db")
 	p := &resourceDBProvider{
-		cfg:         cfg,
-		log:         logger,
-		migrateFunc: migrations.MigrateResourceStore,
-		tracer:      tracer,
+		settingsProvider: settingsProvider,
+		log:              logger,
+		migrateFunc:      migrations.MigrateResourceStore,
+		tracer:           tracer,
 	}
 
+	cfg := settingsProvider.Get()
 	dbType := cfg.SectionWithEnvOverrides("database").Key("type").String()
 
 	switch {
 	case dbType != "":
 		logger.Info("Using database section", "db_type", dbType)
-		dbCfg, err := sqlstore.NewDatabaseConfig(cfg, nil)
+		dbCfg, err := sqlstore.NewDatabaseConfig(settingsProvider, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +128,7 @@ func (p *resourceDBProvider) initDB(ctx context.Context) (db.DB, error) {
 
 	// TODO: change the migrator to use db.DB instead of xorm
 	if p.migrateFunc != nil {
-		err := p.migrateFunc(ctx, p.engine, p.cfg)
+		err := p.migrateFunc(ctx, p.engine, p.settingsProvider)
 		if err != nil {
 			return nil, fmt.Errorf("run migrations: %w", err)
 		}

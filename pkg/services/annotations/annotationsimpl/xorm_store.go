@@ -39,13 +39,13 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type xormRepositoryImpl struct {
-	cfg        *setting.Cfg
-	db         db.DB
-	log        log.Logger
-	tagService tag.Service
+	settingsProvider setting.SettingsProvider
+	db               db.DB
+	log              log.Logger
+	tagService       tag.Service
 }
 
-func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
+func NewXormStore(settingsProvider setting.SettingsProvider, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
 	// populate dashboard_uid at startup, to ensure safe downgrades & upgrades after
 	// the initial migration occurs
 	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName())
@@ -54,10 +54,10 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 	}
 
 	return &xormRepositoryImpl{
-		cfg:        cfg,
-		db:         db,
-		log:        l,
-		tagService: tagService,
+		settingsProvider: settingsProvider,
+		db:               db,
+		log:              l,
+		tagService:       tagService,
 	}
 }
 
@@ -155,7 +155,6 @@ func (r *xormRepositoryImpl) update(ctx context.Context, item *annotations.Item)
 		existing := new(annotations.Item)
 
 		isExist, err = sess.Table("annotation").Where("id=? AND org_id=?", item.ID, item.OrgID).Get(existing)
-
 		if err != nil {
 			return err
 		}
@@ -538,6 +537,7 @@ func (r *xormRepositoryImpl) validateItem(item *annotations.Item) error {
 }
 
 func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
+	cfg := r.settingsProvider.Get()
 	estimatedTagsLength := 1 // leading: [
 	for i, t := range item.Tags {
 		if i == 0 {
@@ -547,8 +547,8 @@ func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
 		}
 	}
 	estimatedTagsLength += 1 // trailing: ]
-	if estimatedTagsLength > int(r.cfg.AnnotationMaximumTagsLength) {
-		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.cfg.AnnotationMaximumTagsLength)
+	if estimatedTagsLength > int(cfg.AnnotationMaximumTagsLength) {
+		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, cfg.AnnotationMaximumTagsLength)
 	}
 	return nil
 }
@@ -563,7 +563,8 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 		//
 		// We execute the following batched operation repeatedly until either we run out of objects, the context is cancelled, or there is an error.
 		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
-			cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+			cfg := r.settingsProvider.Get()
+			cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(cfg.AnnotationCleanupJobBatchSize))
 			ids, err := r.fetchIDs(ctx, "annotation", cond)
 			if err != nil {
 				return 0, err
@@ -580,7 +581,7 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 	if cfg.MaxCount > 0 {
 		// Similar strategy as the above cleanup process, to avoid deadlocks.
 		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
-			cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
+			cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.settingsProvider.Get().AnnotationCleanupJobBatchSize, cfg.MaxCount))
 			ids, err := r.fetchIDs(ctx, "annotation", cond)
 			if err != nil {
 				return 0, err
@@ -599,7 +600,8 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 
 func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
 	return untilDoneOrCancelled(ctx, func() (int64, error) {
-		cond := fmt.Sprintf(`NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s`, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+		cfg := r.settingsProvider.Get()
+		cond := fmt.Sprintf(`NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s`, r.db.GetDialect().Limit(cfg.AnnotationCleanupJobBatchSize))
 		ids, err := r.fetchIDs(ctx, "annotation_tag", cond)
 		if err != nil {
 			return 0, err
@@ -633,7 +635,8 @@ func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids 
 	// SQLite has a parameter limit of 999.
 	// If the batch size is bigger than that, and we're on SQLite, we have to put the IDs directly into the statement.
 	const sqliteParameterLimit = 999
-	if r.db.GetDBType() == migrator.SQLite && r.cfg.AnnotationCleanupJobBatchSize > sqliteParameterLimit {
+	cfg := r.settingsProvider.Get()
+	if r.db.GetDBType() == migrator.SQLite && cfg.AnnotationCleanupJobBatchSize > sqliteParameterLimit {
 		values := fmt.Sprint(ids[0])
 		for _, v := range ids[1:] {
 			values = fmt.Sprintf("%s, %d", values, v)

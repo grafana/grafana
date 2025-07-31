@@ -142,7 +142,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			pService := provisioning.NewProvisioningServiceMock(context.Background())
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.ProvisioningService = pService
 			})
 

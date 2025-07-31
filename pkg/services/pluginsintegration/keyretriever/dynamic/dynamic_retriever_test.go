@@ -40,6 +40,7 @@ func setFakeAPIServer(t *testing.T, publicKey string, keyID string) (*httptest.S
 		done <- true
 	})), done
 }
+
 func Test_PublicKeyUpdate(t *testing.T) {
 	t.Run("it should retrieve an API key", func(t *testing.T) {
 		cfg := &setting.Cfg{}

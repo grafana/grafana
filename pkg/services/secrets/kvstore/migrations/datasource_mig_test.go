@@ -36,9 +36,9 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	features := featuremgmt.WithFeatures()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	quotaService := quotatest.New(false, nil)
-	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(),
+	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, setting.ProvideService(cfg), features, acmock.New(),
 		acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		plugincontext.ProvideBaseService(setting.ProvideService(cfg), pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
 	migService := ProvideDataSourceMigrationService(dsService, kvStore, features)
 	return migService

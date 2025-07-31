@@ -34,7 +34,7 @@ type ServiceAccountsService struct {
 	acService   accesscontrol.Service
 	permissions accesscontrol.ServiceAccountPermissionsService
 
-	cfg               *setting.Cfg
+	settingsProvider  setting.SettingsProvider
 	db                db.DB
 	store             store
 	log               log.Logger
@@ -48,7 +48,7 @@ type ServiceAccountsService struct {
 }
 
 func ProvideServiceAccountsService(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	usageStats usagestats.Service,
 	store db.DB,
 	apiKeyService apikey.Service,
@@ -60,7 +60,7 @@ func ProvideServiceAccountsService(
 	serverLockService *serverlock.ServerLockService,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
-		cfg,
+		settingsProvider,
 		store,
 		apiKeyService,
 		kvStore,
@@ -68,15 +68,15 @@ func ProvideServiceAccountsService(
 		orgService,
 	)
 	s := &ServiceAccountsService{
-		cfg:           cfg,
-		db:            store,
-		acService:     acService,
-		permissions:   permissions,
-		store:         serviceAccountsStore,
-		log:           log.New("serviceaccounts"),
-		backgroundLog: log.New("serviceaccounts.background"),
-		orgService:    orgService,
-		serverLock:    serverLockService,
+		settingsProvider: settingsProvider,
+		db:               store,
+		acService:        acService,
+		permissions:      permissions,
+		store:            serviceAccountsStore,
+		log:              log.New("serviceaccounts"),
+		backgroundLog:    log.New("serviceaccounts.background"),
+		orgService:       orgService,
+		serverLock:       serverLockService,
 	}
 
 	if err := RegisterRoles(acService); err != nil {
@@ -85,6 +85,7 @@ func ProvideServiceAccountsService(
 
 	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
 
+	cfg := s.settingsProvider.Get()
 	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
 	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
 		Key("interval").MustDuration(defaultSecretScanInterval)
@@ -114,7 +115,6 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 			sa.log.Warn("Failed to migrate API keys", "error", err.Error())
 		}
 	})
-
 	if err != nil {
 		sa.log.Error("Failed to lock and execute the migration of API keys to service accounts", "error", err)
 	}
@@ -185,7 +185,7 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 		}
 
 		user, err := identity.GetRequester(ctx)
-		if err == nil && sa.cfg.RBAC.PermissionsOnCreation("service-account") {
+		if err == nil && sa.settingsProvider.Get().RBAC.PermissionsOnCreation("service-account") {
 			if user.IsIdentityType(claims.TypeUser) {
 				userID, err := user.GetInternalID()
 				if err != nil {
@@ -202,7 +202,6 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

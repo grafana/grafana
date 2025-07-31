@@ -20,9 +20,9 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
-func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService, folderService folder.Service, features featuremgmt.FeatureToggles, sortService grafanasort.Service) *SearchService {
+func ProvideService(settingsProvider setting.SettingsProvider, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService, folderService folder.Service, features featuremgmt.FeatureToggles, sortService grafanasort.Service) *SearchService {
 	s := &SearchService{
-		Cfg:              cfg,
+		settingsProvider: settingsProvider,
 		sqlstore:         sqlstore,
 		starService:      starService,
 		folderService:    folderService,
@@ -58,7 +58,7 @@ type Service interface {
 }
 
 type SearchService struct {
-	Cfg              *setting.Cfg
+	settingsProvider setting.SettingsProvider
 	sortService      grafanasort.Service
 	sqlstore         db.DB
 	starService      star.Service

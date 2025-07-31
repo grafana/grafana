@@ -9,8 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func MigrateResourceStore(ctx context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
-	mg := migrator.NewScopedMigrator(engine, cfg, "resource")
+func MigrateResourceStore(ctx context.Context, engine *xorm.Engine, settingsProvider setting.SettingsProvider) error {
+	cfg := settingsProvider.Get()
+	mg := migrator.NewScopedMigrator(engine, settingsProvider, "resource")
 	mg.AddCreateMigration()
 
 	initResourceTables(mg)

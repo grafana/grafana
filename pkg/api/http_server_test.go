@@ -11,19 +11,20 @@ import (
 
 func TestHTTPServer_MetricsBasicAuth(t *testing.T) {
 	ts := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg: setting.ProvideService(setting.NewCfg()),
 	}
 
+	cfg := ts.Cfg.Get()
 	t.Run("enabled", func(t *testing.T) {
-		ts.Cfg.MetricsEndpointBasicAuthUsername = "foo"
-		ts.Cfg.MetricsEndpointBasicAuthPassword = "bar"
+		cfg.MetricsEndpointBasicAuthUsername = "foo"
+		cfg.MetricsEndpointBasicAuthPassword = "bar"
 
 		assert.True(t, ts.metricsEndpointBasicAuthEnabled())
 	})
 
 	t.Run("disabled", func(t *testing.T) {
-		ts.Cfg.MetricsEndpointBasicAuthUsername = ""
-		ts.Cfg.MetricsEndpointBasicAuthPassword = ""
+		cfg.MetricsEndpointBasicAuthUsername = ""
+		cfg.MetricsEndpointBasicAuthPassword = ""
 
 		assert.False(t, ts.metricsEndpointBasicAuthEnabled())
 	})
@@ -31,7 +32,7 @@ func TestHTTPServer_MetricsBasicAuth(t *testing.T) {
 
 func TestHTTPServer_readCertificates(t *testing.T) {
 	ts := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg: setting.ProvideService(setting.NewCfg()),
 	}
 	t.Run("ReadCertificates should return error when cert files are not configured", func(t *testing.T) {
 		_, err := ts.readCertificates()
@@ -90,7 +91,7 @@ func TestHTTPServer_readEncryptedCertificates(t *testing.T) {
 			defer cleanUpFunc()
 
 			ts := &HTTPServer{
-				Cfg: cfg,
+				Cfg: setting.ProvideService(cfg),
 			}
 
 			c, err := ts.readCertificates()

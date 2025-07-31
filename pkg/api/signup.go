@@ -19,9 +19,10 @@ import (
 
 // GET /api/user/signup/options
 func (hs *HTTPServer) GetSignUpOptions(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	return response.JSON(http.StatusOK, util.DynMap{
-		"verifyEmailEnabled": hs.Cfg.VerifyEmailEnabled,
-		"autoAssignOrg":      hs.Cfg.AutoAssignOrg,
+		"verifyEmailEnabled": cfg.VerifyEmailEnabled,
+		"autoAssignOrg":      cfg.AutoAssignOrg,
 	})
 }
 
@@ -32,7 +33,8 @@ func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 	if err = web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !hs.Cfg.AllowUserSignUp {
+	cfg := hs.Cfg.Get()
+	if !cfg.AllowUserSignUp {
 		return response.Error(http.StatusUnauthorized, "User signup is disabled", nil)
 	}
 
@@ -84,7 +86,8 @@ func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response 
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !hs.Cfg.AllowUserSignUp {
+	cfg := hs.Cfg.Get()
+	if !cfg.AllowUserSignUp {
 		return response.Error(http.StatusUnauthorized, "User signup is disabled", nil)
 	}
 
@@ -97,7 +100,7 @@ func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response 
 	}
 
 	// verify email
-	if hs.Cfg.VerifyEmailEnabled {
+	if cfg.VerifyEmailEnabled {
 		if ok, rsp := hs.verifyUserSignUpEmail(c.Req.Context(), form.Email, form.Code); !ok {
 			return rsp
 		}

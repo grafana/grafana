@@ -33,7 +33,7 @@ import (
 type Registration struct{}
 
 func ProvideRegistration(
-	cfg *setting.Cfg, authnSvc authn.Service,
+	settingsProvider setting.SettingsProvider, authnSvc authn.Service,
 	orgService org.Service, sessionService auth.UserTokenService,
 	accessControlService accesscontrol.Service, permRegistry permreg.PermissionRegistry,
 	apikeyService apikey.Service, userService user.Service,
@@ -50,6 +50,7 @@ func ProvideRegistration(
 	authnSvc.RegisterClient(clients.ProvideRender(renderService))
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tracer))
 
+	cfg := settingsProvider.Get()
 	if cfg.LoginCookieName != "" {
 		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService, authInfoService, tracer))
 	}
@@ -117,7 +118,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.ExtJWTAuth.Enabled {
-		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))
+		authnSvc.RegisterClient(clients.ProvideExtendedJWT(settingsProvider, tracer))
 	}
 
 	for name := range socialService.GetOAuthProviders() {
@@ -154,7 +155,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
 	authnSvc.RegisterPostLoginHook(rbacSync.ClearUserPermissionCacheHook, 170)
 
-	nsSync := sync.ProvideNamespaceSync(cfg)
+	nsSync := sync.ProvideNamespaceSync(settingsProvider)
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)
 	authnSvc.RegisterPostAuthHook(sync.AccessClaimsHook, 160)
 

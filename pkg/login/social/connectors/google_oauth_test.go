@@ -482,7 +482,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				Login: "test@example.com",
 			},
 			wantErr: false,
-		}, {
+		},
+		{
 			name: "Unverified Email userinfo",
 			fields: fields{
 				apiURL: "https://openidconnect.googleapis.com/v1/userinfo",

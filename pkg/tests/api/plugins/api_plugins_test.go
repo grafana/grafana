@@ -68,8 +68,8 @@ func TestIntegrationPlugins(t *testing.T) {
 	}
 
 	t.Run("Install", func(t *testing.T) {
-		createUser(t, store, env.Cfg, user.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
-		createUser(t, store, env.Cfg, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
+		createUser(t, store, env.SettingsProvider, user.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
+		createUser(t, store, env.SettingsProvider, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
 
 		t.Run("Request is forbidden if not from an admin", func(t *testing.T) {
 			status, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
@@ -193,17 +193,18 @@ func TestIntegrationPluginAssets(t *testing.T) {
 	})
 }
 
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) {
+func createUser(t *testing.T, db db.DB, settingsProvider setting.SettingsProvider, cmd user.CreateUserCommand) {
 	t.Helper()
 
+	cfg := settingsProvider.Get()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, settingsProvider)
+	orgService, err := orgimpl.ProvideService(db, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -224,7 +225,7 @@ func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	var body = make(map[string]interface{})
+	body := make(map[string]interface{})
 	err = json.Unmarshal(b, &body)
 	require.NoError(t, err)
 
@@ -251,7 +252,7 @@ func expectedResp(t *testing.T, filename string) dtos.PluginList {
 }
 
 func updateRespSnapshot(t *testing.T, filename string, body string) {
-	err := os.WriteFile(filepath.Join("data", filename), []byte(body), 0600)
+	err := os.WriteFile(filepath.Join("data", filename), []byte(body), 0o600)
 	if err != nil {
 		t.Errorf("error writing snapshot %s: %v", filename, err)
 	}

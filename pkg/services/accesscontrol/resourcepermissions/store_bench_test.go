@@ -82,7 +82,7 @@ func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*store, []int64)
 	return ac, dataSources
 }
 
-func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac *store, dsNum, usersNum, permissionsPerDs int) []int64 {
+func GenerateDatasourcePermissions(b *testing.B, db db.DB, settingsProvider setting.SettingsProvider, ac *store, dsNum, usersNum, permissionsPerDs int) []int64 {
 	dataSources := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
 		addDSCommand := &datasources.AddDataSourceCommand{
@@ -97,7 +97,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 		dataSources = append(dataSources, dataSource.ID)
 	}
 
-	userIds, teamIds := generateTeamsAndUsers(b, db, cfg, usersNum)
+	userIds, teamIds := generateTeamsAndUsers(b, db, settingsProvider, usersNum)
 
 	for _, dsID := range dataSources {
 		// Add DS permissions for the users
@@ -140,16 +140,16 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 	return dataSources
 }
 
-func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
-	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest())
+func generateTeamsAndUsers(b *testing.B, store db.DB, settingsProvider setting.SettingsProvider, users int) ([]int64, []int64) {
+	teamSvc, err := teamimpl.ProvideService(store, settingsProvider, tracing.InitializeTracerForTest())
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 	qs := quotatest.New(false, nil)
-	orgSvc, err := orgimpl.ProvideService(store, cfg, qs)
+	orgSvc, err := orgimpl.ProvideService(store, settingsProvider, qs)
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		store, orgSvc, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		qs, supportbundlestest.NewFakeBundleService())
 	require.NoError(b, err)
 	userIds := make([]int64, 0)

@@ -235,7 +235,7 @@ func TestIntegrationStore_DeleteServiceAccount(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
+			user := tests.SetupUserServiceAccount(t, db, store.settingsProvider, c.user)
 			err := store.DeleteServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -248,19 +248,19 @@ func TestIntegrationStore_DeleteServiceAccount(t *testing.T) {
 
 func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	t.Helper()
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, settingsProvider := db.InitTestDBWithCfg(t)
 	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(db, cfg, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(db, settingsProvider, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(db, settingsProvider, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
-	return db, ProvideServiceAccountsStore(cfg, db, apiKeyService, kvStore, userSvc, orgService)
+	return db, ProvideServiceAccountsStore(settingsProvider, db, apiKeyService, kvStore, userSvc, orgService)
 }
 
 func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
@@ -296,7 +296,7 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 			var dto *serviceaccounts.ServiceAccountProfileDTO
 			var err error
 			db, store := setupTestDatabase(t)
-			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
+			user := tests.SetupUserServiceAccount(t, db, store.settingsProvider, c.user)
 			if c.retrieveByUID {
 				dto, err = store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
 					OrgID: user.OrgID,
@@ -392,14 +392,15 @@ func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.cfg.AutoAssignOrg = true
-			store.cfg.AutoAssignOrgId = 1
-			store.cfg.AutoAssignOrgRole = "Viewer"
+			cfg := store.settingsProvider.Get()
+			cfg.AutoAssignOrg = true
+			cfg.AutoAssignOrgId = 1
+			cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 
 			for _, key := range c.keys {
-				tests.SetupApiKey(t, db, store.cfg, key)
+				tests.SetupApiKey(t, db, store.settingsProvider, key)
 			}
 
 			results, err := store.MigrateApiKeysToServiceAccounts(context.Background(), c.orgId)
@@ -442,6 +443,7 @@ func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
 		})
 	}
 }
+
 func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode")
@@ -460,7 +462,7 @@ func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing
 		{Name: "satest-8", Role: string(org.RoleAdmin), Login: "sa-1-satest-8", IsServiceAccount: true},
 	}
 
-	users, orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
+	users, orgID := tests.SetupUsersServiceAccounts(t, db, store.settingsProvider, initUsers)
 
 	apiKeys := []tests.TestApiKey{
 		{Name: "sa-01-apikey-01", OrgId: orgID, Key: "key01", IsExpired: false, ServiceAccountID: &users[0].ID},
@@ -471,7 +473,7 @@ func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing
 		{Name: "sa-03-apikey-01", OrgId: orgID, Key: "key06", IsExpired: false, ServiceAccountID: &users[3].ID},
 	}
 
-	tests.SetupApiKeys(t, db, store.cfg, apiKeys)
+	tests.SetupApiKeys(t, db, store.settingsProvider, apiKeys)
 
 	userWithPerm := &user.SignedInUser{
 		OrgID:       orgID,
@@ -651,7 +653,7 @@ func TestIntegrationServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T)
 	}
 
 	db, store := setupTestDatabase(t)
-	_, orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
+	_, orgID := tests.SetupUsersServiceAccounts(t, db, store.settingsProvider, initUsers)
 
 	fetchStates := func() map[int64]bool {
 		sa1, err := store.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: 1})

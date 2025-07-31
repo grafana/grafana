@@ -50,8 +50,9 @@ func ReverseProxyGnetReq(logger log.Logger, proxyPath, version, grafanaComAPIUrl
 }
 
 func (hs *HTTPServer) ProxyGnetRequest(c *contextmodel.ReqContext) {
+	cfg := hs.Cfg.Get()
 	proxyPath := web.Params(c.Req)["*"]
-	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion, hs.Cfg.GrafanaComAPIURL, hs.Cfg.GrafanaComSSOAPIToken)
+	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, cfg.BuildVersion, cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken)
 	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req)
 }

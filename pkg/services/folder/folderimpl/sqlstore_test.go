@@ -29,8 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var folderTitle string = "folder1"
-var folderDsc string = "folder desc"
+var (
+	folderTitle string = "folder1"
+	folderDsc   string = "folder desc"
+)
 
 func TestIntegrationCreate(t *testing.T) {
 	if testing.Short() {
@@ -429,7 +431,7 @@ func TestIntegrationGet(t *testing.T) {
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
 		assert.Equal(t, f.Description, ff.Description)
-		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
+		// assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
@@ -445,7 +447,7 @@ func TestIntegrationGet(t *testing.T) {
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
 		assert.Equal(t, f.Description, ff.Description)
-		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
+		// assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
@@ -478,7 +480,7 @@ func TestIntegrationGet(t *testing.T) {
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
 		assert.Equal(t, f.Description, ff.Description)
-		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
+		// assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
@@ -996,7 +998,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 	})
 }
 
-func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
+func CreateOrg(t *testing.T, db db.DB, settingsProvider setting.SettingsProvider) int64 {
 	t.Helper()
 
 	requester := &identity.StaticRequester{
@@ -1010,11 +1012,11 @@ func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 			},
 		},
 	}
-	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(db, settingsProvider, quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil)
-	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc, acimpl.ProvideAccessControlTest())
+	deleteOrgService, err := orgimpl.ProvideDeletionService(db, settingsProvider, dashSvc, acimpl.ProvideAccessControlTest())
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)

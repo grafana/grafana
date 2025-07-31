@@ -97,11 +97,11 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			pluginID = "grafana-preinstalled-datasource"
 		}
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = setting.NewCfg()
-			hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
-			hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
-			hs.Cfg.RBAC.SingleOrganization = tc.singleOrganization
-			hs.Cfg.PreinstallPluginsAsync = []setting.InstallPlugin{{ID: "grafana-preinstalled-datasource", Version: "1.0.0"}}
+			cfg := hs.Cfg.Get()
+			cfg.PluginAdminEnabled = tc.pluginAdminEnabled
+			cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
+			cfg.RBAC.SingleOrganization = tc.singleOrganization
+			cfg.PreinstallPluginsAsync = []setting.InstallPlugin{{ID: "grafana-preinstalled-datasource", Version: "1.0.0"}}
 
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.accesscontrolService = &actest.FakeService{}
@@ -167,7 +167,8 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 				nonCDNPluginID: nonCdnPlugin,
 			},
 		}
-		cfg := setting.NewCfg()
+		settingsProvider := setting.ProvideService(setting.NewCfg())
+		cfg := settingsProvider.Get()
 		cfg.PluginsCDNURLTemplate = "https://cdn.example.com"
 		cfg.PluginSettings = map[string]map[string]string{
 			cdnPluginID: {"cdn": "true"},
@@ -189,7 +190,7 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 				"When calling GET for a CDN plugin on",
 				fmt.Sprintf("/public/plugins/%s/%s", cdnPluginID, cas.assetURL),
 				"/public/plugins/:pluginId/*",
-				cfg, registry, func(sc *scenarioContext) {
+				settingsProvider, registry, func(sc *scenarioContext) {
 					// Get the prometheus metric (to test that the handler is instrumented correctly)
 					counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
 						"plugin_id":      cdnPluginID,
@@ -219,7 +220,7 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 			"When calling GET for a non-CDN plugin on",
 			fmt.Sprintf("/public/plugins/%s/%s", nonCDNPluginID, "module.js"),
 			"/public/plugins/:pluginId/*",
-			cfg, registry, func(sc *scenarioContext) {
+			settingsProvider, registry, func(sc *scenarioContext) {
 				// Here the metric should not increment
 				var m dto.Metric
 				counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
@@ -273,7 +274,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), pluginRegistry, func(sc *scenarioContext) {
+			setting.ProvideService(setting.NewCfg()), pluginRegistry, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 200, sc.resp.Code)
@@ -291,7 +292,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, tmpFileInParentDir.Name())
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), pluginRegistry, func(sc *scenarioContext) {
+			setting.ProvideService(setting.NewCfg()), pluginRegistry, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 404, sc.resp.Code)
@@ -308,7 +309,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), pluginRegistry, func(sc *scenarioContext) {
+			setting.ProvideService(setting.NewCfg()), pluginRegistry, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 200, sc.resp.Code)
@@ -327,7 +328,7 @@ func Test_GetPluginAssets(t *testing.T) {
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), service, func(sc *scenarioContext) {
+			setting.ProvideService(setting.NewCfg()), service, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				var respJson map[string]any
@@ -342,7 +343,7 @@ func Test_GetPluginAssets(t *testing.T) {
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), fakes.NewFakePluginRegistry(), func(sc *scenarioContext) {
+			setting.ProvideService(setting.NewCfg()), fakes.NewFakePluginRegistry(), func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				var respJson map[string]any
@@ -356,7 +357,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 func TestMakePluginResourceRequest(t *testing.T) {
 	hs := HTTPServer{
-		Cfg:          setting.NewCfg(),
+		Cfg:          setting.ProvideService(setting.NewCfg()),
 		log:          log.New(),
 		pluginClient: &fakePluginClient{},
 	}
@@ -382,7 +383,7 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 	for _, ctHeader := range []string{"content-type", "Content-Type", "CoNtEnT-TyPe"} {
 		t.Run(ctHeader, func(t *testing.T) {
 			hs := HTTPServer{
-				Cfg: setting.NewCfg(),
+				Cfg: setting.ProvideService(setting.NewCfg()),
 				log: log.New(),
 				pluginClient: &fakePluginClient{
 					headers: map[string][]string{
@@ -412,7 +413,7 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 		statusCode: http.StatusNoContent,
 	}
 	hs := HTTPServer{
-		Cfg:          setting.NewCfg(),
+		Cfg:          setting.ProvideService(setting.NewCfg()),
 		log:          log.New(),
 		pluginClient: pluginClient,
 	}
@@ -526,10 +527,12 @@ func callGetPluginAsset(sc *scenarioContext) {
 }
 
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
-	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
+	settingsProvider setting.SettingsProvider, pluginRegistry registry.Service, fn scenarioFunc,
+) {
+	cfg := settingsProvider.Get()
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
-			Cfg:             cfg,
+			Cfg:             settingsProvider,
 			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
@@ -596,13 +599,16 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		ID: "test-app", Type: "app", Name: "test-app",
 		Info: plugins.Info{
 			Version: "1.0.0",
-		}}, plugins.ClassExternal, plugins.NewFakeFS())
+		},
+	}, plugins.ClassExternal, plugins.NewFakeFS())
 	p2 := createPlugin(
-		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
+		plugins.JSONData{
+			ID: "mysql", Type: "datasource", Name: "MySQL",
 			Info: plugins.Info{
 				Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
 				Description: "Data source for MySQL databases",
-			}}, plugins.ClassCore, plugins.NewFakeFS())
+			},
+		}, plugins.ClassCore, plugins.NewFakeFS())
 
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
@@ -611,9 +617,11 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		},
 	}
 
-	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
-		"mysql":    {ID: 0, OrgID: 1, PluginID: "mysql", PluginVersion: "", Enabled: true}},
+	pluginSettings := pluginsettings.FakePluginSettings{
+		Plugins: map[string]*pluginsettings.DTO{
+			"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
+			"mysql":    {ID: 0, OrgID: 1, PluginID: "mysql", PluginVersion: "", Enabled: true},
+		},
 	}
 
 	type testCase struct {
@@ -640,7 +648,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
@@ -750,8 +758,9 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 			require.NoError(t, err)
 
-			hs.Cfg = setting.NewCfg()
-			hs.Cfg.RBAC.SingleOrganization = tt.singleOrg
+			hs.Cfg = setting.ProvideService(setting.NewCfg())
+			cfg := hs.Cfg.Get()
+			cfg.RBAC.SingleOrganization = tt.singleOrg
 			hs.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{tt.plugin},
 			}
@@ -784,7 +793,8 @@ func Test_PluginsSettings(t *testing.T) {
 		ID: pID, Type: "datasource", Name: pID,
 		Info: plugins.Info{
 			Version: "1.0.0",
-		}}, plugins.ClassExternal, plugins.NewFakeFS())
+		},
+	}, plugins.ClassExternal, plugins.NewFakeFS())
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
 			p1.ID: p1,
@@ -828,7 +838,7 @@ func Test_PluginsSettings(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
@@ -896,7 +906,7 @@ func Test_UpdatePluginSetting(t *testing.T) {
 
 	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = setting.NewCfg()
+			hs.Cfg = setting.ProvideService(setting.NewCfg())
 			hs.PluginSettings = &pluginSettings
 			hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)

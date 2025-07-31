@@ -58,7 +58,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	stateStore := NewFileStore(int64(orgID), kvStore)
 	crypto := NewCrypto(secretsService, s, l)
 
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto, nil)
+	am, err := NewAlertmanager(context.Background(), 1, setting.ProvideService(cfg), s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto, nil)
 	require.NoError(t, err)
 	return am
 }

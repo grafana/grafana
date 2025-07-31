@@ -85,7 +85,8 @@ func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSear
 
 func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEventsService,
 	ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service,
-	userService user.Service, folderService folder.Service) SearchService {
+	userService user.Service, folderService folder.Service,
+) SearchService {
 	extender := &NoopExtender{}
 	logger := log.New("searchV2")
 	s := &StandardSearchService{
@@ -214,7 +215,6 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	start := time.Now()
 
 	signedInUser, err := s.getUser(ctx, user, orgID)
-
 	if err != nil {
 		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
 			"reason": "get_user_error",

@@ -27,7 +27,7 @@ func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
 
 	KVStore := kv.Config{Store: "memberlist"}
 
-	memberlistKVsvc := memberlist.NewKVInitService(toMemberlistConfig(ms.cfg), logger, dnsProvider, ms.registerer)
+	memberlistKVsvc := memberlist.NewKVInitService(toMemberlistConfig(ms.settingsProvider), logger, dnsProvider, ms.registerer)
 	KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV
 
 	ms.MemberlistKVConfig = KVStore
@@ -37,7 +37,8 @@ func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
 	return memberlistKVsvc, nil
 }
 
-func toMemberlistConfig(cfg *setting.Cfg) *memberlist.KVConfig {
+func toMemberlistConfig(settingsProvider setting.SettingsProvider) *memberlist.KVConfig {
+	cfg := settingsProvider.Get()
 	memberlistKVcfg := &memberlist.KVConfig{}
 	flagext.DefaultValues(memberlistKVcfg)
 	memberlistKVcfg.Codecs = []codec.Codec{

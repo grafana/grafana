@@ -129,7 +129,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 
 			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = int64(test.annotationCleanupJobBatchSize)
-			cleaner := ProvideCleanupService(fakeSQL, cfg)
+			cleaner := ProvideCleanupService(fakeSQL, setting.ProvideService(cfg))
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
 			require.NoError(t, err)
 
@@ -188,7 +188,7 @@ func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
 		// run the clean up task to keep one annotation.
 		cfg := setting.NewCfg()
 		cfg.AnnotationCleanupJobBatchSize = 1
-		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil)
+		cleaner := NewXormStore(setting.ProvideService(cfg), log.New("annotation.test"), fakeSQL, nil)
 		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 		require.NoError(t, err)
 

@@ -68,14 +68,16 @@ func TestDashboardVersionService(t *testing.T) {
 				"spec": map[string]any{
 					"hello": "world",
 				},
-			}}
+			},
+		}
 		dash.SetCreationTimestamp(v1.NewTime(creationTimestamp))
 		obj, err := utils.MetaAccessor(dash)
 		require.NoError(t, err)
 		obj.SetUpdatedTimestamp(&updatedTimestamp)
 		mockCli.On("GetUsersFromMeta", mock.Anything, []string{"user:1", ""}).Return(map[string]*user.User{"user:1": {ID: 1}}, nil)
 		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
-			Items: []unstructured.Unstructured{*dash}}, nil).Once()
+			Items: []unstructured.Unstructured{*dash},
+		}, nil).Once()
 		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
 			OrgID:       1,
@@ -110,7 +112,9 @@ func TestDashboardVersionService(t *testing.T) {
 						},
 					},
 					"spec": map[string]any{},
-				}}}}, nil).Once()
+				},
+			}},
+		}, nil).Once()
 		res, err = dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
 			DashboardID: 42,
 			OrgID:       1,
@@ -154,7 +158,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 	dashboardVersionStore := newDashboardVersionStoreFake()
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	dashboardVersionService := Service{
-		cfg: cfg, store: dashboardVersionStore, dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+		settingsProvider: setting.ProvideService(cfg),
+		store:            dashboardVersionStore,
+		dashSvc:          dashboardService,
+		features:         featuremgmt.WithFeatures(),
+	}
 
 	t.Run("Don't delete anything if there are no expired versions", func(t *testing.T) {
 		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
@@ -281,7 +289,8 @@ func TestListDashboardVersions(t *testing.T) {
 					},
 				},
 				"spec": map[string]any{},
-			}}}}, nil).Once()
+			}}},
+		}, nil).Once()
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(res.Versions))
@@ -293,7 +302,8 @@ func TestListDashboardVersions(t *testing.T) {
 				Version:       5, // should take from spec
 				DashboardUID:  "uid",
 				Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(5)}),
-			}}}, res)
+			}},
+		}, res)
 	})
 
 	t.Run("should return dashboard not found error when k8s client says not found", func(t *testing.T) {

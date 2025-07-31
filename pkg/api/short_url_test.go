@@ -56,7 +56,7 @@ func callCreateShortURL(sc *scenarioContext) {
 func createShortURLScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CreateShortURLCmd, shortURLService shorturls.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
-			Cfg:             setting.NewCfg(),
+			Cfg:             setting.ProvideService(setting.NewCfg()),
 			ShortURLService: shortURLService,
 			log:             log.New("test"),
 		}

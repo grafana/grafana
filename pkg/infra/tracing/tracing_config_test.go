@@ -189,7 +189,7 @@ func TestTracingConfig(t *testing.T) {
 			err := cfg.Raw.Append([]byte(test.Cfg))
 			assert.NoError(t, err)
 			// create tracingConfig
-			tracingConfig, err := ProvideTracingConfig(cfg)
+			tracingConfig, err := ProvideTracingConfig(setting.ProvideService(cfg))
 			assert.NoError(t, err)
 			// make sure tracker is properly configured
 			assert.Equal(t, test.ExpectedExporter, tracingConfig.enabled)

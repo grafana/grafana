@@ -82,7 +82,6 @@ func (m tokenExchangeMiddlewareImpl) RoundTrip(req *http.Request) (res *http.Res
 		Namespace: namespace,
 		Audiences: m.audiences,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %w", err)
 	}

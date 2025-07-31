@@ -127,7 +127,7 @@ type HTTPServer struct {
 	pluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
 	RenderService                rendering.Service
-	Cfg                          *setting.Cfg
+	Cfg                          setting.SettingsProvider
 	Features                     featuremgmt.FeatureToggles
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
@@ -235,7 +235,7 @@ type ServerOptions struct {
 	Listener net.Listener
 }
 
-func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
+func ProvideHTTPServer(opts ServerOptions, config setting.SettingsProvider, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore db.DB,
 	dataSourceRequestValidator validations.DataSourceRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
@@ -273,11 +273,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall,
 ) (*HTTPServer, error) {
+	cfg := config.Get()
 	web.Env = cfg.Env
 	m := web.New()
 
 	hs := &HTTPServer{
-		Cfg:                          cfg,
+		Cfg:                          config,
 		RouteRegister:                routeRegister,
 		bus:                          bus,
 		RenderService:                renderService,
@@ -373,7 +374,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
 		clientConfigProvider:         clientConfigProvider,
-		namespacer:                   request.GetNamespaceMapper(cfg),
+		namespacer:                   request.GetNamespaceMapper(config),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
 	}
@@ -400,24 +401,25 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
+	cfg := hs.Cfg.Get()
 	hs.context = ctx
 
 	hs.applyRoutes()
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
-	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
+	host := strings.TrimSuffix(strings.TrimPrefix(cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
+		Addr:        net.JoinHostPort(host, cfg.HTTPPort),
 		Handler:     hs.web,
-		ReadTimeout: hs.Cfg.ReadTimeout,
+		ReadTimeout: cfg.ReadTimeout,
 	}
-	switch hs.Cfg.Protocol {
+	switch cfg.Protocol {
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		if err := hs.configureTLS(); err != nil {
 			return err
 		}
-		if hs.Cfg.CertFile != "" && hs.Cfg.KeyFile != "" {
-			if hs.Cfg.CertWatchInterval > 0 {
+		if cfg.CertFile != "" && cfg.KeyFile != "" {
+			if cfg.CertWatchInterval > 0 {
 				hs.httpSrv.TLSConfig.GetCertificate = hs.GetCertificate
 				go hs.WatchAndUpdateCerts(ctx)
 				hs.log.Debug("HTTP Server certificates reload feature is enabled")
@@ -434,7 +436,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
-		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
+		cfg.Protocol, "subUrl", cfg.AppSubURL, "socket", cfg.SocketPath)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -449,7 +451,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	}()
 
-	switch hs.Cfg.Protocol {
+	switch cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
 		if err := hs.httpSrv.Serve(listener); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
@@ -467,7 +469,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			return err
 		}
 	default:
-		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
+		panic(fmt.Sprintf("Unhandled protocol %q", cfg.Protocol))
 	}
 
 	wg.Wait()
@@ -476,11 +478,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 }
 
 func (hs *HTTPServer) getListener() (net.Listener, error) {
+	cfg := hs.Cfg.Get()
 	if hs.Listener != nil {
 		return hs.Listener, nil
 	}
 
-	switch hs.Cfg.Protocol {
+	switch cfg.Protocol {
 	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
@@ -488,38 +491,39 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		}
 		return listener, nil
 	case setting.SocketScheme:
-		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: cfg.SocketPath, Net: "unix"})
 		if err != nil {
-			return nil, fmt.Errorf("failed to open listener for socket %s: %w", hs.Cfg.SocketPath, err)
+			return nil, fmt.Errorf("failed to open listener for socket %s: %w", cfg.SocketPath, err)
 		}
 
 		// Make socket writable by group
 		// nolint:gosec
-		if err := os.Chmod(hs.Cfg.SocketPath, os.FileMode(hs.Cfg.SocketMode)); err != nil {
-			return nil, fmt.Errorf("failed to change socket mode %d: %w", hs.Cfg.SocketMode, err)
+		if err := os.Chmod(cfg.SocketPath, os.FileMode(cfg.SocketMode)); err != nil {
+			return nil, fmt.Errorf("failed to change socket mode %d: %w", cfg.SocketMode, err)
 		}
 
 		// golang.org/pkg/os does not have chgrp
 		// Changing the gid of a file without privileges requires that the target group is in the group of the process and that the process is the file owner
-		if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
-			return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
+		if err := os.Chown(cfg.SocketPath, -1, cfg.SocketGid); err != nil {
+			return nil, fmt.Errorf("failed to change socket group id %d: %w", cfg.SocketGid, err)
 		}
 
 		return listener, nil
 	default:
-		hs.log.Error("Invalid protocol", "protocol", hs.Cfg.Protocol)
-		return nil, fmt.Errorf("invalid protocol %q", hs.Cfg.Protocol)
+		hs.log.Error("Invalid protocol", "protocol", cfg.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", cfg.Protocol)
 	}
 }
 
 func (hs *HTTPServer) selfSignedCert() ([]tls.Certificate, error) {
+	cfg := hs.Cfg.Get()
 	template := &x509.Certificate{
 		IsCA:                  true,
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1},
 		SerialNumber:          big.NewInt(1),
 		Subject: pkix.Name{
-			CommonName: hs.Cfg.Domain,
+			CommonName: cfg.Domain,
 		},
 		NotBefore: time.Now(),
 		NotAfter:  time.Now().AddDate(1, 0, 0),
@@ -537,7 +541,7 @@ func (hs *HTTPServer) selfSignedCert() ([]tls.Certificate, error) {
 	publickey := &privatekey.PublicKey
 
 	// create a self-signed certificate
-	var parent = template
+	parent := template
 	certBytes, err := x509.CreateCertificate(rand.Reader, template, parent, publickey, privatekey)
 	if err != nil {
 		return nil, fmt.Errorf("error generating tls self-signed certificate: %w", err)
@@ -566,8 +570,9 @@ func (hs *HTTPServer) selfSignedCert() ([]tls.Certificate, error) {
 }
 
 func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
+	cfg := hs.Cfg.Get()
 	// if we don't have either a cert or key specified, generate a self-signed certificate
-	if hs.Cfg.CertFile == "" && hs.Cfg.KeyFile == "" {
+	if cfg.CertFile == "" && cfg.KeyFile == "" {
 		return hs.selfSignedCert()
 	}
 
@@ -593,6 +598,7 @@ func (hs *HTTPServer) applyRoutes() {
 }
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
+	cfg := hs.Cfg.Get()
 	m := hs.web
 
 	m.Use(requestmeta.SetupRequestMetadata())
@@ -601,34 +607,34 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())
 
-	if hs.Cfg.EnableGzip {
+	if cfg.EnableGzip {
 		m.UseMiddleware(middleware.Gziper())
 	}
 
 	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")
+	hs.mapStatic(m, cfg.StaticRootPath, "build", "public/build")
+	hs.mapStatic(m, cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
+	hs.mapStatic(m, cfg.StaticRootPath, "robots.txt", "robots.txt")
+	hs.mapStatic(m, cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")
 
-	if hs.Cfg.ImageUploadProvider == "local" {
-		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
+	if cfg.ImageUploadProvider == "local" {
+		hs.mapStatic(m, cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
-	if len(hs.Cfg.CustomResponseHeaders) > 0 {
+	if len(cfg.CustomResponseHeaders) > 0 {
 		m.Use(middleware.AddCustomResponseHeaders(hs.Cfg))
 	}
 
 	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
-	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
-		m.SetURLPrefix(hs.Cfg.AppSubURL)
+	if cfg.ServeFromSubPath && cfg.AppSubURL != "" {
+		m.SetURLPrefix(cfg.AppSubURL)
 		m.UseMiddleware(middleware.SubPathRedirect(hs.Cfg))
 	}
 
-	m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
+	m.UseMiddleware(web.Renderer(filepath.Join(cfg.StaticRootPath, "views"), "[[", "]]"))
 
 	// These endpoints are used for monitoring the Grafana instance
 	// and should not be redirected or rejected.
@@ -642,15 +648,15 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
 
 	// needs to be after context handler
-	if hs.Cfg.EnforceDomain {
-		m.Use(middleware.ValidateHostHeader(hs.Cfg))
+	if cfg.EnforceDomain {
+		m.Use(middleware.ValidateHostHeader(cfg))
 	}
 	// handle action urls
 	m.UseMiddleware(middleware.ValidateActionUrl(hs.Cfg, hs.log))
 
 	m.Use(middleware.HandleNoCacheHeaders)
 
-	if hs.Cfg.CSPEnabled || hs.Cfg.CSPReportOnlyEnabled {
+	if cfg.CSPEnabled || cfg.CSPReportOnlyEnabled {
 		m.UseMiddleware(middleware.ContentSecurityPolicy(hs.Cfg, hs.log))
 	}
 
@@ -660,7 +666,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
-	if !hs.Cfg.MetricsEndpointEnabled {
+	cfg := hs.Cfg.Get()
+	if !cfg.MetricsEndpointEnabled {
 		return
 	}
 
@@ -668,7 +675,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 		return
 	}
 
-	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, cfg.MetricsEndpointBasicAuthUsername, cfg.MetricsEndpointBasicAuthPassword) {
 		ctx.Resp.Header().Set("WWW-Authenticate", `Basic realm="Grafana"`)
 		ctx.Resp.WriteHeader(http.StatusUnauthorized)
 		return
@@ -710,6 +717,7 @@ type healthResponse struct {
 // 200: healthResponse
 // 503: internalServerError
 func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
+	cfg := hs.Cfg.Get()
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
 	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
 		return
@@ -718,11 +726,11 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	data := healthResponse{
 		Database: "ok",
 	}
-	if !hs.Cfg.Anonymous.HideVersion {
-		data.Version = hs.Cfg.BuildVersion
-		data.Commit = hs.Cfg.BuildCommit
-		if hs.Cfg.EnterpriseBuildCommit != "NA" && hs.Cfg.EnterpriseBuildCommit != "" {
-			data.EnterpriseCommit = hs.Cfg.EnterpriseBuildCommit
+	if !cfg.Anonymous.HideVersion {
+		data.Version = cfg.BuildVersion
+		data.Commit = cfg.BuildCommit
+		if cfg.EnterpriseBuildCommit != "NA" && cfg.EnterpriseBuildCommit != "" {
+			data.EnterpriseCommit = cfg.EnterpriseBuildCommit
 		}
 	}
 
@@ -747,6 +755,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 }
 
 func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string, exclude ...string) {
+	cfg := hs.Cfg.Get()
 	headers := func(c *web.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
@@ -757,7 +766,7 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 		}
 	}
 
-	if hs.Cfg.Env == setting.Dev {
+	if cfg.Env == setting.Dev {
 		headers = func(c *web.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 		}
@@ -781,7 +790,8 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 }
 
 func (hs *HTTPServer) metricsEndpointBasicAuthEnabled() bool {
-	return hs.Cfg.MetricsEndpointBasicAuthUsername != "" && hs.Cfg.MetricsEndpointBasicAuthPassword != ""
+	cfg := hs.Cfg.Get()
+	return cfg.MetricsEndpointBasicAuthUsername != "" && cfg.MetricsEndpointBasicAuthPassword != ""
 }
 
 func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []uint16 {
@@ -816,27 +826,28 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 }
 
 func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
-	if hs.Cfg.CertFile == "" {
+	cfg := hs.Cfg.Get()
+	if cfg.CertFile == "" {
 		return nil, errors.New("cert_file cannot be empty when using HTTPS")
 	}
 
-	if hs.Cfg.KeyFile == "" {
+	if cfg.KeyFile == "" {
 		return nil, errors.New("cert_key cannot be empty when using HTTPS")
 	}
 
-	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return nil, fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
+	if _, err := os.Stat(cfg.CertFile); os.IsNotExist(err) {
+		return nil, fmt.Errorf(`cannot find SSL cert_file at %q`, cfg.CertFile)
 	}
 
-	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+	if _, err := os.Stat(cfg.KeyFile); os.IsNotExist(err) {
+		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, cfg.KeyFile)
 	}
 
-	if hs.Cfg.CertPassword != "" {
-		return handleEncryptedCertificates(hs.Cfg)
+	if cfg.CertPassword != "" {
+		return handleEncryptedCertificates(cfg)
 	}
 	// previous implementation
-	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+	tlsCert, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
 	}
@@ -901,19 +912,20 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 }
 
 func (hs *HTTPServer) configureTLS() error {
+	cfg := hs.Cfg.Get()
 	tlsCerts, err := hs.tlsCertificates()
 	if err != nil {
 		return err
 	}
 
-	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
+	minTlsVersion, err := util.TlsNameToVersion(cfg.MinTLSVersion)
 	if err != nil {
 		return err
 	}
 
-	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(hs.Cfg.Protocol))
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(cfg.Protocol))
 
-	hs.log.Info("HTTP Server TLS settings", "scheme", hs.Cfg.Protocol, "Min TLS Version", hs.Cfg.MinTLSVersion,
+	hs.log.Info("HTTP Server TLS settings", "scheme", cfg.Protocol, "Min TLS Version", cfg.MinTLSVersion,
 		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
 
 	tlsCfg := &tls.Config{
@@ -924,11 +936,11 @@ func (hs *HTTPServer) configureTLS() error {
 
 	hs.httpSrv.TLSConfig = tlsCfg
 
-	if hs.Cfg.Protocol == setting.HTTP2Scheme {
+	if cfg.Protocol == setting.HTTP2Scheme {
 		hs.httpSrv.TLSConfig.NextProtos = []string{"h2", "http/1.1"}
 	}
 
-	if hs.Cfg.Protocol == setting.HTTPSScheme {
+	if cfg.Protocol == setting.HTTPSScheme {
 		hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 	}
 
@@ -948,7 +960,8 @@ func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, er
 // of cert files is chosen. If fsnotify is added as direct dependency in future, then the implementation
 // can be revisited to align to fsnotify.
 func (hs *HTTPServer) WatchAndUpdateCerts(ctx context.Context) {
-	ticker := time.NewTicker(hs.Cfg.CertWatchInterval)
+	cfg := hs.Cfg.Get()
+	ticker := time.NewTicker(cfg.CertWatchInterval)
 
 	for {
 		select {
@@ -965,12 +978,13 @@ func (hs *HTTPServer) WatchAndUpdateCerts(ctx context.Context) {
 }
 
 func (hs *HTTPServer) updateCerts() error {
+	cfg := hs.Cfg.Get()
 	tlsInfo := &hs.tlsCerts
-	cMtime, err := getMtime(hs.Cfg.CertFile)
+	cMtime, err := getMtime(cfg.CertFile)
 	if err != nil {
 		return err
 	}
-	kMtime, err := getMtime(hs.Cfg.KeyFile)
+	kMtime, err := getMtime(cfg.KeyFile)
 	if err != nil {
 		return err
 	}
@@ -1000,13 +1014,14 @@ func getMtime(name string) (time.Time, error) {
 }
 
 func (hs *HTTPServer) updateMtimeOfServerCerts() error {
+	cfg := hs.Cfg.Get()
 	var err error
-	hs.tlsCerts.certMtime, err = getMtime(hs.Cfg.CertFile)
+	hs.tlsCerts.certMtime, err = getMtime(cfg.CertFile)
 	if err != nil {
 		return err
 	}
 
-	hs.tlsCerts.keyMtime, err = getMtime(hs.Cfg.KeyFile)
+	hs.tlsCerts.keyMtime, err = getMtime(cfg.KeyFile)
 	if err != nil {
 		return err
 	}

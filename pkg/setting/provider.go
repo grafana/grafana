@@ -8,9 +8,7 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-var (
-	ErrOperationNotPermitted = errors.New("operation not permitted")
-)
+var ErrOperationNotPermitted = errors.New("operation not permitted")
 
 type ValidationError struct {
 	Errors []error
@@ -94,20 +92,24 @@ type ReloadHandler interface {
 	ValidateSection(section Section) error
 }
 
-type SettingsBag map[string]map[string]string
-type SettingsRemovals map[string][]string
+type (
+	SettingsBag      map[string]map[string]string
+	SettingsRemovals map[string][]string
+)
 
-type VerboseSourceType string
-type VerboseSettingsBag map[string]map[string]map[VerboseSourceType]string
+type (
+	VerboseSourceType  string
+	VerboseSettingsBag map[string]map[string]map[VerboseSourceType]string
+)
 
 const (
 	DB     VerboseSourceType = "db"
 	System VerboseSourceType = "system"
 )
 
-func ProvideProvider(cfg *Cfg) *OSSImpl {
+func ProvideProvider(settingsProvider SettingsProvider) *OSSImpl {
 	return &OSSImpl{
-		Cfg: cfg,
+		Cfg: settingsProvider.Get(),
 	}
 }
 

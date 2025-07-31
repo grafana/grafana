@@ -35,9 +35,10 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 			"FavIcon":        "public/img/fav32.png",
 			"AppleTouchIcon": "public/img/apple-touch-icon.png",
 		}
-		if hs.Cfg.CSPEnabled {
+		cfg := hs.Cfg.Get()
+		if cfg.CSPEnabled {
 			data["CSPEnabled"] = true
-			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
+			data["CSPContent"] = middleware.ReplacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, c.RequestNonce)
 		}
 
 		c.HTML(http.StatusOK, "swagger", data)

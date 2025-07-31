@@ -137,7 +137,6 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 		Token:            cfg.Token,
 		TokenExchangeURL: cfg.TokenExchangeURL,
 	}, exchangeOpts...)
-
 	if err != nil {
 		return nil, err
 	}

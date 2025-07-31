@@ -18,9 +18,10 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 
 	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		// Create the org only:
-		ss.cfg.AutoAssignOrg = true
-		ss.cfg.DisableInitAdminCreation = true
-		ss.cfg.AutoAssignOrgId = 1
+		cfg := ss.settingsProvider.Get()
+		cfg.AutoAssignOrg = true
+		cfg.DisableInitAdminCreation = true
+		cfg.AutoAssignOrgId = 1
 		createdOrgID, err := ss.getOrCreateOrg(sess, mainOrgName)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), createdOrgID)

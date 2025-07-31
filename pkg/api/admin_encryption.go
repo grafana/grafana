@@ -25,26 +25,28 @@ func (hs *HTTPServer) AdminReEncryptEncryptionKeys(c *contextmodel.ReqContext) r
 }
 
 func (hs *HTTPServer) AdminReEncryptSecrets(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	success, err := hs.SecretsMigrator.ReEncryptSecrets(c.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to re-encrypt secrets", err)
 	}
 
 	if !success {
-		return response.Error(http.StatusPartialContent, fmt.Sprintf("Something unexpected happened - %s", hs.Cfg.UserFacingDefaultError), err)
+		return response.Error(http.StatusPartialContent, fmt.Sprintf("Something unexpected happened - %s", cfg.UserFacingDefaultError), err)
 	}
 
 	return response.Respond(http.StatusOK, "Secrets re-encrypted successfully")
 }
 
 func (hs *HTTPServer) AdminRollbackSecrets(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	success, err := hs.SecretsMigrator.RollBackSecrets(c.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to rollback secrets", err)
 	}
 
 	if !success {
-		return response.Error(http.StatusPartialContent, fmt.Sprintf("Something unexpected happened - %s", hs.Cfg.UserFacingDefaultError), err)
+		return response.Error(http.StatusPartialContent, fmt.Sprintf("Something unexpected happened - %s", cfg.UserFacingDefaultError), err)
 	}
 
 	return response.Respond(http.StatusOK, "Secrets rolled back successfully")

@@ -35,11 +35,11 @@ var (
 )
 
 type legacyStorage struct {
-	service        folder.Service
-	namespacer     request.NamespaceMapper
-	tableConverter rest.TableConvertor
-	cfg            *setting.Cfg
-	features       featuremgmt.FeatureToggles
+	service          folder.Service
+	namespacer       request.NamespaceMapper
+	tableConverter   rest.TableConvertor
+	settingsProvider setting.SettingsProvider
+	features         featuremgmt.FeatureToggles
 }
 
 func (s *legacyStorage) New() runtime.Object {

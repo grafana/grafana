@@ -37,17 +37,17 @@ type TestApiKey struct {
 	ServiceAccountID *int64
 }
 
-func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser TestUser) *user.User {
+func SetupUserServiceAccount(t *testing.T, db db.DB, settingsProvider setting.SettingsProvider, testUser TestUser) *user.User {
 	role := string(org.RoleViewer)
 	if testUser.Role != "" {
 		role = testUser.Role
 	}
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, settingsProvider)
+	orgService, err := orgimpl.ProvideService(db, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -68,7 +68,7 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 	return u1
 }
 
-func SetupApiKey(t *testing.T, store db.DB, cfg *setting.Cfg, testKey TestApiKey) *apikey.APIKey {
+func SetupApiKey(t *testing.T, store db.DB, settingsProvider setting.SettingsProvider, testKey TestApiKey) *apikey.APIKey {
 	role := org.RoleViewer
 	if testKey.Role != "" {
 		role = testKey.Role
@@ -88,7 +88,7 @@ func SetupApiKey(t *testing.T, store db.DB, cfg *setting.Cfg, testKey TestApiKey
 	}
 
 	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, cfg, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(store, settingsProvider, quotaService)
 	require.NoError(t, err)
 	key, err := apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
@@ -108,10 +108,10 @@ func SetupApiKey(t *testing.T, store db.DB, cfg *setting.Cfg, testKey TestApiKey
 	return key
 }
 
-func SetupApiKeys(t *testing.T, store db.DB, cfg *setting.Cfg, testKeys []TestApiKey) []*apikey.APIKey {
+func SetupApiKeys(t *testing.T, store db.DB, settingsProvider setting.SettingsProvider, testKeys []TestApiKey) []*apikey.APIKey {
 	result := make([]*apikey.APIKey, len(testKeys))
 	for i, testKey := range testKeys {
-		result[i] = SetupApiKey(t, store, cfg, testKey)
+		result[i] = SetupApiKey(t, store, settingsProvider, testKey)
 	}
 
 	return result
@@ -119,14 +119,14 @@ func SetupApiKeys(t *testing.T, store db.DB, cfg *setting.Cfg, testKeys []TestAp
 
 // SetupUsersServiceAccounts creates in "test org" all users or service accounts passed in parameter
 // To achieve this, it sets the AutoAssignOrg and AutoAssignOrgId settings.
-func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, testUsers []TestUser) (users []user.User, orgID int64) {
+func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, settingsProvider setting.SettingsProvider, testUsers []TestUser) (users []user.User, orgID int64) {
 	role := string(org.RoleNone)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
-	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(sqlStore, settingsProvider)
+	orgService, err := orgimpl.ProvideService(sqlStore, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		sqlStore, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -136,6 +136,7 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 	})
 	require.NoError(t, err)
 
+	cfg := settingsProvider.Get()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(org.ID)
 

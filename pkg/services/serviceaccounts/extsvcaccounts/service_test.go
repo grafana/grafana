@@ -26,9 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	autoAssignOrgID = int64(2)
-)
+var autoAssignOrgID = int64(2)
 
 type TestEnv struct {
 	S        *ExtSvcAccountsService
@@ -53,7 +51,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	env.S = &ExtSvcAccountsService{
 		enabled: true,
 		acSvc: acimpl.ProvideOSSService(
-			cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
+			setting.ProvideService(cfg), env.AcStore, &resourcepermissions.FakeActionSetSvc{},
 			localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil,
 			permreg.ProvidePermissionRegistry(), nil),
 		defaultOrgID: autoAssignOrgID,

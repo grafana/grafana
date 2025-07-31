@@ -29,7 +29,7 @@ type IndexViewData struct {
 	CSPEnabled           bool
 	IsDevelopmentEnv     bool
 
-	Config  *setting.Cfg
+	Config  setting.SettingsProvider
 	License licensing.Licensing
 
 	AppSubUrl    string
@@ -52,7 +52,8 @@ var (
 	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProvider, error) {
+func NewIndexProvider(settingsProvider setting.SettingsProvider, license licensing.Licensing) (*IndexProvider, error) {
+	cfg := settingsProvider.Get()
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
@@ -66,7 +67,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProv
 			AppSubUrl:    cfg.AppSubURL, // Based on the request?
 			BuildVersion: cfg.BuildVersion,
 			BuildCommit:  cfg.BuildCommit,
-			Config:       cfg,
+			Config:       settingsProvider,
 			License:      license,
 
 			CSPEnabled:           cfg.CSPEnabled,

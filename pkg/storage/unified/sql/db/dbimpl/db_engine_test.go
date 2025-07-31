@@ -25,7 +25,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		dbSection.Key("user").SetValue("user")
 		dbSection.Key("password").SetValue("password")
 
-		engine, err := newResourceDBProvider(nil, cfg, nil)
+		engine, err := newResourceDBProvider(nil, setting.ProvideService(cfg), nil)
 		require.NoError(t, err)
 		require.NotNil(t, engine)
 		require.Equal(t, dbTypeMySQL, engine.engine.Dialect().DriverName())
@@ -41,7 +41,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		dbSection.Key("user").SetValue("user")
 		dbSection.Key("password").SetValue("password")
 
-		engine, err := newResourceDBProvider(nil, cfg, nil)
+		engine, err := newResourceDBProvider(nil, setting.ProvideService(cfg), nil)
 		require.NoError(t, err)
 		require.NotNil(t, engine)
 		require.Equal(t, dbTypePostgres, engine.engine.Dialect().DriverName())
@@ -54,7 +54,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		dbSection.Key("type").SetValue(dbTypeSQLite)
 		dbSection.Key("path").SetValue(":memory:")
 
-		engine, err := newResourceDBProvider(nil, cfg, nil)
+		engine, err := newResourceDBProvider(nil, setting.ProvideService(cfg), nil)
 		require.NoError(t, err)
 		require.NotNil(t, engine)
 		require.Equal(t, dbTypeSQLite, engine.engine.Dialect().DriverName())
@@ -64,7 +64,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		t.Parallel()
 		cfg := setting.NewCfg()
 
-		engine, err := newResourceDBProvider(nil, cfg, nil)
+		engine, err := newResourceDBProvider(nil, setting.ProvideService(cfg), nil)
 		require.Error(t, err)
 		require.Nil(t, engine)
 		require.Contains(t, err.Error(), "no database type specified")
@@ -76,7 +76,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		dbSection := cfg.SectionWithEnvOverrides("database")
 		dbSection.Key("type").SetValue("unknown")
 
-		engine, err := newResourceDBProvider(nil, cfg, nil)
+		engine, err := newResourceDBProvider(nil, setting.ProvideService(cfg), nil)
 		require.Error(t, err)
 		require.Nil(t, engine)
 		require.Contains(t, err.Error(), "unknown")
@@ -98,9 +98,9 @@ func TestDatabaseConfigOverridenByEnvVariable(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	require.NoError(t, os.MkdirAll(filepath.Join(tmpDir, "conf"), 0750))
+	require.NoError(t, os.MkdirAll(filepath.Join(tmpDir, "conf"), 0o750))
 	// We need to include database.url in defaults, otherwise it won't be overridden by environment variable!
-	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "conf/defaults.ini"), []byte("[log.console]\nlevel =\n[database]\nurl = \n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "conf/defaults.ini"), []byte("[log.console]\nlevel =\n[database]\nurl = \n"), 0o644))
 
 	dbConfig := `
 [database]
@@ -110,7 +110,7 @@ name = grafana
 user = user
 password = password
 `
-	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "conf/custom.ini"), []byte(dbConfig), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "conf/custom.ini"), []byte(dbConfig), 0o644))
 
 	// Override database URL
 	require.NoError(t, os.Setenv("GF_DATABASE_URL", "mysql://gf:pwd@overthere:3306/grafana"))
@@ -118,7 +118,7 @@ password = password
 	cfg := setting.NewCfg()
 	require.NoError(t, cfg.Load(setting.CommandLineArgs{HomePath: tmpDir}))
 
-	engine, err := newResourceDBProvider(nil, cfg, nil)
+	engine, err := newResourceDBProvider(nil, setting.ProvideService(cfg), nil)
 	require.NoError(t, err)
 	require.NotNil(t, engine)
 	// Verify that GF_DATABASE_URL value is used.

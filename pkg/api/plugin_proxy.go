@@ -21,9 +21,10 @@ var (
 
 func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 	once.Do(func() {
+		cfg := hs.Cfg.Get()
 		pluginProxyTransport = &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: hs.Cfg.PluginsAppsSkipVerifyTLS,
+				InsecureSkipVerify: cfg.PluginsAppsSkipVerifyTLS,
 				Renegotiation:      tls.RenegotiateFreelyAsClient,
 			},
 			Proxy: http.ProxyFromEnvironment,

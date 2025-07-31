@@ -49,11 +49,12 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 // 200: getSharingOptionsResponse
 // 401: unauthorisedError
 func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
+	cfg := hs.Cfg.Get()
 	c.JSON(http.StatusOK, util.DynMap{
-		"snapshotEnabled":      hs.Cfg.SnapshotEnabled,
-		"externalSnapshotURL":  hs.Cfg.ExternalSnapshotUrl,
-		"externalSnapshotName": hs.Cfg.ExternalSnapshotName,
-		"externalEnabled":      hs.Cfg.ExternalEnabled,
+		"snapshotEnabled":      cfg.SnapshotEnabled,
+		"externalSnapshotURL":  cfg.ExternalSnapshotUrl,
+		"externalSnapshotName": cfg.ExternalSnapshotName,
+		"externalEnabled":      cfg.ExternalEnabled,
 	})
 }
 
@@ -69,6 +70,7 @@ func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
+	cfg := hs.Cfg.Get()
 	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
@@ -76,7 +78,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 	}
 
 	// Do not check permissions when the instance snapshot public mode is enabled
-	if !hs.Cfg.SnapshotPublicMode {
+	if !cfg.SnapshotPublicMode {
 		evaluator := ac.EvalAll(ac.EvalPermission(dashboards.ActionSnapshotsCreate), ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid"))))
 		if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
 			c.JsonApiErr(http.StatusForbidden, "forbidden", err)
@@ -85,10 +87,10 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 	}
 
 	dashboardsnapshots.CreateDashboardSnapshot(c, dashboardsnapshot.SnapshotSharingOptions{
-		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
-		ExternalEnabled:      hs.Cfg.ExternalEnabled,
-		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,
-		ExternalSnapshotURL:  hs.Cfg.ExternalSnapshotUrl,
+		SnapshotsEnabled:     cfg.SnapshotEnabled,
+		ExternalEnabled:      cfg.ExternalEnabled,
+		ExternalSnapshotName: cfg.ExternalSnapshotName,
+		ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
 	}, cmd, hs.dashboardsnapshotsService)
 }
 
@@ -103,7 +105,8 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
-	if !hs.Cfg.SnapshotEnabled {
+	cfg := hs.Cfg.Get()
+	if !cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}
@@ -155,7 +158,8 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqContext) response.Response {
-	if !hs.Cfg.SnapshotEnabled {
+	cfg := hs.Cfg.Get()
+	if !cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}
@@ -188,7 +192,8 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
-	if !hs.Cfg.SnapshotEnabled {
+	cfg := hs.Cfg.Get()
+	if !cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}
@@ -258,7 +263,8 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 // 200: searchDashboardSnapshotsResponse
 // 500: internalServerError
 func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) response.Response {
-	if !hs.Cfg.SnapshotEnabled {
+	cfg := hs.Cfg.Get()
+	if !cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}

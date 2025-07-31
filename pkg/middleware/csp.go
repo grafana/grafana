@@ -15,8 +15,9 @@ import (
 )
 
 // ContentSecurityPolicy sets the configured Content-Security-Policy and/or Content-Security-Policy-Report-Only header(s) in the response.
-func ContentSecurityPolicy(cfg *setting.Cfg, logger log.Logger) func(http.Handler) http.Handler {
+func ContentSecurityPolicy(settingsProvider setting.SettingsProvider, logger log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
+		cfg := settingsProvider.Get()
 		if cfg.CSPEnabled {
 			next = cspMiddleware(cfg, next, logger)
 		}

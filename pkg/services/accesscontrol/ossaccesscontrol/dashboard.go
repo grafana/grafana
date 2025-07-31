@@ -23,9 +23,11 @@ type DashboardPermissionsService struct {
 	*resourcepermissions.Service
 }
 
-var DashboardViewActions = []string{dashboards.ActionDashboardsRead}
-var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
-var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
+var (
+	DashboardViewActions  = []string{dashboards.ActionDashboardsRead}
+	DashboardEditActions  = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
+	DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
+)
 
 func getDashboardViewActions(features featuremgmt.FeatureToggles) []string {
 	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
@@ -168,7 +170,7 @@ func ProvideDashboardPermissions(
 		RoleGroup:      "Dashboards",
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(setting.ProvideService(cfg), options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}

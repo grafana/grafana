@@ -107,10 +107,11 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	fakeViewIndex(t)
 
 	sc := setupScenarioContext(t, "/login")
-	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	hs := &HTTPServer{
-		Cfg:              cfg,
+		Cfg:              settingsProvider,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
@@ -139,8 +140,8 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
 		Path:     expCookiePath,
-		Secure:   hs.Cfg.CookieSecure,
-		SameSite: hs.Cfg.CookieSameSiteMode,
+		Secure:   cfg.CookieSecure,
+		SameSite: cfg.CookieSameSiteMode,
 	}
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
@@ -155,16 +156,17 @@ func TestLoginViewRedirect(t *testing.T) {
 	fakeSetIndexViewData(t)
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
-	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	hs := &HTTPServer{
-		Cfg:              cfg,
+		Cfg:              settingsProvider,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
 		Features:         featuremgmt.WithFeatures(),
 		log:              log.NewNopLogger(),
 	}
-	hs.Cfg.CookieSecure = true
+	cfg.CookieSecure = true
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
@@ -273,12 +275,13 @@ func TestLoginViewRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		hs.Cfg.AppURL = c.appURL
-		hs.Cfg.AppSubURL = c.appSubURL
+		cfg := hs.Cfg.Get()
+		cfg.AppURL = c.appURL
+		cfg.AppSubURL = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
-			if len(hs.Cfg.AppSubURL) > 0 {
-				expCookiePath = hs.Cfg.AppSubURL
+			if len(cfg.AppSubURL) > 0 {
+				expCookiePath = cfg.AppSubURL
 			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
@@ -286,8 +289,8 @@ func TestLoginViewRedirect(t *testing.T) {
 				Value:    c.url,
 				HttpOnly: true,
 				Path:     expCookiePath,
-				Secure:   hs.Cfg.CookieSecure,
-				SameSite: hs.Cfg.CookieSameSiteMode,
+				Secure:   cfg.CookieSecure,
+				SameSite: cfg.CookieSameSiteMode,
 			}
 			sc.m.Get(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
@@ -327,9 +330,11 @@ func TestLoginPostRedirect(t *testing.T) {
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	hs := &HTTPServer{
 		log:          log.NewNopLogger(),
-		Cfg:          setting.NewCfg(),
+		Cfg:          settingsProvider,
 		HooksService: &hooks.HooksService{},
 		License:      &licensing.OSSLicensingService{},
 		authnService: &authntest.FakeService{
@@ -338,7 +343,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Features:         featuremgmt.WithFeatures(),
 	}
-	hs.Cfg.CookieSecure = true
+	cfg.CookieSecure = true
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Header.Set("Content-Type", "application/json")
@@ -431,16 +436,17 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		hs.Cfg.AppURL = c.appURL
-		hs.Cfg.AppSubURL = c.appSubURL
+		cfg := hs.Cfg.Get()
+		cfg.AppURL = c.appURL
+		cfg.AppSubURL = c.appSubURL
 
 		t.Run(c.desc, func(t *testing.T) {
 			if c.desc == "grafana invalid relative url starting with subpath" {
 				fmt.Println()
 			}
 			expCookiePath := "/"
-			if len(hs.Cfg.AppSubURL) > 0 {
-				expCookiePath = hs.Cfg.AppSubURL
+			if len(cfg.AppSubURL) > 0 {
+				expCookiePath = cfg.AppSubURL
 			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
@@ -448,8 +454,8 @@ func TestLoginPostRedirect(t *testing.T) {
 				Value:    c.url,
 				HttpOnly: true,
 				Path:     expCookiePath,
-				Secure:   hs.Cfg.CookieSecure,
-				SameSite: hs.Cfg.CookieSameSiteMode,
+				Secure:   cfg.CookieSecure,
+				SameSite: cfg.CookieSameSiteMode,
 			}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("POST", sc.url, cookie).exec()
@@ -481,7 +487,8 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	fakeSetIndexViewData(t)
 
 	sc := setupScenarioContext(t, "/login")
-	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	mock := &mockSocialService{
 		oAuthInfo: &social.OAuthInfo{
 			ClientId:     "fake",
@@ -494,7 +501,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	}
 	hs := &HTTPServer{
 		authnService:     &authntest.FakeService{},
-		Cfg:              cfg,
+		Cfg:              settingsProvider,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    mock,
@@ -506,7 +513,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		return response.Empty(http.StatusOK)
 	})
 
-	hs.Cfg.OAuthAutoLogin = true
+	cfg.OAuthAutoLogin = true
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
@@ -521,8 +528,10 @@ func TestLoginInternal(t *testing.T) {
 
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	hs := &HTTPServer{
-		Cfg:      setting.NewCfg(),
+		Cfg:      settingsProvider,
 		License:  &licensing.OSSLicensingService{},
 		log:      log.New("test"),
 		Features: featuremgmt.WithFeatures(),
@@ -534,7 +543,7 @@ func TestLoginInternal(t *testing.T) {
 		return response.Empty(http.StatusOK)
 	})
 
-	hs.Cfg.OAuthAutoLogin = true
+	cfg.OAuthAutoLogin = true
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
@@ -581,11 +590,12 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	}
 
 	sc := setupScenarioContext(t, "/login")
-	sc.cfg.LoginCookieName = loginCookieName
-	sc.cfg.OAuthAutoLogin = true
+	cfg := sc.settingsProvider.Get()
+	cfg.LoginCookieName = loginCookieName
+	cfg.OAuthAutoLogin = true
 	hs := &HTTPServer{
-		Cfg:              sc.cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
+		Cfg:              sc.settingsProvider,
+		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
@@ -603,8 +613,8 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 		return response.Empty(http.StatusOK)
 	})
 
-	sc.cfg.AuthProxy.Enabled = true
-	sc.cfg.AuthProxy.EnableLoginToken = true
+	cfg.AuthProxy.Enabled = true
+	cfg.AuthProxy.EnableLoginToken = true
 
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
@@ -622,10 +632,11 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	fakeSetIndexViewData(t)
 
 	sc := setupScenarioContext(t, "/login")
-	sc.cfg.LoginCookieName = loginCookieName
+	cfg := sc.settingsProvider.Get()
+	cfg.LoginCookieName = loginCookieName
 	hs := &HTTPServer{
-		Cfg:              sc.cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
+		Cfg:              sc.settingsProvider,
+		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
@@ -643,8 +654,8 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		return response.Empty(http.StatusOK)
 	})
 
-	sc.cfg.AuthProxy.Enabled = true
-	sc.cfg.AuthProxy.EnableLoginToken = enableLoginToken
+	cfg.AuthProxy.Enabled = true
+	cfg.AuthProxy.EnableLoginToken = enableLoginToken
 
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
@@ -665,8 +676,8 @@ func TestLogoutSaml(t *testing.T) {
 				ExpectedIsSingleLogoutEnabled: true,
 			},
 		},
-		Cfg:              sc.cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
+		Cfg:              sc.settingsProvider,
+		SettingsProvider: &setting.OSSImpl{Cfg: sc.settingsProvider.Get()},
 		License:          license,
 		SocialService:    &mockSocialService{},
 		Features:         featuremgmt.WithFeatures(),
@@ -692,7 +703,7 @@ func TestLogoutSaml(t *testing.T) {
 func TestIsExternallySynced(t *testing.T) {
 	testcases := []struct {
 		name                string
-		cfg                 *setting.Cfg
+		settingsProvider    setting.SettingsProvider
 		provider            string
 		enabledAuthnClients []string
 		authnClientConfig   authn.SSOClientConfig
@@ -701,7 +712,7 @@ func TestIsExternallySynced(t *testing.T) {
 		// Same for all of the OAuth providers
 		{
 			name:                "AzureAD external user should return that it is externally synced",
-			cfg:                 &setting.Cfg{},
+			settingsProvider:    setting.ProvideService(setting.NewCfg()),
 			provider:            loginservice.AzureADAuthModule,
 			enabledAuthnClients: []string{authn.ClientWithPrefix("azuread")},
 			authnClientConfig: &authntest.FakeSSOClientConfig{
@@ -711,7 +722,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		{
 			name:                "AzureAD external user should return that it is not externally synced when org role sync is set",
-			cfg:                 &setting.Cfg{},
+			settingsProvider:    setting.ProvideService(setting.NewCfg()),
 			provider:            loginservice.AzureADAuthModule,
 			enabledAuthnClients: []string{authn.ClientWithPrefix(strings.TrimPrefix(loginservice.AzureADAuthModule, "oauth_"))},
 			authnClientConfig: &authntest.FakeSSOClientConfig{
@@ -721,7 +732,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		{
 			name:                "AzureAD external user should return that it is not externally synced when the provider is not enabled",
-			cfg:                 &setting.Cfg{},
+			settingsProvider:    setting.ProvideService(setting.NewCfg()),
 			enabledAuthnClients: []string{},
 			authnClientConfig: &authntest.FakeSSOClientConfig{
 				ExpectedIsSkipOrgRoleSyncEnabled: false,
@@ -732,7 +743,7 @@ func TestIsExternallySynced(t *testing.T) {
 		// saml
 		{
 			name:                "SAML synced user should return that it is not externally synced when the provider is disabled",
-			cfg:                 &setting.Cfg{},
+			settingsProvider:    setting.ProvideService(setting.NewCfg()),
 			provider:            loginservice.SAMLAuthModule,
 			enabledAuthnClients: []string{},
 			authnClientConfig: &authntest.FakeSSOClientConfig{
@@ -742,7 +753,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		{
 			name:                "SAML synced user should return that it is externally synced",
-			cfg:                 &setting.Cfg{},
+			settingsProvider:    setting.ProvideService(setting.NewCfg()),
 			provider:            loginservice.SAMLAuthModule,
 			enabledAuthnClients: []string{authn.ClientSAML},
 			authnClientConfig: &authntest.FakeSSOClientConfig{
@@ -752,7 +763,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		{
 			name:                "SAML synced user should return that it is not externally synced when org role sync is set",
-			cfg:                 &setting.Cfg{},
+			settingsProvider:    setting.ProvideService(setting.NewCfg()),
 			provider:            loginservice.SAMLAuthModule,
 			enabledAuthnClients: []string{authn.ClientSAML},
 			authnClientConfig: &authntest.FakeSSOClientConfig{
@@ -762,36 +773,36 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// ldap
 		{
-			name:     "LDAP synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: false},
-			provider: loginservice.LDAPAuthModule,
-			expected: true,
+			name:             "LDAP synced user should return that it is externally synced",
+			settingsProvider: setting.ProvideService(&setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: false}),
+			provider:         loginservice.LDAPAuthModule,
+			expected:         true,
 		},
 		{
-			name:     "LDAP synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: true},
-			provider: loginservice.LDAPAuthModule,
-			expected: false,
+			name:             "LDAP synced user should return that it is not externally synced when org role sync is set",
+			settingsProvider: setting.ProvideService(&setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: true}),
+			provider:         loginservice.LDAPAuthModule,
+			expected:         false,
 		},
 		// jwt
 		{
-			name:     "JWT synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: false}},
-			provider: loginservice.JWTModule,
-			expected: true,
+			name:             "JWT synced user should return that it is externally synced",
+			settingsProvider: setting.ProvideService(&setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: false}}),
+			provider:         loginservice.JWTModule,
+			expected:         true,
 		},
 		{
-			name:     "JWT synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: true}},
-			provider: loginservice.JWTModule,
-			expected: false,
+			name:             "JWT synced user should return that it is not externally synced when org role sync is set",
+			settingsProvider: setting.ProvideService(&setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: true}}),
+			provider:         loginservice.JWTModule,
+			expected:         false,
 		},
 		// IsProvider test
 		{
-			name:     "If no provider enabled should return false",
-			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: false, SkipOrgRoleSync: true}},
-			provider: loginservice.JWTModule,
-			expected: false,
+			name:             "If no provider enabled should return false",
+			settingsProvider: setting.ProvideService(&setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: false, SkipOrgRoleSync: true}}),
+			provider:         loginservice.JWTModule,
+			expected:         false,
 		},
 	}
 
@@ -804,7 +815,7 @@ func TestIsExternallySynced(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider))
+			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.settingsProvider, tc.provider))
 		})
 	}
 }
@@ -850,7 +861,7 @@ func TestIsProviderEnabled(t *testing.T) {
 					EnabledClients: tc.enabledAuthnClients,
 				},
 			}
-			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider))
+			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.ProvideService(setting.NewCfg()), tc.provider))
 		})
 	}
 }

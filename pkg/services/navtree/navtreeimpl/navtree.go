@@ -29,7 +29,7 @@ import (
 )
 
 type ServiceImpl struct {
-	cfg                  *setting.Cfg
+	settingsProvider     setting.SettingsProvider
 	log                  log.Logger
 	accessControl        ac.AccessControl
 	authnService         authn.Service
@@ -57,11 +57,12 @@ type NavigationAppConfig struct {
 	IsNew      bool
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
+func ProvideService(settingsProvider setting.SettingsProvider, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
-	license licensing.Licensing, authnService authn.Service) navtree.Service {
+	license licensing.Licensing, authnService authn.Service,
+) navtree.Service {
 	service := &ServiceImpl{
-		cfg:                  cfg,
+		settingsProvider:     settingsProvider,
 		log:                  log.New("navtree service"),
 		accessControl:        accessControl,
 		authnService:         authnService,
@@ -83,6 +84,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 
 //nolint:gocyclo
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
+	cfg := s.settingsProvider.Get()
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 	ctx := c.Req.Context()
@@ -102,7 +104,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			SortWeight:     navtree.WeightSavedItems,
 			Children:       starredItemsLinks,
 			EmptyMessageId: "starred-empty",
-			Url:            s.cfg.AppSubURL + "/dashboards?starred",
+			Url:            cfg.AppSubURL + "/dashboards?starred",
 		})
 	}
 
@@ -117,7 +119,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			Id:         navtree.NavIDDashboards,
 			SubTitle:   "Create and manage dashboards to visualize your data",
 			Icon:       "apps",
-			Url:        s.cfg.AppSubURL + "/dashboards",
+			Url:        cfg.AppSubURL + "/dashboards",
 			SortWeight: navtree.WeightDashboard,
 			Children:   dashboardChildLinks,
 		}
@@ -125,14 +127,14 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(dashboardLink)
 	}
 
-	if s.cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+	if cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
 			Id:         navtree.NavIDExplore,
 			SubTitle:   "Explore your data",
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,
-			Url:        s.cfg.AppSubURL + "/explore",
+			Url:        cfg.AppSubURL + "/explore",
 		})
 	}
 
@@ -143,16 +145,16 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
 			Icon:       "drilldown",
 			SortWeight: navtree.WeightDrilldown,
-			Url:        s.cfg.AppSubURL + "/drilldown",
+			Url:        cfg.AppSubURL + "/drilldown",
 		})
 	}
 
-	if s.cfg.ProfileEnabled && c.IsSignedIn {
+	if cfg.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
-	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.GetOrgID()]
-	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
+	_, uaIsDisabledForOrg := cfg.UnifiedAlerting.DisabledOrgs[c.GetOrgID()]
+	uaVisibleForOrg := cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
 	if uaVisibleForOrg {
 		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
@@ -196,7 +198,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			SortWeight:     navtree.WeightBookmarks,
 			Children:       []*navtree.NavLink{},
 			EmptyMessageId: "bookmarks-empty",
-			Url:            s.cfg.AppSubURL + "/bookmarks",
+			Url:            cfg.AppSubURL + "/bookmarks",
 		})
 	}
 
@@ -204,11 +206,12 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 }
 
 func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Preference) *navtree.NavLink {
-	homeUrl := s.cfg.AppSubURL + "/"
-	if !c.IsSignedIn && !s.cfg.Anonymous.Enabled {
-		homeUrl = s.cfg.AppSubURL + "/login"
+	cfg := s.settingsProvider.Get()
+	homeUrl := cfg.AppSubURL + "/"
+	if !c.IsSignedIn && !cfg.Anonymous.Enabled {
+		homeUrl = cfg.AppSubURL + "/login"
 	} else {
-		homePage := s.cfg.HomePage
+		homePage := cfg.HomePage
 
 		if prefs.HomeDashboardUID == "" && len(homePage) > 0 {
 			homeUrl = homePage
@@ -240,11 +243,13 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 }
 
 func isSupportBundlesEnabled(s *ServiceImpl) bool {
-	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
+	cfg := s.settingsProvider.Get()
+	return cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
-	if s.cfg.HelpEnabled {
+	cfg := s.settingsProvider.Get()
+	if cfg.HelpEnabled {
 		// The version subtitle is set later by NavTree.ApplyHelpVersion
 		helpNode := &navtree.NavLink{
 			Text:       "Help",
@@ -283,21 +288,22 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	if c.GetLogin() != c.GetName() {
 		login = c.GetLogin()
 	}
-	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.GetEmail())
+	gravatarURL := dtos.GetGravatarUrl(s.settingsProvider, c.GetEmail())
 
+	cfg := s.settingsProvider.Get()
 	children := []*navtree.NavLink{
 		{
-			Text: "Profile", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
+			Text: "Profile", Id: "profile/settings", Url: cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
 		},
 	}
 
 	children = append(children, &navtree.NavLink{
-		Text: "Notification history", Id: "profile/notifications", Url: s.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
+		Text: "Notification history", Id: "profile/notifications", Url: cfg.AppSubURL + "/profile/notifications", Icon: "bell",
 	})
 
-	if s.cfg.AddChangePasswordLink() {
+	if cfg.AddChangePasswordLink() {
 		children = append(children, &navtree.NavLink{
-			Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",
+			Text: "Change password", Id: "profile/password", Url: cfg.AppSubURL + "/profile/password",
 			Icon: "lock",
 		})
 	}
@@ -307,7 +313,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
-		Url:        s.cfg.AppSubURL + "/profile",
+		Url:        cfg.AppSubURL + "/profile",
 		SortWeight: navtree.WeightProfile,
 		Children:   children,
 		RoundIcon:  true,
@@ -366,19 +372,20 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 	dashboardChildNavs := []*navtree.NavLink{}
 
+	cfg := s.settingsProvider.Get()
 	if c.IsSignedIn {
 		if c.HasRole(org.RoleViewer) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
 		}
 
-		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
+		if cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
 				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
 				Id:       "dashboards/snapshots",
-				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
+				Url:      cfg.AppSubURL + "/dashboard/snapshots",
 				Icon:     "camera",
 			})
 		}
@@ -387,15 +394,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Text:     "Library panels",
 			SubTitle: "Reusable panels that can be added to multiple dashboards",
 			Id:       "dashboards/library-panels",
-			Url:      s.cfg.AppSubURL + "/library-panels",
+			Url:      cfg.AppSubURL + "/library-panels",
 			Icon:     "library-panel",
 		})
 
-		if s.cfg.PublicDashboardsEnabled {
+		if cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
-				Url:  s.cfg.AppSubURL + "/dashboard/public",
+				Url:  cfg.AppSubURL + "/dashboard/public",
 				Icon: "library-panel",
 			})
 		}
@@ -405,19 +412,19 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
 				Id:       "dashboards/recently-deleted",
-				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
+				Url:      cfg.AppSubURL + "/dashboard/recently-deleted",
 			})
 		}
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
+			Text: "New dashboard", Icon: "plus", Url: cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
 		})
 
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "Import dashboard", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
-			Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, IsCreateAction: true,
+			Url: cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, IsCreateAction: true,
 		})
 	}
 
@@ -428,9 +435,10 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
+	cfg := s.settingsProvider.Get()
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+			Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 		})
 	}
 
@@ -449,7 +457,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
+			Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
 	}
@@ -462,7 +470,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
 	)) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
 	if hasAccess(ac.EvalAny(
@@ -470,11 +478,11 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingInstancesExternalRead),
 		ac.EvalPermission(ac.ActionAlertingSilencesRead),
 	)) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Silences", SubTitle: "Stop notifications from one or more alerting rules", Id: "silences", Url: s.cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Silences", SubTitle: "Stop notifications from one or more alerting rules", Id: "silences", Url: cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
@@ -483,7 +491,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 				Text:     "History",
 				SubTitle: "View a history of all alert events generated by your Grafana-managed alert rules. All alert events are displayed regardless of whether silences or mute timings are set.",
 				Id:       "alerts-history",
-				Url:      s.cfg.AppSubURL + "/alerting/history",
+				Url:      cfg.AppSubURL + "/alerting/history",
 				Icon:     "history",
 			})
 		}
@@ -493,13 +501,13 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			Text:     "Recently deleted",
 			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
 			Id:       "alerts/recently-deleted",
-			Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
+			Url:      cfg.AppSubURL + "/alerting/recently-deleted",
 		})
 	}
 
 	if c.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
+			Text: "Settings", Id: "alerting-admin", Url: cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
 		})
 	}
@@ -507,19 +515,19 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Create alert rule", SubTitle: "Create an alert rule", Id: "alert",
-			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, IsCreateAction: true,
+			Icon: "plus", Url: cfg.AppSubURL + "/alerting/new", HideFromTabs: true, IsCreateAction: true,
 		})
 	}
 
 	if len(alertChildNavs) > 0 {
-		var alertNav = navtree.NavLink{
+		alertNav := navtree.NavLink{
 			Text:       "Alerting",
 			SubTitle:   "Learn about problems in your systems moments after they occur",
 			Id:         navtree.NavIDAlerting,
 			Icon:       "bell",
 			Children:   alertChildNavs,
 			SortWeight: navtree.WeightAlerting,
-			Url:        s.cfg.AppSubURL + "/alerting",
+			Url:        cfg.AppSubURL + "/alerting",
 		}
 
 		return &alertNav
@@ -534,7 +542,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 	var children []*navtree.NavLink
 	var navLink *navtree.NavLink
 
-	baseUrl := s.cfg.AppSubURL + "/connections"
+	cfg := s.settingsProvider.Get()
+	baseUrl := cfg.AppSubURL + "/connections"
 
 	if hasAccess(datasources.ConfigurationPageAccess) {
 		// Add new connection

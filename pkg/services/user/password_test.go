@@ -24,7 +24,8 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 			expectedError:               ErrPasswordTooShort.Errorf("new password is too short"),
 			strongPasswordPolicyEnabled: false,
 		},
-		{name: "should not return error when the password has 4 characters and strong password policy is disabled",
+		{
+			name:                        "should not return error when the password has 4 characters and strong password policy is disabled",
 			passwordTest:                "test",
 			expectedError:               nil,
 			strongPasswordPolicyEnabled: false,
@@ -87,7 +88,7 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 	for _, tc := range testCases {
 		cfg := setting.NewCfg()
 		cfg.BasicAuthStrongPasswordPolicy = tc.strongPasswordPolicyEnabled
-		err := ValidatePassword(tc.passwordTest, cfg)
+		err := ValidatePassword(tc.passwordTest, setting.ProvideService(cfg))
 		assert.Equal(t, tc.expectedError, err)
 	}
 }

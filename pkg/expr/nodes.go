@@ -26,9 +26,7 @@ import (
 // label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
 const nameLabelName = "__name__"
 
-var (
-	logger = log.New("expr")
-)
+var logger = log.New("expr")
 
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
@@ -107,7 +105,7 @@ func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars
 	return gn.Command.Execute(ctx, now, vars, s.tracer, s.metrics)
 }
 
-func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg setting.SettingsProvider) (*CMDNode, error) {
+func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, settingsProvider setting.SettingsProvider) (*CMDNode, error) {
 	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
@@ -164,7 +162,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg setting.S
 	case TypeThreshold:
 		node.Command, err = UnmarshalThresholdCommand(rn)
 	case TypeSQL:
-		node.Command, err = UnmarshalSQLCommand(rn, cfg)
+		node.Command, err = UnmarshalSQLCommand(rn, settingsProvider)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
@@ -426,7 +424,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		var err error
 		// make the query with a mt client
 		resp, err = mtDSClient.QueryData(ctx, *k8sReq)
-
 		// handle error
 		if err != nil {
 			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
@@ -441,7 +438,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	var result mathexp.Results
 
 	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
-
 	if err != nil {
 		err = makeConversionError(dn.refID, err)
 	}

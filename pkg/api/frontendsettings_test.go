@@ -44,9 +44,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service, passets *pluginassets.Service) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service, passets *pluginassets.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
+	cfg := settingsProvider.Get()
 	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
@@ -65,17 +66,17 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	}
 	pluginsCDN := pluginscdn.ProvideService(pluginsCfg)
 
-	var pluginStore = pstore
+	pluginStore := pstore
 	if pluginStore == nil {
 		pluginStore = &pluginstore.FakePluginStore{}
 	}
 
-	var pluginsSettings = psettings
+	pluginsSettings := psettings
 	if pluginsSettings == nil {
 		pluginsSettings = &pluginsettings.FakePluginSettings{}
 	}
 
-	var pluginsAssets = passets
+	pluginsAssets := passets
 	if pluginsAssets == nil {
 		sig := signature.ProvideService(pluginsCfg, statickey.New())
 		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, sig, pluginStore)
@@ -83,7 +84,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 
 	hs := &HTTPServer{
 		authnService: &authntest.FakeService{},
-		Cfg:          cfg,
+		Cfg:          setting.ProvideService(cfg),
 		Features:     features,
 		License:      &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
@@ -91,14 +92,14 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 			RendererPluginManager: &fakeRendererPluginManager{},
 		},
 		SQLStore:              db.InitTestDB(t),
-		SettingsProvider:      setting.ProvideProvider(cfg),
+		SettingsProvider:      setting.ProvideProvider(settingsProvider),
 		pluginStore:           pluginStore,
 		grafanaUpdateChecker:  &updatemanager.GrafanaService{},
 		AccessControl:         accesscontrolmock.New(),
 		PluginSettings:        pluginsSettings,
 		pluginsCDNService:     pluginsCDN,
 		pluginAssets:          pluginsAssets,
-		namespacer:            request.GetNamespaceMapper(cfg),
+		namespacer:            request.GetNamespaceMapper(settingsProvider),
 		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
 		managedPluginsService: managedplugins.NewNoop(),
 		tracer:                tracing.InitializeTracerForTest(),
@@ -131,7 +132,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testi
 	cfg.BuildVersion = "7.8.9"
 	cfg.BuildCommit = "01234567"
 
-	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil, nil)
+	m, hs := setupTestEnvironment(t, setting.ProvideService(cfg), featuremgmt.WithFeatures(), nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
@@ -170,7 +171,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testi
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			hs.Cfg.Anonymous.HideVersion = test.hideVersion
+			hs.Cfg.Get().Anonymous.HideVersion = test.hideVersion
 			expected := test.expected
 
 			recorder := httptest.NewRecorder()
@@ -224,7 +225,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.
 			if test.mutateCfg != nil {
 				test.mutateCfg(cfg)
 			}
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil, nil)
+			m, _ := setupTestEnvironment(t, setting.ProvideService(cfg), featuremgmt.WithFeatures(), nil, nil, nil)
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -446,7 +447,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings(), test.pluginAssets())
+			m, _ := setupTestEnvironment(t, setting.ProvideService(cfg), featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings(), test.pluginAssets())
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -663,7 +664,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), nil, nil)
+			m, hs := setupTestEnvironment(t, setting.ProvideService(cfg), featuremgmt.WithFeatures(), test.pluginStore(), nil, nil)
 
 			// Create a request with the appropriate context
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)

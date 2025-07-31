@@ -59,7 +59,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	err = orgResp.Body.Close()
 	require.NoError(t, err)
 
-	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          "admin-org2",
 		Password:       "admin",
@@ -352,12 +352,12 @@ providers:
   allowUiUpdates: false
   options:
    path: %s`, provDashboardsDir))
-	err := os.WriteFile(provDashboardsCfg, blob, 0644)
+	err := os.WriteFile(provDashboardsCfg, blob, 0o644)
 	require.NoError(t, err)
 	input, err := os.ReadFile(filepath.Join("./home.json"))
 	require.NoError(t, err)
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
-	err = os.WriteFile(provDashboardFile, input, 0644)
+	err = os.WriteFile(provDashboardFile, input, 0o644)
 	require.NoError(t, err)
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -1000,13 +1000,13 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Login:          "editor",
 		Password:       "editor",
 		IsAdmin:        false,
 	})
-	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Login:          "viewer",
 		Password:       "viewer",
@@ -1169,7 +1169,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			return results
 		}
 
-		noneUserID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		noneUserID := tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleNone),
 			Login:          "noneuser",
 			Password:       "noneuser",

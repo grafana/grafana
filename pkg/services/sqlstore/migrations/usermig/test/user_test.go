@@ -40,10 +40,10 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
-	mg := migrator.NewMigrator(x, &setting.Cfg{
+	mg := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{
 		Logger: log.New("users.test"),
 		Raw:    ini.Empty(),
-	})
+	}))
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 

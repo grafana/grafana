@@ -51,17 +51,18 @@ func TestIntegrationCallResource(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = staticRootPath
 	cfg.Azure = &azsettings.AzureSettings{}
+	settingsProvider := setting.ProvideService(cfg)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.Service{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil, nil, nil)
 
-	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
+	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, settingsProvider, coreRegistry)
 
-	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(), testCtx.PluginStore, &datasources.FakeCacheService{},
+	pcp := plugincontext.ProvideService(settingsProvider, localcache.ProvideService(), testCtx.PluginStore, &datasources.FakeCacheService{},
 		&datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = cfg
+		hs.Cfg = setting.ProvideService(cfg)
 		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = testCtx.PluginStore
@@ -82,7 +83,7 @@ func TestIntegrationCallResource(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		var body = make(map[string]any)
+		body := make(map[string]any)
 		err = json.Unmarshal(b, &body)
 		require.NoError(t, err)
 
@@ -176,14 +177,15 @@ func TestIntegrationCallResource(t *testing.T) {
 	middlewares := pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), &caching.OSSCachingService{}, featuremgmt.WithFeatures(), prometheus.DefaultRegisterer, pluginRegistry)
 	pc, err := backend.HandlerFromMiddlewares(&fakes.FakePluginClient{
 		CallResourceHandlerFunc: backend.CallResourceHandlerFunc(func(ctx context.Context,
-			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender,
+		) error {
 			return errors.New("something went wrong")
 		}),
 	}, middlewares...)
 	require.NoError(t, err)
 
 	srv = SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = cfg
+		hs.Cfg = setting.ProvideService(cfg)
 		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = testCtx.PluginStore

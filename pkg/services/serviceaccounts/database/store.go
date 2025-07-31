@@ -21,25 +21,26 @@ import (
 )
 
 type ServiceAccountsStoreImpl struct {
-	cfg           *setting.Cfg
-	sqlStore      db.DB
-	apiKeyService apikey.Service
-	kvStore       kvstore.KVStore
-	log           log.Logger
-	orgService    org.Service
-	userService   user.Service
+	settingsProvider setting.SettingsProvider
+	sqlStore         db.DB
+	apiKeyService    apikey.Service
+	kvStore          kvstore.KVStore
+	log              log.Logger
+	orgService       org.Service
+	userService      user.Service
 }
 
-func ProvideServiceAccountsStore(cfg *setting.Cfg, store db.DB, apiKeyService apikey.Service,
-	kvStore kvstore.KVStore, userService user.Service, orgService org.Service) *ServiceAccountsStoreImpl {
+func ProvideServiceAccountsStore(settingsProvider setting.SettingsProvider, store db.DB, apiKeyService apikey.Service,
+	kvStore kvstore.KVStore, userService user.Service, orgService org.Service,
+) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
-		cfg:           cfg,
-		sqlStore:      store,
-		apiKeyService: apiKeyService,
-		kvStore:       kvStore,
-		log:           log.New("serviceaccounts.store"),
-		orgService:    orgService,
-		userService:   userService,
+		settingsProvider: settingsProvider,
+		sqlStore:         store,
+		apiKeyService:    apiKeyService,
+		kvStore:          kvStore,
+		log:              log.New("serviceaccounts.store"),
+		orgService:       orgService,
+		userService:      userService,
 	}
 }
 
@@ -291,7 +292,6 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 
 		return nil
 	})
-
 	if err != nil {
 		return 0, err
 	}

@@ -14,14 +14,16 @@ import (
 
 func TestOrgService(t *testing.T) {
 	orgStore := newOrgStoreFake()
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	orgService := Service{
-		store: orgStore,
-		cfg:   setting.NewCfg(),
+		store:            orgStore,
+		settingsProvider: settingsProvider,
 	}
 
 	t.Run("create org", func(t *testing.T) {
-		orgService.cfg.AutoAssignOrg = false
-		orgService.cfg.AutoAssignOrgId = 1
+		cfg.AutoAssignOrg = false
+		cfg.AutoAssignOrgId = 1
 		orgStore.ExpectedOrgID = 3
 		id, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{})
 		require.NoError(t, err)
@@ -30,8 +32,8 @@ func TestOrgService(t *testing.T) {
 
 	// Should return a new org instead of the org defined in the command
 	t.Run("no autoassign - org defined", func(t *testing.T) {
-		orgService.cfg.AutoAssignOrg = false
-		orgService.cfg.AutoAssignOrgId = 1
+		cfg.AutoAssignOrg = false
+		cfg.AutoAssignOrgId = 1
 		orgStore.ExpectedOrgID = 3
 		orgStore.ExpectedOrg = &org.Org{ID: 1}
 		id, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{OrgID: 1})
@@ -40,8 +42,8 @@ func TestOrgService(t *testing.T) {
 	})
 
 	t.Run("create org with auto assign org ID", func(t *testing.T) {
-		orgService.cfg.AutoAssignOrg = true
-		orgService.cfg.AutoAssignOrgId = 1
+		cfg.AutoAssignOrg = true
+		cfg.AutoAssignOrgId = 1
 		orgStore.ExpectedOrgID = 1
 		orgStore.ExpectedOrg = &org.Org{ID: 1}
 		id, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{})
@@ -50,8 +52,8 @@ func TestOrgService(t *testing.T) {
 	})
 
 	t.Run("create org with auto assign org ID and orgID", func(t *testing.T) {
-		orgService.cfg.AutoAssignOrg = true
-		orgService.cfg.AutoAssignOrgId = 1
+		cfg.AutoAssignOrg = true
+		cfg.AutoAssignOrgId = 1
 		orgStore.ExpectedOrgID = 1
 		orgStore.ExpectedOrg = &org.Org{ID: 1}
 		id, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{OrgID: 1})
@@ -59,8 +61,8 @@ func TestOrgService(t *testing.T) {
 		assert.Equal(t, int64(1), id)
 	})
 
-	orgService.cfg.AutoAssignOrg = false
-	orgService.cfg.AutoAssignOrgId = 0
+	cfg.AutoAssignOrg = false
+	cfg.AutoAssignOrgId = 0
 
 	t.Run("delete user from all orgs", func(t *testing.T) {
 		err := orgService.DeleteUserFromAll(context.Background(), 1)

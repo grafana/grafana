@@ -16,15 +16,15 @@ import (
 
 type instrumentationService struct {
 	*services.BasicService
-	cfg          *setting.Cfg
-	httpServ     *http.Server
-	log          log.Logger
-	errChan      chan error
-	promGatherer prometheus.Gatherer
+	settingsProvider setting.SettingsProvider
+	httpServ         *http.Server
+	log              log.Logger
+	errChan          chan error
+	promGatherer     prometheus.Gatherer
 }
 
 func (ms *ModuleServer) initInstrumentationServer() (*instrumentationService, error) {
-	s := &instrumentationService{log: ms.log, cfg: ms.cfg, promGatherer: ms.promGatherer}
+	s := &instrumentationService{log: ms.log, settingsProvider: ms.settingsProvider, promGatherer: ms.promGatherer}
 	s.httpServ, ms.httpServerRouter = s.newInstrumentationServer()
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -61,7 +61,8 @@ func (s *instrumentationService) newInstrumentationServer() (*http.Server, *mux.
 	router := mux.NewRouter()
 	router.Handle("/metrics", promhttp.HandlerFor(s.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}))
 
-	addr := net.JoinHostPort(s.cfg.HTTPAddr, s.cfg.HTTPPort)
+	cfg := s.settingsProvider.Get()
+	addr := net.JoinHostPort(cfg.HTTPAddr, cfg.HTTPPort)
 	srv := &http.Server{
 		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
 		ReadHeaderTimeout: 5 * time.Second,

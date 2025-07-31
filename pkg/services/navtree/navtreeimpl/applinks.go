@@ -66,6 +66,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
+	cfg := s.settingsProvider.Get()
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -74,7 +75,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		SortWeight: navtree.WeightPlugin,
 		IsSection:  true,
 		PluginID:   plugin.ID,
-		Url:        s.cfg.AppSubURL + "/a/" + plugin.ID,
+		Url:        cfg.AppSubURL + "/a/" + plugin.ID,
 	}
 
 	for _, include := range plugin.Includes {
@@ -90,12 +91,12 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			}
 
 			if len(include.Path) > 0 {
-				link.Url = s.cfg.AppSubURL + include.Path
+				link.Url = cfg.AppSubURL + include.Path
 				if include.DefaultNav && include.AddToNav {
 					appLink.Url = link.Url
 				}
 			} else {
-				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
+				link.Url = cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
 			// Register standalone plugin pages to certain sections using the Grafana config
@@ -134,7 +135,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			dboardURL := include.DashboardURLPath()
 			if dboardURL != "" {
 				link := &navtree.NavLink{
-					Url:      path.Join(s.cfg.AppSubURL, dboardURL),
+					Url:      path.Join(cfg.AppSubURL, dboardURL),
 					Text:     include.Name,
 					PluginID: plugin.ID,
 				}
@@ -169,7 +170,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			serviceLink := &navtree.NavLink{
 				Text:       "Service Center",
 				Id:         "standalone-plugin-page-slo-services",
-				Url:        s.cfg.AppSubURL + "/a/grafana-slo-app/services",
+				Url:        cfg.AppSubURL + "/a/grafana-slo-app/services",
 				SortWeight: 1,
 				IsNew:      true,
 			}
@@ -186,6 +187,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 }
 
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {
+	cfg := s.settingsProvider.Get()
 	// Handle moving apps into specific navtree sections
 	var alertingNodes []*navtree.NavLink
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
@@ -226,7 +228,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Id:         navtree.NavIDApps,
 				Children:   []*navtree.NavLink{appLink},
 				SortWeight: navtree.WeightApps,
-				Url:        s.cfg.AppSubURL + "/apps",
+				Url:        cfg.AppSubURL + "/apps",
 			})
 		case navtree.NavIDObservability:
 			treeRoot.AddSection(&navtree.NavLink{
@@ -236,7 +238,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightObservability,
 				Children:   []*navtree.NavLink{appLink},
-				Url:        s.cfg.AppSubURL + "/observability",
+				Url:        cfg.AppSubURL + "/observability",
 			})
 		case navtree.NavIDInfrastructure:
 			treeRoot.AddSection(&navtree.NavLink{
@@ -246,7 +248,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightInfrastructure,
 				Children:   []*navtree.NavLink{appLink},
-				Url:        s.cfg.AppSubURL + "/infrastructure",
+				Url:        cfg.AppSubURL + "/infrastructure",
 			})
 		case navtree.NavIDFrontend:
 			treeRoot.AddSection(&navtree.NavLink{
@@ -256,7 +258,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Icon:       "frontend-observability",
 				SortWeight: navtree.WeightFrontend,
 				Children:   []*navtree.NavLink{appLink},
-				Url:        s.cfg.AppSubURL + "/frontend",
+				Url:        cfg.AppSubURL + "/frontend",
 			})
 		case navtree.NavIDAlertsAndIncidents:
 			alertsAndIncidentsChildren := []*navtree.NavLink{}
@@ -275,7 +277,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Icon:       "bell",
 				SortWeight: navtree.WeightAlertsAndIncidents,
 				Children:   alertsAndIncidentsChildren,
-				Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
+				Url:        cfg.AppSubURL + "/alerts-and-incidents",
 			})
 		case navtree.NavIDTestingAndSynthetics:
 			treeRoot.AddSection(&navtree.NavLink{
@@ -285,7 +287,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Icon:       "k6",
 				SortWeight: navtree.WeightTestingAndSynthetics,
 				Children:   []*navtree.NavLink{appLink},
-				Url:        s.cfg.AppSubURL + "/testing-and-synthetics",
+				Url:        cfg.AppSubURL + "/testing-and-synthetics",
 			})
 		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
@@ -350,8 +352,9 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfgAccess, SortWeight: 2},
 	}
 
-	appSections := s.cfg.Raw.Section("navigation.app_sections")
-	appStandalonePages := s.cfg.Raw.Section("navigation.app_standalone_pages")
+	cfg := s.settingsProvider.Get()
+	appSections := cfg.Raw.Section("navigation.app_sections")
+	appStandalonePages := cfg.Raw.Section("navigation.app_standalone_pages")
 
 	for _, key := range appSections.Keys() {
 		pluginId := key.Name()

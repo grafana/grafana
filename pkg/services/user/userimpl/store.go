@@ -37,18 +37,18 @@ type store interface {
 }
 
 type sqlStore struct {
-	db      db.DB
-	dialect migrator.Dialect
-	logger  log.Logger
-	cfg     *setting.Cfg
+	db               db.DB
+	dialect          migrator.Dialect
+	logger           log.Logger
+	settingsProvider setting.SettingsProvider
 }
 
-func ProvideStore(db db.DB, cfg *setting.Cfg) sqlStore {
+func ProvideStore(db db.DB, settingsProvider setting.SettingsProvider) sqlStore {
 	return sqlStore{
-		db:      db,
-		dialect: db.GetDialect(),
-		cfg:     cfg,
-		logger:  log.New("user.store"),
+		db:               db,
+		dialect:          db.GetDialect(),
+		settingsProvider: settingsProvider,
+		logger:           log.New("user.store"),
 	}
 }
 
@@ -72,7 +72,6 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 		})
 		return nil
 	})
-
 	if err != nil {
 		return 0, handleSQLError(ss.dialect, err)
 	}
@@ -82,7 +81,7 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 
 func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM " + ss.dialect.Quote("user") + " WHERE id = ?"
+		rawSQL := "DELETE FROM " + ss.dialect.Quote("user") + " WHERE id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
@@ -136,7 +135,6 @@ func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int6
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +185,6 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +326,7 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			orgId = strconv.FormatInt(query.OrgID, 10)
 		}
 
-		var rawSQL = `SELECT
+		rawSQL := `SELECT
 		u.id                  as user_id,
 		u.uid                 as user_uid,
 		u.is_admin            as is_grafana_admin,

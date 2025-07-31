@@ -50,73 +50,84 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 		},
 		{
 			name: "missing info should not tag",
-			req: []tagReq{{httpReq: &http.Request{
-				Header: http.Header{
-					"User-Agent": []string{"test"},
+			req: []tagReq{{
+				httpReq: &http.Request{
+					Header: http.Header{
+						"User-Agent": []string{"test"},
+					},
 				},
-			},
 				kind: anonymous.AnonDeviceUI,
 			}},
 		},
 		{
 			name: "should tag device ID once",
-			req: []tagReq{{httpReq: &http.Request{
-				Header: http.Header{
-					"User-Agent":                            []string{"test"},
-					"X-Forwarded-For":                       []string{"10.30.30.1"},
-					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+			req: []tagReq{
+				{
+					httpReq: &http.Request{
+						Header: http.Header{
+							"User-Agent":                            []string{"test"},
+							"X-Forwarded-For":                       []string{"10.30.30.1"},
+							http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+						},
+					},
+					kind: anonymous.AnonDeviceUI,
 				},
-			},
-				kind: anonymous.AnonDeviceUI,
-			},
 			},
 			expectedAnonUICount: 1,
 			expectedKey:         "ui-anon-session:32mdo31deeqwes",
 			expectedDevice: &anonstore.Device{
 				DeviceID:  "32mdo31deeqwes",
 				ClientIP:  "10.30.30.1",
-				UserAgent: "test"},
+				UserAgent: "test",
+			},
 		},
 		{
 			name: "repeat request should not tag",
-			req: []tagReq{{httpReq: &http.Request{
-				Header: http.Header{
-					"User-Agent":                            []string{"test"},
-					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
-					"X-Forwarded-For":                       []string{"10.30.30.1"},
+			req: []tagReq{
+				{
+					httpReq: &http.Request{
+						Header: http.Header{
+							"User-Agent":                            []string{"test"},
+							http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+							"X-Forwarded-For":                       []string{"10.30.30.1"},
+						},
+					},
+					kind: anonymous.AnonDeviceUI,
+				}, {
+					httpReq: &http.Request{
+						Header: http.Header{
+							"User-Agent":                            []string{"test"},
+							http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+							"X-Forwarded-For":                       []string{"10.30.30.1"},
+						},
+					},
+					kind: anonymous.AnonDeviceUI,
 				},
-			},
-				kind: anonymous.AnonDeviceUI,
-			}, {httpReq: &http.Request{
-				Header: http.Header{
-					"User-Agent":                            []string{"test"},
-					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
-					"X-Forwarded-For":                       []string{"10.30.30.1"},
-				},
-			},
-				kind: anonymous.AnonDeviceUI,
-			},
 			},
 			expectedAnonUICount: 1,
-		}, {
+		},
+		{
 			name: "tag 2 different requests",
-			req: []tagReq{{httpReq: &http.Request{
-				Header: http.Header{
-					http.CanonicalHeaderKey("User-Agent"):      []string{"test"},
-					http.CanonicalHeaderKey("X-Forwarded-For"): []string{"10.30.30.1"},
-					http.CanonicalHeaderKey(deviceIDHeader):    []string{"a"},
+			req: []tagReq{
+				{
+					httpReq: &http.Request{
+						Header: http.Header{
+							http.CanonicalHeaderKey("User-Agent"):      []string{"test"},
+							http.CanonicalHeaderKey("X-Forwarded-For"): []string{"10.30.30.1"},
+							http.CanonicalHeaderKey(deviceIDHeader):    []string{"a"},
+						},
+					},
+					kind: anonymous.AnonDeviceUI,
+				}, {
+					httpReq: &http.Request{
+						Header: http.Header{
+							"User-Agent":                            []string{"test"},
+							"X-Forwarded-For":                       []string{"10.30.30.2"},
+							http.CanonicalHeaderKey(deviceIDHeader): []string{"b"},
+						},
+					},
+					kind: anonymous.AnonDeviceUI,
 				},
-			},
-				kind: anonymous.AnonDeviceUI,
-			}, {httpReq: &http.Request{
-				Header: http.Header{
-					"User-Agent":                            []string{"test"},
-					"X-Forwarded-For":                       []string{"10.30.30.2"},
-					http.CanonicalHeaderKey(deviceIDHeader): []string{"b"},
-				},
-			},
-				kind: anonymous.AnonDeviceUI,
-			},
 			},
 			expectedAnonUICount: 2,
 		},
@@ -147,9 +158,10 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 
 			cfg := setting.NewCfg()
 			cfg.Anonymous.Enabled = !tc.disableService
+			settingsProvider := setting.ProvideService(cfg)
 
 			anonService := ProvideAnonymousDeviceService(
-				&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(),
+				&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, settingsProvider, orgtest.NewOrgServiceFake(),
 				nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{},
 			)
 
@@ -213,7 +225,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	}
 	store := db.InitTestDB(t)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
+		&authntest.FakeService{}, store, setting.ProvideService(setting.NewCfg()), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	req := &http.Request{
 		Header: http.Header{
@@ -327,11 +339,12 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				DeviceID: "32mdo31deeqwes",
 				ClientIP: "[2001:db8:3333:4444:cccc:DDDD:eeee:FFFF]:1000",
 			},
-		}}
+		},
+	}
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.Anonymous.Enabled = true
-	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
+	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, setting.ProvideService(cfg), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	for _, tc := range testCases {
 		err := store.Reset()
@@ -367,7 +380,7 @@ func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
 		&usagestats.UsageStatsMock{},
 		&authntest.FakeService{},
 		store,
-		cfg,
+		setting.ProvideService(cfg),
 		orgtest.NewOrgServiceFake(),
 		nil,
 		actest.FakeAccessControl{},

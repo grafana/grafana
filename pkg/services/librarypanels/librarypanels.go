@@ -21,10 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister,
-	libraryElementService libraryelements.Service, folderService folder.Service) (*LibraryPanelService, error) {
+func ProvideService(settingsProvider setting.SettingsProvider, sqlStore db.DB, routeRegister routing.RouteRegister,
+	libraryElementService libraryelements.Service, folderService folder.Service,
+) (*LibraryPanelService, error) {
 	lps := LibraryPanelService{
-		Cfg:                   cfg,
+		settingsProvider:      settingsProvider,
 		SQLStore:              sqlStore,
 		RouteRegister:         routeRegister,
 		LibraryElementService: libraryElementService,
@@ -52,7 +53,7 @@ type LibraryInfo struct {
 
 // LibraryPanelService is the service for the Panel Library feature.
 type LibraryPanelService struct {
-	Cfg                   *setting.Cfg
+	settingsProvider      setting.SettingsProvider
 	SQLStore              db.DB
 	RouteRegister         routing.RouteRegister
 	LibraryElementService libraryelements.Service
@@ -167,7 +168,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 			}
 
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
-			var cmd = model.CreateLibraryElementCommand{
+			cmd := model.CreateLibraryElementCommand{
 				FolderID:  folderID, // nolint:staticcheck
 				FolderUID: &folderUID,
 				Name:      name,

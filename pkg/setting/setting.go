@@ -556,7 +556,7 @@ type Cfg struct {
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
-	//Short Links
+	// Short Links
 	ShortLinkExpiration int
 
 	// Unified Storage
@@ -790,7 +790,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 
-	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
+	newAnnotationCleanupSettings := func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
 		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
 		if err != nil {
 			maxAge = 0
@@ -1773,7 +1773,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			string(identity.RoleNone),
 			string(identity.RoleViewer),
 			string(identity.RoleEditor),
-			string(identity.RoleAdmin)})
+			string(identity.RoleAdmin),
+		})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	// Deprecated
@@ -1919,7 +1920,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
-		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0o660)
 		cfg.SocketPath = server.Key("socket").String()
 	}
 

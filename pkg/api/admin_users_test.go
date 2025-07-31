@@ -348,7 +348,8 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 			userAuth := &login.UserAuth{AuthModule: tc.authModule}
 			authInfoService := &authinfotest.FakeService{ExpectedUserAuth: userAuth}
 			socialService := &socialtest.FakeSocialService{}
-			cfg := setting.NewCfg()
+			settingsProvider := setting.ProvideService(setting.NewCfg())
+			cfg := settingsProvider.Get()
 
 			if tc.authModule == login.JWTModule {
 				cfg.JWTAuth.Enabled = tc.authEnabled
@@ -357,7 +358,7 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 			}
 
 			hs := &HTTPServer{
-				Cfg:             cfg,
+				Cfg:             settingsProvider,
 				authInfoService: authInfoService,
 				SocialService:   socialService,
 				userService:     usertest.NewUserServiceFake(),
@@ -385,10 +386,11 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 }
 
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
-	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore db.DB, userSvc user.Service) {
+	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore db.DB, userSvc user.Service,
+) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := &HTTPServer{
-			Cfg:             setting.NewCfg(),
+			Cfg:             setting.ProvideService(setting.NewCfg()),
 			SQLStore:        sqlStore,
 			authInfoService: &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound},
 			userService:     userSvc,

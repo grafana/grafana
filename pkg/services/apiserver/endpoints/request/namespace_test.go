@@ -39,7 +39,7 @@ func TestNamespaceMapper(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapper := request.GetNamespaceMapper(&setting.Cfg{StackID: tt.cfg})
+			mapper := request.GetNamespaceMapper(setting.ProvideService(&setting.Cfg{StackID: tt.cfg}))
 			require.Equal(t, tt.expected, mapper(tt.orgId))
 		})
 	}

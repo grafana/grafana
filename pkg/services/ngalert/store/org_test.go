@@ -30,7 +30,7 @@ func TestIntegrationFetchOrgIds(t *testing.T) {
 	t.Run("returns all org IDs", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		store := &DBstore{SQLStore: sqlStore}
-		orgService, err := testutil.SetupOrgService(t, sqlStore, setting.NewCfg())
+		orgService, err := testutil.SetupOrgService(t, sqlStore, setting.ProvideService(setting.NewCfg()))
 		require.NoError(t, err)
 
 		createdOrgIDs := make([]int64, 3)

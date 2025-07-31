@@ -266,7 +266,8 @@ func TestAuthenticateJWT(t *testing.T) {
 				tc.cfg, tracing.InitializeTracerForTest())
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
-					jwtHeaderName: {"sample-token"}},
+					jwtHeaderName: {"sample-token"},
+				},
 			}
 
 			id, err := jwtClient.Authenticate(context.Background(), &authn.Request{
@@ -377,7 +378,8 @@ func TestJWTClaimConfig(t *testing.T) {
 			httpReq := &http.Request{
 				URL: &url.URL{RawQuery: "auth_token=" + token},
 				Header: map[string][]string{
-					jwtHeaderName: {token}},
+					jwtHeaderName: {token},
+				},
 			}
 			jwtClient := ProvideJWT(jwtService, connectors.ProvideOrgRoleMapper(cfg,
 				&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
@@ -498,7 +500,8 @@ func TestJWTTest(t *testing.T) {
 			httpReq := &http.Request{
 				URL: &url.URL{RawQuery: "auth_token=" + tc.token},
 				Header: map[string][]string{
-					tc.reqHeaderName: {tc.token}},
+					tc.reqHeaderName: {tc.token},
+				},
 			}
 
 			got := jwtClient.Test(context.Background(), &authn.Request{
@@ -598,7 +601,8 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 	httpReq := &http.Request{
 		URL: &url.URL{RawQuery: "auth_token=" + token},
 		Header: map[string][]string{
-			jwtHeaderName: {token}},
+			jwtHeaderName: {token},
+		},
 	}
 	jwtService := &jwt.FakeJWTService{
 		VerifyProvider: func(context.Context, string) (map[string]any, error) {

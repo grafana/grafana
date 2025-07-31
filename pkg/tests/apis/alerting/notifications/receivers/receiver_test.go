@@ -301,7 +301,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			createClient := test_common.NewReceiverClient(t, tc.creatingUser)
 			client := test_common.NewReceiverClient(t, tc.testUser)
 
-			var created = &v0alpha1.Receiver{
+			created := &v0alpha1.Receiver{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
@@ -567,7 +567,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
 			client := test_common.NewReceiverClient(t, tc.user)
 
-			var expected = &v0alpha1.Receiver{
+			expected := &v0alpha1.Receiver{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
@@ -871,7 +871,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	db, err := store.ProvideDBStore(env.SettingsProvider, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
 	created, err := adminClient.Create(ctx, &v0alpha1.Receiver{
@@ -1102,7 +1102,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	db, err := store.ProvideDBStore(env.SettingsProvider, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
@@ -1420,7 +1420,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	db, err := store.ProvideDBStore(env.SettingsProvider, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
 		UID: *recv2.Spec.Integrations[0].Uid,
@@ -1524,6 +1524,7 @@ func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIn
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
 	return createIntegrationWithSettings(t, integrationType, cfg.Config)
 }
+
 func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
 	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))

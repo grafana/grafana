@@ -29,8 +29,10 @@ var ExtraGithubSettingKeys = map[string]ExtraKeyInfo{
 	teamIdsKey:              {Type: String},
 }
 
-var _ social.SocialConnector = (*SocialGithub)(nil)
-var _ ssosettings.Reloadable = (*SocialGithub)(nil)
+var (
+	_ social.SocialConnector = (*SocialGithub)(nil)
+	_ ssosettings.Reloadable = (*SocialGithub)(nil)
+)
 
 type SocialGithub struct {
 	*SocialBase
@@ -178,7 +180,8 @@ func (s *SocialGithub) isTeamMember(ctx context.Context, client *http.Client) bo
 }
 
 func (s *SocialGithub) isOrganizationMember(ctx context.Context,
-	client *http.Client, organizationsUrl string) bool {
+	client *http.Client, organizationsUrl string,
+) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
@@ -218,7 +221,7 @@ func (s *SocialGithub) fetchPrivateEmail(ctx context.Context, client *http.Clien
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
 
-	var email = ""
+	email := ""
 	for _, record := range records {
 		if record.Primary {
 			email = record.Email

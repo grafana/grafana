@@ -54,24 +54,24 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		cfg.ErrTemplateName = "error"
 		cfg.UserFacingDefaultError = "test error"
 		sc := &scenarioContext{
-			t:   t,
-			url: url,
-			cfg: cfg,
+			t:                t,
+			url:              url,
+			settingsProvider: setting.ProvideService(cfg),
 		}
 
 		viewsPath, err := filepath.Abs("../../public/views")
 		require.NoError(t, err)
 
 		sc.m = web.New()
-		sc.m.UseMiddleware(Recovery(cfg, &licensing.OSSLicensingService{}))
+		sc.m.UseMiddleware(Recovery(sc.settingsProvider, &licensing.OSSLicensingService{}))
 
-		sc.m.Use(AddDefaultResponseHeaders(cfg))
+		sc.m.Use(AddDefaultResponseHeaders(sc.settingsProvider))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
 		contextHandler := getContextHandler(t, setting.NewCfg(), &authntest.FakeService{ExpectedIdentity: &authn.Identity{}})
 		sc.m.Use(contextHandler.Middleware)
 		// mock out gc goroutine
-		sc.m.Use(OrgRedirect(cfg, usertest.NewUserServiceFake()))
+		sc.m.Use(OrgRedirect(sc.settingsProvider, usertest.NewUserServiceFake()))
 
 		sc.defaultHandler = func(c *contextmodel.ReqContext) {
 			sc.context = c

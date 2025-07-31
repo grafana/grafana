@@ -80,9 +80,9 @@ type service struct {
 	scheme     *runtime.Scheme
 	codecs     serializer.CodecFactory
 
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
-	log      log.Logger
+	settingsProvider setting.SettingsProvider
+	features         featuremgmt.FeatureToggles
+	log              log.Logger
 
 	stopCh    chan struct{}
 	stoppedCh chan error
@@ -115,7 +115,7 @@ type service struct {
 }
 
 func ProvideService(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
 	tracing *tracing.TracingService,
@@ -142,12 +142,12 @@ func ProvideService(
 		scheme:                            scheme,
 		codecs:                            codecs,
 		log:                               log.New(modules.GrafanaAPIServer),
-		cfg:                               cfg,
+		settingsProvider:                  settingsProvider,
 		features:                          features,
 		rr:                                rr,
 		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(settingsProvider),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
@@ -252,6 +252,7 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
+	cfg := s.settingsProvider.Get()
 	// Get the list of groups the server will support
 	builders := s.builders
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
@@ -295,7 +296,7 @@ func (s *service) start(ctx context.Context) error {
 	// Register authorizers from app installers
 	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
 
-	err = applyGrafanaConfig(s.cfg, s.features, o)
+	err = applyGrafanaConfig(s.settingsProvider, s.features, o)
 	if err != nil {
 		return err
 	}
@@ -343,10 +344,10 @@ func (s *service) start(ctx context.Context) error {
 		s.scheme,
 		serverConfig,
 		builders,
-		s.cfg.BuildStamp,
-		s.cfg.BuildVersion,
-		s.cfg.BuildCommit,
-		s.cfg.BuildBranch,
+		cfg.BuildStamp,
+		cfg.BuildVersion,
+		cfg.BuildCommit,
+		cfg.BuildBranch,
 		s.buildHandlerChainFuncFromBuilders,
 		groupVersions,
 		defGetters,
@@ -370,7 +371,7 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		s.metrics,
-		request.GetNamespaceMapper(s.cfg),
+		request.GetNamespaceMapper(s.settingsProvider),
 		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
 		s.storageStatus,
@@ -391,7 +392,7 @@ func (s *service) start(ctx context.Context) error {
 		o.StorageOptions,
 		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
-		request.GetNamespaceMapper(s.cfg),
+		request.GetNamespaceMapper(s.settingsProvider),
 		s.storageStatus,
 		s.dualWriterMetrics,
 		s.builderMetrics,

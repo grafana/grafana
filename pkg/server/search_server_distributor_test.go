@@ -284,7 +284,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	require.NoError(t, err)
 	client := resource.NewLegacyResourceClient(conn, conn)
 
-	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
+	server := initModuleServerForTest(t, setting.ProvideService(cfg), Options{}, api.ServerOptions{})
 
 	server.resourceClient = client
 
@@ -315,20 +315,21 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.Target = []string{modules.StorageServer}
 
-	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
+	return initModuleServerForTest(t, setting.ProvideService(cfg), Options{}, api.ServerOptions{})
 }
 
 func initModuleServerForTest(
 	t *testing.T,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	opts Options,
 	apiOpts api.ServerOptions,
 ) testModuleServer {
 	tracer := tracing.InitializeTracerForTest()
 
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), settingsProvider, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil)
 	require.NoError(t, err)
 
+	cfg := settingsProvider.Get()
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
@@ -355,19 +356,19 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, tracer, docBuilders, nil)
+	searchOpts, err := search.NewSearchOptions(features, setting.ProvideService(cfg), tracer, docBuilders, nil)
 	require.NoError(t, err)
 	server, err := sql.NewResourceServer(sql.ServerOptions{
-		DB:             nil,
-		Cfg:            cfg,
-		Tracer:         tracer,
-		Reg:            nil,
-		AccessClient:   nil,
-		SearchOptions:  searchOpts,
-		StorageMetrics: nil,
-		IndexMetrics:   nil,
-		Features:       features,
-		QOSQueue:       nil,
+		DB:               nil,
+		SettingsProvider: setting.ProvideService(cfg),
+		Tracer:           tracer,
+		Reg:              nil,
+		AccessClient:     nil,
+		SearchOptions:    searchOpts,
+		StorageMetrics:   nil,
+		IndexMetrics:     nil,
+		Features:         features,
+		QOSQueue:         nil,
 	})
 	require.NoError(t, err)
 

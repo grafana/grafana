@@ -85,10 +85,11 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 	return m.maintenanceFunc(state)
 }
 
-func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
+func NewAlertmanager(ctx context.Context, orgID int64, settingsProvider setting.SettingsProvider, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager, featureToggles featuremgmt.FeatureToggles, crypto Crypto, notificationHistorian nfstatus.NotificationHistorian,
 ) (*alertmanager, error) {
+	cfg := settingsProvider.Get()
 	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err

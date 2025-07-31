@@ -532,7 +532,8 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 	dc := &fakeDataSourceCache{cache: dss}
 	rv := &fakeDataSourceRequestValidator{}
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, settingsProvider := db.InitTestDBWithCfg(t)
+	cfg := settingsProvider.Get()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
@@ -542,7 +543,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 	}
 
 	pCtxProvider := plugincontext.ProvideService(
-		cfg,
+		settingsProvider,
 		localcache.ProvideService(),
 		&pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{

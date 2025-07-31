@@ -10,7 +10,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer trace.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
+func NewSearchOptions(features featuremgmt.FeatureToggles, settingsProvider setting.SettingsProvider, tracer trace.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
+	cfg := settingsProvider.Get()
 	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -18,7 +19,7 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
 		}
-		err := os.MkdirAll(root, 0750)
+		err := os.MkdirAll(root, 0o750)
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
@@ -28,7 +29,6 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
 			IndexCacheTTL: cfg.IndexCacheTTL,             // How long to keep the index cache in memory
 		}, tracer, features, indexMetrics)
-
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}

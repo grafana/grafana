@@ -45,9 +45,9 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, settingsProvider := db.InitTestDBWithCfg(t)
 
-	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dashboard1 := testutil.CreateDashboard(t, sql, settingsProvider, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -55,7 +55,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		}),
 	})
 
-	dashboard2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dashboard2 := testutil.CreateDashboard(t, sql, settingsProvider, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -137,7 +137,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return ErrLokiStoreNotFound if rule is not found by ID", func(t *testing.T) {
-			var rules = slices.Concat(maps.Values(dashboardRules)...)
+			rules := slices.Concat(maps.Values(dashboardRules)...)
 			id := rand.Int63n(1000) // in Postgres ID is integer, so limit range
 			// make sure id is not known
 			for slices.IndexFunc(rules, func(rule *ngmodels.AlertRule) bool {

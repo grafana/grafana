@@ -24,6 +24,7 @@ import (
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
+
 func TestIntegrationListIter(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -32,7 +33,7 @@ func TestIntegrationListIter(t *testing.T) {
 
 	grafanaDB := db.InitTestDB(t)
 
-	resourceDBProvider, err := dbimpl.ProvideResourceDB(grafanaDB, setting.NewCfg(), tracing.NewNoopTracerService())
+	resourceDBProvider, err := dbimpl.ProvideResourceDB(grafanaDB, setting.ProvideService(setting.NewCfg()), tracing.NewNoopTracerService())
 	require.NoError(t, err)
 
 	resourceDB, err := resourceDBProvider.Init(ctx)

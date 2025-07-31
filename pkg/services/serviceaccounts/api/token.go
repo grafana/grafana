@@ -147,17 +147,18 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 	// Force affected service account to be the one referenced in the URL
 	cmd.OrgId = c.GetOrgID()
 
-	if api.cfg.ApiKeyMaxSecondsToLive != -1 {
+	cfg := api.settingsProvider.Get()
+	if cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {
 			return response.Error(http.StatusBadRequest, "Number of seconds before expiration should be set", nil)
 		}
-		if cmd.SecondsToLive > api.cfg.ApiKeyMaxSecondsToLive {
+		if cmd.SecondsToLive > cfg.ApiKeyMaxSecondsToLive {
 			return response.Error(http.StatusBadRequest, "Number of seconds before expiration is greater than the global limit", nil)
 		}
 	}
 
-	if api.cfg.SATokenExpirationDayLimit > 0 {
-		dayExpireLimit := time.Now().Add(time.Duration(api.cfg.SATokenExpirationDayLimit) * time.Hour * 24).Truncate(24 * time.Hour)
+	if cfg.SATokenExpirationDayLimit > 0 {
+		dayExpireLimit := time.Now().Add(time.Duration(cfg.SATokenExpirationDayLimit) * time.Hour * 24).Truncate(24 * time.Hour)
 		expirationDate := time.Now().Add(time.Duration(cmd.SecondsToLive) * time.Second).Truncate(24 * time.Hour)
 		if expirationDate.After(dayExpireLimit) {
 			return response.Respond(http.StatusBadRequest, "The expiration date input exceeds the limit for service account access tokens expiration date")

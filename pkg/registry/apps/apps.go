@@ -29,9 +29,7 @@ func ProvideAppInstallers(
 	return []appsdkapiserver.AppInstaller{playlistAppInstaller}
 }
 
-var (
-	_ registry.BackgroundService = (*Service)(nil)
-)
+var _ registry.BackgroundService = (*Service)(nil)
 
 type Service struct {
 	runner *runner.APIGroupRunner
@@ -78,7 +76,6 @@ func ProvideBuilderRunners(
 		providers = append(providers, alertingNotificationsAppProvider)
 	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
-
 	if err != nil {
 		return nil, err
 	}

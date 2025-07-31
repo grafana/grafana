@@ -10,8 +10,9 @@ import (
 
 // In Grafana v7.0 we changed panel edit & view query parameters.
 // This middleware tries to detect those old url parameters and direct to the new url query params
-func RedirectFromLegacyPanelEditURL(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
+func RedirectFromLegacyPanelEditURL(settingsProvider setting.SettingsProvider) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
+		cfg := settingsProvider.Get()
 		queryParams := c.Req.URL.Query()
 
 		panelID, hasPanelID := queryParams["panelId"]

@@ -36,7 +36,7 @@ var (
 
 type folderStorage struct {
 	tableConverter       rest.TableConvertor
-	cfg                  *setting.Cfg
+	settingsProvider     setting.SettingsProvider
 	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
@@ -136,7 +136,8 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 }
 
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string, parentUID string) error {
-	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
+	cfg := s.settingsProvider.Get()
+	if !cfg.RBAC.PermissionsOnCreation("folder") {
 		return nil
 	}
 

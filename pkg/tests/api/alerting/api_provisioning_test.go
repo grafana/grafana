@@ -92,12 +92,12 @@ func TestIntegrationProvisioning(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create users to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
@@ -577,12 +577,12 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create users to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
@@ -998,7 +998,7 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 
 	provisioningDir := filepath.Join(dir, "conf", "provisioning")
 	alertingDir := filepath.Join(provisioningDir, "alerting")
-	err := os.MkdirAll(alertingDir, 0750)
+	err := os.MkdirAll(alertingDir, 0o750)
 	require.NoError(t, err)
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
@@ -1019,7 +1019,7 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 		folderUID := "my_first_folder_uid"
 		apiClient.CreateFolder(t, folderUID, "my_first_folder_with_$escaped_symbols")
 
-		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-rules.yaml"), fileProvisionedAlertRules, 0750)
+		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-rules.yaml"), fileProvisionedAlertRules, 0o750)
 		require.NoError(t, err)
 
 		apiClient.ReloadAlertingFileProvisioning(t)
@@ -1055,7 +1055,7 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 		expectedYamlRaw, err := yaml.Marshal(expected)
 		require.NoError(t, err)
 
-		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-mute-times.yaml"), fileProvisionedMuteTimings, 0750)
+		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-mute-times.yaml"), fileProvisionedMuteTimings, 0o750)
 		require.NoError(t, err)
 
 		apiClient.ReloadAlertingFileProvisioning(t)
@@ -1089,7 +1089,7 @@ func TestIntegrationExportFileProvisionMixed(t *testing.T) {
 
 	provisioningDir := filepath.Join(dir, "conf", "provisioning")
 	alertingDir := filepath.Join(provisioningDir, "alerting")
-	err := os.MkdirAll(alertingDir, 0750)
+	err := os.MkdirAll(alertingDir, 0o750)
 	require.NoError(t, err)
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
@@ -1105,7 +1105,7 @@ func TestIntegrationExportFileProvisionMixed(t *testing.T) {
 		require.NoError(t, yaml.Unmarshal(fileProvisionedResources, &expected))
 		expected.MuteTimings[0].OrgID = 1 // HACK to deal with weird goyaml behavior
 
-		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-mixed-set.yaml"), fileProvisionedResources, 0750)
+		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-mixed-set.yaml"), fileProvisionedResources, 0o750)
 		require.NoError(t, err)
 
 		apiClient.ReloadAlertingFileProvisioning(t)
@@ -1138,7 +1138,7 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 
 	provisioningDir := filepath.Join(dir, "conf", "provisioning")
 	alertingDir := filepath.Join(provisioningDir, "alerting")
-	err := os.MkdirAll(alertingDir, 0750)
+	err := os.MkdirAll(alertingDir, 0o750)
 	require.NoError(t, err)
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
@@ -1156,7 +1156,7 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 		expectedYaml, err := yaml.Marshal(expected)
 		require.NoError(t, err)
 
-		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-contact-points.yaml"), fileProvisionedContactPoints, 0750)
+		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-contact-points.yaml"), fileProvisionedContactPoints, 0o750)
 		require.NoError(t, err)
 
 		apiClient.ReloadAlertingFileProvisioning(t)

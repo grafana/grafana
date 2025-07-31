@@ -11,7 +11,7 @@ import (
 )
 
 type Runner struct {
-	Cfg               *setting.Cfg
+	Cfg               setting.SettingsProvider
 	SQLStore          db.DB
 	SettingsProvider  setting.Provider
 	Features          featuremgmt.FeatureToggles
@@ -21,13 +21,13 @@ type Runner struct {
 	UserService       user.Service
 }
 
-func NewRunner(cfg *setting.Cfg, sqlStore db.DB, settingsProvider setting.Provider,
+func NewRunner(config setting.SettingsProvider, sqlStore db.DB, settingsProvider setting.Provider,
 	encryptionService encryption.Internal, features featuremgmt.FeatureToggles,
 	secretsService *manager.SecretsService, secretsMigrator secrets.Migrator,
 	userService user.Service,
 ) Runner {
 	return Runner{
-		Cfg:               cfg,
+		Cfg:               config,
 		SQLStore:          sqlStore,
 		SettingsProvider:  settingsProvider,
 		EncryptionService: encryptionService,

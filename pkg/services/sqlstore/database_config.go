@@ -49,7 +49,8 @@ type DatabaseConfig struct {
 	TransactionRetries int
 }
 
-func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*DatabaseConfig, error) {
+func NewDatabaseConfig(settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles) (*DatabaseConfig, error) {
+	cfg := settingsProvider.Get()
 	if cfg == nil {
 		return nil, errors.New("cfg cannot be nil")
 	}
@@ -172,8 +173,10 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			return fmt.Errorf("invalid host specifier '%s': %w", dbCfg.Host, err)
 		}
 
-		args := []any{dbCfg.User, addr.Host, addr.Port, dbCfg.Name, dbCfg.SslMode, dbCfg.ClientCertPath,
-			dbCfg.ClientKeyPath, dbCfg.CaCertPath}
+		args := []any{
+			dbCfg.User, addr.Host, addr.Port, dbCfg.Name, dbCfg.SslMode, dbCfg.ClientCertPath,
+			dbCfg.ClientKeyPath, dbCfg.CaCertPath,
+		}
 
 		for i, arg := range args {
 			if arg == "" {

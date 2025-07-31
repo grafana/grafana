@@ -204,7 +204,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		encryptionManager := encMgr.(*EncryptionManager)
 
-		//override default provider with fake, and register the fake separately
+		// override default provider with fake, and register the fake separately
 		fake := &fakeProvider{}
 		encryptionManager.providerConfig.AvailableProviders = encryption.ProviderMap{
 			encryption.ProviderID("fakeProvider.v1"): fake,

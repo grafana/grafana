@@ -111,17 +111,17 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	})
 }
 
-func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
+func populateDB(t *testing.T, db db.DB, settingsProvider setting.SettingsProvider) org.Service {
 	t.Helper()
 
-	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	orgService, _ := orgimpl.ProvideService(db, settingsProvider, quotatest.New(false, nil))
 	userSvc, _ := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(),
 	)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	correlationsSvc := correlationstest.New(db, cfg, bus)
+	correlationsSvc := correlationstest.New(db, settingsProvider, bus)
 
 	c := make([]correlations.Correlation, 2)
 	for i := range c {

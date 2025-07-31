@@ -54,8 +54,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const userInDbName = "user_in_db"
-const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
+const (
+	userInDbName   = "user_in_db"
+	userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
+)
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -187,7 +189,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 99999999)
 			require.NoError(t, err)
 
-			var expected = func(res model.LibraryElementConnectionsResponse) model.LibraryElementConnectionsResponse {
+			expected := func(res model.LibraryElementConnectionsResponse) model.LibraryElementConnectionsResponse {
 				return model.LibraryElementConnectionsResponse{
 					Result: []model.LibraryElementConnectionDTO{
 						{
@@ -209,7 +211,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.getConnectionsHandler(sc.reqContext)
-			var result = validateAndUnMarshalConnectionResponse(t, resp)
+			result := validateAndUnMarshalConnectionResponse(t, resp)
 
 			if diff := cmp.Diff(expected(result), result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -336,8 +338,9 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(cfg)
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, settingsProvider, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderPermissions := acmock.NewMockedPermissionsService()
@@ -348,11 +351,11 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, settingsProvider, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	_, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{UID: folderUID, SignedInUser: &user, Title: folderUID + "-title"})
 	require.NoError(t, err)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore,
+		settingsProvider, dashboardStore, folderStore,
 		features, folderPermissions, ac,
 		actest.FakeService{},
 		folderSvc,
@@ -397,7 +400,7 @@ func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryE
 
 	require.Equal(t, 200, resp.Status())
 
-	var result = libraryElementResult{}
+	result := libraryElementResult{}
 	err := json.Unmarshal(resp.Body(), &result)
 	require.NoError(t, err)
 
@@ -407,7 +410,7 @@ func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryE
 func validateAndUnMarshalConnectionResponse(t *testing.T, resp response.Response) model.LibraryElementConnectionsResponse {
 	t.Helper()
 	require.Equal(t, 200, resp.Status())
-	var result = model.LibraryElementConnectionsResponse{}
+	result := model.LibraryElementConnectionsResponse{}
 	err := json.Unmarshal(resp.Body(), &result)
 	require.NoError(t, err)
 	return result
@@ -417,7 +420,7 @@ func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) lib
 	t.Helper()
 
 	require.Equal(t, 200, resp.Status())
-	var result = libraryElementArrayResult{}
+	result := libraryElementArrayResult{}
 	err := json.Unmarshal(resp.Body(), &result)
 	require.NoError(t, err)
 
@@ -462,10 +465,10 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	features := featuremgmt.WithFeatures()
 	tracer := tracing.InitializeTracerForTest()
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, settingsProvider := db.InitTestDBWithCfg(t)
 	t.Cleanup(db.CleanupTestDB)
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, settingsProvider, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(features)
 	folderPermissions := acmock.NewMockedPermissionsService()
@@ -477,13 +480,13 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	publicDash.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDash, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-	alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDash, settingsProvider, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	alertStore, err := ngstore.ProvideDBStore(settingsProvider, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	err = folderSvc.RegisterService(alertStore)
 	require.NoError(t, err)
 	dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore,
+		settingsProvider, dashboardStore, folderStore,
 		features, folderPermissions, ac, actest.FakeService{}, folderSvc,
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
@@ -492,7 +495,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	require.NoError(t, dashSvcErr)
 	dashService.RegisterDashboardPermissions(dashboardPermissions)
 	service := LibraryElementService{
-		Cfg:               cfg,
+		SettingsProvider:  settingsProvider,
 		features:          featuremgmt.WithFeatures(),
 		SQLStore:          sqlStore,
 		folderService:     folderSvc,
@@ -511,10 +514,10 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		Name:  "User In DB",
 		Login: userInDbName,
 	}
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	orgSvc, err := orgimpl.ProvideService(sqlStore, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		sqlStore, orgSvc, cfg, nil, nil, tracer,
+		sqlStore, orgSvc, settingsProvider, nil, nil, tracer,
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

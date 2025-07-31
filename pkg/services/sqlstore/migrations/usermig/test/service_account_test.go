@@ -265,7 +265,7 @@ func TestIntegrationServiceAccountMigration(t *testing.T) {
 			require.Equal(t, int64(len(tc.serviceAccounts)), serviceAccoutsCount)
 
 			// run the migration
-			usermigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("usermigration.test")})
+			usermigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("usermigration.test")}))
 			usermig.AddServiceAccountsAllowSameLoginCrossOrgs(usermigrator)
 			errRunningMig := usermigrator.Start(false, 0)
 			require.NoError(t, errRunningMig)
@@ -424,7 +424,7 @@ func TestIntegrationServiceAccountDedupOrgMigration(t *testing.T) {
 			require.Equal(t, int64(len(tc.serviceAccounts)), serviceAccoutsCount)
 
 			// run the migration
-			usermigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("usermigration.test")})
+			usermigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("usermigration.test")}))
 			usermigrator.AddMigration(usermig.DedupOrgInLogin, &usermig.ServiceAccountsDeduplicateOrgInLogin{})
 			errRunningMig := usermigrator.Start(false, 0)
 			require.NoError(t, errRunningMig)

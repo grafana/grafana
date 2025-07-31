@@ -41,7 +41,7 @@ func TestIntegrationStorageServer(t *testing.T) {
 	}
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
 		dbstore := db.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.ProvideService(setting.NewCfg()), nil)
 		require.NoError(t, err)
 		require.NotNil(t, eDB)
 
@@ -65,7 +65,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			dbstore := db.InitTestDB(t)
-			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.ProvideService(setting.NewCfg()), nil)
 			require.NoError(t, err)
 			require.NotNil(t, eDB)
 
@@ -84,7 +84,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			dbstore := db.InitTestDB(t)
-			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.ProvideService(setting.NewCfg()), nil)
 			require.NoError(t, err)
 			require.NotNil(t, eDB)
 
@@ -123,7 +123,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 
 	// Create a new resource backend
 	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.ProvideService(setting.NewCfg()), nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
 
@@ -153,7 +153,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
+	svc, err := sql.ProvideUnifiedStorageGrpcService(setting.ProvideService(cfg), features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 

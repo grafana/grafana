@@ -29,7 +29,7 @@ type RepositoryImpl struct {
 
 func ProvideService(
 	db db.DB,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
 	tracer tracing.Tracer,
@@ -40,11 +40,11 @@ func ProvideService(
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
 
-	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService)
+	xormStore := NewXormStore(settingsProvider, log.New("annotations.sql"), db, tagService)
 	write := xormStore
 
 	var read readStore
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, ruleStore, log.New("annotations.loki"), tracer, reg)
+	historianStore := loki.NewLokiHistorianStore(settingsProvider.Get().UnifiedAlerting.StateHistory, db, ruleStore, log.New("annotations.loki"), tracer, reg)
 	if historianStore != nil {
 		l.Debug("Using composite read store")
 		read = NewCompositeStore(log.New("annotations.composite"), xormStore, historianStore)

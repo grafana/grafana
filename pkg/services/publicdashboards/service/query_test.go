@@ -312,12 +312,12 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
+	service, sqlStore, settingsProvider := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
 	service.QueryDataService = fakeQueryService
 
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, service.cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
 	publicDashboardQueryDTO := PublicDashboardQueryDTO{
@@ -342,7 +342,8 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 					"uid": "ds1",
 				},
 				"targets": []interface{}{hiddenQuery},
-			}}
+			},
+		}
 
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, "", true, []map[string]interface{}{}, customPanels)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -894,7 +895,8 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 					"uid": "ds1",
 				},
 				"targets": []interface{}{hiddenQuery, nonHiddenQuery},
-			}}
+			},
+		}
 
 		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, "", true, []map[string]interface{}{}, customPanels)
 
@@ -1175,7 +1177,7 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 }
 
 func TestBuildTimeSettings(t *testing.T) {
-	var defaultDashboardData = simplejson.NewFromAny(map[string]interface{}{
+	defaultDashboardData := simplejson.NewFromAny(map[string]interface{}{
 		"time": map[string]interface{}{
 			"from": "2022-09-01T00:00:00.000Z", "to": "2022-09-01T12:00:00.000Z",
 		},
@@ -1251,7 +1253,8 @@ func TestBuildTimeSettings(t *testing.T) {
 			reqDTO: PublicDashboardQueryDTO{
 				TimeRange: TimeRangeDTO{
 					Timezone: "Europe/Madrid",
-				}},
+				},
+			},
 			want: TimeSettings{
 				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
 				To:   strconv.FormatInt(endOfYesterdaySydney.UnixMilli(), 10),

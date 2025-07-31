@@ -33,15 +33,13 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 	return psMap
 }
 
-var (
-	defaultPreinstallPlugins = map[string]InstallPlugin{
-		// Default preinstalled plugins
-		"grafana-lokiexplore-app":      {ID: "grafana-lokiexplore-app"},
-		"grafana-pyroscope-app":        {ID: "grafana-pyroscope-app"},
-		"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
-		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
-	}
-)
+var defaultPreinstallPlugins = map[string]InstallPlugin{
+	// Default preinstalled plugins
+	"grafana-lokiexplore-app":      {ID: "grafana-lokiexplore-app"},
+	"grafana-pyroscope-app":        {ID: "grafana-pyroscope-app"},
+	"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
+	"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
+}
 
 func (cfg *Cfg) migrateInstallPluginsToPreinstallPluginsSync(rawInstallPlugins, installPluginsForce string, preinstallPluginsSync map[string]InstallPlugin) {
 	if strings.ToLower(installPluginsForce) == "true" || rawInstallPlugins == "" {

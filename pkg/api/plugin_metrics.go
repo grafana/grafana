@@ -12,7 +12,8 @@ import (
 )
 
 func (hs *HTTPServer) pluginMetricsEndpoint(ctx *web.Context) {
-	if !hs.Cfg.MetricsEndpointEnabled {
+	cfg := hs.Cfg.Get()
+	if !cfg.MetricsEndpointEnabled {
 		return
 	}
 
@@ -20,7 +21,7 @@ func (hs *HTTPServer) pluginMetricsEndpoint(ctx *web.Context) {
 		return
 	}
 
-	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, cfg.MetricsEndpointBasicAuthUsername, cfg.MetricsEndpointBasicAuthPassword) {
 		ctx.Resp.WriteHeader(http.StatusUnauthorized)
 		return
 	}

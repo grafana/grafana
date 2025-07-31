@@ -21,16 +21,13 @@ type ImageUploader interface {
 	Upload(ctx context.Context, path string) (string, error)
 }
 
-type NopImageUploader struct {
-}
+type NopImageUploader struct{}
 
 func (NopImageUploader) Upload(ctx context.Context, path string) (string, error) {
 	return "", nil
 }
 
-var (
-	logger = log.New("imguploader")
-)
+var logger = log.New("imguploader")
 
 func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 	switch cfg.ImageUploadProvider {

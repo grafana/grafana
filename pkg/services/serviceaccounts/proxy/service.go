@@ -27,7 +27,7 @@ type ServiceAccountsProxy struct {
 }
 
 func ProvideServiceAccountsProxy(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	ac accesscontrol.AccessControl,
 	accesscontrolService accesscontrol.Service,
 	features featuremgmt.FeatureToggles,
@@ -35,13 +35,14 @@ func ProvideServiceAccountsProxy(
 	proxiedService *manager.ServiceAccountsService,
 	routeRegister routing.RouteRegister,
 ) (*ServiceAccountsProxy, error) {
+	cfg := settingsProvider.Get()
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
 		isProxyEnabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService, features)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(settingsProvider, s, ac, accesscontrolService, routeRegister, permissionService, features)
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	return s, nil

@@ -106,7 +106,7 @@ func TestAuth_Middleware(t *testing.T) {
 		{
 			desc:           "snapshot public mode disabled should return 200 for authenticated user",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
+			authMiddleware: SnapshotPublicModeOrCreate(setting.ProvideService(&setting.Cfg{SnapshotPublicMode: false}), ac),
 			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
@@ -114,7 +114,7 @@ func TestAuth_Middleware(t *testing.T) {
 		{
 			desc:           "snapshot public mode disabled should return 401 for unauthenticated request",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
+			authMiddleware: SnapshotPublicModeOrCreate(setting.ProvideService(&setting.Cfg{SnapshotPublicMode: false}), ac),
 			authErr:        errors.New("no auth"),
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
@@ -122,7 +122,7 @@ func TestAuth_Middleware(t *testing.T) {
 		{
 			desc:           "snapshot public mode enabled should return 200 for unauthenticated request",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: true}, ac),
+			authMiddleware: SnapshotPublicModeOrCreate(setting.ProvideService(&setting.Cfg{SnapshotPublicMode: true}), ac),
 			authErr:        errors.New("no auth"),
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
@@ -402,7 +402,7 @@ func TestCanAdminPlugin(t *testing.T) {
 				c.OrgRole = tt.orgRole
 				c.AllowAnonymous = true
 			}))
-			server.Use(CanAdminPlugins(&setting.Cfg{PluginAdminEnabled: true}, ac))
+			server.Use(CanAdminPlugins(setting.ProvideService(&setting.Cfg{PluginAdminEnabled: true}), ac))
 			server.Get("/plugins/:id", func(c *contextmodel.ReqContext) {
 				reached = true
 				c.Resp.WriteHeader(http.StatusOK)

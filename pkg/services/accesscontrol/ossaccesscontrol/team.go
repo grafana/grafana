@@ -36,7 +36,7 @@ var (
 )
 
 func ProvideTeamPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
+	settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*TeamPermissionsService, error) {
@@ -98,7 +98,7 @@ func ProvideTeamPermissions(
 		},
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(settingsProvider, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}

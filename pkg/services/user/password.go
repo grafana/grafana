@@ -16,15 +16,15 @@ var (
 
 type Password string
 
-func NewPassword(newPassword string, config *setting.Cfg) (Password, error) {
-	if err := ValidatePassword(newPassword, config); err != nil {
+func NewPassword(newPassword string, settingsProvider setting.SettingsProvider) (Password, error) {
+	if err := ValidatePassword(newPassword, settingsProvider); err != nil {
 		return "", err
 	}
 	return Password(newPassword), nil
 }
 
-func (p Password) Validate(config *setting.Cfg) error {
-	return ValidatePassword(string(p), config)
+func (p Password) Validate(settingsProvider setting.SettingsProvider) error {
+	return ValidatePassword(string(p), settingsProvider)
 }
 
 func (p Password) Hash(salt string) (Password, error) {
@@ -39,8 +39,9 @@ func (p Password) Hash(salt string) (Password, error) {
 // If BasicAuthStrongPasswordPolicy is disabled, it only checks for password length.
 // Otherwise, it ensures the password meets the minimum length requirement and contains at least one uppercase letter,
 // one lowercase letter, one number, and one symbol.
-func ValidatePassword(newPassword string, config *setting.Cfg) error {
-	if !config.BasicAuthStrongPasswordPolicy {
+func ValidatePassword(newPassword string, settingsProvider setting.SettingsProvider) error {
+	cfg := settingsProvider.Get()
+	if !cfg.BasicAuthStrongPasswordPolicy {
 		if len(newPassword) < 4 {
 			return ErrPasswordTooShort.Errorf("new password is too short")
 		}

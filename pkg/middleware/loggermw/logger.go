@@ -40,17 +40,17 @@ type Logger interface {
 }
 
 type loggerImpl struct {
-	cfg   *setting.Cfg
-	flags featuremgmt.FeatureToggles
+	settingsProvider setting.SettingsProvider
+	flags            featuremgmt.FeatureToggles
 }
 
 func Provide(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	flags featuremgmt.FeatureToggles,
 ) Logger {
 	return &loggerImpl{
-		cfg:   cfg,
-		flags: flags,
+		settingsProvider: settingsProvider,
+		flags:            flags,
 	}
 }
 
@@ -88,6 +88,7 @@ func (l *loggerImpl) Middleware() web.Middleware {
 }
 
 func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.Duration) ([]any, errutil.LogLevel) {
+	cfg := l.settingsProvider.Get()
 	rw := c.Resp
 	r := c.Req
 
@@ -96,7 +97,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 
 	switch {
 	case status == http.StatusOK, status == http.StatusNotModified:
-		if !l.cfg.RouterLogging {
+		if !cfg.RouterLogging {
 			lvl = errutil.LevelNever
 		}
 	case status >= http.StatusInternalServerError:
@@ -121,7 +122,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		lvl = lvl.HighestOf(errutil.LevelWarn)
 	}
 
-	if l.cfg.DatabaseInstrumentQueries {
+	if cfg.DatabaseInstrumentQueries {
 		logParams = append(logParams, "db_call_count", log.TotalDBCallCount(c.Req.Context()))
 	}
 

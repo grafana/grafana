@@ -87,7 +87,7 @@ type DashboardsAPIBuilder struct {
 	folderStore                  folder.FolderStore
 	QuotaService                 quota.Service
 	ProvisioningService          provisioning.ProvisioningService
-	cfg                          *setting.Cfg
+	settingsProvider             setting.SettingsProvider
 	dualWriter                   dualwrite.Service
 	folderClient                 client.K8sHandler
 
@@ -96,7 +96,7 @@ type DashboardsAPIBuilder struct {
 }
 
 func RegisterAPIService(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
@@ -120,9 +120,9 @@ func RegisterAPIService(
 	userService user.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
-	namespacer := request.GetNamespaceMapper(cfg)
+	namespacer := request.GetNamespaceMapper(settingsProvider)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
+	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(settingsProvider), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
 
@@ -138,7 +138,7 @@ func RegisterAPIService(
 		folderStore:                  folderStore,
 		QuotaService:                 quotaService,
 		ProvisioningService:          provisioning,
-		cfg:                          cfg,
+		settingsProvider:             settingsProvider,
 		dualWriter:                   dual,
 		folderClient:                 folderClient,
 
@@ -281,7 +281,8 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
+	cfg := b.settingsProvider.Get()
+	if err := b.dashboardService.ValidateDashboardRefreshInterval(cfg.MinRefreshInterval, refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -367,7 +368,8 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
+	cfg := b.settingsProvider.Get()
+	if err := b.dashboardService.ValidateDashboardRefreshInterval(cfg.MinRefreshInterval, refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -378,7 +380,6 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) error {
 	// Check if folder exists using the folder store
 	_, err := b.folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
-
 	if err != nil {
 		return err
 	}

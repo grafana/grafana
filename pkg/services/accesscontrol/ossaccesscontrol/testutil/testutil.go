@@ -30,7 +30,7 @@ import (
 
 func ProvideFolderPermissions(
 	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	sqlStore *sqlstore.SQLStore,
 ) (*ossaccesscontrol.FolderPermissionsService, error) {
 	actionSets := resourcepermissions.NewActionSetService()
@@ -41,7 +41,7 @@ func ProvideFolderPermissions(
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, settingsProvider, features, tagimpl.ProvideService(sqlStore))
 	if err != nil {
 		return nil, err
 	}
@@ -50,19 +50,19 @@ func ProvideFolderPermissions(
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fService := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, settingsProvider, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	acSvc := acimpl.ProvideOSSService(
-		cfg, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
+		settingsProvider, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sqlStore, permreg.ProvidePermissionRegistry(),
 		nil,
 	)
 
-	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(sqlStore, settingsProvider, quotaService)
 	if err != nil {
 		return nil, err
 	}
-	teamSvc, err := teamimpl.ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := teamimpl.ProvideService(sqlStore, settingsProvider, tracing.InitializeTracerForTest())
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func ProvideFolderPermissions(
 	userSvc, err := userimpl.ProvideService(
 		sqlStore,
 		orgService,
-		cfg,
+		settingsProvider,
 		teamSvc,
 		cache,
 		tracing.InitializeTracerForTest(),
@@ -83,7 +83,7 @@ func ProvideFolderPermissions(
 	}
 
 	return ossaccesscontrol.ProvideFolderPermissions(
-		cfg,
+		settingsProvider,
 		features,
 		routing.NewRouteRegister(),
 		sqlStore,

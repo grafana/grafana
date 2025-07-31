@@ -83,7 +83,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
 	publicDashboardService publicdashboards.ServiceWrapper,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	r prometheus.Registerer,
 	tracer trace.Tracer,
 	resourceClient resource.ResourceClient,
@@ -115,7 +115,7 @@ func ProvideService(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		k8sHandler := client.NewK8sHandler(
 			dual,
-			request.GetNamespaceMapper(cfg),
+			request.GetNamespaceMapper(settingsProvider),
 			folderv1.FolderResourceInfo.GroupVersionResource(),
 			restConfig.GetRestConfig,
 			dashboardStore,
@@ -134,7 +134,7 @@ func ProvideService(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		dashHandler := client.NewK8sHandler(
 			dual,
-			request.GetNamespaceMapper(cfg),
+			request.GetNamespaceMapper(settingsProvider),
 			dashboardv1.DashboardResourceInfo.GroupVersionResource(),
 			restConfig.GetRestConfig,
 			dashboardStore,
@@ -846,7 +846,6 @@ func (s *Service) UpdateLegacy(ctx context.Context, cmd *folder.UpdateFolderComm
 
 		return nil
 	})
-
 	if err != nil {
 		s.log.ErrorContext(ctx, "folder update failed", "folderUID", cmd.UID, "error", err)
 		return nil, err
@@ -977,7 +976,6 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 	folders := []string{cmd.UID}
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		descendants, err := s.nestedFolderDelete(ctx, cmd)
-
 		if err != nil {
 			s.log.ErrorContext(ctx, "the delete folder on folder table failed with err: ", "error", err)
 			return err

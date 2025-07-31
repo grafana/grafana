@@ -35,8 +35,10 @@ var ExtraGenericOAuthSettingKeys = map[string]ExtraKeyInfo{
 	allowedOrganizationsKey: {Type: String},
 }
 
-var _ social.SocialConnector = (*SocialGenericOAuth)(nil)
-var _ ssosettings.Reloadable = (*SocialGenericOAuth)(nil)
+var (
+	_ social.SocialConnector = (*SocialGenericOAuth)(nil)
+	_ ssosettings.Reloadable = (*SocialGenericOAuth)(nil)
+)
 
 type SocialGenericOAuth struct {
 	*SocialBase
@@ -104,7 +106,6 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 		validation.UrlValidator(info.AuthUrl, "Auth URL"),
 		validation.UrlValidator(info.TokenUrl, "Token URL"),
 		validateTeamsUrlWhenNotEmpty)
-
 	if err != nil {
 		return err
 	}
@@ -615,7 +616,7 @@ func (s *SocialGenericOAuth) fetchPrivateEmail(ctx context.Context, client *http
 
 	s.log.Debug("Received email addresses", "emails", records)
 
-	var email = ""
+	email := ""
 	for _, record := range records {
 		if record.Primary || record.IsPrimary {
 			email = record.Email
@@ -707,7 +708,7 @@ func (s *SocialGenericOAuth) fetchOrganizations(ctx context.Context, client *htt
 		return nil, false
 	}
 
-	var logins = make([]string, len(records))
+	logins := make([]string, len(records))
 	for i, record := range records {
 		logins[i] = record.Login
 	}

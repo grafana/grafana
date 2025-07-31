@@ -87,7 +87,7 @@ func TestIntegrationServer(t *testing.T) {
 func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	t.Helper()
 
-	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
+	store, err := store.NewEmbeddedStore(setting.ProvideService(cfg), testDB, log.NewNopLogger())
 	require.NoError(t, err)
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	require.NoError(t, err)

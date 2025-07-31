@@ -12,7 +12,8 @@ type RuleUsageReader interface {
 	Count(ctx context.Context, orgID int64) (int64, error)
 }
 
-func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleUsageReader) error {
+func RegisterQuotas(settingsProvider setting.SettingsProvider, qs quota.Service, rules RuleUsageReader) error {
+	cfg := settingsProvider.Get()
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return err

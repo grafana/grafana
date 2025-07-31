@@ -90,7 +90,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		}, // do not poll in tests.
 	}
 	moa, err := notifier.NewMultiOrgAlertmanager(
-		cfg,
+		setting.ProvideService(cfg),
 		configStore,
 		notifier.NewFakeOrgStore(t, []int64{1}),
 		kvStore,

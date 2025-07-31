@@ -40,7 +40,8 @@ var datasourcesLogger = log.New("datasources")
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Response {
-	query := datasources.GetDataSourcesQuery{OrgID: c.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
+	cfg := hs.Cfg.Get()
+	query := datasources.GetDataSourcesQuery{OrgID: c.GetOrgID(), DataSourceLimit: cfg.DataSourceLimit}
 
 	dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 	if err != nil {
@@ -201,7 +202,6 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 // 500: internalServerError
 func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Response {
 	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.GetOrgID())
-
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return response.Error(http.StatusNotFound, "Data source not found", nil)
@@ -323,7 +323,8 @@ func validateURL(cmdType string, url string) response.Response {
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
-func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
+func validateJSONData(jsonData *simplejson.Json, settingsProvider setting.SettingsProvider) error {
+	cfg := settingsProvider.Get()
 	if jsonData == nil {
 		return nil
 	}

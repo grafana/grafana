@@ -87,7 +87,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/", strings.NewReader(tt.body))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				OrgRole: tt.basicRole, OrgID: 1, IsAnonymous: true,
-				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)},
+			})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 
@@ -253,7 +254,7 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 	t.Helper()
 	cfg := setting.NewCfg()
 	api := &ServiceAccountsAPI{
-		cfg:                  cfg,
+		settingsProvider:     setting.ProvideService(cfg),
 		service:              &satests.FakeServiceAccountService{},
 		accesscontrolService: &actest.FakeService{},
 		accesscontrol:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),

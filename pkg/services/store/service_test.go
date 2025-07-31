@@ -66,7 +66,8 @@ var (
 					"/maps/",
 					"/upload/",
 				},
-			}})
+			},
+		})
 )
 
 func TestMain(m *testing.M) {
@@ -223,7 +224,8 @@ func TestIntegrationShouldDelegateFolderDeletion(t *testing.T) {
 		{
 			Path:  storageName,
 			Force: true,
-		}}
+		},
+	}
 
 	ctx := context.Background()
 

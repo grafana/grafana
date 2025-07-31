@@ -153,7 +153,7 @@ func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrat
 	configs := make([]*AlertConfiguration, 0, len(orgs))
 	for _, org := range orgs {
 		configs = append(configs, &AlertConfiguration{
-			AlertmanagerConfiguration: migrator.Cfg.UnifiedAlerting.DefaultConfiguration,
+			AlertmanagerConfiguration: migrator.SettingsProvider.Get().UnifiedAlerting.DefaultConfiguration,
 			// Since we are migration for a snapshot of the code, it is always going to migrate to
 			// the v1 config.
 			ConfigurationVersion: "v1",
@@ -174,7 +174,7 @@ func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrat
 // pre-8.2 version put all configuration files into the root of alerting directory. Since 8.2 configuration files are put in organization specific directory
 func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migrator.Migrator) {
 	knownFiles := map[string]any{"__default__.tmpl": nil, "silences": nil, "notifications": nil}
-	alertingDir := filepath.Join(migrator.Cfg.DataPath, "alerting")
+	alertingDir := filepath.Join(migrator.SettingsProvider.Get().DataPath, "alerting")
 
 	// do not fail if something goes wrong because these files are not used anymore. the worst that can happen is that we leave some leftovers behind
 	deleteFile := func(fileName string) {
@@ -188,7 +188,7 @@ func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migra
 
 	moveFile := func(fileName string) {
 		alertingOrgDir := filepath.Join(alertingDir, strconv.FormatInt(orgId, 10))
-		if err := os.MkdirAll(alertingOrgDir, 0750); err != nil {
+		if err := os.MkdirAll(alertingOrgDir, 0o750); err != nil {
 			migrator.Logger.Error("Failed to create alerting directory for organization. Skip moving the file and delete it instead", "target_dir", alertingOrgDir, "org_id", orgId, "error", err, "file", fileName)
 			deleteFile(fileName)
 			return

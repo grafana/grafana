@@ -20,9 +20,10 @@ func TestIntegrationStore_UsageStats(t *testing.T) {
 
 	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
-	sa := tests.SetupUserServiceAccount(t, db, store.cfg, saToCreate)
+	sa := tests.SetupUserServiceAccount(t, db, store.settingsProvider, saToCreate)
 
-	store.cfg.SATokenExpirationDayLimit = 4
+	cfg := store.settingsProvider.Get()
+	cfg.SATokenExpirationDayLimit = 4
 
 	keyName := t.Name()
 	key, err := satokengen.New(keyName)

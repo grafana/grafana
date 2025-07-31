@@ -77,7 +77,8 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-				}})
+				},
+			})
 
 			t.Cleanup(func() {
 				helper.Shutdown()
@@ -111,7 +112,8 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-				}})
+				},
+			})
 
 			t.Cleanup(func() {
 				helper.Shutdown()
@@ -148,7 +150,8 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 					"folders.folder.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-				}})
+				},
+			})
 
 			t.Cleanup(func() {
 				helper.Shutdown()
@@ -200,7 +203,8 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 					"folders.folder.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-				}})
+				},
+			})
 
 			t.Cleanup(func() {
 				helper.Shutdown()
@@ -659,11 +663,12 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 	t.Run("Dashboard refresh interval validations", func(t *testing.T) {
 		// Store original settings to restore after test
-		origCfg := ctx.Helper.GetEnv().Cfg
+		origCfg := ctx.Helper.GetEnv().SettingsProvider.Get()
 		origMinRefreshInterval := origCfg.MinRefreshInterval
 
 		// Set a fixed min_refresh_interval for all tests to make them predictable
-		ctx.Helper.GetEnv().Cfg.MinRefreshInterval = "10s"
+		cfg := ctx.Helper.GetEnv().SettingsProvider.Get()
+		cfg.MinRefreshInterval = "10s"
 
 		testCases := []struct {
 			name          string
@@ -733,7 +738,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		}
 
 		// Restore original settings
-		ctx.Helper.GetEnv().Cfg.MinRefreshInterval = origMinRefreshInterval
+		cfg.MinRefreshInterval = origMinRefreshInterval
 	})
 
 	t.Run("Dashboard size limit validations", func(t *testing.T) {
@@ -1618,8 +1623,8 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		// Try to access the dashboard from a viewer in the other org
 		_, err = otherOrgClient.Resource.Get(context.Background(), org1DashUID, v1.GetOptions{})
 		require.Error(t, err, "User from other org should not be able to view dashboard even with custom permissions")
-		//statusErr := ctx.Helper.AsStatusError(err)
-		//require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code), "Should get 404 Not Found")
+		// statusErr := ctx.Helper.AsStatusError(err)
+		// require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code), "Should get 404 Not Found")
 		// TODO: Find out why this throws a 500 instead of a 404 with this message:
 		// an error on the server (\"Internal Server Error: \\\"/apis/dashboard.grafana.app/v1beta1/namespaces/org-3/dashboards/test-cs6xk\\\": Dashboard not found\") has prevented the request from succeeding"
 
@@ -1804,10 +1809,10 @@ func runCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) {
 				// Try to get the dashboard
 				_, err := client.Resource.Get(context.Background(), targetDashUID, v1.GetOptions{})
 				require.Error(t, err, "Should not be able to access dashboard from another org")
-				//statusErr := org1Ctx.Helper.AsStatusError(err)
+				// statusErr := org1Ctx.Helper.AsStatusError(err)
 				// TODO: Find out why this throws a 500 instead of a 404 with this message:
 				// "an error on the server (\"Internal Server Error: \\\"/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/test-rbm2q\\\": Dashboard not found\") has prevented the request from succeeding"
-				//require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code), "Should get 404 Not Found")
+				// require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code), "Should get 404 Not Found")
 
 				// Get a dashboard as admin from the target org to then send an update request
 				dash, err := adminClient.Resource.Get(context.Background(), targetDashUID, v1.GetOptions{})
@@ -2139,7 +2144,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 
 					// Verify the dashboard was deleted
 					_, err = adminClient.Resource.Get(context.Background(), dashboardUID, v1.GetOptions{})
-					//require.ErrorIs(t, err, dashboards.ErrDashboardNotFound, "Dashboard should be deleted")
+					// require.ErrorIs(t, err, dashboards.ErrDashboardNotFound, "Dashboard should be deleted")
 					require.Error(t, err, "Dashboard should be deleted")
 				} else {
 					require.NotEqual(t, http.StatusCreated, createResp.Response.StatusCode,
@@ -2148,7 +2153,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 					// Always verify the dashboard wasn't created by checking for its UID
 					// Verify the dashboard was not created
 					_, err := adminClient.Resource.Get(context.Background(), dashboardUID, v1.GetOptions{})
-					//require.ErrorIs(t, err, dashboards.ErrDashboardNotFound, "Dashboard should never have been created")
+					// require.ErrorIs(t, err, dashboards.ErrDashboardNotFound, "Dashboard should never have been created")
 					require.Error(t, err, "Dashboard should never have been created")
 				}
 			})
@@ -2181,7 +2186,8 @@ func getDashboardViaHTTP(t *testing.T, ctx *TestContext, dashboardPath string, u
 
 // Helper function to test dashboard updates via different http methods
 func testDashboardHttpUpdateMethods(t *testing.T, ctx TestContext, dashboardPath string, originalTitle string,
-	updateUser apis.User, canUpdate bool) {
+	updateUser apis.User, canUpdate bool,
+) {
 	// Helper to verify update results based on permissions
 	verifyUpdateResults := func(updateMethod string, updateTitle string, updateResp apis.K8sResponse[struct{}]) {
 		if canUpdate {

@@ -77,12 +77,12 @@ func SetupRBACPermission(t *testing.T, db db.DB, role *accesscontrol.Role, user 
 	require.NoError(t, err)
 }
 
-func CreateDashboard(t *testing.T, db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, cmd dashboards.SaveDashboardCommand) *dashboards.Dashboard {
+func CreateDashboard(t *testing.T, db db.DB, settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, cmd dashboards.SaveDashboardCommand) *dashboards.Dashboard {
 	t.Helper()
 
 	dashboardStore, err := dashboardstore.ProvideDashboardStore(
 		db,
-		cfg,
+		settingsProvider,
 		features,
 		tagimpl.ProvideService(db),
 	)

@@ -17,7 +17,7 @@ func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
 	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
-	user := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
+	user := tests.SetupUserServiceAccount(t, db, store.settingsProvider, userToCreate)
 
 	type testCasesAdd struct {
 		secondsToLive int64
@@ -82,7 +82,7 @@ func TestIntegration_Store_AddServiceAccountToken_WrongServiceAccount(t *testing
 	}
 	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
-	sa := tests.SetupUserServiceAccount(t, db, store.cfg, saToCreate)
+	sa := tests.SetupUserServiceAccount(t, db, store.settingsProvider, saToCreate)
 
 	keyName := t.Name()
 	key, err := apikeygen.New(sa.OrgID, keyName)
@@ -105,7 +105,7 @@ func TestIntegration_Store_RevokeServiceAccountToken(t *testing.T) {
 	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
-	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
+	sa := tests.SetupUserServiceAccount(t, db, store.settingsProvider, userToCreate)
 
 	keyName := t.Name()
 	key, err := apikeygen.New(sa.OrgID, keyName)
@@ -148,7 +148,7 @@ func TestIntegration_Store_DeleteServiceAccountToken(t *testing.T) {
 	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
-	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
+	sa := tests.SetupUserServiceAccount(t, db, store.settingsProvider, userToCreate)
 
 	keyName := t.Name()
 	key, err := apikeygen.New(sa.OrgID, keyName)

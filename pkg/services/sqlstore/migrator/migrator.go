@@ -34,15 +34,15 @@ var (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/sqlstore/migrator")
 
 type Migrator struct {
-	DBEngine     *xorm.Engine
-	Dialect      Dialect
-	migrations   []Migration
-	migrationIds map[string]struct{}
-	Logger       log.Logger
-	Cfg          *setting.Cfg
-	isLocked     atomic.Bool
-	logMap       map[string]MigrationLog
-	tableName    string
+	DBEngine         *xorm.Engine
+	Dialect          Dialect
+	migrations       []Migration
+	migrationIds     map[string]struct{}
+	Logger           log.Logger
+	SettingsProvider setting.SettingsProvider
+	isLocked         atomic.Bool
+	logMap           map[string]MigrationLog
+	tableName        string
 
 	metrics migratorMetrics
 }
@@ -62,18 +62,18 @@ type migratorMetrics struct {
 	totalMigDuration *prometheus.HistogramVec
 }
 
-func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
-	return NewScopedMigrator(engine, cfg, "")
+func NewMigrator(engine *xorm.Engine, settingsProvider setting.SettingsProvider) *Migrator {
+	return NewScopedMigrator(engine, settingsProvider, "")
 }
 
 // NewScopedMigrator should only be used for the transition to a new storage engine
-func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
+func NewScopedMigrator(engine *xorm.Engine, settingsProvider setting.SettingsProvider, scope string) *Migrator {
 	mg := &Migrator{
-		Cfg:          cfg,
-		DBEngine:     engine,
-		migrations:   make([]Migration, 0),
-		migrationIds: make(map[string]struct{}),
-		Dialect:      NewDialect(engine.DriverName()),
+		SettingsProvider: settingsProvider,
+		DBEngine:         engine,
+		migrations:       make([]Migration, 0),
+		migrationIds:     make(map[string]struct{}),
+		Dialect:          NewDialect(engine.DriverName()),
 		metrics: migratorMetrics{
 			migCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 				Namespace: "grafana_database",

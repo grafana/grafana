@@ -21,8 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
 )
 
-func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
-	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
+func NewStore(settingsProvider setting.SettingsProvider, logger log.Logger) (storage.OpenFGADatastore, error) {
+	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(settingsProvider, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
@@ -30,7 +30,7 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
 		connStr := sqliteConnectionString(grafanaDBCfg.ConnectionString)
-		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg, logger); err != nil {
+		if err := migration.Run(settingsProvider, migrator.SQLite, grafanaDBCfg, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -38,14 +38,14 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	case migrator.MySQL:
 		// For mysql we need to pass parseTime parameter in connection string
 		connStr := grafanaDBCfg.ConnectionString + "&parseTime=true"
-		if err := migration.Run(cfg, migrator.MySQL, grafanaDBCfg, logger); err != nil {
+		if err := migration.Run(settingsProvider, migrator.MySQL, grafanaDBCfg, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return mysql.New(connStr, zanzanaDBCfg)
 	case migrator.Postgres:
 		// Parse and transform the connection string to the format OpenFGA expects
-		if err := migration.Run(cfg, migrator.Postgres, grafanaDBCfg, logger); err != nil {
+		if err := migration.Run(settingsProvider, migrator.Postgres, grafanaDBCfg, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -56,8 +56,8 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	return nil, fmt.Errorf("unsupported database engine: %s", grafanaDBCfg.Type)
 }
 
-func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error) {
-	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
+func NewEmbeddedStore(settingsProvider setting.SettingsProvider, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error) {
+	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(settingsProvider, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
@@ -65,19 +65,19 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
 		grafanaDBCfg.ConnectionString = sqliteConnectionString(grafanaDBCfg.ConnectionString)
-		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg, logger); err != nil {
+		if err := migration.Run(settingsProvider, migrator.SQLite, grafanaDBCfg, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return sqlite.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	case migrator.MySQL:
-		if err := migration.Run(cfg, migrator.MySQL, grafanaDBCfg, logger); err != nil {
+		if err := migration.Run(settingsProvider, migrator.MySQL, grafanaDBCfg, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return mysql.New(grafanaDBCfg.ConnectionString+"&parseTime=true", zanzanaDBCfg)
 	case migrator.Postgres:
-		if err := migration.Run(cfg, migrator.Postgres, grafanaDBCfg, logger); err != nil {
+		if err := migration.Run(settingsProvider, migrator.Postgres, grafanaDBCfg, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -88,9 +88,9 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 	return nil, fmt.Errorf("unsupported database engine: %s", db.GetDialect().DriverName())
 }
 
-func parseConfig(cfg *setting.Cfg, logger log.Logger) (*sqlstore.DatabaseConfig, *sqlcommon.Config, error) {
-	sec := cfg.Raw.Section("database")
-	grafanaDBCfg, err := sqlstore.NewDatabaseConfig(cfg, nil)
+func parseConfig(settingsProvider setting.SettingsProvider, logger log.Logger) (*sqlstore.DatabaseConfig, *sqlcommon.Config, error) {
+	sec := settingsProvider.Get().Raw.Section("database")
+	grafanaDBCfg, err := sqlstore.NewDatabaseConfig(settingsProvider, nil)
 	if err != nil {
 		return nil, nil, nil
 	}

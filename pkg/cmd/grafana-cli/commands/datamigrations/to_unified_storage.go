@@ -34,7 +34,7 @@ import (
 )
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
-func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
+func ToUnifiedStorage(c utils.CommandLine, settingsProvider setting.SettingsProvider, sqlStore db.DB) error {
 	// Take namespace from command line
 	namespace := c.String("namespace")
 
@@ -63,6 +63,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		},
 	}
 
+	cfg := settingsProvider.Get()
 	provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
 	if err != nil {
 		return err
@@ -78,7 +79,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 	)
 
-	client, err := newUnifiedClient(cfg, sqlStore)
+	client, err := newUnifiedClient(settingsProvider, sqlStore)
 	if err != nil {
 		return err
 	}
@@ -215,20 +216,20 @@ func promptYesNo(prompt string) (bool, error) {
 	}
 }
 
-func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+func newUnifiedClient(settingsProvider setting.SettingsProvider, sqlStore db.DB) (resource.ResourceClient, error) {
+	featureManager, err := featuremgmt.ProvideManagerService(settingsProvider)
 	if err != nil {
 		return nil, err
 	}
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
-		Cfg:      cfg,
-		Features: featureToggles,
-		DB:       sqlStore,
-		Tracer:   tracing.NewNoopTracerService(),
-		Reg:      prometheus.NewPedanticRegistry(),
-		Authzc:   authlib.FixedAccessClient(true), // always true!
-		Docs:     nil,                             // document supplier
+		SettingsProvider: settingsProvider,
+		Features:         featureToggles,
+		DB:               sqlStore,
+		Tracer:           tracing.NewNoopTracerService(),
+		Reg:              prometheus.NewPedanticRegistry(),
+		Authzc:           authlib.FixedAccessClient(true), // always true!
+		Docs:             nil,                             // document supplier
 	}, nil, nil)
 }
 

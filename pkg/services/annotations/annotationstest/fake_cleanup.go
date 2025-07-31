@@ -6,8 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type fakeCleaner struct {
-}
+type fakeCleaner struct{}
 
 func NewFakeCleaner() *fakeCleaner {
 	return &fakeCleaner{}

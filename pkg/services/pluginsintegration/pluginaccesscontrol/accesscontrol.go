@@ -37,14 +37,16 @@ type ActionSetRegistry interface {
 	RegisterActionSets(ctx context.Context, ID string, registrations []plugins.ActionSet) error
 }
 
-func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool {
+func ReqCanAdminPlugins(settingsProvider setting.SettingsProvider) func(rc *contextmodel.ReqContext) bool {
+	cfg := settingsProvider.Get()
 	// Legacy handler that protects access to the Configuration > Plugins page
 	return func(rc *contextmodel.ReqContext) bool {
 		return rc.OrgRole == org.RoleAdmin || cfg.PluginAdminEnabled && rc.IsGrafanaAdmin
 	}
 }
 
-func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
+func DeclareRBACRoles(service ac.Service, settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles) error {
+	cfg := settingsProvider.Get()
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",

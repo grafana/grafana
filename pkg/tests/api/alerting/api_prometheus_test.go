@@ -46,7 +46,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -376,7 +376,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -711,7 +711,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	userID := createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -720,7 +720,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
-	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(env.SettingsProvider, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")

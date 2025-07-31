@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, userService user.Service) *LibraryElementService {
+func ProvideService(settingsProvider setting.SettingsProvider, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, userService user.Service) *LibraryElementService {
 	l := &LibraryElementService{
-		Cfg:               cfg,
+		SettingsProvider:  settingsProvider,
 		SQLStore:          sqlStore,
 		RouteRegister:     routeRegister,
 		folderService:     folderService,
@@ -28,7 +28,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		log:               log.New("library-elements"),
 		features:          features,
 		AccessControl:     ac,
-		k8sHandler:        newLibraryElementsK8sHandler(cfg, clientConfigProvider, folderService, userService, dashboardsService),
+		k8sHandler:        newLibraryElementsK8sHandler(settingsProvider, clientConfigProvider, folderService, userService, dashboardsService),
 	}
 
 	l.registerAPIEndpoints()
@@ -50,7 +50,7 @@ type Service interface {
 
 // LibraryElementService is the service for the Library Element feature.
 type LibraryElementService struct {
-	Cfg               *setting.Cfg
+	SettingsProvider  setting.SettingsProvider
 	SQLStore          db.DB
 	RouteRegister     routing.RouteRegister
 	folderService     folder.Service

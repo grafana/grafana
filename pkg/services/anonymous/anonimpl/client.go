@@ -28,7 +28,7 @@ var (
 )
 
 type Anonymous struct {
-	cfg               *setting.Cfg
+	settingsProvider  setting.SettingsProvider
 	log               log.Logger
 	orgService        org.Service
 	anonDeviceService anonymous.Service
@@ -39,9 +39,10 @@ func (a *Anonymous) Name() string {
 }
 
 func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.Anonymous.OrgName})
+	cfg := a.settingsProvider.Get()
+	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: cfg.Anonymous.OrgName})
 	if err != nil {
-		a.log.FromContext(ctx).Error("Failed to find organization", "name", a.cfg.Anonymous.OrgName, "error", err)
+		a.log.FromContext(ctx).Error("Failed to find organization", "name", cfg.Anonymous.OrgName, "error", err)
 		return nil, err
 	}
 
@@ -64,7 +65,8 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 }
 
 func (a *Anonymous) IsEnabled() bool {
-	return a.cfg.Anonymous.Enabled
+	cfg := a.settingsProvider.Get()
+	return cfg.Anonymous.Enabled
 }
 
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
@@ -77,7 +79,8 @@ func (a *Anonymous) IdentityType() claims.IdentityType {
 }
 
 func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
-	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.Anonymous.OrgName})
+	cfg := a.settingsProvider.Get()
+	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: cfg.Anonymous.OrgName})
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +98,12 @@ func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typ claims
 }
 
 func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]any, error) {
+	cfg := a.settingsProvider.Get()
 	m := map[string]any{}
 
 	// Add stats about anonymous auth
 	m["stats.anonymous.customized_role.count"] = 0
-	if !strings.EqualFold(a.cfg.Anonymous.OrgRole, "Viewer") {
+	if !strings.EqualFold(cfg.Anonymous.OrgRole, "Viewer") {
 		m["stats.anonymous.customized_role.count"] = 1
 	}
 
@@ -111,12 +115,13 @@ func (a *Anonymous) Priority() uint {
 }
 
 func (a *Anonymous) newAnonymousIdentity(o *org.Org) *authn.Identity {
+	cfg := a.settingsProvider.Get()
 	return &authn.Identity{
 		ID:           "0",
 		Type:         claims.TypeAnonymous,
 		OrgID:        o.ID,
 		OrgName:      o.Name,
-		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.Anonymous.OrgRole)},
+		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(cfg.Anonymous.OrgRole)},
 		ClientParams: authn.ClientParams{SyncPermissions: true},
 	}
 }

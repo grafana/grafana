@@ -18,15 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(cfg *setting.Cfg, sql db.DB, features featuremgmt.FeatureToggles) *store {
-	store := &store{cfg: cfg, sql: sql, features: features}
+func NewStore(settingsProvider setting.SettingsProvider, sql db.DB, features featuremgmt.FeatureToggles) *store {
+	store := &store{settingsProvider: settingsProvider, sql: sql, features: features}
 	return store
 }
 
 type store struct {
-	cfg      *setting.Cfg
-	sql      db.DB
-	features featuremgmt.FeatureToggles
+	settingsProvider setting.SettingsProvider
+	sql              db.DB
+	features         featuremgmt.FeatureToggles
 }
 
 type flatResourcePermission struct {
@@ -109,6 +109,7 @@ func (s *store) SetUserResourcePermission(
 
 	return permission, err
 }
+
 func (s *store) setUserResourcePermission(
 	sess *db.Session, orgID int64, user accesscontrol.User,
 	cmd SetResourcePermissionCommand,
@@ -189,7 +190,6 @@ func (s *store) SetBuiltInResourcePermission(
 		permission, err = s.setBuiltInResourcePermission(sess, orgID, builtInRole, cmd, hook)
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -718,7 +718,8 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 
 	// if we have actionset feature enabled and are only working with action sets
 	// skip adding the missing actions to the permissions table
-	if !s.shouldStoreActionSet(resource, permission) || !s.cfg.RBAC.OnlyStoreAccessActionSets {
+	cfg := s.settingsProvider.Get()
+	if !s.shouldStoreActionSet(resource, permission) || !cfg.RBAC.OnlyStoreAccessActionSets {
 		for action := range missingActions {
 			p := managedPermission(action, resource, resourceID, resourceAttribute)
 			p.RoleID = roleID

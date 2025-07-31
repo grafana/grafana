@@ -36,10 +36,10 @@ func TestIntegrationAnnotations(t *testing.T) {
 	}
 	sql := db.InitTestDB(t)
 
-	cfg := setting.NewCfg()
-	cfg.AnnotationMaximumTagsLength = 60
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	settingsProvider.Get().AnnotationMaximumTagsLength = 60
 
-	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql))
+	store := NewXormStore(settingsProvider, log.New("annotation.test"), sql, tagimpl.ProvideService(sql))
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -64,7 +64,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboard := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		dashboard := testutil.CreateDashboard(t, sql, settingsProvider, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
@@ -72,7 +72,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			}),
 		})
 
-		dashboard2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		dashboard2 := testutil.CreateDashboard(t, sql, settingsProvider, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
@@ -193,7 +193,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Text:   "rollback",
 			Type:   "",
 			Epoch:  17,
-			Tags:   []string{strings.Repeat("a", int(cfg.AnnotationMaximumTagsLength+1))},
+			Tags:   []string{strings.Repeat("a", int(settingsProvider.Get().AnnotationMaximumTagsLength+1))},
 		}
 		err = store.Add(context.Background(), badAnnotation)
 		require.Error(t, err)
@@ -665,7 +665,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	sql := db.InitTestDB(b)
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
-	store := xormRepositoryImpl{db: sql, cfg: cfg, log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
+	store := xormRepositoryImpl{db: sql, settingsProvider: setting.ProvideService(cfg), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
 
 	type annotationTag struct {
 		ID           int64 `xorm:"pk autoincr 'id'"`

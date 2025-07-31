@@ -47,7 +47,7 @@ func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd
 func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {
 	var result *dashboardsnapshots.DashboardSnapshot
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
+		expires := time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
 		}
@@ -80,7 +80,7 @@ func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cm
 
 func (d *DashboardSnapshotStore) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.DeleteDashboardSnapshotCommand) error {
 	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
+		rawSQL := "DELETE FROM dashboard_snapshot WHERE delete_key=?"
 		_, err := sess.Exec(rawSQL, cmd.DeleteKey)
 		return err
 	})
@@ -112,7 +112,7 @@ func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query
 func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) (dashboardsnapshots.DashboardSnapshotsList, error) {
 	var queryResult dashboardsnapshots.DashboardSnapshotsList
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var snapshots = make(dashboardsnapshots.DashboardSnapshotsList, 0)
+		snapshots := make(dashboardsnapshots.DashboardSnapshotsList, 0)
 		if query.Limit > 0 {
 			sess.Limit(query.Limit)
 		}

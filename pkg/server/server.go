@@ -208,7 +208,7 @@ func (s *Server) writePIDFile() error {
 	}
 
 	// Ensure the required directory structure exists.
-	err := os.MkdirAll(filepath.Dir(s.pidFile), 0700)
+	err := os.MkdirAll(filepath.Dir(s.pidFile), 0o700)
 	if err != nil {
 		s.log.Error("Failed to verify pid directory", "error", err)
 		return fmt.Errorf("failed to verify pid directory: %s", err)
@@ -216,7 +216,7 @@ func (s *Server) writePIDFile() error {
 
 	// Retrieve the PID and write it to file.
 	pid := strconv.Itoa(os.Getpid())
-	if err := os.WriteFile(s.pidFile, []byte(pid), 0644); err != nil {
+	if err := os.WriteFile(s.pidFile, []byte(pid), 0o644); err != nil {
 		s.log.Error("Failed to write pidfile", "error", err)
 		return fmt.Errorf("failed to write pidfile: %s", err)
 	}

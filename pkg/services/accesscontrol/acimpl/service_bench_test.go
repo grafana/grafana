@@ -28,12 +28,12 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	sqlStore := db.InitTestDB(b)
 	store := database.ProvideService(sqlStore)
 	acService := &Service{
-		cfg:           setting.NewCfg(),
-		log:           log.New("accesscontrol-test"),
-		registrations: accesscontrol.RegistrationList{},
-		store:         store,
-		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		cache:         localcache.New(1*time.Second, 1*time.Second),
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		log:              log.New("accesscontrol-test"),
+		registrations:    accesscontrol.RegistrationList{},
+		store:            store,
+		roles:            accesscontrol.BuildBasicRoleDefinitions(),
+		cache:            localcache.New(1*time.Second, 1*time.Second),
 	}
 
 	// Prepare default permissions
@@ -133,8 +133,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	// Allow signed in user to view all users permissions in the worst way
 	userPermissions := map[string][]string{}
 	for u := 1; u < usersCount+1; u++ {
-		userPermissions[accesscontrol.ActionUsersPermissionsRead] =
-			append(userPermissions[accesscontrol.ActionUsersPermissionsRead], fmt.Sprintf("users:id:%v", u))
+		userPermissions[accesscontrol.ActionUsersPermissionsRead] = append(userPermissions[accesscontrol.ActionUsersPermissionsRead], fmt.Sprintf("users:id:%v", u))
 	}
 	return acService, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: userPermissions}}
 }

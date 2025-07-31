@@ -36,14 +36,14 @@ type Service struct {
 	provisionedPlugins    provisionedplugins.Manager
 	ssoSettingsSvc        ssosettings.Service
 	GrafanaVersion        string
-	cfg                   *setting.Cfg
+	cfg                   setting.SettingsProvider
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
-	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service, cfg *setting.Cfg,
+	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service, cfg setting.SettingsProvider,
 	pluginErrorResolver plugins.ErrorResolver,
 ) *Service {
 	return &Service{
@@ -58,7 +58,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		managedPlugins:        managedPlugins,
 		provisionedPlugins:    provisionedPlugins,
 		ssoSettingsSvc:        ssoSettingsSvc,
-		GrafanaVersion:        cfg.BuildVersion,
+		GrafanaVersion:        cfg.Get().BuildVersion,
 		cfg:                   cfg,
 	}
 }

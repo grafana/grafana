@@ -17,10 +17,10 @@ type Service struct {
 	log log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, pCcfg *config.PluginManagementCfg) *Service {
+func ProvideService(settingsProvider setting.SettingsProvider, pCcfg *config.PluginManagementCfg) *Service {
 	return &Service{
 		cfg:            pCcfg,
-		staticRootPath: cfg.StaticRootPath,
+		staticRootPath: settingsProvider.Get().StaticRootPath,
 		log:            log.New("plugin.sources"),
 	}
 }

@@ -18,10 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const GrafanaRequestID = "X-Grafana-Request-Id"
-const GrafanaSignedRequestID = "X-Grafana-Signed-Request-Id"
-const XRealIPHeader = "X-Real-Ip"
-const GrafanaInternalRequest = "X-Grafana-Internal-Request"
+const (
+	GrafanaRequestID       = "X-Grafana-Request-Id"
+	GrafanaSignedRequestID = "X-Grafana-Signed-Request-Id"
+	XRealIPHeader          = "X-Real-Ip"
+	GrafanaInternalRequest = "X-Grafana-Internal-Request"
+)
 
 // NewHostedGrafanaACHeaderMiddleware creates a new backend.HandlerMiddleware that will
 // generate a random request ID, sign it using internal key and populate X-Grafana-Request-ID with the request ID

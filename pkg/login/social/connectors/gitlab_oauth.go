@@ -25,8 +25,10 @@ const (
 	accessLevelGuest = "10"
 )
 
-var _ social.SocialConnector = (*SocialGitlab)(nil)
-var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
+var (
+	_ social.SocialConnector = (*SocialGitlab)(nil)
+	_ ssosettings.Reloadable = (*SocialGitlab)(nil)
+)
 
 type SocialGitlab struct {
 	*SocialBase

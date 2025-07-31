@@ -58,11 +58,11 @@ func NodeTypeFromDatasourceUID(uid string) NodeType {
 
 // Service is service representation for expression handling.
 type Service struct {
-	cfg          setting.SettingsProvider
-	dataService  backend.QueryDataHandler
-	pCtxProvider pluginContextProvider
-	features     featuremgmt.FeatureToggles
-	converter    *ResultConverter
+	settingsProvider setting.SettingsProvider
+	dataService      backend.QueryDataHandler
+	pCtxProvider     pluginContextProvider
+	features         featuremgmt.FeatureToggles
+	converter        *ResultConverter
 
 	pluginsClient backend.CallResourceHandler
 
@@ -76,17 +76,17 @@ type pluginContextProvider interface {
 	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }
 
-func ProvideService(cfg setting.SettingsProvider, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
+func ProvideService(settingsProvider setting.SettingsProvider, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
 	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, builder mtdsclient.MTDatasourceClientBuilder,
 ) *Service {
 	return &Service{
-		cfg:           cfg,
-		dataService:   pluginClient,
-		pCtxProvider:  pCtxProvider,
-		features:      features,
-		tracer:        tracer,
-		metrics:       metrics.NewSSEMetrics(registerer),
-		pluginsClient: pluginClient,
+		settingsProvider: settingsProvider,
+		dataService:      pluginClient,
+		pCtxProvider:     pCtxProvider,
+		features:         features,
+		tracer:           tracer,
+		metrics:          metrics.NewSSEMetrics(registerer),
+		pluginsClient:    pluginClient,
 		converter: &ResultConverter{
 			Features: features,
 			Tracer:   tracer,
@@ -96,10 +96,15 @@ func ProvideService(cfg setting.SettingsProvider, pluginClient plugins.Client, p
 }
 
 func (s *Service) isDisabled() bool {
-	if s.cfg == nil {
+	if s.settingsProvider == nil {
 		return true
 	}
-	return !s.cfg.Get().ExpressionsEnabled
+
+	cfg := s.settingsProvider.Get()
+	if cfg == nil {
+		return true
+	}
+	return !cfg.ExpressionsEnabled
 }
 
 // BuildPipeline builds a pipeline from a request.

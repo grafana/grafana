@@ -30,13 +30,13 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
 		var err error
-		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore))
+		dashboardStore, err = database.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 	}
 
@@ -120,13 +120,13 @@ func TestIntegrationGetDashFolderStore(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cfg := sqlstore.InitTestDB(t)
+	db, settingsProvider := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
-	dashboardStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+	dashboardStore, err := database.ProvideDashboardStore(db, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	dashFolderStore := ProvideDashboardFolderStore(db)
 
-	orgID := CreateOrg(t, db, cfg)
+	orgID := CreateOrg(t, db, settingsProvider)
 
 	// create folder
 	d, err := dashboardStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
@@ -179,7 +179,7 @@ func TestIntegrationGetDashFolderStore(t *testing.T) {
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
 		assert.Equal(t, f.Description, ff.Description)
-		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
+		// assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)

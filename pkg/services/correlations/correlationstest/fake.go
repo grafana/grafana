@@ -13,13 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func New(db db.DB, cfg *setting.Cfg, bus bus.Bus) *correlations.CorrelationsService {
+func New(db db.DB, settingsProvider setting.SettingsProvider, bus bus.Bus) *correlations.CorrelationsService {
 	ds := &fakeDatasources.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{
 			{ID: 1, UID: "graphite", Type: datasources.DS_GRAPHITE},
 		},
 	}
 
-	correlationsSvc, _ := correlations.ProvideService(db, routing.NewRouteRegister(), ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), bus, quotatest.New(false, nil), cfg)
+	correlationsSvc, _ := correlations.ProvideService(db, routing.NewRouteRegister(), ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), bus, quotatest.New(false, nil), settingsProvider)
 	return correlationsSvc
 }

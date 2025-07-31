@@ -40,7 +40,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	quotaService := quotaimpl.ProvideService(ss, cfg)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
-	userStore := ProvideStore(ss, setting.NewCfg())
+	userStore := ProvideStore(ss, setting.ProvideService(setting.NewCfg()))
 	usrSvc, err := ProvideService(
 		ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
@@ -396,7 +396,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			_, err = userStore.GetSignedInUser(context.Background(),
 				&user.GetSignedInUserQuery{
 					OrgID:  users[1].OrgID,
-					UserID: userID}) // zero
+					UserID: userID,
+				}) // zero
 			require.Error(t, err)
 		}
 	})
@@ -634,7 +635,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Can search users", func(t *testing.T) {
 		ss = db.InitTestDB(t)
-		userStore.cfg.AutoAssignOrg = false
+		cfg := userStore.settingsProvider.Get()
+		cfg.AutoAssignOrg = false
 
 		ac1cmd := user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 		ac2cmd := user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
@@ -1067,7 +1069,7 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 	ss, cfg := db.InitTestDBWithCfg(t)
-	userStore := ProvideStore(ss, setting.NewCfg())
+	userStore := ProvideStore(ss, setting.ProvideService(setting.NewCfg()))
 	quotaService := quotaimpl.ProvideService(ss, cfg)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
@@ -1124,14 +1126,14 @@ func assertEqualUser(t *testing.T, expected, got *user.User) {
 	assert.Equal(t, expected, got)
 }
 
-func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
+func createOrgAndUserSvc(t *testing.T, store db.DB, settingsProvider setting.SettingsProvider) (org.Service, user.Service) {
 	t.Helper()
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(store, settingsProvider)
+	orgService, err := orgimpl.ProvideService(store, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		store, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

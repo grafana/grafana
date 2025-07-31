@@ -35,11 +35,11 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboard/database")
 
 type dashboardStore struct {
-	store      db.DB
-	cfg        *setting.Cfg
-	log        log.Logger
-	features   featuremgmt.FeatureToggles
-	tagService tag.Service
+	store            db.DB
+	settingsProvider setting.SettingsProvider
+	log              log.Logger
+	features         featuremgmt.FeatureToggles
+	tagService       tag.Service
 }
 
 // SQL bean helper to save tags
@@ -54,8 +54,8 @@ type dashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service) (dashboards.Store, error) {
-	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
+func ProvideDashboardStore(sqlStore db.DB, settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, tagService tag.Service) (dashboards.Store, error) {
+	s := &dashboardStore{store: sqlStore, settingsProvider: settingsProvider, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
 	// fill out dashboard_uid and org_id for dashboard_tags
 	// need to run this at startup in case any downgrade happened after the initial migration
@@ -82,7 +82,7 @@ func (d *dashboardStore) GetDashboardsByLibraryPanelUID(ctx context.Context, lib
 	}
 
 	err = d.store.WithDbSession(ctx, func(session *db.Session) error {
-		builder := db.NewSqlBuilder(d.cfg, d.features, d.store.GetDialect(), recursiveQueriesAreSupported)
+		builder := db.NewSqlBuilder(d.features, d.store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write("SELECT d.*")
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" INNER JOIN " + model.LibraryElementTableName + " AS le ON lec.element_id = le.id")
@@ -191,7 +191,6 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *
 
 		return nil
 	})
-
 	if err != nil {
 		return false, err
 	}
@@ -558,7 +557,7 @@ func (d *dashboardStore) GetDashboardsByPluginID(ctx context.Context, query *das
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboardsByPluginID")
 	defer span.End()
 
-	var dashboards = make([]*dashboards.Dashboard, 0)
+	dashboards := make([]*dashboards.Dashboard, 0)
 	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + d.store.GetDialect().BooleanStr(false)
 
@@ -827,7 +826,7 @@ func (d *dashboardStore) GetDashboardUIDByID(ctx context.Context, query *dashboa
 
 	us := &dashboards.DashboardRef{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = `SELECT uid, slug, folder_uid from dashboard WHERE Id=?`
+		rawSQL := `SELECT uid, slug, folder_uid from dashboard WHERE Id=?`
 		exists, err := sess.SQL(rawSQL, query.ID).Get(us)
 		if err != nil {
 			return err
@@ -846,7 +845,7 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboards")
 	defer span.End()
 
-	var dashboards = make([]*dashboards.Dashboard, 0)
+	dashboards := make([]*dashboards.Dashboard, 0)
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		if len(query.DashboardIDs) == 0 && len(query.DashboardUIDs) == 0 {
 			return star.ErrCommandValidationFailed
@@ -960,7 +959,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -1028,7 +1026,8 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 // CountDashboardsInFolder returns a count of all dashboards associated with the
 // given parent folder ID.
 func (d *dashboardStore) CountDashboardsInFolders(
-	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest) (int64, error) {
+	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest,
+) (int64, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.CountDashboardsInFolders")
 	defer span.End()
 
@@ -1059,7 +1058,8 @@ func (d *dashboardStore) CountDashboardsInFolders(
 }
 
 func (d *dashboardStore) DeleteDashboardsInFolders(
-	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest) error {
+	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest,
+) error {
 	ctx, span := tracer.Start(ctx, "dashboards.database.DeleteDashboardsInFolders")
 	defer span.End()
 
@@ -1092,7 +1092,7 @@ func (d *dashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int6
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboardsByOrgId")
 	defer span.End()
 
-	var dashs = make([]*dashboards.Dashboard, 0)
+	dashs := make([]*dashboards.Dashboard, 0)
 	err := d.store.WithDbSession(ctx, func(session *db.Session) error {
 		// "deleted IS NULL" is to avoid deleted dashboards
 		return session.Where("org_id = ? AND deleted IS NULL", orgID).Find(&dashs)

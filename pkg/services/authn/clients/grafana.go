@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var _ authn.ProxyClient = new(Grafana)
-var _ authn.PasswordClient = new(Grafana)
+var (
+	_ authn.ProxyClient    = new(Grafana)
+	_ authn.PasswordClient = new(Grafana)
+)
 
 func ProvideGrafana(cfg *setting.Cfg, userService user.Service, tracer trace.Tracer) *Grafana {
 	return &Grafana{cfg, userService, tracer}

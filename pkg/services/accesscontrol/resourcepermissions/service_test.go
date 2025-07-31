@@ -301,7 +301,7 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			ac := acimpl.ProvideAccessControl(features)
 			actionSets := NewActionSetService()
 			_, err := New(
-				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
+				setting.ProvideService(setting.NewCfg()), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
 				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
 			)
 			require.NoError(t, err)
@@ -480,16 +480,17 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(cfg)
 	tracer := tracing.InitializeTracerForTest()
 
-	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer)
+	teamSvc, err := teamimpl.ProvideService(sql, settingsProvider, tracer)
 	require.NoError(t, err)
 
-	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	orgSvc, err := orgimpl.ProvideService(sql, settingsProvider, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	userSvc, err := userimpl.ProvideService(
-		sql, orgSvc, cfg, teamSvc, nil, tracer,
+		sql, orgSvc, settingsProvider, teamSvc, nil, tracer,
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -500,7 +501,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	features := featuremgmt.WithFeatures()
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
-		cfg, ops, features, routing.NewRouteRegister(), license,
+		settingsProvider, ops, features, routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
 	)
 	require.NoError(t, err)

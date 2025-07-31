@@ -18,11 +18,11 @@ import (
 func TestPluginMetricsEndpoint(t *testing.T) {
 	t.Run("Endpoint is enabled, basic auth disabled", func(t *testing.T) {
 		hs := &HTTPServer{
-			Cfg: &setting.Cfg{
+			Cfg: setting.ProvideService(&setting.Cfg{
 				MetricsEndpointEnabled:           true,
 				MetricsEndpointBasicAuthUsername: "",
 				MetricsEndpointBasicAuthPassword: "",
-			},
+			}),
 			pluginClient: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),
@@ -72,11 +72,11 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 
 	t.Run("Endpoint and basic auth is enabled", func(t *testing.T) {
 		hs := &HTTPServer{
-			Cfg: &setting.Cfg{
+			Cfg: setting.ProvideService(&setting.Cfg{
 				MetricsEndpointEnabled:           true,
 				MetricsEndpointBasicAuthUsername: "user",
 				MetricsEndpointBasicAuthPassword: "pwd",
-			},
+			}),
 			pluginClient: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),
@@ -117,9 +117,9 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 
 	t.Run("Endpoint is disabled", func(t *testing.T) {
 		hs := &HTTPServer{
-			Cfg: &setting.Cfg{
+			Cfg: setting.ProvideService(&setting.Cfg{
 				MetricsEndpointEnabled: false,
-			},
+			}),
 			pluginClient: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),

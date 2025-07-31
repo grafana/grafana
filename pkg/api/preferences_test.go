@@ -38,7 +38,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences(t *testing.T) {
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+		hs.Cfg = setting.ProvideService(setting.NewCfg())
 		hs.preferenceService = prefService
 	})
 
@@ -78,7 +78,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences(t *testing.T) {
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+		hs.Cfg = setting.ProvideService(setting.NewCfg())
 		hs.preferenceService = prefService
 		hs.DashboardService = dashSvc
 	})
@@ -121,7 +121,7 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = cfg
+		hs.Cfg = setting.ProvideService(cfg)
 		hs.preferenceService = preftest.NewPreferenceServiceFake()
 		hs.DashboardService = dashSvc
 	})
@@ -170,7 +170,7 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = cfg
+		hs.Cfg = setting.ProvideService(cfg)
 		hs.preferenceService = preftest.NewPreferenceServiceFake()
 	})
 

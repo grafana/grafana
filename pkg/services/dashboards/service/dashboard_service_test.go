@@ -62,7 +62,7 @@ func TestDashboardService(t *testing.T) {
 
 		folderSvc := foldertest.NewFakeService()
 		service := &DashboardServiceImpl{
-			cfg:                    setting.NewCfg(),
+			settingsProvider:       setting.ProvideService(setting.NewCfg()),
 			log:                    log.New("test.logger"),
 			dashboardStore:         &fakeStore,
 			folderService:          folderSvc,
@@ -182,9 +182,10 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
-				oldRefreshInterval := service.cfg.MinRefreshInterval
-				service.cfg.MinRefreshInterval = "5m"
-				defer func() { service.cfg.MinRefreshInterval = oldRefreshInterval }()
+				cfg := service.settingsProvider.Get()
+				oldRefreshInterval := cfg.MinRefreshInterval
+				cfg.MinRefreshInterval = "5m"
+				defer func() { cfg.MinRefreshInterval = oldRefreshInterval }()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -284,8 +285,8 @@ func TestGetDashboard(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 	query := &dashboards.GetDashboardQuery{
 		UID:   "test-uid",
@@ -424,8 +425,8 @@ func TestGetAllDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
@@ -476,8 +477,8 @@ func TestGetAllDashboardsByOrgId(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
@@ -528,8 +529,8 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -641,8 +642,8 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -743,8 +744,8 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -839,8 +840,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -1007,8 +1008,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	t.Run("Should retry until deleted dashboard not found in search", func(t *testing.T) {
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
-			cfg:            setting.NewCfg(),
-			dashboardStore: &fakeStore,
+			settingsProvider: setting.ProvideService(setting.NewCfg()),
+			dashboardStore:   &fakeStore,
 			orgService: &orgtest.FakeOrgService{
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
@@ -1101,8 +1102,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	t.Run("Will not wait for indexer when no dashboards were deleted", func(t *testing.T) {
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
-			cfg:            setting.NewCfg(),
-			dashboardStore: &fakeStore,
+			settingsProvider: setting.ProvideService(setting.NewCfg()),
+			dashboardStore:   &fakeStore,
 			orgService: &orgtest.FakeOrgService{
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
@@ -1134,8 +1135,8 @@ func TestUnprovisionDashboard(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -1223,8 +1224,8 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 
 	query := &dashboards.GetDashboardsByPluginIDQuery{
@@ -1326,7 +1327,7 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 			cfg.RBAC = tempCfg.RBAC
 
 			service := &DashboardServiceImpl{
-				cfg:               cfg,
+				settingsProvider:  setting.ProvideService(cfg),
 				dashboardStore:    &fakeStore,
 				folderPermissions: folderPermService,
 				folderService: &foldertest.FakeService{
@@ -1359,8 +1360,8 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
 				ID:  0,
@@ -1426,8 +1427,8 @@ func TestSaveDashboard(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{},
 		},
@@ -1512,7 +1513,7 @@ func TestDeleteDashboard(t *testing.T) {
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:                    setting.NewCfg(),
+		settingsProvider:       setting.ProvideService(setting.NewCfg()),
 		dashboardStore:         &fakeStore,
 		publicDashboardService: fakePublicDashboardService,
 	}
@@ -1579,8 +1580,8 @@ func TestDeleteAllDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
@@ -1611,10 +1612,10 @@ func TestSearchDashboards(t *testing.T) {
 	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
-		folderService:  fakeFolders,
-		metrics:        newDashboardsMetrics(prometheus.NewRegistry()),
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
+		folderService:    fakeFolders,
+		metrics:          newDashboardsMetrics(prometheus.NewRegistry()),
 	}
 
 	expectedResult := model.HitList{
@@ -1851,8 +1852,8 @@ func TestGetDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 
 	expectedResult := []*dashboards.Dashboard{
@@ -1979,8 +1980,8 @@ func TestGetDashboardUIDByID(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 
 	expectedResult := &dashboards.DashboardRef{
@@ -2095,8 +2096,8 @@ func TestGetDashboardTags(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 
 	expectedResult := []*dashboards.DashboardTagCloudItem{
@@ -2151,8 +2152,8 @@ func TestQuotaCount(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 
 	orgs := []*org.OrgDTO{
@@ -2218,8 +2219,8 @@ func TestCountDashboardsInOrg(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 	count := resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{
@@ -2250,8 +2251,8 @@ func TestCountInFolders(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		dashboardStore:   &fakeStore,
 	}
 	dashs := &resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
@@ -2540,7 +2541,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 				service := &DashboardServiceImpl{
-					cfg:                       setting.NewCfg(),
+					settingsProvider:          setting.ProvideService(setting.NewCfg()),
 					log:                       log.New("test-logger"),
 					dashboardStore:            dashboardStore,
 					folderStore:               &folderStore,
@@ -2610,7 +2611,7 @@ func TestCleanUpDashboard(t *testing.T) {
 			fakeStore := dashboards.FakeDashboardStore{}
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 			service := &DashboardServiceImpl{
-				cfg:                    setting.NewCfg(),
+				settingsProvider:       setting.ProvideService(setting.NewCfg()),
 				dashboardStore:         &fakeStore,
 				publicDashboardService: fakePublicDashboardService,
 			}
@@ -2843,7 +2844,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 			}
 
 			service := &DashboardServiceImpl{
-				cfg:                    setting.NewCfg(),
+				settingsProvider:       setting.ProvideService(setting.NewCfg()),
 				log:                    log.New("test.logger"),
 				dashboardStore:         &fakeStore,
 				publicDashboardService: fakePublicDashboardService,
@@ -2883,7 +2884,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 		}
 
 		service := &DashboardServiceImpl{
-			cfg:               cfg,
+			settingsProvider:  setting.ProvideService(cfg),
 			log:               log.New("test.logger"),
 			features:          featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 			serverLockService: lockService,
@@ -2937,7 +2938,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 
 	folderSvc := foldertest.NewFakeService()
 	service := &DashboardServiceImpl{
-		cfg:                    setting.NewCfg(),
+		settingsProvider:       setting.ProvideService(setting.NewCfg()),
 		log:                    log.New("test.logger"),
 		dashboardStore:         &fakeStore,
 		folderService:          folderSvc,

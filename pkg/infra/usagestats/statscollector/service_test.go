@@ -34,9 +34,10 @@ import (
 func TestTotalStatsUpdate(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
-	s := createService(t, setting.NewCfg(), sqlStore, statsService)
-	s.cfg.MetricsEndpointEnabled = true
-	s.cfg.MetricsEndpointDisableTotalStats = false
+	s := createService(t, setting.ProvideService(setting.NewCfg()), sqlStore, statsService)
+	cfg := s.settingsProvider.Get()
+	cfg.MetricsEndpointEnabled = true
+	cfg.MetricsEndpointDisableTotalStats = false
 
 	statsService.ExpectedSystemStats = &stats.SystemStats{}
 
@@ -76,8 +77,9 @@ func TestTotalStatsUpdate(t *testing.T) {
 			tc.MetricsEndpointDisableTotalStats,
 			tc.ExpectedUpdate,
 		), func(t *testing.T) {
-			s.cfg.MetricsEndpointEnabled = tc.MetricsEndpointEnabled
-			s.cfg.MetricsEndpointDisableTotalStats = tc.MetricsEndpointDisableTotalStats
+			cfg := s.settingsProvider.Get()
+			cfg.MetricsEndpointEnabled = tc.MetricsEndpointEnabled
+			cfg.MetricsEndpointDisableTotalStats = tc.MetricsEndpointDisableTotalStats
 
 			assert.Equal(t, tc.ExpectedUpdate, s.updateTotalStats(context.Background()))
 		})
@@ -100,7 +102,7 @@ func TestUsageStatsProviders(t *testing.T) {
 	store := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	mockSystemStats(statsService)
-	s := createService(t, setting.NewCfg(), store, statsService)
+	s := createService(t, setting.ProvideService(setting.NewCfg()), store, statsService)
 	s.RegisterProviders([]registry.ProvidesUsageStats{provider})
 
 	report, err := s.usageStats.GetUsageReport(context.Background())
@@ -114,7 +116,7 @@ func TestFeatureUsageStats(t *testing.T) {
 	store := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	mockSystemStats(statsService)
-	s := createService(t, setting.NewCfg(), store, statsService)
+	s := createService(t, setting.ProvideService(setting.NewCfg()), store, statsService)
 
 	m, err := s.collectSystemStats(context.Background())
 	require.NoError(t, err, "Expected no error")
@@ -138,7 +140,7 @@ func TestCollectingUsageStats(t *testing.T) {
 		},
 	}
 
-	s := createService(t, &setting.Cfg{
+	s := createService(t, setting.ProvideService(&setting.Cfg{
 		ReportingEnabled:     true,
 		BuildVersion:         "5.0.0",
 		Anonymous:            setting.AnonymousSettings{Enabled: true},
@@ -151,7 +153,7 @@ func TestCollectingUsageStats(t *testing.T) {
 			Name: "database",
 		},
 		EnableFrontendSandboxForPlugins: []string{"grafana-worldmap-panel"},
-	}, sqlStore, statsService,
+	}), sqlStore, statsService,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
 	s.startTime = time.Now().Add(-1 * time.Minute)
@@ -188,7 +190,7 @@ func TestCollectingUsageStats(t *testing.T) {
 func TestDatasourceStats(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
-	s := createService(t, &setting.Cfg{}, sqlStore, statsService)
+	s := createService(t, setting.ProvideService(&setting.Cfg{}), sqlStore, statsService)
 
 	setupSomeDataSourcePlugins(t, s)
 
@@ -278,7 +280,7 @@ func TestDatasourceStats(t *testing.T) {
 func TestAlertNotifiersStats(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
-	s := createService(t, &setting.Cfg{}, sqlStore, statsService)
+	s := createService(t, setting.ProvideService(&setting.Cfg{}), sqlStore, statsService)
 
 	statsService.ExpectedNotifierUsageStats = []*stats.NotifierUsageStats{
 		{
@@ -354,8 +356,7 @@ func (m *mockSocial) GetOAuthProviders() map[string]bool {
 	return m.OAuthProviders
 }
 
-type mockAdvisor struct {
-}
+type mockAdvisor struct{}
 
 func (m *mockAdvisor) ReportSummary(ctx context.Context) (*advisor.ReportInfo, error) {
 	return &advisor.ReportInfo{}, nil
@@ -374,7 +375,7 @@ func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	}
 }
 
-func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService stats.Service, opts ...func(*serviceOptions)) *Service {
+func createService(t testing.TB, settingsProvider setting.SettingsProvider, store db.DB, statsService stats.Service, opts ...func(*serviceOptions)) *Service {
 	t.Helper()
 
 	o := &serviceOptions{datasources: mockDatasourceService{}}
@@ -387,14 +388,14 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		&usagestats.UsageStatsMock{},
 		&validator.FakeUsageStatsValidator{},
 		statsService,
-		cfg,
+		settingsProvider,
 		store,
 		&mockSocial{},
 		&pluginstore.FakePluginStore{},
 		featuremgmt.WithManager("feature1", "feature2"),
 		o.datasources,
 		httpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{}}),
-		sandbox.ProvideService(cfg),
+		sandbox.ProvideService(settingsProvider),
 		&mockAdvisor{},
 	)
 }

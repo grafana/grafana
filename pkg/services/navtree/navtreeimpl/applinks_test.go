@@ -110,11 +110,11 @@ func TestAddAppLinks(t *testing.T) {
 	}}
 
 	service := ServiceImpl{
-		log:            log.New("navtree"),
-		cfg:            setting.NewCfg(),
-		accessControl:  accesscontrolmock.New().WithPermissions(permissions),
-		pluginSettings: &pluginSettings,
-		features:       featuremgmt.WithFeatures(),
+		log:              log.New("navtree"),
+		settingsProvider: setting.ProvideService(setting.NewCfg()),
+		accessControl:    accesscontrolmock.New().WithPermissions(permissions),
+		pluginSettings:   &pluginSettings,
+		features:         featuremgmt.WithFeatures(),
 		pluginStore: &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{testApp1, testApp2, testApp3},
 		},
@@ -358,13 +358,15 @@ func TestAddAppLinks(t *testing.T) {
 }
 
 func TestReadingNavigationSettings(t *testing.T) {
+	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(cfg)
 	t.Run("Should include defaults", func(t *testing.T) {
 		service := ServiceImpl{
-			cfg:      setting.NewCfg(),
-			features: featuremgmt.WithFeatures(),
+			settingsProvider: settingsProvider,
+			features:         featuremgmt.WithFeatures(),
 		}
 
-		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
+		_, _ = cfg.Raw.NewSection("navigation.app_sections")
 		service.readNavigationSettings()
 
 		require.Equal(t, "observability", service.navigationAppConfig["grafana-k8s-app"].SectionID)
@@ -372,12 +374,12 @@ func TestReadingNavigationSettings(t *testing.T) {
 
 	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
 		service := ServiceImpl{
-			cfg:      setting.NewCfg(),
-			features: featuremgmt.WithFeatures(),
+			settingsProvider: settingsProvider,
+			features:         featuremgmt.WithFeatures(),
 		}
 
-		appSections, _ := service.cfg.Raw.NewSection("navigation.app_sections")
-		appStandalonePages, _ := service.cfg.Raw.NewSection("navigation.app_standalone_pages")
+		appSections, _ := cfg.Raw.NewSection("navigation.app_sections")
+		appStandalonePages, _ := cfg.Raw.NewSection("navigation.app_standalone_pages")
 		_, _ = appSections.NewKey("grafana-k8s-app", "dashboards")
 		_, _ = appSections.NewKey("other-app", "admin 12")
 		_, _ = appStandalonePages.NewKey("/a/grafana-k8s-app/foo", "admin 30")
@@ -438,13 +440,14 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	}}
 
 	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(cfg)
 
 	service := ServiceImpl{
-		log:            log.New("navtree"),
-		cfg:            cfg,
-		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
-		pluginSettings: &pluginSettings,
-		features:       featuremgmt.WithFeatures(),
+		log:              log.New("navtree"),
+		settingsProvider: settingsProvider,
+		accessControl:    acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		pluginSettings:   &pluginSettings,
+		features:         featuremgmt.WithFeatures(),
 		pluginStore: &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{testApp1},
 		},

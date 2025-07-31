@@ -110,7 +110,8 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.cfg.ApiKeyMaxSecondsToLive = tt.tokenTTL
+				cfg := a.settingsProvider.Get()
+				cfg.ApiKeyMaxSecondsToLive = tt.tokenTTL
 				a.service = &satests.FakeServiceAccountService{
 					ExpectedErr:    tt.expectedErr,
 					ExpectedAPIKey: tt.expectedAPIKey,

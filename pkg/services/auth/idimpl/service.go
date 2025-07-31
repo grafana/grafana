@@ -32,15 +32,16 @@ const (
 var _ auth.IDService = (*Service)(nil)
 
 func ProvideService(
-	cfg *setting.Cfg, signer auth.IDSigner,
+	settingsProvider setting.SettingsProvider, signer auth.IDSigner,
 	cache remotecache.CacheStorage, authnService authn.Service,
 	reg prometheus.Registerer, tracer trace.Tracer,
 ) *Service {
 	s := &Service{
-		cfg: cfg, logger: log.New("id-service"),
-		signer: signer, cache: cache,
+		settingsProvider: settingsProvider,
+		logger:           log.New("id-service"),
+		signer:           signer, cache: cache,
 		metrics:  newMetrics(reg),
-		nsMapper: request.GetNamespaceMapper(cfg),
+		nsMapper: request.GetNamespaceMapper(settingsProvider),
 		tracer:   tracer,
 	}
 
@@ -50,17 +51,18 @@ func ProvideService(
 }
 
 type Service struct {
-	cfg      *setting.Cfg
-	logger   log.Logger
-	signer   auth.IDSigner
-	cache    remotecache.CacheStorage
-	si       singleflight.Group
-	metrics  *metrics
-	tracer   trace.Tracer
-	nsMapper request.NamespaceMapper
+	settingsProvider setting.SettingsProvider
+	logger           log.Logger
+	signer           auth.IDSigner
+	cache            remotecache.CacheStorage
+	si               singleflight.Group
+	metrics          *metrics
+	tracer           trace.Tracer
+	nsMapper         request.NamespaceMapper
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, *authnlib.Claims[authnlib.IDTokenClaims], error) {
+	cfg := s.settingsProvider.Get()
 	ctx, span := s.tracer.Start(ctx, "user.sync.SignIdentity")
 	defer span.End()
 
@@ -93,7 +95,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		now := time.Now()
 		idClaims := &auth.IDClaims{
 			Claims: jwt.Claims{
-				Issuer:   s.cfg.AppURL,
+				Issuer:   cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
 				Subject:  id.GetID(),
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),

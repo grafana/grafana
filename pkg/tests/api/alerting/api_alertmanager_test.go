@@ -40,12 +40,12 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
@@ -526,12 +526,12 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	// Create users to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",

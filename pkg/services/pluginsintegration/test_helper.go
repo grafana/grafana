@@ -42,8 +42,8 @@ type IntegrationTestCtx struct {
 	PluginRegistry registry.Service
 }
 
-func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *IntegrationTestCtx {
-	pCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+func CreateIntegrationTestCtx(t *testing.T, settingsProvider setting.SettingsProvider, coreRegistry *coreplugin.Registry) *IntegrationTestCtx {
+	pCfg, err := pluginconfig.ProvidePluginManagementConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	cdn := pluginscdn.ProvideService(pCfg)
@@ -66,7 +66,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 		Terminator:   term,
 	})
 
-	ps, err := pluginstore.ProvideService(reg, sources.ProvideService(cfg, pCfg), l)
+	ps, err := pluginstore.ProvideService(reg, sources.ProvideService(settingsProvider, pCfg), l)
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{

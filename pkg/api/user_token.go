@@ -76,22 +76,23 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	if err := hs.rotateToken(c); err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
 		if errors.Is(err, auth.ErrInvalidSessionToken) {
 			hs.log.FromContext(c.Req.Context()).Debug("Deleting session cookie")
 			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 		}
-		return response.Redirect(hs.Cfg.AppSubURL + "/login")
+		return response.Redirect(cfg.AppSubURL + "/login")
 	}
 
 	if !c.UseSessionStorageRedirect {
 		return response.Redirect(hs.GetRedirectURL(c))
 	}
 
-	redirectTo := hs.Cfg.AppSubURL + c.Query("redirectTo")
+	redirectTo := cfg.AppSubURL + c.Query("redirectTo")
 	if err := hs.ValidateRedirectTo(redirectTo); err != nil {
-		return response.Redirect(hs.Cfg.AppSubURL + "/")
+		return response.Redirect(cfg.AppSubURL + "/")
 	}
 	return response.Redirect(redirectTo)
 }
@@ -127,7 +128,8 @@ func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) rotateToken(c *contextmodel.ReqContext) error {
-	token := c.GetCookie(hs.Cfg.LoginCookieName)
+	cfg := hs.Cfg.Get()
+	token := c.GetCookie(cfg.LoginCookieName)
 	ip, err := network.GetIPFromAddress(c.RemoteAddr())
 	if err != nil {
 		hs.log.Debug("Failed to get IP from client address", "addr", c.RemoteAddr())

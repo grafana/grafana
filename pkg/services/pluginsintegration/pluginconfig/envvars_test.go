@@ -74,7 +74,8 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		provider := NewEnvVarsProvider(pCfg, nil)
@@ -91,7 +92,8 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		p.SkipHostEnvVars = true
 
 		cfg := setting.NewCfg()
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		provider := NewEnvVarsProvider(pCfg, nil)
 
@@ -470,7 +472,8 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 			AppURL: "https://myorg.com/",
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		provider := NewEnvVarsProvider(pCfg, nil)
@@ -588,12 +591,14 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			},
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		provider := NewEnvVarsProvider(pCfg, nil)
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
-		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
+		assert.ElementsMatch(t, []string{
+			"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID=mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED=true",

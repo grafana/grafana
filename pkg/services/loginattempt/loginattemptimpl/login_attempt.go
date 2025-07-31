@@ -117,7 +117,6 @@ func (s *Service) cleanup(ctx context.Context) {
 			s.logger.Debug("Deleted expired login attempts", "rows affected", deletedLogs)
 		}
 	})
-
 	if err != nil {
 		s.logger.Error("Failed to lock and execute cleanup of old login attempts", "error", err)
 	}

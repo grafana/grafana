@@ -82,7 +82,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	dashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 
 	hs := &HTTPServer{
-		Cfg:                     cfg,
+		Cfg:                     setting.ProvideService(cfg),
 		pluginStore:             &pluginstore.FakePluginStore{},
 		SQLStore:                dbtest.NewFakeDB(),
 		preferenceService:       prefService,
@@ -107,7 +107,8 @@ func TestGetHomeDashboard(t *testing.T) {
 
 			homeDashJSON, err := os.ReadFile(tc.expectedDashboardPath)
 			require.NoError(t, err, "must be able to read expected dashboard file")
-			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
+			cfg := hs.Cfg.Get()
+			cfg.DefaultHomeDashboardPath = tc.defaultSetting
 			bytes, err := simplejson.NewJson(homeDashJSON)
 			require.NoError(t, err, "must be able to encode file as JSON")
 
@@ -156,7 +157,7 @@ func TestHTTPServer_GetDashboard_AccessControl(t *testing.T) {
 			dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dash, nil).Maybe()
 			hs.DashboardService = dashSvc
 
-			hs.Cfg = setting.NewCfg()
+			hs.Cfg = setting.ProvideService(setting.NewCfg())
 			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			hs.starService = startest.NewStarServiceFake()
 			hs.dashboardProvisioningService = mockDashboardProvisioningService{}
@@ -273,7 +274,7 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 			dashSvc.On("DeleteDashboard", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 			hs.DashboardService = dashSvc
 
-			hs.Cfg = setting.NewCfg()
+			hs.Cfg = setting.ProvideService(setting.NewCfg())
 			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			hs.starService = startest.NewStarServiceFake()
 
@@ -325,7 +326,7 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 			dashSvc.On("DeleteDashboard", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 			hs.DashboardService = dashSvc
 
-			hs.Cfg = setting.NewCfg()
+			hs.Cfg = setting.ProvideService(setting.NewCfg())
 			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			hs.starService = startest.NewStarServiceFake()
 
@@ -744,7 +745,7 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 			}
 
 			hs := &HTTPServer{
-				Cfg:                          setting.NewCfg(),
+				Cfg:                          setting.ProvideService(setting.NewCfg()),
 				ProvisioningService:          fakeProvisioningService,
 				LibraryPanelService:          &mockLibraryPanelService{},
 				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
@@ -785,7 +786,7 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			hs := &HTTPServer{
-				Cfg:                          setting.NewCfg(),
+				Cfg:                          setting.ProvideService(setting.NewCfg()),
 				LibraryPanelService:          &mockLibraryPanelService{},
 				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
 				SQLStore:                     mockSQLStore,
@@ -818,10 +819,11 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 	mockSQLStore := dbtest.NewFakeDB()
 
 	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(cfg)
 
 	getHS := func(userSvc *usertest.FakeUserService) *HTTPServer {
 		return &HTTPServer{
-			Cfg:                     cfg,
+			Cfg:                     settingsProvider,
 			pluginStore:             &pluginstore.FakePluginStore{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           actest.FakeAccessControl{ExpectedEvaluate: true},
@@ -922,14 +924,15 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	features := featuremgmt.WithFeatures()
 	var err error
 	if dashboardStore == nil {
-		sql, cfg := db.InitTestDBWithCfg(t)
-		dashboardStore, err = database.ProvideDashboardStore(sql, cfg, features, tagimpl.ProvideService(sql))
+		sql, settingsProvider := db.InitTestDBWithCfg(t)
+		dashboardStore, err = database.ProvideDashboardStore(sql, settingsProvider, features, tagimpl.ProvideService(sql))
 		require.NoError(t, err)
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
 	libraryElementsService := libraryelementsfake.LibraryElementService{}
 	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(cfg)
 	ac := accesscontrolmock.New()
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -939,11 +942,11 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	quotaService := quotatest.New(false, nil)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil,
+		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, settingsProvider, nil, tracing.InitializeTracerForTest(), nil,
 		dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, features, folderPermissions,
+			settingsProvider, dashboardStore, folderStore, features, folderPermissions,
 			ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 			dualwrite.ProvideTestService(), sort.ProvideService(),
 			serverlock.ProvideService(db, tracing.InitializeTracerForTest()), kvstore.NewFakeKVStore(),
@@ -953,7 +956,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, features, folderPermissions,
+		settingsProvider, dashboardStore, folderStore, features, folderPermissions,
 		ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 		dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(db, tracing.InitializeTracerForTest()), kvstore.NewFakeKVStore(),
@@ -961,7 +964,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	require.NoError(t, err)
 
 	hs := &HTTPServer{
-		Cfg:                          cfg,
+		Cfg:                          settingsProvider,
 		LibraryPanelService:          &libraryPanelsService,
 		LibraryElementService:        &libraryElementsService,
 		SQLStore:                     sc.sqlStore,
@@ -1013,7 +1016,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
-			Cfg:                   cfg,
+			Cfg:                   setting.ProvideService(cfg),
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t, db.InitTestDB(t)),
 			QuotaService:          quotatest.New(false, nil),
@@ -1054,7 +1057,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		folderSvc.ExpectedFolder = &folder.Folder{}
 
 		hs := HTTPServer{
-			Cfg:                     cfg,
+			Cfg:                     setting.ProvideService(cfg),
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, db.InitTestDB(t)),
 			QuotaService:            quotatest.New(false, nil),

@@ -72,7 +72,7 @@ func ProvideServiceAccountPermissions(
 		RoleGroup:      "Service accounts",
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(setting.ProvideService(cfg), options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}

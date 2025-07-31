@@ -381,7 +381,8 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
-				}},
+				},
+			},
 			numUsers: 3,
 			query: GetResourcePermissionsQuery{
 				Actions:              []string{"datasources:query"},
@@ -398,7 +399,8 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
-				}},
+				},
+			},
 			numUsers: 3,
 			query: GetResourcePermissionsQuery{
 				Actions:              []string{"datasources:query"},
@@ -416,7 +418,8 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {"users:id:1", "users:id:3"}},
-				}},
+				},
+			},
 			numUsers: 3,
 			query: GetResourcePermissionsQuery{
 				Actions:              []string{"datasources:query"},
@@ -437,7 +440,8 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 						accesscontrol.ActionOrgUsersRead: {"users:id:1", "users:id:2", "users:id:3"},
 						serviceaccounts.ActionRead:       {"serviceaccounts:id:5"},
 					},
-				}},
+				},
+			},
 			numUsers:           3,
 			numServiceAccounts: 3,
 			query: GetResourcePermissionsQuery{
@@ -454,7 +458,8 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			desc: "should return permissions for all users when access control is not enforces",
 			user: &user.SignedInUser{
 				OrgID:       1,
-				Permissions: map[int64]map[string][]string{1: {}}},
+				Permissions: map[int64]map[string][]string{1: {}},
+			},
 			numUsers: 3,
 			query: GetResourcePermissionsQuery{
 				Actions:              []string{"datasources:query"},
@@ -470,8 +475,8 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, sql, cfg := setupTestEnv(t)
-			orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+			store, sql, settingsProvider := setupTestEnv(t)
+			orgService, err := orgimpl.ProvideService(sql, settingsProvider, quotatest.New(false, nil))
 			require.NoError(t, err)
 
 			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -509,7 +514,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			seedResourcePermissions(t, store, sql, cfg, orgService, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers, tt.numServiceAccounts)
+			seedResourcePermissions(t, store, sql, settingsProvider, orgService, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers, tt.numServiceAccounts)
 
 			tt.query.User = tt.user
 			permissions, err := store.GetResourcePermissions(context.Background(), tt.user.OrgID, tt.query)
@@ -520,7 +525,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 }
 
 func seedResourcePermissions(
-	t *testing.T, store *store, sql db.DB, cfg *setting.Cfg, orgService org.Service,
+	t *testing.T, store *store, sql db.DB, settingsProvider setting.SettingsProvider, orgService org.Service,
 	actions []string, resource, resourceID, resourceAttribute string, numUsers, numServiceAccounts int,
 ) {
 	t.Helper()
@@ -529,7 +534,7 @@ func seedResourcePermissions(
 	require.NoError(t, err)
 
 	usrSvc, err := userimpl.ProvideService(
-		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		sql, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -561,9 +566,9 @@ func seedResourcePermissions(
 	}
 }
 
-func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
-	sql, cfg := db.InitTestDBWithCfg(t)
-	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
+func setupTestEnv(t testing.TB) (*store, db.DB, setting.SettingsProvider) {
+	sql, settingsProvider := db.InitTestDBWithCfg(t)
+	return NewStore(settingsProvider, sql, featuremgmt.WithFeatures()), sql, settingsProvider
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -656,7 +661,8 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 					OrgID:  2,
 					Action: "datasources:query",
 					Scope:  "datasources:uid:1",
-				}, {
+				},
+				{
 					OrgID:  2,
 					Action: "datasources:write",
 					Scope:  "datasources:uid:1",
@@ -665,11 +671,13 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 					OrgID:  1,
 					Action: "datasources:query",
 					Scope:  "datasources:uid:2",
-				}, {
+				},
+				{
 					OrgID:  1,
 					Action: "datasources:write",
 					Scope:  "datasources:uid:2",
-				}},
+				},
+			},
 			shouldNotExist: []orgPermission{
 				{
 					OrgID:  1,
@@ -679,7 +687,8 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 					OrgID:  1,
 					Action: "datasources:write",
 					Scope:  "datasources:uid:1",
-				}},
+				},
+			},
 		},
 	}
 

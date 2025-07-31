@@ -16,7 +16,7 @@ func (ms *ModuleServer) initSearchServerDistributor() (services.Service, error) 
 		tracer      = otel.Tracer("index-server-distributor")
 		err         error
 	)
-	distributor.grpcHandler, err = resource.ProvideSearchDistributorServer(ms.cfg, ms.features, ms.registerer, tracer, ms.searchServerRing, ms.searchServerRingClientPool)
+	distributor.grpcHandler, err = resource.ProvideSearchDistributorServer(ms.settingsProvider, ms.features, ms.registerer, tracer, ms.searchServerRing, ms.searchServerRingClientPool)
 	if err != nil {
 		return nil, err
 	}

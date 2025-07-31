@@ -34,9 +34,11 @@ type cachingScenarioContext struct {
 	reqCount *int
 }
 
-type configureFunc func(*testing.T, *setting.Cfg)
-type scenarioFunc func(*testing.T, scenarioContext)
-type cachingScenarioFunc func(*testing.T, cachingScenarioContext)
+type (
+	configureFunc       func(*testing.T, *setting.Cfg)
+	scenarioFunc        func(*testing.T, scenarioContext)
+	cachingScenarioFunc func(*testing.T, cachingScenarioContext)
+)
 
 const subject = "foo-subj"
 

@@ -15,14 +15,14 @@ import (
 )
 
 type DeletionService struct {
-	store   store
-	cfg     *setting.Cfg
-	log     log.Logger
-	dashSvc dashboards.DashboardService
-	ac      accesscontrol.AccessControl
+	store            store
+	settingsProvider setting.SettingsProvider
+	log              log.Logger
+	dashSvc          dashboards.DashboardService
+	ac               accesscontrol.AccessControl
 }
 
-func ProvideDeletionService(db db.DB, cfg *setting.Cfg, dashboardService dashboards.DashboardService, ac accesscontrol.AccessControl) (org.DeletionService, error) {
+func ProvideDeletionService(db db.DB, settingsProvider setting.SettingsProvider, dashboardService dashboards.DashboardService, ac accesscontrol.AccessControl) (org.DeletionService, error) {
 	log := log.New("org deletion service")
 	s := &DeletionService{
 		store: &sqlStore{
@@ -30,10 +30,10 @@ func ProvideDeletionService(db db.DB, cfg *setting.Cfg, dashboardService dashboa
 			dialect: db.GetDialect(),
 			log:     log,
 		},
-		cfg:     cfg,
-		dashSvc: dashboardService,
-		log:     log,
-		ac:      ac,
+		settingsProvider: settingsProvider,
+		dashSvc:          dashboardService,
+		log:              log,
+		ac:               ac,
 	}
 
 	return s, nil

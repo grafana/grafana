@@ -62,7 +62,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			},
 		},
 		plugincontext.ProvideService(
-			cfg,
+			setting.ProvideService(cfg),
 			localcache.ProvideService(),
 			&pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
@@ -258,7 +258,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					nil,
 					&fakeDataSourceRequestValidator{},
 					pluginClient.ProvideService(r),
-					plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
+					plugincontext.ProvideService(setting.ProvideService(cfg), localcache.ProvideService(), &pluginstore.FakePluginStore{
 						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},
 					},
 						&fakeDatasources.FakeCacheService{}, ds,

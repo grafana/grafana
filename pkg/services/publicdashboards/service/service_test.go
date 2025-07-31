@@ -30,10 +30,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
-var defaultPubdashTimeSettings = &TimeSettings{}
-var dashboardData = simplejson.NewFromAny(map[string]any{"time": map[string]any{"from": "now-8h", "to": "now"}})
-var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
+var (
+	timeSettings               = &TimeSettings{From: "now-12h", To: "now"}
+	defaultPubdashTimeSettings = &TimeSettings{}
+	dashboardData              = simplejson.NewFromAny(map[string]any{"time": map[string]any{"from": "now-8h", "to": "now"}})
+	SignedInUser               = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
+)
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -396,7 +398,7 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			//assert.Equal(t, test.DashResp, dash)
+			// assert.Equal(t, test.DashResp, dash)
 
 			if test.DashResp != nil {
 				assert.Equal(t, test.DashResp.Meta.Slug, dashboardFullWithMeta.Meta.Slug)
@@ -592,9 +594,9 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 	}
 	t.Run("Create public dashboard", func(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
-		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
+		service, sqlStore, settingsProvider := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, settingsProvider, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -1562,7 +1564,8 @@ func AddAnnotationsToDashboard(t *testing.T, dash *dashboards.Dashboard, annotat
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
-	folderId int64, folderUID string, isFolder bool, templateVars []map[string]any, customPanels []any, tags ...any) *dashboards.Dashboard {
+	folderId int64, folderUID string, isFolder bool, templateVars []map[string]any, customPanels []any, tags ...any,
+) *dashboards.Dashboard {
 	t.Helper()
 
 	var dashboardPanels []any

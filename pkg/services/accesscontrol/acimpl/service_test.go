@@ -35,15 +35,15 @@ func setupTestEnv(t testing.TB) *Service {
 	cfg := setting.NewCfg()
 
 	ac := &Service{
-		cache:          localcache.ProvideService(),
-		cfg:            cfg,
-		features:       featuremgmt.WithFeatures(),
-		log:            log.New("accesscontrol"),
-		registrations:  accesscontrol.RegistrationList{},
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          database.ProvideService(db.InitTestDB(t)),
-		permRegistry:   permreg.ProvidePermissionRegistry(),
-		actionResolver: resourcepermissions.NewActionSetService(),
+		cache:            localcache.ProvideService(),
+		settingsProvider: setting.ProvideService(cfg),
+		features:         featuremgmt.WithFeatures(),
+		log:              log.New("accesscontrol"),
+		registrations:    accesscontrol.RegistrationList{},
+		roles:            accesscontrol.BuildBasicRoleDefinitions(),
+		store:            database.ProvideService(db.InitTestDB(t)),
+		permRegistry:     permreg.ProvidePermissionRegistry(),
+		actionResolver:   resourcepermissions.NewActionSetService(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -68,7 +68,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 			cfg := setting.NewCfg()
 
 			s := ProvideOSSService(
-				cfg,
+				setting.ProvideService(cfg),
 				database.ProvideService(db.InitTestDB(t)),
 				&resourcepermissions.FakeActionSetSvc{},
 				localcache.ProvideService(),
@@ -427,8 +427,10 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: map[int64][]accesscontrol.Permission{
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				},
 			},
 		},
 		{
@@ -437,8 +439,10 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			searchOption:   searchOption,
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				},
 			},
 			storedRoles: map[int64][]string{
 				1: {string(identity.RoleEditor)},
@@ -446,8 +450,10 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			},
 			want: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				},
 			},
 		},
 		{
@@ -464,8 +470,10 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+				},
 			},
 			storedRoles: map[int64][]string{
 				1: {string(identity.RoleEditor)},
@@ -473,10 +481,12 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			},
 			want: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				},
 			},
 		},
 		{
@@ -507,17 +517,21 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+				},
 			},
 			storedRoles: map[int64][]string{
 				1: {string(identity.RoleEditor)},
 				2: {accesscontrol.RoleGrafanaAdmin},
 			},
 			want: map[int64][]accesscontrol.Permission{
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				},
 			},
 		},
 		{
@@ -549,7 +563,8 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			},
 			storedRoles: map[int64][]string{1: {accesscontrol.RoleGrafanaAdmin}},
 			want: map[int64][]accesscontrol.Permission{
-				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				1: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 					{Action: accesscontrol.ActionUsersCreate},
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
 					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
@@ -575,8 +590,10 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+				},
 			},
 			storedRoles: map[int64][]string{
 				1: {string(identity.RoleEditor)},
@@ -655,7 +672,8 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 			},
 			want: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
-				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+			},
 		},
 		{
 			name: "stored only",
@@ -665,8 +683,10 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				},
 			},
 			storedRoles: map[int64][]string{
 				1: {string(identity.RoleEditor)},
@@ -693,8 +713,10 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
-				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
-					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+				2: {
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+				},
 			},
 			storedRoles: map[int64][]string{
 				1: {string(identity.RoleEditor)},
@@ -920,7 +942,8 @@ func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
-			ac.cfg.ManagedServiceAccountsEnabled = true
+			cfg := ac.settingsProvider.Get()
+			cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 			for _, r := range tt.runs {
 				err := ac.SaveExternalServiceRole(ctx, r.cmd)
@@ -970,7 +993,8 @@ func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
-			ac.cfg.ManagedServiceAccountsEnabled = true
+			cfg := ac.settingsProvider.Get()
+			cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 			if tt.initCmd != nil {

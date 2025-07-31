@@ -14,12 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	logger = log.New("correlations")
-)
+var logger = log.New("correlations")
 
-func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus, qs quota.Service, cfg *setting.Cfg,
-) (*CorrelationsService, error) {
+func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus, qs quota.Service, settingsProvider setting.SettingsProvider) (*CorrelationsService, error) {
 	s := &CorrelationsService{
 		SQLStore:          sqlStore,
 		RouteRegister:     routeRegister,
@@ -33,7 +30,7 @@ func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds data
 
 	bus.AddEventListener(s.handleDatasourceDeletion)
 
-	defaultLimits, err := readQuotaConfig(cfg)
+	defaultLimits, err := readQuotaConfig(settingsProvider)
 	if err != nil {
 		return s, err
 	}
@@ -135,10 +132,10 @@ func (s *CorrelationsService) Usage(ctx context.Context, scopeParams *quota.Scop
 	return s.CountCorrelations(ctx)
 }
 
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+func readQuotaConfig(settingsProvider setting.SettingsProvider) (*quota.Map, error) {
 	limits := &quota.Map{}
 
-	if cfg == nil {
+	if settingsProvider == nil {
 		return limits, nil
 	}
 
@@ -147,6 +144,6 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 		return limits, err
 	}
 
-	limits.Set(globalQuotaTag, cfg.Quota.Global.Correlations)
+	limits.Set(globalQuotaTag, settingsProvider.Get().Quota.Global.Correlations)
 	return limits, nil
 }

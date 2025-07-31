@@ -15,12 +15,12 @@ import (
 )
 
 type Service struct {
-	store store
-	cfg   *setting.Cfg
-	log   log.Logger
+	store            store
+	settingsProvider setting.SettingsProvider
+	log              log.Logger
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org.Service, error) {
+func ProvideService(db db.DB, settingsProvider setting.SettingsProvider, quotaService quota.Service) (org.Service, error) {
 	log := log.New("org service")
 	s := &Service{
 		store: &sqlStore{
@@ -28,11 +28,11 @@ func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org
 			dialect: db.GetDialect(),
 			log:     log,
 		},
-		cfg: cfg,
-		log: log,
+		settingsProvider: settingsProvider,
+		log:              log,
 	}
 
-	defaultLimits, err := readQuotaConfig(cfg)
+	defaultLimits, err := readQuotaConfig(s.settingsProvider)
 	if err != nil {
 		return s, err
 	}
@@ -52,12 +52,13 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 }
 
 func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUserCommand) (int64, error) {
+	cfg := s.settingsProvider.Get()
 	var orga org.Org
 	if cmd.SkipOrgSetup {
 		return -1, nil
 	}
 
-	if s.cfg.AutoAssignOrg && cmd.OrgID != 0 {
+	if cfg.AutoAssignOrg && cmd.OrgID != 0 {
 		_, err := s.store.Get(ctx, cmd.OrgID)
 		if err != nil {
 			return -1, err
@@ -72,22 +73,22 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 	}
 	orga.Name = orgName
 
-	if s.cfg.AutoAssignOrg {
-		orga, err := s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
+	if cfg.AutoAssignOrg {
+		orga, err := s.store.Get(ctx, int64(cfg.AutoAssignOrgId))
 		if err != nil {
 			return 0, err
 		}
 		if orga.ID != 0 {
 			return orga.ID, nil
 		}
-		if s.cfg.AutoAssignOrgId != 1 {
+		if cfg.AutoAssignOrgId != 1 {
 			s.log.Error("Could not create user: organization ID does not exist", "orgID",
-				s.cfg.AutoAssignOrgId)
+				cfg.AutoAssignOrgId)
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
-				s.cfg.AutoAssignOrgId)
+				cfg.AutoAssignOrgId)
 		}
 		orga.Name = MainOrgName
-		orga.ID = int64(s.cfg.AutoAssignOrgId)
+		orga.ID = int64(cfg.AutoAssignOrgId)
 	} else {
 		orga.Name = orgName
 	}
@@ -139,24 +140,25 @@ func (s *Service) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCo
 }
 
 func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
-	var orga = &org.Org{}
+	cfg := s.settingsProvider.Get()
+	orga := &org.Org{}
 	var err error
-	if s.cfg.AutoAssignOrg {
-		got, err := s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
+	if cfg.AutoAssignOrg {
+		got, err := s.store.Get(ctx, int64(cfg.AutoAssignOrgId))
 		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return 0, err
 		} else if err == nil {
 			return got.ID, nil
 		}
 
-		if s.cfg.AutoAssignOrgId != 1 {
+		if cfg.AutoAssignOrgId != 1 {
 			s.log.Error("Could not create user: organization ID does not exist", "orgID",
-				s.cfg.AutoAssignOrgId)
+				cfg.AutoAssignOrgId)
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
-				s.cfg.AutoAssignOrgId)
+				cfg.AutoAssignOrgId)
 		}
 		orga.Name = MainOrgName
-		orga.ID = int64(s.cfg.AutoAssignOrgId)
+		orga.ID = int64(cfg.AutoAssignOrgId)
 	} else {
 		orga.Name = orgName
 	}
@@ -208,7 +210,8 @@ func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQ
 	return s.store.SearchOrgUsers(ctx, query)
 }
 
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+func readQuotaConfig(settingsProvider setting.SettingsProvider) (*quota.Map, error) {
+	cfg := settingsProvider.Get()
 	limits := &quota.Map{}
 
 	if cfg == nil {

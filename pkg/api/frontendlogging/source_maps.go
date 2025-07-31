@@ -46,18 +46,18 @@ func ReadSourceMapFromFS(dir string, path string) ([]byte, error) {
 
 type SourceMapStore struct {
 	sync.Mutex
-	cache         map[string]*sourceMap
-	cfg           *setting.Cfg
-	readSourceMap ReadSourceMapFn
-	routeResolver plugins.StaticRouteResolver
+	cache            map[string]*sourceMap
+	settingsProvider setting.SettingsProvider
+	readSourceMap    ReadSourceMapFn
+	routeResolver    plugins.StaticRouteResolver
 }
 
-func NewSourceMapStore(cfg *setting.Cfg, routeResolver plugins.StaticRouteResolver, readSourceMap ReadSourceMapFn) *SourceMapStore {
+func NewSourceMapStore(settingsProvider setting.SettingsProvider, routeResolver plugins.StaticRouteResolver, readSourceMap ReadSourceMapFn) *SourceMapStore {
 	return &SourceMapStore{
-		cache:         make(map[string]*sourceMap),
-		cfg:           cfg,
-		routeResolver: routeResolver,
-		readSourceMap: readSourceMap,
+		cache:            make(map[string]*sourceMap),
+		settingsProvider: settingsProvider,
+		routeResolver:    routeResolver,
+		readSourceMap:    readSourceMap,
 	}
 }
 
@@ -67,18 +67,19 @@ func NewSourceMapStore(cfg *setting.Cfg, routeResolver plugins.StaticRouteResolv
  * and only considers sources coming from grafana core or plugins`
  */
 func (store *SourceMapStore) guessSourceMapLocation(ctx context.Context, sourceURL string) (*sourceMapLocation, error) {
+	cfg := store.settingsProvider.Get()
 	u, err := url.Parse(sourceURL)
 	if err != nil {
 		return nil, err
 	}
 
 	// determine if source comes from grafana core, locally or CDN, look in public build dir on fs
-	if strings.HasPrefix(u.Path, "/public/build/") || (store.cfg.CDNRootURL != nil &&
-		strings.HasPrefix(sourceURL, store.cfg.CDNRootURL.String()) && strings.Contains(u.Path, "/public/build/")) {
+	if strings.HasPrefix(u.Path, "/public/build/") || (cfg.CDNRootURL != nil &&
+		strings.HasPrefix(sourceURL, cfg.CDNRootURL.String()) && strings.Contains(u.Path, "/public/build/")) {
 		pathParts := strings.SplitN(u.Path, "/public/build/", 2)
 		if len(pathParts) == 2 {
 			return &sourceMapLocation{
-				dir:      store.cfg.StaticRootPath,
+				dir:      cfg.StaticRootPath,
 				path:     filepath.Join("build", pathParts[1]+".map"),
 				pluginID: "",
 			}, nil

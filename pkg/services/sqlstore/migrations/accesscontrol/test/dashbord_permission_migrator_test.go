@@ -296,7 +296,7 @@ func TestAnnotationActionMigration(t *testing.T) {
 				}
 
 				// Run accesscontrol migration (permissions insertion should not have conflicted)
-				acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+				acmigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("acmigration.test")}))
 				acmig.AddManagedDashboardAnnotationActionsMigration(acmigrator)
 
 				errRunningMig := acmigrator.Start(false, 0)

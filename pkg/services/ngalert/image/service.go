@@ -65,7 +65,8 @@ func NewScreenshotImageService(
 	screenshots screenshot.ScreenshotService,
 	screenshotTimeout time.Duration,
 	store store.ImageStore,
-	uploads *UploadingService) ImageService {
+	uploads *UploadingService,
+) ImageService {
 	return &ScreenshotImageService{
 		cache:             cache,
 		limiter:           limiter,
@@ -79,8 +80,9 @@ func NewScreenshotImageService(
 
 // NewScreenshotImageServiceFromCfg returns a new ScreenshotImageService
 // from the configuration.
-func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds dashboards.DashboardService,
-	rs rendering.Service, r prometheus.Registerer) (ImageService, error) {
+func NewScreenshotImageServiceFromCfg(settingsProvider setting.SettingsProvider, db *store.DBstore, ds dashboards.DashboardService,
+	rs rendering.Service, r prometheus.Registerer,
+) (ImageService, error) {
 	var (
 		cache             CacheService                 = &NoOpCacheService{}
 		limiter           screenshot.RateLimiter       = &screenshot.NoOpRateLimiter{}
@@ -88,6 +90,8 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 		screenshotTimeout time.Duration                = 0
 		uploads           *UploadingService            = nil
 	)
+
+	cfg := settingsProvider.Get()
 
 	// If screenshots are enabled
 	if cfg.UnifiedAlerting.Screenshots.Capture {

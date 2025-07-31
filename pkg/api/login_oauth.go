@@ -16,12 +16,13 @@ const (
 )
 
 func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
+	cfg := hs.Cfg.Get()
 	name := web.Params(reqCtx.Req)[":name"]
 
 	if errorParam := reqCtx.Query("error"); errorParam != "" {
 		errorDesc := reqCtx.Query("error_description")
 		hs.log.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
-		hs.redirectWithError(reqCtx, errutil.Unauthorized("oauth.login", errutil.WithPublicMessage(hs.Cfg.OAuthLoginErrorMessage)).Errorf("Login provider denied login request"))
+		hs.redirectWithError(reqCtx, errutil.Unauthorized("oauth.login", errutil.WithPublicMessage(cfg.OAuthLoginErrorMessage)).Errorf("Login provider denied login request"))
 		return
 	}
 
@@ -36,13 +37,13 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 			return
 		}
 
-		cookies.WriteCookie(reqCtx.Resp, OauthStateCookieName, redirect.Extra[authn.KeyOAuthState], hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+		cookies.WriteCookie(reqCtx.Resp, OauthStateCookieName, redirect.Extra[authn.KeyOAuthState], cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
-			cookies.WriteCookie(reqCtx.Resp, "redirectTo", redirectTo, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+			cookies.WriteCookie(reqCtx.Resp, "redirectTo", redirectTo, cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		}
 		if pkce := redirect.Extra[authn.KeyOAuthPKCE]; pkce != "" {
-			cookies.WriteCookie(reqCtx.Resp, OauthPKCECookieName, pkce, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+			cookies.WriteCookie(reqCtx.Resp, OauthPKCECookieName, pkce, cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		}
 
 		reqCtx.Redirect(redirect.URL)

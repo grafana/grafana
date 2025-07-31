@@ -78,7 +78,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
 	case setting.ZanzanaModeEmbedded:
-		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
+		store, err := zanzana.NewEmbeddedStore(setting.ProvideService(cfg), db, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -127,11 +127,11 @@ type ZanzanaService interface {
 var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Zanzana, error) {
+func ProvideZanzanaService(settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles) (*Zanzana, error) {
 	s := &Zanzana{
-		cfg:      cfg,
-		features: features,
-		logger:   log.New("zanzana.server"),
+		settingsProvider: settingsProvider,
+		features:         features,
+		logger:           log.New("zanzana.server"),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -142,7 +142,7 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 type Zanzana struct {
 	*services.BasicService
 
-	cfg *setting.Cfg
+	settingsProvider setting.SettingsProvider
 
 	logger   log.Logger
 	handle   grpcserver.Provider
@@ -150,7 +150,7 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
+	tracingCfg, err := tracing.ProvideTracingConfig(z.settingsProvider)
 	if err != nil {
 		return err
 	}
@@ -162,23 +162,24 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	store, err := zanzana.NewStore(z.cfg, z.logger)
+	store, err := zanzana.NewStore(z.settingsProvider, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	openfgaServer, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store)
+	cfg := z.settingsProvider.Get()
+	openfgaServer, err := zanzana.NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer)
+	zanzanaServer, err := zanzana.NewServer(cfg.ZanzanaServer, openfgaServer, z.logger, tracer)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
 	var authenticatorInterceptor interceptors.Authenticator
-	if z.cfg.ZanzanaServer.AllowInsecure && z.cfg.Env == setting.Dev {
+	if cfg.ZanzanaServer.AllowInsecure && cfg.Env == setting.Dev {
 		z.logger.Info("Allowing insecure connections to OpenFGA HTTP server")
 		authenticatorInterceptor = noopAuthenticator{}
 	} else {
@@ -187,7 +188,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 			authnlib.NewAccessTokenVerifier(
 				authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
 				authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
-					SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
+					SigningKeysURL: cfg.ZanzanaServer.SigningKeysURL,
 				}),
 			),
 		)
@@ -200,7 +201,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	}
 
 	z.handle, err = grpcserver.ProvideService(
-		z.cfg,
+		z.settingsProvider,
 		z.features,
 		authenticatorInterceptor,
 		tracer,
@@ -219,7 +220,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	healthServer := zanzana.NewHealthServer(zanzanaServer)
 	healthv1pb.RegisterHealthServer(grpcServer, healthServer)
 
-	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
+	if _, err := grpcserver.ProvideReflectionService(z.settingsProvider, z.handle); err != nil {
 		return fmt.Errorf("failed to register reflection for zanzana: %w", err)
 	}
 
@@ -227,14 +228,15 @@ func (z *Zanzana) start(ctx context.Context) error {
 }
 
 func (z *Zanzana) running(ctx context.Context) error {
-	if z.cfg.Env == setting.Dev && z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
+	cfg := z.settingsProvider.Get()
+	if cfg.Env == setting.Dev && cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
 		go func() {
-			srv, err := zanzana.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
+			srv, err := zanzana.NewOpenFGAHttpServer(cfg.ZanzanaServer, z.handle)
 			if err != nil {
 				z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
 			} else {
 				z.logger.Info("Starting OpenFGA HTTP server")
-				if z.cfg.ZanzanaServer.AllowInsecure {
+				if cfg.ZanzanaServer.AllowInsecure {
 					z.logger.Warn("Allowing unauthenticated connections!")
 				}
 				if err := srv.ListenAndServe(); err != nil {
@@ -256,8 +258,7 @@ func (z *Zanzana) stopping(err error) error {
 }
 
 // TODO this impl might be more broadly useful in authlib
-type noopAuthenticator struct {
-}
+type noopAuthenticator struct{}
 
 func (n noopAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	return ctx, nil

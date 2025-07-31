@@ -51,13 +51,13 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(
-	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	settingsProvider setting.SettingsProvider, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService,
 ) (*Service, error) {
 	service := ProvideOSSService(
-		cfg,
+		settingsProvider,
 		database.ProvideService(db),
 		actionResolver,
 		cache,
@@ -69,7 +69,7 @@ func ProvideService(
 	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
-	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+	if err := accesscontrol.DeclareFixedRoles(service, settingsProvider); err != nil {
 		return nil, err
 	}
 
@@ -85,19 +85,19 @@ func ProvideService(
 }
 
 func ProvideOSSService(
-	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
+	settingsProvider setting.SettingsProvider, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 ) *Service {
 	s := &Service{
-		actionResolver: actionResolver,
-		cache:          cache,
-		cfg:            cfg,
-		features:       features,
-		log:            log.New("accesscontrol.service"),
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          store,
-		permRegistry:   permRegistry,
+		actionResolver:   actionResolver,
+		cache:            cache,
+		settingsProvider: settingsProvider,
+		features:         features,
+		log:              log.New("accesscontrol.service"),
+		roles:            accesscontrol.BuildBasicRoleDefinitions(),
+		store:            store,
+		permRegistry:     permRegistry,
 	}
 
 	return s
@@ -105,15 +105,15 @@ func ProvideOSSService(
 
 // Service is the service implementing role based access control.
 type Service struct {
-	actionResolver accesscontrol.ActionResolver
-	cache          *localcache.CacheService
-	cfg            *setting.Cfg
-	features       featuremgmt.FeatureToggles
-	log            log.Logger
-	registrations  accesscontrol.RegistrationList
-	roles          map[string]*accesscontrol.RoleDTO
-	store          accesscontrol.Store
-	permRegistry   permreg.PermissionRegistry
+	actionResolver   accesscontrol.ActionResolver
+	cache            *localcache.CacheService
+	settingsProvider setting.SettingsProvider
+	features         featuremgmt.FeatureToggles
+	log              log.Logger
+	registrations    accesscontrol.RegistrationList
+	roles            map[string]*accesscontrol.RoleDTO
+	store            accesscontrol.Store
+	permRegistry     permreg.PermissionRegistry
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -130,7 +130,8 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+	cfg := s.settingsProvider.Get()
+	if !cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.getUserPermissions(ctx, user, options)
 	}
 
@@ -713,7 +714,8 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SaveExternalServiceRole")
 	defer span.End()
 
-	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	cfg := s.settingsProvider.Get()
+	if !cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -729,7 +731,8 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeleteExternalServiceRole")
 	defer span.End()
 
-	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	cfg := s.settingsProvider.Get()
+	if !cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}

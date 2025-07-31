@@ -102,10 +102,10 @@ func newTestInfraDB(t *testing.T, m cfgMap) infraDB.DB {
 	t.Helper()
 	// nil migrations means no migrations
 	sqlstoreDB, err := sqlstore.ProvideService(
-		newCfgFromIniMap(t, m), // *setting.Cfg
-		featureTogglesNop{},    // featuremgmt.FeatureToggles
-		nil,                    // registry.DatabaseMigrator
-		nopBus{},               // github.com/grafana/grafana/pkg/bus.Bus
+		setting.ProvideService(newCfgFromIniMap(t, m)), // *setting.Cfg
+		featureTogglesNop{},                            // featuremgmt.FeatureToggles
+		nil,                                            // registry.DatabaseMigrator
+		nopBus{},                                       // github.com/grafana/grafana/pkg/bus.Bus
 		newNopTestGrafanaTracer(),
 	)
 	require.NoError(t, err)
@@ -160,9 +160,11 @@ func newNopTestGrafanaTracer() tracing.Tracer {
 func (featureTogglesNop) IsEnabled(context.Context, string) bool {
 	return false
 }
+
 func (featureTogglesNop) IsEnabledGlobally(string) bool {
 	return false
 }
+
 func (featureTogglesNop) GetEnabled(context.Context) map[string]bool {
 	return map[string]bool{}
 }

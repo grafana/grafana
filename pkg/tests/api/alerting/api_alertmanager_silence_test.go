@@ -294,7 +294,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			if tt.orgRole != "" {
 				orgRole = tt.orgRole
 			}
-			testUserId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			testUserId := createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 				DefaultOrgRole: string(orgRole),
 				Password:       user.Password(randomLogin),
 				Login:          randomLogin,
@@ -303,7 +303,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			apiClient := newAlertingApiClient(grafanaListedAddr, randomLogin, randomLogin)
 
 			// Set permissions.
-			permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+			permissionsStore := resourcepermissions.NewStore(env.SettingsProvider, env.SQLStore, featuremgmt.WithFeatures())
 			for _, cmd := range tt.permissions {
 				_, err := permissionsStore.SetUserResourcePermission(
 					context.Background(),

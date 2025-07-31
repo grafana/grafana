@@ -26,7 +26,8 @@ func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Respon
 		return response.Err(err)
 	}
 
-	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(hs.Cfg.AppURL, "/"), shortURL.Uid, c.GetOrgID())
+	cfg := hs.Cfg.Get()
+	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(cfg.AppURL, "/"), shortURL.Uid, c.GetOrgID())
 	c.Logger.Debug("Created short URL", "url", url)
 
 	dto := dtos.ShortURL{
@@ -39,7 +40,7 @@ func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Respon
 
 func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 	shortURLUID := web.Params(c.Req)[":uid"]
-
+	cfg := hs.Cfg.Get()
 	if !util.IsValidShortUID(shortURLUID) {
 		return
 	}
@@ -51,11 +52,11 @@ func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 		// we would try to redirect again.
 		if shorturls.ErrShortURLNotFound.Is(err) {
 			hs.log.Debug("Not redirecting short URL since not found", "uid", shortURLUID)
-			c.Redirect(hs.Cfg.AppURL, 308)
+			c.Redirect(cfg.AppURL, 308)
 			return
 		}
 		hs.log.Error("Short URL redirection error", "err", err)
-		c.Redirect(hs.Cfg.AppURL, 307)
+		c.Redirect(cfg.AppURL, 307)
 		return
 	}
 

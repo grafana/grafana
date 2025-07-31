@@ -58,7 +58,7 @@ import (
 )
 
 func ProvideService(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	featureToggles featuremgmt.FeatureToggles,
 	dataSourceCache datasources.CacheService,
 	dataSourceService datasources.DataSourceService,
@@ -87,7 +87,7 @@ func ProvideService(
 	userService user.Service,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:                   cfg,
+		SettingsProvider:      settingsProvider,
 		FeatureToggles:        featureToggles,
 		DataSourceCache:       dataSourceCache,
 		DataSourceService:     dataSourceService,
@@ -130,7 +130,7 @@ func ProvideService(
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg                   *setting.Cfg
+	SettingsProvider      setting.SettingsProvider
 	FeatureToggles        featuremgmt.FeatureToggles
 	DataSourceCache       datasources.CacheService
 	DataSourceService     datasources.DataSourceService
@@ -174,8 +174,9 @@ type AlertNG struct {
 }
 
 func (ng *AlertNG) init() error {
+	grafanaCfg := ng.SettingsProvider.Get()
 	// AlertNG should be initialized before the cancellation deadline of initCtx
-	initCtx, cancelFunc := context.WithTimeout(context.Background(), ng.Cfg.UnifiedAlerting.InitializationTimeout)
+	initCtx, cancelFunc := context.WithTimeout(context.Background(), grafanaCfg.UnifiedAlerting.InitializationTimeout)
 	defer cancelFunc()
 
 	ng.store.Logger = ng.Log
@@ -197,29 +198,29 @@ func (ng *AlertNG) init() error {
 	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		smtpCfg := remoteClient.SmtpConfig{
-			FromAddress:    ng.Cfg.Smtp.FromAddress,
-			FromName:       ng.Cfg.Smtp.FromName,
-			Host:           ng.Cfg.Smtp.Host,
-			User:           ng.Cfg.Smtp.User,
-			Password:       ng.Cfg.Smtp.Password,
-			EhloIdentity:   ng.Cfg.Smtp.EhloIdentity,
-			StartTLSPolicy: ng.Cfg.Smtp.StartTLSPolicy,
-			SkipVerify:     ng.Cfg.Smtp.SkipVerify,
-			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
+			FromAddress:    grafanaCfg.Smtp.FromAddress,
+			FromName:       grafanaCfg.Smtp.FromName,
+			Host:           grafanaCfg.Smtp.Host,
+			User:           grafanaCfg.Smtp.User,
+			Password:       grafanaCfg.Smtp.Password,
+			EhloIdentity:   grafanaCfg.Smtp.EhloIdentity,
+			StartTLSPolicy: grafanaCfg.Smtp.StartTLSPolicy,
+			SkipVerify:     grafanaCfg.Smtp.SkipVerify,
+			StaticHeaders:  grafanaCfg.Smtp.StaticHeaders,
 		}
 
 		cfg := remote.AlertmanagerConfig{
-			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
-			DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
-			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
-			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-			ExternalURL:       ng.Cfg.AppURL,
+			BasicAuthPassword: grafanaCfg.UnifiedAlerting.RemoteAlertmanager.Password,
+			DefaultConfig:     grafanaCfg.UnifiedAlerting.DefaultConfiguration,
+			TenantID:          grafanaCfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+			URL:               grafanaCfg.UnifiedAlerting.RemoteAlertmanager.URL,
+			ExternalURL:       grafanaCfg.AppURL,
 			SmtpConfig:        smtpCfg,
-			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+			Timeout:           grafanaCfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 
 			// TODO: Remove once everything can be sent in the 'smtp_config' field.
-			SmtpFrom:      ng.Cfg.Smtp.FromAddress,
-			StaticHeaders: ng.Cfg.Smtp.StaticHeaders,
+			SmtpFrom:      grafanaCfg.Smtp.FromAddress,
+			StaticHeaders: grafanaCfg.Smtp.StaticHeaders,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
@@ -229,7 +230,7 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			ng.Cfg.UnifiedAlerting.SkipClustering = true
+			grafanaCfg.UnifiedAlerting.SkipClustering = true
 			// This function will be used by the MOA to create new Alertmanagers.
 			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
@@ -282,7 +283,7 @@ func (ng *AlertNG) init() error {
 						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
 						OrgID:        orgID,
 						Store:        ng.store,
-						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+						SyncInterval: grafanaCfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
 					return remote.NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
 				}
@@ -294,7 +295,7 @@ func (ng *AlertNG) init() error {
 	notificationHistorian, err := configureNotificationHistorian(
 		initCtx,
 		ng.FeatureToggles,
-		ng.Cfg.UnifiedAlerting.NotificationHistory,
+		grafanaCfg.UnifiedAlerting.NotificationHistory,
 		ng.Metrics.GetNotificationHistorianMetrics(),
 		ng.Log,
 		ng.tracer,
@@ -306,7 +307,7 @@ func (ng *AlertNG) init() error {
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 	moa, err := notifier.NewMultiOrgAlertmanager(
-		ng.Cfg,
+		ng.SettingsProvider,
 		ng.store,
 		ng.store,
 		ng.KVStore,
@@ -326,7 +327,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.MultiOrgAlertmanager = moa
 
-	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
+	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.SettingsProvider, ng.store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
 	if err != nil {
 		return err
 	}
@@ -337,7 +338,7 @@ func (ng *AlertNG) init() error {
 		return fmt.Errorf("failed to initialize alerting because multiorg alertmanager manager failed to warm up: %w", err)
 	}
 
-	appUrl, err := url.Parse(ng.Cfg.AppURL)
+	appUrl, err := url.Parse(grafanaCfg.AppURL)
 	if err != nil {
 		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
@@ -345,8 +346,8 @@ func (ng *AlertNG) init() error {
 
 	clk := clock.New()
 
-	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles)
+	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, grafanaCfg.UnifiedAlerting.DisabledOrgs,
+		grafanaCfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles)
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(initCtx); err != nil {
@@ -355,26 +356,26 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
-	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
+	evalFactory := eval.NewEvaluatorFactory(grafanaCfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	recordingWriter, err := createRecordingWriter(ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, ng.pluginContextProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
+	recordingWriter, err := createRecordingWriter(grafanaCfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, ng.pluginContextProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
 	ng.RecordingWriter = recordingWriter
 
 	schedCfg := schedule.SchedulerCfg{
-		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+		MaxAttempts:          grafanaCfg.UnifiedAlerting.MaxAttempts,
 		C:                    clk,
-		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
-		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
-		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
-		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
+		BaseInterval:         grafanaCfg.UnifiedAlerting.BaseInterval,
+		MinRuleInterval:      grafanaCfg.UnifiedAlerting.MinInterval,
+		DisableGrafanaFolder: grafanaCfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		JitterEvaluations:    schedule.JitterStrategyFrom(grafanaCfg.UnifiedAlerting, ng.FeatureToggles),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
-		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
+		RecordingRulesCfg:    grafanaCfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
@@ -385,7 +386,7 @@ func (ng *AlertNG) init() error {
 
 	history, err := configureHistorianBackend(
 		initCtx,
-		ng.Cfg.UnifiedAlerting.StateHistory,
+		grafanaCfg.UnifiedAlerting.StateHistory,
 		ng.annotationsRepo,
 		ng.dashboardService,
 		ng.store,
@@ -408,24 +409,24 @@ func (ng *AlertNG) init() error {
 	stateManagerCfg := state.ManagerCfg{
 		Metrics:                    ng.Metrics.GetStateMetrics(),
 		ExternalURL:                appUrl,
-		DisableExecution:           !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
+		DisableExecution:           !grafanaCfg.UnifiedAlerting.ExecuteAlerts,
 		InstanceStore:              ng.InstanceStore,
 		Images:                     ng.ImageService,
 		Clock:                      clk,
 		Historian:                  history,
-		MaxStateSaveConcurrency:    ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
-		StatePeriodicSaveBatchSize: ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
-		RulesPerRuleGroupLimit:     ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
+		MaxStateSaveConcurrency:    grafanaCfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		StatePeriodicSaveBatchSize: grafanaCfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
+		RulesPerRuleGroupLimit:     grafanaCfg.UnifiedAlerting.RulesPerRuleGroupLimit,
 		Tracer:                     ng.tracer,
 		Log:                        log.New("ngalert.state.manager"),
-		ResolvedRetention:          ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
+		ResolvedRetention:          grafanaCfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
-	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
+	statePersister := initStatePersister(grafanaCfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	stateManager := state.NewManager(stateManagerCfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
-	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
+	if !grafanaCfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
 		subscribeToFolderChanges(ng.Log, ng.bus, ng.store)
 	}
 
@@ -457,18 +458,18 @@ func (ng *AlertNG) init() error {
 	)
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
+	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, grafanaCfg.UnifiedAlerting, ng.Log)
 	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
-		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
-		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
-		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
+		int64(grafanaCfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
+		int64(grafanaCfg.UnifiedAlerting.BaseInterval.Seconds()),
+		grafanaCfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol))
 
 	ng.Api = &api.API{
-		Cfg:                  ng.Cfg,
+		SettingsProvider:     ng.SettingsProvider,
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
@@ -501,7 +502,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.store); err != nil {
+	if err := RegisterQuotas(ng.SettingsProvider, ng.QuotaService, ng.store); err != nil {
 		return err
 	}
 
@@ -589,7 +590,8 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
-	ng.Log.Debug("Starting", "execute_alerts", ng.Cfg.UnifiedAlerting.ExecuteAlerts)
+	cfg := ng.SettingsProvider.Get()
+	ng.Log.Debug("Starting", "execute_alerts", cfg.UnifiedAlerting.ExecuteAlerts)
 
 	children, subCtx := errgroup.WithContext(ctx)
 
@@ -600,7 +602,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.AlertsRouter.Run(subCtx)
 	})
 
-	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
+	if cfg.UnifiedAlerting.ExecuteAlerts {
 		// Only Warm() the state manager if we are actually executing alerts.
 		// Doing so when we are not executing alerts is wasteful and could lead
 		// to misleading rule status queries, as the status returned will be
@@ -624,11 +626,16 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
 func (ng *AlertNG) IsDisabled() bool {
-	if ng.Cfg == nil {
+	if ng.SettingsProvider == nil {
 		return true
 	}
 
-	return !ng.Cfg.UnifiedAlerting.IsEnabled()
+	cfg := ng.SettingsProvider.Get()
+	if cfg == nil {
+		return true
+	}
+
+	return !cfg.UnifiedAlerting.IsEnabled()
 }
 
 // GetHooks returns a facility for replacing handlers for paths. The handler hook for a path

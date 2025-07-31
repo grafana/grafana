@@ -29,11 +29,9 @@ const (
 	keyIdDelimiter = '#'
 )
 
-var (
-	// now is used for testing purposes,
-	// as a way to fake time.Now function.
-	now = time.Now
-)
+// now is used for testing purposes,
+// as a way to fake time.Now function.
+var now = time.Now
 
 type SecretsService struct {
 	tracer     tracing.Tracer

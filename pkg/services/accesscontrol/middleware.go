@@ -276,7 +276,6 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 
 func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
-
 	// Special case of macaron handling invalid params
 	if err != nil {
 		return 0, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
@@ -294,7 +293,8 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 }
 
 // UseGlobalOrSingleOrg returns the global organization or the current organization in a single organization setup
-func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
+func UseGlobalOrSingleOrg(settingsProvider setting.SettingsProvider) OrgIDGetter {
+	cfg := settingsProvider.Get()
 	return func(c *contextmodel.ReqContext) (int64, error) {
 		if cfg.RBAC.SingleOrganization {
 			return c.GetOrgID(), nil

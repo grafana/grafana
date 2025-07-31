@@ -27,8 +27,8 @@ type TracingConfig struct {
 	Insecure             bool
 }
 
-func ProvideTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
-	return ParseTracingConfig(cfg)
+func ProvideTracingConfig(settingsProvider setting.SettingsProvider) (*TracingConfig, error) {
+	return ParseTracingConfig(settingsProvider)
 }
 
 func NewEmptyTracingConfig() *TracingConfig {
@@ -62,7 +62,8 @@ func NewOTLPTracingConfig(address string, propagation string, insecure bool) (*T
 	return cfg, nil
 }
 
-func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
+func ParseTracingConfig(settingsProvider setting.SettingsProvider) (*TracingConfig, error) {
+	cfg := settingsProvider.Get()
 	if cfg == nil {
 		return nil, fmt.Errorf("cfg cannot be nil")
 	}

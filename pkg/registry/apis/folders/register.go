@@ -37,13 +37,17 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
-var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder    = (*FolderAPIBuilder)(nil)
+	_ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
+)
 
 var resourceInfo = folders.FolderResourceInfo
 
-var errNoUser = errors.New("valid user is required")
-var errNoResource = errors.New("resource name is required")
+var (
+	errNoUser     = errors.New("valid user is required")
+	errNoResource = errors.New("resource name is required")
+)
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -58,12 +62,12 @@ type FolderAPIBuilder struct {
 
 	authorizer authorizer.Authorizer
 
-	searcher     resourcepb.ResourceIndexClient
-	cfg          *setting.Cfg
-	ignoreLegacy bool // skip legacy storage and only use unified storage
+	searcher         resourcepb.ResourceIndexClient
+	settingsProvider setting.SettingsProvider
+	ignoreLegacy     bool // skip legacy storage and only use unified storage
 }
 
-func RegisterAPIService(cfg *setting.Cfg,
+func RegisterAPIService(settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
@@ -76,12 +80,12 @@ func RegisterAPIService(cfg *setting.Cfg,
 	builder := &FolderAPIBuilder{
 		gv:                   resourceInfo.GroupVersion(),
 		features:             features,
-		namespacer:           request.GetNamespaceMapper(cfg),
+		namespacer:           request.GetNamespaceMapper(settingsProvider),
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
 		ac:                   accessControl,
-		cfg:                  cfg,
+		settingsProvider:     settingsProvider,
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
 	}
@@ -153,23 +157,24 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: resourceInfo.TableConverter(),
-		features:       b.features,
-		cfg:            b.cfg,
+		service:          b.folderSvc,
+		namespacer:       b.namespacer,
+		tableConverter:   resourceInfo.TableConverter(),
+		features:         b.features,
+		settingsProvider: b.settingsProvider,
 	}
 
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true})
+		RequireDeprecatedInternalID: true,
+	})
 
 	folderStore := &folderStorage{
 		tableConverter:       resourceInfo.TableConverter(),
 		folderPermissionsSvc: b.folderPermissionsSvc,
 		acService:            b.acService,
 		features:             b.features,
-		cfg:                  b.cfg,
+		settingsProvider:     b.settingsProvider,
 	}
 
 	if optsGetter != nil && dualWriteBuilder != nil {
@@ -340,7 +345,7 @@ func getParent(o runtime.Object) string {
 }
 
 func (b *FolderAPIBuilder) checkFolderMaxDepth(ctx context.Context, obj runtime.Object) ([]string, error) {
-	var parents = []string{}
+	parents := []string{}
 	for i := 0; i < folderValidationRules.maxDepth; i++ {
 		parent := getParent(obj)
 		if parent == "" {
@@ -370,7 +375,7 @@ func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtim
 	if !ok {
 		return fmt.Errorf("obj is not folders.Folder")
 	}
-	var newParent = getParent(obj)
+	newParent := getParent(obj)
 	if newParent != getParent(fOld) {
 		// it's a move operation
 		return b.validateMove(ctx, obj, newParent)
@@ -388,7 +393,7 @@ func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object,
 		return fmt.Errorf("k6 project may not be moved")
 	}
 
-	//FIXME: until we have a way to represent the tree, we can only
+	// FIXME: until we have a way to represent the tree, we can only
 	// look at folder parents to check how deep the new folder tree will be
 	parents, err := b.checkFolderMaxDepth(ctx, obj)
 	if err != nil {

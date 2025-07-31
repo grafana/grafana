@@ -76,7 +76,7 @@ func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64,
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
-func UnmarshalSQLCommand(rn *rawNode, cfg setting.SettingsProvider) (*SQLCommand, error) {
+func UnmarshalSQLCommand(rn *rawNode, settingsProvider setting.SettingsProvider) (*SQLCommand, error) {
 	if rn.TimeRange == nil {
 		logger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
@@ -96,14 +96,8 @@ func UnmarshalSQLCommand(rn *rawNode, cfg setting.SettingsProvider) (*SQLCommand
 	formatRaw := rn.Query["format"]
 	format, _ := formatRaw.(string)
 
-	/*
-		// Example of how to get the configuration values from the config provider
-		cellLimit := cfg.GetValue("expressions", "sql_expression_cell_limit").(int64)
-		outputLimit := cfg.GetValue("expressions", "sql_expression_output_cell_limit").(int64)
-		timeout := cfg.GetValue("expressions", "sql_expression_timeout").(time.Duration)
-	*/
-
-	return NewSQLCommand(rn.RefID, format, expression, cfg.Get().SQLExpressionCellLimit, cfg.Get().SQLExpressionOutputCellLimit, cfg.Get().SQLExpressionTimeout)
+	cfg := settingsProvider.Get()
+	return NewSQLCommand(rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies

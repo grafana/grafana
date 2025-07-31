@@ -8,10 +8,10 @@ type Preinstall interface {
 }
 
 func ProvidePreinstall(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 ) *PreinstallImpl {
 	plugins := make(map[string]*setting.InstallPlugin)
-	for _, p := range cfg.PreinstallPluginsAsync {
+	for _, p := range settingsProvider.Get().PreinstallPluginsAsync {
 		plugins[p.ID] = &p
 	}
 	return &PreinstallImpl{

@@ -21,7 +21,7 @@ import (
 )
 
 type ServiceAccountsAPI struct {
-	cfg                  *setting.Cfg
+	settingsProvider     setting.SettingsProvider
 	service              serviceaccounts.Service
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
@@ -32,7 +32,7 @@ type ServiceAccountsAPI struct {
 }
 
 func NewServiceAccountsAPI(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	service serviceaccounts.Service,
 	accesscontrol accesscontrol.AccessControl,
 	accesscontrolService accesscontrol.Service,
@@ -40,9 +40,10 @@ func NewServiceAccountsAPI(
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 	features featuremgmt.FeatureToggles,
 ) *ServiceAccountsAPI {
+	cfg := settingsProvider.Get()
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) && cfg.ManagedServiceAccountsEnabled
 	return &ServiceAccountsAPI{
-		cfg:                  cfg,
+		settingsProvider:     settingsProvider,
 		service:              service,
 		accesscontrol:        accesscontrol,
 		accesscontrolService: accesscontrolService,
@@ -98,7 +99,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
-	if api.cfg.RBAC.PermissionsOnCreation("service-account") {
+	if api.settingsProvider.Get().RBAC.PermissionsOnCreation("service-account") {
 		if c.IsIdentityType(claims.TypeUser) {
 			// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
 			// Required for cases when caller wants to immediately interact with the newly created object
@@ -139,7 +140,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 
 	saIDString := strconv.FormatInt(serviceAccount.Id, 10)
 	metadata := api.getAccessControlMetadata(ctx, map[string]bool{saIDString: true})
-	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", serviceAccount.Name)
+	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.settingsProvider, "", serviceAccount.Name)
 	serviceAccount.AccessControl = metadata[saIDString]
 
 	tokens, err := api.service.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
@@ -190,7 +191,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 
 	saIDString := strconv.FormatInt(resp.Id, 10)
 	metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
-	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", resp.Name)
+	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.settingsProvider, "", resp.Name)
 	resp.AccessControl = metadata[saIDString]
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -290,7 +291,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	saIDs := map[string]bool{}
 	for i := range serviceAccountSearch.ServiceAccounts {
 		sa := serviceAccountSearch.ServiceAccounts[i]
-		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", sa.Name)
+		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.settingsProvider, "", sa.Name)
 
 		saIDString := strconv.FormatInt(sa.Id, 10)
 		saIDs[saIDString] = true

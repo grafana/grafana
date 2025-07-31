@@ -94,7 +94,7 @@ func (r *LegacyDisplayREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 }
 
 // This will always have an empty app url
-var fakeCfgForGravatar = &setting.Cfg{}
+var fakeCfgForGravatar = setting.ProvideService(&setting.Cfg{})
 
 func (r *LegacyDisplayREST) handleDisplay(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()

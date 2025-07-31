@@ -9,7 +9,7 @@ import (
 
 func TestMiddlewareDashboardRedirect_legacyEditPanel(t *testing.T) {
 	middlewareScenario(t, "GET dashboard by legacy edit URL", func(t *testing.T, sc *scenarioContext) {
-		sc.handlerFunc = RedirectFromLegacyPanelEditURL(sc.cfg)
+		sc.handlerFunc = RedirectFromLegacyPanelEditURL(sc.settingsProvider)
 		sc.m.Get("/d/:uid/:slug", sc.defaultHandler)
 
 		sc.fakeReqWithParams("GET", "/d/asd/dash?orgId=1&panelId=12&fullscreen&edit", map[string]string{}).exec()

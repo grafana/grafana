@@ -397,7 +397,7 @@ func TestAPI_Annotations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				repo := annotationstest.NewFakeAnnotationsRepo()
 				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0, DashboardUID: ""})
 				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1, DashboardUID: "dashuid1"})

@@ -25,12 +25,13 @@ type Service struct {
 }
 
 func ProvideService(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	restConfigProvider apiserver.RestConfigProvider,
 ) (*Service, error) {
 	namespace := "default"
+	cfg := settingsProvider.Get()
 	if cfg.StackID != "" {
-		namespace = apiserverrequest.GetNamespaceMapper(cfg)(1)
+		namespace = apiserverrequest.GetNamespaceMapper(settingsProvider)(1)
 	}
 
 	return &Service{

@@ -159,6 +159,7 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 // 403: forbiddenError
 // 500: internalServerError
 func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
+	cfg := tapi.settingsProvider.Get()
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -190,7 +191,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
-		HiddenUsers:  tapi.cfg.HiddenUsers,
+		HiddenUsers:  cfg.HiddenUsers,
 		SortOpts:     sortOpts,
 	}
 
@@ -201,7 +202,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 
 	teamIDs := map[string]bool{}
 	for _, team := range queryResult.Teams {
-		team.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, team.Email, team.Name)
+		team.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.settingsProvider, team.Email, team.Name)
 		teamIDs[strconv.FormatInt(team.ID, 10)] = true
 	}
 
@@ -229,6 +230,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
+	cfg := tapi.settingsProvider.Get()
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -238,7 +240,7 @@ func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 		OrgID:        c.GetOrgID(),
 		ID:           teamId,
 		SignedInUser: c.SignedInUser,
-		HiddenUsers:  tapi.cfg.HiddenUsers,
+		HiddenUsers:  cfg.HiddenUsers,
 	}
 
 	queryResult, err := tapi.teamService.GetTeamByID(c.Req.Context(), &query)
@@ -253,7 +255,7 @@ func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 	// Add accesscontrol metadata
 	queryResult.AccessControl = tapi.getAccessControlMetadata(c, "teams:id:", strconv.FormatInt(queryResult.ID, 10))
 
-	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, queryResult.Email, queryResult.Name)
+	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.settingsProvider, queryResult.Email, queryResult.Name)
 	return response.JSON(http.StatusOK, &queryResult)
 }
 
@@ -391,7 +393,8 @@ type CreateTeamResponse struct {
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
 // Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
 func (tapi *TeamAPI) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
-	prefix string, resourceIDs map[string]bool) map[string]accesscontrol.Metadata {
+	prefix string, resourceIDs map[string]bool,
+) map[string]accesscontrol.Metadata {
 	if !c.QueryBool("accesscontrol") {
 		return map[string]accesscontrol.Metadata{}
 	}
@@ -406,7 +409,8 @@ func (tapi *TeamAPI) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
 func (tapi *TeamAPI) getAccessControlMetadata(c *contextmodel.ReqContext,
-	prefix string, resourceID string) accesscontrol.Metadata {
+	prefix string, resourceID string,
+) accesscontrol.Metadata {
 	ids := map[string]bool{resourceID: true}
 	return tapi.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }

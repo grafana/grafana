@@ -35,6 +35,7 @@ var (
 // grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
+	cfg := hs.Cfg.Get()
 	// Declare plugins roles
 	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg, hs.Features); err != nil {
 		return err
@@ -72,7 +73,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-	if hs.Cfg.ViewersCanEdit {
+	if cfg.ViewersCanEdit {
 		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
 	}
 
@@ -644,7 +645,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleViewer)},
 	}
 
-	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
+	roles := []ac.RoleRegistration{
+		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
@@ -652,7 +654,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
-		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole}
+		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole,
+	}
 
 	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		allAnnotationsReaderRole := ac.RoleRegistration{
@@ -696,7 +699,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
 func getAccessControlMetadata(c *contextmodel.ReqContext,
-	prefix string, resourceID string) ac.Metadata {
+	prefix string, resourceID string,
+) ac.Metadata {
 	ids := map[string]bool{resourceID: true}
 	return getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }
@@ -704,7 +708,8 @@ func getAccessControlMetadata(c *contextmodel.ReqContext,
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
 // Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
 func getMultiAccessControlMetadata(c *contextmodel.ReqContext,
-	prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
+	prefix string, resourceIDs map[string]bool,
+) map[string]ac.Metadata {
 	if !c.QueryBool("accesscontrol") {
 		return map[string]ac.Metadata{}
 	}

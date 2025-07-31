@@ -13,7 +13,8 @@ import (
 	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
-func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConfig, logger log.Logger) error {
+func Run(settingsProvider setting.SettingsProvider, dbType string, grafanaDBConfig *sqlstore.DatabaseConfig, logger log.Logger) error {
+	cfg := settingsProvider.Get()
 	connStr := grafanaDBConfig.ConnectionString
 	// running grafana migrations
 	engine, err := xorm.NewEngine(dbType, connStr)
@@ -21,7 +22,7 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConf
 		return fmt.Errorf("failed to create db engine: %w", err)
 	}
 
-	m := migrator.NewMigrator(engine, cfg)
+	m := migrator.NewMigrator(engine, settingsProvider)
 	m.AddCreateMigration()
 
 	if err := RunWithMigrator(m, cfg); err != nil {

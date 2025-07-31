@@ -51,7 +51,7 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 				folderPermissionsSvc: folderPermService,
 				acService:            actest.FakeService{},
 				store:                &fakeStorage{},
-				cfg:                  cfg,
+				settingsProvider:     setting.ProvideService(cfg),
 			}
 			obj := &folders.Folder{}
 
@@ -61,7 +61,8 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 			})
 
 			out, err := fs.Create(ctx, obj, func(ctx context.Context,
-				obj runtime.Object) error {
+				obj runtime.Object,
+			) error {
 				return nil
 			},
 				&metav1.CreateOptions{})
@@ -122,7 +123,8 @@ func (s *fakeStorage) Create(ctx context.Context, obj runtime.Object, createVali
 }
 
 func (s *fakeStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc,
-	updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
 	return nil, false, nil
 }
 

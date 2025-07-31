@@ -16,7 +16,8 @@ import (
 const mainOrgName = "Main Org."
 
 func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserCommand) (int64, error) {
-	if ss.cfg.AutoAssignOrg && args.OrgID != 0 {
+	cfg := ss.settingsProvider.Get()
+	if cfg.AutoAssignOrg && args.OrgID != 0 {
 		if err := verifyExistingOrg(sess, args.OrgID); err != nil {
 			return -1, err
 		}
@@ -40,6 +41,7 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserComm
 // args.OrgName will be used to create a new Org with name=args.OrgName. If an
 // org already exists with that name, it will error.
 func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.CreateUserCommand) (user.User, error) {
+	cfg := ss.settingsProvider.Get()
 	var usr user.User
 	orgID, err := ss.getOrgIDForNewUser(sess, args)
 	if err != nil {
@@ -115,11 +117,11 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		Updated: time.Now(),
 	}
 
-	if ss.cfg.AutoAssignOrg && !usr.IsAdmin {
+	if cfg.AutoAssignOrg && !usr.IsAdmin {
 		if len(args.DefaultOrgRole) > 0 {
 			orgUser.Role = org.RoleType(args.DefaultOrgRole)
 		} else {
-			orgUser.Role = org.RoleType(ss.cfg.AutoAssignOrgRole)
+			orgUser.Role = org.RoleType(cfg.AutoAssignOrgRole)
 		}
 	}
 
@@ -143,10 +145,11 @@ func verifyExistingOrg(sess *DBSession, orgId int64) error {
 }
 
 func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
+	cfg := ss.settingsProvider.Get()
 	var org org.Org
 
-	if ss.cfg.AutoAssignOrg {
-		has, err := sess.Where("id=?", ss.cfg.AutoAssignOrgId).Get(&org)
+	if cfg.AutoAssignOrg {
+		has, err := sess.Where("id=?", cfg.AutoAssignOrgId).Get(&org)
 		if err != nil {
 			return 0, err
 		}
@@ -155,17 +158,17 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 		}
 		ss.log.Debug("auto assigned organization not found")
 
-		if ss.cfg.AutoAssignOrgId != 1 {
+		if cfg.AutoAssignOrgId != 1 {
 			ss.log.Error("Could not create user: organization ID does not exist", "orgID",
-				ss.cfg.AutoAssignOrgId)
+				cfg.AutoAssignOrgId)
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
-				ss.cfg.AutoAssignOrgId)
+				cfg.AutoAssignOrgId)
 		}
 
 		org.Name = mainOrgName
 		org.Created = time.Now()
 		org.Updated = org.Created
-		org.ID = int64(ss.cfg.AutoAssignOrgId)
+		org.ID = int64(cfg.AutoAssignOrgId)
 		if err := sess.InsertId(&org, ss.dialect); err != nil {
 			ss.log.Error("failed to insert organization with provided id", "org_id", org.ID, "err", err)
 			// ignore failure if for some reason the organization exists

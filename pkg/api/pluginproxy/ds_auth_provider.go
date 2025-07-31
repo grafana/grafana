@@ -23,7 +23,8 @@ type DSInfo struct {
 
 // ApplyRoute should use the plugin route data to set auth headers and custom headers.
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.Route,
-	ds DSInfo, cfg *setting.Cfg) {
+	ds DSInfo, cfg *setting.Cfg,
+) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 	data := templateData{
 		URL:            ds.URL,
@@ -86,7 +87,8 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 }
 
 func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds DSInfo, pluginRoute *plugins.Route,
-	data templateData) (accessTokenProvider, error) {
+	data templateData,
+) (accessTokenProvider, error) {
 	authType := pluginRoute.AuthType
 
 	// Plugin can override authentication type specified in route configuration

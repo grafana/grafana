@@ -114,12 +114,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		}
 	}
 
-	appURL := hs.Cfg.AppURL
-	appSubURL := hs.Cfg.AppSubURL
+	cfg := hs.Cfg.Get()
+	appURL := cfg.AppURL
+	appSubURL := cfg.AppSubURL
 
 	// special case when doing localhost call from image renderer
-	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
-		appURL = fmt.Sprintf("%s://localhost:%s", hs.Cfg.Protocol, hs.Cfg.HTTPPort)
+	if c.IsRenderCall && !cfg.ServeFromSubPath {
+		appURL = fmt.Sprintf("%s://localhost:%s", cfg.Protocol, cfg.HTTPPort)
 		appSubURL = ""
 		settings.AppSubUrl = ""
 	}
@@ -173,11 +174,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		ThemeType:                           theme.Type,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		NewsFeedEnabled:                     hs.Cfg.NewsFeedEnabled,
+		NewsFeedEnabled:                     cfg.NewsFeedEnabled,
 		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
 		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
-		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
-		GoogleTagManagerId:                  hs.Cfg.GoogleTagManagerID,
+		GoogleAnalytics4SendManualPageViews: cfg.GoogleAnalytics4SendManualPageViews,
+		GoogleTagManagerId:                  cfg.GoogleTagManagerID,
 		BuildVersion:                        setting.BuildVersion,
 		BuildCommit:                         setting.BuildCommit,
 		NewGrafanaVersion:                   hs.grafanaUpdateChecker.LatestVersion(),
@@ -190,13 +191,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
 		LoadingLogo:                         "public/img/grafana_icon.svg",
-		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
+		IsDevelopmentEnv:                    cfg.Env == setting.Dev,
 		Assets:                              assets,
 	}
 
-	if hs.Cfg.CSPEnabled {
+	if cfg.CSPEnabled {
 		data.CSPEnabled = true
-		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
+		data.CSPContent = middleware.ReplacePolicyVariables(cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
 	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 	if err != nil {
@@ -205,8 +206,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
-	if hs.Cfg.DisableGravatar {
-		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/img/user_profile.png"
+	if cfg.DisableGravatar {
+		data.User.GravatarUrl = cfg.AppSubURL + "/public/img/user_profile.png"
 	}
 
 	if len(data.User.Name) == 0 {
@@ -223,16 +224,17 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 }
 
 func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
+	cfg := hs.Cfg.Get()
 	// Anonymous users do not have an email or auth info
 	if !c.IsIdentityType(claims.TypeUser) {
-		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
+		return dtos.AnalyticsSettings{Identifier: "@" + cfg.AppURL}
 	}
 
 	if !c.IsSignedIn {
 		return dtos.AnalyticsSettings{}
 	}
 
-	identifier := c.GetEmail() + "@" + hs.Cfg.AppURL
+	identifier := c.GetEmail() + "@" + cfg.AppURL
 
 	if authenticatedBy := c.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
 		identifier = c.GetAuthID()
@@ -240,7 +242,7 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 
 	return dtos.AnalyticsSettings{
 		Identifier:         identifier,
-		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
+		IntercomIdentifier: hashUserIdentifier(identifier, cfg.IntercomSecret),
 	}
 }
 
@@ -309,5 +311,5 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 		}
 	}
 
-	return pref.GetThemeByID(hs.Cfg.DefaultTheme)
+	return pref.GetThemeByID(hs.Cfg.Get().DefaultTheme)
 }

@@ -98,7 +98,8 @@ func TestService_GetForProvider(t *testing.T) {
 				Provider: "github",
 				Settings: map[string]any{
 					"enabled":   true,
-					"client_id": "client_id"},
+					"client_id": "client_id",
+				},
 				Source: models.System,
 			},
 			wantErr: false,

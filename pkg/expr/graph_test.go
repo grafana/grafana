@@ -233,10 +233,10 @@ func TestServicebuildPipeLine(t *testing.T) {
 			expectedOrder: []string{"B", "A"},
 		},
 	}
-	cfg := setting.ProvideService(setting.NewCfg())
+	settingsProvider := setting.ProvideService(setting.NewCfg())
 	s := Service{
-		features: featuremgmt.WithFeatures(featuremgmt.FlagExpressionParser),
-		cfg:      cfg,
+		features:         featuremgmt.WithFeatures(featuremgmt.FlagExpressionParser),
+		settingsProvider: settingsProvider,
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

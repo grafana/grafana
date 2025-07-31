@@ -51,7 +51,8 @@ type CleanUpService struct {
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, dashboardService dashboards.DashboardService, service AlertRuleService) *CleanUpService {
+	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, dashboardService dashboards.DashboardService, service AlertRuleService,
+) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		ServerLockService:         serverLockService,
@@ -175,7 +176,7 @@ func (srv *CleanUpService) cleanUpTmpFolder(ctx context.Context, folder string) 
 	}
 
 	var toDelete []fs.DirEntry
-	var now = time.Now()
+	now := time.Now()
 
 	for _, file := range files {
 		info, err := file.Info()

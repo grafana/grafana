@@ -23,9 +23,7 @@ const (
 	subsystem = "screenshot"
 )
 
-var (
-	ErrScreenshotsUnavailable = errors.New("screenshots unavailable")
-)
+var ErrScreenshotsUnavailable = errors.New("screenshots unavailable")
 
 // Screenshot represents a path to a screenshot on disk.
 type Screenshot struct {

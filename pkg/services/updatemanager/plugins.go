@@ -48,7 +48,7 @@ type PluginsService struct {
 	features featuremgmt.FeatureToggles
 }
 
-func ProvidePluginsService(cfg *setting.Cfg,
+func ProvidePluginsService(settingsProvider setting.SettingsProvider,
 	pluginStore pluginstore.Store,
 	pluginInstaller plugins.Installer,
 	tracer tracing.Tracer,
@@ -65,6 +65,7 @@ func ProvidePluginsService(cfg *setting.Cfg,
 		return nil, err
 	}
 
+	cfg := settingsProvider.Get()
 	updateCheckURL, err := url.JoinPath(cfg.GrafanaComAPIURL, "plugins", "versioncheck")
 	if err != nil {
 		return nil, err
@@ -251,6 +252,7 @@ func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map
 
 	return result
 }
+
 func (s *PluginsService) updateAll(ctx context.Context) {
 	ctxLogger := s.log.FromContext(ctx)
 

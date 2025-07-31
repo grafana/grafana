@@ -40,7 +40,8 @@ var (
 	httpClient              = httpclient.New()
 )
 
-func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
+func GetWebAssets(ctx context.Context, settingsProvider setting.SettingsProvider, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
+	cfg := settingsProvider.Get()
 	entryPointAssetsCacheMu.RLock()
 	ret := entryPointAssetsCache
 	entryPointAssetsCacheMu.RUnlock()

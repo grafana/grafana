@@ -27,9 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
-var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
-var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder         = (*APIBuilder)(nil)
+	_ builder.APIGroupRouteProvider   = (*APIBuilder)(nil)
+	_ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
+)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
@@ -137,7 +139,9 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-			}}}
+			},
+		},
+	}
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{

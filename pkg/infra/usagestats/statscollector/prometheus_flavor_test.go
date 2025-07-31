@@ -48,7 +48,7 @@ func TestDetectPrometheusVariant(t *testing.T) {
 	statsService := statstest.NewFakeService()
 	s := createService(
 		t,
-		setting.NewCfg(),
+		setting.ProvideService(setting.NewCfg()),
 		sqlStore,
 		statsService,
 		withDatasources(mockDatasourceService{datasources: []*datasources.DataSource{

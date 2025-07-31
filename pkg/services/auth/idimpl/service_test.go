@@ -30,7 +30,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, authnService, nil, tracing.InitializeTracerForTest())
+		_ = ProvideService(setting.ProvideService(setting.NewCfg()), nil, nil, authnService, nil, tracing.InitializeTracerForTest())
 		assert.True(t, hookRegistered)
 	})
 }
@@ -51,7 +51,7 @@ func TestService_SignIdentity(t *testing.T) {
 
 	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
-			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			setting.ProvideService(setting.NewCfg()), signer, remotecache.NewFakeCacheStorage(),
 			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
@@ -61,7 +61,7 @@ func TestService_SignIdentity(t *testing.T) {
 
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
-			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			setting.ProvideService(setting.NewCfg()), signer, remotecache.NewFakeCacheStorage(),
 			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{
@@ -86,7 +86,7 @@ func TestService_SignIdentity(t *testing.T) {
 
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
-			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			setting.ProvideService(setting.NewCfg()), signer, remotecache.NewFakeCacheStorage(),
 			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
 		)
 		_, gotClaims, err := s.SignIdentity(context.Background(), &authn.Identity{
@@ -106,7 +106,7 @@ func TestService_SignIdentity(t *testing.T) {
 
 	t.Run("should sign new token if org role has changed", func(t *testing.T) {
 		s := ProvideService(
-			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			setting.ProvideService(setting.NewCfg()), signer, remotecache.NewFakeCacheStorage(),
 			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
 		)
 

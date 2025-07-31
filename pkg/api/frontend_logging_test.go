@@ -31,7 +31,7 @@ type logScenarioFunc func(c *scenarioContext, logs map[string]any, sourceMapRead
 
 func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event frontendlogging.FrontendGrafanaJavascriptAgentEvent, fn logScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		var logcontent = make(map[string]any)
+		logcontent := make(map[string]any)
 		logcontent["logger"] = "frontend"
 		newfrontendLogger := log.Logger(log.LoggerFunc(func(keyvals ...any) error {
 			for i := 0; i < len(keyvals); i += 2 {
@@ -53,10 +53,10 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 		cdnRootURL, e := url.Parse("https://storage.googleapis.com/grafana-static-assets")
 		require.NoError(t, e)
 
-		cfg := &setting.Cfg{
+		settingsProvider := setting.ProvideService(&setting.Cfg{
 			StaticRootPath: "/staticroot",
 			CDNRootURL:     cdnRootURL,
-		}
+		})
 
 		readSourceMap := func(dir string, path string) ([]byte, error) {
 			sourceMapReads = append(sourceMapReads, SourceMapReadRecord{
@@ -84,7 +84,7 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 			},
 		}
 
-		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pm, readSourceMap)
+		sourceMapStore := frontendlogging.NewSourceMapStore(settingsProvider, &pm, readSourceMap)
 
 		loggingHandler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
@@ -124,12 +124,13 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 					Type:  "UserError",
 					Value: "Please replace user and try again\n  at foofn (foo.js:123:23)\n  at barfn (bar.js:113:231)",
 					Stacktrace: &frontendlogging.Stacktrace{
-						Frames: []frontendlogging.Frame{{
-							Function: "bla",
-							Filename: "http://localhost:3000/public/build/foo.js",
-							Lineno:   20,
-							Colno:    30,
-						},
+						Frames: []frontendlogging.Frame{
+							{
+								Function: "bla",
+								Filename: "http://localhost:3000/public/build/foo.js",
+								Lineno:   20,
+								Colno:    30,
+							},
 						},
 					},
 					Timestamp: ts,
@@ -276,11 +277,12 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 
 		logWebVitals := frontendlogging.FrontendGrafanaJavascriptAgentEvent{
 			Meta: meta,
-			Measurements: []frontendlogging.Measurement{{
-				Values: map[string]float64{
-					"CLS": 1.0,
+			Measurements: []frontendlogging.Measurement{
+				{
+					Values: map[string]float64{
+						"CLS": 1.0,
+					},
 				},
-			},
 			},
 		}
 

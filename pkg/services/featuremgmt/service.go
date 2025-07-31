@@ -11,16 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	// The values are updated each time
-	featureToggleInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "feature_toggles_info",
-		Help:      "info metric that exposes what feature toggles are enabled or not",
-		Namespace: "grafana",
-	}, []string{"name"})
-)
+// The values are updated each time
+var featureToggleInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name:      "feature_toggles_info",
+	Help:      "info metric that exposes what feature toggles are enabled or not",
+	Namespace: "grafana",
+}, []string{"name"})
 
-func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
+func ProvideManagerService(settingsProvider setting.SettingsProvider) (*FeatureManager, error) {
+	cfg := settingsProvider.Get()
 	mgmt := &FeatureManager{
 		isDevMod: cfg.Env != setting.Prod,
 		flags:    make(map[string]*FeatureFlag, 30),

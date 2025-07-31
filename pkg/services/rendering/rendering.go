@@ -67,7 +67,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 
 	// ensure folders exists
 	for _, f := range folders {
-		err := os.MkdirAll(f, 0700)
+		err := os.MkdirAll(f, 0o700)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create directory %q: %w", f, err)
 		}

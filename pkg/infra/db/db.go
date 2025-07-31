@@ -48,19 +48,23 @@ type DB interface {
 	RecursiveQueriesAreSupported() (bool, error)
 }
 
-type Session = sqlstore.DBSession
-type InitTestDBOpt = sqlstore.InitTestDBOpt
+type (
+	Session       = sqlstore.DBSession
+	InitTestDBOpt = sqlstore.InitTestDBOpt
+)
 
-var SetupTestDB = sqlstore.SetupTestDB
-var CleanupTestDB = sqlstore.CleanupTestDB
-var ProvideService = sqlstore.ProvideService
+var (
+	SetupTestDB    = sqlstore.SetupTestDB
+	CleanupTestDB  = sqlstore.CleanupTestDB
+	ProvideService = sqlstore.ProvideService
+)
 
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
 	db, _ := InitTestDBWithCfg(t, opts...)
 	return db
 }
 
-func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
+func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, setting.SettingsProvider) {
 	return sqlstore.InitTestDB(t, opts...)
 }
 

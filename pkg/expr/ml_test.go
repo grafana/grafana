@@ -56,13 +56,13 @@ func TestMLNodeExecute(t *testing.T) {
 	}
 
 	s := &Service{
-		cfg:           nil,
-		dataService:   nil,
-		pCtxProvider:  pluginCtx,
-		features:      nil,
-		pluginsClient: pluginsClient,
-		tracer:        nil,
-		metrics:       metrics.NewSSEMetrics(nil),
+		settingsProvider: nil,
+		dataService:      nil,
+		pCtxProvider:     pluginCtx,
+		features:         nil,
+		pluginsClient:    pluginsClient,
+		tracer:           nil,
+		metrics:          metrics.NewSSEMetrics(nil),
 	}
 
 	cmdResponse := data.NewFrame("test",
@@ -137,8 +137,8 @@ func TestMLNodeExecute(t *testing.T) {
 
 	t.Run("should fail if plugin is not installed", func(t *testing.T) {
 		s := &Service{
-			cfg:         nil,
-			dataService: nil,
+			settingsProvider: nil,
+			dataService:      nil,
 			pCtxProvider: &fakePluginContextProvider{
 				errorResult: plugins.ErrPluginNotRegistered,
 			},
@@ -155,8 +155,8 @@ func TestMLNodeExecute(t *testing.T) {
 	t.Run("should fail if plugin settings cannot be retrieved", func(t *testing.T) {
 		expectedErr := errors.New("test-error")
 		s := &Service{
-			cfg:         nil,
-			dataService: nil,
+			settingsProvider: nil,
+			dataService:      nil,
 			pCtxProvider: &fakePluginContextProvider{
 				errorResult: expectedErr,
 			},
@@ -172,8 +172,8 @@ func TestMLNodeExecute(t *testing.T) {
 
 	t.Run("should fail if plugin is not initialized", func(t *testing.T) {
 		s := &Service{
-			cfg:         nil,
-			dataService: nil,
+			settingsProvider: nil,
+			dataService:      nil,
 			pCtxProvider: &fakePluginContextProvider{
 				result: map[string]*backend.AppInstanceSettings{
 					mlPluginID: {
@@ -193,13 +193,13 @@ func TestMLNodeExecute(t *testing.T) {
 
 	t.Run("should return QueryError if command failed", func(t *testing.T) {
 		s := &Service{
-			cfg:           nil,
-			dataService:   nil,
-			pCtxProvider:  pluginCtx,
-			features:      nil,
-			pluginsClient: pluginsClient,
-			tracer:        nil,
-			metrics:       metrics.NewSSEMetrics(nil),
+			settingsProvider: nil,
+			dataService:      nil,
+			pCtxProvider:     pluginCtx,
+			features:         nil,
+			pluginsClient:    pluginsClient,
+			tracer:           nil,
+			metrics:          metrics.NewSSEMetrics(nil),
 		}
 
 		cmd := &ml.FakeCommand{

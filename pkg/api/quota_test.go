@@ -33,7 +33,7 @@ func TestAPIEndpoint_GetCurrentOrgQuotas(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Quota.Enabled = true
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = cfg
+		hs.Cfg = setting.ProvideService(cfg)
 	})
 
 	t.Run("AccessControl allows viewing CurrentOrgQuotas with correct permissions", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestAPIEndpoint_GetOrgQuotas(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Quota.Enabled = true
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = cfg
+		hs.Cfg = setting.ProvideService(cfg)
 		hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: []accesscontrol.Permission{}}
 		hs.userService = &usertest.FakeUserService{
 			ExpectedSignedInUser: &user.SignedInUser{OrgID: 2},
@@ -161,7 +161,7 @@ func TestAPIEndpoint_PutOrgQuotas(t *testing.T) {
 			}
 
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = cfg
+				hs.Cfg = setting.ProvideService(cfg)
 				hs.accesscontrolService = fakeACService
 				hs.userService = &usertest.FakeUserService{
 					ExpectedSignedInUser: &user.SignedInUser{OrgID: tt.userOrg},

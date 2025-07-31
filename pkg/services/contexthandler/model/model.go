@@ -43,7 +43,8 @@ type ReqContext struct {
 }
 
 // Handle handles and logs error by given status.
-func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
+func (ctx *ReqContext) Handle(settingsProvider setting.SettingsProvider, status int, title string, err error) {
+	cfg := settingsProvider.Get()
 	data := struct {
 		Title     string
 		AppTitle  string

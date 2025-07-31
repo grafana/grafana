@@ -44,11 +44,11 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(env.SQLStore, env.SettingsProvider, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	userID := createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          "grafana",
 		Password:       "password",
@@ -64,7 +64,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	require.Equal(t, disableOrgID, orgID)
 
 	// create user under different organisation
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin-42",
 		Login:          "admin-42",

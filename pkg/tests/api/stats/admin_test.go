@@ -74,7 +74,7 @@ func grafanaSetup(t *testing.T, opts testinfra.GrafanaOpts) string {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          "grafana",
 		Password:       "password",
@@ -84,17 +84,18 @@ func grafanaSetup(t *testing.T, opts testinfra.GrafanaOpts) string {
 	return fmt.Sprintf("http://%s:%s@%s/api/admin/stats", "grafana", "password", grafanaListedAddr)
 }
 
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+func createUser(t *testing.T, db db.DB, settingsProvider setting.SettingsProvider, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
+	cfg := settingsProvider.Get()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, settingsProvider)
+	orgService, err := orgimpl.ProvideService(db, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

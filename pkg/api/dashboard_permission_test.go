@@ -50,7 +50,7 @@ func TestHTTPServer_GetDashboardPermissionList(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			cfg := setting.NewCfg()
 			cfg.HiddenUsers = map[string]struct{}{"hidden": {}}
-			hs.Cfg = cfg
+			hs.Cfg = setting.ProvideService(cfg)
 
 			svc := dashboards.NewFakeDashboardService(t)
 			svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1, UID: "1"}, nil)

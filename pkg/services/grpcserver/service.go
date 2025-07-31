@@ -22,9 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	grpcRequestDuration *prometheus.HistogramVec
-)
+var grpcRequestDuration *prometheus.HistogramVec
 
 type Provider interface {
 	registry.BackgroundService
@@ -42,7 +40,8 @@ type gPRCServerService struct {
 	startedChan chan struct{}
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
+func ProvideService(settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
+	cfg := settingsProvider.Get()
 	s := &gPRCServerService{
 		cfg:         cfg.GRPCServer,
 		logger:      log.New("grpc-server"),

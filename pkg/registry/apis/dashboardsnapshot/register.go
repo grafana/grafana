@@ -53,7 +53,7 @@ type SnapshotsAPIBuilder struct {
 
 func NewSnapshotsAPIBuilder(
 	p dashboardsnapshots.Service,
-	cfg *setting.Cfg,
+	cfg setting.SettingsProvider,
 	exporter *dashExporter,
 ) *SnapshotsAPIBuilder {
 	return &SnapshotsAPIBuilder{
@@ -68,7 +68,7 @@ func NewSnapshotsAPIBuilder(
 func RegisterAPIService(
 	service dashboardsnapshots.Service,
 	apiregistration builder.APIRegistrar,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	sql db.DB,
 	reg prometheus.Registerer,
@@ -76,7 +76,7 @@ func RegisterAPIService(
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewSnapshotsAPIBuilder(service, cfg, &dashExporter{
+	builder := NewSnapshotsAPIBuilder(service, settingsProvider, &dashExporter{
 		service: service,
 		sql:     sql,
 	})

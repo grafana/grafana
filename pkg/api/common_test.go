@@ -157,7 +157,7 @@ func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, coo
 
 type scenarioContext struct {
 	t                       *testing.T
-	cfg                     *setting.Cfg
+	settingsProvider        setting.SettingsProvider
 	m                       *web.Mux
 	context                 *contextmodel.ReqContext
 	resp                    *httptest.ResponseRecorder
@@ -177,8 +177,10 @@ func (sc *scenarioContext) exec() {
 	sc.m.ServeHTTP(sc.resp, sc.req)
 }
 
-type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *contextmodel.ReqContext) response.Response
+type (
+	scenarioFunc func(c *scenarioContext)
+	handlerFunc  func(c *contextmodel.ReqContext) response.Response
+)
 
 func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
 	t.Helper()
@@ -195,13 +197,14 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 }
 
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
-	cfg := setting.NewCfg()
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	ctxHdlr := getContextHandler(t, cfg)
 	sc := &scenarioContext{
-		url:     url,
-		t:       t,
-		cfg:     cfg,
-		ctxHdlr: ctxHdlr,
+		url:              url,
+		t:                t,
+		settingsProvider: settingsProvider,
+		ctxHdlr:          ctxHdlr,
 	}
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
@@ -218,7 +221,7 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 
 func setupScenarioContextSamlLogout(t *testing.T, url string) *scenarioContext {
 	cfg := setting.NewCfg()
-	//seed sections and keys
+	// seed sections and keys
 	cfg.Raw.DeleteSection("DEFAULT")
 	saml, err := cfg.Raw.NewSection("auth.saml")
 	assert.NoError(t, err)
@@ -231,10 +234,10 @@ func setupScenarioContextSamlLogout(t *testing.T, url string) *scenarioContext {
 
 	ctxHdlr := getContextHandler(t, cfg)
 	sc := &scenarioContext{
-		url:     url,
-		t:       t,
-		cfg:     cfg,
-		ctxHdlr: ctxHdlr,
+		url:              url,
+		t:                t,
+		settingsProvider: setting.ProvideService(cfg),
+		ctxHdlr:          ctxHdlr,
 	}
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
@@ -267,7 +270,7 @@ func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 	cfg := setting.NewCfgWithFeatures(features.IsEnabledGlobally)
 
 	return &HTTPServer{
-		Cfg:             cfg,
+		Cfg:             setting.ProvideService(cfg),
 		Features:        features,
 		License:         &licensing.OSSLicensingService{},
 		AccessControl:   acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
@@ -309,7 +312,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	}
 
 	if hs.Cfg == nil {
-		hs.Cfg = setting.NewCfg()
+		hs.Cfg = setting.ProvideService(setting.NewCfg())
 	}
 
 	if hs.AccessControl == nil {

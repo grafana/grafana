@@ -39,15 +39,16 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
+func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, settingsProvider setting.SettingsProvider) {
+	cfg := settingsProvider.Get()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(testOrgID)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
-	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(sqlStore, settingsProvider)
+	orgService, err := orgimpl.ProvideService(sqlStore, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		sqlStore, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -69,14 +70,15 @@ func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
-	settings := hs.Cfg
+	settingsProvider := hs.Cfg
+	cfg := settingsProvider.Get()
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{SettingsProvider: settingsProvider})
 	hs.SQLStore = sqlStore
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
-	setUpGetOrgUsersDB(t, sqlStore, settings)
+	setUpGetOrgUsersDB(t, sqlStore, settingsProvider)
 	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
@@ -158,11 +160,11 @@ func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	t.Run("Given there are two hidden users", func(t *testing.T) {
-		settings.HiddenUsers = map[string]struct{}{
+		cfg.HiddenUsers = map[string]struct{}{
 			"user1":       {},
 			testUserLogin: {},
 		}
-		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
+		t.Cleanup(func() { cfg.HiddenUsers = make(map[string]struct{}) })
 
 		loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 			orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
@@ -261,12 +263,13 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
-				hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
+				cfg := hs.Cfg.Get()
+				cfg.LDAPAuthEnabled = tt.AuthEnabled
 				switch tt.AuthModule {
 				case login.LDAPAuthModule:
-					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
-					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
+					cfg.LDAPAuthEnabled = tt.AuthEnabled
+					cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
 				case login.GrafanaComAuthModule:
 					hs.authnService = &authntest.FakeService{
 						EnabledClients: []string{authn.ClientWithPrefix("grafana_com")},
@@ -322,7 +325,7 @@ func TestOrgUsersAPIEndpoint(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{}}
 				hs.authInfoService = &authinfotest.FakeService{}
 			})
@@ -378,7 +381,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{
 					ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{{UserID: 1}}},
 				}
@@ -437,7 +440,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{
 					ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{},
 				}
@@ -482,7 +485,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
@@ -607,7 +610,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{
@@ -669,7 +672,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{
@@ -716,7 +719,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.accesscontrolService = actest.FakeService{}
 				hs.orgService = &orgtest.FakeOrgService{
 					ExpectedOrgListResponse: orgtest.OrgListResponse{struct {

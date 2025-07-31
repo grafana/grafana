@@ -215,7 +215,7 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
-	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+	if !hs.Cfg.Get().RBAC.PermissionsOnCreation("folder") {
 		return nil
 	}
 
@@ -383,6 +383,7 @@ func (hs *HTTPServer) GetFolderDescendantCounts(c *contextmodel.ReqContext) resp
 
 	return response.JSON(http.StatusOK, counts)
 }
+
 func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder) (dtos.Folder, error) {
 	ctx := c.Req.Context()
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {

@@ -24,8 +24,9 @@ type GlobalStorageConfig struct {
 	Roots []RootStorageConfig `json:"roots"`
 }
 
-func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*GlobalStorageConfig, error) {
+func LoadStorageConfig(settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles) (*GlobalStorageConfig, error) {
 	changed := false
+	cfg := settingsProvider.Get()
 	fpath := filepath.Join(cfg.DataPath, "storage", "storage.json")
 	g := &GlobalStorageConfig{}
 	if _, err := os.Stat(fpath); err == nil {
@@ -63,11 +64,11 @@ func (c *GlobalStorageConfig) save() error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(filepath.Dir(c.filepath), 0700)
+	err = os.MkdirAll(filepath.Dir(c.filepath), 0o700)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(c.filepath, out, 0600)
+	return os.WriteFile(c.filepath, out, 0o600)
 }
 
 type RootStorageConfig struct {

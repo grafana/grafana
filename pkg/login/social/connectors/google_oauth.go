@@ -31,8 +31,10 @@ var ExtraGoogleSettingKeys = map[string]ExtraKeyInfo{
 	validateHDKey: {Type: Bool, DefaultValue: true},
 }
 
-var _ social.SocialConnector = (*SocialGoogle)(nil)
-var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
+var (
+	_ social.SocialConnector = (*SocialGoogle)(nil)
+	_ ssosettings.Reloadable = (*SocialGoogle)(nil)
+)
 
 type SocialGoogle struct {
 	*SocialBase

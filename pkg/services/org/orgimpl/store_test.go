@@ -108,7 +108,8 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 				City:     "city",
 				ZipCode:  "zip",
 				State:    "state",
-				Country:  "country"},
+				Country:  "country",
+			},
 		})
 		require.NoError(t, err)
 		orga, err := orgStore.Get(context.Background(), ac2.ID)
@@ -510,12 +511,13 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given single org and 2 users inserted", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		ss, settingsProvider := db.InitTestDBWithCfg(t)
+		cfg := settingsProvider.Get()
 		cfg.AutoAssignOrg = true
 		cfg.AutoAssignOrgId = 1
 		cfg.AutoAssignOrgRole = "Viewer"
 
-		orgSvc, usrSvc := createOrgAndUserSvc(t, ss, cfg)
+		orgSvc, usrSvc := createOrgAndUserSvc(t, ss, settingsProvider)
 
 		testUser := &user.SignedInUser{
 			Permissions: map[int64]map[string][]string{
@@ -570,7 +572,8 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	store, settingsProvider := db.InitTestDBWithCfg(t)
+	cfg := settingsProvider.Get()
 	defer func() {
 		cfg.AutoAssignOrg, cfg.AutoAssignOrgId, cfg.AutoAssignOrgRole = false, 0, ""
 	}()
@@ -582,7 +585,7 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 		dialect: store.GetDialect(),
 		log:     log.NewNopLogger(),
 	}
-	orgSvc, usrSvc := createOrgAndUserSvc(t, store, cfg)
+	orgSvc, usrSvc := createOrgAndUserSvc(t, store, settingsProvider)
 
 	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 	require.NoError(t, err)
@@ -642,7 +645,8 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	store, settingsProvider := db.InitTestDBWithCfg(t)
+	cfg := settingsProvider.Get()
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
@@ -653,7 +657,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 		cfg.IsEnterprise = false
 	}()
 
-	orgSvc, userSvc := createOrgAndUserSvc(t, store, cfg)
+	orgSvc, userSvc := createOrgAndUserSvc(t, store, settingsProvider)
 
 	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 	require.NoError(t, err)
@@ -1036,14 +1040,14 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 	assert.NotNil(t, usr)
 }
 
-func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
+func createOrgAndUserSvc(t *testing.T, store db.DB, settingsProvider setting.SettingsProvider) (org.Service, user.Service) {
 	t.Helper()
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
-	orgService, err := ProvideService(store, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(store, settingsProvider)
+	orgService, err := ProvideService(store, settingsProvider, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		store, orgService, settingsProvider, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

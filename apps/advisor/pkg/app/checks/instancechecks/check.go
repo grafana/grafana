@@ -12,14 +12,14 @@ import (
 var _ checks.Check = (*check)(nil)
 
 type check struct {
-	cfg             *setting.Cfg
+	cfg             setting.SettingsProvider
 	isCloudInstance bool
 }
 
-func New(cfg *setting.Cfg) checks.Check {
+func New(cfg setting.SettingsProvider) checks.Check {
 	return &check{
 		cfg:             cfg,
-		isCloudInstance: cfg.StackID != "",
+		isCloudInstance: cfg.Get().StackID != "",
 	}
 }
 
@@ -52,11 +52,12 @@ func (c *check) Init(ctx context.Context) error {
 }
 
 func (c *check) Steps() []checks.Step {
+	config := c.cfg.Get()
 	// If running in cloud, we need to check if the version is pinned
 	if c.isCloudInstance {
 		return []checks.Step{
 			&pinnedVersionStep{
-				BuildBranch: c.cfg.BuildBranch,
+				BuildBranch: config.BuildBranch,
 			},
 		}
 	}
@@ -64,8 +65,8 @@ func (c *check) Steps() []checks.Step {
 	// If running in self-managed, we need to check if the version is out of support
 	return []checks.Step{
 		&outOfSupportVersionStep{
-			GrafanaVersion: c.cfg.BuildVersion,
-			BuildDate:      time.Unix(c.cfg.BuildStamp, 0).UTC(),
+			GrafanaVersion: config.BuildVersion,
+			BuildDate:      time.Unix(config.BuildStamp, 0).UTC(),
 			ghClient:       github.NewClient(nil).Repositories,
 		},
 	}

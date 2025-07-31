@@ -187,12 +187,12 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 			cfg.SQLExpressionCellLimit = tt.configCellLimit
 
 			features := featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-			cfgProvider := setting.ProvideService(cfg)
+			settingsProvider := setting.ProvideService(cfg)
 
 			// Create service with our configured limit
 			s := &Service{
-				cfg:      cfgProvider,
-				features: features,
+				settingsProvider: settingsProvider,
+				features:         features,
 				converter: &ResultConverter{
 					Features: features,
 				},
@@ -241,21 +241,21 @@ func newMockQueryService(t *testing.T, responses map[string]backend.DataResponse
 	me := &mockEndpoint{
 		Responses: responses,
 	}
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	pCtxProvider := plugincontext.ProvideService(settingsProvider, nil, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
 	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
 
 	features := featuremgmt.WithFeatures()
-	cfg := setting.ProvideService(setting.NewCfg())
 	return &Service{
-		cfg:          cfg,
-		dataService:  me,
-		pCtxProvider: pCtxProvider,
-		features:     featuremgmt.WithFeatures(),
-		tracer:       tracing.InitializeTracerForTest(),
-		metrics:      metrics.NewSSEMetrics(nil),
+		settingsProvider: settingsProvider,
+		dataService:      me,
+		pCtxProvider:     pCtxProvider,
+		features:         featuremgmt.WithFeatures(),
+		tracer:           tracing.InitializeTracerForTest(),
+		metrics:          metrics.NewSSEMetrics(nil),
 		converter: &ResultConverter{
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),

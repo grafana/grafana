@@ -481,15 +481,16 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 }
 
 func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Service, team.Service, org.Service, *sqlstore.SQLStore) {
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, settingsProvider := db.InitTestDBWithCfg(t)
+	cfg := settingsProvider.Get()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 	acstore := database.ProvideService(sql)
-	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
-	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
+	permissionStore := rs.NewStore(settingsProvider, sql, featuremgmt.WithFeatures())
+	teamService, err := teamimpl.ProvideService(sql, settingsProvider, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
-	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(sql, settingsProvider, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	orgID, err := orgService.GetOrCreate(context.Background(), "test")
@@ -497,7 +498,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	require.NoError(t, err)
 
 	userService, err := userimpl.ProvideService(
-		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
+		sql, orgService, settingsProvider, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -612,10 +613,17 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{
-				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
-					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
-				2: {{Action: "teams:read", Scope: "teams:id:2"}, {Action: "teams:read", Scope: "teams:id:20"},
-					{Action: "teams:read", Scope: "teams:id:200"}},
+				1: {
+					{Action: "teams:read", Scope: "teams:id:1"},
+					{Action: "teams:read", Scope: "teams:id:10"},
+					{Action: "teams:read", Scope: "teams:id:100"},
+					{Action: "teams:read", Scope: "teams:id:1000"},
+				},
+				2: {
+					{Action: "teams:read", Scope: "teams:id:2"},
+					{Action: "teams:read", Scope: "teams:id:20"},
+					{Action: "teams:read", Scope: "teams:id:200"},
+				},
 			},
 		},
 		{
@@ -642,8 +650,12 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 				UserID:       1,
 			},
 			wantPerm: map[int64][]accesscontrol.Permission{
-				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
-					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
+				1: {
+					{Action: "teams:read", Scope: "teams:id:1"},
+					{Action: "teams:read", Scope: "teams:id:10"},
+					{Action: "teams:read", Scope: "teams:id:100"},
+					{Action: "teams:read", Scope: "teams:id:1000"},
+				},
 			},
 		},
 		{
@@ -665,8 +677,12 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{
-				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
-					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
+				1: {
+					{Action: "teams:read", Scope: "teams:id:1"},
+					{Action: "teams:read", Scope: "teams:id:10"},
+					{Action: "teams:read", Scope: "teams:id:100"},
+					{Action: "teams:read", Scope: "teams:id:1000"},
+				},
 			},
 		},
 		{
@@ -686,9 +702,11 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("2")},
 			},
 			options: accesscontrol.SearchOptions{Action: "teams:read"},
-			wantPerm: map[int64][]accesscontrol.Permission{1: {
-				{Action: "teams:read", Scope: "teams:id:1"},
-				{Action: "teams:read", Scope: "teams:id:2"}},
+			wantPerm: map[int64][]accesscontrol.Permission{
+				1: {
+					{Action: "teams:read", Scope: "teams:id:1"},
+					{Action: "teams:read", Scope: "teams:id:2"},
+				},
 			},
 		},
 		{

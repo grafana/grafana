@@ -15,10 +15,11 @@ func TestSubPathRedirect(t *testing.T) {
 
 func testSubPathRedirect(t *testing.T, url string, expectedRedirect string) {
 	middlewareScenario(t, "GET url without subpath", func(t *testing.T, sc *scenarioContext) {
-		sc.cfg.AppSubURL = "/subpath"
-		sc.cfg.AppURL = "http://localhost:3000/subpath/"
+		cfg := sc.settingsProvider.Get()
+		cfg.AppSubURL = "/subpath"
+		cfg.AppURL = "http://localhost:3000/subpath/"
 
-		sc.m.UseMiddleware(SubPathRedirect(sc.cfg))
+		sc.m.UseMiddleware(SubPathRedirect(sc.settingsProvider))
 		sc.m.Get("/api/users", sc.defaultHandler)
 
 		sc.fakeReqWithParams("GET", url, map[string]string{}).exec()

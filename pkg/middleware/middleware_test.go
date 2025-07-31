@@ -41,12 +41,13 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	})
 
 	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(t *testing.T, sc *scenarioContext) {
+		cfg := sc.settingsProvider.Get()
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000", sc.resp.Header().Get("Strict-Transport-Security"))
-		sc.cfg.StrictTransportSecurityPreload = true
+		cfg.StrictTransportSecurityPreload = true
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000; preload", sc.resp.Header().Get("Strict-Transport-Security"))
-		sc.cfg.StrictTransportSecuritySubDomains = true
+		cfg.StrictTransportSecuritySubDomains = true
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
 	}, func(cfg *setting.Cfg) {
@@ -149,7 +150,8 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
-		t *testing.T, sc *scenarioContext) {
+		t *testing.T, sc *scenarioContext,
+	) {
 		sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
 		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
 		assert.Empty(t, sc.resp.Header().Get("Pragma"))
@@ -157,7 +159,8 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "middleware should add Cache-Control header for requests with HTML response", func(
-		t *testing.T, sc *scenarioContext) {
+		t *testing.T, sc *scenarioContext,
+	) {
 		sc.handlerFunc = func(c *contextmodel.ReqContext) {
 			t.Log("Handler called")
 			data := &dtos.IndexViewData{
@@ -182,13 +185,15 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(
-		t *testing.T, sc *scenarioContext) {
+		t *testing.T, sc *scenarioContext,
+	) {
 		sc.fakeReq("GET", "/api/search").exec()
 		assert.Equal(t, "deny", sc.resp.Header().Get("X-Frame-Options"))
 	})
 
 	middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(
-		t *testing.T, sc *scenarioContext) {
+		t *testing.T, sc *scenarioContext,
+	) {
 		sc.fakeReq("GET", "/api/search").exec()
 		assert.Empty(t, sc.resp.Header().Get("X-Frame-Options"))
 	}, func(cfg *setting.Cfg) {
@@ -207,7 +212,8 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to render pdf", func(
-		t *testing.T, sc *scenarioContext) {
+		t *testing.T, sc *scenarioContext,
+	) {
 		sc.fakeReq("GET", "/api/reports/render/pdf/").exec()
 		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
 		assert.Empty(t, sc.resp.Header().Get("Pragma"))
@@ -215,7 +221,8 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to render panel as image", func(
-		t *testing.T, sc *scenarioContext) {
+		t *testing.T, sc *scenarioContext,
+	) {
 		sc.fakeReq("GET", "/render/d-solo/").exec()
 		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
 		assert.Empty(t, sc.resp.Header().Get("Pragma"))
@@ -240,7 +247,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 			cb(cfg)
 		}
 
-		sc := &scenarioContext{t: t, cfg: cfg}
+		sc := &scenarioContext{t: t, settingsProvider: setting.ProvideService(cfg)}
 		viewsPath, err := filepath.Abs("../../public/views")
 		require.NoError(t, err)
 		exists, err := fs.Exists(viewsPath)
@@ -248,9 +255,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
 		sc.m = web.New()
-		sc.m.Use(AddCustomResponseHeaders(cfg))
-		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.UseMiddleware(ContentSecurityPolicy(cfg, logger))
+		sc.m.Use(AddCustomResponseHeaders(sc.settingsProvider))
+		sc.m.Use(AddDefaultResponseHeaders(sc.settingsProvider))
+		sc.m.UseMiddleware(ContentSecurityPolicy(sc.settingsProvider, logger))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
 		// defalut to not authenticated request
@@ -259,9 +266,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 		ctxHdlr := getContextHandler(t, cfg, sc.authnService)
 		sc.m.Use(ctxHdlr.Middleware)
-		sc.m.Use(OrgRedirect(sc.cfg, sc.userService))
+		sc.m.Use(OrgRedirect(sc.settingsProvider, sc.userService))
 		// handle action urls
-		sc.m.Use(ValidateActionUrl(sc.cfg, logger))
+		sc.m.Use(ValidateActionUrl(sc.settingsProvider, logger))
 
 		sc.defaultHandler = func(c *contextmodel.ReqContext) {
 			require.NotNil(t, c)

@@ -27,7 +27,7 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	folderService := setupFolderService(t, sqlStore, setting.ProvideService(cfg), featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
@@ -74,7 +74,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	folderService := setupFolderService(t, sqlStore, setting.ProvideService(cfg), featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
@@ -116,7 +116,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	})
 
 	t.Run("when nested folders are enabled full path should be populated with correct value", func(t *testing.T) {
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		store.FolderService = setupFolderService(t, sqlStore, setting.ProvideService(cfg), featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 		actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
 		require.NoError(t, err)
 		require.Equal(t, title, actual.Title)
@@ -132,11 +132,12 @@ func TestIntegration_GetNamespaceByTitle(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	settingsProvider := setting.ProvideService(cfg)
+	folderService := setupFolderService(t, sqlStore, settingsProvider, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-	store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	store.FolderService = setupFolderService(t, sqlStore, settingsProvider, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	u := &user.SignedInUser{
 		UserID:         1,
@@ -198,11 +199,12 @@ func TestIntegration_GetOrCreateNamespaceByTitle(t *testing.T) {
 	setupStore := func(t *testing.T) *DBstore {
 		sqlStore := db.InitTestDB(t)
 		cfg := setting.NewCfg()
-		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		folderService := setupFolderService(t, sqlStore, settingsProvider, featuremgmt.WithFeatures())
 		b := &fakeBus{}
 		logger := log.New("test-dbstore")
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		store.FolderService = setupFolderService(t, sqlStore, settingsProvider, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 		return store
 	}
@@ -393,11 +395,12 @@ func TestIntegration_GetNamespaceChildren(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	settingsProvider := setting.ProvideService(cfg)
+	folderService := setupFolderService(t, sqlStore, settingsProvider, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-	store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	store.FolderService = setupFolderService(t, sqlStore, settingsProvider, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	admin := &user.SignedInUser{
 		UserID:         1,

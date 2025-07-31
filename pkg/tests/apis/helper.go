@@ -95,17 +95,17 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 		Namespacer: request.GetNamespaceMapper(nil),
 	}
 
-	quotaService := quotaimpl.ProvideService(c.env.SQLStore, c.env.Cfg)
-	orgSvc, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(c.env.SQLStore, c.env.SettingsProvider)
+	orgSvc, err := orgimpl.ProvideService(c.env.SQLStore, c.env.SettingsProvider, quotaService)
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 
-	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
+	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.SettingsProvider, tracing.NewNoopTracerService())
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
 	userSvc, err := userimpl.ProvideService(
-		c.env.SQLStore, orgSvc, c.env.Cfg, teamSvc,
+		c.env.SQLStore, orgSvc, c.env.SettingsProvider, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
 		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
@@ -375,8 +375,10 @@ type K8sResponse[T any] struct {
 	Status   *metav1.Status
 }
 
-type AnyResourceResponse = K8sResponse[AnyResource]
-type AnyResourceListResponse = K8sResponse[AnyResourceList]
+type (
+	AnyResourceResponse     = K8sResponse[AnyResource]
+	AnyResourceListResponse = K8sResponse[AnyResourceList]
+)
 
 func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
@@ -564,12 +566,13 @@ func (c *K8sTestHelper) CreateOrg(name string) int64 {
 		return 1
 	}
 
-	oldAssing := c.env.Cfg.AutoAssignOrg
+	cfg := c.env.SettingsProvider.Get()
+	oldAssing := cfg.AutoAssignOrg
 	defer func() {
-		c.env.Cfg.AutoAssignOrg = oldAssing
+		cfg.AutoAssignOrg = oldAssing
 	}()
 
-	c.env.Cfg.AutoAssignOrg = false
+	cfg.AutoAssignOrg = false
 	o, err := c.orgSvc.GetByName(context.Background(), &org.GetOrgByNameQuery{
 		Name: name,
 	})
@@ -652,7 +655,7 @@ func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissi
 	id, err := user.Identity.GetInternalID()
 	require.NoError(c.t, err)
 
-	permissionsStore := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(c.env.SettingsProvider, c.env.SQLStore, featuremgmt.WithFeatures())
 
 	for _, permission := range permissions {
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
@@ -665,7 +668,7 @@ func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissi
 
 func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permission team.PermissionType) {
 	teampermissionSvc, err := ossaccesscontrol.ProvideTeamPermissions(
-		c.env.Cfg,
+		c.env.SettingsProvider,
 		c.env.FeatureToggles,
 		c.env.Server.HTTPServer.RouteRegister,
 		c.env.SQLStore,
@@ -799,7 +802,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}
 
 		if write {
-			e2 := os.WriteFile(fpath, []byte(pretty), 0644)
+			e2 := os.WriteFile(fpath, []byte(pretty), 0o644)
 			if e2 != nil {
 				t.Errorf("error writing file: %s", e2.Error())
 			}

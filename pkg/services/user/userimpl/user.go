@@ -26,35 +26,35 @@ import (
 )
 
 type Service struct {
-	store        store
-	orgService   org.Service
-	teamService  team.Service
-	cacheService *localcache.CacheService
-	cfg          *setting.Cfg
-	tracer       tracing.Tracer
-	db           db.DB
+	store            store
+	orgService       org.Service
+	teamService      team.Service
+	cacheService     *localcache.CacheService
+	settingsProvider setting.SettingsProvider
+	tracer           tracing.Tracer
+	db               db.DB
 }
 
 func ProvideService(
 	db db.DB,
 	orgService org.Service,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
 ) (user.Service, error) {
-	store := ProvideStore(db, cfg)
+	store := ProvideStore(db, settingsProvider)
 	s := &Service{
-		store:        &store,
-		orgService:   orgService,
-		cfg:          cfg,
-		teamService:  teamService,
-		cacheService: cacheService,
-		tracer:       tracer,
-		db:           db,
+		store:            &store,
+		orgService:       orgService,
+		settingsProvider: settingsProvider,
+		teamService:      teamService,
+		cacheService:     cacheService,
+		tracer:           tracer,
+		db:               db,
 	}
 
-	defaultLimits, err := readQuotaConfig(cfg)
+	defaultLimits, err := readQuotaConfig(settingsProvider)
 	if err != nil {
 		return s, err
 	}
@@ -72,9 +72,10 @@ func ProvideService(
 }
 
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
+	cfg := s.settingsProvider.Get()
 	stats := map[string]any{}
 	basicAuthStrongPasswordPolicyVal := 0
-	if s.cfg.BasicAuthStrongPasswordPolicy {
+	if cfg.BasicAuthStrongPasswordPolicy {
 		basicAuthStrongPasswordPolicyVal = 1
 	}
 
@@ -91,6 +92,7 @@ func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	cfg := s.settingsProvider.Get()
 	ctx, span := s.tracer.Start(ctx, "user.Create")
 	defer span.End()
 
@@ -164,7 +166,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		if err := cmd.Password.Validate(s.cfg); err != nil {
+		if err := cmd.Password.Validate(s.settingsProvider); err != nil {
 			return nil, err
 		}
 
@@ -190,11 +192,11 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 				Updated: time.Now(),
 			}
 
-			if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+			if cfg.AutoAssignOrg && !usr.IsAdmin {
 				if len(cmd.DefaultOrgRole) > 0 {
 					orgUser.Role = org.RoleType(cmd.DefaultOrgRole)
 				} else {
-					orgUser.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+					orgUser.Role = org.RoleType(cfg.AutoAssignOrgRole)
 				}
 			}
 			_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
@@ -287,7 +289,7 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 	}
 
 	if cmd.Password != nil {
-		if err := cmd.Password.Validate(s.cfg); err != nil {
+		if err := cmd.Password.Validate(s.settingsProvider); err != nil {
 			return err
 		}
 
@@ -329,7 +331,6 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 		UserID: cmd.UserID,
 		OrgID:  cmd.OrgID,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -342,7 +343,8 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 }
 
 func (s *Service) shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > s.cfg.UserLastSeenUpdateInterval
+	cfg := s.settingsProvider.Get()
+	return time.Since(t) > cfg.UserLastSeenUpdateInterval
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
@@ -547,9 +549,10 @@ func (s *Service) usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.M
 	return u, nil
 }
 
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+func readQuotaConfig(settingsProvider setting.SettingsProvider) (*quota.Map, error) {
 	limits := &quota.Map{}
 
+	cfg := settingsProvider.Get()
 	if cfg == nil {
 		return limits, nil
 	}

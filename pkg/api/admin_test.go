@@ -65,7 +65,7 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	//seed sections and keys
+	// seed sections and keys
 	cfg.Raw.DeleteSection("DEFAULT")
 	saml, err := cfg.Raw.NewSection("auth.saml")
 	assert.NoError(t, err)
@@ -84,7 +84,7 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = cfg
+				hs.Cfg = setting.ProvideService(cfg)
 				hs.SettingsProvider = setting.ProvideProvider(hs.Cfg)
 			})
 
@@ -157,9 +157,9 @@ func TestAdmin_AccessControl(t *testing.T) {
 			fakeAnonService := anontest.NewFakeService()
 			fakeAnonService.ExpectedCountDevices = 0
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.SQLStore = dbtest.NewFakeDB()
-				hs.SettingsProvider = &setting.OSSImpl{Cfg: hs.Cfg}
+				hs.SettingsProvider = &setting.OSSImpl{Cfg: hs.Cfg.Get()}
 				hs.statsService = fakeStatsService
 				hs.anonService = fakeAnonService
 			})

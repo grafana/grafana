@@ -14,7 +14,7 @@ func TestIsPreinstalled(t *testing.T) {
 			{ID: "plugin2"},
 		},
 	}
-	preinstall := ProvidePreinstall(cfg)
+	preinstall := ProvidePreinstall(setting.ProvideService(cfg))
 
 	assert.True(t, preinstall.IsPreinstalled("plugin1"))
 	assert.True(t, preinstall.IsPreinstalled("plugin2"))
@@ -28,7 +28,7 @@ func TestIsPinned(t *testing.T) {
 			{ID: "plugin2"},
 		},
 	}
-	preinstall := ProvidePreinstall(cfg)
+	preinstall := ProvidePreinstall(setting.ProvideService(cfg))
 
 	assert.True(t, preinstall.IsPinned("plugin1"))
 	assert.False(t, preinstall.IsPinned("plugin2"))

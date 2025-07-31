@@ -86,7 +86,7 @@ ABCD = true
 		}
 	}
 
-	mgr, err := ProvideManagerService(cfg)
+	mgr, err := ProvideManagerService(setting.ProvideService(cfg))
 	require.NoError(t, err)
 
 	// compare enabled feature flags match between StaticFlagEvaluator and Feature Manager

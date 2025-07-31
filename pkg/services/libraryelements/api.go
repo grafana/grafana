@@ -555,7 +555,7 @@ type GetLibraryElementConnectionsResponse struct {
 //-----------------------------------------------------------------------------------------
 
 type libraryElementsK8sHandler struct {
-	cfg                  *setting.Cfg
+	settingsProvider     setting.SettingsProvider
 	namespacer           request.NamespaceMapper
 	gvr                  schema.GroupVersionResource
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
@@ -564,16 +564,16 @@ type libraryElementsK8sHandler struct {
 	userService          user.Service
 }
 
-func newLibraryElementsK8sHandler(cfg *setting.Cfg, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, folderService folder.Service, userService user.Service, dashboardsService dashboards.DashboardService) *libraryElementsK8sHandler {
+func newLibraryElementsK8sHandler(settingsProvider setting.SettingsProvider, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, folderService folder.Service, userService user.Service, dashboardsService dashboards.DashboardService) *libraryElementsK8sHandler {
 	gvr := schema.GroupVersionResource{
 		Group:    dashboardV0.APIGroup,
 		Version:  dashboardV0.APIVersion,
 		Resource: dashboardV0.LIBRARY_PANEL_RESOURCE,
 	}
 	return &libraryElementsK8sHandler{
-		cfg:                  cfg,
+		settingsProvider:     settingsProvider,
 		gvr:                  gvr,
-		namespacer:           request.GetNamespaceMapper(cfg),
+		namespacer:           request.GetNamespaceMapper(settingsProvider),
 		clientConfigProvider: clientConfigProvider,
 		folderService:        folderService,
 		dashboardsService:    dashboardsService,
@@ -713,7 +713,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 			dto.Meta.CreatedBy = librarypanel.LibraryElementDTOMetaUser{
 				Id:        user.ID,
 				Name:      user.Login,
-				AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
+				AvatarUrl: dtos.GetGravatarUrl(lk8s.settingsProvider, user.Email),
 			}
 		}
 		// not else because /api returns the same user for updated if it was never updated
@@ -721,7 +721,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 			dto.Meta.UpdatedBy = librarypanel.LibraryElementDTOMetaUser{
 				Id:        user.ID,
 				Name:      user.Login,
-				AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
+				AvatarUrl: dtos.GetGravatarUrl(lk8s.settingsProvider, user.Email),
 			}
 		}
 	}

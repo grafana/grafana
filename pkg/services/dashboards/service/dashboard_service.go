@@ -83,7 +83,7 @@ const (
 )
 
 type DashboardServiceImpl struct {
-	cfg                    *setting.Cfg
+	settingsProvider       setting.SettingsProvider
 	log                    log.Logger
 	dashboardStore         dashboards.Store
 	folderStore            folder.FolderStore
@@ -109,7 +109,7 @@ func (dr *DashboardServiceImpl) startK8sDeletedDashboardsCleanupJob(ctx context.
 	go func() {
 		defer close(done)
 
-		ticker := time.NewTicker(dr.cfg.K8sDashboardCleanup.Interval)
+		ticker := time.NewTicker(dr.settingsProvider.Get().K8sDashboardCleanup.Interval)
 		defer ticker.Stop()
 
 		for {
@@ -130,12 +130,13 @@ func (dr *DashboardServiceImpl) executeCleanupWithLock(ctx context.Context) erro
 	// We're taking a leader-like locking approach here. By locking and executing, but never releasing the lock,
 	// we ensure that other instances of this service can't run in parallel and hence the cleanup will only happen once
 	// per cleanup interval by setting the maxInterval and having the time between executions be the cleanup interval as well.
+	cfg := dr.settingsProvider.Get()
 	return dr.serverLockService.LockAndExecute(
 		ctx,
 		k8sDashboardKvNamespace,
-		dr.cfg.K8sDashboardCleanup.Interval,
+		cfg.K8sDashboardCleanup.Interval,
 		func(ctx context.Context) {
-			if err := dr.cleanupK8sDashboardResources(ctx, dr.cfg.K8sDashboardCleanup.BatchSize, dr.cfg.K8sDashboardCleanup.Timeout); err != nil {
+			if err := dr.cleanupK8sDashboardResources(ctx, cfg.K8sDashboardCleanup.BatchSize, cfg.K8sDashboardCleanup.Timeout); err != nil {
 				dr.log.Error("Failed to cleanup k8s dashboard resources", "error", err)
 			}
 		},
@@ -373,12 +374,14 @@ func (dr *DashboardServiceImpl) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-var _ dashboards.PermissionsRegistrationService = (*DashboardServiceImpl)(nil)
-var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
+var (
+	_ dashboards.PermissionsRegistrationService = (*DashboardServiceImpl)(nil)
+	_ registry.BackgroundService                = (*DashboardServiceImpl)(nil)
+)
 
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
-	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
+	settingsProvider setting.SettingsProvider, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl, acService accesscontrol.Service, folderSvc folder.Service, r prometheus.Registerer,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service,
@@ -387,9 +390,9 @@ func ProvideDashboardServiceImpl(
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 ) (*DashboardServiceImpl, error) {
-	k8sclient := dashboardclient.NewK8sClientWithFallback(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, r, features)
+	k8sclient := dashboardclient.NewK8sClientWithFallback(settingsProvider, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, r, features)
 	dashSvc := &DashboardServiceImpl{
-		cfg:                       cfg,
+		settingsProvider:          settingsProvider,
 		log:                       log.New("dashboard-service"),
 		dashboardStore:            dashboardStore,
 		features:                  features,
@@ -408,7 +411,7 @@ func ProvideDashboardServiceImpl(
 		dual:                      dual,
 	}
 
-	defaultLimits, err := readQuotaConfig(cfg)
+	defaultLimits, err := readQuotaConfig(settingsProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -535,9 +538,10 @@ func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID 
 	return dr.dashboardStore.CountInOrg(ctx, orgID, false)
 }
 
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+func readQuotaConfig(settingsProvider setting.SettingsProvider) (*quota.Map, error) {
 	limits := &quota.Map{}
 
+	cfg := settingsProvider.Get()
 	if cfg == nil {
 		return limits, nil
 	}
@@ -700,7 +704,8 @@ func (dr *DashboardServiceImpl) ValidateBasicDashboardProperties(title string, u
 
 //nolint:gocyclo
 func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO,
-	validateProvisionedDashboard bool) (*dashboards.SaveDashboardCommand, error) {
+	validateProvisionedDashboard bool,
+) (*dashboards.SaveDashboardCommand, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.BuildSaveDashboardcommand")
 	defer span.End()
 
@@ -725,7 +730,8 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		return nil, dashboards.ErrDashboardFolderNameExists
 	}
 
-	if err := dr.ValidateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dash.Data.Get("refresh").MustString("")); err != nil {
+	cfg := dr.settingsProvider.Get()
+	if err := dr.ValidateDashboardRefreshInterval(cfg.MinRefreshInterval, dash.Data.Get("refresh").MustString("")); err != nil {
 		return nil, err
 	}
 
@@ -1013,14 +1019,16 @@ func (dr *DashboardServiceImpl) ValidateDashboardRefreshInterval(minRefreshInter
 }
 
 func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO,
-	provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+	provisioning *dashboards.DashboardProvisioning,
+) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.SaveProvisionedDashboard")
 	defer span.End()
 
-	if err := dr.ValidateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dto.Dashboard.Data.Get("refresh").MustString("")); err != nil {
+	cfg := dr.settingsProvider.Get()
+	if err := dr.ValidateDashboardRefreshInterval(cfg.MinRefreshInterval, dto.Dashboard.Data.Get("refresh").MustString("")); err != nil {
 		dr.log.Warn("Changing refresh interval for provisioned dashboard to minimum refresh interval", "dashboardUid",
-			dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval", dr.cfg.MinRefreshInterval)
-		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
+			dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval", cfg.MinRefreshInterval)
+		dto.Dashboard.Data.Set("refresh", cfg.MinRefreshInterval)
 	}
 
 	ctx, ident := identity.WithServiceIdentity(ctx, dto.OrgID)
@@ -1073,15 +1081,17 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 }
 
 func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO,
-	allowUiUpdate bool) (*dashboards.Dashboard, error) {
+	allowUiUpdate bool,
+) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.SaveDashboard")
 	defer span.End()
 
-	if err := dr.ValidateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dto.Dashboard.Data.Get("refresh").MustString("")); err != nil {
+	cfg := dr.settingsProvider.Get()
+	if err := dr.ValidateDashboardRefreshInterval(cfg.MinRefreshInterval, dto.Dashboard.Data.Get("refresh").MustString("")); err != nil {
 		dr.log.Warn("Changing refresh interval for imported dashboard to minimum refresh interval",
 			"dashboardUid", dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval",
-			dr.cfg.MinRefreshInterval)
-		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
+			cfg.MinRefreshInterval)
+		dto.Dashboard.Data.Set("refresh", cfg.MinRefreshInterval)
 	}
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, !allowUiUpdate)
@@ -1166,15 +1176,17 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 }
 
 func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO) (
-	*dashboards.Dashboard, error) {
+	*dashboards.Dashboard, error,
+) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.ImportDashboard")
 	defer span.End()
 
-	if err := dr.ValidateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dto.Dashboard.Data.Get("refresh").MustString("")); err != nil {
+	cfg := dr.settingsProvider.Get()
+	if err := dr.ValidateDashboardRefreshInterval(cfg.MinRefreshInterval, dto.Dashboard.Data.Get("refresh").MustString("")); err != nil {
 		dr.log.Warn("Changing refresh interval for imported dashboard to minimum refresh interval",
 			"dashboardUid", dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title,
-			"minRefreshInterval", dr.cfg.MinRefreshInterval)
-		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
+			"minRefreshInterval", cfg.MinRefreshInterval)
+		dto.Dashboard.Data.Set("refresh", cfg.MinRefreshInterval)
 	}
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, true)
@@ -1324,7 +1336,8 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 		resource = "folder"
 	}
 
-	if !dr.cfg.RBAC.PermissionsOnCreation(resource) {
+	cfg := dr.settingsProvider.Get()
+	if !cfg.RBAC.PermissionsOnCreation(resource) {
 		return
 	}
 
@@ -1362,7 +1375,8 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) || !dr.cfg.RBAC.PermissionsOnCreation("folder") || f.ParentUID != "" {
+	cfg := dr.settingsProvider.Get()
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) || !cfg.RBAC.PermissionsOnCreation("folder") || f.ParentUID != "" {
 		return
 	}
 
@@ -1751,7 +1765,8 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 					Limit: 100000,
 				},
 			},
-			Limit: 100000})
+			Limit: 100000,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -1825,7 +1840,7 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 	defer span.End()
 
 	// cleanup things related to dashboards that are not stored in unistore yet
-	var err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
+	err := dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
 	if err != nil {
 		return err
 	}
@@ -2005,7 +2020,8 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Fields: []*resourcepb.Requirement{},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Limit: 100000}
+		Limit: 100000,
+	}
 
 	if len(query.DashboardUIDs) > 0 {
 		request.Options.Fields = []*resourcepb.Requirement{{

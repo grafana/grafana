@@ -111,6 +111,7 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 //
 //nolint:gocyclo
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
+	cfg := hs.Cfg.Get()
 	c, span := hs.injectSpan(c, "api.getFrontendSettings")
 	defer span.End()
 
@@ -143,7 +144,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	panels := make(map[string]plugins.PanelDTO)
 	for _, ap := range availablePlugins[plugins.TypePanel] {
 		panel := ap.Plugin
-		if panel.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+		if panel.State == plugins.ReleaseStateAlpha && !cfg.PluginsEnableAlpha {
 			continue
 		}
 
@@ -170,7 +171,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 	}
 
-	hideVersion := hs.Cfg.Anonymous.HideVersion && !c.IsSignedIn
+	hideVersion := cfg.Anonymous.HideVersion && !c.IsSignedIn
 	version := setting.BuildVersion
 	commit := setting.BuildCommit
 	commitShort := getShortCommitHash(setting.BuildCommit, 10)
@@ -186,8 +187,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
-	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigration.IsTarget
+	trustedTypesDefaultPolicyEnabled := (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
+	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && cfg.CloudMigration.IsTarget
 	featureToggles := hs.Features.GetEnabled(c.Req.Context())
 	// this is needed for backwards compatibility with external plugins
 	// we should remove this once we can be sure that no external plugins rely on this
@@ -196,73 +197,73 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
 		Datasources:                         dataSources,
-		MinRefreshInterval:                  hs.Cfg.MinRefreshInterval,
+		MinRefreshInterval:                  cfg.MinRefreshInterval,
 		Panels:                              panels,
 		Apps:                                apps,
-		AppUrl:                              hs.Cfg.AppURL,
-		AppSubUrl:                           hs.Cfg.AppSubURL,
-		AllowOrgCreate:                      (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		AuthProxyEnabled:                    hs.Cfg.AuthProxy.Enabled,
-		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
-		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
-		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
-		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
-		LiveMessageSizeLimit:                hs.Cfg.LiveMessageSizeLimit,
-		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
-		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
-		SigV4AuthEnabled:                    hs.Cfg.SigV4AuthEnabled,
-		AzureAuthEnabled:                    hs.Cfg.AzureAuthEnabled,
+		AppUrl:                              cfg.AppURL,
+		AppSubUrl:                           cfg.AppSubURL,
+		AllowOrgCreate:                      (cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		AuthProxyEnabled:                    cfg.AuthProxy.Enabled,
+		LdapEnabled:                         cfg.LDAPAuthEnabled,
+		JwtHeaderName:                       cfg.JWTAuth.HeaderName,
+		JwtUrlLogin:                         cfg.JWTAuth.URLLogin,
+		LiveEnabled:                         cfg.LiveMaxConnections != 0,
+		LiveMessageSizeLimit:                cfg.LiveMessageSizeLimit,
+		AutoAssignOrg:                       cfg.AutoAssignOrg,
+		VerifyEmailEnabled:                  cfg.VerifyEmailEnabled,
+		SigV4AuthEnabled:                    cfg.SigV4AuthEnabled,
+		AzureAuthEnabled:                    cfg.AzureAuthEnabled,
 		RbacEnabled:                         true,
-		ExploreEnabled:                      hs.Cfg.ExploreEnabled,
-		HelpEnabled:                         hs.Cfg.HelpEnabled,
-		ProfileEnabled:                      hs.Cfg.ProfileEnabled,
-		NewsFeedEnabled:                     hs.Cfg.NewsFeedEnabled,
-		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
-		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
-		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
-		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
-		RudderstackWriteKey:                 hs.Cfg.RudderstackWriteKey,
-		RudderstackDataPlaneUrl:             hs.Cfg.RudderstackDataPlaneURL,
-		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
-		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
-		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
-		AnalyticsConsoleReporting:           hs.Cfg.FrontendAnalyticsConsoleReporting,
-		DashboardPerformanceMetrics:         hs.Cfg.DashboardPerformanceMetrics,
-		PanelSeriesLimit:                    hs.Cfg.PanelSeriesLimit,
-		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
-		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
-		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
-		DisableLoginForm:                    hs.Cfg.DisableLoginForm,
-		DisableUserSignUp:                   !hs.Cfg.AllowUserSignUp,
-		LoginHint:                           hs.Cfg.LoginHint,
-		PasswordHint:                        hs.Cfg.PasswordHint,
-		ExternalUserMngInfo:                 hs.Cfg.ExternalUserMngInfo,
-		ExternalUserMngLinkUrl:              hs.Cfg.ExternalUserMngLinkUrl,
-		ExternalUserMngLinkName:             hs.Cfg.ExternalUserMngLinkName,
-		ExternalUserMngAnalytics:            hs.Cfg.ExternalUserMngAnalytics,
-		ExternalUserMngAnalyticsParams:      hs.Cfg.ExternalUserMngAnalyticsParams,
+		ExploreEnabled:                      cfg.ExploreEnabled,
+		HelpEnabled:                         cfg.HelpEnabled,
+		ProfileEnabled:                      cfg.ProfileEnabled,
+		NewsFeedEnabled:                     cfg.NewsFeedEnabled,
+		QueryHistoryEnabled:                 cfg.QueryHistoryEnabled,
+		GoogleAnalyticsId:                   cfg.GoogleAnalyticsID,
+		GoogleAnalytics4Id:                  cfg.GoogleAnalytics4ID,
+		GoogleAnalytics4SendManualPageViews: cfg.GoogleAnalytics4SendManualPageViews,
+		RudderstackWriteKey:                 cfg.RudderstackWriteKey,
+		RudderstackDataPlaneUrl:             cfg.RudderstackDataPlaneURL,
+		RudderstackSdkUrl:                   cfg.RudderstackSDKURL,
+		RudderstackConfigUrl:                cfg.RudderstackConfigURL,
+		RudderstackIntegrationsUrl:          cfg.RudderstackIntegrationsURL,
+		AnalyticsConsoleReporting:           cfg.FrontendAnalyticsConsoleReporting,
+		DashboardPerformanceMetrics:         cfg.DashboardPerformanceMetrics,
+		PanelSeriesLimit:                    cfg.PanelSeriesLimit,
+		FeedbackLinksEnabled:                cfg.FeedbackLinksEnabled,
+		ApplicationInsightsConnectionString: cfg.ApplicationInsightsConnectionString,
+		ApplicationInsightsEndpointUrl:      cfg.ApplicationInsightsEndpointUrl,
+		DisableLoginForm:                    cfg.DisableLoginForm,
+		DisableUserSignUp:                   !cfg.AllowUserSignUp,
+		LoginHint:                           cfg.LoginHint,
+		PasswordHint:                        cfg.PasswordHint,
+		ExternalUserMngInfo:                 cfg.ExternalUserMngInfo,
+		ExternalUserMngLinkUrl:              cfg.ExternalUserMngLinkUrl,
+		ExternalUserMngLinkName:             cfg.ExternalUserMngLinkName,
+		ExternalUserMngAnalytics:            cfg.ExternalUserMngAnalytics,
+		ExternalUserMngAnalyticsParams:      cfg.ExternalUserMngAnalyticsParams,
 		//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-		ViewersCanEdit:                   hs.Cfg.ViewersCanEdit,
-		DisableSanitizeHtml:              hs.Cfg.DisableSanitizeHtml,
+		ViewersCanEdit:                   cfg.ViewersCanEdit,
+		DisableSanitizeHtml:              cfg.DisableSanitizeHtml,
 		TrustedTypesDefaultPolicyEnabled: trustedTypesDefaultPolicyEnabled,
-		CSPReportOnlyEnabled:             hs.Cfg.CSPReportOnlyEnabled,
-		DateFormats:                      hs.Cfg.DateFormats,
-		QuickRanges:                      hs.Cfg.QuickRanges,
-		SecureSocksDSProxyEnabled:        hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
-		EnableFrontendSandboxForPlugins:  hs.Cfg.EnableFrontendSandboxForPlugins,
+		CSPReportOnlyEnabled:             cfg.CSPReportOnlyEnabled,
+		DateFormats:                      cfg.DateFormats,
+		QuickRanges:                      cfg.QuickRanges,
+		SecureSocksDSProxyEnabled:        cfg.SecureSocksDSProxy.Enabled && cfg.SecureSocksDSProxy.ShowUI,
+		EnableFrontendSandboxForPlugins:  cfg.EnableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
-		PublicDashboardsEnabled:          hs.Cfg.PublicDashboardsEnabled,
+		PublicDashboardsEnabled:          cfg.PublicDashboardsEnabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
-		CloudMigrationPollIntervalMs:     int(hs.Cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
+		CloudMigrationPollIntervalMs:     int(cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
 		SharedWithMeFolderUID:            folder.SharedWithMeFolderUID,
 		RootFolderUID:                    accesscontrol.GeneralFolderUID,
-		LocalFileSystemAvailable:         hs.Cfg.LocalFileSystemAvailable,
-		ReportingStaticContext:           hs.Cfg.ReportingStaticContext,
-		ExploreDefaultTimeOffset:         hs.Cfg.ExploreDefaultTimeOffset,
-		ExploreHideLogsDownload:          hs.Cfg.ExploreHideLogsDownload,
+		LocalFileSystemAvailable:         cfg.LocalFileSystemAvailable,
+		ReportingStaticContext:           cfg.ReportingStaticContext,
+		ExploreDefaultTimeOffset:         cfg.ExploreDefaultTimeOffset,
+		ExploreHideLogsDownload:          cfg.ExploreHideLogsDownload,
 
-		DefaultDatasourceManageAlertsUIToggle:          hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
-		DefaultAllowRecordingRulesTargetAlertsUIToggle: hs.Cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle,
+		DefaultDatasourceManageAlertsUIToggle:          cfg.DefaultDatasourceManageAlertsUIToggle,
+		DefaultAllowRecordingRulesTargetAlertsUIToggle: cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -274,7 +275,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Edition:       hs.License.Edition(),
 			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
 			HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
-			Env:           hs.Cfg.Env,
+			Env:           cfg.Env,
 		},
 
 		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
@@ -286,77 +287,77 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 
 		FeatureToggles:                   featureToggles,
-		AnonymousEnabled:                 hs.Cfg.Anonymous.Enabled,
-		AnonymousDeviceLimit:             hs.Cfg.Anonymous.DeviceLimit,
+		AnonymousEnabled:                 cfg.Anonymous.Enabled,
+		AnonymousDeviceLimit:             cfg.Anonymous.DeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
-		RendererDefaultImageWidth:        hs.Cfg.RendererDefaultImageWidth,
-		RendererDefaultImageHeight:       hs.Cfg.RendererDefaultImageHeight,
-		RendererDefaultImageScale:        hs.Cfg.RendererDefaultImageScale,
-		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
-		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
-		PluginCatalogURL:                 hs.Cfg.PluginCatalogURL,
-		PluginAdminEnabled:               hs.Cfg.PluginAdminEnabled,
-		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
-		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
+		RendererDefaultImageWidth:        cfg.RendererDefaultImageWidth,
+		RendererDefaultImageHeight:       cfg.RendererDefaultImageHeight,
+		RendererDefaultImageScale:        cfg.RendererDefaultImageScale,
+		Http2Enabled:                     cfg.Protocol == setting.HTTP2Scheme,
+		GrafanaJavascriptAgent:           cfg.GrafanaJavascriptAgent,
+		PluginCatalogURL:                 cfg.PluginCatalogURL,
+		PluginAdminEnabled:               cfg.PluginAdminEnabled,
+		PluginAdminExternalManageEnabled: cfg.PluginAdminEnabled && cfg.PluginAdminExternalManageEnabled,
+		PluginCatalogHiddenPlugins:       cfg.PluginCatalogHiddenPlugins,
 		PluginCatalogManagedPlugins:      hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
-		PluginCatalogPreinstalledPlugins: append(hs.Cfg.PreinstallPluginsAsync, hs.Cfg.PreinstallPluginsSync...),
-		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
-		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
-		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
+		PluginCatalogPreinstalledPlugins: append(cfg.PreinstallPluginsAsync, cfg.PreinstallPluginsSync...),
+		ExpressionsEnabled:               cfg.ExpressionsEnabled,
+		AwsAllowedAuthProviders:          cfg.AWSAllowedAuthProviders,
+		AwsAssumeRoleEnabled:             cfg.AWSAssumeRoleEnabled,
 		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
-			Cloud:                                  hs.Cfg.Azure.Cloud,
-			Clouds:                                 hs.Cfg.Azure.CustomClouds(),
-			ManagedIdentityEnabled:                 hs.Cfg.Azure.ManagedIdentityEnabled,
-			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
-			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
-			UserIdentityFallbackCredentialsEnabled: hs.Cfg.Azure.UserIdentityFallbackCredentialsEnabled,
-			AzureEntraPasswordCredentialsEnabled:   hs.Cfg.Azure.AzureEntraPasswordCredentialsEnabled,
+			Cloud:                                  cfg.Azure.Cloud,
+			Clouds:                                 cfg.Azure.CustomClouds(),
+			ManagedIdentityEnabled:                 cfg.Azure.ManagedIdentityEnabled,
+			WorkloadIdentityEnabled:                cfg.Azure.WorkloadIdentityEnabled,
+			UserIdentityEnabled:                    cfg.Azure.UserIdentityEnabled,
+			UserIdentityFallbackCredentialsEnabled: cfg.Azure.UserIdentityFallbackCredentialsEnabled,
+			AzureEntraPasswordCredentialsEnabled:   cfg.Azure.AzureEntraPasswordCredentialsEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
-			Enabled: hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+			Enabled: cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
 		RecordedQueries: dtos.FrontendSettingsRecordedQueriesDTO{
-			Enabled: hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
+			Enabled: cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
 		},
 		Reporting: dtos.FrontendSettingsReportingDTO{
-			Enabled: hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
+			Enabled: cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
 		Analytics: dtos.FrontendSettingsAnalyticsDTO{
-			Enabled: hs.Cfg.SectionWithEnvOverrides("analytics").Key("enabled").MustBool(true),
+			Enabled: cfg.SectionWithEnvOverrides("analytics").Key("enabled").MustBool(true),
 		},
 
 		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{
-			MinInterval: hs.Cfg.UnifiedAlerting.MinInterval.String(),
+			MinInterval: cfg.UnifiedAlerting.MinInterval.String(),
 		},
 
 		Oauth:                   hs.getEnabledOAuthProviders(),
 		SamlEnabled:             hs.samlEnabled(),
 		SamlName:                hs.samlName(),
-		TokenExpirationDayLimit: hs.Cfg.SATokenExpirationDayLimit,
+		TokenExpirationDayLimit: cfg.SATokenExpirationDayLimit,
 
-		SnapshotEnabled: hs.Cfg.SnapshotEnabled,
+		SnapshotEnabled: cfg.SnapshotEnabled,
 
 		SqlConnectionLimits: dtos.FrontendSettingsSqlConnectionLimitsDTO{
-			MaxOpenConns:    hs.Cfg.SqlDatasourceMaxOpenConnsDefault,
-			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
-			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
+			MaxOpenConns:    cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:    cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime: cfg.SqlDatasourceMaxConnLifetimeDefault,
 		},
 	}
 
-	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
-		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = hs.Cfg.UnifiedAlerting.StateHistory.Backend
-		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary
+	if cfg.UnifiedAlerting.StateHistory.Enabled {
+		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = cfg.UnifiedAlerting.StateHistory.Backend
+		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = cfg.UnifiedAlerting.StateHistory.MultiPrimary
 	}
 
-	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = hs.Cfg.UnifiedAlerting.RecordingRules.Enabled
-	frontendSettings.UnifiedAlerting.DefaultRecordingRulesTargetDatasourceUID = hs.Cfg.UnifiedAlerting.RecordingRules.DefaultDatasourceUID
+	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = cfg.UnifiedAlerting.RecordingRules.Enabled
+	frontendSettings.UnifiedAlerting.DefaultRecordingRulesTargetDatasourceUID = cfg.UnifiedAlerting.RecordingRules.DefaultDatasourceUID
 
-	if hs.Cfg.UnifiedAlerting.Enabled != nil {
-		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
+	if cfg.UnifiedAlerting.Enabled != nil {
+		frontendSettings.UnifiedAlertingEnabled = *cfg.UnifiedAlerting.Enabled
 	}
 
 	// It returns false if the provider is not enabled or the skip org role sync is false.
@@ -369,10 +370,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
-		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
-		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
-		LDAPSkipOrgRoleSync:           hs.Cfg.LDAPSkipOrgRoleSync,
-		JWTAuthSkipOrgRoleSync:        hs.Cfg.JWTAuth.SkipOrgRoleSync,
+		AuthProxyEnableLoginToken:     cfg.AuthProxy.EnableLoginToken,
+		SAMLSkipOrgRoleSync:           cfg.SAMLSkipOrgRoleSync,
+		LDAPSkipOrgRoleSync:           cfg.LDAPSkipOrgRoleSync,
+		JWTAuthSkipOrgRoleSync:        cfg.JWTAuth.SkipOrgRoleSync,
 		GoogleSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
 		GrafanaComSkipOrgRoleSync:     parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
 		GenericOAuthSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
@@ -380,12 +381,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		GithubSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
 		GitLabSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
 		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
-		DisableLogin:                  hs.Cfg.DisableLogin,
-		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
-		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
+		DisableLogin:                  cfg.DisableLogin,
+		BasicAuthStrongPasswordPolicy: cfg.BasicAuthStrongPasswordPolicy,
+		DisableSignoutMenu:            cfg.DisableSignoutMenu,
 	}
 
-	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+	if cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
 		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientLDAP)
 
 		if !hasEnabledProviders {
@@ -411,11 +412,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
 	}
 
-	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
-		frontendSettings.GeomapDefaultBaseLayerConfig = &hs.Cfg.GeomapDefaultBaseLayerConfig
+	if cfg.GeomapDefaultBaseLayerConfig != nil {
+		frontendSettings.GeomapDefaultBaseLayerConfig = &cfg.GeomapDefaultBaseLayerConfig
 	}
 
-	if !hs.Cfg.GeomapEnableCustomBaseLayers {
+	if !cfg.GeomapEnableCustomBaseLayers {
 		frontendSettings.GeomapDisableCustomBaseLayer = true
 	}
 
@@ -424,15 +425,16 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	// experimental scope features
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
-		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
-		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
+		frontendSettings.ListScopesEndpoint = cfg.ScopesListScopesURL
+		frontendSettings.ListDashboardScopesEndpoint = cfg.ScopesListDashboardsURL
 	}
 
 	return frontendSettings, nil
 }
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
-	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
+	cfg := hs.Cfg.Get()
+	return cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
 func getShortCommitHash(commitHash string, maxLength int) string {
@@ -443,12 +445,13 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 }
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
+	cfg := hs.Cfg.Get()
 	c, span := hs.injectSpan(c, "api.getFSDataSources")
 	defer span.End()
 
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.GetOrgID() != 0 {
-		query := datasources.GetDataSourcesQuery{OrgID: c.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
+		query := datasources.GetDataSourcesQuery{OrgID: c.GetOrgID(), DataSourceLimit: cfg.DataSourceLimit}
 		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err

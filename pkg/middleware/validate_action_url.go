@@ -13,11 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	errInvalidAllowedURL = func(url string) error {
-		return fmt.Errorf("action URL '%s' is invalid", url)
-	}
-)
+var errInvalidAllowedURL = func(url string) error {
+	return fmt.Errorf("action URL '%s' is invalid", url)
+}
 
 type errorWithStatus struct {
 	Underlying error
@@ -32,7 +30,8 @@ func (e errorWithStatus) Unwrap() error {
 	return e.Underlying
 }
 
-func ValidateActionUrl(cfg *setting.Cfg, logger log.Logger) func(http.Handler) http.Handler {
+func ValidateActionUrl(settingsProvider setting.SettingsProvider, logger log.Logger) func(http.Handler) http.Handler {
+	cfg := settingsProvider.Get()
 	// get the urls allowed from server config
 	allGlobs, globErr := cacheGlobs(cfg.ActionsAllowPostURL)
 	if globErr != nil {

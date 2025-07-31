@@ -56,7 +56,7 @@ func TestOAuthLogin_Redirect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.SecretsService = fakes.NewFakeSecretsService()
 				hs.authnService = &authntest.FakeService{
 					ExpectedErr:      tt.expectedErr,
@@ -133,8 +133,8 @@ func TestOAuthLogin_AuthorizationCode(t *testing.T) {
 			var cfg *setting.Cfg
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				cfg = setting.NewCfg()
-				hs.Cfg = cfg
-				hs.Cfg.LoginCookieName = "some_name"
+				hs.Cfg = setting.ProvideService(cfg)
+				cfg.LoginCookieName = "some_name"
 				hs.SecretsService = fakes.NewFakeSecretsService()
 				hs.authnService = &authntest.FakeService{
 					ExpectedErr:      tt.expectedErr,
@@ -184,7 +184,7 @@ func TestOAuthLogin_AuthorizationCode(t *testing.T) {
 
 func TestOAuthLogin_Error(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+		hs.Cfg = setting.ProvideService(setting.NewCfg())
 		hs.log = log.NewNopLogger()
 		hs.SecretsService = fakes.NewFakeSecretsService()
 	})

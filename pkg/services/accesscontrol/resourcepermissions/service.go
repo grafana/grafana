@@ -64,7 +64,7 @@ type Store interface {
 	DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error
 }
 
-func New(cfg *setting.Cfg,
+func New(settingsProvider setting.SettingsProvider,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service, actionSetService ActionSetService,
@@ -92,7 +92,7 @@ func New(cfg *setting.Cfg,
 	s := &Service{
 		ac:           ac,
 		features:     features,
-		store:        NewStore(cfg, sqlStore, features),
+		store:        NewStore(settingsProvider, sqlStore, features),
 		options:      options,
 		license:      license,
 		log:          log.New("resourcepermissions"),
@@ -105,7 +105,7 @@ func New(cfg *setting.Cfg,
 		actionSetSvc: actionSetService,
 	}
 
-	s.api = newApi(cfg, ac, router, s)
+	s.api = newApi(settingsProvider, ac, router, s)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err

@@ -32,9 +32,9 @@ type store interface {
 }
 
 type xormStore struct {
-	db      db.DB
-	cfg     *setting.Cfg
-	deletes []string
+	db               db.DB
+	settingsProvider setting.SettingsProvider
+	deletes          []string
 }
 
 func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
@@ -120,7 +120,6 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 		sess.MustCols("email")
 
 		affectedRows, err := sess.ID(cmd.ID).Update(&t)
-
 		if err != nil {
 			return err
 		}
@@ -301,7 +300,6 @@ func (ss *xormStore) GetByID(ctx context.Context, query *team.GetTeamByIDQuery) 
 
 		var t team.TeamDTO
 		exists, err := sess.SQL(sql.String(), params...).Get(&t)
-
 		if err != nil {
 			return err
 		}
@@ -367,7 +365,6 @@ func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (t
 	rawSQL := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
 	var member team.TeamMember
 	exists, err := sess.SQL(rawSQL, orgId, teamId, userId).Get(&member)
-
 	if err != nil {
 		return member, err
 	}
@@ -462,7 +459,7 @@ func removeTeamMember(sess *db.Session, cmd *team.RemoveTeamMemberCommand) error
 		return err
 	}
 
-	var rawSQL = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
+	rawSQL := "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
 	res, err := sess.Exec(rawSQL, cmd.OrgID, cmd.TeamID, cmd.UserID)
 	if err != nil {
 		return err
@@ -479,7 +476,7 @@ func removeTeamMember(sess *db.Session, cmd *team.RemoveTeamMemberCommand) error
 // Only used when removing a user from a Grafana instance.
 func (ss *xormStore) RemoveUsersMemberships(ctx context.Context, userID int64) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM team_member WHERE user_id = ?"
+		rawSQL := "DELETE FROM team_member WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})

@@ -22,9 +22,9 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
+func ProvideSearchDistributorServer(settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
 	var err error
-	grpcHandler, err := grpcserver.ProvideService(cfg, features, nil, tracer, registerer)
+	grpcHandler, err := grpcserver.ProvideService(settingsProvider, features, nil, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.Featu
 	resourcepb.RegisterResourceIndexServer(grpcServer, distributorServer)
 	resourcepb.RegisterManagedObjectIndexServer(grpcServer, distributorServer)
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthService)
-	_, err = grpcserver.ProvideReflectionService(cfg, grpcHandler)
+	_, err = grpcserver.ProvideReflectionService(settingsProvider, grpcHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -72,10 +72,12 @@ func (c *RingClient) RemoteAddress() string {
 	return c.Conn.Target()
 }
 
-const RingKey = "search-server-ring"
-const RingName = "search_server_ring"
-const RingHeartbeatTimeout = time.Minute
-const RingNumTokens = 128
+const (
+	RingKey              = "search-server-ring"
+	RingName             = "search_server_ring"
+	RingHeartbeatTimeout = time.Minute
+	RingNumTokens        = 128
+)
 
 type distributorServer struct {
 	clientPool *ringclient.Pool

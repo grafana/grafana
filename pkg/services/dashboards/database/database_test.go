@@ -45,14 +45,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore db.DB
-	var cfg *setting.Cfg
+	var settingsProvider setting.SettingsProvider
 	var savedFolder, savedDash, savedDash2 *dashboards.Dashboard
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, settingsProvider = db.InitTestDBWithCfg(t)
 		var err error
-		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+		dashboardStore, err = ProvideDashboardStore(sqlStore, settingsProvider, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		// insertTestDashboard creates the following hierarchy:
 		// 1 test dash folder
@@ -715,7 +715,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		t.Skip("skipping integration test")
 	}
 	sqlStore := db.InitTestDB(t)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := ProvideDashboardStore(sqlStore, setting.ProvideService(&setting.Cfg{}), testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	pluginId := "test-app"
 
@@ -739,7 +739,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := db.InitTestDB(t)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := ProvideDashboardStore(sqlStore, setting.ProvideService(&setting.Cfg{}), testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, "", false)
@@ -790,7 +790,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	}
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := ProvideDashboardStore(sqlStore, setting.ProvideService(cfg), testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, "", false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, "", false)
@@ -838,7 +838,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := ProvideDashboardStore(sqlStore, setting.ProvideService(cfg), features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
 	orgID := int64(1)
@@ -849,7 +849,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, setting.ProvideService(cfg), nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -935,7 +935,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
+			dashboardStore, err := ProvideDashboardStore(sqlStore, setting.ProvideService(cfg), features, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
 			res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 				SignedInUser:    user,
@@ -1074,10 +1074,14 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			folderUIDs: []string{f0.UID, f1.UID},
 			typ:        searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
-				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title}},
+				"": {
+					{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
+				},
+				featuremgmt.FlagNestedFolders: {
+					{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
+				},
 			},
 		},
 		{
@@ -1085,10 +1089,14 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			folderUIDs: []string{folder.GeneralFolderUID, f0.UID},
 			typ:        searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
-				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under general"}},
+				"": {
+					{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+					{title: "dashboard under general"},
+				},
+				featuremgmt.FlagNestedFolders: {
+					{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+					{title: "dashboard under general"},
+				},
 			},
 		},
 		{
@@ -1096,12 +1104,16 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			folderUIDs: []string{folder.GeneralFolderUID, f0.UID, f1.UID},
 			typ:        searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
-				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+				"": {
+					{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
 					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
-					{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+					{title: "dashboard under general"},
+				},
+				featuremgmt.FlagNestedFolders: {
+					{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
 					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
-					{title: "dashboard under general"}},
+					{title: "dashboard under general"},
+				},
 			},
 		},
 		{
@@ -1308,7 +1320,8 @@ func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID st
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
-	folderId int64, folderUID string, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
+	folderId int64, folderUID string, isFolder bool, tags ...interface{},
+) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
@@ -1330,7 +1343,8 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 }
 
 func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
-	folderUID string, isFolder bool, pluginId string) *dashboards.Dashboard {
+	folderUID string, isFolder bool, pluginId string,
+) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,

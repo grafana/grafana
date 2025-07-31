@@ -141,6 +141,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	cmd := user.UpdateUserCommand{}
 	var err error
 	if err = web.Bind(c.Req, &cmd); err != nil {
@@ -155,11 +156,11 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 		return errResponse
 	}
 
-	if hs.Cfg.AuthProxy.Enabled {
-		if hs.Cfg.AuthProxy.HeaderProperty == "email" && cmd.Email != c.GetEmail() {
+	if cfg.AuthProxy.Enabled {
+		if cfg.AuthProxy.HeaderProperty == "email" && cmd.Email != c.GetEmail() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change email when auth proxy is using email property", nil)
 		}
-		if hs.Cfg.AuthProxy.HeaderProperty == "username" && cmd.Login != c.GetLogin() {
+		if cfg.AuthProxy.HeaderProperty == "username" && cmd.Login != c.GetLogin() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
@@ -241,7 +242,8 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 	// To avoid breaking changes, email verification is implemented in a way that if the email field is being updated,
 	// all the other fields being updated in the same request are disregarded. We do this because email might need to
 	// be verified and if so, it goes through a different code flow.
-	if hs.Cfg.Smtp.Enabled && hs.Cfg.VerifyEmailEnabled {
+	cfg := hs.Cfg.Get()
+	if cfg.Smtp.Enabled && cfg.VerifyEmailEnabled {
 		query := user.GetUserByIDQuery{ID: cmd.UserID}
 		usr, err := hs.userService.GetByID(ctx, &query)
 		if err != nil {
@@ -294,7 +296,6 @@ func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response
 	usr, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{
 		ID: userID,
 	})
-
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch user", err)
 	}
@@ -323,6 +324,7 @@ func (hs *HTTPServer) startEmailVerification(ctx context.Context, email string, 
 // Responses:
 // 302: okResponse
 func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	code, err := url.QueryUnescape(c.Req.URL.Query().Get("code"))
 	if err != nil || code == "" {
 		return hs.RedirectResponseWithError(c, errors.New("bad request data"))
@@ -332,7 +334,7 @@ func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Respo
 		return hs.RedirectResponseWithError(c, err)
 	}
 
-	return response.Redirect(hs.Cfg.AppSubURL + "/profile")
+	return response.Redirect(cfg.AppSubURL + "/profile")
 }
 
 // swagger:route GET /user/orgs signed_in_user getSignedInUserOrgList
@@ -498,6 +500,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Respo
 
 // GET /profile/switch-org/:id
 func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContext) {
+	cfg := hs.Cfg.Get()
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
@@ -526,7 +529,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 		return
 	}
 
-	c.Redirect(hs.Cfg.AppSubURL + "/")
+	c.Redirect(cfg.AppSubURL + "/")
 }
 
 // swagger:route PUT /user/password signed_in_user changeUserPassword

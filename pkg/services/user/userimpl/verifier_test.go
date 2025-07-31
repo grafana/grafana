@@ -29,7 +29,7 @@ func TestVerifier_Start(t *testing.T) {
 		updateCalled bool
 	}
 
-	verifier := ProvideVerifier(setting.NewCfg(), us, ts, ns, is)
+	verifier := ProvideVerifier(setting.ProvideService(setting.NewCfg()), us, ts, ns, is)
 	t.Run("should error if email already exist for other user", func(t *testing.T) {
 		us.ExpectedUser = &user.User{ID: 1}
 		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
@@ -126,7 +126,7 @@ func TestVerifier_Complete(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.VerificationEmailMaxLifetime = 1 * time.Hour
-	verifier := ProvideVerifier(cfg, us, ts, ns, is)
+	verifier := ProvideVerifier(setting.ProvideService(cfg), us, ts, ns, is)
 	t.Run("should return error for invalid code", func(t *testing.T) {
 		ts.GetTempUserByCodeFN = func(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
 			return nil, tempuser.ErrTempUserNotFound

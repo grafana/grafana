@@ -55,7 +55,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -88,7 +88,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -176,7 +176,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -261,7 +261,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -345,7 +345,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -437,7 +437,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -562,7 +562,7 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -660,7 +660,7 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -753,7 +753,7 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
@@ -888,7 +888,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",

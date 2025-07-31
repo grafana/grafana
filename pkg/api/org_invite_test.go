@@ -60,7 +60,7 @@ func TestOrgInvitesAPIEndpoint_RBAC(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.orgService = orgtest.NewOrgServiceFake()
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{ID: 1},

@@ -38,9 +38,9 @@ import (
 type ContextSessionKey struct{}
 
 type SQLStore struct {
-	cfg         *setting.Cfg
-	features    featuremgmt.FeatureToggles
-	sqlxsession *session.SessionDB
+	settingsProvider setting.SettingsProvider
+	features         featuremgmt.FeatureToggles
+	sqlxsession      *session.SessionDB
 
 	bus                          bus.Bus
 	dbCfg                        *DatabaseConfig
@@ -53,15 +53,16 @@ type SQLStore struct {
 	recursiveQueriesMu           sync.Mutex
 }
 
-func ProvideService(cfg *setting.Cfg,
+func ProvideService(settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	migrations registry.DatabaseMigrator,
-	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+	bus bus.Bus, tracer tracing.Tracer,
+) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newStore(cfg, nil, features, migrations, bus, tracer)
+	s, err := newStore(settingsProvider, nil, features, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -78,29 +79,33 @@ func ProvideService(cfg *setting.Cfg,
 	return s, nil
 }
 
-func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(t, cfg, features, migrations, bus, InitTestDBOpt{})
+func ProvideServiceForTests(t sqlutil.ITestDB, settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(t, settingsProvider, features, migrations, bus, InitTestDBOpt{})
 }
 
 // NewSQLStoreWithoutSideEffects creates a new *SQLStore without side-effects such as
 // running database migrations and/or ensuring main org and admin user exists.
-func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
+func NewSQLStoreWithoutSideEffects(settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
-	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+	bus bus.Bus, tracer tracing.Tracer,
+) (*SQLStore, error) {
+	cfg := settingsProvider.Get()
 	cfgDBSection := cfg.Raw.Section("database")
 	cfgDBSection.Key("ensure_default_org_and_user").SetValue("false")
-	return newStore(cfg, nil, features, nil, bus, tracer)
+	// TODO: test me
+	return newStore(setting.ProvideService(cfg), nil, features, nil, bus, tracer)
 }
 
-func newStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
-	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func newStore(settingsProvider setting.SettingsProvider, engine *xorm.Engine, features featuremgmt.FeatureToggles,
+	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer,
+) (*SQLStore, error) {
 	ss := &SQLStore{
-		cfg:        cfg,
-		log:        log.New("sqlstore"),
-		migrations: migrations,
-		bus:        bus,
-		tracer:     tracer,
-		features:   features,
+		settingsProvider: settingsProvider,
+		log:              log.New("sqlstore"),
+		migrations:       migrations,
+		bus:              bus,
+		tracer:           tracer,
+		features:         features,
 	}
 
 	if err := ss.initEngine(engine); err != nil {
@@ -131,7 +136,7 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 		return nil
 	}
 
-	migrator := migrator.NewMigrator(ss.engine, ss.cfg)
+	migrator := migrator.NewMigrator(ss.engine, ss.settingsProvider)
 	ss.migrations.AddMigration(migrator)
 
 	if err := prometheus.Register(migrator); err != nil {
@@ -183,6 +188,7 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
+	cfg := ss.settingsProvider.Get()
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		ss.log.Debug("Ensuring main org and admin user exist")
@@ -202,19 +208,19 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 		}
 
 		// ensure admin user
-		if !ss.cfg.DisableInitAdminCreation {
+		if !cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
 
 			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
-				Login:    ss.cfg.AdminUser,
-				Email:    ss.cfg.AdminEmail,
-				Password: user.Password(ss.cfg.AdminPassword),
+				Login:    cfg.AdminUser,
+				Email:    cfg.AdminEmail,
+				Password: user.Password(cfg.AdminPassword),
 				IsAdmin:  true,
 			}); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
 			}
 
-			ss.log.Info("Created default admin", "user", ss.cfg.AdminUser)
+			ss.log.Info("Created default admin", "user", cfg.AdminUser)
 		}
 
 		ss.log.Debug("Creating default org", "name", mainOrgName)
@@ -236,14 +242,15 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return nil
 	}
 
-	dbCfg, err := NewDatabaseConfig(ss.cfg, ss.features)
+	dbCfg, err := NewDatabaseConfig(ss.settingsProvider, ss.features)
 	if err != nil {
 		return err
 	}
 
 	ss.dbCfg = dbCfg
 
-	if ss.cfg.DatabaseInstrumentQueries {
+	cfg := ss.settingsProvider.Get()
+	if cfg.DatabaseInstrumentQueries {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
@@ -255,7 +262,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 			return fmt.Errorf("can't check for existence of %q: %w", ss.dbCfg.Path, err)
 		}
 
-		const perms = 0640
+		const perms = 0o640
 		if !exists {
 			ss.log.Info("Creating SQLite database file", "path", ss.dbCfg.Path)
 			f, err := os.OpenFile(ss.dbCfg.Path, os.O_CREATE|os.O_RDWR, perms)
@@ -307,7 +314,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
 
 	// configure sql logging
-	debugSQL := ss.cfg.Raw.Section("database").Key("log_queries").MustBool(false)
+	debugSQL := cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 	if !debugSQL {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
@@ -403,15 +410,17 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	return *ss.recursiveQueriesAreSupported, nil
 }
 
-var testSQLStoreSetup = false
-var testSQLStore *SQLStore
-var testSQLStoreMutex sync.Mutex
-var testSQLStoreCleanup []func()
+var (
+	testSQLStoreSetup   = false
+	testSQLStore        *SQLStore
+	testSQLStoreMutex   sync.Mutex
+	testSQLStoreCleanup []func()
+)
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
-	FeatureFlags []string
-	Cfg          *setting.Cfg
+	FeatureFlags     []string
+	SettingsProvider setting.SettingsProvider
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -427,7 +436,7 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 }
 
 // InitTestDB initializes the test DB.
-func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
+func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, setting.SettingsProvider) {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
@@ -437,7 +446,7 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.C
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
-	return store, store.cfg
+	return store, store.settingsProvider
 }
 
 func SetupTestDB() {
@@ -471,14 +480,14 @@ func CleanupTestDB() {
 	}
 }
 
-func getCfgForTesting(opts ...InitTestDBOpt) *setting.Cfg {
+func getCfgForTesting(opts ...InitTestDBOpt) setting.SettingsProvider {
 	cfg := setting.NewCfg()
 	for _, opt := range opts {
 		if len(opt.FeatureFlags) > 0 {
-			cfg = opt.Cfg
+			cfg = opt.SettingsProvider.Get()
 		}
 	}
-	return cfg
+	return setting.ProvideService(cfg)
 }
 
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
@@ -496,11 +505,12 @@ func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 }
 
 //nolint:gocyclo
-func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
+func initTestDB(t sqlutil.ITestDB, testCfg setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	migration registry.DatabaseMigrator,
 	bus bus.Bus,
-	opts ...InitTestDBOpt) (*SQLStore, error) {
+	opts ...InitTestDBOpt,
+) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 	if !testSQLStoreSetup {
@@ -528,15 +538,16 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	cfg := testCfg.Get()
 	if len(opts) == 0 {
-		cfgDBSec := testCfg.Raw.Section("database")
+		cfgDBSec := cfg.Raw.Section("database")
 		cfgDBSec.Key("ensure_default_org_and_user").SetValue("false")
 	}
 
 	if testSQLStore == nil {
 		dbType := sqlutil.GetTestDBType()
 
-		cfgDBSec := testCfg.Raw.Section("database")
+		cfgDBSec := cfg.Raw.Section("database")
 		cfgDBSec.Key("type").SetValue(dbType)
 
 		testDB, err := sqlutil.GetTestDB(dbType)
@@ -575,7 +586,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// nolint:staticcheck
-	testSQLStore.cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
+	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err

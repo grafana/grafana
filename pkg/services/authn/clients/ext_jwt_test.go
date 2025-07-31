@@ -154,20 +154,20 @@ func (m *mockVerifier) Verify(ctx context.Context, token string) (*accessTokenCl
 
 func TestExtendedJWT_Test(t *testing.T) {
 	type testCase struct {
-		name           string
-		cfg            *setting.Cfg
-		authHeaderFunc func() string
-		want           bool
+		name             string
+		settingsProvider setting.SettingsProvider
+		authHeaderFunc   func() string
+		want             bool
 	}
 
 	testCases := []testCase{
 		{
 			name: "should return false when extended jwt is disabled",
-			cfg: &setting.Cfg{
+			settingsProvider: setting.ProvideService(&setting.Cfg{
 				ExtJWTAuth: setting.ExtJWTSettings{
 					Enabled: false,
 				},
-			},
+			}),
 			authHeaderFunc: func() string { return "eyJ" },
 			want:           false,
 		},
@@ -195,7 +195,7 @@ func TestExtendedJWT_Test(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			env := setupTestCtx(tc.cfg)
+			env := setupTestCtx(tc.settingsProvider)
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
@@ -239,7 +239,8 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
-					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}, AllowedActions: []string{"folders:read"}, K8s: []string{}}},
+					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}, AllowedActions: []string{"folders:read"}, K8s: []string{}},
+				},
 			},
 		},
 		{
@@ -481,7 +482,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			env := setupTestCtx(tc.cfg)
+			env := setupTestCtx(setting.ProvideService(tc.cfg))
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
@@ -689,18 +690,18 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 	}
 }
 
-func setupTestCtx(cfg *setting.Cfg) *testEnv {
-	if cfg == nil {
-		cfg = &setting.Cfg{
+func setupTestCtx(settingsProvider setting.SettingsProvider) *testEnv {
+	if settingsProvider == nil {
+		settingsProvider = setting.ProvideService(&setting.Cfg{
 			// default org set up by the authenticator is 1
 			ExtJWTAuth: setting.ExtJWTSettings{
 				Enabled:      true,
 				ExpectIssuer: "http://localhost:3000",
 			},
-		}
+		})
 	}
 
-	extJwtClient := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
+	extJwtClient := ProvideExtendedJWT(settingsProvider, tracing.InitializeTracerForTest())
 
 	return &testEnv{
 		s: extJwtClient,
@@ -716,7 +717,8 @@ func generateToken(payload accessTokenClaims, signingKey any, alg jose.Signature
 		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: authnlib.TokenTypeAccess,
 			"kid":           "default",
-		}})
+		},
+	})
 
 	result, _ := jwt.Signed(signer).Claims(payload).CompactSerialize()
 	return result
@@ -727,7 +729,8 @@ func generateIDToken(payload idTokenClaims, signingKey any, alg jose.SignatureAl
 		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: authnlib.TokenTypeID,
 			"kid":           "default",
-		}})
+		},
+	})
 
 	result, _ := jwt.Signed(signer).Claims(payload).CompactSerialize()
 	return result

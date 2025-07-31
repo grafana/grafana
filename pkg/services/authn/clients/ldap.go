@@ -14,8 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authn.ProxyClient = new(LDAP)
-var _ authn.PasswordClient = new(LDAP)
+var (
+	_ authn.ProxyClient    = new(LDAP)
+	_ authn.PasswordClient = new(LDAP)
+)
 
 type ldapService interface {
 	Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error)

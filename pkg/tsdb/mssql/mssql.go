@@ -197,7 +197,6 @@ func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		}
 
 		_, handler, err := newMSSQL(ctx, driverName, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
-
 		if err != nil {
 			logger.Error("Failed connecting to MSSQL", "err", err)
 			return nil, err

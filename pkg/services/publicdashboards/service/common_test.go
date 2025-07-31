@@ -25,23 +25,23 @@ import (
 func newPublicDashboardServiceImpl(
 	t *testing.T,
 	store *sqlstore.SQLStore,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	publicDashboardStore publicdashboards.Store,
 	dashboardService dashboards.DashboardService,
 	annotationsRepo annotations.Repository,
-) (*PublicDashboardServiceImpl, db.DB, *setting.Cfg) {
+) (*PublicDashboardServiceImpl, db.DB, setting.SettingsProvider) {
 	t.Helper()
 
 	if store == nil {
-		store, cfg = db.InitTestDBWithCfg(t)
+		store, settingsProvider = db.InitTestDBWithCfg(t)
 	}
 	tagService := tagimpl.ProvideService(store)
 	if annotationsRepo == nil {
-		annotationsRepo = annotationsimpl.ProvideService(store, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest(), nil, dashboardService, prometheus.NewPedanticRegistry())
+		annotationsRepo = annotationsimpl.ProvideService(store, settingsProvider, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest(), nil, dashboardService, prometheus.NewPedanticRegistry())
 	}
 
 	if publicDashboardStore == nil {
-		publicDashboardStore = database.ProvideStore(store, cfg, featuremgmt.WithFeatures())
+		publicDashboardStore = database.ProvideStore(store, settingsProvider, featuremgmt.WithFeatures())
 	}
 	serviceWrapper := ProvideServiceWrapper(publicDashboardStore)
 
@@ -57,5 +57,6 @@ func newPublicDashboardServiceImpl(
 		serviceWrapper:     serviceWrapper,
 		license:            license,
 		features:           featuremgmt.WithFeatures(),
-	}, store, cfg
+		settingsProvider:   settingsProvider,
+	}, store, settingsProvider
 }

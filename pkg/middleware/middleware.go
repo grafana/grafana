@@ -29,7 +29,8 @@ func HandleNoCacheHeaders(ctx *contextmodel.ReqContext) {
 	ctx.SkipQueryCache = ctx.Req.Header.Get("X-Cache-Skip") == "true"
 }
 
-func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
+func AddDefaultResponseHeaders(settingsProvider setting.SettingsProvider) web.Handler {
+	cfg := settingsProvider.Get()
 	t := web.NewTree()
 	t.Add("/api/datasources/uid/:uid/resources/*", nil)
 	t.Add("/api/datasources/:id/resources/*", nil)
@@ -100,7 +101,8 @@ func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
 	w.Header().Set("X-Frame-Options", "deny")
 }
 
-func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
+func AddCustomResponseHeaders(settingsProvider setting.SettingsProvider) web.Handler {
+	cfg := settingsProvider.Get()
 	return func(c *web.Context) {
 		c.Resp.Before(func(w web.ResponseWriter) {
 			if w.Written() {

@@ -41,7 +41,7 @@ const AuthzServiceAudience = "authzService"
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider,
 	tracer tracing.Tracer,
@@ -51,7 +51,8 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
-	authCfg, err := readAuthzClientSettings(cfg)
+	cfg := settingsProvider.Get()
+	authCfg, err := readAuthzClientSettings(settingsProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -128,13 +129,13 @@ func ProvideAuthZClient(
 // ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
 // You need to provide a remote address in the configuration
 func ProvideStandaloneAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer,
+	settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) (authlib.AccessClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
 	}
 
-	authCfg, err := readAuthzClientSettings(cfg)
+	authCfg, err := readAuthzClientSettings(settingsProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +244,6 @@ func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, er
 		Namespace: "*",
 		Audiences: []string{"folder.grafana.app"},
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("create access token: %w", err)
 	}

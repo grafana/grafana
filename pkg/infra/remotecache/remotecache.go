@@ -27,7 +27,8 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
-	secretsService secrets.Service) (*RemoteCache, error) {
+	secretsService secrets.Service,
+) (*RemoteCache, error) {
 	client, err := createClient(cfg.RemoteCacheOptions, sqlStore, secretsService)
 	if err != nil {
 		return nil, err
@@ -151,6 +152,7 @@ func (pcs *encryptedCacheStorage) Get(ctx context.Context, key string) ([]byte, 
 
 	return pcs.secretsService.Decrypt(ctx, data)
 }
+
 func (pcs *encryptedCacheStorage) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	encrypted, err := pcs.secretsService.Encrypt(ctx, value, secrets.WithoutScope())
 	if err != nil {
@@ -159,6 +161,7 @@ func (pcs *encryptedCacheStorage) Set(ctx context.Context, key string, value []b
 
 	return pcs.cache.Set(ctx, key, encrypted, expire)
 }
+
 func (pcs *encryptedCacheStorage) Delete(ctx context.Context, key string) error {
 	return pcs.cache.Delete(ctx, key)
 }
@@ -171,9 +174,11 @@ type prefixCacheStorage struct {
 func (pcs *prefixCacheStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	return pcs.cache.Get(ctx, pcs.prefix+key)
 }
+
 func (pcs *prefixCacheStorage) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	return pcs.cache.Set(ctx, pcs.prefix+key, value, expire)
 }
+
 func (pcs *prefixCacheStorage) Delete(ctx context.Context, key string) error {
 	return pcs.cache.Delete(ctx, pcs.prefix+key)
 }

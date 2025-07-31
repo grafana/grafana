@@ -19,8 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ social.SocialConnector = (*SocialOkta)(nil)
-var _ ssosettings.Reloadable = (*SocialOkta)(nil)
+var (
+	_ social.SocialConnector = (*SocialOkta)(nil)
+	_ ssosettings.Reloadable = (*SocialOkta)(nil)
+)
 
 type SocialOkta struct {
 	*SocialBase

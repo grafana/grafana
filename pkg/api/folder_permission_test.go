@@ -49,7 +49,7 @@ func TestHTTPServer_GetFolderPermissionList(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			cfg := setting.NewCfg()
 			cfg.HiddenUsers = map[string]struct{}{"hidden": {}}
-			hs.Cfg = cfg
+			hs.Cfg = setting.ProvideService(cfg)
 			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{UID: "1"}}
 
 			hs.folderPermissionsService = &actest.FakePermissionsService{

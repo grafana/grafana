@@ -492,7 +492,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	moa, err := notifier.NewMultiOrgAlertmanager(
-		cfg,
+		setting.ProvideService(cfg),
 		cfgStore,
 		orgStore,
 		kvStore,

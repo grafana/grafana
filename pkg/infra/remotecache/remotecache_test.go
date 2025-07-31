@@ -37,7 +37,8 @@ func TestIntegrationCachedBasedOnConfig(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	db, cfg := sqlstore.InitTestDB(t)
+	db, settingsProvider := sqlstore.InitTestDB(t)
+	cfg := settingsProvider.Get()
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",
 	})

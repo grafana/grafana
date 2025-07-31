@@ -27,7 +27,7 @@ func TestPublicDashboardQueryAPI(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	adminUsername := fmt.Sprintf("testadmin-%d", time.Now().UnixNano())
-	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Login:          adminUsername,
 		Password:       "admin",

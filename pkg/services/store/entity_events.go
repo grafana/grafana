@@ -104,7 +104,7 @@ func (e *entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, er
 }
 
 func (e *entityEventService) GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error) {
-	var evs = make([]*EntityEvent, 0)
+	evs := make([]*EntityEvent, 0)
 	err := e.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.OrderBy("id asc").Where("id > ?", id).Find(&evs)
 	})
@@ -145,8 +145,7 @@ func (e *entityEventService) Run(ctx context.Context) error {
 	}
 }
 
-type dummyEntityEventsService struct {
-}
+type dummyEntityEventsService struct{}
 
 func NewDummyEntityEventsService() EntityEventsService {
 	return dummyEntityEventsService{}

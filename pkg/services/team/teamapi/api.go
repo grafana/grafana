@@ -20,7 +20,7 @@ type TeamAPI struct {
 	teamPermissionsService accesscontrol.TeamPermissionsService
 	userService            user.Service
 	license                licensing.Licensing
-	cfg                    *setting.Cfg
+	settingsProvider       setting.SettingsProvider
 	preferenceService      pref.Service
 	ds                     dashboards.DashboardService
 	logger                 log.Logger
@@ -35,7 +35,7 @@ func ProvideTeamAPI(
 	teamPermissionsService accesscontrol.TeamPermissionsService,
 	userService user.Service,
 	license licensing.Licensing,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	preferenceService pref.Service,
 	ds dashboards.DashboardService,
 	features featuremgmt.FeatureToggles,
@@ -46,7 +46,7 @@ func ProvideTeamAPI(
 		teamPermissionsService: teamPermissionsService,
 		userService:            userService,
 		license:                license,
-		cfg:                    cfg,
+		settingsProvider:       settingsProvider,
 		preferenceService:      preferenceService,
 		ds:                     ds,
 		logger:                 log.New("team-api"),

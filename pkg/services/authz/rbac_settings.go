@@ -34,7 +34,8 @@ type authzClientSettings struct {
 	cacheTTL time.Duration
 }
 
-func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
+func readAuthzClientSettings(settingsProvider setting.SettingsProvider) (*authzClientSettings, error) {
+	cfg := settingsProvider.Get()
 	authzSection := cfg.SectionWithEnvOverrides("authorization")
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 

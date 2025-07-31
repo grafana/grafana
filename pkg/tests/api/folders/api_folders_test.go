@@ -44,7 +44,7 @@ func testGetFolders(t *testing.T, featureToggles []string) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-	store, cfg := env.SQLStore, env.Cfg
+	store, cfg := env.SQLStore, env.SettingsProvider
 
 	orgID := int64(1)
 

@@ -48,7 +48,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 
 		// handler func being tested
 		hs := &HTTPServer{
-			Cfg:         setting.NewCfg(),
+			Cfg:         setting.ProvideService(setting.NewCfg()),
 			pluginStore: &pluginstore.FakePluginStore{},
 			DataSourcesService: &dataSourcesServiceMock{
 				expectedDatasources: ds,
@@ -72,7 +72,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		"/api/datasources/name/12345", "/api/datasources/name/:name", func(sc *scenarioContext) {
 			// handler func being tested
 			hs := &HTTPServer{
-				Cfg:         setting.NewCfg(),
+				Cfg:         setting.ProvideService(setting.NewCfg()),
 				pluginStore: &pluginstore.FakePluginStore{},
 			}
 			sc.handlerFunc = hs.DeleteDataSourceByName
@@ -86,7 +86,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{},
-		Cfg:                setting.NewCfg(),
+		Cfg:                setting.ProvideService(setting.NewCfg()),
 	}
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -114,7 +114,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
-		Cfg:                  setting.NewCfg(),
+		Cfg:                  setting.ProvideService(setting.NewCfg()),
 		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
@@ -141,16 +141,16 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 func TestAddDataSource_InvalidJSONData(t *testing.T) {
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{},
-		Cfg:                setting.NewCfg(),
+		Cfg:                setting.ProvideService(setting.NewCfg()),
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
-	hs.Cfg = setting.NewCfg()
-	hs.Cfg.AuthProxy.Enabled = true
-	hs.Cfg.AuthProxy.HeaderName = "X-AUTH-PROXY-HEADER"
+	cfg := hs.Cfg.Get()
+	cfg.AuthProxy.Enabled = true
+	cfg.AuthProxy.HeaderName = "X-AUTH-PROXY-HEADER"
 	jsonData := simplejson.New()
-	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxy.HeaderName)
+	jsonData.Set("httpHeaderName1", cfg.AuthProxy.HeaderName)
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
@@ -171,9 +171,10 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 
 // Updating data sources with invalid URLs should lead to an error.
 func TestUpdateDataSource_InvalidURL(t *testing.T) {
+	settingsProvider := setting.ProvideService(setting.NewCfg())
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{},
-		Cfg:                setting.NewCfg(),
+		Cfg:                settingsProvider,
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
@@ -195,16 +196,18 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 
 // Using a custom header whose name matches the name specified for auth proxy header should fail
 func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{},
-		Cfg:                setting.NewCfg(),
+		Cfg:                settingsProvider,
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	hs.Cfg.AuthProxy.Enabled = true
-	hs.Cfg.AuthProxy.HeaderName = "X-AUTH-PROXY-HEADER"
+	cfg.AuthProxy.Enabled = true
+	cfg.AuthProxy.HeaderName = "X-AUTH-PROXY-HEADER"
 	jsonData := simplejson.New()
-	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxy.HeaderName)
+	jsonData.Set("httpHeaderName1", cfg.AuthProxy.HeaderName)
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
@@ -222,13 +225,16 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 
 	assert.Equal(t, 400, sc.resp.Code)
 }
+
 func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
+	settingsProvider := setting.ProvideService(setting.NewCfg())
+	cfg := settingsProvider.Get()
 	tenantID := "1234"
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
-		Cfg:                  setting.NewCfg(),
+		Cfg:                  settingsProvider,
 		Features:             featuremgmt.WithFeatures(),
 		accesscontrolService: actest.FakeService{},
 		AccessControl: actest.FakeAccessControl{
@@ -237,7 +243,7 @@ func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 		},
 	}
 	sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
-	hs.Cfg.AuthProxy.Enabled = true
+	cfg.AuthProxy.Enabled = true
 
 	jsonData := simplejson.New()
 	jsonData.Set("teamHttpHeaders", datasources.TeamHTTPHeaders{
@@ -278,6 +284,7 @@ func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 
 // Updating data sources with URLs not specifying protocol should work.
 func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
+	settingsProvider := setting.ProvideService(setting.NewCfg())
 	const name = "Test"
 	const url = "localhost:5432"
 
@@ -285,7 +292,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
-		Cfg:                  setting.NewCfg(),
+		Cfg:                  settingsProvider,
 		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
@@ -311,6 +318,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 
 // Updating data source name where data source with same name exists.
 func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
+	settingsProvider := setting.ProvideService(setting.NewCfg())
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
@@ -318,7 +326,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 				return nil, datasources.ErrDataSourceNameExists
 			},
 		},
-		Cfg:                  setting.NewCfg(),
+		Cfg:                  settingsProvider,
 		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 		Live:                 newTestLive(t, nil),
@@ -425,7 +433,7 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
+				hs.Cfg = setting.ProvideService(setting.NewCfg())
 				hs.DataSourcesService = &dataSourcesServiceMock{expectedDatasource: &datasources.DataSource{}}
 				hs.accesscontrolService = actest.FakeService{}
 				hs.Live = newTestLive(t, hs.SQLStore)

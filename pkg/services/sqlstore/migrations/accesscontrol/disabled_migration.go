@@ -44,7 +44,8 @@ func (m *DisabledMigrator) SQL(dialect migrator.Dialect) string {
 }
 
 func (m *DisabledMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	enabled := mg.Cfg.Raw.Section("rbac").Key("enabled").MustBool(true)
+	cfg := mg.SettingsProvider.Get()
+	enabled := cfg.Raw.Section("rbac").Key("enabled").MustBool(true)
 	if enabled {
 		// if the flag is enabled we skip the reset of data migrations
 		mg.Logger.Debug("skip reset of rbac data migrations")

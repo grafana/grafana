@@ -84,7 +84,7 @@ func TestBacktesting(t *testing.T) {
 	})
 
 	t.Run("if user does not have permissions", func(t *testing.T) {
-		testUserId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		testUserId := createUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 			DefaultOrgRole: string(identity.RoleNone),
 			Password:       "test",
 			Login:          "test",
@@ -100,7 +100,7 @@ func TestBacktesting(t *testing.T) {
 		})
 
 		// access control permissions store
-		permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+		permissionsStore := resourcepermissions.NewStore(env.SettingsProvider, env.SQLStore, featuremgmt.WithFeatures())
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
 			accesscontrol.GlobalOrgID,
 			accesscontrol.User{ID: testUserId},

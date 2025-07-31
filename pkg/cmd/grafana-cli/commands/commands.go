@@ -30,7 +30,7 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.
 	}
 }
 
-func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, settingsProvider setting.SettingsProvider, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 		runner, err := initializeRunner(cmd)
@@ -67,7 +67,7 @@ func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
 	}
 
 	if cmd.Bool("debug") {
-		runner.Cfg.LogConfigSources()
+		runner.Cfg.Get().LogConfigSources()
 	}
 	return runner, nil
 }

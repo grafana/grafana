@@ -37,7 +37,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		EnableFeatureToggles: []string{featuremgmt.FlagAnnotationPermissionUpdate},
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	noneUserID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	noneUserID := tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleNone),
 		Login:          "noneuser",
 		Password:       "noneuser",
@@ -45,7 +45,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		OrgID:          1,
 	})
 
-	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Login:          "editor",
 		Password:       "editor",
@@ -53,7 +53,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		OrgID:          1,
 	})
 
-	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+	tests.CreateUser(t, env.SQLStore, env.SettingsProvider, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Login:          "viewer",
 		Password:       "viewer",

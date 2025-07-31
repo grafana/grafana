@@ -16,6 +16,7 @@ import (
 )
 
 func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
+	cfg := hs.Cfg.Get()
 	queryReader, err := util.NewURLQueryReader(c.Req.URL)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", err)
@@ -26,12 +27,12 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 
 	width := c.QueryInt("width")
 	if width == 0 {
-		width = hs.Cfg.RendererDefaultImageWidth
+		width = cfg.RendererDefaultImageWidth
 	}
 
 	height := c.QueryInt("height")
 	if height == 0 {
-		height = hs.Cfg.RendererDefaultImageHeight
+		height = cfg.RendererDefaultImageHeight
 	}
 
 	timeout, err := strconv.Atoi(queryReader.Get("timeout", "60"))
@@ -42,7 +43,7 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 
 	scale := c.QueryFloat64("scale")
 	if scale == 0 {
-		scale = hs.Cfg.RendererDefaultImageScale
+		scale = cfg.RendererDefaultImageScale
 	}
 
 	theme := c.QueryStrings("theme")
@@ -89,7 +90,7 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 			},
 			Path:            web.Params(c.Req)["*"] + queryParams,
 			Timezone:        queryReader.Get("tz", ""),
-			ConcurrentLimit: hs.Cfg.RendererConcurrentRequestLimit,
+			ConcurrentLimit: cfg.RendererConcurrentRequestLimit,
 			Headers:         headers,
 		},
 		Width:             width,

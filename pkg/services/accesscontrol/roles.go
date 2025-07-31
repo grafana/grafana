@@ -305,7 +305,7 @@ var (
 )
 
 // Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
+func DeclareFixedRoles(service Service, settingsProvider setting.SettingsProvider) error {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},

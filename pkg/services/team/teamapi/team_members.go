@@ -44,11 +44,11 @@ func (tapi *TeamAPI) getTeamMembers(c *contextmodel.ReqContext) response.Respons
 
 	filteredMembers := make([]*team.TeamMemberDTO, 0, len(queryResult))
 	for _, member := range queryResult {
-		if dtos.IsHiddenUser(member.Login, c.SignedInUser, tapi.cfg) {
+		if dtos.IsHiddenUser(member.Login, c.SignedInUser, tapi.settingsProvider) {
 			continue
 		}
 
-		member.AvatarURL = dtos.GetGravatarUrl(tapi.cfg, member.Email)
+		member.AvatarURL = dtos.GetGravatarUrl(tapi.settingsProvider, member.Email)
 		member.Labels = []string{}
 
 		if tapi.license.FeatureEnabled("teamgroupsync") && member.External {

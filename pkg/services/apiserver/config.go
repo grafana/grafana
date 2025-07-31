@@ -11,7 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o *options.Options) error {
+func applyGrafanaConfig(settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, o *options.Options) error {
+	cfg := settingsProvider.Get()
 	defaultLogLevel := 0
 	ip := net.ParseIP(cfg.HTTPAddr)
 	if ip == nil {

@@ -109,10 +109,10 @@ func TestIntegrationValidateDashboardExists(t *testing.T) {
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	feats := featuremgmt.WithFeatures()
-	dashboardStore, err := dashdb.ProvideDashboardStore(sqlStore, cfg, feats, tagimpl.ProvideService(sqlStore))
+	dashboardStore, err := dashdb.ProvideDashboardStore(sqlStore, setting.ProvideService(cfg), feats, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	dashSvc, err := dashsvc.ProvideDashboardServiceImpl(
-		cfg,
+		setting.ProvideService(cfg),
 		dashboardStore,
 		folderimpl.ProvideDashboardFolderStore(sqlStore),
 		feats,

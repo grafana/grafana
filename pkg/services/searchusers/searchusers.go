@@ -18,15 +18,15 @@ type Service interface {
 }
 
 type OSSService struct {
-	cfg              *setting.Cfg
+	settingsProvider setting.SettingsProvider
 	searchUserFilter user.SearchUserFilter
 	userService      user.Service
 }
 
-func ProvideUsersService(cfg *setting.Cfg, searchUserFilter user.SearchUserFilter, userService user.Service,
+func ProvideUsersService(settingsProvider setting.SettingsProvider, searchUserFilter user.SearchUserFilter, userService user.Service,
 ) *OSSService {
 	return &OSSService{
-		cfg:              cfg,
+		settingsProvider: settingsProvider,
 		searchUserFilter: searchUserFilter,
 		userService:      userService,
 	}
@@ -111,7 +111,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 	}
 
 	for _, user := range res.Users {
-		user.AvatarURL = dtos.GetGravatarUrl(s.cfg, user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(s.settingsProvider, user.Email)
 		user.AuthLabels = make([]string, 0, len(user.AuthModule))
 		for _, authModule := range user.AuthModule {
 			user.AuthLabels = append(user.AuthLabels, login.GetAuthProviderLabel(authModule))

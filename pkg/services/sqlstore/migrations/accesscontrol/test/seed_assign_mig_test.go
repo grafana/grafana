@@ -64,7 +64,7 @@ func TestPreventOnCallAccessSeed(t *testing.T) {
 			}
 
 			// Run accesscontrol migration
-			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+			acmigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("acmigration.test")}))
 			acmigrator.AddMigration(acmig.PreventSeedingOnCallAccessID, &acmig.SeedAssignmentOnCallAccessMigrator{})
 
 			errRunningMig := acmigrator.Start(false, 0)

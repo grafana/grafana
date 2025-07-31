@@ -25,25 +25,25 @@ type deviceDTO struct {
 }
 
 type AnonDeviceServiceAPI struct {
-	cfg            *setting.Cfg
-	store          anonstore.AnonStore
-	accesscontrol  accesscontrol.AccessControl
-	RouterRegister routing.RouteRegister
-	log            log.Logger
+	settingsProvider setting.SettingsProvider
+	store            anonstore.AnonStore
+	accesscontrol    accesscontrol.AccessControl
+	RouterRegister   routing.RouteRegister
+	log              log.Logger
 }
 
 func NewAnonDeviceServiceAPI(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	anonstore anonstore.AnonStore,
 	accesscontrol accesscontrol.AccessControl,
 	routerRegister routing.RouteRegister,
 ) *AnonDeviceServiceAPI {
 	return &AnonDeviceServiceAPI{
-		cfg:            cfg,
-		store:          anonstore,
-		accesscontrol:  accesscontrol,
-		RouterRegister: routerRegister,
-		log:            log.New("anon.api"),
+		settingsProvider: settingsProvider,
+		store:            anonstore,
+		accesscontrol:    accesscontrol,
+		RouterRegister:   routerRegister,
+		log:              log.New("anon.api"),
 	}
 }
 
@@ -84,7 +84,7 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 		resDevices = append(resDevices, &deviceDTO{
 			Device:     *device,
 			LastSeenAt: util.GetAgeString(device.UpdatedAt),
-			AvatarUrl:  dtos.GetGravatarUrl(api.cfg, device.DeviceID),
+			AvatarUrl:  dtos.GetGravatarUrl(api.settingsProvider, device.DeviceID),
 		})
 	}
 

@@ -111,7 +111,7 @@ func TestIntegrationSQLConnectionString(t *testing.T) {
 	for _, testCase := range databaseConfigTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			cfg := makeDatabaseTestConfig(t, testCase)
-			dbCfg, err := NewDatabaseConfig(cfg, testCase.features)
+			dbCfg, err := NewDatabaseConfig(setting.ProvideService(cfg), testCase.features)
 			require.Equal(t, testCase.err, err)
 			if testCase.expConnStr != "" {
 				assert.Equal(t, testCase.expConnStr, dbCfg.ConnectionString)
@@ -146,6 +146,7 @@ func makeDatabaseTestConfig(t *testing.T, tc databaseConfigTest) *setting.Cfg {
 
 	return cfg
 }
+
 func TestBuildConnectionStringPostgres(t *testing.T) {
 	testCases := []struct {
 		name            string

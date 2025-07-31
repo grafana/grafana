@@ -384,7 +384,7 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
 	mam, err := NewMultiOrgAlertmanager(
-		cfg,
+		setting.ProvideService(cfg),
 		cs,
 		orgStore,
 		kvStore,

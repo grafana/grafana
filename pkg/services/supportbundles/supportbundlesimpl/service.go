@@ -58,7 +58,8 @@ func ProvideService(
 	settings setting.Provider,
 	sql db.DB,
 	usageStats usagestats.Service,
-	tracer tracing.Tracer) (*Service, error) {
+	tracer tracing.Tracer,
+) (*Service, error) {
 	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
 		accessControl:        accessControl,

@@ -49,10 +49,13 @@ var supportedFederatedCredentialAudiences = []string{
 	"api://AzureADTokenExchangeUSGov", // US Gov
 	"api://AzureADTokenExchangeChina", // Mooncake
 	"api://AzureADTokenExchangeUSNat", // USNat
-	"api://AzureADTokenExchangeUSSec"} // USSec
+	"api://AzureADTokenExchangeUSSec",
+} // USSec
 
-var _ social.SocialConnector = (*SocialAzureAD)(nil)
-var _ ssosettings.Reloadable = (*SocialAzureAD)(nil)
+var (
+	_ social.SocialConnector = (*SocialAzureAD)(nil)
+	_ ssosettings.Reloadable = (*SocialAzureAD)(nil)
+)
 
 type SocialAzureAD struct {
 	*SocialBase
@@ -435,8 +438,10 @@ func (s *SocialAzureAD) extractRoleAndAdminOptional(claims *azureClaims) (org.Ro
 		return "", false
 	}
 
-	roleOrder := []org.RoleType{social.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
-		org.RoleViewer, org.RoleNone}
+	roleOrder := []org.RoleType{
+		social.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
+		org.RoleViewer, org.RoleNone,
+	}
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == social.RoleGrafanaAdmin {

@@ -33,7 +33,7 @@ func TestSources_List(t *testing.T) {
 			},
 		}
 
-		s := ProvideService(cfg, pCfg)
+		s := ProvideService(setting.ProvideService(cfg), pCfg)
 		srcs := s.List(context.Background())
 
 		ctx := context.Background()
@@ -104,7 +104,7 @@ func TestSources_List(t *testing.T) {
 			PluginsPath: filepath.Join(testdata, "symbolic-plugin-dirs"),
 		}
 
-		s := ProvideService(cfg, pCfg)
+		s := ProvideService(setting.ProvideService(cfg), pCfg)
 		ctx := context.Background()
 		srcs := s.List(ctx)
 		uris := map[plugins.Class]map[string]struct{}{}

@@ -61,7 +61,7 @@ func TestHealthAPI_VersionEnterprise(t *testing.T) {
 
 func TestHealthAPI_AnonymousHideVersion(t *testing.T) {
 	m, hs := setupHealthAPITestEnvironment(t)
-	hs.Cfg.Anonymous.HideVersion = true
+	hs.Cfg.Get().Anonymous.HideVersion = true
 
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	rec := httptest.NewRecorder()
@@ -80,7 +80,7 @@ func TestHealthAPI_DatabaseHealthy(t *testing.T) {
 	const cacheKey = "db-healthy"
 
 	m, hs := setupHealthAPITestEnvironment(t)
-	hs.Cfg.Anonymous.HideVersion = true
+	hs.Cfg.Get().Anonymous.HideVersion = true
 
 	healthy, found := hs.CacheService.Get(cacheKey)
 	require.False(t, found)
@@ -107,7 +107,7 @@ func TestHealthAPI_DatabaseUnhealthy(t *testing.T) {
 	const cacheKey = "db-healthy"
 
 	m, hs := setupHealthAPITestEnvironment(t)
-	hs.Cfg.Anonymous.HideVersion = true
+	hs.Cfg.Get().Anonymous.HideVersion = true
 	hs.SQLStore.(*dbtest.FakeDB).ExpectedError = errors.New("bad")
 
 	healthy, found := hs.CacheService.Get(cacheKey)
@@ -135,7 +135,7 @@ func TestHealthAPI_DatabaseHealthCached(t *testing.T) {
 	const cacheKey = "db-healthy"
 
 	m, hs := setupHealthAPITestEnvironment(t)
-	hs.Cfg.Anonymous.HideVersion = true
+	hs.Cfg.Get().Anonymous.HideVersion = true
 
 	// Mock unhealthy database in cache.
 	hs.CacheService.Set(cacheKey, false, 5*time.Minute)
@@ -180,7 +180,7 @@ func setupHealthAPITestEnvironment(t *testing.T, cbs ...func(*setting.Cfg)) (*we
 	}
 	hs := &HTTPServer{
 		CacheService: localcache.New(5*time.Minute, 10*time.Minute),
-		Cfg:          cfg,
+		Cfg:          setting.ProvideService(cfg),
 		SQLStore:     dbtest.NewFakeDB(),
 	}
 

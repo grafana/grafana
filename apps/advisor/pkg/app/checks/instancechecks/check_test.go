@@ -36,12 +36,12 @@ func TestCheck_IsCloudInstance_Logic(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &setting.Cfg{
+			cfg := setting.ProvideService(&setting.Cfg{
 				StackID:      tt.stackID,
 				BuildBranch:  "v10.0.0",
 				BuildVersion: "10.0.0",
 				BuildStamp:   time.Now().Unix(),
-			}
+			})
 
 			check := New(cfg).(*check)
 

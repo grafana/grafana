@@ -589,8 +589,8 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	userIds := make([]int64, 4)
 
 	// Seed 2 teams with 2 members
-	setup := func(store db.DB, cfg *setting.Cfg) {
-		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
+	setup := func(store db.DB, settingsProvider setting.SettingsProvider) {
+		teamSvc, err := ProvideService(store, settingsProvider, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
 
 		team1Cmd := team.CreateTeamCommand{
@@ -609,11 +609,11 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), &team2Cmd)
 		require.NoError(t, errCreateTeam)
 
-		quotaService := quotaimpl.ProvideService(store, cfg)
-		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
+		quotaService := quotaimpl.ProvideService(store, settingsProvider)
+		orgSvc, err := orgimpl.ProvideService(store, settingsProvider, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			store, orgSvc, settingsProvider, teamSvc, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(),
 		)
 		require.NoError(t, err)
@@ -682,7 +682,6 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			expectedNumUsers: 0,
 		},
 		{
-
 			desc: "should return some team members",
 			query: &team.GetTeamMembersQuery{
 				OrgID: testOrgID,

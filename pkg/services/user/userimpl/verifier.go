@@ -26,16 +26,16 @@ var (
 
 var _ user.Verifier = (*Verifier)(nil)
 
-func ProvideVerifier(cfg *setting.Cfg, us user.Service, ts tempuser.Service, ns notifications.Service, is auth.IDService) *Verifier {
-	return &Verifier{cfg, us, ts, ns, is}
+func ProvideVerifier(settingsProvider setting.SettingsProvider, us user.Service, ts tempuser.Service, ns notifications.Service, is auth.IDService) *Verifier {
+	return &Verifier{settingsProvider, us, ts, ns, is}
 }
 
 type Verifier struct {
-	cfg *setting.Cfg
-	us  user.Service
-	ts  tempuser.Service
-	ns  notifications.Service
-	is  auth.IDService
+	settingsProvider setting.SettingsProvider
+	us               user.Service
+	ts               tempuser.Service
+	ns               notifications.Service
+	is               auth.IDService
 }
 
 func (s *Verifier) Start(ctx context.Context, cmd user.StartVerifyEmailCommand) error {
@@ -74,7 +74,6 @@ func (s *Verifier) Start(ctx context.Context, cmd user.StartVerifyEmailCommand) 
 		Code:            code,
 		Status:          tempuser.TmpUserEmailUpdateStarted,
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to generate temp user for email verification: %w", err)
 	}
@@ -110,7 +109,7 @@ func (s *Verifier) Complete(ctx context.Context, cmd user.CompleteEmailVerifyCom
 		return errInvalidCode.Errorf("email was not marked as sent")
 	}
 
-	if tmpUsr.EmailSentOn.Add(s.cfg.VerificationEmailMaxLifetime).Before(time.Now()) {
+	if tmpUsr.EmailSentOn.Add(s.settingsProvider.Get().VerificationEmailMaxLifetime).Before(time.Now()) {
 		return errExpiredCode.Errorf("verification code has expired")
 	}
 

@@ -15,7 +15,8 @@ import (
 
 // ProvidePluginManagementConfig returns a new config.PluginManagementCfg.
 // It is used to provide configuration to Grafana's implementation of the plugin management system.
-func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*config.PluginManagementCfg, error) {
+func ProvidePluginManagementConfig(settingsProvider setting.SettingsProvider, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*config.PluginManagementCfg, error) {
+	cfg := settingsProvider.Get()
 	plugins := settingProvider.Section("plugins")
 	allowedUnsigned := cfg.PluginsAllowUnsigned
 	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
@@ -84,7 +85,8 @@ type PluginInstanceCfg struct {
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
-func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
+func ProvidePluginInstanceConfig(settingsProvider setting.SettingsProvider, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
+	cfg := settingsProvider.Get()
 	aws := settingProvider.Section("aws")
 	allowedAuth := cfg.AWSAllowedAuthProviders
 	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
@@ -95,7 +97,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		awsForwardSettingsPlugins = util.SplitString(aws.KeyValue("forward_settings_to_plugins").Value())
 	}
 
-	tracingCfg, err := newTracingCfg(cfg)
+	tracingCfg, err := newTracingCfg(settingsProvider)
 	if err != nil {
 		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
 	}

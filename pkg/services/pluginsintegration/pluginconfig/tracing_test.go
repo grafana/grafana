@@ -12,7 +12,7 @@ func TestNewTracingCfg(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		cfg := setting.NewCfg()
 
-		tracingCfg, err := newTracingCfg(cfg)
+		tracingCfg, err := newTracingCfg(setting.ProvideService(cfg))
 		require.NoError(t, err)
 		assert.False(t, tracingCfg.IsEnabled(), "tracing should be disabled")
 		assert.Empty(t, tracingCfg.OpenTelemetry.Address)
@@ -39,7 +39,7 @@ func TestNewTracingCfg(t *testing.T) {
 					otlpSect.Key("propagation").SetValue(tc.propagation)
 				}
 
-				tracingCfg, err := newTracingCfg(cfg)
+				tracingCfg, err := newTracingCfg(setting.ProvideService(cfg))
 				require.NoError(t, err)
 				assert.True(t, tracingCfg.IsEnabled(), "tracing should be enabled")
 				assert.Equal(t, address, tracingCfg.OpenTelemetry.Address)

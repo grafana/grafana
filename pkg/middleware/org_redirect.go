@@ -18,7 +18,8 @@ var redirectRe = regexp.MustCompile(`^/?[a-zA-Z0-9-_].*`)
 
 // OrgRedirect changes org and redirects users if the
 // querystring `orgId` doesn't match the active org.
-func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
+func OrgRedirect(settingsProvider setting.SettingsProvider, userSvc user.Service) web.Handler {
+	cfg := settingsProvider.Get()
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		orgIdValue := req.URL.Query().Get("orgId")
 		orgId, err := strconv.ParseInt(orgIdValue, 10, 64)

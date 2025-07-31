@@ -292,7 +292,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath: "'Viewer'",
 			OrgAttributePath:  "info.roles",
 			OrgMapping:        []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
@@ -307,7 +308,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath:   "'Invalid'",
 			RoleAttributeStrict: true,
 			OrgAttributePath:    "info.roles",
@@ -323,7 +325,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath:   "'Editor'",
 			RoleAttributeStrict: true,
 			OrgAttributePath:    "info.roles",
@@ -339,7 +342,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath:   "",
 			RoleAttributeStrict: true,
 			OrgAttributePath:    "info.roles",
@@ -355,7 +359,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			Setup: func(orgSvc *orgtest.FakeOrgService) {
 				orgSvc.ExpectedError = assert.AnError
 			},
@@ -374,7 +379,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath:   "",
 			RoleAttributeStrict: true,
 			OrgAttributePath:    "info.invalid",
@@ -390,7 +396,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath:   "'Invalid'",
 			RoleAttributeStrict: true,
 			OrgAttributePath:    "info.invalid",
@@ -406,7 +413,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath:   "",
 			RoleAttributeStrict: true,
 			OrgAttributePath:    "info.invalid",
@@ -420,7 +428,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath:   "",
 			RoleAttributeStrict: true,
 			OrgAttributePath:    "anotherInfo.roles",
@@ -434,7 +443,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
-				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
 			RoleAttributePath: "",
 			OrgAttributePath:  "info.roles",
 			OrgMapping:        []string{"foo:org_dev:Viewer", "bar:org_engineering:Editor"},

@@ -26,7 +26,8 @@ import (
 var metricsPrefix = resource.RingName + "_"
 
 func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
-	if !ms.cfg.EnableSharding {
+	cfg := ms.settingsProvider.Get()
+	if !cfg.EnableSharding {
 		return nil, nil
 	}
 
@@ -36,7 +37,7 @@ func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 
 	grpcclientcfg := &grpcclient.Config{}
 	flagext.DefaultValues(grpcclientcfg)
-	pool := newClientPool(*grpcclientcfg, logger, reg, ms.cfg, ms.features, tracer)
+	pool := newClientPool(*grpcclientcfg, logger, reg, ms.settingsProvider, ms.features, tracer)
 
 	ringStore, err := kv.NewClient(
 		ms.MemberlistKVConfig,
@@ -49,7 +50,7 @@ func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 	}
 
 	searchServerRing, err := ring.NewWithStoreClientAndStrategy(
-		toRingConfig(ms.cfg, ms.MemberlistKVConfig),
+		toRingConfig(ms.settingsProvider, ms.MemberlistKVConfig),
 		resource.RingName,
 		resource.RingKey,
 		ringStore,
@@ -84,19 +85,19 @@ func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 	return svc, nil
 }
 
-func toRingConfig(cfg *setting.Cfg, KVStore kv.Config) ring.Config {
+func toRingConfig(settingsProvider setting.SettingsProvider, KVStore kv.Config) ring.Config {
 	rc := ring.Config{}
 	flagext.DefaultValues(&rc)
 
 	rc.KVStore = KVStore
 	rc.HeartbeatTimeout = resource.RingHeartbeatTimeout
 
-	rc.ReplicationFactor = cfg.SearchRingReplicationFactor
+	rc.ReplicationFactor = settingsProvider.Get().SearchRingReplicationFactor
 
 	return rc
 }
 
-func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.Registerer, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) *ringclient.Pool {
+func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.Registerer, settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles, tracer trace.Tracer) *ringclient.Pool {
 	poolCfg := ringclient.PoolConfig{
 		CheckInterval:      10 * time.Second,
 		HealthCheckEnabled: true,

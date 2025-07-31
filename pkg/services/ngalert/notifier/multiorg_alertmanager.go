@@ -96,9 +96,9 @@ type MultiOrgAlertmanager struct {
 	alertmanagersMtx sync.RWMutex
 	alertmanagers    map[int64]Alertmanager
 
-	settings       *setting.Cfg
-	featureManager featuremgmt.FeatureToggles
-	logger         log.Logger
+	settingsProvider setting.SettingsProvider
+	featureManager   featuremgmt.FeatureToggles
+	logger           log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
 	peer         alertingNotify.ClusterPeer
@@ -128,7 +128,7 @@ func WithAlertmanagerOverride(f func(OrgAlertmanagerFactory) OrgAlertmanagerFact
 }
 
 func NewMultiOrgAlertmanager(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	configStore AlertingStore,
 	orgStore store.OrgStore,
 	kvStore kvstore.KVStore,
@@ -148,7 +148,7 @@ func NewMultiOrgAlertmanager(
 		ProvStore: provStore,
 
 		logger:                      l,
-		settings:                    cfg,
+		settingsProvider:            settingsProvider,
 		featureManager:              featureManager,
 		alertmanagers:               map[int64]Alertmanager{},
 		configStore:                 configStore,
@@ -161,6 +161,7 @@ func NewMultiOrgAlertmanager(
 		peer:                        &NilPeer{},
 	}
 
+	cfg := settingsProvider.Get()
 	if cfg.UnifiedAlerting.SkipClustering {
 		l.Info("Skipping setting up clustering for MOA")
 	} else {
@@ -173,7 +174,7 @@ func NewMultiOrgAlertmanager(
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
 		stateStore := NewFileStore(orgID, kvStore)
-		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager, moa.Crypto, notificationHistorian)
+		return NewAlertmanager(ctx, orgID, moa.settingsProvider, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager, moa.Crypto, notificationHistorian)
 	}
 
 	for _, opt := range opts {
@@ -261,7 +262,7 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			moa.StopAndWait()
 			return nil
-		case <-time.After(moa.settings.UnifiedAlerting.AlertmanagerConfigPollInterval):
+		case <-time.After(moa.settingsProvider.Get().UnifiedAlerting.AlertmanagerConfigPollInterval):
 			if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
 				moa.logger.Error("Error while synchronizing Alertmanager orgs", "error", err)
 			}
@@ -311,7 +312,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	}
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
-		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
+		if _, isDisabledOrg := moa.settingsProvider.Get().UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
 			moa.logger.Debug("Skipping syncing Alertmanager for disabled org", "org", orgID)
 			continue
 		}

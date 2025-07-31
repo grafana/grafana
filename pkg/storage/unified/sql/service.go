@@ -37,9 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
-var (
-	_ UnifiedStorageGrpcService = (*service)(nil)
-)
+var _ UnifiedStorageGrpcService = (*service)(nil)
 
 type UnifiedStorageGrpcService interface {
 	services.NamedService
@@ -56,11 +54,11 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
 
-	cfg       *setting.Cfg
-	features  featuremgmt.FeatureToggles
-	db        infraDB.DB
-	stopCh    chan struct{}
-	stoppedCh chan error
+	settingsProvider setting.SettingsProvider
+	features         featuremgmt.FeatureToggles
+	db               infraDB.DB
+	stopCh           chan struct{}
+	stoppedCh        chan error
 
 	handler grpcserver.Provider
 
@@ -83,7 +81,7 @@ type service struct {
 }
 
 func ProvideUnifiedStorageGrpcService(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	log log.Logger,
@@ -94,18 +92,19 @@ func ProvideUnifiedStorageGrpcService(
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 ) (UnifiedStorageGrpcService, error) {
+	cfg := settingsProvider.Get()
 	var err error
 	tracer := otel.Tracer("unified-storage")
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
+	authn := NewAuthenticatorWithFallback(settingsProvider, reg, tracer, func(ctx context.Context) (context.Context, error) {
 		auth := grpc.Authenticator{Tracer: tracer}
 		return auth.Authenticate(ctx)
 	})
 
 	s := &service{
-		cfg:                cfg,
+		settingsProvider:   settingsProvider,
 		features:           features,
 		stopCh:             make(chan struct{}),
 		authenticator:      authn,
@@ -132,7 +131,7 @@ func ProvideUnifiedStorageGrpcService(
 			return nil, fmt.Errorf("failed to create KV store client: %s", err)
 		}
 
-		lifecyclerCfg, err := toLifecyclerConfig(cfg, log)
+		lifecyclerCfg, err := toLifecyclerConfig(settingsProvider, log)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler config: %s", err)
 		}
@@ -201,35 +200,35 @@ func (s *service) starting(ctx context.Context) error {
 		}
 	}
 
-	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing)
+	authzClient, err := authz.ProvideStandaloneAuthZClient(s.settingsProvider, s.features, s.tracing)
 	if err != nil {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
+	searchOptions, err := search.NewSearchOptions(s.features, s.settingsProvider, s.tracing, s.docBuilders, s.indexMetrics)
 	if err != nil {
 		return err
 	}
 
 	serverOptions := ServerOptions{
-		DB:             s.db,
-		Cfg:            s.cfg,
-		Tracer:         s.tracing,
-		Reg:            s.reg,
-		AccessClient:   authzClient,
-		SearchOptions:  searchOptions,
-		StorageMetrics: s.storageMetrics,
-		IndexMetrics:   s.indexMetrics,
-		Features:       s.features,
-		QOSQueue:       s.queue,
-		Ring:           s.searchRing,
-		RingLifecycler: s.ringLifecycler,
+		DB:               s.db,
+		SettingsProvider: s.settingsProvider,
+		Tracer:           s.tracing,
+		Reg:              s.reg,
+		AccessClient:     authzClient,
+		SearchOptions:    searchOptions,
+		StorageMetrics:   s.storageMetrics,
+		IndexMetrics:     s.indexMetrics,
+		Features:         s.features,
+		QOSQueue:         s.queue,
+		Ring:             s.searchRing,
+		RingLifecycler:   s.ringLifecycler,
 	}
 	server, err := NewResourceServer(serverOptions)
 	if err != nil {
 		return err
 	}
-	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
+	s.handler, err = grpcserver.ProvideService(s.settingsProvider, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
 	if err != nil {
 		return err
 	}
@@ -249,12 +248,13 @@ func (s *service) starting(ctx context.Context) error {
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
-	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
+	_, err = grpcserver.ProvideReflectionService(s.settingsProvider, s.handler)
 	if err != nil {
 		return err
 	}
 
-	if s.cfg.EnableSharding {
+	cfg := s.settingsProvider.Get()
+	if cfg.EnableSharding {
 		s.log.Info("waiting until resource server is JOINING in the ring")
 		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
@@ -354,7 +354,8 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 	}
 }
 
-func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
+func ReadGrpcServerConfig(settingsProvider setting.SettingsProvider) *grpcutils.AuthenticatorConfig {
+	cfg := settingsProvider.Get()
 	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
 	return &grpcutils.AuthenticatorConfig{
@@ -364,8 +365,8 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 	}
 }
 
-func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback func(context.Context) (context.Context, error)) func(context.Context) (context.Context, error) {
-	authCfg := ReadGrpcServerConfig(cfg)
+func NewAuthenticatorWithFallback(settingsProvider setting.SettingsProvider, reg prometheus.Registerer, tracer trace.Tracer, fallback func(context.Context) (context.Context, error)) func(context.Context) (context.Context, error) {
+	authCfg := ReadGrpcServerConfig(settingsProvider)
 	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
 	metrics := newMetrics(reg)
 	return func(ctx context.Context) (context.Context, error) {
@@ -379,7 +380,8 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 	}
 }
 
-func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
+func toLifecyclerConfig(settingsProvider setting.SettingsProvider, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
+	cfg := settingsProvider.Get()
 	instanceAddr, err := ring.GetInstanceAddr(cfg.MemberlistBindAddr, netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger), logger, true)
 	if err != nil {
 		return ring.BasicLifecyclerConfig{}, err

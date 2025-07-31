@@ -18,10 +18,10 @@ import (
 // Define the storage implementation. We're generating the mock implementation
 // automatically
 type PublicDashboardStoreImpl struct {
-	sqlStore db.DB
-	log      log.Logger
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
+	sqlStore         db.DB
+	log              log.Logger
+	settingsProvider setting.SettingsProvider
+	features         featuremgmt.FeatureToggles
 }
 
 var LogPrefix = "publicdashboards.store"
@@ -31,12 +31,12 @@ var LogPrefix = "publicdashboards.store"
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 
 // Factory used by wire to dependency injection
-func ProvideStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *PublicDashboardStoreImpl {
+func ProvideStore(sqlStore db.DB, settingsProvider setting.SettingsProvider, features featuremgmt.FeatureToggles) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
-		sqlStore: sqlStore,
-		log:      log.New(LogPrefix),
-		cfg:      cfg,
-		features: features,
+		sqlStore:         sqlStore,
+		log:              log.New(LogPrefix),
+		settingsProvider: settingsProvider,
+		features:         features,
 	}
 }
 
@@ -52,12 +52,12 @@ func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, query *PublicDas
 		return nil, err
 	}
 
-	pubdashBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
+	pubdashBuilder := db.NewSqlBuilder(d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
 	pubdashBuilder.Write("SELECT uid, access_token, dashboard_uid, is_enabled")
 	pubdashBuilder.Write(" FROM dashboard_public")
 	pubdashBuilder.Write(` WHERE org_id = ?`, query.OrgID)
 
-	counterBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
+	counterBuilder := db.NewSqlBuilder(d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
 	counterBuilder.Write("SELECT COUNT(*)")
 	counterBuilder.Write(" FROM dashboard_public")
 	counterBuilder.Write(` WHERE org_id = ?`, query.OrgID)
@@ -71,7 +71,6 @@ func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, query *PublicDas
 		_, err = sess.SQL(counterBuilder.GetSQLString(), counterBuilder.GetParams()...).Get(&resp.TotalCount)
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +91,6 @@ func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*Publi
 		found, err = sess.Get(publicDashboard)
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +115,6 @@ func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, access
 		found, err = sess.Get(publicDashboard)
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +142,6 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +240,6 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 			cmd.PublicDashboard.UpdatedBy,
 			cmd.PublicDashboard.UpdatedAt.UTC(),
 			cmd.PublicDashboard.Uid)
-
 		if err != nil {
 			return err
 		}

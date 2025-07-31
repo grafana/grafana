@@ -229,7 +229,7 @@ func TestActionSetMigration(t *testing.T) {
 			putTestPermissions(t, x, perms)
 
 			// Run action set migration
-			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+			acmigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("acmigration.test")}))
 			acmig.AddActionSetPermissionsMigrator(acmigrator)
 
 			errRunningMig := acmigrator.Start(false, 0)

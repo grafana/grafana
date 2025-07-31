@@ -294,8 +294,10 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 
 		if ldap.IsMemberOf(user.Groups, group.GroupDN) {
 			orgRolesMap[group.OrgId] = group.OrgRole
-			u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: group.GroupDN,
-				OrgId: group.OrgId, OrgRole: group.OrgRole})
+			u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{
+				GroupDN: group.GroupDN,
+				OrgId:   group.OrgId, OrgRole: group.OrgRole,
+			})
 			delete(unmappedUserGroups, strings.ToLower(group.GroupDN))
 			orgIDs = append(orgIDs, group.OrgId)
 		}

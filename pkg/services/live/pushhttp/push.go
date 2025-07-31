@@ -17,9 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var (
-	logger = log.New("live.push_http")
-)
+var logger = log.New("live.push_http")
 
 func ProvideService(cfg *setting.Cfg, live *live.GrafanaLive) *Gateway {
 	logger.Info("Live Push Gateway initialization")

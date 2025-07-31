@@ -39,12 +39,12 @@ var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
 func ProvideUserAuthTokenService(sqlStore db.DB,
 	serverLockService *serverlock.ServerLockService,
 	quotaService quota.Service, secretService secrets.Service,
-	cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+	settingsProvider setting.SettingsProvider, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
 ) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
 		serverLockService: serverLockService,
-		cfg:               cfg,
+		settingsProvider:  settingsProvider,
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
 		features:          features,
@@ -52,7 +52,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 	}
 	s.externalSessionStore = provideExternalSessionStore(sqlStore, secretService, tracer)
 
-	defaultLimits, err := readQuotaConfig(cfg)
+	defaultLimits, err := readQuotaConfig(settingsProvider)
 	if err != nil {
 		return s, err
 	}
@@ -71,7 +71,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 type UserAuthTokenService struct {
 	sqlStore             db.DB
 	serverLockService    *serverlock.ServerLockService
-	cfg                  *setting.Cfg
+	settingsProvider     setting.SettingsProvider
 	log                  log.Logger
 	externalSessionStore auth.ExternalSessionStore
 	singleflight         *singleflight.Group
@@ -83,7 +83,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.Create
 	ctx, span := s.tracer.Start(ctx, "authtoken.CreateToken")
 	defer span.End()
 
-	token, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
+	token, hashedToken, err := generateAndHashToken(s.settingsProvider.Get().SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,8 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	ctx, span := s.tracer.Start(ctx, "authtoken.LookupToken")
 	defer span.End()
 
-	hashedToken := hashToken(s.cfg.SecretKey, unhashedToken)
+	cfg := s.settingsProvider.Get()
+	hashedToken := hashToken(cfg.SecretKey, unhashedToken)
 	var model userAuthToken
 	var exists bool
 	var err error
@@ -355,7 +356,8 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 		clientIPStr = clientIP.String()
 	}
 
-	newToken, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
+	cfg := s.settingsProvider.Get()
+	newToken, hashedToken, err := generateAndHashToken(cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -677,11 +679,13 @@ func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *qu
 }
 
 func (s *UserAuthTokenService) createdAfterParam() int64 {
-	return getTime().Add(-s.cfg.LoginMaxLifetime).Unix()
+	cfg := s.settingsProvider.Get()
+	return getTime().Add(-cfg.LoginMaxLifetime).Unix()
 }
 
 func (s *UserAuthTokenService) rotatedAfterParam() int64 {
-	return getTime().Add(-s.cfg.LoginMaxInactiveLifetime).Unix()
+	cfg := s.settingsProvider.Get()
+	return getTime().Add(-cfg.LoginMaxInactiveLifetime).Unix()
 }
 
 func createToken() (string, error) {
@@ -707,9 +711,14 @@ func generateAndHashToken(secretKey string) (string, string, error) {
 	return token, hashToken(secretKey, token), nil
 }
 
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+func readQuotaConfig(settingsProvider setting.SettingsProvider) (*quota.Map, error) {
 	limits := &quota.Map{}
 
+	if settingsProvider == nil {
+		return limits, nil
+	}
+
+	cfg := settingsProvider.Get()
 	if cfg == nil {
 		return limits, nil
 	}

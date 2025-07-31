@@ -31,7 +31,7 @@ type AlertingNotificationsAppProvider struct {
 }
 
 func RegisterApp(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	ng *ngalert.AlertNG,
 ) *AlertingNotificationsAppProvider {
 	if ng.IsDisabled() {
@@ -39,7 +39,7 @@ func RegisterApp(
 	}
 	appCfg := &runner.AppBuilderConfig{
 		Authorizer:               getAuthorizer(ng.Api.AccessControl),
-		LegacyStorageGetter:      getLegacyStorage(request.GetNamespaceMapper(cfg), ng),
+		LegacyStorageGetter:      getLegacyStorage(request.GetNamespaceMapper(settingsProvider), ng),
 		OpenAPIDefGetter:         v0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:             notificationsResource.GetKinds(),
 		AllowedV0Alpha1Resources: []string{builder.AllResourcesAllowed},

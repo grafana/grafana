@@ -47,6 +47,7 @@ var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.Count
 var ErrUnexpectedFileExtension = errors.New("unexpected file extension")
 
 func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
@@ -102,7 +103,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			continue
 		}
 
-		if pluginDef.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+		if pluginDef.State == plugins.ReleaseStateAlpha && !cfg.PluginsEnableAlpha {
 			continue
 		}
 
@@ -135,7 +136,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			Category:        pluginDef.Category,
 			Info:            pluginDef.Info,
 			Dependencies:    pluginDef.Dependencies,
-			DefaultNavUrl:   path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
+			DefaultNavUrl:   path.Join(cfg.AppSubURL, pluginDef.DefaultNavURL),
 			State:           pluginDef.State,
 			Signature:       pluginDef.Signature,
 			SignatureType:   pluginDef.SignatureType,
@@ -144,7 +145,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			AngularDetected: pluginDef.Angular.Detected,
 		}
 
-		if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+		if cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 			listItem.IAM = pluginDef.IAM
 		}
 
@@ -160,7 +161,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
-			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
+			listItem.DefaultNavUrl = cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
 		}
 
 		result = append(result, listItem)
@@ -171,6 +172,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	perr := hs.pluginErrorResolver.PluginError(c.Req.Context(), pluginID)
@@ -202,7 +204,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		BaseUrl:          plugin.BaseURL,
 		Module:           plugin.Module,
 		ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
-		DefaultNavUrl:    path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
+		DefaultNavUrl:    path.Join(cfg.AppSubURL, plugin.DefaultNavURL),
 		State:            plugin.State,
 		Signature:        plugin.Signature,
 		SignatureType:    plugin.SignatureType,
@@ -373,6 +375,7 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
 func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin pluginstore.Plugin, assetPath string) {
+	cfg := hs.Cfg.Get()
 	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, plugin.Info.Version, assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
@@ -383,7 +386,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin p
 		return
 	}
 
-	if hs.Cfg.Env == setting.Dev {
+	if cfg.Env == setting.Dev {
 		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 	} else {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
@@ -459,6 +462,7 @@ func (hs *HTTPServer) GetPluginErrorsList(c *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	dto := dtos.InstallPluginCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -471,7 +475,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusConflict, "Cannot update a pinned pre-installed plugin", nil)
 	}
 
-	compatOpts := plugins.NewAddOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, "")
+	compatOpts := plugins.NewAddOpts(cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, "")
 	ctx := repo.WithRequestOrigin(c.Req.Context(), "api")
 	err := hs.pluginInstaller.Add(ctx, pluginID, dto.Version, compatOpts)
 	if err != nil {
@@ -490,7 +494,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
-	if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+	if cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 		// This is a non-blocking function that verifies that the installer has
 		// the permissions that the plugin requests to have on Grafana.
 		// If we want to make this blocking, the check will have to happen before or during the installation.
@@ -553,6 +557,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID, pluginVersio
 
 // hasPluginRequestedPermissions logs if the plugin installer does not have the permissions that the plugin requests to have on Grafana.
 func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID string) {
+	cfg := hs.Cfg.Get()
 	plugin, ok := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !ok {
 		hs.log.Debug("plugin has not been installed", "pluginID", pluginID)
@@ -568,7 +573,7 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
 	evaluator := evalAllPermissions(plugin.IAM.Permissions)
 	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.authnService, c)
-	if hs.Cfg.RBAC.SingleOrganization {
+	if cfg.RBAC.SingleOrganization {
 		// In a single organization setup, no need for a global check
 		hasAccess = ac.HasAccess(hs.AccessControl, c)
 	}

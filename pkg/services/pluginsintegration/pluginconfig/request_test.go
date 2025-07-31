@@ -16,7 +16,8 @@ import (
 
 func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
 	cfg := setting.NewCfg()
-	pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	settingsProvider := setting.ProvideService(cfg)
+	pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	p := NewRequestConfigProvider(pCfg)
@@ -165,7 +166,8 @@ func TestRequestConfigProvider_PluginRequestConfig_featureToggles(t *testing.T) 
 
 		for _, tc := range tcs {
 			cfg := setting.NewCfg()
-			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), tc.features)
+			settingsProvider := setting.ProvideService(cfg)
+			pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), tc.features)
 			require.NoError(t, err)
 
 			p := NewRequestConfigProvider(pCfg)
@@ -179,7 +181,8 @@ func TestRequestConfigProvider_PluginRequestConfig_appURL(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.AppURL = "https://myorg.com/"
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -195,7 +198,8 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 		cfg.SqlDatasourceMaxIdleConnsDefault = 25
 		cfg.SqlDatasourceMaxConnLifetimeDefault = 26
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -213,7 +217,8 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 		cfg.SqlDatasourceMaxIdleConnsDefault = 0
 		cfg.SqlDatasourceMaxConnLifetimeDefault = 0
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -230,7 +235,8 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		cfg := setting.NewCfg()
 		cfg.ConcurrentQueryCount = 42
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -239,7 +245,8 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 
 	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -250,7 +257,8 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		cfg := setting.NewCfg()
 		cfg.ConcurrentQueryCount = 0
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -319,7 +327,8 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Azure = azSettings
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -353,7 +362,8 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		// Sanity check to make sure SetCustomClouds call above also desirializes the JSON
 		require.Equal(t, len(azSettings.CustomCloudList), 1)
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -381,7 +391,8 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Azure = azSettings
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -410,7 +421,8 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Azure = azSettings
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)
@@ -486,7 +498,8 @@ func TestRequestConfigProvider_PluginRequestConfig_appClientSecret(t *testing.T)
 	t.Run("Uses the configured app URL", func(t *testing.T) {
 		cfg := setting.NewCfg()
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		settingsProvider := setting.ProvideService(cfg)
+		pCfg, err := ProvidePluginInstanceConfig(settingsProvider, setting.ProvideProvider(settingsProvider), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg)

@@ -148,10 +148,10 @@ func getBatchSize() int {
 }
 
 func (c cleanUpRuleVersionsMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	var batchSize = getBatchSize()
+	batchSize := getBatchSize()
 
 	const maxRetention = 100
-	toKeep := mg.Cfg.UnifiedAlerting.RuleVersionRecordLimit
+	toKeep := mg.SettingsProvider.Get().UnifiedAlerting.RuleVersionRecordLimit
 	if toKeep <= 0 {
 		mg.Logger.Info("Rule version record limit is not set, fallback to 100", "limit", toKeep)
 		toKeep = maxRetention

@@ -76,10 +76,10 @@ const (
 type benchScenario struct {
 	db db.DB
 	// signedInUser is the user that is signed in to the server
-	cfg          *setting.Cfg
-	signedInUser *user.SignedInUser
-	teamSvc      team.Service
-	userSvc      user.Service
+	settingsProvider setting.SettingsProvider
+	signedInUser     *user.SignedInUser
+	teamSvc          team.Service
+	userSvc          user.Service
 }
 
 func BenchmarkFolderListAndSearch(b *testing.B) {
@@ -430,11 +430,11 @@ func setupDB(b testing.TB) benchScenario {
 	})
 	require.NoError(b, err)
 	return benchScenario{
-		db:           db,
-		cfg:          cfg,
-		signedInUser: &signedInUser,
-		teamSvc:      teamSvc,
-		userSvc:      userSvc,
+		db:               db,
+		settingsProvider: cfg,
+		signedInUser:     &signedInUser,
+		teamSvc:          teamSvc,
+		userSvc:          userSvc,
 	}
 }
 
@@ -456,7 +456,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	quotaSrv := quotatest.New(false, nil)
 
-	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db))
+	dashStore, err := database.ProvideDashboardStore(sc.db, sc.settingsProvider, features, tagimpl.ProvideService(sc.db))
 	require.NoError(b, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
@@ -467,16 +467,16 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	fStore := folderimpl.ProvideStore(sc.db)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
-		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, sc.settingsProvider, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
-		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
+		sc.settingsProvider, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
 	)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
+		sc.settingsProvider, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
-		sc.cfg, dashStore, folderStore,
+		sc.settingsProvider, dashStore, folderStore,
 		features, folderPermissions, ac, actest.FakeService{},
 		folderServiceWithFlagOn, nil, client.MockTestRestConfig{}, nil, quotaSrv, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
@@ -493,11 +493,11 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	hs := &HTTPServer{
 		CacheService:     localcache.New(5*time.Minute, 10*time.Minute),
-		Cfg:              sc.cfg,
+		Cfg:              sc.settingsProvider,
 		SQLStore:         sc.db,
 		Features:         features,
 		QuotaService:     quotaSrv,
-		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc, folderServiceWithFlagOn, features, sort.ProvideService()),
+		SearchService:    search.ProvideService(sc.settingsProvider, sc.db, starSvc, dashboardSvc, folderServiceWithFlagOn, features, sort.ProvideService()),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
 	}

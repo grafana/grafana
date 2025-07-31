@@ -136,7 +136,8 @@ func (s *Service) buildMLNode(_ *simple.DirectedGraph, rn *rawNode, req *Request
 		return nil, errors.New("time range must be specified")
 	}
 
-	cmd, err := ml.UnmarshalCommand(rn.QueryRaw, s.cfg.Get().AppURL)
+	cfg := s.settingsProvider.Get()
+	cmd, err := ml.UnmarshalCommand(rn.QueryRaw, cfg.AppURL)
 	if err != nil {
 		return nil, err
 	}

@@ -33,7 +33,6 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.SQL(query, orgID).Find(&memberships)
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -152,7 +151,6 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.SQL(query, orgID, kind).Find(&permissions)
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +231,6 @@ func basicRoleBindingsCollector(store db.DB) legacyTupleCollector {
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.SQL(query, orgID).Find(&bindings)
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -347,7 +344,7 @@ func roleBindingsCollector(store db.DB) legacyTupleCollector {
 
 func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
-		var query = `
+		query := `
 			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
@@ -447,7 +444,6 @@ func zanzanaCollector(relations []string) zanzanaTupleCollector {
 					Relation: relation,
 				},
 			})
-
 			if err != nil {
 				return nil, err
 			}

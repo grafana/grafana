@@ -227,7 +227,7 @@ func TestLowerCaseMigration(t *testing.T) {
 			require.Equal(t, int64(len(tc.users)), usersCount)
 
 			// run the migration
-			usermigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("usermigration.test")})
+			usermigrator := migrator.NewMigrator(x, setting.ProvideService(&setting.Cfg{Logger: log.New("usermigration.test")}))
 			usermig.AddLowerCaseUserLoginAndEmail(usermigrator)
 			errRunningMig := usermigrator.Start(false, 0)
 			require.NoError(t, errRunningMig)

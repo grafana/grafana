@@ -90,7 +90,6 @@ func goffHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Clie
 			m.New([]string{featuresProviderAudience}),
 		},
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create http client for openfeature: %w", err)
 	}

@@ -182,7 +182,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	folderApiServerMock := httptest.NewServer(mux)
 	defer folderApiServerMock.Close()
 
-	db, cfg := sqlstore.InitTestDB(t)
+	db, settingsProvider := sqlstore.InitTestDB(t)
+	cfg := settingsProvider.Get()
 	cfg.AppURL = folderApiServerMock.URL
 
 	restCfgProvider := rcp{
@@ -194,12 +195,13 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	featuresArr := []any{
-		featuremgmt.FlagKubernetesClientDashboardsFolders}
+		featuremgmt.FlagKubernetesClientDashboardsFolders,
+	}
 	features := featuremgmt.WithFeatures(featuresArr...)
 
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService(), nil)
+	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(settingsProvider), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService(), nil)
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService, tracer)
 
 	ctx := context.Background()
@@ -547,7 +549,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				},
 				Labels: []*resourcepb.Requirement{},
 			},
-			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Limit: folderSearchLimit,
+		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
@@ -637,7 +640,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 					},
 				},
 			},
-			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Limit: folderSearchLimit,
+		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
@@ -702,7 +706,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			},
 			Query:  "*test*",
 			Fields: dashboardsearch.IncludeFields,
-			Limit:  folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Limit:  folderSearchLimit,
+		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
@@ -802,7 +807,8 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 				},
 				Labels: []*resourcepb.Requirement{},
 			},
-			Limit: folderSearchLimit}).
+			Limit: folderSearchLimit,
+		}).
 			Return(&resourcepb.ResourceSearchResponse{
 				Results: &resourcepb.ResourceTable{
 					Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -871,7 +877,8 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
-	db, cfg := sqlstore.InitTestDB(t)
+	db, settingsProvider := sqlstore.InitTestDB(t)
+	cfg := settingsProvider.Get()
 
 	alertingStore := ngstore.DBstore{
 		SQLStore:      db,
@@ -909,7 +916,8 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 					},
 				},
 			},
-			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Limit: folderSearchLimit,
+		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{

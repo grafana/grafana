@@ -25,20 +25,24 @@ import (
 
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
 
-var ErrUnsupportedStorage = errors.New("storage does not support this operation")
-var ErrUploadInternalError = errors.New("upload internal error")
-var ErrQuotaReached = errors.New("file quota reached")
-var ErrValidationFailed = errors.New("request validation failed")
-var ErrFileAlreadyExists = errors.New("file exists")
-var ErrStorageNotFound = errors.New("storage not found")
-var ErrAccessDenied = errors.New("access denied")
-var ErrOnlyDashboardSaveSupported = errors.New("only dashboard save is currently supported")
+var (
+	ErrUnsupportedStorage         = errors.New("storage does not support this operation")
+	ErrUploadInternalError        = errors.New("upload internal error")
+	ErrQuotaReached               = errors.New("file quota reached")
+	ErrValidationFailed           = errors.New("request validation failed")
+	ErrFileAlreadyExists          = errors.New("file exists")
+	ErrStorageNotFound            = errors.New("storage not found")
+	ErrAccessDenied               = errors.New("access denied")
+	ErrOnlyDashboardSaveSupported = errors.New("only dashboard save is currently supported")
+)
 
-const RootPublicStatic = "public-static"
-const RootResources = "resources"
-const RootContent = "content"
-const RootDevenv = "devenv"
-const RootSystem = "system"
+const (
+	RootPublicStatic = "public-static"
+	RootResources    = "resources"
+	RootContent      = "content"
+	RootDevenv       = "devenv"
+	RootSystem       = "system"
+)
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
 
@@ -94,14 +98,15 @@ type standardStorageService struct {
 func ProvideService(
 	sql db.DB,
 	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	quotaService quota.Service,
 	systemUsersService SystemUsers,
 ) (StorageService, error) {
-	settings, err := LoadStorageConfig(cfg, features)
+	settings, err := LoadStorageConfig(settingsProvider, features)
 	if err != nil {
 		grafanaStorageLogger.Warn("Error loading storage config", "error", err)
 	}
+	cfg := settingsProvider.Get()
 
 	// always exists
 	globalRoots := []storageRuntime{
@@ -113,7 +118,7 @@ func ProvideService(
 			Name:        "Public static files",
 			Description: "Access files from the static public files",
 			Disk: &StorageLocalDiskConfig{
-				Path: cfg.StaticRootPath,
+				Path: settingsProvider.Get().StaticRootPath,
 				Roots: []string{
 					"/testdata/",
 					"/img/",
@@ -140,7 +145,8 @@ func ProvideService(
 					Roots: []string{
 						"/dev-dashboards/",
 					},
-				}})
+				},
+			})
 			globalRoots = append(globalRoots, s)
 		}
 	}

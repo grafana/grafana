@@ -22,9 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var ReceiversViewActions = []string{accesscontrol.ActionAlertingReceiversRead}
-var ReceiversEditActions = append(ReceiversViewActions, []string{accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversDelete}...)
-var ReceiversAdminActions = append(ReceiversEditActions, []string{accesscontrol.ActionAlertingReceiversReadSecrets, accesscontrol.ActionAlertingReceiversPermissionsRead, accesscontrol.ActionAlertingReceiversPermissionsWrite}...)
+var (
+	ReceiversViewActions  = []string{accesscontrol.ActionAlertingReceiversRead}
+	ReceiversEditActions  = append(ReceiversViewActions, []string{accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversDelete}...)
+	ReceiversAdminActions = append(ReceiversEditActions, []string{accesscontrol.ActionAlertingReceiversReadSecrets, accesscontrol.ActionAlertingReceiversPermissionsRead, accesscontrol.ActionAlertingReceiversPermissionsWrite}...)
+)
 
 // defaultPermissions returns the default permissions for a newly created receiver.
 func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
@@ -61,7 +63,7 @@ func ProvideReceiverPermissionsService(
 		RoleGroup:      ngalert.AlertRolesGroup,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(setting.ProvideService(cfg), options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}

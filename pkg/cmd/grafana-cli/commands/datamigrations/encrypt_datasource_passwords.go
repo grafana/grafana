@@ -14,20 +14,19 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	datasourceTypes = []string{
-		"mysql",
-		"influxdb",
-		"elasticsearch",
-		"graphite",
-		"prometheus",
-		"opentsdb",
-	}
-)
+var datasourceTypes = []string{
+	"mysql",
+	"influxdb",
+	"elasticsearch",
+	"graphite",
+	"prometheus",
+	"opentsdb",
+}
 
 // EncryptDatasourcePasswords migrates unencrypted secrets on datasources
 // to the secureJson Column.
-func EncryptDatasourcePasswords(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
+func EncryptDatasourcePasswords(c utils.CommandLine, settingsProvider setting.SettingsProvider, sqlStore db.DB) error {
+	cfg := settingsProvider.Get()
 	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
 		passwordsUpdated, err := migrateColumn(cfg, session, "password")
 		if err != nil {
@@ -69,7 +68,6 @@ func migrateColumn(cfg *setting.Cfg, session *db.Session, column string) (int, e
 	session.In("type", datasourceTypes)
 	session.Where(column + " IS NOT NULL AND " + column + " != ''")
 	err := session.Find(&rows)
-
 	if err != nil {
 		return 0, fmt.Errorf("failed to select column: %s: %w", column, err)
 	}

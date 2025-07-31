@@ -25,34 +25,35 @@ import (
 )
 
 type PluginProxy struct {
-	accessControl  ac.AccessControl
-	ps             *pluginsettings.DTO
-	pluginRoutes   []*plugins.Route
-	ctx            *contextmodel.ReqContext
-	proxyPath      string
-	matchedRoute   *plugins.Route
-	cfg            *setting.Cfg
-	secretsService secrets.Service
-	tracer         tracing.Tracer
-	transport      *http.Transport
-	features       featuremgmt.FeatureToggles
+	accessControl    ac.AccessControl
+	ps               *pluginsettings.DTO
+	pluginRoutes     []*plugins.Route
+	ctx              *contextmodel.ReqContext
+	proxyPath        string
+	matchedRoute     *plugins.Route
+	settingsProvider setting.SettingsProvider
+	secretsService   secrets.Service
+	tracer           tracing.Tracer
+	transport        *http.Transport
+	features         featuremgmt.FeatureToggles
 }
 
 // NewPluginProxy creates a plugin proxy.
 func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *contextmodel.ReqContext,
-	proxyPath string, cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
-	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
+	proxyPath string, settingsProvider setting.SettingsProvider, secretsService secrets.Service, tracer tracing.Tracer,
+	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles,
+) (*PluginProxy, error) {
 	return &PluginProxy{
-		accessControl:  accessControl,
-		ps:             ps,
-		pluginRoutes:   routes,
-		ctx:            ctx,
-		proxyPath:      proxyPath,
-		cfg:            cfg,
-		secretsService: secretsService,
-		tracer:         tracer,
-		transport:      transport,
-		features:       features,
+		accessControl:    accessControl,
+		ps:               ps,
+		pluginRoutes:     routes,
+		ctx:              ctx,
+		proxyPath:        proxyPath,
+		settingsProvider: settingsProvider,
+		secretsService:   secretsService,
+		tracer:           tracer,
+		transport:        transport,
+		features:         features,
 	}, nil
 }
 
@@ -183,7 +184,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 
 	req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
-	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.settingsProvider.Get().SendUserHeader, req, proxy.ctx.SignedInUser)
 	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
@@ -197,7 +198,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 }
 
 func (proxy PluginProxy) logRequest() {
-	if !proxy.cfg.DataProxyLogging {
+	if !proxy.settingsProvider.Get().DataProxyLogging {
 		return
 	}
 

@@ -21,20 +21,20 @@ type BasePluginContextProvider interface {
 	GetBasePluginContext(ctx context.Context, plugin pluginstore.Plugin, user identity.Requester) backend.PluginContext
 }
 
-func ProvideBaseService(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
-	return newBaseProvider(cfg, pluginRequestConfigProvider)
+func ProvideBaseService(settingsProvider setting.SettingsProvider, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
+	return newBaseProvider(settingsProvider, pluginRequestConfigProvider)
 }
 
-func newBaseProvider(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
+func newBaseProvider(settingsProvider setting.SettingsProvider, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
 	return &BaseProvider{
-		cfg:                         cfg,
+		settingsProvider:            settingsProvider,
 		pluginRequestConfigProvider: pluginRequestConfigProvider,
 		logger:                      log.New("base.plugin.context"),
 	}
 }
 
 type BaseProvider struct {
-	cfg                         *setting.Cfg
+	settingsProvider            setting.SettingsProvider
 	pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider
 	logger                      log.Logger
 }
@@ -52,7 +52,8 @@ func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginst
 	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, plugin.ID, plugin.ExternalService)
 	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
 
-	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+	cfg := p.settingsProvider.Get()
+	ua, err := useragent.New(cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		p.logger.Warn("Could not create user agent", "error", err)
 	}

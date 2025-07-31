@@ -10,7 +10,7 @@ import (
 
 func TestFeatureService(t *testing.T) {
 	cfg := setting.NewCfg()
-	mgmt, err := ProvideManagerService(cfg)
+	mgmt, err := ProvideManagerService(setting.ProvideService(cfg))
 	require.NoError(t, err)
 	require.NotNil(t, mgmt)
 

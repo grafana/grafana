@@ -140,9 +140,9 @@ func TestIsHiddenUser(t *testing.T) {
 
 	for _, c := range testcases {
 		t.Run(c.desc, func(t *testing.T) {
-			isHidden := IsHiddenUser(c.userLogin, c.signedInUser, &setting.Cfg{
+			isHidden := IsHiddenUser(c.userLogin, c.signedInUser, setting.ProvideService(&setting.Cfg{
 				HiddenUsers: c.hiddenUsers,
-			})
+			}))
 			assert.Equal(t, c.expected, isHidden)
 		})
 	}

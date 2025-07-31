@@ -37,7 +37,7 @@ type K8sClientWithFallback struct {
 }
 
 func NewK8sClientWithFallback(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	restConfigProvider apiserver.RestConfigProvider,
 	dashboardStore dashboards.Store,
 	userService user.Service,
@@ -47,7 +47,7 @@ func NewK8sClientWithFallback(
 	reg prometheus.Registerer,
 	features featuremgmt.FeatureToggles,
 ) *K8sClientWithFallback {
-	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, features)
+	newClientFunc := newK8sClientFactory(settingsProvider, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, features)
 	return &K8sClientWithFallback{
 		K8sHandler:    newClientFunc(context.Background(), dashboardv0.VERSION),
 		newClientFunc: newClientFunc,
@@ -107,7 +107,7 @@ func getConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVer
 }
 
 func newK8sClientFactory(
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	restConfigProvider apiserver.RestConfigProvider,
 	dashboardStore dashboards.Store,
 	userService user.Service,
@@ -152,7 +152,7 @@ func newK8sClientFactory(
 		}
 
 		span.AddEvent("Creating new client")
-		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter, features)
+		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(settingsProvider), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter, features)
 		clientCache[version] = newClient
 
 		return newClient

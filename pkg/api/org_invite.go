@@ -60,6 +60,7 @@ func (hs *HTTPServer) GetPendingOrgInvites(c *contextmodel.ReqContext) response.
 // 412: SMTPNotEnabledError
 // 500: internalServerError
 func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response {
+	cfg := hs.Cfg.Get()
 	inviteDto := dtos.AddInviteForm{}
 	if err := web.Bind(c.Req, &inviteDto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -91,7 +92,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 		return hs.inviteExistingUserToOrg(c, usr, &inviteDto)
 	}
 
-	if hs.Cfg.DisableLoginForm {
+	if cfg.DisableLoginForm {
 		return response.Error(http.StatusBadRequest, "Cannot invite external user when login is disabled.", nil)
 	}
 

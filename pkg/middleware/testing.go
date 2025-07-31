@@ -18,17 +18,17 @@ import (
 )
 
 type scenarioContext struct {
-	t              *testing.T
-	m              *web.Mux
-	context        *contextmodel.ReqContext
-	resp           *httptest.ResponseRecorder
-	respJson       map[string]any
-	handlerFunc    handlerFunc
-	defaultHandler web.Handler
-	url            string
-	authnService   *authntest.FakeService
-	userService    *usertest.FakeUserService
-	cfg            *setting.Cfg
+	t                *testing.T
+	m                *web.Mux
+	context          *contextmodel.ReqContext
+	resp             *httptest.ResponseRecorder
+	respJson         map[string]any
+	handlerFunc      handlerFunc
+	defaultHandler   web.Handler
+	url              string
+	authnService     *authntest.FakeService
+	userService      *usertest.FakeUserService
+	settingsProvider setting.SettingsProvider
 
 	req *http.Request
 }
@@ -93,5 +93,7 @@ func (sc *scenarioContext) exec() {
 	}
 }
 
-type scenarioFunc func(t *testing.T, c *scenarioContext)
-type handlerFunc func(c *contextmodel.ReqContext)
+type (
+	scenarioFunc func(t *testing.T, c *scenarioContext)
+	handlerFunc  func(c *contextmodel.ReqContext)
+)

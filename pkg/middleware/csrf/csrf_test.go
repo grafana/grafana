@@ -278,7 +278,6 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httpte
 	req.Header.Set("ORIGIN", origin)
 
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 	})
 
 	rr := httptest.NewRecorder()

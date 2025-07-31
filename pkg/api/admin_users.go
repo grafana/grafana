@@ -92,7 +92,8 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) response.Response {
-	if hs.Cfg.DisableLoginForm || hs.Cfg.DisableLogin {
+	cfg := hs.Cfg.Get()
+	if cfg.DisableLoginForm || cfg.DisableLogin {
 		return response.Error(http.StatusForbidden,
 			"Not allowed to reset password when login form is disabled", nil)
 	}

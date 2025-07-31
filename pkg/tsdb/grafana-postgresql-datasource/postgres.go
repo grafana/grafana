@@ -154,7 +154,6 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		_, handler, err := newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
-
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)
 			return nil, err

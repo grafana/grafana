@@ -21,13 +21,13 @@ type store interface {
 }
 
 type xormStore struct {
-	db  db.DB
-	cfg *setting.Cfg
+	db               db.DB
+	settingsProvider setting.SettingsProvider
 }
 
 func (ss *xormStore) UpdateTempUserStatus(ctx context.Context, cmd *tempuser.UpdateTempUserStatusCommand) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "UPDATE temp_user SET status=? WHERE code=?"
+		rawSQL := "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSQL, string(cmd.Status), cmd.Code)
 		return err
 	})
@@ -125,7 +125,7 @@ func (ss *xormStore) GetTempUsersQuery(ctx context.Context, query *tempuser.GetT
 func (ss *xormStore) GetTempUserByCode(ctx context.Context, query *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
 	var queryResult *tempuser.TempUserDTO
 	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		var rawSQL = `SELECT
+		rawSQL := `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
 	                tu.email          as email,
@@ -165,7 +165,7 @@ func (ss *xormStore) GetTempUserByCode(ctx context.Context, query *tempuser.GetT
 
 func (ss *xormStore) ExpireOldUserInvites(ctx context.Context, cmd *tempuser.ExpireTempUsersCommand) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
+		rawSQL := "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
 		if result, err := sess.Exec(rawSQL, string(tempuser.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(tempuser.TmpUserSignUpStarted), string(tempuser.TmpUserInvitePending)); err != nil {
 			return err
 		} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
@@ -177,7 +177,7 @@ func (ss *xormStore) ExpireOldUserInvites(ctx context.Context, cmd *tempuser.Exp
 
 func (ss *xormStore) ExpireOldVerifications(ctx context.Context, cmd *tempuser.ExpireTempUsersCommand) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status = ?"
+		rawSQL := "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status = ?"
 		if result, err := sess.Exec(rawSQL, string(tempuser.TmpUserEmailUpdateExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(tempuser.TmpUserEmailUpdateStarted)); err != nil {
 			return err
 		} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
@@ -189,7 +189,7 @@ func (ss *xormStore) ExpireOldVerifications(ctx context.Context, cmd *tempuser.E
 
 func (ss *xormStore) ExpirePreviousVerifications(ctx context.Context, cmd *tempuser.ExpirePreviousVerificationsCommand) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "UPDATE temp_user SET status = ?, updated = ? WHERE invited_by_user_id = ? AND status = ?"
+		rawSQL := "UPDATE temp_user SET status = ?, updated = ? WHERE invited_by_user_id = ? AND status = ?"
 		if result, err := sess.Exec(rawSQL, string(tempuser.TmpUserEmailUpdateExpired), time.Now().Unix(), cmd.InvitedByUserID, string(tempuser.TmpUserEmailUpdateStarted)); err != nil {
 			return err
 		} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {

@@ -12,10 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const timeLimitStartDateLength = 12
-const timeLimitMinutesLength = 6
-const timeLimitHmacLength = 64
-const timeLimitCodeLength = timeLimitStartDateLength + timeLimitMinutesLength + timeLimitHmacLength
+const (
+	timeLimitStartDateLength = 12
+	timeLimitMinutesLength   = 6
+	timeLimitHmacLength      = 64
+	timeLimitCodeLength      = timeLimitStartDateLength + timeLimitMinutesLength + timeLimitHmacLength
+)
 
 // create a time limit code
 // code format: 12 length date time string + 6 minutes string + 64 HMAC-SHA256 encoded string

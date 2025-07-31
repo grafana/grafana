@@ -35,7 +35,7 @@ import (
 func NewModule(opts Options,
 	apiOpts api.ServerOptions,
 	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	reg prometheus.Registerer,
@@ -43,7 +43,7 @@ func NewModule(opts Options,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
+	s, err := newModuleServer(opts, apiOpts, features, settingsProvider, storageMetrics, indexMetrics, reg, promGatherer, license)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func NewModule(opts Options,
 func newModuleServer(opts Options,
 	apiOpts api.ServerOptions,
 	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
+	settingsProvider setting.SettingsProvider,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	reg prometheus.Registerer,
@@ -75,7 +75,7 @@ func newModuleServer(opts Options,
 		shutdownFinished: make(chan struct{}),
 		log:              log.New("base-server"),
 		features:         features,
-		cfg:              cfg,
+		settingsProvider: settingsProvider,
 		pidFile:          opts.PidFile,
 		version:          opts.Version,
 		commit:           opts.Commit,
@@ -101,7 +101,7 @@ type ModuleServer struct {
 	context          context.Context
 	shutdownFn       context.CancelFunc
 	log              log.Logger
-	cfg              *setting.Cfg
+	settingsProvider setting.SettingsProvider
 	shutdownOnce     sync.Once
 	shutdownFinished chan struct{}
 	isInitialized    bool
@@ -153,7 +153,8 @@ func (s *ModuleServer) Run() error {
 	s.notifySystemd("READY=1")
 	s.log.Debug("Waiting on services...")
 
-	m := modules.New(s.cfg.Target)
+	cfg := s.settingsProvider.Get()
+	m := modules.New(cfg.Target)
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
 	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
@@ -168,7 +169,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.SearchServerDistributor, s.initSearchServerDistributor)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
-		return NewService(s.cfg, s.opts, s.apiOpts)
+		return NewService(s.settingsProvider, s.opts, s.apiOpts)
 	})
 
 	// TODO: uncomment this once the apiserver is ready to be run as a standalone target
@@ -181,19 +182,19 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		docBuilders, err := InitializeDocumentBuilders(s.cfg)
+		docBuilders, err := InitializeDocumentBuilders(s.settingsProvider.Get())
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig)
+		return sql.ProvideUnifiedStorageGrpcService(s.settingsProvider, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features)
+		return authz.ProvideZanzanaService(s.settingsProvider, s.features)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
+		return frontend.ProvideFrontendService(s.settingsProvider, s.features, s.promGatherer, s.registerer, s.license)
 	})
 
 	m.RegisterModule(modules.All, nil)
@@ -230,7 +231,7 @@ func (s *ModuleServer) writePIDFile() error {
 	}
 
 	// Ensure the required directory structure exists.
-	err := os.MkdirAll(filepath.Dir(s.pidFile), 0700)
+	err := os.MkdirAll(filepath.Dir(s.pidFile), 0o700)
 	if err != nil {
 		s.log.Error("Failed to verify pid directory", "error", err)
 		return fmt.Errorf("failed to verify pid directory: %s", err)
@@ -238,7 +239,7 @@ func (s *ModuleServer) writePIDFile() error {
 
 	// Retrieve the PID and write it to file.
 	pid := strconv.Itoa(os.Getpid())
-	if err := os.WriteFile(s.pidFile, []byte(pid), 0644); err != nil {
+	if err := os.WriteFile(s.pidFile, []byte(pid), 0o644); err != nil {
 		s.log.Error("Failed to write pidfile", "error", err)
 		return fmt.Errorf("failed to write pidfile: %s", err)
 	}
