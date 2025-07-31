@@ -1548,8 +1548,7 @@
       "group-not-editable": "Le groupe sélectionné ne peut pas être modifié",
       "group-not-editable-description": "Ce groupe appartient à une source de données qui ne prend pas en charge la modification.",
       "page-title": "Modifier le groupe de règles",
-      "rule-group-error": "Erreur lors du chargement du groupe de règles",
-      "title": "Modifier le groupe d’évaluation"
+      "rule-group-error": "Erreur lors du chargement du groupe de règles"
     },
     "group-loader": {
       "group-load-failed": "Échec du chargement des règles du groupe {{ groupName }} dans {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Effectuez des vérifications ping, DNS, HTTP/S et TCP à tous les niveaux du réseau.",
       "synthetic-monitoring-card-item-3": "Utilisez plus de 20 sondes mondiales ou déployez vos propres sondes privées derrière votre pare-feu.",
       "synthetic-monitoring-card-item-4": "Suivez vos SLO grâce à des alertes natives au format Prometheus, directement depuis l’interface utilisateur.",
-      "synthetic-monitoring-card-title": "Monitoring synthétique",
-      "title-alerting": "Alerte"
+      "synthetic-monitoring-card-title": "Monitoring synthétique"
     },
     "import-to-gma": {
       "action-button": "Importer",
@@ -3740,6 +3738,7 @@
     "category-selected-connection": "Connexion sélectionnée",
     "category-selected-element": "Élément sélectionné ({{element}})",
     "category-size": "Taille",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3982,6 +3981,13 @@
       "name-vertical-align": "Alignement vertical",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -7006,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": " Conseil de pro : vous pouvez également définir des sources de données via des fichiers de configuration. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Précédent",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Passer en mode sans requête"
@@ -7272,18 +7281,24 @@
       "split-tooltip": "Scinder le panneau",
       "split-widen": "Élargir le panneau"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Publiez votre commentaire",
-      "label-copied": "Copié !",
-      "label-export": "Exporter",
-      "label-trace-id": "ID de trace",
-      "title-share-thoughts-about-tracing-grafana": "Veuillez partager vos réflexions sur les traces dans Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Trace partielle",
-      "tooltip-url": "{{url}} ou {{target}} ou {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Bouton Supprimer les filtres",

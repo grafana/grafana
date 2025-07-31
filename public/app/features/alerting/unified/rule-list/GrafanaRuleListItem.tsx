@@ -1,7 +1,8 @@
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { GrafanaRulesSource } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource } from '../utils/datasource';
+import { groups } from '../utils/navigation';
 import { totalFromStats } from '../utils/ruleStats';
 import { prometheusRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
@@ -32,10 +33,17 @@ export function GrafanaRuleListItem({
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
 
+  const groupUrl = groups.detailsPageLink(
+    GRAFANA_RULES_SOURCE_NAME,
+    groupIdentifier.namespace.uid,
+    groupIdentifier.groupName
+  );
+
   const commonProps: RuleListItemCommonProps = {
     name,
     rulesSource: GrafanaRulesSource,
     group: groupIdentifier.groupName,
+    groupUrl,
     namespace: namespaceName,
     href: createRelativeUrl(`/alerting/grafana/${uid}/view`),
     health: rule?.health,
