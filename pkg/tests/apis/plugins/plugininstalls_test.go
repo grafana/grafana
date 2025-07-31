@@ -305,7 +305,7 @@ func TestIntegrationPluginInstalls(t *testing.T) {
 func setupHelper(t *testing.T) *apis.K8sTestHelper {
 	t.Helper()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true,
+		AppModeProduction: false,
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
