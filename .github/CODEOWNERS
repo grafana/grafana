@@ -720,11 +720,16 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
 /public/app/core/crash/ @grafana/observability-traces-and-profiling
 /public/app/core/history/ @grafana/observability-traces-and-profiling
+/public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform
+/public/app/core/hooks/useCleanup.ts @grafana/grafana-frontend-platform
+/public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-search-navigate-organise
+/public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
 /public/app/core/icons/ @grafana/grafana-frontend-platform
 /public/app/core/navigation/ @grafana/grafana-search-navigate-organise
 /public/app/core/reducers/ @grafana/grafana-frontend-platform
 /public/app/core/selectors/ @grafana/grafana-frontend-platform
+/public/app/core/services/CorrelationsService.ts @grafana/datapro
 /public/app/core/services/echo/ @grafana/grafana-frontend-platform
 /public/app/core/services/FetchQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
@@ -743,8 +748,17 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/store.ts @grafana/grafana-frontend-platform
 /public/app/core/time_series2.ts @grafana/dataviz-squad
 /public/app/core/trustedTypePolicies.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
+/public/app/core/utils/accessControl.ts @grafana/identity-access-team
+/public/app/core/utils/browser* @grafana/grafana-frontend-platform
+/public/app/core/utils/ConfigProvider.tsx @grafana/grafana-frontend-platform
+/public/app/core/utils/connectWithReduxStore.tsx @grafana/grafana-frontend-platform
+/public/app/core/utils/deferred.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/fetch* @grafana/grafana-frontend-platform
+/public/app/core/utils/flatten.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/isShallowEqual.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
+/public/app/core/utils/object* @grafana/grafana-frontend-platform
+/public/app/core/utils/set.ts @grafana/grafana-frontend-platform
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 # Temp owners until Enterprise team takes over
