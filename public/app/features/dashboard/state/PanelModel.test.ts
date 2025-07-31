@@ -146,12 +146,15 @@ describe('PanelModel', () => {
 
     describe('migrations', () => {
       let initialMigrator: PanelMigrationHandler<(typeof model)['options']> | undefined = undefined;
+      let initialShouldMigrate: ((panel: any) => boolean) | undefined = undefined;
 
       beforeEach(() => {
         initialMigrator = tablePlugin.onPanelMigration;
+        initialShouldMigrate = tablePlugin.shouldMigrate;
       });
       afterEach(() => {
         tablePlugin.onPanelMigration = initialMigrator;
+        tablePlugin.shouldMigrate = initialShouldMigrate;
       });
 
       it('should run sync migrations', async () => {
@@ -178,6 +181,58 @@ describe('PanelModel', () => {
 
         await model.pluginLoaded(tablePlugin);
         expect(model.options).toMatchObject({ valueToMigrate: 'new-version' });
+      });
+
+      it('should run migration when shouldMigrate=true and same version', async () => {
+        model.options.valueToMigrate = 'old-legacy';
+        model.pluginVersion = '1.0.0';
+
+        tablePlugin.meta.info.version = '1.0.0';
+        tablePlugin.onPanelMigration = (p) => ({ ...p.options, valueToMigrate: 'migrated-by-shouldMigrate' });
+        tablePlugin.shouldMigrate = () => true;
+
+        await model.pluginLoaded(tablePlugin);
+
+        expect(model.options).toMatchObject({ valueToMigrate: 'migrated-by-shouldMigrate' });
+      });
+
+      it('should run migration when shouldMigrate=false and versions are different', async () => {
+        model.options.valueToMigrate = 'old-legacy';
+        model.pluginVersion = '1.0.0';
+
+        tablePlugin.meta.info.version = '2.0.0';
+        tablePlugin.onPanelMigration = (p) => ({ ...p.options, valueToMigrate: 'migrated-by-version' });
+        tablePlugin.shouldMigrate = () => false;
+
+        await model.pluginLoaded(tablePlugin);
+
+        expect(model.options).toMatchObject({ valueToMigrate: 'migrated-by-version' });
+      });
+
+      it('should fallback to version comparison when shouldMigrate is false', async () => {
+        model.options.valueToMigrate = 'old-legacy';
+        model.pluginVersion = '1.0.0';
+
+        tablePlugin.meta.info.version = '1.0.0';
+        tablePlugin.onPanelMigration = (p) => ({ ...p.options, valueToMigrate: 'should-not-migrate' });
+        tablePlugin.shouldMigrate = () => false;
+
+        await model.pluginLoaded(tablePlugin);
+
+        expect(model.options).toMatchObject({ valueToMigrate: 'old-legacy' });
+      });
+
+      it('should fallback to version comparison when shouldMigrate is not defined', async () => {
+        model.options.valueToMigrate = 'old-legacy';
+        model.pluginVersion = '1.0.0';
+
+        tablePlugin.meta.info.version = '2.0.0';
+        tablePlugin.onPanelMigration = (p) => ({ ...p.options, valueToMigrate: 'migrated-by-version' });
+        tablePlugin.shouldMigrate = undefined;
+
+        await model.pluginLoaded(tablePlugin);
+
+        expect(model.options).toMatchObject({ valueToMigrate: 'migrated-by-version' });
       });
     });
 
