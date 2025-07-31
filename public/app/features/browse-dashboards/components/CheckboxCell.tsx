@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
+import { Checkbox, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useSelector } from 'app/types/store';
 
@@ -60,16 +60,7 @@ export default function CheckboxCell({
     firstSelectedRootFolder && itemRootFolder && itemRootFolder !== firstSelectedRootFolder;
 
   if (isFromDifferentRootFolder) {
-    return (
-      <Tooltip
-        content={t(
-          'browse-dashboards.different-folder-disabled',
-          'Items from another folder are already selected. Cannot mix folders in bulk actions.'
-        )}
-      >
-        <Checkbox disabled value={false} />
-      </Tooltip>
-    );
+    return <Checkbox disabled value={false} />;
   }
 
   const state = isSelected(item);
