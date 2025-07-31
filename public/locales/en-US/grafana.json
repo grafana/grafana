@@ -5809,6 +5809,7 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "Error moving dashboard",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
       "current-file-not-found": "Current dashboard file could not be found",
