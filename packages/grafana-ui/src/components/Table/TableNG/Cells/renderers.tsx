@@ -135,7 +135,8 @@ export function getCellRenderer(field: Field, cellOptions: TableCellOptions): Ta
     return AUTO_RENDERER;
   }
 
-  return CELL_RENDERERS[cellType].renderer ?? AUTO_RENDERER;
+  // cautious fallback to Auto renderer in case some garbage cell type has been provided.
+  return CELL_RENDERERS[cellType]?.renderer ?? AUTO_RENDERER;
 }
 
 /** @internal */
