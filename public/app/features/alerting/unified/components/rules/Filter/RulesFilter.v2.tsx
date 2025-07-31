@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { pickBy } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
@@ -24,10 +25,12 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { trackFilterButtonApplyClick, trackFilterButtonClearClick, trackFilterButtonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
+import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
 import { PopupCard } from '../../HoverCard';
@@ -96,6 +99,10 @@ export default function RulesFilter() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { searchQuery, updateFilters } = useRulesFilter();
 
+  // Check if plugins filter is enabled
+  const { components } = useAlertingHomePageExtensions();
+  const pluginsFilterEnabled = components.length > 0;
+
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { setValue, watch, handleSubmit } = useForm<SearchQueryForm>({
     defaultValues: {
@@ -109,11 +116,34 @@ export default function RulesFilter() {
 
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
     updateFilters(formAdvancedFiltersToRuleFilter(values));
+
+    // Filter out empty/default values before tracking
+    const meaningfulValues = pickBy(values, (value, key) => {
+      if (value === null || value === undefined || value === '') {
+        return false;
+      }
+      if (Array.isArray(value) && value.length === 0) {
+        return false;
+      }
+      if (key === 'plugins' && !pluginsFilterEnabled) {
+        return false;
+      }
+      return true;
+    });
+
+    trackFilterButtonApplyClick(meaningfulValues);
     setIsPopupOpen(false); // Should close popup after applying filters?
   };
 
   const handleClearFilters = () => {
     updateFilters(formAdvancedFiltersToRuleFilter(emptyAdvancedFilters));
+  };
+
+  const handleOnToggle = () => {
+    if (!isPopupOpen) {
+      trackFilterButtonClick();
+    }
+    setIsPopupOpen(!isPopupOpen);
   };
 
   const filterButtonLabel = t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Filter');
@@ -138,7 +168,7 @@ export default function RulesFilter() {
             disableBlur={true}
             isOpen={isPopupOpen}
             onClose={() => setIsPopupOpen(false)}
-            onToggle={() => setIsPopupOpen(!isPopupOpen)}
+            onToggle={handleOnToggle}
             content={
               <div
                 className={styles.content}
@@ -356,6 +386,7 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
       onReset={() => {
         isManualResetRef.current = true;
         reset(emptyAdvancedFilters);
+        trackFilterButtonClearClick();
         onClear();
       }}
     >
