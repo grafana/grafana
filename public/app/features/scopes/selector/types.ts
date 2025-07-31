@@ -6,6 +6,8 @@ export type ScopesMap = Record<string, Scope>;
 export interface SelectedScope {
   scopeId: string;
   scopeNodeId?: string;
+  // Used to display title next to selected scope
+  parentNodeId?: string;
 }
 
 export interface TreeNode {
