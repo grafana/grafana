@@ -371,6 +371,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       width: '85vw',
+      height: '80%',
       [theme.breakpoints.down('md')]: {
         width: '100%',
       },
@@ -389,9 +390,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css({
       border: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0, 1, 1, 0),
+      height: '100%',
     }),
     logsContainer: css({
-      height: '57vh',
+      height: '100%',
+      minHeight: '52vh',
       overflow: 'hidden',
     }),
     flexColumn: css({
