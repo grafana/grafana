@@ -247,6 +247,10 @@ const (
 	// Routes short url requests from /api to the /apis endpoint
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
+	// FlagKubernetesAlertingRules
+	// Adds support for Kubernetes alerting and recording rules
+	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
