@@ -1,23 +1,22 @@
 import { renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
 
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
-import { useLogListContextData, useLogListContext, useLogIsPinned, LogListContext } from './LogListContext';
-import { defaultProps } from './__mocks__/LogListContext';
+import {
+  useLogListContextData,
+  useLogListContext,
+  useLogIsPinned,
+  LogListContext,
+  useLogIsPermalinked,
+} from './LogListContext';
+import { defaultValue } from './__mocks__/LogListContext';
 
-const log = createLogLine({ rowId: 'yep' });
+const log = createLogLine({ rowId: 'yep', uid: 'uid' });
 const value = {
-  ...defaultProps,
-  downloadLogs: jest.fn(),
-  getRowContextQuery: jest.fn(),
-  logSupportsContext: jest.fn(),
-  onPermalinkClick: jest.fn(),
-  onPinLine: jest.fn(),
-  onOpenContext: jest.fn(),
-  onUnpinLine: jest.fn(),
-  pinLineButtonTooltipTitle: 'test',
+  ...defaultValue,
   pinnedLogs: ['yep'],
+  permalinkedLogId: log.uid,
 };
 const wrapper = ({ children }: { children: ReactNode }) => (
   <LogListContext.Provider value={value}>{children}</LogListContext.Provider>
@@ -41,9 +40,22 @@ test('Allows to tell if a log is pinned', () => {
   expect(result.current).toBe(true);
 });
 
-test('Allows to tell if a log is pinned', () => {
+test('Allows to tell if a log is not pinned', () => {
   const otherLog = createLogLine({ rowId: 'nope' });
   const { result } = renderHook(() => useLogIsPinned(otherLog), { wrapper });
+
+  expect(result.current).toBe(false);
+});
+
+test('Allows to tell if a log is permalinked', () => {
+  const { result } = renderHook(() => useLogIsPermalinked(log), { wrapper });
+
+  expect(result.current).toBe(true);
+});
+
+test('Allows to tell if a log is not permalinked', () => {
+  const otherLog = createLogLine({ rowId: 'nope' });
+  const { result } = renderHook(() => useLogIsPermalinked(otherLog), { wrapper });
 
   expect(result.current).toBe(false);
 });

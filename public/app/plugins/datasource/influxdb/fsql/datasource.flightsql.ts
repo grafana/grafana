@@ -34,7 +34,7 @@ export class FlightSQLDatasource extends SqlDatasource {
       getMeta: (identifier?: TableIdentifier) => this.fetchMeta(identifier),
     };
     this.sqlLanguageDefinition = {
-      id: 'flightsql',
+      id: 'sql',
       completionProvider: getSqlCompletionProvider(args),
       formatter: formatSQL,
     };

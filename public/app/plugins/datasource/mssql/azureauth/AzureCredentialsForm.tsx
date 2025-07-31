@@ -2,6 +2,7 @@ import { ChangeEvent } from 'react';
 
 import { AzureCredentials, AzureAuthType } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Select, Input } from '@grafana/ui';
 
 export interface Props {
@@ -116,27 +117,30 @@ export const AzureCredentialsForm = (props: Props) => {
   const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
     {
       value: 'clientsecret',
-      label: 'App Registration',
+      label: t('azureauth.azure-credentials-form.auth-options-app-registration', 'App Registration'),
     },
   ];
   if (managedIdentityEnabled) {
     authTypeOptions.push({
       value: 'msi',
-      label: 'Managed Identity',
+      label: t('azureauth.azure-credentials-form.auth-options-managed-identity', 'Managed Identity'),
     });
   }
   if (azureEntraPasswordCredentialsEnabled) {
     authTypeOptions.push({
       value: 'ad-password',
-      label: 'Azure Entra Password',
+      label: t('azureauth.azure-credentials-form.auth-options-azure-entra', 'Azure Entra Password'),
     });
   }
 
   return (
     <div>
       <Field
-        label="Authentication"
-        description="Choose the type of authentication to Azure services"
+        label={t('azureauth.azure-credentials-form.label-authentication', 'Authentication')}
+        description={t(
+          'azureauth.azure-credentials-form.description-authentication',
+          'Choose the type of authentication to Azure services'
+        )}
         htmlFor="authentication-type"
       >
         <Select
@@ -150,77 +154,94 @@ export const AzureCredentialsForm = (props: Props) => {
       {credentials.authType === 'clientsecret' && (
         <>
           {azureCloudOptions && (
-            <Field label="Azure Cloud" htmlFor="azure-cloud-type" disabled={disabled}>
+            <Field
+              label={t('azureauth.azure-credentials-form.label-azure-cloud', 'Azure Cloud')}
+              htmlFor="azure-cloud-type"
+              disabled={disabled}
+            >
               <Select
                 value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                 options={azureCloudOptions}
                 onChange={onAzureCloudChange}
                 isDisabled={disabled}
                 inputId="azure-cloud-type"
-                aria-label="Azure Cloud"
+                aria-label={t('azureauth.azure-credentials-form.aria-label-azure-cloud', 'Azure Cloud')}
                 width={20}
               />
             </Field>
           )}
           <Field
-            label="Directory (tenant) ID"
+            label={t('azureauth.azure-credentials-form.label-tenant-id', 'Directory (tenant) ID')}
             required
             htmlFor="tenant-id"
             invalid={!credentials.tenantId}
-            error={'Tenant ID is required'}
+            error={t('azureauth.azure-credentials-form.required-tenant-id', 'Tenant ID is required')}
           >
             <Input
               width={45}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.tenantId || ''}
               onChange={onTenantIdChange}
               disabled={disabled}
-              aria-label="Tenant ID"
+              aria-label={t('azureauth.azure-credentials-form.aria-label-tenant-id', 'Tenant ID')}
             />
           </Field>
           <Field
-            label="Application (client) ID"
+            label={t('azureauth.azure-credentials-form.label-client-id', 'Application (client) ID')}
             required
             htmlFor="client-id"
             invalid={!credentials.clientId}
-            error={'Client ID is required'}
+            error={t('azureauth.azure-credentials-form.required-client-id', 'Client ID is required')}
           >
             <Input
               width={45}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.clientId || ''}
               onChange={onClientIdChange}
               disabled={disabled}
-              aria-label="Client ID"
+              aria-label={t('azureauth.azure-credentials-form.arialabel-client-id', 'Client ID')}
             />
           </Field>
           {!disabled &&
             (typeof credentials.clientSecret === 'symbol' ? (
-              <Field label="Client Secret" htmlFor="client-secret" required>
+              <Field
+                label={t('azureauth.azure-credentials-form.label-configured-client-secret', 'Client Secret')}
+                htmlFor="client-secret"
+                required
+              >
                 <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
                   <Input
-                    aria-label="Client Secret"
-                    placeholder="configured"
+                    aria-label={t(
+                      'azureauth.azure-credentials-form.aria-label-configured-client-secret',
+                      'Client Secret'
+                    )}
+                    placeholder={t(
+                      'azureauth.azure-credentials-form.placeholder-configured-client-secret',
+                      'configured'
+                    )}
                     disabled={true}
                     data-testid={'client-secret'}
                     width={45}
                   />
                   <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
-                    Reset
+                    <Trans i18nKey="azureauth.azure-credentials-form.client-secret-reset">Reset</Trans>
                   </Button>
                 </div>
               </Field>
             ) : (
               <Field
-                label="Client Secret"
+                label={t('azureauth.azure-credentials-form.label-client-secret', 'Client Secret')}
                 required
                 htmlFor="client-secret"
                 invalid={!credentials.clientSecret}
-                error={'Client secret is required'}
+                error={t('azureauth.azure-credentials-form.required-client-secret', 'Client secret is required')}
               >
                 <Input
                   width={45}
-                  aria-label="Client Secret"
+                  aria-label={t('azureauth.azure-credentials-form.aria-label-client-secret', 'Client Secret')}
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientSecret || ''}
                   onChange={onClientSecretChange}
@@ -233,57 +254,73 @@ export const AzureCredentialsForm = (props: Props) => {
       )}
       {credentials.authType === 'ad-password' && azureEntraPasswordCredentialsEnabled && (
         <>
-          <Field label="User Id" required htmlFor="user-id" invalid={!credentials.userId} error={'User ID is required'}>
+          <Field
+            label={t('azureauth.azure-credentials-form.label-user-id', 'User Id')}
+            required
+            htmlFor="user-id"
+            invalid={!credentials.userId}
+            error={'User ID is required'}
+          >
             <Input
               width={45}
               value={credentials.userId || ''}
               onChange={onUserIdChange}
               disabled={disabled}
-              aria-label="User ID"
+              aria-label={t('azureauth.azure-credentials-form.aria-label-user-id', 'User ID')}
             />
           </Field>
           <Field
-            label="Application Client ID"
+            label={t('azureauth.azure-credentials-form.label-application-client-id', 'Application Client ID')}
             required
             htmlFor="application-client-id"
             invalid={!credentials.clientId}
-            error={'Application Client ID is required'}
+            error={t(
+              'azureauth.azure-credentials-form.required-application-client-id',
+              'Application Client ID is required'
+            )}
           >
             <Input
               width={45}
               value={credentials.clientId || ''}
               onChange={onClientIdChange}
               disabled={disabled}
-              aria-label="Application Client ID"
+              aria-label={t(
+                'azureauth.azure-credentials-form.aria-label-application-client-id',
+                'Application Client ID'
+              )}
             />
           </Field>
           {!disabled &&
             (typeof credentials.password === 'symbol' ? (
-              <Field label="Password" htmlFor="password" required>
+              <Field
+                label={t('azureauth.azure-credentials-form.label-password-configured', 'Password')}
+                htmlFor="password"
+                required
+              >
                 <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
                   <Input
-                    aria-label="Password"
-                    placeholder="configured"
+                    aria-label={t('azureauth.azure-credentials-form.aria-label-password-configured', 'Password')}
+                    placeholder={t('azureauth.azure-credentials-form.placeholder-password-configured', 'configured')}
                     disabled={true}
                     data-testid={'password'}
                     width={45}
                   />
                   <Button variant="secondary" type="button" onClick={onPasswordReset} disabled={disabled}>
-                    Reset
+                    <Trans i18nKey="azureauth.azure-credentials-form.password-reset">Reset</Trans>
                   </Button>
                 </div>
               </Field>
             ) : (
               <Field
-                label="Password"
+                label={t('azureauth.azure-credentials-form.label-password', 'Password')}
                 required
                 htmlFor="password"
                 invalid={!credentials.password}
-                error={'Password is required'}
+                error={t('azureauth.azure-credentials-form.required-password', 'Password is required')}
               >
                 <Input
                   width={45}
-                  aria-label="Password"
+                  aria-label={t('azureauth.azure-credentials-form.aria-label-password', 'Password')}
                   value={credentials.password || ''}
                   onChange={onPasswordChange}
                   id="password"

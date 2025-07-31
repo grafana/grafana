@@ -8,14 +8,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestAfterCreatePermissionCreator(t *testing.T) {
-	mockSetter := func(ctx context.Context, key *resource.ResourceKey, auth authtypes.AuthInfo, val utils.GrafanaMetaAccessor) error {
+	mockSetter := func(ctx context.Context, key *resourcepb.ResourceKey, auth authtypes.AuthInfo, val utils.GrafanaMetaAccessor) error {
 		return nil
 	}
 
@@ -69,7 +70,7 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 			UserID:  1,
 		})
 		obj := &v0alpha1.Dashboard{}
-		key := &resource.ResourceKey{
+		key := &resourcepb.ResourceKey{
 			Group:     "test",
 			Resource:  "test",
 			Namespace: "test",
@@ -92,7 +93,7 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 			UserID:  1,
 		})
 		obj := &v0alpha1.Dashboard{}
-		key := &resource.ResourceKey{
+		key := &resourcepb.ResourceKey{
 			Group:     "test",
 			Resource:  "test",
 			Namespace: "test",

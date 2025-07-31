@@ -15,26 +15,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestIntegration_AdminApiReencrypt_Enterprise(t *testing.T) {
-	t.Skip("This test is currently broken, investigating...")
-
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	getSecretsFunctions := map[string]func(*testing.T, *server.TestEnv) map[int]secret{}
 	getSecretsFunctions["settings"] = func(t *testing.T, env *server.TestEnv) map[int]secret {
 		return getSettingSecrets(t, env.SQLStore)
 	}
 
 	setup := func(t *testing.T, env *server.TestEnv, grafanaListenAddr string) {
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "admin",
-			Login:          "admin",
-			IsAdmin:        true,
-		})
-
 		addSetting(t, grafanaListenAddr)
 	}
 
@@ -72,7 +64,13 @@ func getSettingSecrets(t *testing.T, store db.DB) map[int]secret {
 	}
 
 	err := store.WithDbSession(t.Context(), func(sess *db.Session) error {
-		return sess.Table("setting").Select("section, key, encrypted_value").OrderBy("section, key").Find(&rows)
+		cols := []string{
+			store.GetDialect().Quote("section"),
+			store.GetDialect().Quote("key"),
+			store.GetDialect().Quote("encrypted_value"),
+		}
+		// Quote all column names. In practice, only `key` needs to be quoted in MySQL, but we quote all to be safe.
+		return sess.Table("setting").Select(strings.Join(cols, ", ")).Find(&rows)
 	})
 	require.NoError(t, err)
 

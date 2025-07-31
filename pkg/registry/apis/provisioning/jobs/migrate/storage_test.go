@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"google.golang.org/grpc/metadata"
 )
 
@@ -115,7 +117,7 @@ func TestStorageSwapper_WipeUnifiedAndSetMigratedFlag(t *testing.T) {
 				dual.On("Status", mock.Anything, gr.GroupResource()).Return(dualwrite.StorageStatus{}, nil)
 
 				mockStream := NewBulkStore_BulkProcessClient(t)
-				mockStream.On("CloseAndRecv").Return(&resource.BulkResponse{}, nil)
+				mockStream.On("CloseAndRecv").Return(&resourcepb.BulkResponse{}, nil)
 				bulk.On("BulkProcess", mock.Anything, mock.Anything).Return(mockStream, nil)
 
 				dual.On("Update", mock.Anything, mock.MatchedBy(func(status dualwrite.StorageStatus) bool {
@@ -143,7 +145,7 @@ func TestStorageSwapper_WipeUnifiedAndSetMigratedFlag(t *testing.T) {
 					dual.On("Status", mock.Anything, gr.GroupResource()).Return(dualwrite.StorageStatus{}, nil)
 
 					mockStream := NewBulkStore_BulkProcessClient(t)
-					mockStream.On("CloseAndRecv").Return(&resource.BulkResponse{}, nil)
+					mockStream.On("CloseAndRecv").Return(&resourcepb.BulkResponse{}, nil)
 					bulk.On("BulkProcess", mock.MatchedBy(func(ctx context.Context) bool {
 						md, ok := metadata.FromOutgoingContext(ctx)
 						if !ok {

@@ -4,9 +4,10 @@ import { ReactElement } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { docsTip } from '../../../configuration/ConfigEditor';
+import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
 
 import { tracking } from './state/helpers';
@@ -69,7 +70,9 @@ export function ResultsTable(props: ResultsTableProps) {
           <Tooltip
             content={
               <>
-                When creating a {descriptiveType}, Prometheus exposes multiple series with the type counter.{' '}
+                <Trans i18nKey="grafana-prometheus.querybuilder.results-table.content-descriptive-type">
+                  When creating a {{ descriptiveType }}, Prometheus exposes multiple series with the type counter.{' '}
+                </Trans>
                 {docsTip(link)}
               </>
             }
@@ -103,15 +106,24 @@ export function ResultsTable(props: ResultsTableProps) {
     let message;
 
     if (!state.fuzzySearchQuery) {
-      message = 'There are no metrics found in the data source.';
+      message = t(
+        'grafana-prometheus.querybuilder.results-table.message-no-metrics-found',
+        'There are no metrics found in the data source.'
+      );
     }
 
     if (query.labels.length > 0) {
-      message = 'There are no metrics found. Try to expand your label filters.';
+      message = t(
+        'grafana-prometheus.querybuilder.results-table.message-expand-label-filters',
+        'There are no metrics found. Try to expand your label filters.'
+      );
     }
 
     if (state.fuzzySearchQuery || state.selectedTypes.length > 0) {
-      message = 'There are no metrics found. Try to expand your search and filters.';
+      message = t(
+        'grafana-prometheus.querybuilder.results-table.message-expand-search',
+        'There are no metrics found. Try to expand your search and filters.'
+      );
     }
 
     return (
@@ -140,11 +152,17 @@ export function ResultsTable(props: ResultsTableProps) {
     <table className={styles.table}>
       <thead className={styles.stickyHeader}>
         <tr>
-          <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>Name</th>
+          <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>
+            <Trans i18nKey="grafana-prometheus.querybuilder.results-table.name">Name</Trans>
+          </th>
           {state.hasMetadata && (
             <>
-              <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>Type</th>
-              <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>Description</th>
+              <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>
+                <Trans i18nKey="grafana-prometheus.querybuilder.results-table.type">Type</Trans>
+              </th>
+              <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>
+                <Trans i18nKey="grafana-prometheus.querybuilder.results-table.description">Description</Trans>
+              </th>
             </>
           )}
           <th className={styles.selectButtonWidth}> </th>
@@ -172,7 +190,7 @@ export function ResultsTable(props: ResultsTableProps) {
                       onClick={() => selectMetric(metric)}
                       className={styles.centerButton}
                     >
-                      Select
+                      <Trans i18nKey="grafana-prometheus.querybuilder.results-table.select">Select</Trans>
                     </Button>
                   </td>
                 </tr>

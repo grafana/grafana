@@ -10,7 +10,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type LargeObjectSupport interface {
@@ -27,11 +27,11 @@ type LargeObjectSupport interface {
 
 	// Deconstruct takes a large object, write most of it to blob storage and leave a few metadata bits around to help with list
 	// NOTE: changes to the object must be handled by mutating the input obj
-	Deconstruct(ctx context.Context, key *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor, raw []byte) error
+	Deconstruct(ctx context.Context, key *resourcepb.ResourceKey, client resourcepb.BlobStoreClient, obj utils.GrafanaMetaAccessor, raw []byte) error
 
 	// Reconstruct will join the resource+blob back into a complete resource
 	// NOTE: changes to the object must be handled by mutating the input obj
-	Reconstruct(ctx context.Context, key *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor) error
+	Reconstruct(ctx context.Context, key *resourcepb.ResourceKey, client resourcepb.BlobStoreClient, obj utils.GrafanaMetaAccessor) error
 }
 
 var _ LargeObjectSupport = (*BasicLargeObjectSupport)(nil)
@@ -64,7 +64,7 @@ func (s *BasicLargeObjectSupport) MaxSize() int {
 }
 
 // Deconstruct implements LargeObjectSupport.
-func (s *BasicLargeObjectSupport) Deconstruct(ctx context.Context, key *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor, raw []byte) error {
+func (s *BasicLargeObjectSupport) Deconstruct(ctx context.Context, key *resourcepb.ResourceKey, client resourcepb.BlobStoreClient, obj utils.GrafanaMetaAccessor, raw []byte) error {
 	if key.Group != s.TheGroupResource.Group {
 		return fmt.Errorf("requested group mismatch")
 	}
@@ -104,7 +104,7 @@ func (s *BasicLargeObjectSupport) Deconstruct(ctx context.Context, key *resource
 	}
 
 	// Save the blob
-	info, err := client.PutBlob(ctx, &resource.PutBlobRequest{
+	info, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{
 		ContentType: "application/json",
 		Value:       val,
 		Resource:    key,
@@ -125,7 +125,7 @@ func (s *BasicLargeObjectSupport) Deconstruct(ctx context.Context, key *resource
 }
 
 // Reconstruct implements LargeObjectSupport.
-func (s *BasicLargeObjectSupport) Reconstruct(ctx context.Context, key *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor) error {
+func (s *BasicLargeObjectSupport) Reconstruct(ctx context.Context, key *resourcepb.ResourceKey, client resourcepb.BlobStoreClient, obj utils.GrafanaMetaAccessor) error {
 	blobInfo := obj.GetBlob()
 	if blobInfo == nil {
 		return fmt.Errorf("the object does not have a blob")
@@ -135,8 +135,8 @@ func (s *BasicLargeObjectSupport) Reconstruct(ctx context.Context, key *resource
 	if err != nil {
 		return err
 	}
-	rsp, err := client.GetBlob(ctx, &resource.GetBlobRequest{
-		Resource: &resource.ResourceKey{
+	rsp, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{
+		Resource: &resourcepb.ResourceKey{
 			Group:     s.TheGroupResource.Group,
 			Resource:  s.TheGroupResource.Resource,
 			Namespace: obj.GetNamespace(),

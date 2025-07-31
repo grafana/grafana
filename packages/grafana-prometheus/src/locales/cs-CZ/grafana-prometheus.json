@@ -1,0 +1,515 @@
+{
+  "grafana-prometheus": {
+    "components": {
+      "annotation-query-editor": {
+        "annotation-data-load-error": "Chyba načtení dat vysvětlivky!",
+        "aria-label-lower-limit-parameter": "Nastavit dolní limit pro parametr kroku",
+        "label-min-step": "Min. krok",
+        "label-series-value-as-timestamp": "Hodnota řady jako časové razítko",
+        "label-tags": "Tagy",
+        "label-text": "Text",
+        "label-title": "Název",
+        "placeholder-auto": "auto.",
+        "tooltip-either-pattern-example-instance-replaced-label": "Použijte buď název, nebo vzor. Například {{labelTemplate}} je nahrazeno hodnotou štítku pro štítek {{labelName}}.",
+        "tooltip-min-step": "Dodatečný dolní limit pro parametr kroku dotazu Prometheus a pro proměnné <2>{{intervalVar}}</2> a <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Jednotka časového razítka je milisekunda. Pokud je jednotkou hodnoty řady sekunda, vynásobte její vektor rozsahu 1 000."
+      },
+      "get-query-type-options": {
+        "description": {
+          "instant-query-range": "Spustit okamžitý dotaz a dotaz na rozsah"
+        },
+        "label": {
+          "both": "Oba"
+        },
+        "range-options": {
+          "description": {
+            "query-range": "Spustit dotaz v časovém rozsahu"
+          },
+          "label": {
+            "instant": "Instantní",
+            "range": "Rozsah"
+          }
+        }
+      },
+      "label-selector": {
+        "aria-label-filter-expression-for-label": "Filtrovat výraz pro štítek",
+        "description-select-labels": "Po výběru hodnot štítků se zobrazí pouze možné kombinace štítků.",
+        "select-labels-to-search-in": "2. Vyberte štítky, ve kterých chcete hledat"
+      },
+      "metric-selector": {
+        "aria-label-filter-expression-for-metric": "Filtrovat výraz pro metriku",
+        "aria-label-limit-results-from-series-endpoint": "Omezit výsledky z koncového bodu řady",
+        "description-series-limit": "Limit se vztahuje na všechny metriky, štítky a hodnoty. Ponechte pole prázdné pro použití výchozího limitu. Nastavením na 0 zakážete limit a načtete vše – může to způsobit problémy s výkonem.",
+        "label-select-metric": "Po výběru metriky se zobrazí pouze možné štítky. Štítky jsou omezeny limitem řady níže.",
+        "select-a-metric": "1. Vyberte metriku",
+        "series-limit": "Limit řady"
+      },
+      "prom-cheat-sheet": {
+        "prom-ql-cheat-sheet": "Přehled PromQL"
+      },
+      "prom-exemplar-field": {
+        "exemplars": "Příklady",
+        "tooltip-disable-query": "Zakázat dotaz s příklady",
+        "tooltip-enable-query": "Povolit dotaz s příklady"
+      },
+      "prom-explore-extra-field": {
+        "aria-label-prometheus-extra-field": "Extra pole Prometheus",
+        "aria-label-query-type-field": "Pole typu dotazu",
+        "aria-label-step-field": "Pole kroku",
+        "min-step": "Min. krok",
+        "query-type": "Typ dotazu",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Zde lze použít časové jednotky a vestavěné proměnné, například: {{example1}}, {{example2}}, {{example3}} {{example4}}, {{example5}}, {{example6}}, {{example7}} (výchozí, pokud není zadána žádná jednotka: {{default}})"
+      },
+      "prom-query-field": {
+        "placeholder-enter-a-prom-ql-query": "Zadejte dotaz PromQL…"
+      },
+      "prom-variable-query-editor": {
+        "aria-label-classic-query": "Klasický dotaz",
+        "aria-label-metric-regex": "Metrický regulární výraz",
+        "aria-label-metric-selector": "Volič metriky",
+        "aria-label-prometheus-query": "Dotaz Prometheus",
+        "aria-label-query-type": "Typ dotazu",
+        "aria-label-series-query": "Dotaz na řadu",
+        "label-classic-query": "Klasický dotaz",
+        "label-label": "Štítek",
+        "label-metric-regex": "Metrický regulární výraz",
+        "label-query": "Dotaz",
+        "label-query-type": "Typ dotazu",
+        "label-series-query": "Dotaz na řadu",
+        "placeholder-classic-query": "Klasický dotaz",
+        "placeholder-metric-regex": "Metrický regulární výraz",
+        "placeholder-prometheus-query": "Dotaz Prometheus",
+        "placeholder-select-query-type": "Vyberte typ dotazu",
+        "placeholder-series-query": "Dotaz na řadu",
+        "returns-metrics-matching-specified-metric-regex": "Vrátí seznam metrik odpovídajících zadanému metrickému regulárnímu výrazu.",
+        "tooltip-classic-query": "Původní implementace editoru proměnných dotazů Prometheus. Zadejte řetězec se správným typem dotazu a parametry, jak je popsáno v těchto dokumentech. Například {{exampleQuery}}.",
+        "tooltip-label": "Vrátí seznam hodnot štítků pro název štítku ve všech metrikách, pokud není metrika zadána.",
+        "tooltip-metric-regex": "Vrátí seznam názvů štítků, volitelně filtrování podle zadaného metrického regulárního výrazu.",
+        "tooltip-query": "Vrátí seznam výsledků dotazu Prometheus pro daný dotaz. To může zahrnovat funkce Prometheus, tj. {{exampleQuery}}.",
+        "tooltip-query-type": "Zásuvný modul zdroje dat Prometheus poskytuje následující typy dotazů pro proměnné šablony.",
+        "tooltip-series-query": "Zadejte metriku se štítky, pouze metriku nebo pouze štítky, tj. {{example1}}, {{example2}} nebo {{example3}}. Vrátí seznam časových řad spojených se zadanými daty."
+      },
+      "selector-actions": {
+        "aria-label-selector": "volič",
+        "aria-label-selector-clear-button": "Tlačítko Vymazat volič",
+        "aria-label-use-selector-as-metrics-button": "Tlačítko Použít volič jako metriku",
+        "aria-label-use-selector-for-query-button": "Tlačítko Použít volič pro dotaz",
+        "aria-label-validate-submit-button": "Tlačítko Ověřit odeslání",
+        "clear": "Vymazat",
+        "resulting-selector": "4. Výsledný volič",
+        "use-as-rate-query": "Použít jako dotaz na sazbu",
+        "use-query": "Použít dotaz",
+        "validate-selector": "Ověřit volič"
+      },
+      "value-selector": {
+        "aria-label-filter-expression-for-label-values": "Filtrovat výraz pro hodnoty štítků",
+        "aria-label-values-for": "Hodnoty pro {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Použijte vyhledávací pole pro hledání hodnot napříč vybranými štítky.",
+        "select-multiple-values-for-your-labels": "3. Vyberte (více) hodnot pro štítky"
+      }
+    },
+    "configuration": {
+      "alerting-settings-overhaul": {
+        "label-allow-as-recording-rules-target": "Povolit jako cíl pravidel nahrávání",
+        "label-manage-alerts-via-alerting-ui": "Spravovat výstrahy prostřednictvím uživatelského rozhraní upozorňování",
+        "title-alerting": "Výstrahy",
+        "tooltip-allow-as-recording-rules-target": "Povolit výběr tohoto zdroje dat jako cíle pro zápis pravidel záznamu.",
+        "tooltip-manage-alerts-via-alerting-ui": "Spravovat pravidla výstrah pro tento zdroj dat. Chcete-li spravovat další zdroje Alerting, přidejte zdroj dat Alertmanager."
+      },
+      "config-editor": {
+        "browser-access-mode-error": "Režim přístupu z prohlížeče ve zdroji dat Prometheus již není k dispozici. Přepněte na režim přístupu k serveru.",
+        "description-advanced-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat.",
+        "title-advanced-settings": "Pokročilá nastavení",
+        "title-error": "Chyba"
+      },
+      "data-source-http-settings-overhaul": {
+        "tooltip-browser-access-mode": "Vaše metoda přístupu je <1>Prohlížeč</1>, to znamená, že adresa URL musí být přístupná z prohlížeče.",
+        "tooltip-http-url": "Zadejte úplnou adresu URL HTTP (například {{exampleURL}})",
+        "tooltip-server-access-mode": "Vaše metoda přístupu je <1>Server</1>, to znamená, že adresa URL musí být přístupná z backendu/serveru Grafana."
+      },
+      "docs-tip": {
+        "visit-docs-for-more-details-here": "Další podrobnosti najdete v dokumentaci zde."
+      },
+      "exemplar-setting": {
+        "label-data-source": "Zdroj dat",
+        "label-internal-link": "Interní odkaz",
+        "label-label-name": "Název štítku",
+        "label-remove-exemplar-link": "Odebrat příklad odkazu",
+        "label-url": "URL",
+        "label-url-label": "Štítek adresy URL",
+        "placeholder-go-to-examplecom": "Přejít na example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "ID sledování",
+        "title-remove-exemplar-link": "Odebrat příklad odkazu",
+        "tooltip-data-source": "Zdroj dat, na který bude exemplář odkazovat.",
+        "tooltip-internal-link": "Tuto možnost povolte, pokud máte interní odkaz. Pokud je tato možnost povolena, zobrazí se výběr zdroje dat. Vyberte úložiště dat pro sledování backendu pro vaše vzorová data.",
+        "tooltip-label-name": "Název pole v objektu štítků, které by mělo být použito k získání ID sledování.",
+        "tooltip-url": "Adresa URL backendu trasování pro uživatele za účelem trasování",
+        "tooltip-url-label": "Použijte k přepsání štítku tlačítka v poli traceID exempláře."
+      },
+      "exemplars-settings": {
+        "add": "Přidat",
+        "no-exemplars-configurations": "Žádné příklady konfigurace",
+        "title-exemplars": "Příklady"
+      },
+      "prom-settings": {
+        "aria-label-default-editor": "Výchozí editor (kód nebo nástroj pro tvorbu)",
+        "aria-label-prom-type-type": "{{promType}} typ",
+        "aria-label-prometheus-type": "Typ Prometheus",
+        "aria-label-select-http-method": "Vyberte metodu HTTP",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-cache-level": "Úroveň vyrovnávací paměti",
+        "label-custom-query-parameters": "Vlastní parametry dotazu",
+        "label-default-editor": "Výchozí editor",
+        "label-disable-metrics-lookup": "Zakázat vyhledávání metrik",
+        "label-disable-recording-rules-beta": "Zakázat pravidla nahrávání (beta)",
+        "label-http-method": "Metoda HTTP",
+        "label-incremental-querying-beta": "Přírůstkové dotazování (beta)",
+        "label-metric-names-suggestion-limit": "Limit návrhů názvů metriky",
+        "label-prom-type-version": "{{promType}} verze",
+        "label-prometheus-type": "Typ Prometheus",
+        "label-query-overlap-window": "Okno překrytí dotazu",
+        "label-query-timeout": "Časový limit dotazu",
+        "label-scrape-interval": "Interval scrapingu",
+        "label-series-limit": "Limit řady",
+        "label-use-series-endpoint": "Použít koncový bod řady",
+        "more-info": "Další informace o konfiguraci typu a verze Prometheus ve zdrojích dat najdete v <2>dokumentaci k zajišťování</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Příklad: {{example}}",
+        "title-interval-behaviour": "Chování intervalu",
+        "title-other": "Ostatní",
+        "title-performance": "Výkon",
+        "title-query-editor": "Editor dotazů",
+        "tooltip-cache-level": "Nastaví úroveň ukládání do vyrovnávací paměti prohlížeče pro dotazy editoru. Pro zdroje dat s vysokou kardinalitou se doporučuje nastavit vyšší úroveň vyrovnávací paměti.",
+        "tooltip-custom-query-parameters": "Přidejte vlastní parametry do adresy URL dotazu Prometheus. Například {{example1}}, {{example2}}, {{example3}} nebo {{example4}}. Více parametrů by mělo být pospojováno pomocí {{concatenationChar}}.",
+        "tooltip-default-editor": "Nastavit výchozí možnost editoru pro všechny uživatele tohoto zdroje dat.",
+        "tooltip-disable-metrics-lookup": "Zaškrtnutím této možnosti zakážete výběr metrik a podporu metrik/štítků v automatickém doplňování pole dotazu. Užitečné, pokud máte problémy s výkonem u větších instancí Prometheus. ",
+        "tooltip-disable-recording-rules-beta": "Tato funkce zakáže pravidla nahrávání. Zapněte tuto možnost pro zlepšení výkonu nástěnky",
+        "tooltip-http-method": "K dotazu na zdroj dat Prometheus můžete použít metodu POST nebo GET HTTP. Doporučenou metodou je POST, protože umožňuje větší dotazy. Změňte na GET, pokud máte verzi Prometheus starší než 2.1 nebo pokud jsou požadavky POST ve vaší síti omezeny.",
+        "tooltip-incremental-querying-beta": "Tato funkce změní výchozí chování relativních dotazů tak, aby vždy požadovaly aktuální data z instance Prometheus. Místo toho budou výsledky dotazů uloženy do vyrovnávací paměti a budou požadovány pouze nové záznamy. Povolte tuto možnost pro snížení zatížení databáze a sítě.",
+        "tooltip-metric-names-suggestion-limit": "Maximální počet názvů metrik, které se mohou zobrazit jako návrhy automatického doplňování v režimu kódu editoru dotazů.",
+        "tooltip-prom-type-version": "Tímto nastavíte verzi své instance {{promType}}, pokud není automaticky nakonfigurována.",
+        "tooltip-prometheus-type": "Nastavte hodnotu na typ databáze Prometheus, např. Prometheus, Cortex, Mimir nebo Thanos. Změna tohoto pole uloží aktuální nastavení. Některé typy Prometheus podporují nebo nepodporují různá rozhraní API. Některé typy například podporují shodu regex pro dotazy na štítky za účelem zlepšení výkonu. Některé typy mají API pro metadata. Pokud toto nastavíte nesprávně, při dotazování na metriky a štítky můžete zaznamenat neobvyklé chování. Zkontrolujte dokumentaci Prometheus a ujistěte se, že zadáváte správný typ.",
+        "tooltip-query-overlap-window": "Nastavte dobu trvání, například {{example1}} nebo {{example2}} nebo {{example3}}. Výchozí hodnota: {{default}}. Tato doba trvání bude přidána k době trvání každého přírůstkového požadavku.",
+        "tooltip-query-timeout": "Nastavte časový limit dotazu Prometheus.",
+        "tooltip-scrape-interval": "Tento interval udává, jak často Prometheus shromažďuje cíle. Nastavte hodnotu na typický interval shromažďování a vyhodnocování nakonfigurovaný v konfiguračním souboru Prometheus. Pokud nastavíte hodnotu vyšší než interval konfiguračního souboru Prometheus, Grafana vyhodnotí data podle tohoto intervalu a uvidíte méně datových bodů. Výchozí nastavení je {{default}}.",
+        "tooltip-series-limit": "Limit se vztahuje na všechny zdroje (metriky, štítky a hodnoty) pro oba koncové body (řady a štítky). Ponechte pole prázdné pro použití výchozího limitu (40 000). Nastavením na 0 zakážete limit a načtete vše – může to způsobit problémy s výkonem. Výchozí limit je 40 000.",
+        "tooltip-use-series-endpoint": "Zaškrtnutím této možnosti upřednostníte koncový bod řady s parametrem {{exampleParameter}} před koncovým bodem hodnot štítků s parametrem {{exampleParameter}}. Zatímco koncový bod hodnot štítků je považován za výkonnější, někteří uživatelé mohou upřednostňovat řady kvůli metodě POST, zatímco koncový bod hodnot štítků má pouze metodu GET."
+      }
+    },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
+    "querybuilder": {
+      "additional-settings": {
+        "content-filter-metric-names-regex-search-using": "Filtrovat názvy metrik podle vyhledávání regulárních výrazů pomocí dalšího volání rozhraní Prometheus API.",
+        "disable-text-wrap": "Zakázat obtékání textu"
+      },
+      "feedback-link": {
+        "give-feedback": "Poskytnout zpětnou vazbu",
+        "title-give-feedback": "Průzkumník metrik je nový. Dejte nám prosím vědět, jak ho můžeme vylepšit"
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
+      },
+      "get-placeholders": {
+        "browse": "",
+        "include-null-metadata": "",
+        "metadata-search-switch": "",
+        "set-use-backend": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
+      },
+      "handle-function": {
+        "text": {
+          "query-parsing-is-ambiguous": "Analýza dotazu je nejednoznačná."
+        }
+      },
+      "label-filter-item": {
+        "aria-label-remove": "Odebrat {{name}}",
+        "placeholder-select-label": "Vybrat štítek",
+        "placeholder-select-value": "Vyberte hodnotu"
+      },
+      "label-filters": {
+        "label-filters": "Filtry štítků",
+        "label-label-filters": "Filtry štítků",
+        "tooltip-label-filters": "Volitelné: používá se k filtrování metriky vybrané pro tento typ dotazu."
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
+      },
+      "metric-combobox": {
+        "async-select": {
+          "aria-label-open-metrics-explorer": "Otevřít průzkumníka metrik",
+          "placeholder-select-metric": "Vybrat metriku",
+          "tooltip-open-metrics-explorer": "Otevřít průzkumníka metrik"
+        },
+        "label-metric": "Metrika",
+        "tooltip-metric": "Volitelné: vrátí seznam hodnot štítků pro název štítku v zadané metrice."
+      },
+      "metrics-modal": {
+        "additional-settings": "Dodatečná nastavení",
+        "aria-label-additional-settings": "Další nastavení",
+        "aria-label-browse-metrics": "Procházet metriky",
+        "currently-selected": "Aktuálně vybráno: {{selected}}",
+        "metrics-pre-filtered": "Tyto metriky byly předem filtrovány štítky vybranými ve filtrech štítků.",
+        "placeholder-results-per-page": "výsledků na stránku",
+        "results-per-page": "Výsledky na stránku",
+        "title-metrics-explorer": "Průzkumník metrik",
+        "results-amount_one": "Zobrazuje se {{num}} z {{count}} výsledků",
+        "results-amount_few": "Zobrazuje se {{num}} z {{count}} výsledků",
+        "results-amount_many": "Zobrazuje se {{num}} z {{count}} výsledků",
+        "results-amount_other": "Zobrazuje se {{num}} z {{count}} výsledků"
+      },
+      "nested-query": {
+        "label": {
+          "ignoring": "Ignorování",
+          "on": "Zapnuto"
+        },
+        "operator": "Operátor",
+        "tooltip-remove-match": "Odebrat shodu",
+        "vector-matches": "Vektorové shody"
+      },
+      "operation-editor": {
+        "not-found": "Operace {{id}} nebyla nalezena",
+        "title-remove": "Odebrat {{name}}"
+      },
+      "operation-header": {
+        "placeholder-replace-with": "Nahradit",
+        "title-click-to-view-alternative-operations": "Kliknutím zobrazíte alternativní operace",
+        "title-remove-operation": "Odebrat operaci"
+      },
+      "operation-info-button": {
+        "title-click-to-show-description": "Kliknutím zobrazíte popis",
+        "title-remove-operation": "Odebrat operaci"
+      },
+      "operation-list": {
+        "operations": "Operace",
+        "placeholder-search": "Hledat",
+        "title-add-operation": "Přidat operaci"
+      },
+      "operation-param-editor": {
+        "title-add": "Přidat {{name}}",
+        "title-remove": "Odebrat {{name}}"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
+      },
+      "prom-query-builder-options": {
+        "aria-label-lower-limit-parameter": "Nastavit dolní limit pro parametr kroku",
+        "aria-label-select-resolution": "Vyberte rozlišení",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
+        "label-exemplars": "Příklady",
+        "label-format": "Formát",
+        "label-min-step": "Min. krok",
+        "label-resolution": "Rozlišení",
+        "label-type": "Typ",
+        "placeholder-auto": "auto.",
+        "title-options": "Možnosti",
+        "tooltip-min-step": "Dodatečný dolní limit pro parametr kroku dotazu Prometheus a pro proměnné <2>{{interval}}</2> a <4>{{rateInterval}}</4>."
+      },
+      "prom-query-code-editor-autocomplete-info": {
+        "autocomplete-suggestions-limited": "Návrhy automatického doplňování jsou omezeny",
+        "tooltip-autocomplete-suggestions-limited": "Počet názvů metrik překračuje limit automatického doplňování. Zobrazuje se pouze {{autocompleteLimit}} nejrelevantnější/ch metrik. Prahovou hodnotu můžete upravit v nastavení zdroje dat."
+      },
+      "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
+        "kick-start-your-query": "Spustit dotaz",
+        "label-explain": "Vysvětlit",
+        "run-queries": "Spustit dotazy",
+        "title-parsing-error-switch-builder": "Chyba analýzy: Přepnout do režimu nástroje pro tvorbu?"
+      },
+      "prom-query-legend-editor": {
+        "label-legend": "Legenda",
+        "placeholder-select-legend-mode": "Vyberte režim legendy",
+        "tooltip-legend": "Přepsání názvu řady nebo šablony. Např. {{templateExample}} bude nahrazeno hodnotou štítku pro {{labelName}}."
+      },
+      "query-builder-hints": {
+        "hint-details": "nápověda: {{hintDetails}}"
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
+      },
+      "query-pattern": {
+        "apply-query": "Použít dotaz",
+        "aria-label-apply-query-starter-button": "tlačítko Použít spouštěč dotazu",
+        "aria-label-back-button": "tlačítko Zpět",
+        "aria-label-create-new-query-button": "tlačítko Vytvořit nový dotaz",
+        "aria-label-raw-query": "Nezpracovaný dotaz: {{patternName}}",
+        "aria-label-use-this-query-button": "použít toto tlačítko dotazu",
+        "back": "Zpět",
+        "create-new-query": "Vytvořit nový dotaz",
+        "use-this-query": "Použít tento dotaz"
+      },
+      "query-patterns-modal": {
+        "aria-label-close-kick-start-your-query-modal": "zavřít modální okno spuštění dotazu",
+        "aria-label-kick-start-your-query-modal": "Spustit modální okno dotazu",
+        "aria-label-toggle-query-starter": "otevřít a zavřít {{patternType}} kartu spouštěče dotazu",
+        "close": "Zavřít",
+        "description-kick-start-your-query": "Spusťte dotaz výběrem jednoho z těchto dotazů. Poté můžete pokračovat v dokončení dotazu.",
+        "label-toggle-query-starter": "Spouštěče dotazů: {{patternType}}",
+        "title-kick-start-your-query": "Spustit dotaz"
+      },
+      "raw-query": {
+        "aria-label-selector": "volič"
+      },
+      "results-table": {
+        "content-descriptive-type": "Při vytváření {{descriptiveType}} Prometheus zobrazí více řad s počítadlem typů. ",
+        "description": "Popis",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
+        "name": "Název",
+        "select": "Vybrat",
+        "type": "Typ"
+      },
+      "update-function-args": {
+        "text": {
+          "query-parsing-is-ambiguous": "Analýza dotazu je nejednoznačná."
+        }
+      }
+    }
+  }
+}

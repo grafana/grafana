@@ -13,20 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -36,8 +28,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration_AdminApiReencrypt(t *testing.T) {
-	t.Skip("This test is currently broken, investigating...")
-
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	const (
 		dataSourceTable              = "data_source"
 		secretsTable                 = "secrets"
@@ -61,18 +54,12 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 	}
 
 	setup := func(t *testing.T, env *server.TestEnv, grafanaListenAddr string) {
-		userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "admin",
-			Login:          "admin",
-		})
-
 		dsCmd := &datasources.AddDataSourceCommand{
 			Name:            "TestDatasource",
 			Type:            "testdata",
 			Access:          datasources.DS_ACCESS_DIRECT,
 			UID:             "testuid",
-			UserID:          userId,
+			UserID:          1,
 			OrgID:           1,
 			WithCredentials: true,
 			SecureJsonData: map[string]string{
@@ -84,7 +71,7 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		// Trigger creation of signing key
-		_, _, err = env.IDService.SignIdentity(context.Background(), &authn.Identity{ID: fmt.Sprintf("%d", userId), Type: claims.TypeUser})
+		_, _, err = env.IDService.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 		require.NoError(t, err)
 
 		// Add alerting config with secure settings.
@@ -248,24 +235,6 @@ func verifySecrets(t *testing.T, env *server.TestEnv, before, after map[int]secr
 		// Since we're storing timestamps with seconds resolution, diff can be 0.
 		require.True(t, 0 <= updatedDiff && updatedDiff <= time.Minute, "Updated time difference (%v) outside of allowed range for key %d", updatedDiff, k)
 	}
-}
-
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 1
-
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
-	)
-	require.NoError(t, err)
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u.ID
 }
 
 func getSecureJsonSecrets(t *testing.T, store db.DB, table string, secureJsonDataKey string) map[int]secret {

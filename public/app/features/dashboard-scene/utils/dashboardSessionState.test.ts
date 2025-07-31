@@ -1,10 +1,14 @@
 import { config, locationService } from '@grafana/runtime';
 import { CustomVariable, UrlSyncManager } from '@grafana/scenes';
-import { DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
-import { PRESERVED_SCENE_STATE_KEY, restoreDashboardStateFromLocalStorage } from './dashboardSessionState';
+import {
+  PRESERVED_SCENE_STATE_KEY,
+  preserveDashboardSceneStateInLocalStorage,
+  restoreDashboardStateFromLocalStorage,
+} from './dashboardSessionState';
 
 describe('dashboardSessionState', () => {
   beforeAll(() => {
@@ -18,35 +22,21 @@ describe('dashboardSessionState', () => {
   beforeEach(() => {});
 
   describe('behavior', () => {
-    it('should do nothing for default home dashboard', () => {
-      const scene = buildTestScene();
-      scene.setState({ uid: undefined });
-
-      const deactivate = scene.activate();
+    it('should do nothing if no uid', () => {
       expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBeNull();
 
-      deactivate();
+      preserveDashboardSceneStateInLocalStorage({} as URLSearchParams, undefined);
+
       expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBeNull();
     });
 
-    it('should do nothing if dashboard version is 0', () => {
-      const scene = buildTestScene();
-      scene.setState({ version: 0 });
+    it('should capture dashboard scene state and save it to session storage', () => {
+      const params = new URLSearchParams('from=now-6h&to=now&timezone=browser&var-customVar=a');
 
-      const deactivate = scene.activate();
       expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBeNull();
 
-      deactivate();
-      expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBeNull();
-    });
+      preserveDashboardSceneStateInLocalStorage(params, 'uid');
 
-    it('should capture dashboard scene state and save it to session storage on deactivation', () => {
-      const scene = buildTestScene();
-
-      const deactivate = scene.activate();
-      expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBeNull();
-
-      deactivate();
       expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBe(
         '?from=now-6h&to=now&timezone=browser&var-customVar=a'
       );
@@ -69,6 +59,45 @@ describe('dashboardSessionState', () => {
       expect(variable!.state!.text).toEqual(['b']);
       expect(timeRange?.state.from).toEqual('now-5m');
       expect(timeRange?.state.to).toEqual('now');
+    });
+
+    it('should use preserved state filters if current location has empty filters state', () => {
+      // we have a saved state with filters set
+      window.sessionStorage.setItem(
+        PRESERVED_SCENE_STATE_KEY,
+        '?var-customVar=b&var-nonApplicableVar=b&from=now-5m&to=now&timezone=browser&var-filters=cluster%7C%3D%7Cdev&var-filters=test'
+      );
+
+      // but the target location also has filters key with an empty state
+      locationService.replace({
+        search: 'var-customVar=b&from=now-5m&to=now&timezone=browser&var-filters=',
+      });
+
+      // var-filters must also be set on the scene otherwise restore fn will drop the filter url key
+      const scene = buildTestScene({
+        templating: {
+          list: [
+            {
+              multi: true,
+              name: 'customVar',
+              query: 'a,b,c',
+              type: 'custom',
+            },
+            {
+              name: 'filters',
+              type: 'adhoc',
+            },
+          ],
+        },
+      });
+
+      restoreDashboardStateFromLocalStorage(scene);
+
+      expect(locationService.getLocation().search).toBe(
+        '?var-customVar=b&from=now-5m&to=now&timezone=browser&var-filters=cluster%7C%3D%7Cdev&var-filters=test'
+      );
+
+      jest.clearAllMocks();
     });
 
     it('should remove query params that are not applicable on a target dashboard', () => {
@@ -95,23 +124,10 @@ describe('dashboardSessionState', () => {
 
       expect(locationService.getLocation().search).toBe('?var-customVar=b&from=now-6h&to=now&timezone=browser');
     });
-
-    it('should not restore state if dashboard version is 0', () => {
-      window.sessionStorage.setItem(
-        PRESERVED_SCENE_STATE_KEY,
-        '?var-customVarNotOnDB=b&from=now-5m&to=now&timezone=browser'
-      );
-      const scene = buildTestScene();
-      scene.setState({ version: 0 });
-
-      restoreDashboardStateFromLocalStorage(scene);
-
-      expect(locationService.getLocation().search).toBe('?var-customVar=b&from=now-6h&to=now&timezone=browser');
-    });
   });
 });
 
-function buildTestScene() {
+function buildTestScene(overrides?: Partial<DashboardDataDTO>) {
   const testDashboard: DashboardDataDTO = {
     annotations: { list: [] },
     editable: true,
@@ -142,6 +158,7 @@ function buildTestScene() {
     uid: 'edhmd9stpd6o0a',
     version: 24,
     weekStart: '',
+    ...overrides,
   };
 
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });

@@ -3,12 +3,13 @@ import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn } from 'react-use';
 
-import { NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { NavModelItem, OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { OrgUser } from 'app/types/user';
 
 import { OrgUsersTable } from './Users/OrgUsersTable';
 import { getOrg, getOrgUsers, getUsersRoles, removeOrgUser, updateOrgName, updateOrgUserRole } from './api';
@@ -51,8 +52,6 @@ const AdminEditOrgPage = () => {
     fetchOrgUsers(page);
   }, [fetchOrg, fetchOrgUsers, page]);
 
-  const { t } = useTranslate();
-
   const onUpdateOrgName = async ({ orgName }: OrgNameDTO) => {
     await updateOrgName(orgName, orgId);
   };
@@ -86,7 +85,10 @@ const AdminEditOrgPage = () => {
   const pageNav: NavModelItem = {
     text: orgState?.value?.name ?? '',
     icon: 'shield',
-    subTitle: 'Manage settings and user roles for an organization.',
+    subTitle: t(
+      'admin.admin-edit-org-page.page-nav.subTitle.manage-settings-roles-organization',
+      'Manage settings and user roles for an organization.'
+    ),
   };
 
   return (

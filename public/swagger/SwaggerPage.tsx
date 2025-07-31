@@ -127,8 +127,6 @@ export const Page = () => {
               persistAuthorization={false}
             />
           )}
-
-          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
           {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
         </NamespaceContext.Provider>
       </ThemeProvider>

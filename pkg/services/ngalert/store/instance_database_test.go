@@ -301,6 +301,9 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 }
 
 func TestIntegrationFullSync(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	batchSize := 1
 
 	ctx := context.Background()
@@ -594,6 +597,7 @@ func generateTestAlertInstance(orgID int64, ruleID string) models.AlertInstance 
 		CurrentStateSince: time.Now(),
 		LastEvalTime:      time.Now(),
 		LastSentAt:        util.Pointer(time.Now()),
+		FiredAt:           util.Pointer(time.Now()),
 		ResolvedAt:        util.Pointer(time.Now()),
 		CurrentReason:     "abc",
 	}

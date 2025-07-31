@@ -3,7 +3,7 @@ import { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -52,36 +52,28 @@ export class LiveConnectionWarning extends PureComponent<Props, State> {
       }
 
       return (
-        <div className={this.styles.foot}>
-          <Alert
-            severity={'warning'}
-            className={this.styles.warn}
-            title={t(
-              'live.live-connection-warning.title-connection-to-server-is-lost',
-              'Connection to server is lost...'
-            )}
-          />
-        </div>
+        <Alert
+          severity={'warning'}
+          className={this.styles.warn}
+          title={t(
+            'live.live-connection-warning.title-connection-to-server-is-lost',
+            'Connection to server is lost...'
+          )}
+        />
       );
     }
     return null;
   }
 }
 
-const getStyle = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    foot: css({
-      position: 'fixed',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: 10000,
-      cursor: 'wait',
-      margin: theme.spacing(2),
-    }),
-    warn: css({
-      maxWidth: '400px',
-      margin: 'auto',
-    }),
-  };
-});
+const getStyle = stylesFactory((theme: GrafanaTheme2) => ({
+  warn: css({
+    position: 'fixed',
+    bottom: 0,
+    left: '50%',
+    transform: 'translate(-50%)',
+    maxWidth: '400px',
+    zIndex: theme.zIndex.portal,
+    cursor: 'wait',
+  }),
+}));

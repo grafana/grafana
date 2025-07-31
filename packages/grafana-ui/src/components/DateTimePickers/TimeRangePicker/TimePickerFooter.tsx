@@ -5,18 +5,20 @@ import * as React from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { Button } from '../../Button/Button';
 import { Combobox } from '../../Combobox/Combobox';
 import { Field } from '../../Forms/Field';
-import { Tab, TabContent, TabsBar } from '../../Tabs';
+import { Tab } from '../../Tabs/Tab';
+import { TabContent } from '../../Tabs/TabContent';
+import { TabsBar } from '../../Tabs/TabsBar';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
-import { monthOptions } from '../options';
+import { getMonthOptions } from '../options';
 
 interface Props {
   timeZone?: TimeZone;
@@ -110,7 +112,7 @@ export const TimePickerFooter = (props: Props) => {
               aria-controls={fiscalYearSettingsId}
             />
           </TabsBar>
-          <TabContent>
+          <TabContent className={style.noBackground}>
             {editMode === 'tz' ? (
               <section
                 role="tabpanel"
@@ -144,7 +146,7 @@ export const TimePickerFooter = (props: Props) => {
                 >
                   <Combobox
                     value={fiscalYearStartMonth ?? null}
-                    options={monthOptions}
+                    options={getMonthOptions()}
                     onChange={(value) => {
                       if (onChangeFiscalYearStartMonth) {
                         onChangeFiscalYearStartMonth(value?.value ?? 0);
@@ -182,6 +184,9 @@ const getStyle = (theme: GrafanaTheme2) => ({
   }),
   timeSettingContainer: css({
     paddingTop: theme.spacing(1),
+  }),
+  noBackground: css({
+    background: 'inherit',
   }),
   fiscalYearField: css({
     marginBottom: 0,

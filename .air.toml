@@ -1,0 +1,25 @@
+[build]
+bin = "./bin/grafana"
+args_bin = ["server", "-profile", "-profile-addr=127.0.0.1", "-profile-port=6000", "-profile-block-rate=1", "-profile-mutex-rate=5", "-packaging=dev", "cfg:app_mode=development"]
+cmd = "make GO_BUILD_DEV=1 build-backend"
+exclude_regex = ["_test.go", "_gen.go"]
+exclude_unchanged = true
+follow_symlink = true
+include_dir = ["apps", "conf", "devenv/dev-dashboards", "pkg", "public/views"]
+include_ext = ["go", "ini", "toml", "html", "json"]
+stop_on_error = true
+send_interrupt = true
+kill_delay = 500
+
+[log]
+time = true
+
+[misc]
+clean_on_exit = false
+
+[proxy]
+enabled = false
+
+[screen]
+clear_on_rebuild = false
+keep_scroll = true

@@ -11,7 +11,7 @@ func ProvidePreinstall(
 	cfg *setting.Cfg,
 ) *PreinstallImpl {
 	plugins := make(map[string]*setting.InstallPlugin)
-	for _, p := range cfg.PreinstallPlugins {
+	for _, p := range cfg.PreinstallPluginsAsync {
 		plugins[p.ID] = &p
 	}
 	return &PreinstallImpl{

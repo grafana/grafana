@@ -4,11 +4,10 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-
-import { StoreState } from '../../types';
+import { StoreState } from 'app/types/store';
 
 import { AnonUsersDevicesTable } from './Users/AnonUsersTable';
 import { fetchUsersAnonymousDevices, changeAnonUserSort, changeAnonPage, changeAnonQuery } from './state/actions';
@@ -54,7 +53,6 @@ const UserListAnonymousDevicesPageUnConnected = ({
   useEffect(() => {
     fetchUsersAnonymousDevices();
   }, [fetchUsersAnonymousDevices]);
-  const { t } = useTranslate();
 
   return (
     <Page.Contents>
@@ -70,7 +68,15 @@ const UserListAnonymousDevicesPageUnConnected = ({
             onChange={changeAnonQuery}
           />
           <RadioButtonGroup
-            options={[{ label: 'Active last 30 days', value: true }]}
+            options={[
+              {
+                label: t(
+                  'admin.user-list-anonymous-devices-page-un-connected.label.active-last-days',
+                  'Active last 30 days'
+                ),
+                value: true,
+              },
+            ]}
             // onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
             value={filters.find((f) => f.name === 'activeLast30Days')?.value}
             className={styles.filter}

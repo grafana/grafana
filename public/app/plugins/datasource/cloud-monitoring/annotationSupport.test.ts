@@ -1,7 +1,7 @@
 import { AnnotationQuery } from '@grafana/data';
 
-import { createMockDatasource } from './__mocks__/cloudMonitoringDatasource';
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
+import { createMockDatasource } from './mocks/cloudMonitoringDatasource';
 import {
   AlignmentTypes,
   CloudMonitoringQuery,

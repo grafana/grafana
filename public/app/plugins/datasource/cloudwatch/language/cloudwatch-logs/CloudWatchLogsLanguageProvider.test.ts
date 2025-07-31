@@ -3,8 +3,8 @@ import { Value } from 'slate';
 
 import { TypeaheadOutput } from '@grafana/ui';
 
-import { setupMockedTemplateService } from '../../__mocks__/CloudWatchDataSource';
 import { CloudWatchDatasource } from '../../datasource';
+import { setupMockedTemplateService } from '../../mocks/CloudWatchDataSource';
 import { ResourceResponse } from '../../resources/types';
 import { LogGroupField } from '../../types';
 

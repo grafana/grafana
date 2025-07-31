@@ -3,163 +3,274 @@ package query
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	frameData "github.com/grafana/grafana-plugin-sdk-go/data"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	queryapi "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func TestQueryRestConnectHandler(t *testing.T) {
-	b := &QueryAPIBuilder{
-		client: mockClient{
-			lastCalledWithHeaders: &map[string]string{},
-		},
-		tracer: tracing.InitializeTracerForTest(),
-		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
-			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
-		log: log.New("test"),
+func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataResponse {
+	t.Helper()
+
+	// Validate filename doesn't contain path traversal
+	if strings.Contains(filename, "..") || strings.Contains(filename, "/") {
+		t.Fatalf("Invalid test filename: %s", filename)
 	}
-	qr := newQueryREST(b)
-	ctx := context.Background()
-	mr := mockResponder{}
 
-	handler, err := qr.Connect(ctx, "name", nil, mr)
-	require.NoError(t, err)
+	testdataPath := filepath.Join("testdata", filename)
+	data, err := os.ReadFile(testdataPath) // #nosec G304 -- testdata files in tests
+	require.NoError(t, err, "Failed to read testdata file: %s", filename)
 
-	rr := httptest.NewRecorder()
-	body := runtime.RawExtension{
-		Raw: []byte(`{
-			"queries": [
-				{
-					"datasource": {
-					"type": "prometheus",
-					"uid": "demo-prometheus"
-					},
-					"expr": "sum(go_gc_duration_seconds)",
-					"range": false,
-					"instant": true
-				}
-			],
-			"from": "now-1h",
-			"to": "now"}`),
-	}
-	req := httptest.NewRequest(http.MethodGet, "/some-path", bytes.NewReader(body.Raw))
-	req.Header.Set(models.FromAlertHeaderName, "true")
-	req.Header.Set(models.CacheSkipHeaderName, "true")
-	req.Header.Set("X-Rule-Name", "name-1")
-	req.Header.Set("X-Rule-Uid", "abc")
-	req.Header.Set("X-Rule-Folder", "folder-1")
-	req.Header.Set("X-Rule-Source", "grafana-ruler")
-	req.Header.Set("X-Rule-Type", "type-1")
-	req.Header.Set("X-Rule-Version", "version-1")
-	req.Header.Set("X-Grafana-Org-Id", "1")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("some-unexpected-header", "some-value")
-	handler.ServeHTTP(rr, req)
+	var result *backend.QueryDataResponse
+	err = json.Unmarshal(data, &result)
+	require.NoError(t, err, "Failed to unmarshal testdata file: %s", filename)
 
-	require.Equal(t, map[string]string{
-		models.FromAlertHeaderName: "true",
-		models.CacheSkipHeaderName: "true",
-		"X-Rule-Name":              "name-1",
-		"X-Rule-Uid":               "abc",
-		"X-Rule-Folder":            "folder-1",
-		"X-Rule-Source":            "grafana-ruler",
-		"X-Rule-Type":              "type-1",
-		"X-Rule-Version":           "version-1",
-		"X-Grafana-Org-Id":         "1",
-	}, *b.client.(mockClient).lastCalledWithHeaders)
+	return result
 }
 
-func TestInstantQueryFromAlerting(t *testing.T) {
-	builder := &QueryAPIBuilder{
-		converter: &expr.ResultConverter{
-			Features: featuremgmt.WithFeatures(),
-			Tracer:   tracing.InitializeTracerForTest(),
+func TestQueryAPI(t *testing.T) {
+	testCases := []struct {
+		name           string
+		queryJSON      string
+		headers        map[string]string
+		expectedStatus int
+		testdataFile   string
+		stubbedFrame   *data.Frame
+	}{
+		{
+			name: "single prometheus query",
+			queryJSON: `{
+				"queries": [
+					{
+						"datasource": {
+							"type": "prometheus",
+							"uid": "demo-prom"
+						},
+						"expr": "1 + 6",
+						"range": false,
+						"instant": true,
+						"refId": "A"
+					}
+				],
+				"from": "now-1h",
+				"to": "now"
+			}`,
+			expectedStatus: http.StatusOK,
+			testdataFile:   "single_prometheus_query.json",
+			stubbedFrame: data.NewFrame("",
+				data.NewField("Time", nil, []time.Time{time.Unix(1704067200, 0)}),
+				data.NewField("Value", nil, []float64{7.0}),
+			),
+		},
+
+		{
+			name: "prometheus query with server side expression",
+			queryJSON: `{
+				"queries": [
+					{
+				      	"refId": "A",
+						"datasource": {
+							"type": "prometheus",
+							"uid": "demo-prom"
+						},
+						"expr": "7",
+						"range": false,
+						"instant": true,
+						"hide": true
+					},
+					{
+						"refId": "B",
+						"datasource": {
+							"uid": "__expr__",
+							"type": "__expr__"
+						},
+						"type": "math",
+						"expression": "$A * 3"
+					}
+				],
+				"from": "now-1h",
+				"to": "now"
+			}`,
+			testdataFile:   "prometheus_with_sse.json",
+			expectedStatus: http.StatusOK,
+			stubbedFrame: data.NewFrame("",
+				data.NewField("Value", nil, []float64{7.0}),
+			),
+		},
+
+		{
+			name: "prometheus query with sql expression and hidden prom query",
+			queryJSON: `{
+				"queries": [
+					{
+						"datasource": {
+							"type": "prometheus",
+							"uid": "demo-prom"
+						},
+						"expr": "1 + 2",
+						"range": false,
+						"instant": true,
+						"refId": "A",
+						"hidden": true
+					},
+					{
+						"datasource": {
+							"uid": "__expr__",
+							"type": "__expr__"
+						},
+						"type": "sql",
+						"expression": "Select Value + 10 from A;",
+						"refId": "B"
+					}
+				],
+				"from": "now-1h",
+				"to": "now"
+			}`,
+			testdataFile:   "prometheus_with_sql_expression.json",
+			expectedStatus: http.StatusOK,
+			stubbedFrame: data.NewFrame("",
+				data.NewField("Time", nil, []time.Time{time.Unix(1704067200, 0)}),
+				data.NewField("Value", nil, []float64{7.0}),
+			),
 		},
 	}
 
-	dq := data.DataQuery{}
-	dq.RefID = "A"
-
-	dr := datasourceRequest{
-		Headers: map[string]string{
-			models.FromAlertHeaderName: "true",
-		},
-		Request: &data.QueryDataRequest{
-			Queries: []data.DataQuery{
-				dq,
-			},
-		},
-	}
-
-	fakeFrame := frameData.NewFrame(
-		"A",
-		frameData.NewField("Time", nil, []time.Time{time.Now()}),
-		frameData.NewField("Value", nil, []int64{42}),
-	)
-	fakeFrame.Meta = &frameData.FrameMeta{TypeVersion: frameData.FrameTypeVersion{0, 1}, Type: "numeric-multi"}
-
-	inputQDR := &backend.QueryDataResponse{
-		Responses: map[string]backend.DataResponse{
-			"A": {
-				Frames: frameData.Frames{
-					fakeFrame,
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			builder := &QueryAPIBuilder{
+				converter: &expr.ResultConverter{
+					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
+					Tracer:   tracing.InitializeTracerForTest(),
 				},
-			},
-		},
+				clientSupplier: mockClient{
+					stubbedFrame: tc.stubbedFrame,
+				},
+				tracer:                 tracing.InitializeTracerForTest(),
+				log:                    log.New("test"),
+				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
+			req.Header.Set("Content-Type", "application/json")
+
+			// Set optional headers
+			for key, value := range tc.headers {
+				req.Header.Set(key, value)
+			}
+
+			ctx := context.Background()
+			mr := &mockResponder{}
+			qr := newQueryREST(builder)
+
+			handler, err := qr.Connect(ctx, "name", nil, mr)
+			require.NoError(t, err)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			require.NoError(t, mr.err, "Should not have error in responder")
+			require.Equal(t, tc.expectedStatus, mr.statusCode, "Should return expected status code")
+			require.NotNil(t, mr.response, "Should have a response object")
+
+			// Verify the response is the expected type
+			qdr, ok := mr.response.(*queryapi.QueryDataResponse)
+			require.True(t, ok, "Response should be QueryDataResponse type")
+			require.NotNil(t, qdr.Responses, "Should have responses")
+
+			// Load expected frames from testdata if provided
+			if tc.testdataFile != "" {
+				expectedResponse := loadTestdataFrames(t, tc.testdataFile)
+
+				// get refids from expected response
+				expectedRefIds := make([]string, 0, len(expectedResponse.Responses))
+				for refID := range expectedResponse.Responses {
+					expectedRefIds = append(expectedRefIds, refID)
+				}
+
+				// Verify all expected refIDs are present
+				for _, refID := range expectedRefIds {
+					require.Contains(t, qdr.Responses, refID, "Should contain response for refId %s", refID)
+
+					actualResponse := qdr.Responses[refID]
+					expectedFrameResponse := expectedResponse.Responses[refID]
+
+					// Verify frame structure matches testdata
+					require.Len(t, actualResponse.Frames, len(expectedFrameResponse.Frames), "Frame count should match testdata for refId %s", refID)
+
+					for i, actualFrame := range actualResponse.Frames {
+						expectedFrame := expectedFrameResponse.Frames[i]
+						if diff := cmp.Diff(expectedFrame, actualFrame, data.FrameTestCompareOptions()...); diff != "" {
+							require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+						}
+					}
+				}
+			} else {
+				t.Fatalf("No testdata file provided for test case %s", tc.name)
+			}
+
+			t.Logf("Test case '%s' completed successfully", tc.name)
+		})
 	}
-
-	request := parsedRequestInfo{
-		Requests: []datasourceRequest{
-			dr,
-		},
-	}
-
-	result, err := builder.convertQueryFromAlerting(context.Background(), dr, inputQDR)
-	require.NoError(t, err)
-
-	require.True(t, isSingleAlertQuery(request), "Expected a valid alert query with a single query to return true")
-	require.NotNil(t, result)
-	require.Equal(t, 1, len(result.Responses["A"].Frames[0].Fields), "Expected a single field not Time and Value")
-	require.Equal(t, "Value", result.Responses["A"].Frames[0].Fields[0].Name, "Expected the single field to be Value")
 }
 
 type mockResponder struct {
+	statusCode int
+	response   runtime.Object
+	err        error
 }
 
 // Object writes the provided object to the response. Invoking this method multiple times is undefined.
-func (m mockResponder) Object(statusCode int, obj runtime.Object) {
+func (m *mockResponder) Object(statusCode int, obj runtime.Object) {
+	m.statusCode = statusCode
+	m.response = obj
 }
 
 // Error writes the provided error to the response. This method may only be invoked once.
-func (m mockResponder) Error(err error) {
+func (m *mockResponder) Error(err error) {
+	m.err = err
 }
 
 type mockClient struct {
-	lastCalledWithHeaders *map[string]string
+	stubbedFrame *data.Frame
 }
 
-func (m mockClient) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string) (clientapi.QueryDataClient, error) {
-	*m.lastCalledWithHeaders = headers
-
-	return nil, fmt.Errorf("mock error")
+func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
+	mclient := mockClient{
+		stubbedFrame: m.stubbedFrame,
+	}
+	return mclient, nil
 }
 
-func (m mockClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return nil, fmt.Errorf("mock error")
+func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	responses := make(backend.Responses)
+	for i := range req.Queries {
+		refID := req.Queries[i].RefID
+		frame := m.stubbedFrame
+		frame.RefID = refID
+		responses[refID] = backend.DataResponse{
+			Status: backend.StatusOK,
+			Frames: []*data.Frame{frame},
+		}
+	}
+	return &backend.QueryDataResponse{
+		Responses: responses,
+	}, nil
 }
 
 func (m mockClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -168,4 +279,128 @@ func (m mockClient) CallResource(ctx context.Context, req *backend.CallResourceR
 
 func (m mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	return nil, nil
+}
+
+func (m mockClient) GetInstanceConfigurationSettings(ctx context.Context) (clientapi.InstanceConfigurationSettings, error) {
+	return clientapi.InstanceConfigurationSettings{
+		ExpressionsEnabled: true,
+		FeatureToggles:     featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
+	}, nil
+}
+
+type mockLegacyDataSourceLookup struct{}
+
+func (m *mockLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*dataapi.DataSourceRef, error) {
+	return &dataapi.DataSourceRef{
+		UID:  "demo-prom",
+		Type: "prometheus",
+	}, nil
+}
+
+func TestMergeHeaders(t *testing.T) {
+	tests := []struct {
+		name     string
+		h1       http.Header
+		h2       http.Header
+		expected http.Header
+	}{
+		{
+			name: "into empty",
+			h1:   http.Header{},
+			h2: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+			expected: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+		},
+		{
+			name: "from empty",
+			h1: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+			h2: http.Header{},
+			expected: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+		},
+		{
+			name: "from nil",
+			h1: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+			h2: nil,
+			expected: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+		},
+		{
+			name: "no merging",
+			h1: http.Header{
+				"A": {"1", "2"},
+			},
+			h2: http.Header{
+				"B": {"3", "4"},
+			},
+			expected: http.Header{
+				"A": {"1", "2"},
+				"B": {"3", "4"},
+			},
+		},
+		{
+			name: "with merging",
+			h1: http.Header{
+				"A": {"1", "2"},
+			},
+			h2: http.Header{
+				"A": {"3", "4"},
+			},
+			expected: http.Header{
+				"A": {"1", "2", "3", "4"},
+			},
+		},
+		{
+			name: "with duplicates",
+			h1: http.Header{
+				"A": {"1", "2"},
+			},
+			h2: http.Header{
+				"A": {"2", "3"},
+			},
+			expected: http.Header{
+				"A": {"1", "2", "3"},
+			},
+		},
+		{
+			name: "with all",
+			h1: http.Header{
+				"A": {"1", "2", "3"},
+				"B": {"4"},
+			},
+			h2: http.Header{
+				"A": {"3", "4"},
+				"B": {"5"},
+				"C": {"6"},
+			},
+			expected: http.Header{
+				"A": {"1", "2", "3", "4"},
+				"B": {"4", "5"},
+				"C": {"6"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h1 := tt.h1.Clone() // don't mutate the test-data
+			mergeHeaders(h1, tt.h2, log.New("test.logger"))
+			require.Equal(t, tt.expected, h1)
+		})
+	}
 }

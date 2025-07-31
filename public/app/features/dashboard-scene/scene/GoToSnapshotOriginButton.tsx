@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { textUtil } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal, ToolbarButton } from '@grafana/ui';
 
@@ -9,8 +9,6 @@ import appEvents from '../../../core/app_events';
 import { ShowModalReactEvent } from '../../../types/events';
 
 export function GoToSnapshotOriginButton(props: { originalURL: string }) {
-  const { t } = useTranslate();
-
   return (
     <ToolbarButton
       key="button-snapshot"
@@ -33,7 +31,10 @@ const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
         new ShowModalReactEvent({
           component: ConfirmModal,
           props: {
-            title: 'Proceed to external site?',
+            title: t(
+              'dashboard-scene.on-open-snapshot-original-dashboard.title.proceed-to-external-site',
+              'Proceed to external site?'
+            ),
             modalClass: css({
               width: 'max-content',
               maxWidth: '80vw',
@@ -47,7 +48,7 @@ const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
               </>
             ),
             confirmVariant: 'primary',
-            confirmText: 'Proceed',
+            confirmText: t('dashboard-scene.on-open-snapshot-original-dashboard.confirmText.proceed', 'Proceed'),
             onConfirm: () => {
               window.location.href = sanitizedAppUrl.href;
             },

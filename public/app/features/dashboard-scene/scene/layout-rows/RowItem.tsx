@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObject,
@@ -9,7 +9,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -22,7 +22,6 @@ import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSe
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
-import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -33,7 +32,6 @@ import { LayoutParent } from '../types/LayoutParent';
 
 import { useEditOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
-import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
@@ -45,6 +43,8 @@ export interface RowItemState extends SceneObjectState {
   fillScreen?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
+  repeatByVariable?: string;
+  repeatedRows?: RowItem[];
 }
 
 export class RowItem
@@ -59,7 +59,6 @@ export class RowItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
-  private _layoutRestorer = new LayoutRestorer();
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
 
   public constructor(state?: Partial<RowItemState>) {
@@ -88,8 +87,11 @@ export class RowItem
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'list-ul',
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    return this.state.layout.getOutlineChildren();
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -101,7 +103,7 @@ export class RowItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
+    this.setState({ layout });
   }
 
   public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
@@ -178,10 +180,6 @@ export class RowItem
     this.setIsDropTarget(false);
   }
 
-  public getRepeatVariable(): string | undefined {
-    return this._getRepeatBehavior()?.state.variableName;
-  }
-
   public onChangeTitle(title: string) {
     this.setState({ title });
   }
@@ -199,19 +197,10 @@ export class RowItem
   }
 
   public onChangeRepeat(repeat: string | undefined) {
-    let repeatBehavior = this._getRepeatBehavior();
-
     if (repeat) {
-      // Remove repeat behavior if it exists to trigger repeat when adding new one
-      if (repeatBehavior) {
-        repeatBehavior.removeBehavior();
-      }
-
-      repeatBehavior = new RowItemRepeaterBehavior({ variableName: repeat });
-      this.setState({ $behaviors: [...(this.state.$behaviors ?? []), repeatBehavior] });
-      repeatBehavior.activate();
+      this.setState({ repeatByVariable: repeat });
     } else {
-      repeatBehavior?.removeBehavior();
+      this.setState({ repeatedRows: undefined, $variables: undefined, repeatByVariable: undefined });
     }
   }
 
@@ -221,10 +210,6 @@ export class RowItem
 
   public getParentLayout(): RowsLayoutManager {
     return sceneGraph.getAncestor(this, RowsLayoutManager);
-  }
-
-  private _getRepeatBehavior(): RowItemRepeaterBehavior | undefined {
-    return this.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
   }
 
   public scrollIntoView() {

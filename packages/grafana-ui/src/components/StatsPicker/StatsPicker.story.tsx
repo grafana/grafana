@@ -2,6 +2,8 @@ import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { PureComponent } from 'react';
 
+import { Field } from '../Forms/Field';
+
 import { Props, StatsPicker } from './StatsPicker';
 
 interface State {
@@ -21,23 +23,26 @@ class WrapperWithState extends PureComponent<Props, State> {
     const { stats } = this.state;
 
     return (
-      <StatsPicker
-        placeholder={placeholder}
-        allowMultiple={allowMultiple}
-        stats={stats}
-        onChange={(stats: string[]) => {
-          action('Picked:')(stats);
-          this.setState({ stats });
-        }}
-        menuPlacement={menuPlacement}
-        width={width}
-      />
+      <Field label="Pick stats">
+        <StatsPicker
+          inputId="stats-picker"
+          placeholder={placeholder}
+          allowMultiple={allowMultiple}
+          stats={stats}
+          onChange={(stats: string[]) => {
+            action('Picked:')(stats);
+            this.setState({ stats });
+          }}
+          menuPlacement={menuPlacement}
+          width={width}
+        />
+      </Field>
     );
   }
 }
 
 const meta: Meta<typeof StatsPicker> = {
-  title: 'Pickers and Editors/StatsPicker',
+  title: 'Pickers/StatsPicker',
   component: StatsPicker,
   parameters: {
     controls: {

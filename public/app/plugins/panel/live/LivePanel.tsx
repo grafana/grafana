@@ -18,6 +18,7 @@ import {
   LiveChannelAddress,
   StreamingDataFrame,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory, JSONFormatter, CustomScrollbar } from '@grafana/ui';
 
@@ -125,9 +126,12 @@ export class LivePanel extends PureComponent<Props, State> {
     const preformatted = `[feature_toggles]
     enable = live`;
     return (
-      <Alert title="Grafana Live" severity="info">
-        <p>Grafana live requires a feature flag to run</p>
+      <Alert title={t('live.live-panel.title-grafana-live', 'Grafana Live')} severity="info">
+        <p>
+          <Trans i18nKey="live.live-panel.grafana-requires-feature">Grafana live requires a feature flag to run</Trans>
+        </p>
 
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <b>custom.ini:</b>
         <pre>{preformatted}</pre>
       </Alert>
@@ -141,7 +145,9 @@ export class LivePanel extends PureComponent<Props, State> {
     if (!message) {
       return (
         <div>
-          <h4>Waiting for data:</h4>
+          <h4>
+            <Trans i18nKey="live.live-panel.waiting-for-data">Waiting for data:</Trans>
+          </h4>
           {options.channel?.scope}/{options.channel?.namespace}/{options.channel?.path}
         </div>
       );
@@ -246,15 +252,17 @@ export class LivePanel extends PureComponent<Props, State> {
     const { addr, error } = this.state;
     if (!addr) {
       return (
-        <Alert title="Grafana Live" severity="info">
-          Use the panel editor to pick a channel
+        <Alert title={t('live.live-panel.title-grafana-live', 'Grafana Live')} severity="info">
+          <Trans i18nKey="live.live-panel.panel-editor-channel">Use the panel editor to pick a channel</Trans>
         </Alert>
       );
     }
     if (error) {
       return (
         <div>
-          <h2>ERROR</h2>
+          <h2>
+            <Trans i18nKey="live.live-panel.error">Error</Trans>
+          </h2>
           <div>{JSON.stringify(error)}</div>
         </div>
       );

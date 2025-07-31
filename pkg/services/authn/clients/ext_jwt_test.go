@@ -17,6 +17,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -238,7 +239,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
-					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}, AllowedActions: []string{"folders:read"}}},
+					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}, AllowedActions: []string{"folders:read"}, K8s: []string{}}},
 			},
 		},
 		{
@@ -699,7 +700,7 @@ func setupTestCtx(cfg *setting.Cfg) *testEnv {
 		}
 	}
 
-	extJwtClient := ProvideExtendedJWT(cfg)
+	extJwtClient := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
 
 	return &testEnv{
 		s: extJwtClient,

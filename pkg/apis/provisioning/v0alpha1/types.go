@@ -59,15 +59,81 @@ type GitHubRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
+type GitRepositoryConfig struct {
+	// The repository URL (e.g. `https://github.com/example/test.git`).
+	URL string `json:"url,omitempty"`
+	// The branch to use in the repository.
+	Branch string `json:"branch"`
+	// TokenUser is the user that will be used to access the repository if it's a personal access token.
+	TokenUser string `json:"tokenUser,omitempty"`
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
+	Token string `json:"token,omitempty"`
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
+	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
+	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
+	// The path is relative to the root of the repository, regardless of the leading slash.
+	//
+	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
+	Path string `json:"path,omitempty"`
+}
+
+type BitbucketRepositoryConfig struct {
+	// The repository URL (e.g. `https://bitbucket.org/example/test`).
+	URL string `json:"url,omitempty"`
+	// The branch to use in the repository.
+	Branch string `json:"branch"`
+	// TokenUser is the user that will be used to access the repository if it's a personal access token.
+	TokenUser string `json:"tokenUser,omitempty"`
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
+	Token string `json:"token,omitempty"`
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
+	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
+	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
+	// The path is relative to the root of the repository, regardless of the leading slash.
+	//
+	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
+	Path string `json:"path,omitempty"`
+}
+
+type GitLabRepositoryConfig struct {
+	// The repository URL (e.g. `https://gitlab.com/example/test`).
+	URL string `json:"url,omitempty"`
+	// The branch to use in the repository.
+	Branch string `json:"branch"`
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
+	Token string `json:"token,omitempty"`
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
+	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
+	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
+	// The path is relative to the root of the repository, regardless of the leading slash.
+	//
+	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
+	Path string `json:"path,omitempty"`
+}
+
 // RepositoryType defines the types of Repository
 // +enum
 type RepositoryType string
 
 // RepositoryType values
 const (
-	LocalRepositoryType  RepositoryType = "local"
-	GitHubRepositoryType RepositoryType = "github"
+	LocalRepositoryType     RepositoryType = "local"
+	GitHubRepositoryType    RepositoryType = "github"
+	GitRepositoryType       RepositoryType = "git"
+	BitbucketRepositoryType RepositoryType = "bitbucket"
+	GitLabRepositoryType    RepositoryType = "gitlab"
 )
+
+// IsGit returns true if the repository type is git or github
+func (r RepositoryType) IsGit() bool {
+	return r == GitRepositoryType || r == GitHubRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
+}
 
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
@@ -92,9 +158,20 @@ type RepositorySpec struct {
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
 
 	// The repository on GitHub.
-	// Mutually exclusive with local | github.
-	// TODO: github or just 'git'??
+	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+
+	// The repository on Git.
+	// Mutually exclusive with local | github | git.
+	Git *GitRepositoryConfig `json:"git,omitempty"`
+
+	// The repository on Bitbucket.
+	// Mutually exclusive with local | github | git.
+	Bitbucket *BitbucketRepositoryConfig `json:"bitbucket,omitempty"`
+
+	// The repository on GitLab.
+	// Mutually exclusive with local | github | git.
+	GitLab *GitLabRepositoryConfig `json:"gitlab,omitempty"`
 }
 
 // SyncTargetType defines where we want all values to resolve
@@ -218,6 +295,7 @@ const (
 	ResourceActionCreate ResourceAction = "create"
 	ResourceActionUpdate ResourceAction = "update"
 	ResourceActionDelete ResourceAction = "delete"
+	ResourceActionMove   ResourceAction = "move"
 )
 
 // This is a container type for any resource type
@@ -426,4 +504,22 @@ type HistoryItem struct {
 	// +listType=atomic
 	Authors   []Author `json:"authors"`
 	CreatedAt int64    `json:"createdAt"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type RefList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []RefItem `json:"items"`
+}
+
+type RefItem struct {
+	// The name of the reference (branch or tag)
+	Name string `json:"name"`
+	// The SHA hash of the commit this ref points to
+	Hash string `json:"hash,omitempty"`
+	// The URL to the reference (branch or tag)
+	RefURL string `json:"refURL,omitempty"`
 }

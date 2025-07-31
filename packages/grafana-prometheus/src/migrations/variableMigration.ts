@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/migrations/variableMigration.ts
-import { promQueryModeller } from '../querybuilder/PromQueryModeller';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
+import { promQueryModeller } from '../querybuilder/shared/modeller_instance';
 import { PromVariableQuery, PromVariableQueryType as QueryType } from '../types';
 
 export const PrometheusLabelNamesRegex = /^label_names\(\)\s*$/;
@@ -107,7 +107,7 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
     case QueryType.LabelValues:
       if (QueryVariable.metric || (QueryVariable.labelFilters && QueryVariable.labelFilters.length !== 0)) {
         const visualQueryQuery = {
-          metric: QueryVariable.metric,
+          metric: QueryVariable.metric ?? '',
           labels: QueryVariable.labelFilters ?? [],
           operations: [],
         };

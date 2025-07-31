@@ -107,7 +107,7 @@ func TestCheck_Run(t *testing.T) {
 
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
-		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "test message"}}
 		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
 			{ID: 1, Slug: "prometheus", Status: "active"},
 		}}
@@ -125,6 +125,7 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, "health-check", failures[0].StepID)
+		assert.Contains(t, *failures[0].MoreInfo, "test message")
 	})
 
 	t.Run("should skip health check when plugin does not support backend health checks", func(t *testing.T) {
@@ -231,6 +232,19 @@ func TestCheck_Run(t *testing.T) {
 	})
 }
 
+func TestCheck_Item(t *testing.T) {
+	t.Run("should return nil when datasource is not found", func(t *testing.T) {
+		mockDatasourceSvc := &MockDatasourceSvc{dss: []*datasources.DataSource{}}
+		check := &check{
+			DatasourceSvc: mockDatasourceSvc,
+		}
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		item, err := check.Item(ctx, "invalid-uid")
+		assert.NoError(t, err)
+		assert.Nil(t, item)
+	})
+}
+
 type MockDatasourceSvc struct {
 	datasources.DataSourceService
 
@@ -239,6 +253,13 @@ type MockDatasourceSvc struct {
 
 func (m *MockDatasourceSvc) GetAllDataSources(context.Context, *datasources.GetAllDataSourcesQuery) ([]*datasources.DataSource, error) {
 	return m.dss, nil
+}
+
+func (m *MockDatasourceSvc) GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	if len(m.dss) == 0 {
+		return nil, datasources.ErrDataSourceNotFound
+	}
+	return m.dss[0], nil
 }
 
 type MockPluginContextProvider struct {

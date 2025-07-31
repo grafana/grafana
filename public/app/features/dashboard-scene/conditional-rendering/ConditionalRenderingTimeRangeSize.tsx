@@ -1,14 +1,17 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { rangeUtil, SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Field, Select, useStyles2 } from '@grafana/ui';
+
+import { dashboardEditActions } from '../edit-pane/shared';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingSerializerRegistryItem, TimeRangeSizeConditionValue } from './types';
+import { translatedItemType } from './utils';
 
 type ConditionalRenderingTimeRangeSizeState = ConditionalRenderingBaseState<TimeRangeSizeConditionValue>;
 
@@ -29,7 +32,7 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
     return t(
       'dashboard.conditional-rendering.conditions.time-range-size.info',
       'Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.',
-      { type: this.getItemType() }
+      { type: translatedItemType(this.getItemType()) }
     );
   }
 
@@ -192,6 +195,18 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
     return [{ label: value, value }, ...staticOptions];
   }, [staticOptions, value]);
 
+  const handleChange = useCallback(
+    (newValue: string | undefined) => {
+      dashboardEditActions.edit({
+        description: t('dashboard.edit-actions.edit-time-range-rule', 'Change time range rule'),
+        source: model,
+        perform: () => model.setStateAndNotify({ value: newValue }),
+        undo: () => model.setStateAndNotify({ value }),
+      });
+    },
+    [model, value]
+  );
+
   return (
     <Field
       invalid={!isValid}
@@ -201,10 +216,10 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
       <Select
         isClearable={false}
         allowCustomValue
-        onCreateOption={(value) => model.setStateAndNotify({ value })}
+        onCreateOption={(value) => handleChange(value)}
         value={value}
         options={options}
-        onChange={({ value }) => model.setStateAndNotify({ value })}
+        onChange={({ value }) => handleChange(value)}
       />
     </Field>
   );

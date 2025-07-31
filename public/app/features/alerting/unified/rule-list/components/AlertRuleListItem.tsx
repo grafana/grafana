@@ -3,12 +3,13 @@ import pluralize from 'pluralize';
 import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
+import { AlertLabels } from '../../components/AlertLabels';
 import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
@@ -45,6 +46,8 @@ export interface AlertRuleListItemProps {
   actions?: ReactNode;
   origin?: RulePluginOrigin;
   operation?: RuleOperation;
+  // the grouped view doesn't need to show the location again – it's redundant
+  showLocation?: boolean;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -69,12 +72,13 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     origin,
     actions = null,
     operation,
+    showLocation = true,
   } = props;
 
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -100,12 +104,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     }
   }
 
-  if (labelsSize(labels) > 0) {
+  if (labels && labelsSize(labels) > 0) {
     metadata.push(
       <MetaText icon="tag-alt">
-        <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
-          {pluralize('label', labelsSize(labels), true)}
-        </TextLink>
+        <RuleLabels labels={labels} />
       </MetaText>
     );
   }
@@ -167,9 +169,10 @@ export function RecordingRuleListItem({
   isPaused,
   origin,
   actions,
+  showLocation = true,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -181,7 +184,7 @@ export function RecordingRuleListItem({
     <ListItem
       title={
         <Stack direction="row" alignItems="center">
-          <TextLink href={href} inline={false}>
+          <TextLink color="primary" href={href} inline={false}>
             {name}
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
@@ -206,6 +209,7 @@ interface RuleOperationListItemProps {
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
   operation: RuleOperation;
+  showLocation?: boolean;
 }
 
 export function RuleOperationListItem({
@@ -215,11 +219,12 @@ export function RuleOperationListItem({
   rulesSource,
   application,
   operation,
+  showLocation = true,
 }: RuleOperationListItemProps) {
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -256,13 +261,35 @@ function Summary({ content, error }: SummaryProps) {
   }
   if (content) {
     return (
-      <Text variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary" truncate>
         {content}
       </Text>
     );
   }
 
   return null;
+}
+
+function RuleLabels({ labels }: { labels: Labels }) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Tooltip
+      content={
+        <div className={styles.ruleLabels.tooltip}>
+          <AlertLabels labels={labels} size="sm" />
+        </div>
+      }
+      placement="right"
+      interactive
+    >
+      <div>
+        <Text variant="bodySmall" color="primary">
+          {pluralize('label', labelsSize(labels), true)}
+        </Text>
+      </div>
+    </Tooltip>
+  );
 }
 
 interface EvaluationMetadataProps {
@@ -323,7 +350,6 @@ export const UnknownRuleListItem = ({ ruleName, groupIdentifier, ruleDefinition 
     };
     logError(new Error('unknown rule type'), ruleContext);
   }, [ruleName, groupIdentifier]);
-  const { t } = useTranslate();
 
   return (
     <Alert
@@ -386,6 +412,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resetMargin: css({
     margin: 0,
   }),
+  ruleLabels: {
+    tooltip: css({
+      padding: theme.spacing(1),
+    }),
+    text: css({
+      cursor: 'pointer',
+    }),
+  },
 });
 
 export type RuleListItemCommonProps = Pick<

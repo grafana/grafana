@@ -16,13 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 const threshold = 9999
 
 func TestCanSearchByTitle(t *testing.T) {
-	key := &resource.ResourceKey{
+	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -37,7 +38,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name1",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -51,7 +52,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name2",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -81,7 +82,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name1",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -95,7 +96,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name2",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -125,7 +126,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name1",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -139,7 +140,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name2",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -168,7 +169,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name1",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -182,7 +183,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name2",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -212,7 +213,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "aaa",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -253,7 +254,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "aaa",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -267,7 +268,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   2,
 						Name: "name2",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name2",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -300,7 +301,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "aaa",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -365,7 +366,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name1",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -379,7 +380,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name2",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -393,7 +394,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name3",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "name3",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -434,7 +435,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:      "aaa",
 							Namespace: key.Namespace,
 							Group:     key.Group,
@@ -455,7 +456,7 @@ func TestCanSearchByTitle(t *testing.T) {
 						Doc: &resource.IndexableDocument{
 							RV:   int64(i),
 							Name: fmt.Sprintf("name%d", i),
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Name:      fmt.Sprintf("name%d", i),
 								Namespace: key.Namespace,
 								Group:     key.Group,
@@ -491,10 +492,10 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 }
 
-func newTestQuery(query string) *resource.ResourceSearchRequest {
-	return &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key: &resource.ResourceKey{
+func newTestQuery(query string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Namespace: "default",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
@@ -505,22 +506,22 @@ func newTestQuery(query string) *resource.ResourceSearchRequest {
 	}
 }
 
-func newQueryByTitle(query string) *resource.ResourceSearchRequest {
-	return &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key: &resource.ResourceKey{
+func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Namespace: "default",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 			},
-			Fields: []*resource.Requirement{{Key: "title", Operator: "=", Values: []string{query}}},
+			Fields: []*resourcepb.Requirement{{Key: "title", Operator: "=", Values: []string{query}}},
 		},
 		Limit: 100000,
 	}
 }
 
 func newTestDashboardsIndex(t TB, threshold int64, size int64, batchSize int64, writer IndexWriter) (resource.ResourceIndex, string) {
-	key := &resource.ResourceKey{
+	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -552,7 +553,7 @@ func newTestDashboardsIndex(t TB, threshold int64, size int64, batchSize int64, 
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, rv, info.Fields, writer)
+	}, size, rv, info.Fields, "test", writer)
 	require.NoError(t, err)
 
 	return index, tmpdir

@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,24 +29,31 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const tracePrefix = "folder.unifiedstore."
+
 type FolderUnifiedStoreImpl struct {
 	log         log.Logger
 	k8sclient   client.K8sHandler
 	userService user.Service
+	tracer      trace.Tracer
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service) *FolderUnifiedStoreImpl {
+func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service, tracer trace.Tracer) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
 		k8sclient:   k8sHandler,
 		log:         log.New("folder-store"),
 		userService: userService,
+		tracer:      tracer,
 	}
 }
 
 func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"Create")
+	defer span.End()
+
 	obj, err := internalfolders.LegacyCreateCommandToUnstructured(&cmd)
 	if err != nil {
 		return nil, err
@@ -63,6 +73,9 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 }
 
 func (ss *FolderUnifiedStoreImpl) Delete(ctx context.Context, UIDs []string, orgID int64) error {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"Delete")
+	defer span.End()
+
 	for _, uid := range UIDs {
 		err := ss.k8sclient.Delete(ctx, uid, orgID, v1.DeleteOptions{})
 		if err != nil {
@@ -74,6 +87,9 @@ func (ss *FolderUnifiedStoreImpl) Delete(ctx context.Context, UIDs []string, org
 }
 
 func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"Update")
+	defer span.End()
+
 	obj, err := ss.k8sclient.Get(ctx, cmd.UID, cmd.OrgID, v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -138,6 +154,9 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 //
 // The full path of C is "A/B\/C".
 func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"Get")
+	defer span.End()
+
 	out, err := ss.k8sclient.Get(ctx, *q.UID, q.OrgID, v1.GetOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
@@ -149,6 +168,9 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 }
 
 func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetParents")
+	defer span.End()
+
 	hits := []*folder.Folder{}
 
 	parentUID := q.UID
@@ -175,6 +197,9 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 }
 
 func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetChildren")
+	defer span.End()
+
 	// the general folder is saved as an empty string in the database
 	if q.UID == folder.GeneralFolderUID {
 		q.UID = ""
@@ -195,9 +220,9 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		}
 	}
 
-	req := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Fields: []*resource.Requirement{
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Fields: []*resourcepb.Requirement{
 				{
 					Key:      resource.SEARCH_FIELD_FOLDER,
 					Operator: string(selection.In),
@@ -214,7 +239,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 
 	// only filter the folder UIDs if they are provided in the query
 	if len(q.FolderUIDs) > 0 {
-		req.Options.Fields = append(req.Options.Fields, &resource.Requirement{
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: string(selection.In),
 			Values:   q.FolderUIDs,
@@ -259,6 +284,9 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 
 // TODO use a single query to get the height of a folder
 func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetHeight")
+	defer span.End()
+
 	height := -1
 	queue := []string{foldrUID}
 	for len(queue) > 0 && height <= folder.MaxNestedFolderDepth {
@@ -317,16 +345,17 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
-	opts := v1.ListOptions{
-		Limit: folderSearchLimit,
-	}
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetFolders")
+	defer span.End()
+
+	opts := v1.ListOptions{}
 	if q.WithFullpath || q.WithFullpathUIDs {
 		// only supported in modes 0-2, to keep the alerting queries from causing tons of get folder requests
 		// to retrieve the parent for all folders in grafana
 		opts.LabelSelector = utils.LabelGetFullpath + "=true"
 	}
 
-	out, err := ss.k8sclient.List(ctx, q.OrgID, opts)
+	out, err := ss.list(ctx, q.OrgID, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +400,10 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 }
 
 func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
-	out, err := ss.k8sclient.List(ctx, orgID, v1.ListOptions{})
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetDescendants")
+	defer span.End()
+
+	out, err := ss.list(ctx, orgID, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -421,6 +453,9 @@ func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]
 }
 
 func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"CountFolderContent")
+	defer span.End()
+
 	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -445,6 +480,50 @@ func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (
 	}
 
 	return resp.Stats[0].Count, nil
+}
+
+func (ss *FolderUnifiedStoreImpl) list(ctx context.Context, orgID int64, opts v1.ListOptions) (*unstructured.UnstructuredList, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"list")
+	defer span.End()
+
+	var allItems []unstructured.Unstructured
+
+	listOpts := opts.DeepCopy()
+
+	if listOpts.Limit == 0 {
+		listOpts.Limit = folderListLimit
+	}
+
+	for {
+		out, err := ss.k8sclient.List(ctx, orgID, *listOpts)
+		if err != nil {
+			return nil, err
+		}
+
+		if out == nil {
+			return nil, fmt.Errorf("k8s folder list returned nil")
+		}
+
+		if len(out.Items) > 0 {
+			allItems = append(allItems, out.Items...)
+		}
+
+		if out.GetContinue() == "" || (opts.Limit > 0 && int64(len(allItems)) >= opts.Limit) {
+			break
+		}
+
+		listOpts.Continue = out.GetContinue()
+	}
+
+	result := &unstructured.UnstructuredList{
+		Items: allItems,
+	}
+
+	if opts.Limit > 0 && int64(len(allItems)) > opts.Limit {
+		result.Items = allItems[:opts.Limit]
+	}
+
+	return result, nil
 }
 
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {

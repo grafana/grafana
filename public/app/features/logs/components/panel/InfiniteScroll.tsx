@@ -1,10 +1,9 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
 import { usePrevious } from 'react-use';
 import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
 
@@ -13,6 +12,7 @@ import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } fro
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { LogListModel } from './processing';
+import { LogLineVirtualization } from './virtualization';
 
 interface ChildrenProps {
   itemCount: number;
@@ -27,12 +27,14 @@ interface Props {
   handleOverflow: (index: number, id: string, height?: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
   setInitialScrollPosition: () => void;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
   timeZone: string;
+  virtualization: LogLineVirtualization;
   wrapLogMessage: boolean;
 }
 
@@ -44,12 +46,14 @@ export const InfiniteScroll = ({
   handleOverflow,
   loadMore,
   logs,
+  onClick,
   scrollElement,
   setInitialScrollPosition,
   showTime,
   sortOrder,
   timeRange,
   timeZone,
+  virtualization,
   wrapLogMessage,
 }: Props) => {
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
@@ -60,7 +64,7 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, virtualization);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -132,8 +136,6 @@ export const InfiniteScroll = ({
     };
   }, [infiniteLoaderState, loadMore, logs.length, onLoadMore, scrollElement]);
 
-  const { t } = useTranslate();
-
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
       if (!logs[index] && infiniteLoaderState !== 'idle') {
@@ -143,7 +145,7 @@ export const InfiniteScroll = ({
             styles={styles}
             onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}
           >
-            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder, t)}
+            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
           </LogLineMessage>
         );
       }
@@ -152,10 +154,13 @@ export const InfiniteScroll = ({
           displayedFields={displayedFields}
           index={index}
           log={logs[index]}
+          logs={logs}
+          onClick={onClick}
           showTime={showTime}
           style={style}
           styles={styles}
           variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
+          virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
           onOverflow={handleOverflow}
         />
@@ -166,12 +171,13 @@ export const InfiniteScroll = ({
       handleOverflow,
       infiniteLoaderState,
       logs,
+      onClick,
       onLoadMore,
       showTime,
       sortOrder,
       styles,
+      virtualization,
       wrapLogMessage,
-      t,
     ]
   );
 
@@ -201,7 +207,7 @@ export const InfiniteScroll = ({
   return <>{children({ getItemKey, itemCount, onItemsRendered, Renderer })}</>;
 };
 
-function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder, t: TFunction) {
+function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder) {
   switch (state) {
     case 'out-of-bounds':
       return t('logs.infinite-scroll.end-of-range', 'End of the selected time range.');

@@ -14,10 +14,11 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	authtypes "github.com/grafana/authlib/types"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -32,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
@@ -50,11 +53,12 @@ type FolderAPIBuilder struct {
 	folderSvc            folder.Service
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
+	ac                   accesscontrol.AccessControl
 	storage              grafanarest.Storage
 
 	authorizer authorizer.Authorizer
 
-	searcher     resource.ResourceIndexClient
+	searcher     resourcepb.ResourceIndexClient
 	cfg          *setting.Cfg
 	ignoreLegacy bool // skip legacy storage and only use unified storage
 }
@@ -76,6 +80,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
+		ac:                   accessControl,
 		cfg:                  cfg,
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
@@ -124,6 +129,10 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// }
 	metav1.AddToGroupVersion(scheme, b.gv)
 	return scheme.SetVersionPriority(b.gv)
+}
+
+func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return nil
 }
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -182,7 +191,12 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
 	}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc, b.ac}
+
+	// Adds a path to return children of a given folder
+	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{
+		lister: storage[resourceInfo.StoragePath()].(rest.Lister),
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
 	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
@@ -223,7 +237,7 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		f.Spec.Title = strings.Trim(f.Spec.Title, "")
+		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
 	}
 	return nil
@@ -260,7 +274,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 }
 
 func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *folders.Folder) error {
-	resp, err := b.searcher.GetStats(ctx, &resource.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	resp, err := b.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
 	if err != nil {
 		return err
 	}
@@ -287,6 +301,14 @@ func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj 
 		if id == invalidName {
 			return dashboards.ErrFolderInvalidUID
 		}
+	}
+
+	if !util.IsValidShortUID(id) {
+		return dashboards.ErrDashboardInvalidUid
+	}
+
+	if util.IsShortUIDTooLong(id) {
+		return dashboards.ErrDashboardUidTooLong
 	}
 
 	f, ok := obj.(*folders.Folder)

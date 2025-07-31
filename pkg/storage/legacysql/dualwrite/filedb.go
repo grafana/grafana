@@ -4,96 +4,37 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"sync"
-
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"path/filepath"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-// Simple file implementation -- useful while testing and not yet sure about the SQL structure!
-// When a path exists, read/write it from disk; otherwise it is held in memory
-type fileDB struct {
-	path    string
-	changed int64
-	db      map[string]StorageStatus
-	mu      sync.RWMutex
-	logger  logging.Logger
-}
-
-// File implementation while testing -- values are saved in the data directory
-func newFileDB(path string) *fileDB {
-	return &fileDB{
-		db:     make(map[string]StorageStatus),
-		path:   path,
-		logger: logging.DefaultLogger.With("logger", "fileDB"),
+// This format was used in early G12 provisioning config.  It should be removed after 12.1
+// This migration will be called once, and will remove the file based option even if the input was invalid
+func migrateFileDBTo(cfg *setting.Cfg, db *keyvalueDB) {
+	fpath := filepath.Join(cfg.DataPath, "dualwrite.json")
+	v, err := os.ReadFile(fpath) // nolint:gosec
+	if err != nil {
+		return // the file does not exist, so nothign required
 	}
-}
+	logger := logging.DefaultLogger.With("logger", "dualwrite-migrator")
 
-func (m *fileDB) Get(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	old := make(map[string]StorageStatus)
+	err = json.Unmarshal(v, &old)
+	if err != nil {
+		logger.Warn("error loading dual write settings", "err", err)
+	}
 
-	info, err := os.Stat(m.path)
-	if err == nil && info.ModTime().UnixMilli() != m.changed {
-		v, err := os.ReadFile(m.path)
-		if err == nil {
-			err = json.Unmarshal(v, &m.db)
-			m.changed = info.ModTime().UnixMilli()
-		}
+	for _, v := range old {
+		err = db.set(context.Background(), v)
 		if err != nil {
-			m.logger.Warn("error reading filedb", "err", err)
-		}
-
-		changed := false
-		for k, v := range m.db {
-			// Must write to unified if we are reading unified
-			if v.ReadUnified && !v.WriteUnified {
-				v.WriteUnified = true
-				m.db[k] = v
-				changed = true
-			}
-
-			// Make sure we are writing something!
-			if !v.WriteLegacy && !v.WriteUnified {
-				v.WriteLegacy = true
-				m.db[k] = v
-				changed = true
-			}
-		}
-		if changed {
-			err = m.save()
-			m.logger.Warn("error saving changes filedb", "err", err)
+			logger.Warn("error migrating dual write value", "err", err)
 		}
 	}
 
-	v, ok := m.db[gr.String()]
-	return v, ok, nil
-}
-
-func (m *fileDB) Set(ctx context.Context, status StorageStatus) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	gr := schema.GroupResource{
-		Group:    status.Group,
-		Resource: status.Resource,
+	err = os.Remove(fpath)
+	if err != nil {
+		logger.Warn("error removing old dual write settings", "err", err)
 	}
-	m.db[gr.String()] = status
-
-	return m.save()
-}
-
-func (m *fileDB) save() error {
-	if m.path != "" {
-		data, err := json.MarshalIndent(m.db, "", "  ")
-		if err != nil {
-			return err
-		}
-		err = os.WriteFile(m.path, data, 0644)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

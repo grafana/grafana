@@ -4,14 +4,14 @@ import { connect, ConnectedProps } from 'react-redux';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
+import { Alert, Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
-import { ProviderCard } from './components/ProviderCard';
+import { ProviderCard, ProviderSAMLCard, ProviderSCIMCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
 
 import { getRegisteredAuthProviders } from './index';
@@ -46,6 +46,13 @@ export const AuthConfigPageUnconnected = ({
   }, [loadSettings]);
 
   const [showDrawer, setShowDrawer] = useState(false);
+  const [showSCIMBanner, setShowSCIMBanner] = useState(false);
+
+  // Check if SCIM banner should be shown
+  useEffect(() => {
+    const isSCIMEnabled = config.featureToggles.enableSCIM || false;
+    setShowSCIMBanner(isSCIMEnabled);
+  }, []);
 
   const authProviders = getRegisteredAuthProviders();
   const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.hide);
@@ -102,6 +109,14 @@ export const AuthConfigPageUnconnected = ({
       }
     >
       <Page.Contents isLoading={isLoading}>
+        {showSCIMBanner && (
+          <Alert severity="warning" title="" onRemove={() => setShowSCIMBanner(false)} style={{ marginBottom: 16 }}>
+            <Trans i18nKey="auth-config.scim-banner.message">
+              SCIM is currently in development and not recommended for production use. Please use with caution and
+              expect potential changes.
+            </Trans>
+          </Alert>
+        )}
         {!providerList.length ? (
           <ConfigureAuthCTA />
         ) : (
@@ -120,6 +135,12 @@ export const AuthConfigPageUnconnected = ({
                   configPath={settings.configPath}
                 />
               ))}
+            {config.buildInfo.edition === GrafanaEdition.OpenSource && (
+              <>
+                <ProviderSAMLCard />
+                <ProviderSCIMCard />
+              </>
+            )}
             {showDrawer && <AuthDrawer onClose={() => setShowDrawer(false)}></AuthDrawer>}
           </Grid>
         )}

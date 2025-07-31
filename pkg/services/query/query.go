@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"golang.org/x/sync/errgroup"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -22,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,10 +33,12 @@ import (
 )
 
 const (
-	HeaderPluginID       = "X-Plugin-Id"      // can be used for routing
-	HeaderDatasourceUID  = "X-Datasource-Uid" // can be used for routing/ load balancing
-	HeaderDashboardUID   = "X-Dashboard-Uid"  // mainly useful for debugging slow queries
-	HeaderPanelID        = "X-Panel-Id"       // mainly useful for debugging slow queries
+	HeaderPluginID       = "X-Plugin-Id"       // can be used for routing
+	HeaderDatasourceUID  = "X-Datasource-Uid"  // can be used for routing/ load balancing
+	HeaderDashboardUID   = "X-Dashboard-Uid"   // mainly useful for debugging slow queries
+	HeaderPanelID        = "X-Panel-Id"        // mainly useful for debugging slow queries
+	HeaderDashboardTitle = "X-Dashboard-Title" // used for identifying the dashboard with heavy query load
+	HeaderPanelTitle     = "X-Panel-Title"     // used for identifying the panel with heavy query load
 	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
 	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
@@ -45,6 +51,7 @@ func ProvideService(
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
+	mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                        cfg,
@@ -55,6 +62,7 @@ func ProvideService(
 		pCtxProvider:               pCtxProvider,
 		log:                        log.New("query_data"),
 		concurrentQueryLimit:       cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
+		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -78,6 +86,8 @@ type ServiceImpl struct {
 	pCtxProvider               *plugincontext.Provider
 	log                        log.Logger
 	concurrentQueryLimit       int
+	mtDatasourceClientBuilder  mtdsclient.MTDatasourceClientBuilder
+	headers                    map[string]string
 }
 
 // Run ServiceImpl.
@@ -88,6 +98,12 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
 func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	fromAlert := false
+	for header, val := range s.headers {
+		if header == models.FromAlertHeaderName && val == "true" {
+			fromAlert = true
+		}
+	}
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
 	if err != nil {
@@ -95,7 +111,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 
 	// If there are expressions, handle them and return
-	if parsedReq.hasExpression {
+	if parsedReq.hasExpression || fromAlert {
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
 	// If there is only one datasource, query it and return
@@ -199,7 +215,20 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
-// handleExpressions handles POST /api/ds/query when there is an expression.
+func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder, headers map[string]string) (*backend.QueryDataResponse, error) {
+	s := &ServiceImpl{
+		log:                        log,
+		dataSourceCache:            dscache,
+		expressionService:          exprService,
+		dataSourceRequestValidator: validations.ProvideValidator(),
+		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
+		headers:                    headers,
+		concurrentQueryLimit:       16, // TODO: make it configurable
+	}
+	return s.QueryData(ctx, nil, false, reqDTO)
+}
+
+// handleExpressions handles queries when there is an expression.
 func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
 		Queries: []expr.Query{},
@@ -255,21 +284,42 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		}
 	}
 
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
-	if err != nil {
-		return nil, err
-	}
 	req := &backend.QueryDataRequest{
-		PluginContext: pCtx,
-		Headers:       map[string]string{},
-		Queries:       []backend.DataQuery{},
+		Headers: map[string]string{},
+		Queries: []backend.DataQuery{},
 	}
 
 	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
 	}
 
-	return s.pluginClient.QueryData(ctx, req)
+	mtDsClient, ok := s.mtDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
+	if !ok { // single tenant flow
+		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
+		if err != nil {
+			return nil, err
+		}
+		req.PluginContext = pCtx
+		return s.pluginClient.QueryData(ctx, req)
+	} else { // multi tenant flow
+		// transform request from backend.QueryDataRequest to k8s request
+		k8sReq := &data.QueryDataRequest{
+			TimeRange: data.TimeRange{
+				From: req.Queries[0].TimeRange.From.Format(time.RFC3339),
+				To:   req.Queries[0].TimeRange.To.Format(time.RFC3339),
+			},
+		}
+		for _, q := range req.Queries {
+			var dataQuery data.DataQuery
+			err := json.Unmarshal(q.JSON, &dataQuery)
+			if err != nil {
+				return nil, err
+			}
+
+			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
+		}
+		return mtDsClient.QueryData(ctx, *k8sReq)
+	}
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid

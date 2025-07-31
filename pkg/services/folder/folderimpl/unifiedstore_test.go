@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/trace/noop"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -13,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -93,9 +97,11 @@ func TestComputeFullPath(t *testing.T) {
 
 func TestGetParents(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
+	tracer := noop.NewTracerProvider().Tracer("TestGetParents")
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
+		tracer:      tracer,
 	}
 
 	ctx := context.Background()
@@ -189,18 +195,20 @@ func TestGetParents(t *testing.T) {
 
 func TestGetChildren(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
+	tracer := noop.NewTracerProvider().Tracer("TestGetChildren")
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
+		tracer:      tracer,
 	}
 
 	ctx := context.Background()
 	orgID := int64(2)
 
 	t.Run("should be able to find children folders, and set defaults for pages", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Fields: []*resource.Requirement{
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -211,18 +219,18 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // should default to folderSearchLimit
 			Offset: 0,                 // should be set as limit * (page - 1)
 			Page:   1,                 // should be set to 1 by default
-		}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 					{
-						Key:   &resource.ResourceKey{Name: "folder3", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -257,9 +265,9 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("should return an error if the folder is not found", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Fields: []*resource.Requirement{
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -270,18 +278,18 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // should default to folderSearchLimit
 			Offset: 0,                 // should be set as limit * (page - 1)
 			Page:   1,                 // should be set to 1 by default
-		}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 					{
-						Key:   &resource.ResourceKey{Name: "folder3", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -298,9 +306,9 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("pages should be able to be set, general folder should be turned to empty string, and folder uids should be passed in", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Fields: []*resource.Requirement{
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -316,14 +324,14 @@ func TestGetChildren(t *testing.T) {
 			Limit:  10,
 			Offset: 20, // should be set as limit * (page - 1)
 			Page:   3,
-		}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -349,14 +357,14 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("k6 folder should only be returned to service accounts", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		mockCli.On("Search", mock.Anything, orgID, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -391,9 +399,9 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Fields: []*resource.Requirement{
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -404,18 +412,18 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // should default to folderSearchLimit
 			Offset: 0,                 // should be set as limit * (page - 1)
 			Page:   1,                 // should be set to 1 by default
-		}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 					{
-						Key:   &resource.ResourceKey{Name: "folder3", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -465,7 +473,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100000,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
@@ -521,7 +529,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100000,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
@@ -588,7 +596,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:         100000,
+					Limit:         folderListLimit,
 					TypeMeta:      metav1.TypeMeta{},
 					LabelSelector: "grafana.app/fullpath=true",
 				}).Return(&unstructured.UnstructuredList{
@@ -650,7 +658,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:         100000,
+					Limit:         folderListLimit,
 					TypeMeta:      metav1.TypeMeta{},
 					LabelSelector: "grafana.app/fullpath=true",
 				}).Return(&unstructured.UnstructuredList{
@@ -724,7 +732,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100000,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "folder1")).Once()
 			},
@@ -736,9 +744,11 @@ func TestGetFolders(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCLI := new(client.MockK8sHandler)
 			tt.mock(mockCLI)
+			tracer := noop.NewTracerProvider().Tracer("TestGetFolders")
 			ss := &FolderUnifiedStoreImpl{
 				k8sclient:   mockCLI,
 				userService: usertest.NewUserServiceFake(),
+				tracer:      tracer,
 			}
 			got, err := ss.GetFolders(tt.args.ctx, tt.args.q)
 			require.Equal(t, tt.wantErr, err != nil, "GetFolders() error = %v, wantErr %v", err, tt.wantErr)
@@ -877,6 +887,239 @@ func TestBuildFolderFullPaths(t *testing.T) {
 			require.Equal(t, tt.want.Title, tt.args.f.Title, "BuildFolderFullPaths() = %v, want %v", tt.args.f.Title, tt.want.Title)
 			require.Equal(t, tt.want.UID, tt.args.f.UID, "BuildFolderFullPaths() = %v, want %v", tt.args.f.UID, tt.want.UID)
 			require.Equal(t, tt.want.ParentUID, tt.args.f.ParentUID, "BuildFolderFullPaths() = %v, want %v", tt.args.f.ParentUID, tt.want.ParentUID)
+		})
+	}
+}
+
+func TestList(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		orgID int64
+		opts  metav1.ListOptions
+	}
+	tests := []struct {
+		name    string
+		args    args
+		mock    func(mockCli *client.MockK8sHandler)
+		want    *unstructured.UnstructuredList
+		wantErr bool
+	}{
+		{
+			name: "should return all folders",
+			args: args{
+				ctx:   context.Background(),
+				orgID: orgID,
+				opts: metav1.ListOptions{
+					Limit:    0,
+					TypeMeta: metav1.TypeMeta{},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder1",
+									"uid":  "folder1",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder1",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder2",
+									"uid":  "folder2",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder2",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"name": "folder1",
+								"uid":  "folder1",
+							},
+							"spec": map[string]interface{}{
+								"title": "folder1",
+							},
+						},
+					},
+					{
+						Object: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"name": "folder2",
+								"uid":  "folder2",
+							},
+							"spec": map[string]interface{}{
+								"title": "folder2",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should return folders with limit",
+			args: args{
+				ctx:   context.Background(),
+				orgID: orgID,
+				opts: metav1.ListOptions{
+					Limit:    1,
+					TypeMeta: metav1.TypeMeta{},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
+					Limit:    1,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder1",
+									"uid":  "folder1",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder1",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder2",
+									"uid":  "folder2",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder2",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"name": "folder1",
+								"uid":  "folder1",
+							},
+							"spec": map[string]interface{}{
+								"title": "folder1",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return folders with continue token",
+			args: args{
+				ctx:   context.Background(),
+				orgID: orgID,
+				opts: metav1.ListOptions{
+					Limit:    1,
+					TypeMeta: metav1.TypeMeta{},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
+					Limit:    1,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"continue": "continue-token",
+						},
+					},
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder1",
+									"uid":  "folder1",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder1",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"name": "folder1",
+								"uid":  "folder1",
+							},
+							"spec": map[string]interface{}{
+								"title": "folder1",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return error if k8s returns error",
+			args: args{
+				ctx:   context.Background(),
+				orgID: orgID,
+				opts: metav1.ListOptions{
+					Limit:    0,
+					TypeMeta: metav1.TypeMeta{},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "folder1")).Once()
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCLI := new(client.MockK8sHandler)
+			tt.mock(mockCLI)
+			tracer := noop.NewTracerProvider().Tracer("TestList")
+			ss := &FolderUnifiedStoreImpl{
+				k8sclient:   mockCLI,
+				userService: usertest.NewUserServiceFake(),
+				tracer:      tracer,
+			}
+			got, err := ss.list(tt.args.ctx, tt.args.orgID, tt.args.opts)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }

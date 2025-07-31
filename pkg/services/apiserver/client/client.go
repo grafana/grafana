@@ -15,10 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type K8sHandler interface {
@@ -29,8 +31,8 @@ type K8sHandler interface {
 	Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, orgID int64) error
 	List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error)
-	Search(ctx context.Context, orgID int64, in *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error)
-	GetStats(ctx context.Context, orgID int64) (*resource.ResourceStatsResponse, error)
+	Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
+	GetStats(ctx context.Context, orgID int64) (*resourcepb.ResourceStatsResponse, error)
 	GetUsersFromMeta(ctx context.Context, userMeta []string) (map[string]*user.User, error)
 }
 
@@ -40,14 +42,14 @@ type k8sHandler struct {
 	namespacer  request.NamespaceMapper
 	gvr         schema.GroupVersionResource
 	restConfig  func(context.Context) (*rest.Config, error)
-	searcher    resource.ResourceIndexClient
+	searcher    resourcepb.ResourceIndexClient
 	userService user.Service
 }
 
 func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
-	restConfig func(context.Context) (*rest.Config, error), dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient, sorter sort.Service) K8sHandler {
+	restConfig func(context.Context) (*rest.Config, error), dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient, sorter sort.Service, features featuremgmt.FeatureToggles) K8sHandler {
 	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gvr.GroupResource(), resourceClient, legacySearcher)
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gvr.GroupResource(), resourceClient, legacySearcher, features)
 
 	return &k8sHandler{
 		namespacer:  namespacer,
@@ -116,14 +118,14 @@ func (h *k8sHandler) List(ctx context.Context, orgID int64, options v1.ListOptio
 	return client.List(ctx, options)
 }
 
-func (h *k8sHandler) Search(ctx context.Context, orgID int64, in *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
+func (h *k8sHandler) Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	// goes directly through grpc, so doesn't need the new context
 	if in.Options == nil {
-		in.Options = &resource.ListOptions{}
+		in.Options = &resourcepb.ListOptions{}
 	}
 
 	if in.Options.Key == nil {
-		in.Options.Key = &resource.ResourceKey{
+		in.Options.Key = &resourcepb.ResourceKey{
 			Namespace: h.GetNamespace(orgID),
 			Group:     h.gvr.Group,
 			Resource:  h.gvr.Resource,
@@ -133,9 +135,9 @@ func (h *k8sHandler) Search(ctx context.Context, orgID int64, in *resource.Resou
 	return h.searcher.Search(ctx, in)
 }
 
-func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.ResourceStatsResponse, error) {
+func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resourcepb.ResourceStatsResponse, error) {
 	// goes directly through grpc, so doesn't need the new context
-	return h.searcher.GetStats(ctx, &resource.ResourceStatsRequest{
+	return h.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 		Namespace: h.GetNamespace(orgID),
 		Kinds: []string{
 			h.gvr.Group + "/" + h.gvr.Resource,

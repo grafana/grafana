@@ -3,12 +3,12 @@ import { PropsWithChildren } from 'react';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { ElasticsearchDataQuery } from '../../dataquery.gen';
 import { ElasticDatasource } from '../../datasource';
-import { ElasticsearchQuery } from '../../types';
 
 import { ElasticsearchProvider, useQuery } from './ElasticsearchQueryContext';
 
-const query: ElasticsearchQuery = {
+const query: ElasticsearchDataQuery = {
   refId: 'A',
   query: '',
   metrics: [{ id: '1', type: 'count' }],
@@ -31,7 +31,7 @@ describe('ElasticsearchQueryContext', () => {
       />
     );
 
-    const changedQuery: ElasticsearchQuery = onChange.mock.calls[0][0];
+    const changedQuery: ElasticsearchDataQuery = onChange.mock.calls[0][0];
     expect(changedQuery.query).toBeDefined();
     expect(changedQuery.alias).toBeDefined();
     expect(changedQuery.metrics).toBeDefined();

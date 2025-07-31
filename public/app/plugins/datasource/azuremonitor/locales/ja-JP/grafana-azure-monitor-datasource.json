@@ -1,0 +1,304 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "高度な設定"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "追加",
+      "aria-label-remove": "削除",
+      "button-add-resource": "リソースを追加",
+      "button-add-resource-uri": "リソースURIを追加",
+      "label-namespace": "名前空間",
+      "label-region": "リージョン",
+      "label-resource-group": "リソースグループ",
+      "label-resource-name": "リソース名",
+      "label-resource-number": "リソース {{resourceNum}}",
+      "label-resource-uri": "リソースURI",
+      "label-subscription": "サブスクリプション",
+      "placeholder-resource-name": "名前",
+      "tooltip-region": "リソースのコード領域。単一のリソースの場合はオプションですが、複数のリソースを選択する場合は必須です。",
+      "tooltip-resource-uri": "<2>リソースURI</2>を手動で編集します。複数のテンプレート変数の使用をサポートしています（例：/subscriptions/$subId/resourceGroups/$rg）"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "集計関数",
+      "aria-label-column": "列",
+      "aria-label-remove": "削除",
+      "label-percentile": "の"
+    },
+    "aggregate-section": {
+      "label-aggregate": "集計",
+      "tooltip-aggregate": "カウント、合計、平均、最小、最大、標準偏差、パーセンタイルなど、データ行全体で計算を実行します。"
+    },
+    "aggregation-field": {
+      "label-aggregation": "集計"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "クライアントID",
+      "aria-label-client-secret": "クライアントシークレット",
+      "aria-label-symbol-client-secret": "クライアントシークレット",
+      "aria-label-tenant-id": "テナントID",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "アプリケーション（クライアント）ID",
+      "label-client-secret": "クライアントシークレット",
+      "label-symbol-client-secret": "クライアントシークレット",
+      "label-tenant-id": "ディレクトリ（テナント）ID",
+      "placeholder-symbol-client-secret": "設定済み",
+      "reset-symbol-client-secret": "リセット"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "{{queryDisplayName}}の生クエリ",
+      "aria-label-use-query": "このクエリボタンを使用",
+      "button-use-query": "このクエリを使用",
+      "label-categories": "カテゴリ－",
+      "label-query-results": "クエリ結果：{{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "すべてのカテゴリー",
+      "placeholder-search-logs": "ログクエリを検索",
+      "text-loading": "読み込み中..."
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "クエリモーダルを開始",
+      "title-kick-start": "クエリを開始"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "Azureサービスへの認証タイプを選択",
+      "label-authentication": "認証",
+      "title-authentication": "認証"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "基本ログ",
+      "description-basic-logs": "この機能を有効にすると、<2>基本ログ</2>用に設定されたテーブルをクエリするダッシュボードパネルで、Azure Monitorのクエリごとのコストが発生します。",
+      "label-enable-basic-logs": "基本ログを有効にする"
+    },
+    "config-editor": {
+      "description-additional-settings": "追加設定は、データソースをよりきめ細かく制御するために設定できるオプション設定です。これには、Socket Secureプロキシ（SOCKS）が含まれます。",
+      "description-request-timeout": "リクエストタイムアウトを秒単位で設定します。デフォルトは30秒です。",
+      "title-additional-settings": "追加設定",
+      "title-request-timeout": "リクエストタイムアウト"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "フォールバック認証情報が無効になっています。ユーザーベース認証は、本質的にスコープ内のユーザーのリクエストのみをサポートするため、アラート、記録クエリ、レポートなどの機能は想定どおりに機能しません。詳細については、<2>ドキュメント</2>をご覧ください。",
+      "body-service-credentials": "ユーザーベース認証は、ユーザーの詳細を指定せずにデータソースにリクエストを行うGrafana機能を本質的にサポートしていません。その一例がアラートです。リクエストのコンテキストにユーザーがいない機能が引き続き機能するようにするには、以下にフォールバック認証情報を入力してください。",
+      "description-authentication": "Azureサービスへの認証タイプを選択",
+      "description-service-credentials": "このデータソースでフォールバックサービス認証情報を有効または無効にするかを選択",
+      "label-authentication": "認証",
+      "label-service-credentials": "サービス認証情報",
+      "note-service-credentials": "注：アラートなどの機能は、ユーザーではなくフォールバック認証情報のアクセスレベルに制限されます。これだとユーザーにとって混乱が生じる可能性があるため、明確にする必要があります。",
+      "title-fallback-credentials-disabled": "フォールバック認証情報が無効",
+      "title-fallback-service-credentials": "フォールバックサービス認証情報",
+      "title-service-credentials": "サービス認証情報"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "デフォルトのサブスクリプション",
+      "label-default-subscription": "デフォルトのサブスクリプション",
+      "load-subscriptions": "サブスクリプションを読み込む"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "削除",
+      "label-dimensions": "ディメンション",
+      "placeholder-field": "フィールド",
+      "placeholder-operation": "操作",
+      "placeholder-select-value": "値を選択",
+      "placeholder-select-values": "値を選択"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "{{type}}はGrafana 9で廃止予定になりました。クエリの移行方法の詳細については、<3>廃止予定の案内</3>を参照してください。これは現在のクエリ定義です：",
+      "title-unknown-query-type": "不明なクエリタイプ"
+    },
+    "filter": {
+      "aria-label-remove-filter": "フィルターを削除",
+      "placeholder-property": "プロパティ",
+      "placeholder-value": "値"
+    },
+    "filter-item": {
+      "aria-label-column": "列",
+      "aria-label-column-value": "列の値",
+      "aria-label-operator": "オペレーター",
+      "label-or": "または"
+    },
+    "filter-section": {
+      "label-add-group": "グループを追加",
+      "label-and": "AND",
+      "label-filters": "フィルター",
+      "tooltip-filters": "特定の列に条件を適用して結果を絞り込みます。"
+    },
+    "filters": {
+      "label-filters": "フィルター"
+    },
+    "format-as-field": {
+      "label-format-as": "フォーマット"
+    },
+    "fuzzy-search": {
+      "aria-label-select-column": "列を選択",
+      "label-fuzzy-search": "あいまい検索",
+      "placeholder-search-team": "検索語を入力",
+      "tooltip-fuzzy-search": "スペルのバリエーションを許容して、類似する一致テキストを検索します。デフォルトでは、あいまい検索は特定のフィールドだけでなく、テーブル全体のすべての列（*）をスキャンします。"
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Grafanaテンプレート変数関数",
+      "placeholder-grafana-template-variable": "Grafanaテンプレート変数関数を入力してください。例：{{example}} "
+    },
+    "group-by-item": {
+      "aria-label-column": "列",
+      "aria-label-remove": "削除"
+    },
+    "group-by-section": {
+      "label-group-by": "グループ化",
+      "tooltip-group-by": "指定された列に基づいて結果をカテゴリに整理します。グループ化は、選択した列の一意の値を一覧表示するために単独で使用できるほか、各グループの要約統計を生成するために集計関数と組み合わせて使用することもできます。単独で使用した場合、指定された列の異なる組み合わせが返されます。"
+    },
+    "kql-preview": {
+      "button-hide": "非表示",
+      "button-show": "表示",
+      "label-query-preview": "クエリプレビュー"
+    },
+    "legend-format-field": {
+      "label-legend-format": "凡例フォーマット",
+      "placeholder-legend-format": "エイリアスパターン"
+    },
+    "limit-section": {
+      "label-limit": "制限",
+      "placeholder-limit": "制限値を入力",
+      "tooltip-limit": "返される行数を制限します（デフォルトは1000）。"
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "基本ログクエリを使用すると、スキャンされたデータ量に基づいてコストが発生します。",
+      "label-logs": "ログ",
+      "title-basic-logs-queries": "基本ログクエリ",
+      "tooltip-logs": "基本ログクエリまたは分析ログクエリのどちらを実行するかを指定します。"
+    },
+    "logs-query-builder": {
+      "title-no-tables": "リソースは正常に読み込まれましたが、テーブルがありません"
+    },
+    "logs-query-editor": {
+      "learn-more": "詳細を見る",
+      "view-query": "Azure Portalでクエリを表示"
+    },
+    "metric-name-field": {
+      "label-metric": "メトリック"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "メトリック名前空間"
+    },
+    "nested-row": {
+      "text-loading": "読み込み中..."
+    },
+    "order-by-section": {
+      "aria-label-order-by-column": "列で並べ替え",
+      "aria-label-order-direction": "並び順",
+      "label-by": "基準",
+      "label-order-by": "並べ替え",
+      "tooltip-order-by": "1つ以上の列に基づいて結果を昇順または降順で並び替えます。"
+    },
+    "query-editor": {
+      "alert-error-occurred": "Azure Monitorからメタデータをリクエスト中にエラーが発生しました"
+    },
+    "query-header": {
+      "aria-label-kick-start": "Azureログのクエリ開始ボタン",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "クエリを開始",
+      "button-run-query": "クエリの実行",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "サービス",
+      "placeholder-service": "サービス...",
+      "title-switch-mode": "エディターモードを切り替えますか？"
+    },
+    "raw-query": {
+      "aria-label-selector": "セレクター"
+    },
+    "resource-field": {
+      "label-resource": "リソース",
+      "title-select-resource": "リソースを選択"
+    },
+    "resource-label": {
+      "select-resource": "リソースを選択"
+    },
+    "resource-picker": {
+      "button-apply": "適用",
+      "button-cancel": "キャンセル",
+      "header-location": "場所",
+      "header-scope": "スコープ",
+      "header-type": "種類",
+      "heading-selection": "選択",
+      "result-limit": "最初の{{numResults}}件の結果を表示",
+      "text-loading": "読み込み中...",
+      "text-no-resources": "リソースが見つかりません",
+      "title-error-occurred": "Azure Monitorからリソースをリクエスト中にエラーが発生しました"
+    },
+    "scope-selector": {
+      "label": "スコープ"
+    },
+    "search": {
+      "aria-label-resource-search": "リソース検索",
+      "placeholder-resource-search": "リソースを検索"
+    },
+    "subscription-field": {
+      "label-subscriptions": "サブスクリプション",
+      "validation-subscriptions": "少なくとも1つのサブスクリプションを選択する必要があります。"
+    },
+    "table-section": {
+      "aria-label-columns": "列",
+      "aria-label-table": "テーブル",
+      "label-columns": "列",
+      "label-table": "テーブル",
+      "placeholder-select-columns": "列を選択",
+      "placeholder-select-table": "テーブルを選択"
+    },
+    "time-grain-field": {
+      "label-time-grain": "時間粒度"
+    },
+    "time-management": {
+      "label-time-column": "時間列",
+      "label-time-range": "時間範囲",
+      "tooltip-time-column": "<0>絞り込みに使用する時間列を指定します。デフォルトでは、最初のテーブルの<1>timeSpan</1>列、最初に見つかった<3>datetime</3>列、または<5>TimeGenerated</5>になります。</0>",
+      "tooltip-time-range": "<0>クエリに使用する時間範囲を指定します。<1>クエリ</1>オプションは、クエリで指定された時間範囲のみを使用します。<3>ダッシュボード</3>はGrafanaの時間範囲のみを使用します。ログビルダーモードでは、ダッシュボード時間のみが使用されます。</0>"
+    },
+    "top-field": {
+      "label-top": "上位"
+    },
+    "trace-type-field": {
+      "label-event-type": "イベントタイプ",
+      "placeholder-event-type": "イベントタイプを選択"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "操作ID"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "このデータソースを使用するには、Azure Entra（旧Azure Active Directory）を介した認証が必要です。詳細については、<2>ドキュメント</2>をご覧ください。",
+      "title-unsupported-auth": "サポートされていない認証プロバイダー"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "データソースのバックエンド機能（アラートなど）を使用するには、サービス認証情報が必要です。このデータソースは、サービス認証情報のフォールバックなしで設定されているか、フォールバック機能が無効になっています。詳細については、<2>ドキュメント</2>をご覧ください。",
+      "title-no-fallback-credentials": "フォールバック認証情報が利用できません"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "カスタム名前空間を選択",
+      "aria-label-select-namespace": "名前空間を選択",
+      "aria-label-select-query-type": "クエリタイプを選択",
+      "aria-label-select-region": "リージョンを選択",
+      "aria-label-select-resource": "リソースを選択",
+      "aria-label-select-resource-group": "リソースグループを選択",
+      "aria-label-select-subscription": "サブスクリプションを選択",
+      "label-custom-namespace": "カスタム名前空間",
+      "label-namespace": "名前空間",
+      "label-query-type": "クエリタイプ",
+      "label-region": "リージョン",
+      "label-resource": "リソース",
+      "label-resource-group": "リソースグループ",
+      "label-resource-type": "リソースタイプ",
+      "label-subscription": "サブスクリプション",
+      "placeholder-custom-namespace": "オプション",
+      "placeholder-namespace": "オプション",
+      "placeholder-region": "オプション",
+      "placeholder-resource-group": "オプション",
+      "title-error-occurred": "Azure Monitorからメタデータをリクエスト中にエラーが発生しました"
+    }
+  }
+}

@@ -85,6 +85,12 @@ export type BackendSrvRequest = {
    * @deprecated withCredentials is deprecated in favor of credentials
    */
   withCredentials?: boolean;
+
+  /**
+   * Set to true to validate the URL path to prevent path traversal attacks.
+   * Use this when constructing URLs from user input.
+   */
+  validatePath?: boolean;
 };
 
 /**

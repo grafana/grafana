@@ -4,16 +4,19 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMetricsClient(t *testing.T) {
-	metrics := []*cloudwatch.Metric{
+	metrics := []cloudwatchtypes.Metric{
 		{MetricName: aws.String("Test_MetricName1")},
 		{MetricName: aws.String("Test_MetricName2")},
 		{MetricName: aws.String("Test_MetricName3")},
@@ -50,25 +53,25 @@ func TestMetricsClient(t *testing.T) {
 	})
 
 	t.Run("Should return account id in case IncludeLinkedAccounts is set to true", func(t *testing.T) {
-		fakeApi := &mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{
+		fakeApi := &mocks.FakeMetricsAPI{Metrics: []cloudwatchtypes.Metric{
 			{MetricName: aws.String("Test_MetricName1")},
 			{MetricName: aws.String("Test_MetricName2")},
 			{MetricName: aws.String("Test_MetricName3")},
-		}, OwningAccounts: []*string{aws.String("1234567890"), aws.String("1234567890"), aws.String("1234567895")}}
+		}, OwningAccounts: []string{"1234567890", "1234567890", "1234567895"}}
 		client := NewMetricsClient(fakeApi, 100)
 
 		response, err := client.ListMetricsWithPageLimit(ctx, &cloudwatch.ListMetricsInput{IncludeLinkedAccounts: aws.Bool(true)})
 		require.NoError(t, err)
 		expected := []resources.MetricResponse{
-			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName1")}, AccountId: stringPtr("1234567890")},
-			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName2")}, AccountId: stringPtr("1234567890")},
-			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName3")}, AccountId: stringPtr("1234567895")},
+			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName1")}, AccountId: stringPtr("1234567890")},
+			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName2")}, AccountId: stringPtr("1234567890")},
+			{Metric: cloudwatchtypes.Metric{MetricName: aws.String("Test_MetricName3")}, AccountId: stringPtr("1234567895")},
 		}
 		assert.Equal(t, expected, response)
 	})
 
 	t.Run("Should not return account id in case IncludeLinkedAccounts is set to false", func(t *testing.T) {
-		fakeApi := &mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{{MetricName: aws.String("Test_MetricName1")}}, OwningAccounts: []*string{aws.String("1234567890")}}
+		fakeApi := &mocks.FakeMetricsAPI{Metrics: []cloudwatchtypes.Metric{{MetricName: aws.String("Test_MetricName1")}}, OwningAccounts: []string{"1234567890"}}
 		client := NewMetricsClient(fakeApi, 100)
 
 		response, err := client.ListMetricsWithPageLimit(ctx, &cloudwatch.ListMetricsInput{IncludeLinkedAccounts: aws.Bool(false)})

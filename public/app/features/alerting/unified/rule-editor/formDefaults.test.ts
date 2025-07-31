@@ -1,9 +1,17 @@
+import { GrafanaConfig } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
 import { testWithFeatureToggles } from '../test/test-utils';
 import { RuleFormType } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../utils/datasource';
 import { MANUAL_ROUTING_KEY, getDefaultQueries } from '../utils/rule-form';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(),
+}));
 
 import { formValuesFromQueryParams, getDefaultFormValues, getDefautManualRouting } from './formDefaults';
 import { isAlertQueryOfAlertData } from './formProcessing';
@@ -189,5 +197,99 @@ describe('getDefaultManualRouting', () => {
     expect(getDefautManualRouting()).toBe(true);
     localStorage.removeItem(MANUAL_ROUTING_KEY);
     expect(getDefautManualRouting()).toBe(true);
+  });
+});
+
+describe('getDefaultFormValues', () => {
+  // This is for Typescript. GrafanaBootConfig returns narrower types than GrafanaConfig
+  const grafanaConfig: GrafanaConfig = config;
+  const uaConfig = grafanaConfig.unifiedAlerting;
+
+  const mockGetInstanceSettings = jest.fn();
+
+  beforeEach(() => {
+    (getDataSourceSrv as jest.Mock).mockReturnValue({
+      getInstanceSettings: mockGetInstanceSettings,
+    });
+  });
+
+  afterEach(() => {
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = undefined;
+    jest.clearAllMocks();
+  });
+
+  it('should set targetDatasourceUid from config when datasource is valid for recording rules', () => {
+    const expectedDatasourceUid = 'test-datasource-uid';
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = expectedDatasourceUid;
+
+    const validDataSource = mockDataSource({
+      uid: expectedDatasourceUid,
+      type: DataSourceType.Prometheus,
+      jsonData: {
+        allowAsRecordingRulesTarget: true,
+      },
+    });
+    mockGetInstanceSettings.mockReturnValue(validDataSource);
+
+    const result = getDefaultFormValues();
+
+    expect(result.targetDatasourceUid).toBe(expectedDatasourceUid);
+    expect(mockGetInstanceSettings).toHaveBeenCalledWith(expectedDatasourceUid);
+  });
+
+  it('should set targetDatasourceUid to undefined when datasource has allowAsRecordingRulesTarget disabled', () => {
+    const datasourceUid = 'test-datasource-uid';
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = datasourceUid;
+
+    const invalidDataSource = mockDataSource({
+      uid: datasourceUid,
+      type: DataSourceType.Prometheus,
+      jsonData: {
+        allowAsRecordingRulesTarget: false,
+      },
+    });
+    mockGetInstanceSettings.mockReturnValue(invalidDataSource);
+
+    const result = getDefaultFormValues();
+
+    expect(result.targetDatasourceUid).toBeUndefined();
+    expect(mockGetInstanceSettings).toHaveBeenCalledWith(datasourceUid);
+  });
+
+  it('should set targetDatasourceUid to undefined when datasource type is not supported', () => {
+    const datasourceUid = 'test-datasource-uid';
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = datasourceUid;
+
+    const nonPrometheusDataSource = mockDataSource({
+      uid: datasourceUid,
+      type: DataSourceType.Loki,
+      jsonData: {
+        allowAsRecordingRulesTarget: true,
+      },
+    });
+    mockGetInstanceSettings.mockReturnValue(nonPrometheusDataSource);
+
+    const result = getDefaultFormValues();
+
+    expect(result.targetDatasourceUid).toBeUndefined();
+    expect(mockGetInstanceSettings).toHaveBeenCalledWith(datasourceUid);
+  });
+
+  it('should set targetDatasourceUid to undefined when datasource does not exist', () => {
+    const datasourceUid = 'non-existent-datasource-uid';
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = datasourceUid;
+
+    mockGetInstanceSettings.mockReturnValue(null);
+
+    const result = getDefaultFormValues();
+
+    expect(result.targetDatasourceUid).toBeUndefined();
+    expect(mockGetInstanceSettings).toHaveBeenCalledWith(datasourceUid);
+  });
+
+  it('should set targetDatasourceUid to undefined when defaultRecordingRulesTargetDatasourceUID is not provided', () => {
+    const result = getDefaultFormValues();
+    expect(result.targetDatasourceUid).toBeUndefined();
+    expect(mockGetInstanceSettings).not.toHaveBeenCalled();
   });
 });

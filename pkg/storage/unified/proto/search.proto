@@ -1,0 +1,140 @@
+syntax = "proto3";
+package resource;
+
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
+
+import "resource.proto";
+
+
+// Unlike the ResourceStore, this service can be exposed to clients directly
+// It should be implemented with efficient indexes and does not need read-after-write semantics
+service ResourceIndex {
+  rpc Search(ResourceSearchRequest) returns (ResourceSearchResponse);
+
+  // Get the resource stats
+  rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
+}
+
+// Get statistics across multiple resources
+// For these queries, we do not need authorization to see the actual values
+message ResourceStatsRequest {
+  // Namespace (tenant)
+  string namespace = 1;
+
+  // An optional list of group/resource identifiers
+  // when empty, we assume searching across everything
+  // NOTE, this query may need to federate across a few storage instances
+  repeated string kinds = 2;
+
+  // Limit the stats within a folder (not recursive!)
+  string folder = 3;
+}
+
+message ResourceStatsResponse {
+  message Stats {
+    // Resource group
+    string group = 1;
+    // Resource name
+    string resource = 2;
+    // Number of items
+    int64 count = 3;
+  }
+
+  // Error details
+  ErrorResult error = 1;
+
+  // All results exist within this key
+  repeated Stats stats = 2;
+}
+
+// Search within a single resource
+message ResourceSearchRequest {
+  message Sort {
+    string field = 1;
+    bool desc = 2; // defaults to ascending
+  }
+
+  message Facet {
+    string field = 1;
+    int64 limit = 2;
+    // For now, only term queries, eventually?
+    // numeric queries
+    // date queries
+  }
+
+  // The key must include namespace + group + resource
+  ListOptions options = 1;
+
+  // To search additional resource types, add additional keys to this list
+  // NOTE: queries will only support federation across kinds with common fields
+  repeated ResourceKey federated = 2;
+
+  // When a query exists, it is parsed and used to influence
+  // query string for chosen implementation (currently just bleve)
+  // The score is only relevant when a query exists
+  string query = 3;
+
+  // max results
+  int64 limit = 4;
+
+  // where to start the query (eg, From)
+  int64 offset = 5;
+
+  // sorting
+  repeated Sort sortBy = 6;
+
+  // calculate field statistics
+  map<string,Facet> facet = 7;
+
+  // the return fields (empty will return everything)
+  repeated string fields = 8;
+
+  // explain each result (added to the each row)
+  bool explain = 9;
+
+  bool is_deleted = 10;
+
+  int64 page = 11;
+
+  int64 permission = 12;
+}
+
+message ResourceSearchResponse {
+  message Facet {
+    string field = 1;
+    // The distinct terms
+    int64 total = 2;
+    // The number of documents that do *not* have this field
+    int64 missing = 3;
+    // Top term stats
+    repeated TermFacet terms = 4;
+    // numeric range
+    // date range facets
+  }
+
+  message TermFacet {
+    string term = 1;
+    int64 count = 2;
+  }
+
+  // Error details
+  ErrorResult error = 1;
+
+  // All results exist within this key
+  ResourceKey key = 2;
+
+  // Query results
+  ResourceTable results = 3;
+
+  // The total hit count
+  int64 total_hits = 4;
+
+  // indicates how expensive was the query with respect to bytes read
+  double query_cost = 5;
+
+  // maximum score across all fields
+  double max_score = 6;
+
+  // Facet results
+  map<string,Facet> facet = 7;
+}

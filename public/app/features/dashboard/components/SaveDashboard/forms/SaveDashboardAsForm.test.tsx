@@ -1,9 +1,9 @@
-import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render, screen } from 'test/test-utils';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import * as api from 'app/features/manage-dashboards/state/actions';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardAsForm, SaveDashboardAsFormProps } from './SaveDashboardAsForm';
 

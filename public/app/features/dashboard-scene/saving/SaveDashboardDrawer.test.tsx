@@ -3,9 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { SaveDashboardResponseDTO } from 'app/types/dashboard';
 
+import { DashboardSceneState } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
@@ -152,6 +155,70 @@ describe('SaveDashboardDrawer', () => {
     });
   });
 
+  describe('When a dashboard is managed by an external system', () => {
+    beforeEach(() => {
+      config.featureToggles.provisioning = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.provisioning = false;
+    });
+
+    it('It should show the changes tab if the resource can be edited', async () => {
+      const { dashboard, openAndRender } = setup({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
+      });
+
+      // just changing the title here, in real case scenario changes are reflected through migrations
+      // eg. panel version - same for other manager tests below
+      dashboard.setState({ title: 'updated title' });
+      openAndRender();
+
+      expect(screen.queryByRole('tab', { name: /Changes/ })).toBeInTheDocument();
+    });
+
+    it('It should not show the changes tab if the resource cannot be edited; kubectl', async () => {
+      const { dashboard, openAndRender } = setup({
+        meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Kubectl } } },
+      });
+
+      dashboard.setState({ title: 'updated title' });
+      openAndRender();
+
+      expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
+    });
+
+    it('It should not show the changes tab if the resource cannot be edited; terraform', async () => {
+      const { dashboard, openAndRender } = setup({
+        meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform } } },
+      });
+
+      dashboard.setState({ title: 'updated title' });
+      openAndRender();
+
+      expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
+    });
+
+    it('It should not show the changes tab if the resource cannot be edited; plugin', async () => {
+      const { dashboard, openAndRender } = setup({
+        meta: {
+          k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } },
+        },
+      });
+
+      dashboard.setState({ title: 'updated title' });
+      openAndRender();
+
+      expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
+    });
+  });
+
   describe('Save as copy', () => {
     it('Should show save as form', async () => {
       const { openAndRender } = setup();
@@ -199,7 +266,7 @@ function mockSaveDashboard(options: Partial<MockBackendApiOptions> = {}) {
 
 let cleanUp = () => {};
 
-function setup() {
+function setup(overrides?: Partial<DashboardSceneState>) {
   const dashboard = transformSaveModelToScene({
     dashboard: {
       title: 'hello',
@@ -209,6 +276,7 @@ function setup() {
       version: 10,
     },
     meta: {},
+    ...overrides,
   });
 
   // Clear any data layers

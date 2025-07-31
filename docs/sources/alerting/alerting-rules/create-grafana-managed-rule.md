@@ -42,9 +42,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
   modify-the-no-data-or-error-state:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
   pending-period:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period
@@ -105,11 +105,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/
-  compatible-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
   shared-provision-alerting-resources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/
@@ -130,27 +125,43 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
+  tutorials:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/tutorials/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/tutorials/
 ---
 
 # Configure Grafana-managed alert rules
 
-Grafana-managed rules can query data from multiple data sources in a single alert rule.
-They're the most flexible [alert rule type](ref:alert-rules).
-You can also add expressions to transform your data, set alert conditions, and images in alert notifications.
+Grafana-managed alert rules are the default way to create alert rules in Grafana.
 
-{{< admonition type="note" >}}
+Grafana-managed rules inherit their model from Prometheus Alerting and extend it with greater flexibility—such as multi-data source queries, expression-based transformations, advanced alert conditions, images in notifications, custom states, and more.
+
+To create or edit Grafana-managed alert rules, follow the instructions below.
+
+{{< admonition type="tip" >}}
+For quick-start tutorials on key alerting features, see [Getting started with Grafana Alerting tutorials](ref:tutorials).
+{{< /admonition  >}}
+
+## Before you begin
+
+Before you create Grafana-managed alert rules, review the following requirements and options.
+
+### Supported data sources
+
+Grafana-managed alert rules can query backend data sources when the data source's `plugin.json` file sets `{"backend": true, "alerting": true}`.
+
+Before you create an alert rule, verify that the data sources you plan to query are compatible and properly configured.
+
+You can find the public data sources that support alert rules in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting).
+
+### Alert rule limits in Grafana Cloud
+
 In Grafana Cloud, the number of Grafana-managed alert rules you can create depends on your Grafana Cloud plan.
 
 - Free Forever plan: You can create up to 100 free alert rules, with each alert rule having a maximum of 1000 alert instances.
 - All paid plans (Pro and Advanced): They have a soft limit of 2000 alert rules and support unlimited alert instances. To increase the limit, open a support ticket from the [Cloud portal](/docs/grafana-cloud/account-management/support/).
-
-{{< /admonition >}}
-
-To create or edit Grafana-managed alert rules, follow the instructions below. For a practical example, check out our [tutorial on getting started with Grafana alerting](http://grafana.com/tutorials/alerting-get-started/).
-
-## Before you begin
-
-Verify that the data sources you plan to query in the alert rule are [compatible with Grafana-managed alert rules](ref:compatible-data-sources) and are properly configured.
 
 ### Permissions
 
@@ -173,6 +184,8 @@ After you have created an alert rule, the system defaults to your previous choic
 
 Switching from advanced to default may result in queries and expressions that can't be converted.
 In this case, a warning message asks if you want to continue to reset to default settings.
+
+## Set alert rule name
 
 {{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -263,7 +276,6 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
    This is different to [mute timings](ref:mute-timings), which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
 
 1. In **Configure no data and error handling**, you can define the alerting behavior and alerting state for two scenarios:
-
    - When the evaluation returns **No data** or all values are null.
    - When the evaluation returns **Error** or timeout.
 
@@ -284,15 +296,13 @@ Complete the following steps to set up notifications.
 1. Configure who receives a notification when an alert rule fires by either choosing **Select contact point** or **Use notification policy**.
 
    **Select contact point**
-
    1. Choose this option to select an existing [contact point](ref:contact-points).
 
       All notifications for this alert rule are sent to this contact point automatically and notification policies aren't used.
 
-   1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
+   1. You can also optionally select a mute or active timing as well as groupings and timings to define when not to send notifications.
 
    **Use notification policy**
-
    1. Choose this option to use the [notification policy tree](ref:notification-policies) to handle alert notifications.
 
       All notifications for this alert rule are managed by the notification policy tree, which routes alerts based on their labels.
@@ -337,18 +347,3 @@ Grafana provides several optional annotations.
 1. Click **Save rule**.
 
 [//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})
-
-## Bulk delete all alert rules within a folder
-
-Admin users can delete all of the alert rules within a folder. To delete all the alert rules in a folder, click the menu icon and select **Delete**. Then type "Delete" into the field and click **Delete** to confirm the bulk deletion.
-
-## Permanently delete or restore deleted alert rules
-
-Only users with an Admin role can restore deleted Grafana-managed alert rules. After an alert rule is restored, it is restored with a new, different UID from the one it had before.
-
-1. Go to **Alerts & IRM > Alerting > Recently deleted**.
-1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
-
-{{< admonition type="note" >}}
-Deleted alert rules are stored for 30 days. Grafana Enterprise and OSS users can adjust the length of time for which the rules are stored can be adjusted in the Grafana configuration file's `[unified_alerting].deleted_rule_retention` field. For an example of how to modify the Grafana configuration file, refer to the [documentation example here](/docs/grafana/latest/alerting/set-up/configure-alert-state-history/#configuring-grafana).  
-{{< /admonition >}}

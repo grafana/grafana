@@ -2,26 +2,44 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { downloadLogs } from '../../utils';
-import { createLogRow } from '../__mocks__/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 
+import { LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
 
-jest.mock('../../utils');
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  downloadLogs: jest.fn(),
+}));
 
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
+
+const fontSize: LogListFontSize = 'default';
 const contextProps = {
   app: CoreApp.Unknown,
+  containerElement: document.createElement('div'),
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
+  enableLogDetails: false,
+  fontSize,
   logs: [],
   showControls: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 };
 
 describe('LogListControls', () => {
@@ -235,6 +253,24 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText('Collapse JSON logs'));
   });
 
+  test('Controls font size', async () => {
+    const originalValue = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Use small font size'));
+    await screen.findByLabelText('Use default font size');
+
+    await userEvent.click(screen.getByLabelText('Use default font size'));
+    await screen.findByLabelText('Use small font size');
+
+    config.featureToggles.newLogsPanel = originalValue;
+  });
+
   test.each([
     ['txt', 'text'],
     ['json', 'json'],
@@ -270,14 +306,15 @@ describe('LogListControls', () => {
   });
 
   test('Controls new lines', async () => {
+    const log = createLogLine({ entry: 'the\\r\\nentry', hasUnescapedContent: true });
     const { rerender } = render(
-      <LogListContextProvider {...contextProps} hasUnescapedContent>
+      <LogListContextProvider {...contextProps} logs={[log]}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Fix incorrectly escaped newline and tab sequences in log lines'));
     rerender(
-      <LogListContextProvider {...contextProps} hasUnescapedContent>
+      <LogListContextProvider {...contextProps} logs={[log]}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );

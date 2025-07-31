@@ -2,13 +2,12 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Stack, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '../../utils/datasource';
+import { isValidRecordingRulesTarget } from '../../utils/datasource';
 import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';
@@ -32,7 +31,7 @@ export const AlertRuleNameAndMetric = () => {
     formState: { errors },
     setValue,
   } = useFormContext<RuleFormValues>();
-  const { t } = useTranslate();
+
   const ruleFormType = watch('type');
   if (!ruleFormType) {
     return null;
@@ -66,7 +65,10 @@ export const AlertRuleNameAndMetric = () => {
             id="name"
             width={38}
             {...register('name', {
-              required: { value: true, message: 'Must enter a name' },
+              required: {
+                value: true,
+                message: t('alerting.alert-rule-name-and-metric.message.must-enter-a-name', 'Must enter a name'),
+              },
               pattern: isCloudRecordingRule
                 ? recordingRuleNameValidationPattern(RuleFormType.cloudRecording)
                 : undefined,
@@ -89,7 +91,13 @@ export const AlertRuleNameAndMetric = () => {
               id="metric"
               width={38}
               {...register('metric', {
-                required: { value: true, message: 'Must enter a metric name' },
+                required: {
+                  value: true,
+                  message: t(
+                    'alerting.alert-rule-name-and-metric.message.must-enter-a-metric-name',
+                    'Must enter a metric name'
+                  ),
+                },
                 pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
               })}
               aria-label={t('alerting.alert-rule-name-and-metric.metric-aria-label-metric', 'metric')}
@@ -101,9 +109,10 @@ export const AlertRuleNameAndMetric = () => {
           </Field>
         )}
 
-        {isGrafanaRecordingRule && config.featureToggles.grafanaManagedRecordingRulesDatasources && (
+        {isGrafanaRecordingRule && (
           <Field
             id="target-data-source"
+            data-testid="target-data-source"
             label={t('alerting.recording-rules.label-target-data-source', 'Target data source')}
             description={t(
               'alerting.recording-rules.description-target-data-source',
@@ -119,9 +128,7 @@ export const AlertRuleNameAndMetric = () => {
                   current={field.value}
                   noDefault
                   // Filter with `filter` prop instead of `type` prop to avoid showing the `-- Grafana --` data source
-                  filter={(ds: DataSourceInstanceSettings) =>
-                    isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)
-                  }
+                  filter={isValidRecordingRulesTarget}
                   onChange={(ds: DataSourceInstanceSettings) => {
                     setValue('targetDatasourceUid', ds.uid);
                   }}
@@ -130,7 +137,13 @@ export const AlertRuleNameAndMetric = () => {
               name="targetDatasourceUid"
               control={control}
               rules={{
-                required: { value: true, message: 'Please select a data source' },
+                required: {
+                  value: true,
+                  message: t(
+                    'alerting.alert-rule-name-and-metric.message.please-select-a-data-source',
+                    'Please select a data source'
+                  ),
+                },
               }}
             />
           </Field>

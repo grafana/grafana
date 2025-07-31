@@ -1,4 +1,4 @@
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 /**
  * Removes a panel reference from a layout.
@@ -12,14 +12,7 @@ export function removePanelRefFromLayout(layout: DashboardV2Spec['layout'], elem
     case 'GridLayout': {
       const items = layout.spec.items || [];
       layout.spec.items = items.filter((item) => {
-        if (item.kind === 'GridLayoutItem') {
-          return item.spec.element.name !== elementName;
-        } else if (item.kind === 'GridLayoutRow') {
-          item.spec.elements = item.spec.elements.filter((el) => el.spec.element.name !== elementName);
-          // Keep the row if it still has elements left
-          return item.spec.elements.length > 0;
-        }
-        return true;
+        return item.spec.element.name !== elementName;
       });
       break;
     }
@@ -60,17 +53,7 @@ function isLayoutEmpty(layout: DashboardV2Spec['layout']) {
   switch (layout.kind) {
     case 'GridLayout': {
       const items = layout.spec.items || [];
-      return (
-        items.length === 0 ||
-        items.every((item) => {
-          if (item.kind === 'GridLayoutItem') {
-            return false;
-          } else if (item.kind === 'GridLayoutRow') {
-            return item.spec.elements.length === 0;
-          }
-          return false;
-        })
-      );
+      return items.length === 0;
     }
 
     case 'AutoGridLayout': {

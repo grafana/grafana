@@ -1,5 +1,7 @@
 import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
@@ -12,14 +14,19 @@ import {
   AnnoKeyGrantPermissions,
   Resource,
   DeprecatedInternalId,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  AnnoKeyManagerAllowsEdits,
+  ManagerKind,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
+import { isV2StoredVersion } from './utils';
 
 export const K8S_V1_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
@@ -28,20 +35,22 @@ export const K8S_V1_DASHBOARD_API_CONFIG = {
 };
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
-  private client: ResourceClient<DashboardDataDTO>;
+  private client: ResourceClient<DashboardDataDTO, Status>;
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
-    const dashboard = options.dashboard as DashboardDataDTO; // type for the uid property
+    const dashboard = options.dashboard;
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
         ...options?.k8s,
       },
       spec: {
         ...dashboard,
+        title: dashboard.title ?? '',
+        uid: dashboard.uid ?? '',
       },
     };
 
@@ -65,6 +74,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
+      // remove resource version when updating
+      delete obj.metadata.resourceVersion;
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -85,7 +96,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
     return {
       uid: v.metadata.name,
-      version: v.spec.version ?? 0,
+      version: v.metadata.generation ?? 0,
       id: v.spec.id ?? 0,
       status: 'success',
       url,
@@ -97,7 +108,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     return this.client.delete(uid, showSuccessAlert).then((v) => ({
       id: 0,
       message: v.message,
-      title: 'deleted',
+      title: t('dashboard.k8s-dashboard-api.title.deleted', 'deleted'),
     }));
   }
 
@@ -106,7 +117,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
 
       // This could come as conversion error from v0 or v2 to V1.
-      if (dash.status?.conversion?.failed && dash.status.conversion.storedVersion === 'v2alpha1') {
+      if (dash.status?.conversion?.failed && isV2StoredVersion(dash.status.conversion.storedVersion)) {
         throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
       }
 
@@ -118,6 +129,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
           k8s: dash.metadata,
           version: dash.metadata.generation,
+          created: dash.metadata.creationTimestamp,
         },
         dashboard: {
           ...dash.spec,
@@ -125,6 +137,14 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
         },
       };
+
+      const annotations = dash.metadata.annotations ?? {};
+      const managerKind = annotations[AnnoKeyManagerKind];
+
+      if (managerKind) {
+        result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
+        result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
+      }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
         result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
@@ -156,5 +176,15 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       throw e;
     }
+  }
+
+  async listDeletedDashboards(options: ListDeletedDashboardsOptions) {
+    return await this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
+    // reset the resource version to create a new resource
+    dashboard.metadata.resourceVersion = '';
+    return this.client.create(dashboard);
   }
 }

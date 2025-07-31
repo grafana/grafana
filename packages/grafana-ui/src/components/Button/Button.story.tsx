@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { StoryFn } from '@storybook/react';
 
-import { ComponentSize } from '../../types';
+import { ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -12,7 +12,7 @@ import { ButtonGroup } from './ButtonGroup';
 const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
 
 export default {
-  title: 'Buttons/Button',
+  title: 'Inputs/Button',
   component: Button,
   parameters: {
     docs: {
@@ -79,28 +79,28 @@ export const Examples: StoryFn<typeof Button> = () => {
         <div>Inside ButtonGroup</div>
         <ButtonGroup>
           <Button icon="sync">Run query</Button>
-          <Button icon="angle-down" />
+          <Button icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
         <ButtonGroup>
           <Button variant="destructive" icon="sync">
             Run query
           </Button>
-          <Button variant="destructive" icon="angle-down" />
+          <Button variant="destructive" icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
         <ButtonGroup>
           <Button variant="success" icon="sync">
             Run query
           </Button>
-          <Button variant="success" icon="angle-down" />
+          <Button variant="success" icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
         <ButtonGroup>
           <Button variant="secondary" icon="sync">
             Run query
           </Button>
-          <Button variant="secondary" icon="angle-down" />
+          <Button variant="secondary" icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
       </Stack>
-      <Card>
+      <Card noMargin>
         <Card.Heading>Button inside card</Card.Heading>
         <Card.Actions>
           {allButtonVariants.map((variant) => (

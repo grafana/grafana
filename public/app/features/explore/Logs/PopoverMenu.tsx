@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, LogRowModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, useStyles2 } from '@grafana/ui';
 
@@ -49,8 +49,6 @@ export const PopoverMenu = ({
     track('popover_menu_disabled', selection.length, row.datasourceType);
     props.onDisable();
   }, [props, row.datasourceType, selection.length]);
-
-  const { t } = useTranslate();
 
   const supported = onClickFilterString || onClickFilterOutString;
 

@@ -67,16 +67,18 @@ exports[`VariableQueryEditor renders correctly 1`] = `
               </div>
             </div>
             <div
-              class="css-zyjsuv-input-suffix"
+              class="css-1ms3s8l-input-suffix"
             >
               <svg
                 aria-hidden="true"
                 class="css-1d3xu67-Icon"
+                data-testid="angle-down"
                 height="16"
-                id="public/build/img/icons/unicons/angle-down.svg"
                 loader="[object Object]"
                 title=""
+                viewBox="0 0 24 24"
                 width="16"
+                xmlns="http://www.w3.org/2000/svg"
               />
             </div>
           </div>

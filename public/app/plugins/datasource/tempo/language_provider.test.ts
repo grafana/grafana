@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
 
-import { v1Tags, v2Tags } from './SearchTraceQLEditor/utils.test';
+import { v1Tags, v2Tags } from './SearchTraceQLEditor/mocks';
 import { TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import TempoLanguageProvider from './language_provider';
@@ -174,7 +174,7 @@ describe('Language_provider', () => {
             },
           ],
         })
-      ).toBe(`{name${operator}"api/v2/variants/by-upc/\\\\(\\\\?P<upc>\\\\[\\\\\\\\s\\\\\\\\S\\\\]\\\\*\\\\)/\\\\$"}`);
+      ).toBe(`{name${operator}"api/v2/variants/by-upc/\\\\(\\\\?P<upc>\\\\[\\\\s\\\\S\\\\]\\\\*\\\\)/\\\\$"}`);
     });
     it('two fields with everything filled in', () => {
       expect(

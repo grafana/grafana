@@ -10,30 +10,22 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -383,6 +375,9 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 }
 
 func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		desc           string
 		queryType      string
@@ -445,14 +440,6 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			expectedResult: []string{"parent"},
 		},
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
 
 	var orgID int64 = 1
 
@@ -498,6 +485,9 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		desc                    string
 		queryType               string
@@ -560,14 +550,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			expectedResult: []string{"parent"},
 		},
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
 
 	var orgID int64 = 1
 
@@ -618,6 +600,9 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		desc                    string
 		queryType               string
@@ -675,16 +660,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			expectedResult: []string{"subfolder"},
 		},
 	}
-
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
 
 	var orgID int64 = 1
 
@@ -774,9 +749,6 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 
 		// Insert dashboards in batches
 		batchSize := 500
-		if db.IsTestDBSpanner() {
-			batchSize = 30 // spanner has a limit of 950 parameters per query
-		}
 		for i := 0; i < len(dashes); i += batchSize {
 			end := i + batchSize
 			if end > len(dashes) {
@@ -847,31 +819,42 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// dashboard store commands that should be called.
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
-
 	fStore := folderimpl.ProvideStore(db)
-	folderSvc := folderimpl.ProvideService(
-		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(db),
-		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
-	// create parent folder
-	parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          "parent",
-		OrgID:        orgID,
+	// create in both the folder & dashboard tables
+	parent, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:        "parent",
-		SignedInUser: usr,
-	})
-	require.NoError(t, err)
-
-	// create subfolder
-	subfolder, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          "subfolder",
-		ParentUID:    "parent",
 		OrgID:        orgID,
-		Title:        "subfolder",
+		UID:          "parent",
 		SignedInUser: usr,
 	})
 	require.NoError(t, err)
-
+	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID: orgID,
+		Dashboard: simplejson.NewFromAny(map[string]any{
+			"title": "parent",
+			"uid":   parent.UID,
+		}),
+		IsFolder: true,
+	})
+	require.NoError(t, err)
+	subfolder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title:        "subfolder",
+		OrgID:        orgID,
+		UID:          "subfolder",
+		ParentUID:    parent.UID,
+		SignedInUser: usr,
+	})
+	require.NoError(t, err)
+	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:     orgID,
+		FolderUID: parent.UID,
+		Dashboard: simplejson.NewFromAny(map[string]any{
+			"title": "subfolder",
+			"uid":   subfolder.UID,
+		}),
+		IsFolder: true,
+	})
+	require.NoError(t, err)
 	// create a root level dashboard
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID: orgID,

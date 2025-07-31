@@ -1,4 +1,5 @@
 import { PluginState } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Badge, BadgeProps } from '@grafana/ui';
 
 interface Props {
@@ -29,19 +30,19 @@ function getFeatureStateInfo(state?: PluginState): BadgeProps | null {
   switch (state) {
     case PluginState.deprecated:
       return {
-        text: 'Deprecated',
+        text: t('plugins.get-feature-state-info.text.deprecated', 'Deprecated'),
         color: 'red',
         tooltip: `This feature is deprecated and will be removed in a future release`,
       };
     case PluginState.alpha:
       return {
-        text: 'Alpha',
+        text: t('plugins.get-feature-state-info.text.alpha', 'Alpha'),
         color: 'blue',
         tooltip: `This feature is experimental and future updates might not be backward compatible`,
       };
     case PluginState.beta:
       return {
-        text: 'Beta',
+        text: t('plugins.get-feature-state-info.text.beta', 'Beta'),
         color: 'blue',
         tooltip: `This feature is close to complete but not fully tested`,
       };

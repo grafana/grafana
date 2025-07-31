@@ -9,7 +9,7 @@ import {
   FieldOverrideContext,
   GrafanaTheme2,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Counter, Field, HorizontalGroup, IconButton, Label, useStyles2 } from '@grafana/ui';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
@@ -34,7 +34,7 @@ export const DynamicConfigValueEditor = ({
   searchQuery,
 }: DynamicConfigValueEditorProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const item = registry?.getIfExists(property.id);
 
   const componentId = useId();

@@ -31,11 +31,15 @@ type QueryDataResponse struct {
 // GetResponseCode return the right status code for the response by checking the responses.
 func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	if rsp == nil {
-		return http.StatusBadRequest
+		return http.StatusBadRequest // rsp is nil, so we return a 400
 	}
 	for _, res := range rsp.Responses {
+		if res.Error != nil && res.Status != 0 {
+			return int(res.Status)
+		}
+
 		if res.Error != nil {
-			return http.StatusBadRequest
+			return http.StatusBadRequest // Status is nil but we have an error, so we return a 400
 		}
 	}
 	return http.StatusOK

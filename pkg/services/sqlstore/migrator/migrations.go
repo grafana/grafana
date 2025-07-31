@@ -85,10 +85,6 @@ func (m *RawSQLMigration) Mssql(sql string) *RawSQLMigration {
 	return m.Set(MSSQL, sql)
 }
 
-func (m *RawSQLMigration) Spanner(sql string) *RawSQLMigration {
-	return m.Set(Spanner, sql)
-}
-
 type AddColumnMigration struct {
 	MigrationBase
 	tableName string

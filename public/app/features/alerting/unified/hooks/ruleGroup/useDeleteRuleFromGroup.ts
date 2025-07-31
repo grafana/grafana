@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditableRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -17,7 +17,7 @@ export function useDeleteRuleFromGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
-  const { t } = useTranslate();
+
   return useAsync(async (ruleGroup: RuleGroupIdentifier, ruleIdentifier: EditableRuleIdentifier) => {
     const { groupName, namespaceName } = ruleGroup;
 

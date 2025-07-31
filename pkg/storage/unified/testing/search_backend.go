@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -23,10 +24,6 @@ type NewSearchBackendFunc func(ctx context.Context) resource.SearchBackend
 
 // RunSearchBackendTest runs the search backend test suite
 func RunSearchBackendTest(t *testing.T, newBackend NewSearchBackendFunc, opts *TestOptions) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	if opts == nil {
 		opts = &TestOptions{}
 	}
@@ -67,14 +64,14 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 	require.Nil(t, index)
 
 	// Build the index
-	index, err = backend.BuildIndex(ctx, ns, 0, 0, nil, func(index resource.ResourceIndex) (int64, error) {
+	index, err = backend.BuildIndex(ctx, ns, 0, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		// Write a test document
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -106,7 +103,7 @@ func runTestSearchBackendTotalDocs(t *testing.T, backend resource.SearchBackend,
 }
 
 func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
 	ns := resource.NamespacedResource{
 		Namespace: nsPrefix + "-ns1",
 		Group:     "group",
@@ -114,13 +111,13 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 	}
 
 	// Build initial index with some test documents
-	index, err := backend.BuildIndex(ctx, ns, 3, 0, nil, func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, ns, 3, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -137,7 +134,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -160,9 +157,9 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 	require.NotNil(t, index)
 
 	t.Run("Search", func(t *testing.T) {
-		resp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
@@ -177,9 +174,9 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		require.Equal(t, int64(1), resp.TotalHits) // Only doc3 should have tag3 now
 
 		// Search for Document
-		resp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		resp, err = index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
@@ -201,7 +198,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -219,9 +216,9 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		})
 		require.NoError(t, err)
 		// Search for Document
-		resp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
@@ -234,5 +231,101 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, int64(3), resp.TotalHits) // Both doc1, doc2, and doc3 should have doc now
+	})
+
+	t.Run("Search by LibraryPanel reference", func(t *testing.T) {
+		// Build index with dashboards that have LibraryPanel references
+		index, err := backend.BuildIndex(ctx, ns, 3, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash1",
+							},
+							Title: "Dashboard with Library Panel 1",
+							References: resource.ResourceReferences{
+								{
+									Relation: "depends-on",
+									Group:    "dashboards.grafana.app",
+									Kind:     "LibraryPanel",
+									Name:     "lib-panel-1",
+								},
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash2",
+							},
+							Title: "Dashboard with Library Panel 2",
+							References: resource.ResourceReferences{
+								{
+									Relation: "depends-on",
+									Group:    "dashboards.grafana.app",
+									Kind:     "LibraryPanel",
+									Name:     "lib-panel-2",
+								},
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash3",
+							},
+							Title: "Dashboard without Library Panel",
+						},
+					},
+				},
+			})
+			require.NoError(t, err)
+			return int64(3), nil
+		})
+		require.NoError(t, err)
+		require.NotNil(t, index)
+
+		// Search for dashboards with specific LibraryPanel reference
+		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: ns.Namespace,
+					Group:     ns.Group,
+					Resource:  ns.Resource,
+				},
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      "reference.LibraryPanel",
+						Operator: "=",
+						Values:   []string{"lib-panel-1"},
+					},
+				},
+			},
+			Query:  "",
+			Fields: []string{"title"},
+			Limit:  10,
+		}, nil)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, int64(1), resp.TotalHits) // Only dash1 should have lib-panel-1
+
+		// Verify the result
+		require.Len(t, resp.Results.Rows, 1)
+		row := resp.Results.Rows[0]
+		require.Equal(t, "dash1", row.Key.Name)
+		require.Equal(t, "Dashboard with Library Panel 1", string(row.Cells[0])) // title field
 	})
 }

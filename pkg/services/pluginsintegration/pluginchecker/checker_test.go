@@ -9,7 +9,7 @@ import (
 
 func TestIsPreinstalled(t *testing.T) {
 	cfg := &setting.Cfg{
-		PreinstallPlugins: []setting.InstallPlugin{
+		PreinstallPluginsAsync: []setting.InstallPlugin{
 			{ID: "plugin1"},
 			{ID: "plugin2"},
 		},
@@ -23,7 +23,7 @@ func TestIsPreinstalled(t *testing.T) {
 
 func TestIsPinned(t *testing.T) {
 	cfg := &setting.Cfg{
-		PreinstallPlugins: []setting.InstallPlugin{
+		PreinstallPluginsAsync: []setting.InstallPlugin{
 			{ID: "plugin1", Version: "1.0.0"},
 			{ID: "plugin2"},
 		},

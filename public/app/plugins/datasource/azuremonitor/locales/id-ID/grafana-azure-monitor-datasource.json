@@ -1,0 +1,304 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "Lanjutan"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "Tambahkan",
+      "aria-label-remove": "Hapus",
+      "button-add-resource": "Tambahkan sumber daya",
+      "button-add-resource-uri": "Tambahkan URI sumber daya",
+      "label-namespace": "Ruang nama",
+      "label-region": "Wilayah",
+      "label-resource-group": "Kelompok Sumber Daya",
+      "label-resource-name": "Nama Sumber Daya",
+      "label-resource-number": "Sumber Daya {{resourceNum}}",
+      "label-resource-uri": "URI Sumber Daya ",
+      "label-subscription": "Berlangganan",
+      "placeholder-resource-name": "nama",
+      "tooltip-region": "Wilayah kode sumber daya. Opsional untuk satu sumber daya tetapi wajib saat memilih beberapa sumber daya.",
+      "tooltip-resource-uri": "Edit <2>uri sumber daya</2> secara manual. Mendukung penggunaan beberapa variabel templat (misalnya: /subscriptions/$subId/resourceGroups/$rg)"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "Fungsi agregat",
+      "aria-label-column": "Kolom",
+      "aria-label-remove": "Hapus",
+      "label-percentile": "DARI"
+    },
+    "aggregate-section": {
+      "label-aggregate": "Agregat",
+      "tooltip-aggregate": "Lakukan perhitungan di seluruh baris data, seperti jumlah, total, rata-rata, minimum, maksimum, standar deviasi atau persentil."
+    },
+    "aggregation-field": {
+      "label-aggregation": "Agregasi"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "ID Klien",
+      "aria-label-client-secret": "Rahasia Klien",
+      "aria-label-symbol-client-secret": "Rahasia Klien",
+      "aria-label-tenant-id": "ID Tenant",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "ID Aplikasi (klien)",
+      "label-client-secret": "Rahasia Klien",
+      "label-symbol-client-secret": "Rahasia Klien",
+      "label-tenant-id": "ID Direktori (tenant)",
+      "placeholder-symbol-client-secret": "dikonfigurasi",
+      "reset-symbol-client-secret": "Atur ulang"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "kueri {{queryDisplayName}} mentah",
+      "aria-label-use-query": "Gunakan tombol kueri ini",
+      "button-use-query": "Gunakan kueri ini",
+      "label-categories": "Kategori",
+      "label-query-results": "Hasil kueri: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "Semua kategori",
+      "placeholder-search-logs": "Pencarian kueri Log",
+      "text-loading": "Memuat..."
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "Mulai modal kueri Anda",
+      "title-kick-start": "Mulai kueri Anda"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "Pilih jenis autentikasi ke layanan Azure",
+      "label-authentication": "Autentikasi",
+      "title-authentication": "Autentikasi"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "Log Dasar",
+      "description-basic-logs": "Jika Anda mengaktifkan fitur ini, Azure Monitor akan dikenakan biaya per kueri untuk panel dasbor yang melakukan kueri pada tabel yang dikonfigurasi untuk <2>Log Dasar</2>.",
+      "label-enable-basic-logs": "Aktifkan Log Dasar"
+    },
+    "config-editor": {
+      "description-additional-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda. Ini mencakup Secure Socks Proxy.",
+      "description-request-timeout": "Atur batas waktu permintaan dalam hitungan detik. Default-nya 30 detik.",
+      "title-additional-settings": "Pengaturan tambahan",
+      "title-request-timeout": "Batas Waktu Permintaan"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "Kredensial fallback telah dinonaktifkan. Karena autentikasi berbasis pengguna hanya mendukung permintaan dengan pengguna dalam cakupannya, fitur seperti peringatan, kueri yang direkam, atau pelaporan tidak akan berfungsi seperti yang diharapkan. Silakan tinjau <2>dokumentasi</2> untuk detail selengkapnya.",
+      "body-service-credentials": "Autentikasi berbasis pengguna pada dasarnya tidak mendukung fitur Grafana yang membuat permintaan ke sumber data tanpa detail pengguna yang tersedia untuk permintaan tersebut. Contohnya adalah peringatan. Jika Anda ingin memastikan bahwa fitur yang tidak memiliki pengguna dalam konteks permintaan masih berfungsi, harap berikan kredensial fallback (cadangan) di bawah ini.",
+      "description-authentication": "Pilih jenis autentikasi ke layanan Azure",
+      "description-service-credentials": "Pilih apakah kredensial layanan fallback diaktifkan atau dinonaktifkan untuk sumber data ini",
+      "label-authentication": "Autentikasi",
+      "label-service-credentials": "Kredensial Layanan",
+      "note-service-credentials": "Catatan: Fitur seperti peringatan akan dibatasi pada tingkat akses kredensial fallback, bukan pengguna. Ini dapat menimbulkan kebingungan bagi pengguna dan harus diklarifikasi.",
+      "title-fallback-credentials-disabled": "Kredensial Fallback Dinonaktifkan",
+      "title-fallback-service-credentials": "Kredensial Layanan Fallback",
+      "title-service-credentials": "Kredensial Layanan"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "Langganan Default",
+      "label-default-subscription": "Langganan Default",
+      "load-subscriptions": "Muat Langganan"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "Hapus",
+      "label-dimensions": "Dimensi",
+      "placeholder-field": "Bidang",
+      "placeholder-operation": "Pengoperasian",
+      "placeholder-select-value": "Pilih nilai",
+      "placeholder-select-values": "Pilih nilai"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "{{type}} tidak lagi digunakan di Grafana 9. Lihat <3>pemberitahuan penghentian</3> untuk mendapatkan informasi lebih lanjut tentang cara memigrasikan kueri Anda. Ini adalah definisi kueri saat ini:",
+      "title-unknown-query-type": "Jenis kueri tidak diketahui"
+    },
+    "filter": {
+      "aria-label-remove-filter": "Hapus filter",
+      "placeholder-property": "Properti",
+      "placeholder-value": "Nilai"
+    },
+    "filter-item": {
+      "aria-label-column": "Kolom",
+      "aria-label-column-value": "Nilai kolom",
+      "aria-label-operator": "Operator",
+      "label-or": "ATAU"
+    },
+    "filter-section": {
+      "label-add-group": "Tambah grup",
+      "label-and": "DAN",
+      "label-filters": "Filter",
+      "tooltip-filters": "Persempit hasil dengan menerapkan persyaratan ke kolom tertentu."
+    },
+    "filters": {
+      "label-filters": "Filter"
+    },
+    "format-as-field": {
+      "label-format-as": "Format sebagai"
+    },
+    "fuzzy-search": {
+      "aria-label-select-column": "Pilih Kolom",
+      "label-fuzzy-search": "Pencarian Fuzzy",
+      "placeholder-search-team": "Masukkan kata kunci",
+      "tooltip-fuzzy-search": "Temukan kecocokan teks yang mirip dengan toleransi untuk variasi ejaan. Secara default, pencarian fuzzy memindai semua kolom (*) di seluruh tabel, bukan hanya bidang tertentu."
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Fungsi variabel templat Grafana",
+      "placeholder-grafana-template-variable": "Ketik fungsi variabel templat Grafana, misalnya {{example}}"
+    },
+    "group-by-item": {
+      "aria-label-column": "Kolom",
+      "aria-label-remove": "Hapus"
+    },
+    "group-by-section": {
+      "label-group-by": "Kelompokkan berdasarkan",
+      "tooltip-group-by": "Atur hasil ke dalam kategori berdasarkan kolom yang ditentukan. \"Kelompokkan berdasarkan\" dapat digunakan secara mandiri untuk membuat daftar nilai unik di kolom-kolom yang dipilih, atau digabungkan dengan fungsi agregat untuk menghasilkan statistik ringkasan untuk setiap kelompok. Saat digunakan sendiri, fungsi ini menghasilkan kombinasi yang berbeda dari kolom yang ditentukan."
+    },
+    "kql-preview": {
+      "button-hide": "Sembunyikan",
+      "button-show": "Tampilkan",
+      "label-query-preview": "Pratinjau Kueri"
+    },
+    "legend-format-field": {
+      "label-legend-format": "Format legenda",
+      "placeholder-legend-format": "Pola alias"
+    },
+    "limit-section": {
+      "label-limit": "Batas",
+      "placeholder-limit": "Masukkan batas",
+      "tooltip-limit": "Batasi jumlah baris yang dikembalikan (default-nya adalah 1000)."
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "Kueri Log Dasar dikenakan biaya berdasarkan jumlah data yang dipindai.",
+      "label-logs": "Log",
+      "title-basic-logs-queries": "Kueri Log Dasar",
+      "tooltip-logs": "Menentukan apakah akan menjalankan kueri Log Dasar atau Analitik."
+    },
+    "logs-query-builder": {
+      "title-no-tables": "Sumber daya berhasil dimuat tetapi tanpa tabel"
+    },
+    "logs-query-editor": {
+      "learn-more": "Pelajari Lebih Lanjut",
+      "view-query": "Lihat kueri di Portal Azure"
+    },
+    "metric-name-field": {
+      "label-metric": "Metrik"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "Namespace metrik"
+    },
+    "nested-row": {
+      "text-loading": "Memuat..."
+    },
+    "order-by-section": {
+      "aria-label-order-by-column": "Urutkan berdasarkan kolom",
+      "aria-label-order-direction": "Arah Urutan",
+      "label-by": "BERDASARKAN",
+      "label-order-by": "Urutkan Berdasarkan",
+      "tooltip-order-by": "Urutkan hasil berdasarkan satu atau beberapa kolom dalam urutan naik atau turun."
+    },
+    "query-editor": {
+      "alert-error-occurred": "Terjadi kesalahan saat meminta metadata dari Azure Monitor"
+    },
+    "query-header": {
+      "aria-label-kick-start": "Tombol kueri untuk memulai menggunakan log Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "Mulai kueri Anda",
+      "button-run-query": "Jalankan kueri",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "Layanan",
+      "placeholder-service": "Melayani...",
+      "title-switch-mode": "Beralih ke mode editor?"
+    },
+    "raw-query": {
+      "aria-label-selector": "Selektor"
+    },
+    "resource-field": {
+      "label-resource": "Sumber Daya",
+      "title-select-resource": "Pilih sumber daya"
+    },
+    "resource-label": {
+      "select-resource": "Pilih sumber daya"
+    },
+    "resource-picker": {
+      "button-apply": "Terapkan",
+      "button-cancel": "Batalkan",
+      "header-location": "Lokasi",
+      "header-scope": "Ruang Lingkup",
+      "header-type": "Jenis",
+      "heading-selection": "Pilihan",
+      "result-limit": "Menampilkan {{numResults}} hasil pertama",
+      "text-loading": "Memuat...",
+      "text-no-resources": "Tidak ada sumber daya yang ditemukan",
+      "title-error-occurred": "Terjadi kesalahan saat meminta sumber daya dari Azure Monitor"
+    },
+    "scope-selector": {
+      "label": "Ruang Lingkup"
+    },
+    "search": {
+      "aria-label-resource-search": "Pencarian sumber daya",
+      "placeholder-resource-search": "Cari sumber daya"
+    },
+    "subscription-field": {
+      "label-subscriptions": "Langganan",
+      "validation-subscriptions": "Setidaknya satu langganan harus dipilih."
+    },
+    "table-section": {
+      "aria-label-columns": "Kolom",
+      "aria-label-table": "Tabel",
+      "label-columns": "Kolom",
+      "label-table": "Tabel",
+      "placeholder-select-columns": "Pilih kolom",
+      "placeholder-select-table": "Pilih tabel"
+    },
+    "time-grain-field": {
+      "label-time-grain": "Interval waktu"
+    },
+    "time-management": {
+      "label-time-column": "Kolom Waktu",
+      "label-time-range": "Rentang waktu",
+      "tooltip-time-column": "<0>Menentukan kolom waktu yang digunakan untuk penyaringan. Default ke kolom <1>timeSpan</1> tabel pertama, kolom <3>datetime</3> pertama yang ditemukan, atau <5>TimeGenerated</5>.</0>",
+      "tooltip-time-range": "<0>Menentukan rentang waktu yang digunakan untuk kueri. Opsi <1>Kueri</1> hanya akan menggunakan rentang waktu yang ditentukan dalam kueri. <3>Dasbor</3> hanya akan menggunakan rentang waktu Grafana. Dalam mode Pembuat Log, hanya waktu Dasbor yang akan digunakan.</0>"
+    },
+    "top-field": {
+      "label-top": "Top"
+    },
+    "trace-type-field": {
+      "label-event-type": "Jenis Peristiwa",
+      "placeholder-event-type": "Pilih jenis peristiwa"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "ID Operasi"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "Penggunaan sumber data ini mengharuskan Anda untuk diautentikasi melalui Azure Entra (sebelumnya Azure Active Directory). Silakan tinjau <2>dokumentasi</2> untuk informasi selengkapnya.",
+      "title-unsupported-auth": "Penyedia autentikasi tidak didukung"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "Fitur backend sumber data (seperti peringatan) memerlukan kredensial layanan agar dapat berfungsi dengan baik. Sumber data ini dikonfigurasi tanpa fallback kredensial layanan, atau fungsi fallback dinonaktifkan. Silakan tinjau <2>dokumentasi</2> untuk informasi selengkapnya.",
+      "title-no-fallback-credentials": "Tidak ada kredensial fallback yang tersedia"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "Pilih ruang nama kustom",
+      "aria-label-select-namespace": "Pilih namespace",
+      "aria-label-select-query-type": "Pilih jenis kueri",
+      "aria-label-select-region": "Pilih wilayah",
+      "aria-label-select-resource": "Pilih sumber daya",
+      "aria-label-select-resource-group": "Pilih kelompok sumber daya",
+      "aria-label-select-subscription": "Pilih langganan",
+      "label-custom-namespace": "Ruang Nama Kustom",
+      "label-namespace": "Ruang nama",
+      "label-query-type": "Jenis Kueri",
+      "label-region": "Wilayah",
+      "label-resource": "Sumber Daya",
+      "label-resource-group": "Kelompok Sumber Daya",
+      "label-resource-type": "Jenis Sumber Daya",
+      "label-subscription": "Berlangganan",
+      "placeholder-custom-namespace": "Opsional",
+      "placeholder-namespace": "Opsional",
+      "placeholder-region": "Opsional",
+      "placeholder-resource-group": "Opsional",
+      "title-error-occurred": "Terjadi kesalahan saat meminta metadata dari Azure Monitor"
+    }
+  }
+}

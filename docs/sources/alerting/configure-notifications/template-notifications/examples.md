@@ -55,6 +55,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
+  link-alert-rules-to-panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
   custom-payload-webhook:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
@@ -68,11 +73,11 @@ Notification templates allows you to change the default notification messages.
 
 You can modify the content and format of notification messages. For example, you can customize the content to show only specific information or adjust the format to suit a particular contact point, such as Slack or Email.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Avoid adding extra information about alert instances in notification templates, as this information is only visible in the notification message.
 
 Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
-{{% /admonition %}}
+{{< /admonition >}}
 
 This page provides various examples illustrating how to template common notification messages. For more details about notification templates, refer to:
 
@@ -347,16 +352,16 @@ Pass the dot (`.`) to execute the template:
 ```template_output
 1 resolved alert(s)
 
-- Dashboard: https://example.com/d/
-- Panel: https://example.com/d/
+- Dashboard: https://example.com/d/uiyahbsdaubsd?from=1740070380000&orgId=1&to=1740074106395
+- Panel: https://example.com/d/uiyahbsdaubsd?from=1740070380000&orgId=1&to=1740074106395&viewPanel=31
 - AlertGenerator: ?orgId=1
 - Silence: https://example.com/alerting/silence/new
 - RunbookURL: https://example.com/on-call/db_server_disk_space
 
 1 firing alert(s)
 
-- Dashboard: https://example.com/d/
-- Panel: https://example.com/d/
+- Dashboard: https://example.com/d/uiyahbsdaubsd?from=1740070380000&orgId=1&to=1740074106395
+- Panel: https://example.com/d/uiyahbsdaubsd?from=1740070380000&orgId=1&to=1740074106395&viewPanel=31
 - AlertGenerator: ?orgId=1
 - Silence: https://example.com/alerting/silence/new
 - RunbookURL: https://example.com/on-call/web_server_http_errors
@@ -407,6 +412,74 @@ Execute the template by passing the dot (`.`):
 ```template_output
 [FIRING:1, RESOLVED:1] api warning (sql_db)
 ```
+
+## Print a link to a dashboard with time range
+
+You can include a link to a dashboard or panel in your alert notifications. This is useful when the alert rule is created from a dashboard panel or monitors a target visualized in an existing dashboard.
+
+Including a dashboard link in the notification helps responders quickly navigate to the relevant context for investigation.
+
+Use one of the following methods to include a dashboard link with the correct time range in the alert notification:
+
+1. You can [link the alert rule to a panel](ref:link-alert-rules-to-panels). This includes the dashboard and panel URLs via `{{.Alert.DashboardURL}}` and `{{.Alert.PanelURL}}`.
+
+   ```go
+   {{ define "custom.link_to_dashboard" -}}
+   {{ range .Alerts -}}
+     Dashboard: {{.DashboardURL}}
+     Panel: {{ .PanelURL }}
+   {{ end -}}
+   {{ end -}}
+   ```
+
+   Run the template using:
+
+   ```go
+   {{ template "custom.link_to_dashboard" . }}
+   ```
+
+   ```template_output
+   Dashboard: https://example.com/d/uiyahbsdaubsd?from=1740070380000&orgId=1&to=1740074106395
+   Panel: https://example.com/d/uiyahbsdaubsd?from=1740070380000&orgId=1&to=1740074106395&viewPanel=31
+   ```
+
+   These URLs include a time range based on the alert’s timing:
+   - `from`: One hour before the alert started.
+   - `to`: The current time if the alert is firing, or the alert’s end time if resolved.
+
+1. Alternatively, you can use a custom annotation to set the dashboard URL and build the full URL using the `from` and `to` query parameters derived from `{{.Alert.StartsAt}}` and `{{.Alert.EndsAt}}`.
+
+   ```go
+   {{ define "custom.my_dashboard_url_annotation" -}}
+   {{ range .Alerts -}}
+
+     {{/* StartsAt - 1h */}}
+     {{- $from := (.StartsAt.Add -3600000000000).UnixMilli }}
+
+     {{- $to := "" }}
+     {{- if eq .Status "resolved" }}
+        {{- $to = (.EndsAt).UnixMilli }}
+     {{- else -}}
+       {{/* Use current time if alert is firing */}}
+       {{- $to = (time.Now).UnixMilli }}
+     {{- end -}}
+
+     Dashboard: {{.Annotations.MyDashboardURL}}?from={{$from}}&to={{$to}}
+   {{ end }}
+   {{ end }}
+   ```
+
+   To use this template, define a custom annotation named `MyDashboardURL` that contains the base dashboard URL without `from` and `to` parameters. For example: `http://localhost:3000/d/uiyahbsdaubsd`.
+
+   Run the template using:
+
+   ```go
+   {{ template "custom.my_dashboard_url_annotation" . }}
+   ```
+
+   ```template_output
+   Dashboard: http://localhost:3000/d/uiyahbsdaubsd?from=1740070380000&to=1740071880000
+   ```
 
 ## Custom JSON payload
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // indexQueueProcessor manages queue-based operations for a specific index
@@ -108,7 +110,7 @@ func (b *indexQueueProcessor) process(batch []*WrittenEvent) {
 		resp = append(resp, result)
 
 		item := &BulkIndexItem{}
-		if evt.Type == WatchEvent_DELETED {
+		if evt.Type == resourcepb.WatchEvent_DELETED {
 			item.Action = ActionDelete
 			item.Key = evt.Key
 		} else {

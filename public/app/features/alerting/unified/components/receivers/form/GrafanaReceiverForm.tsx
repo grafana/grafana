@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import {
@@ -15,7 +15,7 @@ import {
   GrafanaManagedReceiverConfig,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction } from '../../../state/actions';
@@ -84,7 +84,6 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint));
   }, [contactPoint, isLoadingNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
-  const { t } = useTranslate();
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);

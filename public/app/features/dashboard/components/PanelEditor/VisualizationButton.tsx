@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ToolbarButton, ButtonGroup } from '@grafana/ui';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { PanelModel } from '../../state/PanelModel';
 import { getPanelPluginWithFallback } from '../../state/selectors';
@@ -20,7 +20,7 @@ export const VisualizationButton = ({ panel }: Props) => {
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const isPanelOptionsVisible = useSelector((state) => state.panelEditor.ui.isPanelOptionsVisible);
   const isVizPickerOpen = useSelector((state) => state.panelEditor.isVizPickerOpen);
-  const { t } = useTranslate();
+
   const onToggleOpen = () => {
     dispatch(toggleVizPicker(!isVizPickerOpen));
   };

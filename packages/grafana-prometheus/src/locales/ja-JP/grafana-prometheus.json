@@ -1,0 +1,512 @@
+{
+  "grafana-prometheus": {
+    "components": {
+      "annotation-query-editor": {
+        "annotation-data-load-error": "注釈データの読み込みエラー！",
+        "aria-label-lower-limit-parameter": "ステップパラメーターの下限を設定",
+        "label-min-step": "最小ステップ",
+        "label-series-value-as-timestamp": "タイムスタンプとしての系列値",
+        "label-tags": "タグ",
+        "label-text": "テキスト",
+        "label-title": "タイトル",
+        "placeholder-auto": "自動",
+        "tooltip-either-pattern-example-instance-replaced-label": "名前またはパターンのいずれかを使用します。例えば、{{labelTemplate}}はラベル{{labelName}}のラベル値に置き換えられます。",
+        "tooltip-min-step": "Prometheusクエリのステップパラメーターと<2>{{intervalVar}}</2>および<4>{{rateIntervalVar}}</4>変数の追加下限。",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "タイムスタンプの単位はミリ秒です。系列値の単位が秒の場合、その範囲ベクトルに1000を掛けます。"
+      },
+      "get-query-type-options": {
+        "description": {
+          "instant-query-range": "インスタントクエリと範囲クエリを実行"
+        },
+        "label": {
+          "both": "両方"
+        },
+        "range-options": {
+          "description": {
+            "query-range": "時間範囲にわたってクエリを実行"
+          },
+          "label": {
+            "instant": "インスタント",
+            "range": "範囲"
+          }
+        }
+      },
+      "label-selector": {
+        "aria-label-filter-expression-for-label": "ラベルのフィルター式",
+        "description-select-labels": "ラベル値を選択すると、可能なラベルの組み合わせのみが表示されます。",
+        "select-labels-to-search-in": "2. 検索するラベルを選択"
+      },
+      "metric-selector": {
+        "aria-label-filter-expression-for-metric": "メトリックのフィルター式",
+        "aria-label-limit-results-from-series-endpoint": "系列エンドポイントからの結果を制限",
+        "description-series-limit": "制限はすべてのメトリック、ラベル、値に適用されます。デフォルトの制限を使用するには、フィールドを空のままにしてください。制限を無効にしてすべてを取得するには0に設定します。これによりパフォーマンスの問題が発生する可能性があります。",
+        "label-select-metric": "メトリックを選択すると、可能なラベルのみが表示されます。ラベルには以下の系列制限が適用されます。",
+        "select-a-metric": "メトリックを選択",
+        "series-limit": "系列制限"
+      },
+      "prom-cheat-sheet": {
+        "prom-ql-cheat-sheet": "PromQLチートシート"
+      },
+      "prom-exemplar-field": {
+        "exemplars": "エグゼンプラー",
+        "tooltip-disable-query": "エグゼンプラーを使用したクエリを無効化",
+        "tooltip-enable-query": "エグゼンプラーを使用したクエリを有効化"
+      },
+      "prom-explore-extra-field": {
+        "aria-label-prometheus-extra-field": "Prometheus追加フィールド",
+        "aria-label-query-type-field": "クエリタイプフィールド",
+        "aria-label-step-field": "ステップフィールド",
+        "min-step": "最小ステップ",
+        "query-type": "クエリタイプ",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "ここでは時間単位と組み込み変数を使用できます。例: {{example1}}、{{example2}}、{{example3}}、{{example4}}、{{example5}}、{{example6}}、{{example7}}（単位が指定されていない場合のデフォルト: {{default}}）"
+      },
+      "prom-query-field": {
+        "placeholder-enter-a-prom-ql-query": "PromQLクエリを入力…"
+      },
+      "prom-variable-query-editor": {
+        "aria-label-classic-query": "クラシッククエリ",
+        "aria-label-metric-regex": "メトリック正規表現",
+        "aria-label-metric-selector": "メトリックセレクター",
+        "aria-label-prometheus-query": "Prometheusクエリ",
+        "aria-label-query-type": "クエリタイプ",
+        "aria-label-series-query": "系列クエリ",
+        "label-classic-query": "クラシッククエリ",
+        "label-label": "ラベル",
+        "label-metric-regex": "メトリック正規表現",
+        "label-query": "クエリ",
+        "label-query-type": "クエリタイプ",
+        "label-series-query": "系列クエリ",
+        "placeholder-classic-query": "クラシッククエリ",
+        "placeholder-metric-regex": "メトリック正規表現",
+        "placeholder-prometheus-query": "Prometheusクエリ",
+        "placeholder-select-query-type": "クエリタイプを選択",
+        "placeholder-series-query": "系列クエリ",
+        "returns-metrics-matching-specified-metric-regex": "指定された正規表現に一致するメトリックのリストを返します。",
+        "tooltip-classic-query": "Prometheus変数クエリエディターの元の実装。これらのドキュメントに記載されているように、正しいクエリタイプとパラメーターを含む文字列を入力してください。例: {{exampleQuery}}。",
+        "tooltip-label": "メトリックが指定されていない限り、すべてのメトリックのラベル名に対するラベル値のリストを返します。",
+        "tooltip-metric-regex": "ラベル名のリストを返します。オプションで、指定されたメトリック正規表現でフィルタリングすることも可能です。",
+        "tooltip-query": "クエリのPrometheusクエリ結果のリストを返します。これには、Prometheus関数を含めることもできます。例: {{exampleQuery}}。",
+        "tooltip-query-type": "Prometheusデータソースプラグインは、テンプレート変数に以下のクエリタイプを入力します。",
+        "tooltip-series-query": "ラベル付きメトリック、メトリックのみ、またはラベルのみを入力します。例: {{example1}}、{{example2}}、または{{example3}}。入力されたデータに関連する時系列のリストを返します。"
+      },
+      "selector-actions": {
+        "aria-label-selector": "セレクター",
+        "aria-label-selector-clear-button": "セレクタークリアボタン",
+        "aria-label-use-selector-as-metrics-button": "メトリックボタンにセレクターを使用",
+        "aria-label-use-selector-for-query-button": "クエリボタンにセレクターを使用",
+        "aria-label-validate-submit-button": "送信ボタンを検証",
+        "clear": "消去",
+        "resulting-selector": "4. 結果セレクター",
+        "use-as-rate-query": "レートクエリとして使用",
+        "use-query": "このクエリを使用",
+        "validate-selector": "セレクターを検証"
+      },
+      "value-selector": {
+        "aria-label-filter-expression-for-label-values": "ラベル値のフィルター式",
+        "aria-label-values-for": "{{labelKey}}の値",
+        "description-search-field-values-across-selected-labels": "検索フィールドを使用して選択したラベル全体の値を検索します。",
+        "select-multiple-values-for-your-labels": "3. ラベルの値を（複数）選択"
+      }
+    },
+    "configuration": {
+      "alerting-settings-overhaul": {
+        "label-allow-as-recording-rules-target": "記録ルールのターゲットとして許可",
+        "label-manage-alerts-via-alerting-ui": "アラートUIでアラートを管理",
+        "title-alerting": "アラート",
+        "tooltip-allow-as-recording-rules-target": "このデータソースを記録ルール書き込みのターゲットとして選択できるようにします。",
+        "tooltip-manage-alerts-via-alerting-ui": "このデータソースのアラートルールを管理します。他のアラートリソースを管理するには、Alertmanagerデータソースを追加します。"
+      },
+      "config-editor": {
+        "browser-access-mode-error": "Prometheusデータソースのブラウザアクセスモードは利用できなくなりました。サーバーアクセスモードに切り替えてください。",
+        "description-advanced-settings": "追加設定は、データソースをより詳細に制御するために指定できるオプション設定です。",
+        "title-advanced-settings": "詳細設定",
+        "title-error": "エラー"
+      },
+      "data-source-http-settings-overhaul": {
+        "tooltip-browser-access-mode": "アクセス方法は<1>ブラウザ</1>です。つまり、URLにブラウザからアクセスできる必要があります。",
+        "tooltip-http-url": "完全なHTTP URLを指定してください（例: {{exampleURL}}）",
+        "tooltip-server-access-mode": "アクセス方法は<1>サーバー</1>です。つまり、URLにGrafanaバックエンド/サーバーからアクセスできる必要があります。"
+      },
+      "docs-tip": {
+        "visit-docs-for-more-details-here": "詳細についてはこちらのドキュメントをご覧ください。"
+      },
+      "exemplar-setting": {
+        "label-data-source": "データソース",
+        "label-internal-link": "内部リンク",
+        "label-label-name": "ラベル名",
+        "label-remove-exemplar-link": "エグゼンプラーリンクを削除",
+        "label-url": "URL",
+        "label-url-label": "URLラベル",
+        "placeholder-go-to-examplecom": "example.comに移動",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "エグゼンプラーリンクを削除",
+        "tooltip-data-source": "エグゼンプラーによる移動先のデータソース。",
+        "tooltip-internal-link": "内部リンクがある場合は、このオプションを有効にしてください。有効にすると、データソースセレクターが表示されます。エグゼンプラーデータのバックエンドトレーシングデータストアを選択してください。",
+        "tooltip-label-name": "traceIDを取得するために使用されるラベルオブジェクト内のフィールド名。",
+        "tooltip-url": "ユーザーがトレースを確認するためにアクセスするトレースバックエンドのURL",
+        "tooltip-url-label": "エグゼンプラーのtraceIDフィールドのボタンラベルを上書きするために使用します。"
+      },
+      "exemplars-settings": {
+        "add": "追加",
+        "no-exemplars-configurations": "エグゼンプラー設定がありません",
+        "title-exemplars": "エグゼンプラー"
+      },
+      "prom-settings": {
+        "aria-label-default-editor": "デフォルトエディター（コードまたはビルダー）",
+        "aria-label-prom-type-type": "{{promType}}タイプ",
+        "aria-label-prometheus-type": "Prometheusタイプ",
+        "aria-label-select-http-method": "HTTPメソッドを選択",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-cache-level": "キャッシュレベル",
+        "label-custom-query-parameters": "カスタムクエリパラメーター",
+        "label-default-editor": "デフォルトエディター",
+        "label-disable-metrics-lookup": "メトリック検索を無効化",
+        "label-disable-recording-rules-beta": "記録ルールを無効化（ベータ版）",
+        "label-http-method": "HTTPメソッド",
+        "label-incremental-querying-beta": "増分クエリ（ベータ版）",
+        "label-metric-names-suggestion-limit": "メトリック名提案制限",
+        "label-prom-type-version": "{{promType}}バージョン",
+        "label-prometheus-type": "Prometheusタイプ",
+        "label-query-overlap-window": "クエリ重複ウィンドウ",
+        "label-query-timeout": "クエリタイムアウト",
+        "label-scrape-interval": "スクレイプ間隔",
+        "label-series-limit": "系列制限",
+        "label-use-series-endpoint": "系列エンドポイントを使用",
+        "more-info": "データソースでのPrometheusタイプとバージョンの設定の詳細については、<2>プロビジョニングドキュメント</2>をご覧ください。",
+        "placeholder-example-maxsourceresolutionmtimeout": "例: {{example}}",
+        "title-interval-behaviour": "間隔の動作",
+        "title-other": "その他",
+        "title-performance": "パフォーマンス",
+        "title-query-editor": "クエリエディター",
+        "tooltip-cache-level": "エディタークエリのブラウザーキャッシュレベルを設定します。高カーディナリティデータソースには、より高いキャッシュ設定を推奨します。",
+        "tooltip-custom-query-parameters": "PrometheusクエリURLにカスタムパラメーターを追加します。例: {{example1}}、{{example2}}、{{example3}}、または{{example4}}。複数のパラメーターは{{concatenationChar}}で連結する必要があります。",
+        "tooltip-default-editor": "このデータソースのすべてのユーザーにデフォルトエディターオプションを設定します。",
+        "tooltip-disable-metrics-lookup": "このオプションをオンにすると、クエリフィールドのオートコンプリートでメトリック選択とメトリック/ラベルサポートが無効になります。これは、大規模なPrometheusインスタンスをご利用でパフォーマンスの問題がある場合に役立ちます。",
+        "tooltip-disable-recording-rules-beta": "この機能は記録ルールを無効にします。ダッシュボードのパフォーマンスを向上させるには、この機能をオンにしてください",
+        "tooltip-http-method": "PrometheusデータソースをクエリするにはPOSTまたはGET HTTPメソッドのいずれかを使用できます。POSTメソッドだと、より大きなクエリを実行できるため、推奨される方法です。Prometheusのバージョンが2.1より古い場合、またはネットワークでPOSTリクエストが制限されている場合は、これをGETに変更してください。",
+        "tooltip-incremental-querying-beta": "この機能は相対クエリのデフォルト動作が変更され、常にPrometheusインスタンスから新しいデータをリクエストする代わりに、クエリ結果をキャッシュして新しいレコードのみをリクエストするようになります。データベースとネットワークの負荷を軽減するには、これをオンにしてください。",
+        "tooltip-metric-names-suggestion-limit": "クエリエディターのコードモードでオートコンプリート候補として表示される可能性のあるメトリック名の最大数。",
+        "tooltip-prom-type-version": "自動設定されていない場合、これを使用して{{promType}}インスタンスのバージョンを設定してください。",
+        "tooltip-prometheus-type": "Prometheus、Cortex、Mimir、Thanosなど、Prometheusデータベースのタイプに設定してください。このフィールドを変更すると、現在の設定が保存されます。一部のPrometheusのタイプでは、さまざまなAPIがサポートされているか、またはサポートされていない場合があります。例えば、一部のタイプではパフォーマンス向上のためにラベルクエリの正規表現マッチングをサポートしています。また、タイプによってはメタデータ用のAPIがあります。これを正しく設定しないと、メトリックとラベルのクエリ時に異常な動作が発生する可能性があります。正しいタイプを入力するために、Prometheusのドキュメントを確認してください。",
+        "tooltip-query-overlap-window": "{{example1}}や{{example2}}または{{example3}}のような期間を設定してください。デフォルトは{{default}}です。この期間は、各増分リクエストの期間に追加されます。",
+        "tooltip-query-timeout": "Prometheusクエリタイムアウトを設定します。",
+        "tooltip-scrape-interval": "この間隔は、Prometheusがターゲットをスクレイプする頻度です。Prometheus設定ファイルで指定された一般的なスクレイプと評価間隔に設定してください。これをPrometheus設定ファイルの間隔より大きな値に設定すると、Grafanaはこの間隔に従ってデータを評価するため、データポイントが少なくなります。デフォルトは{{default}}です。",
+        "tooltip-series-limit": "制限は両方のエンドポイント（系列とラベル）のすべてのリソース（メトリック、ラベル、値）に適用されます。デフォルトの制限（40000）を使用するには、フィールドを空のままにしてください。制限を無効にしてすべてを取得するには0に設定します。これによりパフォーマンスの問題が発生する可能性があります。デフォルトの制限は40000です。",
+        "tooltip-use-series-endpoint": "このオプションをオンにすると、{{exampleParameter}}パラメーターを持つラベル値エンドポイントより、{{exampleParameter}}パラメーターを持つ系列エンドポイントが優先されます。ラベル値エンドポイントの方がパフォーマンスが高いと考えられていますが、ラベル値エンドポイントにはGETメソッドしかないのに対し、系列にはPOSTメソッドがあるため、系列を好むユーザーもいます。"
+      }
+    },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
+    "querybuilder": {
+      "additional-settings": {
+        "content-filter-metric-names-regex-search-using": "Prometheus APIの追加呼び出しを使用して、正規表現検索でメトリック名をフィルタリングします。",
+        "disable-text-wrap": "テキストの折り返しを無効化"
+      },
+      "feedback-link": {
+        "give-feedback": "フィードバックを送信",
+        "title-give-feedback": "メトリックエクスプローラーは新機能です。改善点についてお聞かせください"
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
+      },
+      "get-placeholders": {
+        "browse": "",
+        "include-null-metadata": "",
+        "metadata-search-switch": "",
+        "set-use-backend": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
+      },
+      "handle-function": {
+        "text": {
+          "query-parsing-is-ambiguous": "クエリ解析が曖昧です。"
+        }
+      },
+      "label-filter-item": {
+        "aria-label-remove": "{{name}}を削除",
+        "placeholder-select-label": "ラベルを選択",
+        "placeholder-select-value": "値を選択"
+      },
+      "label-filters": {
+        "label-filters": "ラベルフィルター",
+        "label-label-filters": "ラベルフィルター",
+        "tooltip-label-filters": "オプション: このクエリタイプのメトリック選択をフィルタリングするために使用します。"
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
+      },
+      "metric-combobox": {
+        "async-select": {
+          "aria-label-open-metrics-explorer": "メトリックエクスプローラーを開く",
+          "placeholder-select-metric": "メトリックを選択",
+          "tooltip-open-metrics-explorer": "メトリックエクスプローラーを開く"
+        },
+        "label-metric": "メトリック",
+        "tooltip-metric": "オプション: 指定されたメトリックのラベル名に対するラベル値のリストを返します。"
+      },
+      "metrics-modal": {
+        "additional-settings": "追加設定",
+        "aria-label-additional-settings": "追加設定",
+        "aria-label-browse-metrics": "メトリックを参照",
+        "currently-selected": "現在選択中: {{selected}}",
+        "metrics-pre-filtered": "これらのメトリックは、ラベルフィルターで選択されたラベルによって事前にフィルタリングされています。",
+        "placeholder-results-per-page": "1ページあたりの結果数",
+        "results-per-page": "1ページあたりの結果数",
+        "title-metrics-explorer": "メトリックエクスプローラー",
+        "results-amount_other": "{{count}}件中{{num}}件の結果を表示"
+      },
+      "nested-query": {
+        "label": {
+          "ignoring": "無視",
+          "on": "オン"
+        },
+        "operator": "オペレーター",
+        "tooltip-remove-match": "一致を削除",
+        "vector-matches": "ベクトル一致"
+      },
+      "operation-editor": {
+        "not-found": "操作{{id}}が見つかりません",
+        "title-remove": "{{name}}を削除"
+      },
+      "operation-header": {
+        "placeholder-replace-with": "次で置き換え",
+        "title-click-to-view-alternative-operations": "クリックして代わりの操作を表示",
+        "title-remove-operation": "操作を削除"
+      },
+      "operation-info-button": {
+        "title-click-to-show-description": "クリックして説明を表示",
+        "title-remove-operation": "操作を削除"
+      },
+      "operation-list": {
+        "operations": "操作",
+        "placeholder-search": "検索",
+        "title-add-operation": "操作を追加"
+      },
+      "operation-param-editor": {
+        "title-add": "{{name}}を追加",
+        "title-remove": "{{name}}を削除"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
+      },
+      "prom-query-builder-options": {
+        "aria-label-lower-limit-parameter": "ステップパラメーターの下限を設定",
+        "aria-label-select-resolution": "解像度を選択",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
+        "label-exemplars": "エグゼンプラー",
+        "label-format": "形式",
+        "label-min-step": "最小ステップ",
+        "label-resolution": "解像度",
+        "label-type": "種類",
+        "placeholder-auto": "自動",
+        "title-options": "オプション",
+        "tooltip-min-step": "Prometheusクエリのステップパラメーターと<2>{{interval}}</2>および<4>{{rateInterval}}</4>変数の追加下限。"
+      },
+      "prom-query-code-editor-autocomplete-info": {
+        "autocomplete-suggestions-limited": "オートコンプリート候補が制限されています",
+        "tooltip-autocomplete-suggestions-limited": "メトリック名の数がオートコンプリート制限を超えています。最も関連性の高い{{autocompleteLimit}}個のメトリックのみが表示されます。データソース設定で閾値を調整できます。"
+      },
+      "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
+        "kick-start-your-query": "クエリを開始",
+        "label-explain": "説明",
+        "run-queries": "クエリを実行",
+        "title-parsing-error-switch-builder": "解析エラー: ビルダーモードに切り替えますか？"
+      },
+      "prom-query-legend-editor": {
+        "label-legend": "凡例",
+        "placeholder-select-legend-mode": "凡例モードを選択",
+        "tooltip-legend": "系列名の上書きまたはテンプレート。例: {{templateExample}}は{{labelName}}のラベル値に置き換えられます。"
+      },
+      "query-builder-hints": {
+        "hint-details": "ヒント: {{hintDetails}}"
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
+      },
+      "query-pattern": {
+        "apply-query": "クエリを適用",
+        "aria-label-apply-query-starter-button": "クエリ適用開始ボタン",
+        "aria-label-back-button": "戻るボタン",
+        "aria-label-create-new-query-button": "新しいクエリ作成ボタン",
+        "aria-label-raw-query": "{{patternName}}の生クエリ",
+        "aria-label-use-this-query-button": "このクエリボタンを使用",
+        "back": "戻る",
+        "create-new-query": "新しいクエリを作成",
+        "use-this-query": "このクエリを使用"
+      },
+      "query-patterns-modal": {
+        "aria-label-close-kick-start-your-query-modal": "クエリを開始モーダルを閉じる",
+        "aria-label-kick-start-your-query-modal": "クエリモーダルを開始",
+        "aria-label-toggle-query-starter": "{{patternType}}クエリ開始カードを開いて閉じる",
+        "close": "閉じる",
+        "description-kick-start-your-query": "これらのクエリの1つを選択してクエリを開始してください。その後、クエリを完了できます。",
+        "label-toggle-query-starter": "{{patternType}}クエリスターター",
+        "title-kick-start-your-query": "クエリを開始"
+      },
+      "raw-query": {
+        "aria-label-selector": "セレクター"
+      },
+      "results-table": {
+        "content-descriptive-type": "{{descriptiveType}}を作成する際、Prometheusはタイプカウンターで複数の系列を公開します。",
+        "description": "説明",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
+        "name": "名前",
+        "select": "選択",
+        "type": "種類"
+      },
+      "update-function-args": {
+        "text": {
+          "query-parsing-is-ambiguous": "クエリ解析が曖昧です。"
+        }
+      }
+    }
+  }
+}

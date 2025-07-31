@@ -7,45 +7,27 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/serverlock"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -57,7 +39,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestConnectLibraryPanelsForDashboard(t *testing.T) {
+func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -92,7 +77,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
+			dashInDB := createDashboard(t, sc, &dash)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -190,7 +175,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
+			dashInDB := createDashboard(t, sc, &dash)
 
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -236,7 +221,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
+			dashInDB := createDashboard(t, sc, &dash)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
@@ -292,7 +277,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
+			dashInDB := createDashboard(t, sc, &dash)
 			err = sc.elementService.ConnectElementsToDashboard(sc.ctx, sc.user, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -350,7 +335,10 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 		})
 }
 
-func TestImportLibraryPanelsForDashboard(t *testing.T) {
+func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testScenario(t, "When an admin tries to import a dashboard with a library panel that does not exist, it should import the library panel",
 		func(t *testing.T, sc scenarioContext) {
 			var missingUID = "jL6MrxCMz"
@@ -407,7 +395,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
 				model.GetLibraryElementCommand{UID: missingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
-			var expected = getExpected(t, element, missingUID, missingName, missingModel)
+			var expected = getExpected(t, element, missingUID, missingName, missingModel, "Test Folder")
 			var result = toLibraryElement(t, element)
 			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -448,7 +436,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
 				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
-			var expected = getExpected(t, element, existingUID, existingName, sc.initialResult.Result.Model)
+			var expected = getExpected(t, element, existingUID, existingName, sc.initialResult.Result.Model, "Test Folder")
 			expected.FolderUID = sc.initialResult.Result.FolderUID
 			expected.Description = sc.initialResult.Result.Description
 			expected.Meta.FolderUID = sc.folder.UID
@@ -563,7 +551,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
-			expected := getExpected(t, element, outsideUID, outsideName, outsideModel)
+			expected := getExpected(t, element, outsideUID, outsideName, outsideModel, "Test Folder")
 			result := toLibraryElement(t, element)
 			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -571,7 +559,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 
 			element, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
-			expected = getExpected(t, element, insideUID, insideName, insideModel)
+			expected = getExpected(t, element, insideUID, insideName, insideModel, "Test Folder")
 			result = toLibraryElement(t, element)
 			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -644,6 +632,8 @@ type scenarioContext struct {
 	initialResult  libraryPanelResult
 	sqlStore       db.DB
 	lps            LibraryPanelService
+	mockDashboard  *dashboards.FakeDashboardService
+	mockFolder     *foldertest.FakeService
 }
 
 func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement {
@@ -681,7 +671,7 @@ func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement 
 	}
 }
 
-func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name string, lEModel map[string]any) libraryElement {
+func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name string, lEModel map[string]any, folderName string) libraryElement {
 	marshalled, err := json.Marshal(lEModel)
 	require.NoError(t, err)
 	var libModel libraryElementModel
@@ -700,7 +690,7 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 		Model:       libModel,
 		Version:     1,
 		Meta: model.LibraryElementDTOMeta{
-			FolderName:          "General",
+			FolderName:          folderName,
 			FolderUID:           res.FolderUID,
 			ConnectedDashboards: 0,
 			Created:             res.Meta.Created,
@@ -718,59 +708,14 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 		},
 	}
 }
+func createDashboard(t *testing.T, sc scenarioContext, dash *dashboards.Dashboard) *dashboards.Dashboard {
+	dash.ID = 1
+	dash.UID = "test-dashboard-uid"
+	dash.Created = time.Now()
+	dash.Updated = time.Now()
+	dash.Version = 1
 
-func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard) *dashboards.Dashboard {
-	dashItem := &dashboards.SaveDashboardDTO{
-		Dashboard: dash,
-		Message:   "",
-		OrgID:     user.OrgID,
-		User:      user,
-		Overwrite: false,
-	}
-
-	features := featuremgmt.WithFeatures()
-	cfg := setting.NewCfg()
-	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
-	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	dashPermissionService := acmock.NewMockedPermissionsService()
-	dashPermissionService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-	service, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore,
-		features, acmock.NewMockedPermissionsService(), ac, actest.FakeService{}, foldertest.NewFakeService(),
-		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
-		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
-		kvstore.NewFakeKVStore())
-	require.NoError(t, err)
-	service.RegisterDashboardPermissions(dashPermissionService)
-	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
-	require.NoError(t, err)
-
-	return dashboard
-}
-
-func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder {
-	t.Helper()
-
-	features := featuremgmt.WithFeatures()
-	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-	cfg := setting.NewCfg()
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore))
-	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	fStore := folderimpl.ProvideStore(sc.sqlStore)
-	s := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
-	t.Logf("Creating folder with title and UID %q", title)
-	ctx := identity.WithRequester(context.Background(), sc.user)
-	folder, err := s.Create(ctx, &folder.CreateFolderCommand{OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: sc.user})
-	require.NoError(t, err)
-
-	return folder
+	return dash
 }
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
@@ -817,8 +762,6 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 	})
 }
 
-// testScenario is a wrapper around t.Run performing common setup for library panel tests.
-// It takes your real test function as a callback.
 func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
@@ -828,39 +771,29 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
-
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-		dashStore := &dashboards.FakeDashboardStore{}
-		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		dashPermissionService := acmock.NewMockedPermissionsService()
-		folderSvc := foldertest.NewFakeService()
-		folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
-		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
-			cfg, dashStore, folderStore,
-			features, acmock.NewMockedPermissionsService(), ac, actest.FakeService{}, folderSvc,
-			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
-			serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
-			kvstore.NewFakeKVStore())
-		require.NoError(t, err)
-		dashService.RegisterDashboardPermissions(dashPermissionService)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
-
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
-		require.NoError(t, err)
-		fStore := folderimpl.ProvideStore(sqlStore)
-
-		folderService := folderimpl.ProvideService(
-			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
-		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac, dashService)
+		mockDashboardService := dashboards.NewFakeDashboardService(t)
+		mockFolderService := foldertest.NewFakeService()
+		mockFolder := &folder.Folder{
+			ID:        1,
+			UID:       "test-folder-uid",
+			Title:     "Test Folder",
+			URL:       "/dashboards/f/test-folder-uid/test-folder",
+			Version:   0,
+			Created:   time.Now(),
+			Updated:   time.Now(),
+			UpdatedBy: 0,
+			CreatedBy: 0,
+			HasACL:    false,
+		}
+		mockFolderService.ExpectedFolder = mockFolder
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), mockFolderService, features, ac, mockDashboardService, nil, nil)
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
 			LibraryElementService: elementService,
-			FolderService:         folderService,
+			FolderService:         mockFolderService,
 		}
-
 		usr := &user.SignedInUser{
 			UserID:     1,
 			Name:       "Signed In User",
@@ -869,17 +802,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			OrgID:      orgID,
 			OrgRole:    role,
 			LastSeenAt: time.Now(),
-			// Allow the user to create folders
 			Permissions: map[int64]map[string][]string{
 				orgID: {
 					dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll},
 				},
 			},
 		}
-
-		// deliberate difference between signed in user and user in db to make it crystal clear
-		// what to expect in the tests
-		// In the real world these are identical
 		cmd := user.CreateUserCommand{
 			Email: "user.in.db@test.com",
 			Name:  "User In DB",
@@ -895,6 +823,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		_, err = usrSvc.Create(context.Background(), &cmd)
 		require.NoError(t, err)
+
 		sc := scenarioContext{
 			user:           usr,
 			ctx:            ctx,
@@ -902,21 +831,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			elementService: elementService,
 			sqlStore:       sqlStore,
 			lps:            service,
+			mockDashboard:  mockDashboardService,
+			mockFolder:     mockFolderService,
 		}
 
-		foldr := createFolder(t, sc, "ScenarioFolder")
-		sc.folder = &folder.Folder{
-			ID:        foldr.ID, // nolint:staticcheck
-			UID:       foldr.UID,
-			Title:     foldr.Title,
-			URL:       dashboards.GetFolderURL(foldr.UID, slugify.Slugify(foldr.Title)),
-			Version:   0,
-			Created:   foldr.Created,
-			Updated:   foldr.Updated,
-			UpdatedBy: 0,
-			CreatedBy: 0,
-			HasACL:    false,
-		}
+		sc.folder = mockFolder
 		fn(t, sc)
 	})
 }

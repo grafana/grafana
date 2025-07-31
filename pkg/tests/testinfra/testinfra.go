@@ -12,10 +12,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/dskit/kv"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -80,6 +83,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
+	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
+	require.NoError(t, err)
 	env, err := server.InitializeForTest(t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
@@ -104,7 +109,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -475,6 +480,17 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
 		require.NoError(t, err)
 	}
+
+	if opts.RemoteAlertmanagerURL != "" {
+		remoteAlertmanagerSection, err := getOrCreateSection("remote.alertmanager")
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("url", opts.RemoteAlertmanagerURL)
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("tenant", "1")
+		require.NoError(t, err)
+	}
 	if opts.GrafanaComSSOAPIToken != "" {
 		grafanaComSection, err := getOrCreateSection("grafana_com")
 		require.NoError(t, err)
@@ -489,6 +505,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			_, err = section.NewKey("dualWriterMode", fmt.Sprintf("%d", v.DualWriterMode))
 			require.NoError(t, err)
 		}
+	}
+	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
+		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
@@ -507,17 +529,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	if db.IsTestDBSpanner() {
-		_, err = dbSection.NewKey("max_open_conn", "20")
-	} else {
-		_, err = dbSection.NewKey("max_open_conn", "2")
-	}
+	_, err = dbSection.NewKey("max_open_conn", "2")
 	require.NoError(t, err)
-	if db.IsTestDBSpanner() {
-		_, err = dbSection.NewKey("max_idle_conn", "20")
-	} else {
-		_, err = dbSection.NewKey("max_idle_conn", "2")
-	}
+	_, err = dbSection.NewKey("max_idle_conn", "2")
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -562,6 +576,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
@@ -570,6 +585,9 @@ type GrafanaOpts struct {
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
+
+	// Remote alertmanager configuration
+	RemoteAlertmanagerURL string
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

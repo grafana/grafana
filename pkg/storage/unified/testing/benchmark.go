@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // BenchmarkOptions configures the benchmark parameters
@@ -53,7 +53,7 @@ func initializeBackend(ctx context.Context, backend resource.StorageBackend, opt
 			group := fmt.Sprintf("group-%d", g)
 			for r := 0; r < opts.NumResourceTypes; r++ {
 				resourceType := fmt.Sprintf("resource-%d", r)
-				_, err := writeEvent(ctx, backend, "init", resource.WatchEvent_ADDED,
+				_, err := writeEvent(ctx, backend, "init", resourcepb.WatchEvent_ADDED,
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
@@ -104,7 +104,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 				name := fmt.Sprintf("item-%d", uniqueID)
 
 				writeStart := time.Now()
-				_, err := writeEvent(ctx, backend, name, resource.WatchEvent_ADDED,
+				_, err := writeEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
@@ -215,7 +215,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 
 	// Build initial index
 	size := int64(10000) // force the index to be on disk
-	index, err := backend.BuildIndex(ctx, nr, size, 0, nil, func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, nr, size, 0, nil, "benchmark", func(index resource.ResourceIndex) (int64, error) {
 		return 0, nil
 	})
 	if err != nil {
@@ -232,7 +232,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 
 			for jobID := range jobs {
 				doc := &resource.IndexableDocument{
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Namespace: nr.Namespace,
 						Group:     nr.Group,
 						Resource:  nr.Resource,
@@ -348,7 +348,7 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 		Search: resource.SearchOptions{
 			Backend:         searchBackend,
 			IndexEventsChan: events,
-			Resources:       &testDocumentBuilderSupplier{groupsResources: groupsResources},
+			Resources:       &resource.TestDocumentBuilderSupplier{GroupsResources: groupsResources},
 		},
 	})
 	require.NoError(tb, err)
@@ -366,7 +366,11 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	// Run the storage backend benchmark write throughput to create events
 	startTime := time.Now()
 	var result *BenchmarkResult
+	// Channel to signal when the benchmark goroutine completes
+	benchmarkDone := make(chan struct{})
+
 	go func() {
+		defer close(benchmarkDone)
 		result, err = runStorageBackendBenchmark(ctx, backend, opts)
 		require.NoError(tb, err)
 	}()
@@ -378,6 +382,8 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 		latencies = append(latencies, evt.Latency.Seconds())
 	}
 	totalDuration := time.Since(startTime)
+
+	<-benchmarkDone
 	// Calculate index latency percentiles
 	sort.Float64s(latencies)
 	var p50, p90, p99 float64
@@ -415,74 +421,4 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	tb.Logf("P50 Index Latency: %.3fs", p50)
 	tb.Logf("P90 Index Latency: %.3fs", p90)
 	tb.Logf("P99 Index Latency: %.3fs", p99)
-}
-
-// testDocumentBuilder implements DocumentBuilder for testing
-type testDocumentBuilder struct{}
-
-func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	// convert value to unstructured.Unstructured
-	var u unstructured.Unstructured
-	if err := u.UnmarshalJSON(value); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
-	}
-
-	title := ""
-	tags := []string{}
-	val := ""
-
-	spec, ok, _ := unstructured.NestedMap(u.Object, "spec")
-	if ok {
-		if v, ok := spec["title"]; ok {
-			title = v.(string)
-		}
-		if v, ok := spec["tags"]; ok {
-			if tagSlice, ok := v.([]interface{}); ok {
-				tags = make([]string, len(tagSlice))
-				for i, tag := range tagSlice {
-					if strTag, ok := tag.(string); ok {
-						tags[i] = strTag
-					}
-				}
-			}
-		}
-		if v, ok := spec["value"]; ok {
-			val = v.(string)
-		}
-	}
-	return &resource.IndexableDocument{
-		Key: &resource.ResourceKey{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-			Name:      u.GetName(),
-		},
-		Title: title,
-		Tags:  tags,
-		Fields: map[string]interface{}{
-			"value": val,
-		},
-	}, nil
-}
-
-// testDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
-type testDocumentBuilderSupplier struct {
-	groupsResources map[string]string
-}
-
-func (s *testDocumentBuilderSupplier) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
-	builders := make([]resource.DocumentBuilderInfo, 0, len(s.groupsResources))
-
-	// Add builders for all possible group/resource combinations
-	for group, resourceType := range s.groupsResources {
-		builders = append(builders, resource.DocumentBuilderInfo{
-			GroupResource: schema.GroupResource{
-				Group:    group,
-				Resource: resourceType,
-			},
-			Builder: &testDocumentBuilder{},
-		})
-	}
-
-	return builders, nil
 }

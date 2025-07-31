@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
 import { useWizardContext } from '../components/Wizard/wizardContext';
@@ -8,7 +8,7 @@ import { useCorrelationsFormContext } from './correlationsFormContext';
 export const CorrelationFormNavigation = () => {
   const { currentPage, prevPage, isLastPage } = useWizardContext();
   const { readOnly, loading, correlation } = useCorrelationsFormContext();
-  const { t } = useTranslate();
+
   const LastPageNext = !readOnly && (
     <Button variant="primary" icon={loading ? 'spinner' : 'save'} type="submit" disabled={loading}>
       {correlation === undefined

@@ -4,7 +4,7 @@ import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
 
 import { Label } from '../../Label';
@@ -46,7 +46,7 @@ export const LogRecordViewerByTimestamp = memo(
     onRecordsRendered,
   }: LogRecordViewerProps & AdditionalLogRecordViewerProps) => {
     const styles = useStyles2(getStyles);
-    const { t } = useTranslate();
+
     const groupedLines = groupRecordsByTimestamp(records);
 
     const timestampRefs = new Map<number, HTMLElement>();

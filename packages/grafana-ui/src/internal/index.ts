@@ -45,7 +45,7 @@ export {
 } from '../components/MatchersUI/utils';
 export type { FieldMatcherUIRegistryItem } from '../components/MatchersUI/types';
 export { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '../components/MatchersUI/FieldsByFrameRefIdMatcher';
-export { allFieldTypeIconOptions } from '../components/MatchersUI/FieldTypeMatcherEditor';
+export { getAllFieldTypeIconOptions } from '../components/MatchersUI/FieldTypeMatcherEditor';
 
 export { getStyles as getSliderStyles } from '../components/Slider/styles';
 export { getSelectStyles } from '../components/Select/getSelectStyles';
@@ -55,7 +55,7 @@ export { getModalStyles } from '../components/Modal/getModalStyles';
 export { MultiValueRemove, type MultiValueRemoveProps } from '../components/Select/MultiValue';
 export { getSvgSize } from '../components/Icon/utils';
 export { LoadingIndicator } from '../components/PanelChrome/LoadingIndicator';
-export { type ButtonLinkProps, getButtonStyles } from '../components/Button';
+export { type ButtonLinkProps, getButtonStyles } from '../components/Button/Button';
 export {
   type TableSortByFieldState,
   type TableFieldOptions,
@@ -77,13 +77,13 @@ export type { CodeEditorProps } from '../components/Monaco/types';
 export { type Props as InlineFieldProps } from '../components/Forms/InlineField';
 export { DataLinkSuggestions } from '../components/DataLinks/DataLinkSuggestions';
 export { type Props as AlertProps } from '../components/Alert/Alert';
-export { type TooltipPlacement } from '../components/Tooltip';
+export { type TooltipPlacement } from '../components/Tooltip/types';
 export { ConfirmContent, type ConfirmContentProps } from '../components/ConfirmModal/ConfirmContent';
 
 export { EmotionPerfTest } from '../components/ThemeDemos/EmotionPerfTest';
 
 export { VizTooltipContent } from '../components/VizTooltip/VizTooltipContent';
-export { VizTooltipFooter } from '../components/VizTooltip/VizTooltipFooter';
+export { VizTooltipFooter, type AdHocFilterModel } from '../components/VizTooltip/VizTooltipFooter';
 export { VizTooltipHeader } from '../components/VizTooltip/VizTooltipHeader';
 export { VizTooltipWrapper } from '../components/VizTooltip/VizTooltipWrapper';
 export { VizTooltipRow } from '../components/VizTooltip/VizTooltipRow';

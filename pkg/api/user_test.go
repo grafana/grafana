@@ -57,7 +57,10 @@ import (
 
 const newEmail = "newemail@localhost"
 
-func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
+func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
 	hs := &HTTPServer{
@@ -404,7 +407,10 @@ func Test_GetUserByID(t *testing.T) {
 	}
 }
 
-func TestHTTPServer_UpdateUser(t *testing.T) {
+func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t)
 
@@ -478,7 +484,10 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	return usr, hs, nsMock
 }
 
-func TestUser_UpdateEmail(t *testing.T) {
+func TestIntegrationUser_UpdateEmail(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	cases := []struct {
 		Name  string
 		Field user.UpdateEmailActionType
@@ -1153,7 +1162,10 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 	})
 }
 
-func TestHTTPServer_UpdateSignedInUser(t *testing.T) {
+func TestIntegrationHTTPServer_UpdateSignedInUser(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t)
 

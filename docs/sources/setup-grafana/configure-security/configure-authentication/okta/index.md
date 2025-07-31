@@ -30,7 +30,6 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. For **Sign-in method**, select **OIDC - OpenID Connect**.
 1. For **Application type**, select **Web Application** and click **Next**.
 1. Configure **New Web App Integration Operations**:
-
    - **App integration name**: Choose a name for the app.
    - **Logo (optional)**: Add a logo.
    - **Grant type**: Select **Authorization Code** and **Refresh Token**.
@@ -54,7 +53,6 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. In the **Okta Admin Console**, select **Directory > Profile Editor**.
 1. Select the Okta Application Profile you created previously (the default name for this is `<App name> User`).
 1. Select **Add Attribute** and fill in the following fields:
-
    - **Data Type**: string
    - **Display Name**: Meaningful name. For example, `Grafana Role`.
    - **Variable Name**: Meaningful name. For example, `grafana_role`.
@@ -101,10 +99,6 @@ If you want to configure the role for all users in the Okta directory, you can a
 
 ## Configure Okta authentication client using the Grafana UI
 
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default.
-{{< /admonition >}}
-
 As a Grafana Admin, you can configure Okta OAuth2 client from within Grafana using the Okta UI. To do this, navigate to **Administration > Authentication > Okta** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save**. If the save was successful, Grafana will apply the new configurations.
@@ -118,10 +112,6 @@ If you run Grafana in high availability mode, configuration changes may not get 
 Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure Okta authentication client using the Terraform provider
-
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default. Supported in the Terraform provider since v2.12.0.
-{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "okta_sso_settings" {
@@ -243,11 +233,11 @@ org_attribute_path = groups
 org_mapping = ["Group 1:org_foo:Viewer", "Group 2:org_bar:Editor", "*:3:Editor"]
 ```
 
-### Configure team synchronization (Enterprise only)
+### Configure team synchronization
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](../../../../introduction/grafana-cloud).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+{{< /admonition >}}
 
 By using Team Sync, you can link your Okta groups to teams within Grafana. This will automatically assign users to the appropriate teams.
 

@@ -39,6 +39,7 @@ type DatabaseConfig struct {
 	WALEnabled                  bool
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
+	EnsureDefaultOrgAndUser     bool
 	MigrationLock               bool
 	MigrationLockAttemptTimeout int
 	LogQueries                  bool
@@ -114,6 +115,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
 	dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	dbCfg.EnsureDefaultOrgAndUser = sec.Key("ensure_default_org_and_user").MustBool(true)
 	dbCfg.MigrationLock = sec.Key("migration_locking").MustBool(true)
 	dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 
@@ -203,8 +205,6 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 		}
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
-	case migrator.Spanner:
-		cnnstr = dbCfg.Name
 	default:
 		return fmt.Errorf("unknown database type: %s", dbCfg.Type)
 	}

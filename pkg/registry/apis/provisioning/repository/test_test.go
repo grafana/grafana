@@ -152,6 +152,25 @@ func TestValidateRepository(t *testing.T) {
 			},
 		},
 		{
+			name: "mismatched git config",
+			repository: func() *MockRepository {
+				m := NewMockRepository(t)
+				m.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+						Type:  provisioning.LocalRepositoryType,
+						Git:   &provisioning.GitRepositoryConfig{},
+					},
+				})
+				m.On("Validate").Return(field.ErrorList{})
+				return m
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "spec.git: Invalid value")
+			},
+		},
+		{
 			name: "multiple validation errors",
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
@@ -412,7 +431,7 @@ func TestFromFieldError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := fromFieldError(tt.fieldError)
+			result := FromFieldError(tt.fieldError)
 
 			require.NotNil(t, result)
 			require.Equal(t, tt.expectedCode, result.Code)

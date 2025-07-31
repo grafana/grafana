@@ -1,12 +1,18 @@
 import { isFunction } from 'lodash';
+import { useState } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../BarGauge/BarGauge';
-import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../DataLinks/DataLinksContextMenu';
+import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellProps } from '../types';
-import { getAlignmentFactor, getCellOptions } from '../utils';
+import {
+  DataLinksActionsTooltipCoords,
+  getAlignmentFactor,
+  getCellOptions,
+  getDataLinksActionsTooltipUtils,
+} from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -54,12 +60,9 @@ export const BarGaugeCell = (props: TableCellProps) => {
     return field.getLinks({ valueRowIndex: row.index });
   };
 
-  const hasLinks = Boolean(getLinks().length);
   const alignmentFactors = getAlignmentFactor(field, displayValue, cell.row.index);
 
-  const renderComponent = (menuProps: DataLinksContextMenuApi) => {
-    const { openMenu, targetClassName } = menuProps;
-
+  const renderComponent = () => {
     return (
       <BarGauge
         width={innerWidth}
@@ -71,8 +74,6 @@ export const BarGaugeCell = (props: TableCellProps) => {
         orientation={VizOrientation.Horizontal}
         theme={tableStyles.theme}
         alignmentFactors={alignmentFactors}
-        onClick={openMenu}
-        className={targetClassName}
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
@@ -81,14 +82,33 @@ export const BarGaugeCell = (props: TableCellProps) => {
     );
   };
 
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(getLinks());
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
+
+  const links = getLinks();
+
   return (
-    <div {...cellProps} className={tableStyles.cellContainer}>
-      {hasLinks ? (
-        <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
-          {(api) => renderComponent(api)}
-        </DataLinksContextMenu>
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div
+      {...cellProps}
+      className={tableStyles.cellContainer}
+      style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
+      onClick={({ clientX, clientY }) => {
+        setTooltipCoords({ clientX, clientY });
+      }}
+    >
+      {shouldShowLink ? (
+        renderSingleLink(links[0], renderComponent())
+      ) : shouldShowTooltip ? (
+        <DataLinksActionsTooltip
+          links={links}
+          value={renderComponent()}
+          coords={tooltipCoords}
+          onTooltipClose={() => setTooltipCoords(undefined)}
+        />
       ) : (
-        renderComponent({})
+        renderComponent()
       )}
     </div>
   );

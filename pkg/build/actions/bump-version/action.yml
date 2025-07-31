@@ -12,9 +12,12 @@ runs:
         go-version-file: go.mod
     - name: Bump versions
       uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+      env:
+        GO_MOD_DIR: ${{ inputs.go-mod-dir }}
+        VERSION: ${{ inputs.version }}
       with:
         verb: run
-        args: go run ./pkg/build/actions/bump-version -version=${{ inputs.version }}
+        args: go run ./pkg/build/actions/bump-version -version=${VERSION}
     - name: make gen-cue
       shell: bash
       run: make gen-cue

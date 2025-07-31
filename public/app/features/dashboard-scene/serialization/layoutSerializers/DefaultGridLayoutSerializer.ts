@@ -1,25 +1,20 @@
-import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneGridItemLike, SceneGridLayout, VizPanel } from '@grafana/scenes';
 import {
   Spec as DashboardV2Spec,
   GridLayoutItemKind,
   GridLayoutKind,
-  GridLayoutRowKind,
   RepeatOptions,
   Element,
   GridLayoutItemSpec,
   PanelKind,
   LibraryPanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { contextSrv } from 'app/core/core';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../../scene/layout-default/RowRepeaterBehavior';
-import { RowActions } from '../../scene/layout-default/row-actions/RowActions';
-import { getOriginalKey, isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { calculateGridItemDimensions, isLibraryPanel } from '../../utils/utils';
-import { GRID_ROW_HEIGHT } from '../const';
 
 import { buildLibraryPanel, buildVizPanel } from './utils';
 
@@ -52,11 +47,8 @@ export function deserializeDefaultGridLayout(
   });
 }
 
-function getGridLayoutItems(
-  body: DefaultGridLayoutManager,
-  isSnapshot?: boolean
-): Array<GridLayoutItemKind | GridLayoutRowKind> {
-  let items: Array<GridLayoutItemKind | GridLayoutRowKind> = [];
+function getGridLayoutItems(body: DefaultGridLayoutManager, isSnapshot?: boolean): GridLayoutItemKind[] {
+  let items: GridLayoutItemKind[] = [];
   for (const child of body.state.grid.state.children) {
     if (child instanceof DashboardGridItem) {
       // TODO: handle panel repeater scenario
@@ -65,48 +57,10 @@ function getGridLayoutItems(
       } else {
         items.push(gridItemToGridLayoutItemKind(child));
       }
-    } else if (child instanceof SceneGridRow) {
-      if (isClonedKey(child.state.key!) && !isSnapshot) {
-        // Skip repeat rows
-        continue;
-      }
-      items.push(gridRowToLayoutRowKind(child, isSnapshot));
     }
   }
 
   return items;
-}
-
-function getRowRepeat(row: SceneGridRow): RepeatOptions | undefined {
-  if (row.state.$behaviors) {
-    for (const behavior of row.state.$behaviors) {
-      if (behavior instanceof RowRepeaterBehavior) {
-        return { value: behavior.state.variableName, mode: 'variable' };
-      }
-    }
-  }
-  return undefined;
-}
-
-function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayoutRowKind {
-  const children = row.state.children.map((child) => {
-    if (!(child instanceof DashboardGridItem)) {
-      throw new Error('Unsupported row child type');
-    }
-    const y = (child.state.y ?? 0) - (row.state.y ?? 0) - GRID_ROW_HEIGHT;
-    return gridItemToGridLayoutItemKind(child, y);
-  });
-
-  return {
-    kind: 'GridLayoutRow',
-    spec: {
-      title: row.state.title,
-      y: row.state.y ?? 0,
-      collapsed: Boolean(row.state.isCollapsed),
-      elements: children,
-      repeat: getRowRepeat(row),
-    },
-  };
 }
 
 export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: number): GridLayoutItemKind {
@@ -234,34 +188,7 @@ function createSceneGridLayoutForItems(
   return gridItems.map((item) => {
     if (item.kind === 'GridLayoutItem') {
       return deserializeGridItem(item, elements, panelIdGenerator);
-    } else if (item.kind === 'GridLayoutRow') {
-      const children = item.spec.elements.map((gridElement) => {
-        const panel = elements[getOriginalKey(gridElement.spec.element.name)];
-        if (panel.kind === 'Panel' || panel.kind === 'LibraryPanel') {
-          let id: number | undefined;
-          if (panelIdGenerator) {
-            id = panelIdGenerator();
-          }
-          return buildGridItem(gridElement.spec, panel, item.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y, id);
-        } else {
-          throw new Error(`Unknown element kind: ${gridElement.kind}`);
-        }
-      });
-      let behaviors: SceneObject[] | undefined;
-      if (item.spec.repeat) {
-        behaviors = [new RowRepeaterBehavior({ variableName: item.spec.repeat.value })];
-      }
-      return new SceneGridRow({
-        y: item.spec.y,
-        isCollapsed: item.spec.collapsed,
-        title: item.spec.title,
-        $behaviors: behaviors,
-        actions: new RowActions({}),
-        children,
-      });
     } else {
-      // If this has been validated by the schema we should never reach this point, which is why TS is telling us this is an error.
-      //@ts-expect-error
       throw new Error(`Unknown layout element kind: ${item.kind}`);
     }
   });

@@ -11,7 +11,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 

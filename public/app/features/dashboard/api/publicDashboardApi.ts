@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, FetchError, isFetchError } from '@grafana/runtime';
 import { createBaseQuery } from 'app/api/createBaseQuery';
 import { notifyApp } from 'app/core/actions';
@@ -43,7 +43,7 @@ export const publicDashboardApi = createApi({
         try {
           await queryFulfilled;
         } catch (e) {
-          if (isFetchBaseQueryError(e) && isFetchError(e.error)) {
+          if (isFetchBaseQueryError(e) && isFetchError(e.error) && config.publicDashboardsEnabled) {
             dispatch(notifyApp(createErrorNotification(e.error.data.message)));
           }
         }

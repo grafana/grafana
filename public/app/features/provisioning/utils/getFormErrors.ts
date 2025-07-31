@@ -1,4 +1,4 @@
-import { ErrorDetails } from 'app/api/clients/provisioning';
+import { ErrorDetails } from 'app/api/clients/provisioning/v0alpha1';
 
 import { WizardFormData } from '../Wizard/types';
 
@@ -13,7 +13,21 @@ export type FormErrorTuple = [RepositoryFormPath | null, { message: string } | n
  * @returns Tuple with form field path and error message
  */
 export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
-  const fieldsToValidate = ['local.path', 'github.branch', 'github.url', 'github.token'];
+  const fieldsToValidate = [
+    'local.path',
+    'github.branch',
+    'github.url',
+    'github.token',
+    'gitlab.branch',
+    'gitlab.url',
+    'gitlab.token',
+    'bitbucket.branch',
+    'bitbucket.url',
+    'bitbucket.token',
+    'git.branch',
+    'git.url',
+    'git.token',
+  ];
   const fieldMap: Record<string, RepositoryFormPath> = {
     path: 'repository.path',
     branch: 'repository.branch',

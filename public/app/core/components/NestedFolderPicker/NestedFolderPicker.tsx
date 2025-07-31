@@ -6,7 +6,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -15,13 +15,14 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
-import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
+import { useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
+import { getRootFolderItem } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -221,7 +222,7 @@ export function NestedFolderPicker({
     // these options are used infrequently that its not a big deal
     if (!showRootFolder || excludeUIDs?.length) {
       flatTree = flatTree.filter((item) => {
-        if (!showRootFolder && item === ROOT_FOLDER_ITEM) {
+        if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
           return false;
         }
 
@@ -250,7 +251,6 @@ export function NestedFolderPicker({
     },
     [flatTree]
   );
-  const { t } = useTranslate();
 
   const isLoading = isBrowseLoading || isFetchingSearchResults;
 
@@ -266,7 +266,7 @@ export function NestedFolderPicker({
 
   let label = selectedFolder.data?.title;
   if (value === '') {
-    label = 'Dashboards';
+    label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
 
   // Display the folder name and provisioning status when the picker is closed

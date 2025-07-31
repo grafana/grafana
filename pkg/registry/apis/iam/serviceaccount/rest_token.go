@@ -9,7 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	claims "github.com/grafana/authlib/types"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -32,7 +33,7 @@ type LegacyTokenRest struct {
 
 // New implements rest.Storage.
 func (s *LegacyTokenRest) New() runtime.Object {
-	return &iamv0.UserTeamList{}
+	return &legacyiamv0.ServiceAccountTokenList{}
 }
 
 // Destroy implements rest.Storage.
@@ -70,10 +71,10 @@ func (s *LegacyTokenRest) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
-		list := &iamv0.ServiceAccountTokenList{Items: make([]iamv0.ServiceAccountToken, 0, len(res.Items))}
+		list := &legacyiamv0.ServiceAccountTokenList{Items: make([]legacyiamv0.ServiceAccountToken, 0, len(res.Items))}
 
 		for _, t := range res.Items {
-			list.Items = append(list.Items, mapToToken(t))
+			list.Items = append(list.Items, mapToToken(t, ns))
 		}
 
 		list.Continue = common.OptionalFormatInt(res.Continue)
@@ -92,7 +93,7 @@ func (s *LegacyTokenRest) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func mapToToken(t legacy.ServiceAccountToken) iamv0.ServiceAccountToken {
+func mapToToken(t legacy.ServiceAccountToken, ns claims.NamespaceInfo) legacyiamv0.ServiceAccountToken {
 	var expires, lastUsed *metav1.Time
 
 	if t.Expires != nil {
@@ -105,7 +106,7 @@ func mapToToken(t legacy.ServiceAccountToken) iamv0.ServiceAccountToken {
 		lastUsed = &ts
 	}
 
-	return iamv0.ServiceAccountToken{
+	return legacyiamv0.ServiceAccountToken{
 		Name:     t.Name,
 		Expires:  expires,
 		LastUsed: lastUsed,

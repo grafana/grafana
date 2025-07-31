@@ -1,0 +1,513 @@
+{
+  "grafana-prometheus": {
+    "components": {
+      "annotation-query-editor": {
+        "annotation-data-load-error": "Hiba a jegyzetadatok betöltése során.",
+        "aria-label-lower-limit-parameter": "Állítsa be a léptékparaméter alsó határát",
+        "label-min-step": "Min. lépték",
+        "label-series-value-as-timestamp": "Sorozatérték időbélyegként",
+        "label-tags": "Címkék",
+        "label-text": "Szöveg",
+        "label-title": "Cím",
+        "placeholder-auto": "automatikus",
+        "tooltip-either-pattern-example-instance-replaced-label": "Használja a nevet vagy egy mintázatot. Például a(z) {{labelTemplate}} helyébe a(z) {{labelName}} címke címkeértéke lép.",
+        "tooltip-min-step": "További alsó határérték a Prometheus-lekérdezés lépésparaméteréhez, valamint a(z) <2>{{intervalVar}}</2> és <4>{{rateIntervalVar}}</4> változóhoz.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Az időbélyeg mértékegysége az ezredmásodperc. Ha a sorozatérték mértékegysége a másodperc, szorozza meg a tartományvektorát 1000-rel."
+      },
+      "get-query-type-options": {
+        "description": {
+          "instant-query-range": "Azonnali lekérdezés és tartománylekérdezés futtatása"
+        },
+        "label": {
+          "both": "Mindkettő"
+        },
+        "range-options": {
+          "description": {
+            "query-range": "Lekérdezés futtatása egy időtartományban"
+          },
+          "label": {
+            "instant": "Azonnali",
+            "range": "Tartomány"
+          }
+        }
+      },
+      "label-selector": {
+        "aria-label-filter-expression-for-label": "Szűrőkifejezés címkéhez",
+        "description-select-labels": "A címkeértékek kiválasztása után csak a lehetséges címkekombinációk jelennek meg.",
+        "select-labels-to-search-in": "2. Válassza ki a kereséshez használni kívánt címkéket"
+      },
+      "metric-selector": {
+        "aria-label-filter-expression-for-metric": "Szűrőkifejezés a metrikához",
+        "aria-label-limit-results-from-series-endpoint": "A sorozat végpontjáról származó eredmények korlátozása",
+        "description-series-limit": "A korlát minden metrikára, címkére és értékre vonatkozik. Hagyja üresen a mezőt az alapértelmezett korlát használatához. Állítsa 0-ra a korlát letiltásához és az összes lekéréséhez – ez teljesítményproblémákat okozhat.",
+        "label-select-metric": "A metrika kiválasztása után csak a lehetséges címkék jelennek meg. A címkéket az alábbi sorozatkorlát korlátozza.",
+        "select-a-metric": "1. Válasszon egy metrikát",
+        "series-limit": "Sorozatkorlát"
+      },
+      "prom-cheat-sheet": {
+        "prom-ql-cheat-sheet": "PromQL-puska"
+      },
+      "prom-exemplar-field": {
+        "exemplars": "Mintapéldányok",
+        "tooltip-disable-query": "Mintapéldányokkal rendelkező lekérdezések letiltása",
+        "tooltip-enable-query": "Mintapéldányokkal rendelkező lekérdezések engedélyezése"
+      },
+      "prom-explore-extra-field": {
+        "aria-label-prometheus-extra-field": "Prometheus extra mező",
+        "aria-label-query-type-field": "Lekérdezéstípus mező",
+        "aria-label-step-field": "Lépték mező",
+        "min-step": "Min. lépték",
+        "query-type": "Lekérdezés típusa",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Itt időegységek és beépített változók használhatók, például: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (alapértelmezett, ha nincs megadva mértékegység: {{default}})"
+      },
+      "prom-query-field": {
+        "placeholder-enter-a-prom-ql-query": "Írjon be egy PromQL-lekérdezést…"
+      },
+      "prom-variable-query-editor": {
+        "aria-label-classic-query": "Klasszikus lekérdezés",
+        "aria-label-metric-regex": "Metrika reguláris kifejezése",
+        "aria-label-metric-selector": "Metrikaválasztó",
+        "aria-label-prometheus-query": "Prometheus-lekérdezés",
+        "aria-label-query-type": "Lekérdezés típusa",
+        "aria-label-series-query": "Sorozatlekérdezés",
+        "label-classic-query": "Klasszikus lekérdezés",
+        "label-label": "Címke",
+        "label-metric-regex": "Metrika reguláris kifejezése",
+        "label-query": "Lekérdezés",
+        "label-query-type": "Lekérdezés típusa",
+        "label-series-query": "Sorozatlekérdezés",
+        "placeholder-classic-query": "Klasszikus lekérdezés",
+        "placeholder-metric-regex": "Metrika reguláris kifejezése",
+        "placeholder-prometheus-query": "Prometheus-lekérdezés",
+        "placeholder-select-query-type": "Lekérdezéstípus kiválasztása",
+        "placeholder-series-query": "Sorozatlekérdezés",
+        "returns-metrics-matching-specified-metric-regex": "A megadott metrikai reguláris kifejezésnek megfelelő metrikák listáját adja vissza.",
+        "tooltip-classic-query": "A Prometheus változólekérdezés-szerkesztő eredeti implementációja. Adjon meg egy karakterláncot a megfelelő lekérdezéstípussal és paraméterekkel, a jelen dokumentumokban leírtak szerint. Például: {{exampleQuery}}.",
+        "tooltip-label": "A címke nevéhez tartozó címkeértékek listáját adja vissza az összes metrikában, kivéve, ha a metrika meg van adva.",
+        "tooltip-metric-regex": "A címkenevek listáját adja vissza, opcionálisan a megadott metrikai reguláris kifejezés szerint szűrve.",
+        "tooltip-query": "A lekérdezéshez a Prometheus-lekérdezési eredmények listáját adja vissza. Ez magában foglalhatja a Prometheus-funkciókat, azaz {{exampleQuery}}.",
+        "tooltip-query-type": "A Prometheus adatforrás-beépülőmodul a következő lekérdezéstípusokat biztosítja a sablonváltozókhoz.",
+        "tooltip-series-query": "Adjon meg egy metrikát címkékkel, csak egy metrikát vagy csak címkéket: {{example1}}, {{example2}} vagy {{example3}}. A bevitt adatokhoz társított idősorok listáját adja vissza."
+      },
+      "selector-actions": {
+        "aria-label-selector": "választó",
+        "aria-label-selector-clear-button": "Választó törlése gomb",
+        "aria-label-use-selector-as-metrics-button": "Választó használata metrikaként gomb",
+        "aria-label-use-selector-for-query-button": "Választó használata lekérdezéshez gomb",
+        "aria-label-validate-submit-button": "Küldés érvényesítése gomb",
+        "clear": "Törlés",
+        "resulting-selector": "4. Eredményként kapott választó",
+        "use-as-rate-query": "Használat értékeléses lekérdezésként",
+        "use-query": "Lekérdezés használata",
+        "validate-selector": "Választó érvényesítése"
+      },
+      "value-selector": {
+        "aria-label-filter-expression-for-label-values": "Szűrőkifejezés címkeértékekhez",
+        "aria-label-values-for": "Értékek a következőhöz: {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "A keresőmező segítségével kereshet értékeket a kiválasztott címkék között.",
+        "select-multiple-values-for-your-labels": "3. Válasszon (több) értéket a címkéihez"
+      }
+    },
+    "configuration": {
+      "alerting-settings-overhaul": {
+        "label-allow-as-recording-rules-target": "Engedélyezés felvételkészítési szabályok céljaként",
+        "label-manage-alerts-via-alerting-ui": "Riasztások kezelése az Alerting kezelőfelületén keresztül",
+        "title-alerting": "Riasztás",
+        "tooltip-allow-as-recording-rules-target": "Engedélyezze, hogy ez az adatforrás célként legyen kiválasztva a felvételkészítési szabályok írásához.",
+        "tooltip-manage-alerts-via-alerting-ui": "Riasztási szabályok kezelése ehhez az adatforráshoz. Más Alerting-erőforrások kezeléséhez adjon hozzá egy Alertmanager-adatforrást."
+      },
+      "config-editor": {
+        "browser-access-mode-error": "A Prometheus-adatforrás böngészős hozzáférési módja már nem érhető el. Váltás kiszolgáló-hozzáférési módra.",
+        "description-advanced-settings": "A további beállítások olyan opcionális beállítások, amelyek konfigurálhatók az adatforrás nagyobb mértékű ellenőrzése érdekében.",
+        "title-advanced-settings": "Speciális beállítások",
+        "title-error": "Hiba"
+      },
+      "data-source-http-settings-overhaul": {
+        "tooltip-browser-access-mode": "Az Ön hozzáférési módja <1>Böngésző</1>, ez azt jelenti, hogy az URL-címnek elérhetőnek kell lennie a böngészőből.",
+        "tooltip-http-url": "Adjon meg egy teljes HTTP URL-címet (például: {{exampleURL}})",
+        "tooltip-server-access-mode": "Az Ön hozzáférési módja <1>Kiszolgáló</1>, ez azt jelenti, hogy az URL-címnek elérhetőnek kell lennie a Grafana-háttérrendszerből/-kiszolgálóról."
+      },
+      "docs-tip": {
+        "visit-docs-for-more-details-here": "További részletekért tekintse meg a dokumentumokat itt."
+      },
+      "exemplar-setting": {
+        "label-data-source": "Adatforrás",
+        "label-internal-link": "Belső hivatkozás",
+        "label-label-name": "Címkenév",
+        "label-remove-exemplar-link": "Mintapéldány-hivatkozás eltávolítása",
+        "label-url": "URL-cím",
+        "label-url-label": "URL-címke",
+        "placeholder-go-to-examplecom": "Tovább az example.com webhelyre",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "Mintapéldány-hivatkozás eltávolítása",
+        "tooltip-data-source": "A mintapéldány ehhez az adatforráshoz fog navigálni.",
+        "tooltip-internal-link": "Engedélyezze ezt a lehetőséget, ha van belső hivatkozása. Ha engedélyezve van, megjeleníti az adatforrás-választót. Válassza ki a háttérrendszeri követési adattárat a mintapéldány-adatokhoz.",
+        "tooltip-label-name": "A címkeobjektum azon mezőjének neve, amelyet a traceID lekéréséhez kell használni.",
+        "tooltip-url": "A nyomkövetési háttérrendszer URL-címe, ahová a felhasználó menne, hogy lássa a nyomkövetést",
+        "tooltip-url-label": "Használja a gombcímke felülbírálásához a mintapéldány traceID mezőjén."
+      },
+      "exemplars-settings": {
+        "add": "Hozzáadás",
+        "no-exemplars-configurations": "Nincsenek mintapéldány-konfigurációk",
+        "title-exemplars": "Mintapéldányok"
+      },
+      "prom-settings": {
+        "aria-label-default-editor": "Alapértelmezett szerkesztő (kód vagy építő)",
+        "aria-label-prom-type-type": "{{promType}} típusa",
+        "aria-label-prometheus-type": "Prometheus-típus",
+        "aria-label-select-http-method": "HTTP-módszer kiválasztása",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-cache-level": "Gyorsítótár szintje",
+        "label-custom-query-parameters": "Egyéni lekérdezési paraméterek",
+        "label-default-editor": "Alapértelmezett szerkesztő",
+        "label-disable-metrics-lookup": "Metrikák keresésének letiltása",
+        "label-disable-recording-rules-beta": "Felvételkészítési szabályok letiltása (béta)",
+        "label-http-method": "HTTP-metódus",
+        "label-incremental-querying-beta": "Növekményes lekérdezés (béta)",
+        "label-metric-names-suggestion-limit": "Metrikanevek javaslatának korlátja",
+        "label-prom-type-version": "{{promType}} verziója",
+        "label-prometheus-type": "Prometheus-típus",
+        "label-query-overlap-window": "Lekérdezésátfedési ablak",
+        "label-query-timeout": "Lekérdezési időtúllépés",
+        "label-scrape-interval": "Adatgyűjtési intervallum",
+        "label-series-limit": "Sorozatkorlát",
+        "label-use-series-endpoint": "Sorozat végpontjának használata",
+        "more-info": "A Prometheus-típus és -verzió adatforrásokban történő konfigurálásával kapcsolatos további információkért tekintse meg a <2>kiépítési dokumentációt</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Példa: {{example}}",
+        "title-interval-behaviour": "Intervallum viselkedése",
+        "title-other": "Egyéb",
+        "title-performance": "Teljesítmény",
+        "title-query-editor": "Lekérdezésszerkesztő",
+        "tooltip-cache-level": "Beállítja a böngésző gyorsítótárának szintjét a szerkesztői lekérdezésekhez. A magasabb számossági adatforrásokhoz magasabb gyorsítótár-beállítások ajánlottak.",
+        "tooltip-custom-query-parameters": "Egyéni paraméterek hozzáadása a Prometheus lekérdezési URL-jéhez. Például: {{example1}}, {{example2}}, {{example3}} vagy {{example4}}. Több paramétert a következővel kell összefűzni: {{concatenationChar}}.",
+        "tooltip-default-editor": "Beállítja az alapértelmezett szerkesztőopciót az adatforrás minden felhasználója számára.",
+        "tooltip-disable-metrics-lookup": "Ennek az opciónak a bejelölése letiltja a metrikaválasztót és a metrika-/címketámogatást a lekérdezési mező automatikus kitöltésében. Ez segít, ha a nagyobb Prometheus-példányokkal teljesítményproblémái vannak. ",
+        "tooltip-disable-recording-rules-beta": "Ez a funkció letiltja a felvételkészítési szabályokat. Kapcsolja be az irányítópult teljesítményének javítása érdekében",
+        "tooltip-http-method": "A Prometheus-adatforrás lekérdezéséhez használhatja a POST- vagy a GET HTTP-metódust. A POST az ajánlott metódus, mivel nagyobb lekérdezéseket tesz lehetővé. Módosítsa ezt GET-re, ha a Prometheus-verziója régebbi, mint a 2.1-es, vagy ha a POST-kérések korlátozva vannak a hálózatában.",
+        "tooltip-incremental-querying-beta": "Ez a funkció megváltoztatja a relatív lekérdezések azon alapértelmezett viselkedését, hogy mindig friss adatokat kérjenek le a Prometheus-példányból, ehelyett a lekérdezési eredményeket a rendszer gyorsítótárazza, és csak új rekordok lesznek lekérve. Kapcsolja be az adatbázis és a hálózat terhelésének csökkentése érdekében.",
+        "tooltip-metric-names-suggestion-limit": "Azon metrikanevek maximális száma, amelyek automatikus kitöltési javaslatként jelenhetnek meg a lekérdezésszerkesztő Kód módjában.",
+        "tooltip-prom-type-version": "Ezzel állíthatja be a(z) {{promType}}-példány verzióját, ha nincs automatikusan konfigurálva.",
+        "tooltip-prometheus-type": "Állítsa be a Prometheus-adatbázis típusára, pl.: Prometheus, Cortex, Mimir vagy Thanos. A mező módosításával menti az aktuális beállításokat. A Prometheus bizonyos típusai támogatják vagy nem támogatják a különböző API-kat. Például egyes típusok támogatják a reguláris kifejezéses egyeztetést a címkelekérdezésekhez a teljesítmény javítása érdekében. Egyes típusok rendelkeznek API-val a metaadatokhoz. Ha ezt helytelenül állítja be, furcsa viselkedést tapasztalhat a metrikák és címkék lekérdezésekor. Ellenőrizze a Prometheus dokumentációját, hogy biztosan a megfelelő típust adja meg.",
+        "tooltip-query-overlap-window": "Állítson be egy időtartamot, például: {{example1}}, vagy {{example2}}, vagy {{example3}}. A(z) {{default}} alapértelmezése. Ez az időtartam hozzáadódik az egyes növekményes kérések időtartamához.",
+        "tooltip-query-timeout": "Állítsa be a Prometheus lekérdezési időtúllépését.",
+        "tooltip-scrape-interval": "Ez az intervallum azt mutatja, hogy a Prometheus milyen gyakran gyűjt adatokat a célokról. Állítsa be a Prometheus konfigurációs fájljában konfigurált tipikus adatgyűjtési és értékelési intervallumra. Ha ezt nagyobb értékre állítja, mint a Prometheus konfigurációs fájljának intervalluma, a Grafana ennek az intervallumnak megfelelően értékeli az adatokat, és kevesebb adatpontot fog látni. Alapértelmezett érték: {{default}}.",
+        "tooltip-series-limit": "A korlát minden erőforrásra (metrikára, címkére és értékre) vonatkozik mindkét végpont (sorozatok és címkék) esetében. Hagyja üresen a mezőt az alapértelmezett korlát (40 000) használatához. Állítsa 0-ra a korlát letiltásához és az összes lekéréséhez – ez teljesítményproblémákat okozhat. Az alapértelmezett korlát 40 000.",
+        "tooltip-use-series-endpoint": "Ennek az opciónak a bejelölésével előnyben részesíti a sorozat végpontját {{exampleParameter}} paraméterrel a címkeértékek végpontjához képest {{exampleParameter}} paraméterrel. Bár a címkeértékek végpontja hatékonyabbnak tekinthető, egyes felhasználók előnyben részesíthetik a sorozatot, mert rendelkezik POST-metódussal, míg a címkeértékek végpontja csak GET-metódussal rendelkezik."
+      }
+    },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
+    "querybuilder": {
+      "additional-settings": {
+        "content-filter-metric-names-regex-search-using": "A metrikanevek szűrése reguláris kifejezéses kereséssel, a Prometheus API további hívásával.",
+        "disable-text-wrap": "Sortörés letiltása"
+      },
+      "feedback-link": {
+        "give-feedback": "Visszajelzés küldése",
+        "title-give-feedback": "A metrikaböngésző új, és számítunk az építő jellegű visszajelzésére"
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
+      },
+      "get-placeholders": {
+        "browse": "",
+        "include-null-metadata": "",
+        "metadata-search-switch": "",
+        "set-use-backend": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
+      },
+      "handle-function": {
+        "text": {
+          "query-parsing-is-ambiguous": "A lekérdezés elemzése nem egyértelmű."
+        }
+      },
+      "label-filter-item": {
+        "aria-label-remove": "{{name}} eltávolítása",
+        "placeholder-select-label": "Címke kiválasztása",
+        "placeholder-select-value": "Érték kijelölése"
+      },
+      "label-filters": {
+        "label-filters": "Címkeszűrők",
+        "label-label-filters": "Címkeszűrők",
+        "tooltip-label-filters": "Opcionális: a lekérdezéstípushoz kiválasztott metrika szűrésére szolgál."
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
+      },
+      "metric-combobox": {
+        "async-select": {
+          "aria-label-open-metrics-explorer": "Metrikaböngésző megnyitása",
+          "placeholder-select-metric": "Metrika kiválasztása",
+          "tooltip-open-metrics-explorer": "Metrikaböngésző megnyitása"
+        },
+        "label-metric": "Metrika",
+        "tooltip-metric": "Opcionális: a megadott metrikában a címke nevéhez tartozó címkeértékek listáját adja vissza."
+      },
+      "metrics-modal": {
+        "additional-settings": "További beállítások",
+        "aria-label-additional-settings": "További beállítások",
+        "aria-label-browse-metrics": "Metrikák böngészése",
+        "currently-selected": "Jelenleg kiválasztott: {{selected}}",
+        "metrics-pre-filtered": "Ezek a metrikák előszűrtek a címkeszűrőkben kiválasztott címkék alapján.",
+        "placeholder-results-per-page": "találat oldalanként",
+        "results-per-page": "Találatok száma oldalanként",
+        "title-metrics-explorer": "Metrikaböngésző",
+        "results-amount_one": "{{count}}/{{num}} találat megjelenítése",
+        "results-amount_other": "{{count}}/{{num}} találat megjelenítése"
+      },
+      "nested-query": {
+        "label": {
+          "ignoring": "Mellőzés",
+          "on": "Be"
+        },
+        "operator": "Műveleti jel",
+        "tooltip-remove-match": "Egyezés eltávolítása",
+        "vector-matches": "Vektoregyezések"
+      },
+      "operation-editor": {
+        "not-found": "A(z) {{id}} művelet nem található",
+        "title-remove": "{{name}} eltávolítása"
+      },
+      "operation-header": {
+        "placeholder-replace-with": "Csere ezzel:",
+        "title-click-to-view-alternative-operations": "Kattintson az alternatív műveletek megtekintéséhez",
+        "title-remove-operation": "Művelet eltávolítása"
+      },
+      "operation-info-button": {
+        "title-click-to-show-description": "Kattintson a leírás megjelenítéséhez",
+        "title-remove-operation": "Művelet eltávolítása"
+      },
+      "operation-list": {
+        "operations": "Műveletek",
+        "placeholder-search": "Keresés",
+        "title-add-operation": "Művelet hozzáadása"
+      },
+      "operation-param-editor": {
+        "title-add": "{{name}} hozzáadása",
+        "title-remove": "{{name}} eltávolítása"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
+      },
+      "prom-query-builder-options": {
+        "aria-label-lower-limit-parameter": "Állítsa be a léptékparaméter alsó határát",
+        "aria-label-select-resolution": "Felbontás kiválasztása",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
+        "label-exemplars": "Mintapéldányok",
+        "label-format": "Formátum",
+        "label-min-step": "Min. lépték",
+        "label-resolution": "Felbontás",
+        "label-type": "Típus",
+        "placeholder-auto": "automatikus",
+        "title-options": "Beállítások",
+        "tooltip-min-step": "További alsó határérték a Prometheus-lekérdezés léptékparaméteréhez, valamint a(z) <2>{{interval}}</2> és <4>{{rateInterval}}</4> változóhoz."
+      },
+      "prom-query-code-editor-autocomplete-info": {
+        "autocomplete-suggestions-limited": "Automatikus kitöltési javaslatok korlátozva",
+        "tooltip-autocomplete-suggestions-limited": "A metrikanevek száma meghaladja az automatikus kitöltés korlátját. Csak a(z) {{autocompleteLimit}} legrelevánsabb metrika jelenik meg. A küszöbértéket az adatforrás beállításai között módosíthatja."
+      },
+      "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
+        "kick-start-your-query": "Előbeállításos lekérdezés",
+        "label-explain": "Magyarázat",
+        "run-queries": "Lekérdezések futtatása",
+        "title-parsing-error-switch-builder": "Elemzési hiba: Váltás építő módba?"
+      },
+      "prom-query-legend-editor": {
+        "label-legend": "Jelmagyarázat",
+        "placeholder-select-legend-mode": "Jelmagyarázat mód kiválasztása",
+        "tooltip-legend": "Sorozatnév felülbírálása vagy sablon. Például a(z) {{templateExample}} helyébe a(z) {{labelName}} címkeértéke lép."
+      },
+      "query-builder-hints": {
+        "hint-details": "tipp: {{hintDetails}}"
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
+      },
+      "query-pattern": {
+        "apply-query": "Lekérdezés alkalmazása",
+        "aria-label-apply-query-starter-button": "lekérdezés-előbeállító alkalmazása gomb",
+        "aria-label-back-button": "vissza gomb",
+        "aria-label-create-new-query-button": "új lekérdezés létrehozása gomb",
+        "aria-label-raw-query": "{{patternName}} nyers lekérdezés",
+        "aria-label-use-this-query-button": "használja ezt a lekérdezést gomb",
+        "back": "Vissza",
+        "create-new-query": "Új lekérdezés létrehozása",
+        "use-this-query": "Használja ezt a lekérdezést"
+      },
+      "query-patterns-modal": {
+        "aria-label-close-kick-start-your-query-modal": "előbeállításos lekérdezés modális ablakának bezárása",
+        "aria-label-kick-start-your-query-modal": "Előbeállításos lekérdezés modális ablak",
+        "aria-label-toggle-query-starter": "{{patternType}} lekérdezés-előbeállító kártya megnyitása és bezárása",
+        "close": "Bezárás",
+        "description-kick-start-your-query": "Kezdje el létrehozni a lekérdezést előbeállításokkal az alábbi lekérdezések egyikének kiválasztásával. Ezután folytathatja a lekérdezés befejezését.",
+        "label-toggle-query-starter": "{{patternType}} lekérdezés-előbeállítók",
+        "title-kick-start-your-query": "Előbeállításos lekérdezés"
+      },
+      "raw-query": {
+        "aria-label-selector": "választó"
+      },
+      "results-table": {
+        "content-descriptive-type": "{{descriptiveType}} létrehozásakor a Prometheus több, számláló típusú sorozatot jelenít meg. ",
+        "description": "Leírás",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
+        "name": "Név",
+        "select": "Kijelölés",
+        "type": "Típus"
+      },
+      "update-function-args": {
+        "text": {
+          "query-parsing-is-ambiguous": "A lekérdezés elemzése nem egyértelmű."
+        }
+      }
+    }
+  }
+}

@@ -3,170 +3,85 @@ package server
 import (
 	"context"
 	"fmt"
-	"net"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/kv"
-	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-const ringKey = "unified-storage-ring"
-const ringName = "unified_storage_ring"
-const numTokens = 128
-const heartbeatTimeout = time.Minute
+var metricsPrefix = resource.RingName + "_"
 
-var metricsPrefix = ringName + "_"
-
-func (ms *ModuleServer) initRing() (services.Service, error) {
+func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 	if !ms.cfg.EnableSharding {
 		return nil, nil
 	}
 
-	logger := log.New("resource-server-ring")
+	tracer := otel.Tracer(resource.RingKey)
+	logger := log.New(resource.RingKey)
 	reg := prometheus.WrapRegistererWithPrefix(metricsPrefix, ms.registerer)
 
 	grpcclientcfg := &grpcclient.Config{}
 	flagext.DefaultValues(grpcclientcfg)
-	pool := newClientPool(*grpcclientcfg, logger, reg)
+	pool := newClientPool(*grpcclientcfg, logger, reg, ms.cfg, ms.features, tracer)
 
 	ringStore, err := kv.NewClient(
 		ms.MemberlistKVConfig,
 		ring.GetCodec(),
-		kv.RegistererWithKVName(reg, ringName),
+		kv.RegistererWithKVName(reg, resource.RingName),
 		logger,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KV store client: %s", err)
 	}
 
-	lifecyclerCfg, err := toLifecyclerConfig(ms.cfg, logger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize storage-ring lifecycler config: %s", err)
-	}
-
-	// Define lifecycler delegates in reverse order (last to be called defined first because they're
-	// chained via "next delegate").
-	delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, numTokens))
-	delegate = ring.NewLeaveOnStoppingDelegate(delegate, logger)
-	delegate = ring.NewAutoForgetDelegate(heartbeatTimeout*2, delegate, logger)
-
-	lifecycler, err := ring.NewBasicLifecycler(
-		lifecyclerCfg,
-		ringName,
-		ringKey,
-		ringStore,
-		delegate,
-		logger,
-		reg,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
-	}
-
-	storageRing, err := ring.NewWithStoreClientAndStrategy(
+	searchServerRing, err := ring.NewWithStoreClientAndStrategy(
 		toRingConfig(ms.cfg, ms.MemberlistKVConfig),
-		ringName,
-		ringKey,
+		resource.RingName,
+		resource.RingKey,
 		ringStore,
 		ring.NewIgnoreUnhealthyInstancesReplicationStrategy(),
 		reg,
 		logger,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize storage-ring ring: %s", err)
+		return nil, fmt.Errorf("failed to initialize index-server-ring ring: %s", err)
 	}
 
 	startFn := func(ctx context.Context) error {
-		err = storageRing.StartAsync(ctx)
+		err = searchServerRing.StartAsync(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to start the ring: %s", err)
-		}
-		err = lifecycler.StartAsync(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to start the lifecycler: %s", err)
 		}
 		err = pool.StartAsync(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to start the ring client pool: %s", err)
 		}
 
-		logger.Info("waiting until resource server is JOINING in the ring")
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
-		if err := ring.WaitInstanceState(ctx, storageRing, lifecycler.GetInstanceID(), ring.JOINING); err != nil {
-			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
-		}
-		logger.Info("resource server is JOINING in the ring")
-
-		if err := lifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
-			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
-		}
-		logger.Info("resource server is ACTIVE in the ring")
-
 		return nil
 	}
 
-	ms.distributor = &resource.Distributor{
-		ClientPool: pool,
-		Ring:       storageRing,
-		Lifecycler: lifecycler,
-	}
+	ms.searchServerRing = searchServerRing
+	ms.searchServerRingClientPool = pool
 
-	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(storageRing)
+	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(searchServerRing)
 
 	svc := services.NewIdleService(startFn, nil)
 
 	return svc, nil
-}
-
-func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
-	instanceAddr, err := ring.GetInstanceAddr(cfg.MemberlistBindAddr, netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger), logger, true)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, err
-	}
-
-	instanceId := cfg.InstanceID
-	if instanceId == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return ring.BasicLifecyclerConfig{}, err
-		}
-
-		instanceId = hostname
-	}
-
-	_, grpcPortStr, err := net.SplitHostPort(cfg.GRPCServer.Address)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, fmt.Errorf("could not get grpc port from grpc server address: %s", err)
-	}
-
-	grpcPort, err := strconv.Atoi(grpcPortStr)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, fmt.Errorf("error converting grpc address port to int: %s", err)
-	}
-
-	return ring.BasicLifecyclerConfig{
-		Addr:                fmt.Sprintf("%s:%d", instanceAddr, grpcPort),
-		ID:                  instanceId,
-		HeartbeatPeriod:     15 * time.Second,
-		HeartbeatTimeout:    heartbeatTimeout,
-		TokensObservePeriod: 0,
-		NumTokens:           numTokens,
-	}, nil
 }
 
 func toRingConfig(cfg *setting.Cfg, KVStore kv.Config) ring.Config {
@@ -174,14 +89,14 @@ func toRingConfig(cfg *setting.Cfg, KVStore kv.Config) ring.Config {
 	flagext.DefaultValues(&rc)
 
 	rc.KVStore = KVStore
-	rc.HeartbeatTimeout = heartbeatTimeout
+	rc.HeartbeatTimeout = resource.RingHeartbeatTimeout
 
-	rc.ReplicationFactor = 1
+	rc.ReplicationFactor = cfg.SearchRingReplicationFactor
 
 	return rc
 }
 
-func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.Registerer) *ringclient.Pool {
+func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.Registerer, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) *ringclient.Pool {
 	poolCfg := ringclient.PoolConfig{
 		CheckInterval:      10 * time.Second,
 		HealthCheckEnabled: true,
@@ -198,7 +113,8 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 	}, []string{"operation", "status_code"})
 
 	factory := ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
-		opts, err := clientCfg.DialOption(grpcclient.Instrument(factoryRequestDuration))
+		unaryInterceptors, streamInterceptors := grpcclient.Instrument(factoryRequestDuration)
+		opts, err := clientCfg.DialOption(unaryInterceptors, streamInterceptors, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -208,8 +124,7 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
 		}
 
-		// TODO only use this if FlagAppPlatformGrpcClientAuth is not enabled
-		client := resource.NewLegacyResourceClient(conn)
+		client := resource.NewAuthlessResourceClient(conn)
 
 		return &resource.RingClient{
 			Client:       client,
@@ -218,5 +133,5 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 		}, nil
 	})
 
-	return ringclient.NewPool(ringName, poolCfg, nil, factory, clientsCount, log)
+	return ringclient.NewPool(resource.RingName, poolCfg, nil, factory, clientsCount, log)
 }

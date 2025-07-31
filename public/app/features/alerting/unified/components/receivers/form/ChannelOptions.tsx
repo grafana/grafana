@@ -2,7 +2,7 @@ import * as React from 'react';
 import { DeepMap, FieldError, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { Field, SecretInput } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
 
 import {
   ChannelValues,
@@ -18,7 +18,7 @@ export interface Props<R extends ChannelValues> {
   selectedChannelOptions: NotificationChannelOption[];
 
   onResetSecureField: (key: string) => void;
-  onDeleteSubform?: (propertyName: string) => void;
+  onDeleteSubform?: (settingsPath: string, option: NotificationChannelOption) => void;
   errors?: FieldErrors<R>;
   /**
    * The path for the integration in the array of integrations.
@@ -66,7 +66,7 @@ export function ChannelOptions<R extends ChannelValues>({
           return null;
         }
 
-        if (secureFields && secureFields[option.propertyName]) {
+        if (secureFields && secureFields[option.secureFieldKey ?? option.propertyName]) {
           return (
             <Field
               key={key}
@@ -76,7 +76,7 @@ export function ChannelOptions<R extends ChannelValues>({
             >
               <SecretInput
                 id={`${settingsPath}${option.propertyName}`}
-                onReset={() => onResetSecureField(option.propertyName)}
+                onReset={() => onResetSecureField(option.secureFieldKey ?? option.propertyName)}
                 isConfigured
               />
             </Field>
@@ -85,7 +85,7 @@ export function ChannelOptions<R extends ChannelValues>({
 
         const error: FieldError | DeepMap<any, FieldError> | undefined = (
           (option.secure ? errors?.secureFields : errors?.settings) as DeepMap<any, FieldError> | undefined
-        )?.[option.propertyName];
+        )?.[option.secureFieldKey ?? option.propertyName];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];
 
@@ -122,6 +122,7 @@ const determineRequired = (
     return option.required ? 'Required' : false;
   }
 
+  // TODO: This doesn't work with nested secureFields.
   const dependentOn = Boolean(settings[option.dependsOn]) || Boolean(secureFields[option.dependsOn]);
 
   if (dependentOn) {
@@ -140,5 +141,6 @@ const determineReadOnly = (
     return false;
   }
 
+  // TODO: This doesn't work with nested secureFields.
   return Boolean(settings[option.dependsOn]) || Boolean(secureFields[option.dependsOn]);
 };

@@ -9,6 +9,7 @@ import {
   cacheFieldDisplayNames,
   getHistogramFields,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { TooltipDisplayMode, TooltipPlugin2, useTheme2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
 
@@ -64,7 +65,11 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
   if (!histogram || !histogram.fields.length) {
     return (
       <div className="panel-empty">
-        <p>No histogram found in response</p>
+        <p>
+          <Trans i18nKey="histogram.histogram-panel.no-histogram-found-in-response">
+            No histogram found in response
+          </Trans>
+        </p>
       </div>
     );
   }

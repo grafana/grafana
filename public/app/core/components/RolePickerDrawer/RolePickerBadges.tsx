@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useStyles2, Badge, Stack } from '@grafana/ui';
-import { OrgUser } from 'app/types';
+import { OrgUser } from 'app/types/user';
 
 import { RolePickerDrawer } from './RolePickerDrawer';
 
@@ -27,7 +27,7 @@ export const RolePickerBadges = ({ disabled, user }: Props) => {
       roles: user.roles,
     },
   });
-  const { t } = useTranslate();
+
   const { watch } = methods;
 
   const drawerControl = () => {

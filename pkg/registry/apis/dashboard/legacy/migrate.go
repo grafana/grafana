@@ -15,22 +15,27 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type MigrateOptions struct {
 	Namespace    string
-	Store        resource.BulkStoreClient
+	Store        resourcepb.BulkStoreClient
 	LargeObjects apistore.LargeObjectSupport
-	BlobStore    resource.BlobStoreClient
+	BlobStore    resourcepb.BlobStoreClient
 	Resources    []schema.GroupResource
-	WithHistory  bool // only applies to dashboards
-	OnlyCount    bool // just count the values
+	WithHistory  bool   // only applies to dashboards
+	OnlyCount    bool   // just count the values
+	StackID      string // stack identifier for logging
 	Progress     func(count int, msg string)
 }
 
@@ -38,16 +43,19 @@ type MigrateOptions struct {
 //
 //go:generate mockery --name LegacyMigrator --structname MockLegacyMigrator --inpackage --filename legacy_migrator_mock.go --with-expecter
 type LegacyMigrator interface {
-	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BulkResponse, error)
+	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
 }
 
 // This can migrate Folders, Dashboards and LibraryPanels
 func ProvideLegacyMigrator(
 	sql db.DB, // direct access to tables
 	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
+	libraryPanelSvc librarypanels.Service,
+	accessControl accesscontrol.AccessControl,
+	features featuremgmt.FeatureToggles,
 ) LegacyMigrator {
 	dbp := legacysql.NewDatabaseProvider(sql)
-	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, sort.ProvideService())
+	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, libraryPanelSvc, sort.ProvideService(), accessControl, features)
 }
 
 type BlobStoreInfo struct {
@@ -56,9 +64,9 @@ type BlobStoreInfo struct {
 }
 
 // migrate function -- works for a single kind
-type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
+type migratorFunc = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
 
-func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resource.BulkResponse, error) {
+func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
@@ -72,7 +80,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
-	migrators := []migrator{}
+	migratorFuncs := []migratorFunc{}
 	settings := resource.BulkSettings{
 		RebuildCollection: true,
 		SkipValidation:    true,
@@ -81,24 +89,24 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	for _, res := range opts.Resources {
 		switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
 		case "folder.grafana.app/folders":
-			migrators = append(migrators, a.migrateFolders)
-			settings.Collection = append(settings.Collection, &resource.ResourceKey{
+			migratorFuncs = append(migratorFuncs, a.migrateFolders)
+			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     folders.GROUP,
 				Resource:  folders.RESOURCE,
 			})
 
 		case "dashboard.grafana.app/librarypanels":
-			migrators = append(migrators, a.migratePanels)
-			settings.Collection = append(settings.Collection, &resource.ResourceKey{
+			migratorFuncs = append(migratorFuncs, a.migratePanels)
+			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
 				Resource:  dashboard.LIBRARY_PANEL_RESOURCE,
 			})
 
 		case "dashboard.grafana.app/dashboards":
-			migrators = append(migrators, a.migrateDashboards)
-			settings.Collection = append(settings.Collection, &resource.ResourceKey{
+			migratorFuncs = append(migratorFuncs, a.migrateDashboards)
+			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
 				Resource:  dashboard.DASHBOARD_RESOURCE,
@@ -107,12 +115,22 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			return nil, fmt.Errorf("unsupported resource: %s", res)
 		}
 	}
-
 	if opts.OnlyCount {
 		return a.countValues(ctx, opts)
 	}
 
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
+	if md, ok := metadata.FromOutgoingContext(ctx); ok {
+		a.log.Debug("bulk grpc request metadata",
+			"metadata", md,
+			"collection", settings.Collection,
+		)
+	} else {
+		a.log.Debug("bulk grpc request, no metadata found",
+			"collection", settings.Collection,
+		)
+	}
+
 	stream, err := opts.Store.BulkProcess(ctx)
 	if err != nil {
 		return nil, err
@@ -120,9 +138,12 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 
 	// Now run each migration
 	blobStore := BlobStoreInfo{}
-	for _, m := range migrators {
+	opts.StackID = fmt.Sprintf("%d", info.StackID) // Pass stack ID through options
+	a.log.Info("start migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
+	for _, m := range migratorFuncs {
 		blobs, err := m(ctx, info.OrgID, opts, stream)
 		if err != nil {
+			a.log.Error("error migrating legacy resources", "error", err, "namespace", opts.Namespace)
 			return nil, err
 		}
 		if blobs != nil {
@@ -130,11 +151,11 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			blobStore.Size += blobs.Size
 		}
 	}
-	fmt.Printf("BLOBS: %+v\n", blobStore)
+	a.log.Info("finished migrating legacy resources", "blobStore", blobStore)
 	return stream.CloseAndRecv()
 }
 
-func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOptions) (*resource.BulkResponse, error) {
+func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
 	sql, err := a.sql(ctx)
 	if err != nil {
 		return nil, err
@@ -144,20 +165,20 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 		return nil, err
 	}
 	orgId := ns.OrgID
-	rsp := &resource.BulkResponse{}
+	rsp := &resourcepb.BulkResponse{}
 	err = sql.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		for _, res := range opts.Resources {
 			switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
 			case "folder.grafana.app/folders":
-				summary := &resource.BulkResponse_Summary{}
+				summary := &resourcepb.BulkResponse_Summary{}
 				summary.Group = folders.GROUP
 				summary.Group = folders.RESOURCE
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
-					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
+					" WHERE is_folder=TRUE AND org_id=?", orgId).Get(&summary.Count)
 				rsp.Summary = append(rsp.Summary, summary)
 
 			case "dashboard.grafana.app/librarypanels":
-				summary := &resource.BulkResponse_Summary{}
+				summary := &resourcepb.BulkResponse_Summary{}
 				summary.Group = dashboard.GROUP
 				summary.Resource = dashboard.LIBRARY_PANEL_RESOURCE
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("library_element")+
@@ -165,7 +186,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 				rsp.Summary = append(rsp.Summary, summary)
 
 			case "dashboard.grafana.app/dashboards":
-				summary := &resource.BulkResponse_Summary{}
+				summary := &resourcepb.BulkResponse_Summary{}
 				summary.Group = dashboard.GROUP
 				summary.Resource = dashboard.DASHBOARD_RESOURCE
 				rsp.Summary = append(rsp.Summary, summary)
@@ -177,7 +198,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 				}
 
 				// Also count history
-				_, err = sess.SQL(`SELECT COUNT(*) 
+				_, err = sess.SQL(`SELECT COUNT(*)
 						FROM `+sql.Table("dashboard_version")+` as dv
 						JOIN `+sql.Table("dashboard")+`         as dd
 						ON dd.id = dv.dashboard_id
@@ -192,12 +213,13 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 	return rsp, nil
 }
 
-func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
-		OrgID:      orgId,
-		Limit:      100000000,
-		GetHistory: opts.WithHistory, // include history
-		Order:      "ASC",            // oldest first
+		OrgID:         orgId,
+		Limit:         100000000,
+		GetHistory:    opts.WithHistory, // include history
+		AllowFallback: true,             // allow fallback to dashboard table during migration
+		Order:         "ASC",            // oldest first
 	}
 
 	blobs := &BlobStoreInfo{}
@@ -234,8 +256,8 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 			return blobs, err
 		}
 
-		req := &resource.BulkRequest{
-			Key: &resource.ResourceKey{
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
 				Resource:  dashboard.DASHBOARD_RESOURCE,
@@ -243,12 +265,12 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 			},
 			Value:  body,
 			Folder: rows.row.FolderUID,
-			Action: resource.BulkRequest_ADDED,
+			Action: resourcepb.BulkRequest_ADDED,
 		}
 		if dash.Generation > 1 {
-			req.Action = resource.BulkRequest_MODIFIED
+			req.Action = resourcepb.BulkRequest_MODIFIED
 		} else if dash.Generation < 0 {
-			req.Action = resource.BulkRequest_DELETED
+			req.Action = resourcepb.BulkRequest_DELETED
 		}
 
 		// With large object support
@@ -288,7 +310,14 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	if len(rows.rejected) > 0 {
 		for _, row := range rows.rejected {
 			id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
-			fmt.Printf("REJECTED: %s / %s\n", id, row.Dash.Name)
+			a.log.Warn("rejected dashboard",
+				"namespace", opts.Namespace,
+				"dashboard", row.Dash.Name,
+				"uid", row.Dash.UID,
+				"id", id,
+				"version", row.Dash.Generation,
+				"stackId", opts.StackID,
+			)
 			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 		}
 	}
@@ -301,7 +330,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	return blobs, err
 }
 
-func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
@@ -347,8 +376,8 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 			return nil, err
 		}
 
-		req := &resource.BulkRequest{
-			Key: &resource.ResourceKey{
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     "folder.grafana.app",
 				Resource:  "folders",
@@ -356,12 +385,12 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 			},
 			Value:  body,
 			Folder: rows.row.FolderUID,
-			Action: resource.BulkRequest_ADDED,
+			Action: resourcepb.BulkRequest_ADDED,
 		}
 		if dash.Generation > 1 {
-			req.Action = resource.BulkRequest_MODIFIED
+			req.Action = resourcepb.BulkRequest_MODIFIED
 		} else if dash.Generation < 0 {
-			req.Action = resource.BulkRequest_DELETED
+			req.Action = resourcepb.BulkRequest_DELETED
 		}
 
 		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(req.Value)))
@@ -383,7 +412,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 	return nil, err
 }
 
-func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	opts.Progress(-1, "migrating library panels...")
 	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
 		OrgID: orgId,
@@ -402,8 +431,8 @@ func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opt
 			return nil, err
 		}
 
-		req := &resource.BulkRequest{
-			Key: &resource.ResourceKey{
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
 				Resource:  dashboard.LIBRARY_PANEL_RESOURCE,
@@ -411,10 +440,10 @@ func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opt
 			},
 			Value:  body,
 			Folder: meta.GetFolder(),
-			Action: resource.BulkRequest_ADDED,
+			Action: resourcepb.BulkRequest_ADDED,
 		}
 		if panel.Generation > 1 {
-			req.Action = resource.BulkRequest_MODIFIED
+			req.Action = resourcepb.BulkRequest_MODIFIED
 		}
 
 		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", i, meta.GetName(), len(req.Value)))

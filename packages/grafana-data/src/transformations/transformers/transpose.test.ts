@@ -86,9 +86,17 @@ describe('Transpose transformer', () => {
         { name: 'env', type: FieldType.string, values: ['dev', 'prod', 'staging', 'release', 'beta'] },
         { name: 'january', type: FieldType.number, values: [11, 12, 13, 14, 15] },
         { name: 'february', type: FieldType.number, values: [6, 7, 8, 9, 10] },
-        { name: 'type', type: FieldType.string, values: ['metricA', 'metricB', 'metricC', 'metricD', 'metricE'] },
+        {
+          name: 'metricName',
+          type: FieldType.string,
+          values: ['metricA', 'metricB', 'metricC', 'metricD', 'metricE'],
+          config: {
+            displayName: 'type',
+          },
+        },
       ],
     });
+
     await expect(transformDataFrame([cfgB], [seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
       expect(result[0].fields).toEqual([

@@ -11,11 +11,13 @@ import {
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from './azure_monitor/url_builder';
+import { parseResourceURI } from './components/ResourcePicker/utils';
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
 import { migrateQuery } from './grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType, RawAzureResourceItem } from './types';
+import { AzureMonitorQuery, AzureQueryType } from './types/query';
 import { GrafanaTemplateVariableQuery } from './types/templateVariables';
+import { RawAzureResourceItem } from './types/types';
 import messageFromError from './utils/messageFromError';
 
 export function parseResourceNamesAsTemplateVariable(resources: RawAzureResourceItem[], metricNamespace?: string) {
@@ -29,7 +31,7 @@ export function parseResourceNamesAsTemplateVariable(resources: RawAzureResource
 
     return {
       text: r.name,
-      value: r.name,
+      value: parseResourceURI(r.id).resourceName,
     };
   });
 }

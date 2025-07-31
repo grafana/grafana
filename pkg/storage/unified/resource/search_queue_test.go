@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestNewIndexQueueProcessor(t *testing.T) {
@@ -32,11 +34,11 @@ func TestIndexQueueProcessor_SingleEvent(t *testing.T) {
 	processor := newIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	// Test data
-	key := ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"}
+	key := resourcepb.ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"}
 	evt := &WrittenEvent{
 		Key:             &key,
 		ResourceVersion: time.Now().UnixMicro(),
-		Type:            WatchEvent_ADDED,
+		Type:            resourcepb.WatchEvent_ADDED,
 		Value:           []byte(`{"test": "data"}`),
 	}
 
@@ -70,15 +72,15 @@ func TestIndexQueueProcessor_BatchProcessing(t *testing.T) {
 	// Test data for two events
 	events := []*WrittenEvent{
 		{
-			Key:             &ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
+			Key:             &resourcepb.ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
 			ResourceVersion: time.Now().UnixMicro(),
-			Type:            WatchEvent_ADDED,
+			Type:            resourcepb.WatchEvent_ADDED,
 			Value:           []byte(`{"test": "data1"}`),
 		},
 		{
-			Key:             &ResourceKey{Resource: "test", Name: "obj2", Namespace: "default"},
+			Key:             &resourcepb.ResourceKey{Resource: "test", Name: "obj2", Namespace: "default"},
 			ResourceVersion: time.Now().UnixMicro(),
-			Type:            WatchEvent_DELETED,
+			Type:            resourcepb.WatchEvent_DELETED,
 		},
 	}
 
@@ -117,9 +119,9 @@ func TestIndexQueueProcessor_BuildDocumentError(t *testing.T) {
 	processor := newIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	evt := &WrittenEvent{
-		Key:             &ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
+		Key:             &resourcepb.ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
 		ResourceVersion: time.Now().UnixMicro(),
-		Type:            WatchEvent_ADDED,
+		Type:            resourcepb.WatchEvent_ADDED,
 		Value:           []byte(`invalid json`),
 	}
 
@@ -151,9 +153,9 @@ func TestIndexQueueProcessor_BulkIndexError(t *testing.T) {
 	processor := newIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	evt := &WrittenEvent{
-		Key:             &ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
+		Key:             &resourcepb.ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
 		ResourceVersion: time.Now().UnixMicro(),
-		Type:            WatchEvent_ADDED,
+		Type:            resourcepb.WatchEvent_ADDED,
 		Value:           []byte(`{"test": "data"}`),
 	}
 

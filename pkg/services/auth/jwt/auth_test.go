@@ -44,7 +44,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
+func TestIntegrationVerifyUsingPKIXPublicKeyFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	key := rsaKeys[0]
 	unknownKey := rsaKeys[1]
 
@@ -79,7 +82,10 @@ func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 	})
 }
 
-func TestVerifyUsingJWKSetFile(t *testing.T) {
+func TestIntegrationVerifyUsingJWKSetFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	configure := func(t *testing.T, cfg *setting.Cfg) {
 		t.Helper()
 
@@ -118,7 +124,10 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 	}, configure)
 }
 
-func TestVerifyUsingJWKSetURL(t *testing.T) {
+func TestIntegrationVerifyUsingJWKSetURL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("should refuse to start with non-https URL", func(t *testing.T) {
 		var err error
 
@@ -160,7 +169,10 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 	})
 }
 
-func TestCachingJWKHTTPResponse(t *testing.T) {
+func TestIntegrationCachingJWKHTTPResponse(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	jwkCachingScenario(t, "caches the jwk response", func(t *testing.T, sc cachingScenarioContext) {
 		for i := 0; i < 5; i++ {
 			token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
@@ -200,7 +212,10 @@ func TestCachingJWKHTTPResponse(t *testing.T) {
 	})
 }
 
-func TestSignatureWithNoneAlgorithm(t *testing.T) {
+func TestIntegrationSignatureWithNoneAlgorithm(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenario(t, "rejects a token signed with \"none\" algorithm", func(t *testing.T, sc scenarioContext) {
 		token := signNone(t, jwt.Claims{Subject: "foo"})
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
@@ -208,7 +223,10 @@ func TestSignatureWithNoneAlgorithm(t *testing.T) {
 	}, configurePKIXPublicKeyFile)
 }
 
-func TestClaimValidation(t *testing.T) {
+func TestIntegrationClaimValidation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	key := rsaKeys[0]
 
 	scenario(t, "validates iss field for equality", func(t *testing.T, sc scenarioContext) {
@@ -368,7 +386,10 @@ func jwkCachingScenario(t *testing.T, desc string, fn cachingScenarioFunc, cbs .
 	})
 }
 
-func TestBase64Paddings(t *testing.T) {
+func TestIntegrationBase64Paddings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	key := rsaKeys[0]
 
 	scenario(t, "verifies a token with base64 padding (non compliant rfc7515#section-2 but accepted)", func(t *testing.T, sc scenarioContext) {

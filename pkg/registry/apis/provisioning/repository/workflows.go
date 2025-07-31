@@ -17,12 +17,17 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 		case provisioning.WriteWorkflow:
 			supportsWrite = true
 		case provisioning.BranchWorkflow:
-			supportsBranch = repo.Spec.Type == provisioning.GitHubRepositoryType
+			supportsBranch = repo.Spec.Type.IsGit()
 		}
 	}
 
 	// Ref may be the configured branch for github repositories
 	if ref != "" && repo.Spec.GitHub != nil && repo.Spec.GitHub.Branch == ref {
+		ref = ""
+	}
+
+	// Ref may be the configured branch for git repositories
+	if ref != "" && repo.Spec.Git != nil && repo.Spec.Git.Branch == ref {
 		ref = ""
 	}
 

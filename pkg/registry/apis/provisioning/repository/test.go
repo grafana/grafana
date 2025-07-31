@@ -76,11 +76,16 @@ func ValidateRepository(repo Repository) field.ErrorList {
 			cfg.Spec.GitHub, "Github config only valid when type is github"))
 	}
 
+	if cfg.Spec.Type != provisioning.GitRepositoryType && cfg.Spec.Git != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "git"),
+			cfg.Spec.Git, "Git config only valid when type is git"))
+	}
+
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
 		case provisioning.WriteWorkflow: // valid; no fall thru
 		case provisioning.BranchWorkflow:
-			if cfg.Spec.Type != provisioning.GitHubRepositoryType {
+			if !cfg.Spec.Type.IsGit() {
 				list = append(list, field.Invalid(field.NewPath("spec", "workflow"), w, "branch is only supported on git repositories"))
 			}
 		default:
@@ -91,7 +96,7 @@ func ValidateRepository(repo Repository) field.ErrorList {
 	return list
 }
 
-func fromFieldError(err *field.Error) *provisioning.TestResults {
+func FromFieldError(err *field.Error) *provisioning.TestResults {
 	return &provisioning.TestResults{
 		Code:    http.StatusBadRequest,
 		Success: false,

@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
 import { Field, FieldType, LinkModel } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
+
+import { TableCellDisplayMode } from '../../types';
 
 import { DataLinksCell } from './DataLinksCell';
 
@@ -70,7 +71,7 @@ describe('DataLinksCell', () => {
           expect(screen.getByRole('link', { name: link.title })).toHaveAttribute('href', link.href);
         } else {
           expect(screen.queryByRole('link', { name: link.title })).not.toBeInTheDocument();
-          expect(screen.getByText(link.title)).toBeInTheDocument();
+          expect(screen.queryByText(link.title)).not.toBeInTheDocument();
         }
       });
     });

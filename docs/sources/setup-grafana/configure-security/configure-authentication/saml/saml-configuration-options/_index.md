@@ -36,6 +36,7 @@ The table below describes all SAML configuration options. Continue reading below
 | `assertion_attribute_groups`                               | No       | Friendly name or name of the attribute within the SAML assertion to use as the user groups.                                                                                                                  |                                                       |
 | `assertion_attribute_role`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user roles.                                                                                                                   |                                                       |
 | `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                                                                                                             |                                                       |
+| `assertion_attribute_external_uid`                         | No       | Friendly name or name of the attribute within the SAML assertion to use as the user external UID.                                                                                                            | `userUID`                                             |
 | `allowed_organizations`                                    | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in.                                                                                             |                                                       |
 | `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`.  |                                                       |
 | `role_values_none`                                         | No       | List of comma- or space-separated roles which will be mapped into the None role.                                                                                                                             |                                                       |
@@ -77,10 +78,6 @@ allowed_organizations = Engineering, Sales
 ```
 
 ## Example SAML configuration in Terraform
-
-{{< admonition type="note" >}}
-Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
-{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "saml_sso_settings" {

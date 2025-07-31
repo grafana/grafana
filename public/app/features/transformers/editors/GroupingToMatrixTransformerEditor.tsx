@@ -10,11 +10,13 @@ import {
   SpecialValue,
   TransformerCategory,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/groupingToMatrix.svg';
+import lightImage from '../images/light/groupingToMatrix.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({
@@ -22,8 +24,6 @@ export const GroupingToMatrixTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<GroupingToMatrixTransformerOptions>) => {
-  const { t } = useTranslate();
-
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
   const variables = getTemplateSrv()
     .getVariables()
@@ -62,11 +62,46 @@ export const GroupingToMatrixTransformerEditor = ({
   );
 
   const specialValueOptions: Array<SelectableValue<SpecialValue>> = [
-    { label: 'Null', value: SpecialValue.Null, description: 'Null value' },
-    { label: 'True', value: SpecialValue.True, description: 'Boolean true value' },
-    { label: 'False', value: SpecialValue.False, description: 'Boolean false value' },
-    { label: 'Zero', value: SpecialValue.Zero, description: 'Number 0 value' },
-    { label: 'Empty', value: SpecialValue.Empty, description: 'Empty string' },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.null', 'Null'),
+      value: SpecialValue.Null,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.null-value',
+        'Null value'
+      ),
+    },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.true', 'True'),
+      value: SpecialValue.True,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.boolean-true-value',
+        'Boolean true value'
+      ),
+    },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.false', 'False'),
+      value: SpecialValue.False,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.boolean-false-value',
+        'Boolean false value'
+      ),
+    },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.zero', 'Zero'),
+      value: SpecialValue.Zero,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.number-value',
+        'Number 0 value'
+      ),
+    },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.empty', 'Empty'),
+      value: SpecialValue.Empty,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.empty-string',
+        'Empty string'
+      ),
+    },
   ];
 
   const onSelectEmptyValue = useCallback(
@@ -115,12 +150,18 @@ export const GroupingToMatrixTransformerEditor = ({
   );
 };
 
-export const groupingToMatrixTransformRegistryItem: TransformerRegistryItem<GroupingToMatrixTransformerOptions> = {
-  id: DataTransformerID.groupingToMatrix,
-  editor: GroupingToMatrixTransformerEditor,
-  transformation: standardTransformers.groupingToMatrixTransformer,
-  name: standardTransformers.groupingToMatrixTransformer.name,
-  description: 'Takes a three fields combination and produces a Matrix.',
-  categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.groupingToMatrix).helperDocs,
-};
+export const getGroupingToMatrixTransformRegistryItem: () => TransformerRegistryItem<GroupingToMatrixTransformerOptions> =
+  () => ({
+    id: DataTransformerID.groupingToMatrix,
+    editor: GroupingToMatrixTransformerEditor,
+    transformation: standardTransformers.groupingToMatrixTransformer,
+    name: t('transformers.grouping-to-matrix-transformer-editor.name.grouping-to-matrix', 'Grouping to matrix'),
+    description: t(
+      'transformers.grouping-to-matrix-transformer-editor.description.summarize-and-reorganize-data',
+      'Summarize and reorganize data based on three fields.'
+    ),
+    categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
+    help: getTransformationContent(DataTransformerID.groupingToMatrix).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

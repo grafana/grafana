@@ -17,6 +17,7 @@ func TestAlertInstanceModelToProto(t *testing.T) {
 	currentStateEnd := currentStateSince.Add(time.Minute)
 	lastEvalTime := currentStateSince.Add(-time.Minute)
 	lastSentAt := currentStateSince.Add(-2 * time.Minute)
+	firedAt := currentStateSince.Add(-2 * time.Minute)
 	resolvedAt := currentStateSince.Add(-3 * time.Minute)
 
 	tests := []struct {
@@ -39,6 +40,7 @@ func TestAlertInstanceModelToProto(t *testing.T) {
 				CurrentReason:     "Some reason",
 				LastEvalTime:      lastEvalTime,
 				LastSentAt:        &lastSentAt,
+				FiredAt:           &firedAt,
 				ResolvedAt:        &resolvedAt,
 				ResultFingerprint: "fingerprint",
 			},
@@ -51,6 +53,7 @@ func TestAlertInstanceModelToProto(t *testing.T) {
 				CurrentReason:     "Some reason",
 				LastEvalTime:      timestamppb.New(lastEvalTime),
 				LastSentAt:        toProtoTimestampPtr(&lastSentAt),
+				FiredAt:           toProtoTimestampPtr(&firedAt),
 				ResolvedAt:        toProtoTimestampPtr(&resolvedAt),
 				ResultFingerprint: "fingerprint",
 			},
@@ -70,6 +73,7 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 	currentStateEnd := currentStateSince.Add(time.Minute).UTC()
 	lastEvalTime := currentStateSince.Add(-time.Minute).UTC()
 	lastSentAt := currentStateSince.Add(-2 * time.Minute).UTC()
+	firedAt := currentStateSince.Add(-2 * time.Minute).UTC()
 	resolvedAt := currentStateSince.Add(-3 * time.Minute).UTC()
 	ruleUID := "rule-uid-1"
 	orgID := int64(1)
@@ -89,6 +93,7 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 				CurrentStateEnd:   timestamppb.New(currentStateEnd),
 				LastEvalTime:      timestamppb.New(lastEvalTime),
 				LastSentAt:        toProtoTimestampPtr(&lastSentAt),
+				FiredAt:           toProtoTimestampPtr(&firedAt),
 				ResolvedAt:        toProtoTimestampPtr(&resolvedAt),
 				ResultFingerprint: "fingerprint",
 			},
@@ -104,6 +109,7 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 				CurrentStateEnd:   currentStateEnd,
 				LastEvalTime:      lastEvalTime,
 				LastSentAt:        &lastSentAt,
+				FiredAt:           &firedAt,
 				ResolvedAt:        &resolvedAt,
 				ResultFingerprint: "fingerprint",
 			},
@@ -126,7 +132,7 @@ func TestModelAlertInstanceMatchesProtobuf(t *testing.T) {
 	// and update them accordingly.
 	t.Run("when AlertInstance model changes", func(t *testing.T) {
 		modelType := reflect.TypeOf(models.AlertInstance{})
-		require.Equal(t, 10, modelType.NumField(), "AlertInstance model has changed, update the protobuf")
+		require.Equal(t, 11, modelType.NumField(), "AlertInstance model has changed, update the protobuf")
 	})
 }
 
@@ -142,6 +148,7 @@ func TestCompressAndDecompressAlertInstances(t *testing.T) {
 			CurrentStateEnd:   timestamppb.New(now.Add(time.Hour)),
 			CurrentReason:     "reason-1",
 			LastEvalTime:      timestamppb.New(now.Add(-time.Minute)),
+			FiredAt:           timestamppb.New(now.Add(-time.Minute * 2)),
 			ResolvedAt:        timestamppb.New(now.Add(time.Hour * 2)),
 			ResultFingerprint: "fingerprint-1",
 		},

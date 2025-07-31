@@ -1,5 +1,5 @@
 import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -268,7 +268,7 @@ export function getPanelMenu(
 
   if (extensions.length > 0 && !panel.isEditing) {
     menu.push({
-      text: 'Extensions',
+      text: t('dashboard.get-panel-menu.text.extensions', 'Extensions'),
       iconClassName: 'plug',
       type: 'submenu',
       subMenu: createExtensionSubMenu(extensions),
