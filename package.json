@@ -434,7 +434,9 @@
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
     "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*"
+    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
+    "form-data@~2.3.2": "2.5.4",
+    "form-data@^4.0.0": "4.0.4"
   },
   "workspaces": {
     "packages": [
