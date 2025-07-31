@@ -55,9 +55,9 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 						return v2clientAlphaV1.Get(ctx, item.GetName(), metav1.GetOptions{})
 					}
 
-					if strings.HasPrefix(storedVersion, "v2alpha2") {
+					if strings.HasPrefix(storedVersion, "v2beta1") {
 						if v2clientAlphaV2 == nil {
-							v2clientAlphaV2, _, err = clients.ForResource(resources.DashboardResourceV2alpha2)
+							v2clientAlphaV2, _, err = clients.ForResource(resources.DashboardResourceV2beta1)
 							if err != nil {
 								return nil, err
 							}

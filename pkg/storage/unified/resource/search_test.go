@@ -121,7 +121,7 @@ func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource
 	return nil, nil
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -317,7 +317,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"})
+			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
 		}()
 	}
 
@@ -365,7 +365,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
-	_, err = support.getOrCreateIndex(ctx, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"})
+	_, err = support.getOrCreateIndex(ctx, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
@@ -380,9 +380,9 @@ type slowSearchBackend struct {
 	wg sync.WaitGroup
 }
 
-func (m *slowSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *slowSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
 	m.wg.Add(1)
 	defer m.wg.Done()
 	time.Sleep(1 * time.Second)
-	return m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, builder)
+	return m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder)
 }

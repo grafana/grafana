@@ -380,7 +380,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	prometheusService := prometheus.ProvideService(httpclientProvider)
 	tempoService := tempo.ProvideService(httpclientProvider)
 	testdatasourceService := testdatasource.ProvideService()
-	postgresService := postgres.ProvideService(cfg)
+	postgresService := postgres.ProvideService(cfg, featureToggles)
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
@@ -746,7 +746,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
 	factory := github.ProvideFactory()
-	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
+	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl, featureToggles)
 	databaseDatabase := database5.ProvideDatabase(sqlStore, tracer)
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
@@ -780,7 +780,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
+	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService, registerer)
 	secureValueValidator := validator3.ProvideSecureValueValidator()
 	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
@@ -939,7 +939,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	prometheusService := prometheus.ProvideService(httpclientProvider)
 	tempoService := tempo.ProvideService(httpclientProvider)
 	testdatasourceService := testdatasource.ProvideService()
-	postgresService := postgres.ProvideService(cfg)
+	postgresService := postgres.ProvideService(cfg, featureToggles)
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
@@ -1307,7 +1307,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
 	factory := github.ProvideFactory()
-	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
+	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl, featureToggles)
 	databaseDatabase := database5.ProvideDatabase(sqlStore, tracer)
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
@@ -1341,7 +1341,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
+	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService, registerer)
 	secureValueValidator := validator3.ProvideSecureValueValidator()
 	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
