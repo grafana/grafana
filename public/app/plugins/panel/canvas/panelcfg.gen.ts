@@ -116,10 +116,6 @@ export interface CanvasTooltip {
 
 export interface Options {
   /**
-   * Enable infinite pan
-   */
-  infinitePan: boolean;
-  /**
    * Enable inline editing
    */
   inlineEditing: boolean;
@@ -153,11 +149,15 @@ export interface Options {
    * Controls tooltip options
    */
   tooltip: CanvasTooltip;
+  /**
+   * Zoom to content
+   */
+  zoomToContent: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
-  infinitePan: true,
   inlineEditing: true,
   panZoom: true,
   showAdvancedTypes: true,
+  zoomToContent: true,
 };
