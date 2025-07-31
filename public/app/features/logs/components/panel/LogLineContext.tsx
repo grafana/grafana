@@ -232,14 +232,17 @@ export const LogLineContext = memo(
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
       : true;
     // @todo: Remove when the LogRows are deprecated
-    const logListModel =
-      log instanceof LogListModel
-        ? log
-        : new LogListModel(log, {
-            escape: false,
-            timeZone,
-            wrapLogMessage,
-          });
+    const logListModel = useMemo(
+      () =>
+        log instanceof LogListModel
+          ? log
+          : new LogListModel(log, {
+              escape: false,
+              timeZone,
+              wrapLogMessage,
+            }),
+      [log, timeZone, wrapLogMessage]
+    );
 
     return (
       <Modal
