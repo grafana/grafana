@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.1.0-pre";
+export const pluginVersion = "12.2.0-pre";
 
 export enum HorizontalConstraint {
   Center = 'center',
@@ -112,6 +112,10 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
   connections: [],
 };
 
+export interface CanvasTooltip {
+  mode: ui.TooltipDisplayMode;
+}
+
 export interface Options {
   /**
    * Enable infinite pan
@@ -147,6 +151,10 @@ export interface Options {
    * Show all available element types
    */
   showAdvancedTypes: boolean;
+  /**
+   * Controls tooltip options
+   */
+  tooltip: CanvasTooltip;
 }
 
 export const defaultOptions: Partial<Options> = {
