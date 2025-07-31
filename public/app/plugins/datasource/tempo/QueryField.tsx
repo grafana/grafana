@@ -36,6 +36,8 @@ interface State {
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceql';
 
 class TempoQueryFieldComponent extends PureComponent<Props, State> {
+  private _isMounted = false;
+
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -48,6 +50,8 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
   // otherwise if the user changes the query type and refreshes the page, no query type will be selected
   // which is inconsistent with how the UI was originally when they selected the Tempo data source.
   async componentDidMount() {
+    this._isMounted = true;
+
     if (!this.props.query.queryType || this.props.query.queryType === 'clear') {
       this.props.onChange({
         ...this.props.query,
@@ -58,6 +62,11 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
     // indentify the service map can use native histograms
     const timeRange = this.props.range;
     const nativeHistograms = await this.props.datasource.getNativeHistograms(timeRange);
+
+    // Only update if component is still mounted
+    if (!this._isMounted) {
+      return;
+    }
 
     this.props.onChange({
       ...this.props.query,
@@ -78,6 +87,10 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
     ) {
       this.props.onRunQuery();
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   onClearResults = () => {
