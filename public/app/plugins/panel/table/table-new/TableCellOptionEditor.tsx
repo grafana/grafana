@@ -41,7 +41,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
     { value: TableCellDisplayMode.Sparkline, label: t('table.cell-types.sparkline', 'Sparkline') },
     { value: TableCellDisplayMode.JSONView, label: t('table.cell-types.json', 'JSON View') },
     { value: TableCellDisplayMode.Pill, label: t('table.cell-types.pill', 'Pill') },
-    { value: TableCellDisplayMode.Pill, label: t('table.cell-types.markdown', 'Markdown + HTML') },
+    { value: TableCellDisplayMode.Markdown, label: t('table.cell-types.markdown', 'Markdown + HTML') },
     { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
     { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
   ];
