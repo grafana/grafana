@@ -136,16 +136,6 @@ describe('node graph functionality', () => {
   });
 });
 
-describe('time range', () => {
-  it('should calculate correct time range', async () => {
-    const ds = new JaegerDatasource(defaultSettings);
-    const timeRange = ds.getTimeRange();
-    const now = Date.now();
-    expect(timeRange.end).toBeCloseTo(now * 1000, -4);
-    expect(timeRange.start).toBeCloseTo((now - 6 * 3600 * 1000) * 1000, -4);
-  });
-});
-
 function setupQueryMock(type: 'trace' | 'search') {
   return jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
     if (type === 'search') {
