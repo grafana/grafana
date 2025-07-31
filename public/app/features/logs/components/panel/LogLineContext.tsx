@@ -374,6 +374,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     logsContainer: css({
       height: '57vh',
+      overflow: 'hidden',
     }),
     flexColumn: css({
       display: 'flex',
