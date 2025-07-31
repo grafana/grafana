@@ -292,3 +292,130 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
+	t.Parallel()
+
+	tracer := noop.NewTracerProvider().Tracer("test")
+
+	defaultNs := "org-1234"
+	owner := common.ObjectReference{
+		APIGroup:   "prometheus.datasource.grafana.app",
+		APIVersion: "v1alpha1",
+		Kind:       "DataSourceConfig",
+		Name:       "test-datasource",
+		Namespace:  defaultNs,
+	}
+
+	t.Run("happy path creates an inline secure value", func(t *testing.T) {
+		t.Parallel()
+
+		tu := testutils.Setup(t)
+
+		secret := common.NewSecretValue("test-value")
+
+		serviceIdentity := "service-identity"
+
+		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), serviceIdentity, owner.Namespace, nil, nil)
+
+		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
+
+		createdName, err := svc.CreateInline(createAuthCtx, owner, secret)
+		require.NoError(t, err)
+		require.NotEmpty(t, createdName)
+
+		decryptAuthCtx := testutils.CreateServiceAuthContext(t.Context(), serviceIdentity, owner.Namespace, []string{"secret.grafana.app/securevalues:decrypt"})
+
+		decryptedValues, err := tu.DecryptService.Decrypt(decryptAuthCtx, owner.Namespace, createdName)
+		require.NoError(t, err)
+
+		decryptedResult, ok := decryptedValues[createdName]
+		require.True(t, ok)
+		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), secret.DangerouslyExposeAndConsumeValue())
+	})
+
+	t.Run("when the auth info is missing it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		_, err := svc.CreateInline(t.Context(), common.ObjectReference{}, "")
+		require.Error(t, err)
+	})
+
+	t.Run("when the request identity is not a user nor a service account, it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+
+		createAuthCtx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", defaultNs, nil)
+
+		_, err := svc.CreateInline(createAuthCtx, common.ObjectReference{}, "")
+		require.Error(t, err)
+	})
+
+	t.Run("when the owner namespace does not match auth info namespace it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+
+		reqNs := "org-2345"
+		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", reqNs, nil, nil)
+
+		_, err := svc.CreateInline(createAuthCtx, owner, "")
+		require.Error(t, err)
+	})
+
+	t.Run("when the owner namespace is empty it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+
+		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", defaultNs, nil, nil)
+
+		_, err := svc.CreateInline(createAuthCtx, common.ObjectReference{}, "")
+		require.Error(t, err)
+	})
+
+	t.Run("when the owner reference has empty fields it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+
+		owner := common.ObjectReference{
+			Namespace: defaultNs,
+		}
+
+		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", defaultNs, nil, nil)
+
+		_, err := svc.CreateInline(createAuthCtx, owner, "")
+		require.Error(t, err)
+
+		owner.APIGroup = "prometheus.datasource.grafana.app"
+		_, err = svc.CreateInline(createAuthCtx, owner, "")
+		require.Error(t, err)
+
+		owner.APIVersion = "v1alpha1"
+		_, err = svc.CreateInline(createAuthCtx, owner, "")
+		require.Error(t, err)
+
+		owner.Kind = "DataSourceConfig"
+		_, err = svc.CreateInline(createAuthCtx, owner, "")
+		require.Error(t, err)
+		owner.Kind = ""
+
+		owner.Name = "test-datasource"
+		_, err = svc.CreateInline(createAuthCtx, owner, "")
+		require.Error(t, err)
+	})
+
+	t.Run("when an empty secret is provided it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+
+		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", defaultNs, nil, nil)
+
+		_, err := svc.CreateInline(createAuthCtx, owner, "")
+		require.Error(t, err)
+	})
+}
