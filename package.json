@@ -93,7 +93,7 @@
     "@grafana/plugin-e2e": "2.1.7",
     "@grafana/test-utils": "workspace:*",
     "@grafana/tsconfig": "^2.0.0",
-    "@manypkg/get-packages": "^2.2.0",
+    "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^5.2.0",
     "@playwright/test": "1.54.1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.6.1",
