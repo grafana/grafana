@@ -155,10 +155,16 @@ export function getDataLinksCounter(): LineCounter {
   // when we render links, we need to filter out the invalid links. since the call to `getLinks` is expensive,
   // we'll cache the result and reuse it for every row in the table. this cache is cleared when line counts are
   // rebuilt anytime from the `useRowHeight` hook, and that includes adding and removing data links.
-  return (_value, _width, field, rowIdx) => {
+  return (_value, _width, field) => {
     const cacheKey = getDisplayName(field);
     if (linksCountCache[cacheKey] === undefined) {
-      linksCountCache[cacheKey] = getCellLinks(field, rowIdx)?.length ?? 0;
+      let count = 0;
+      for (const l of field.config?.links ?? []) {
+        if (l.onClick || l.url) {
+          count += 1;
+        }
+      }
+      linksCountCache[cacheKey] = count;
     }
 
     return linksCountCache[cacheKey];

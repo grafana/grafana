@@ -871,49 +871,24 @@ describe('TableNG utils', () => {
       const field: Field = {
         name: 'test',
         type: FieldType.string,
-        config: {},
+        config: {
+          links: [
+            { title: 'Link 1', url: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
+            { title: 'Invalid Link', target: '_blank', origin: { datasourceUid: 'test' } } as LinkModel, // No href or onClick
+            {
+              title: 'Link w',
+              url: 'asdf',
+              target: '_blank',
+              origin: { datasourceUid: 'test' },
+              onClick: jest.fn(() => {}),
+            },
+          ],
+        },
         values: ['value1'],
-        getLinks: jest.fn((): LinkModel[] => [
-          { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
-          { title: 'Invalid Link', target: '_blank', origin: { datasourceUid: 'test' } } as LinkModel, // No href or onClick
-          {
-            title: 'Link w',
-            href: 'asdf',
-            target: '_blank',
-            origin: { datasourceUid: 'test' },
-            onClick: jest.fn(() => {}),
-          },
-        ]),
       };
 
       const counter = getDataLinksCounter();
       expect(counter('my value', 100, field, 0)).toBe(2);
-    });
-
-    it('does not call getLinks after calling it once for a given field', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {},
-        values: ['value1'],
-        getLinks: jest.fn((): LinkModel[] => [
-          { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
-          { title: 'Invalid Link', target: '_blank', origin: { datasourceUid: 'test' } } as LinkModel, // No href or onClick
-          {
-            title: 'Link w',
-            href: 'asdf',
-            target: '_blank',
-            origin: { datasourceUid: 'test' },
-            onClick: jest.fn(() => {}),
-          },
-        ]),
-      };
-
-      const counter = getDataLinksCounter();
-      expect(counter('my value', 100, field, 0)).toBe(2);
-      expect(counter('another value', 150, field, 15)).toBe(2);
-      expect(counter('yet another value', 300, field, 0)).toBe(2);
-      expect(field.getLinks).toHaveBeenCalledTimes(1);
     });
   });
 
