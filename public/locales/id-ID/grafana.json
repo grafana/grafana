@@ -1542,8 +1542,7 @@
       "group-not-editable": "Grup yang dipilih tidak dapat diedit",
       "group-not-editable-description": "Grup ini termasuk dalam sumber data yang tidak mendukung pengeditan.",
       "page-title": "Edit grup aturan",
-      "rule-group-error": "Kesalahan saat memuat grup aturan",
-      "title": "Edit grup evaluasi"
+      "rule-group-error": "Kesalahan saat memuat grup aturan"
     },
     "group-loader": {
       "group-load-failed": "Gagal memuat aturan dari grup {{ groupName }} di {{ namespaceName }}",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "Jalankan pemeriksaan ping, DNS, HTTP/S, dan TCP di setiap layer jaringan.",
       "synthetic-monitoring-card-item-3": "Gunakan 20+ probe global atau probe pribadi di belakang firewall Anda.",
       "synthetic-monitoring-card-item-4": "Lacak SLO dengan peringatan yang mirip cara kerja Prometheus bawaan—langsung dari UI.",
-      "synthetic-monitoring-card-title": "Pemantauan Sintetis",
-      "title-alerting": "Alerting"
+      "synthetic-monitoring-card-title": "Pemantauan Sintetis"
     },
     "import-to-gma": {
       "action-button": "Impor",
@@ -3469,6 +3467,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Batalkan",
       "cannot-move-folders": "Folder tidak dapat dipindahkan",
       "confirmation-text": "Hapus",
@@ -3502,21 +3501,32 @@
       "this-folder-is-empty": "Folder ini kosong"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_other": ""
     },
     "bulk-delete-resources-form": {
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_other": "{{count}} aturan peringatan",
@@ -3709,6 +3719,7 @@
     "category-selected-connection": "Koneksi yang dipilih",
     "category-selected-element": "Elemen yang dipilih ({{element}})",
     "category-size": "Ukuran",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3951,6 +3962,13 @@
       "name-vertical-align": "Rata vertikal",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4548,6 +4566,7 @@
     "edit-actions": {
       "add": "Tambahkan {{typeName}}",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5334,6 +5353,20 @@
       "invalid-json": "JSON Tidak Valid",
       "tags-expected-array": "tag array yang diharapkan",
       "tags-expected-strings": "tag array yang diharapkan dari string"
+    },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
     },
     "version-history-comparison": {
       "button-restore": "Pulihkan ke versi {{version}}",
@@ -6957,6 +6990,9 @@
         "pro-tip-define-sources-through-configuration-files": " ProTip: Anda juga dapat menentukan sumber data melalui file konfigurasi. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Sebelumnya",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Buka tanpa kueri"
@@ -7223,18 +7259,24 @@
       "split-tooltip": "Pisahkan panel",
       "split-widen": "Lebarkan panel"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Berikan umpan balik",
-      "label-copied": "Disalin!",
-      "label-export": "Ekspor",
-      "label-trace-id": "ID Pelacakan",
-      "title-share-thoughts-about-tracing-grafana": "Bagikan pendapat Anda tentang pelacakan di Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Jejak parsial",
-      "tooltip-url": "{{url}} atau {{target}} atau {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tombol hapus filter",
@@ -8250,6 +8292,9 @@
     "card": {
       "option": "opsi"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Hapus pilihan"
     },
@@ -8262,6 +8307,7 @@
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Batalkan",
       "confirmText-delete": ""
     },
@@ -8688,6 +8734,7 @@
       "footer-add-annotation": "Tambahkan anotasi",
       "footer-click-to-action": "Klik untuk {{actionTitle}} ",
       "footer-click-to-navigate": "Klik untuk membuka {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Stempel Waktu"
     },
     "week-start-picker": {
@@ -11188,6 +11235,7 @@
       "starting": "Memulai...",
       "status": {
         "title-error-running-job": "Kesalahan saat menjalankan pekerjaan",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Ringkasan",
@@ -11336,6 +11384,7 @@
       "label-current-step": "Langkah saat ini",
       "label-pending-step": "Langkah tertunda"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11368,6 +11417,12 @@
       "alert-title": "Penting: Tidak ada data atau konfigurasi yang akan hilang, tetapi dasbor tidak akan tersedia sementara selama beberapa menit.",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Pilih item yang akan disinkronkan",
       "step-connect": "Hubungkan",
       "step-finish": "Pilih pengaturan tambahan",
@@ -11382,6 +11437,7 @@
     "wizard-content": {
       "button-cancel": "Batalkan",
       "button-cancelling": "Membatalkan...",
+      "button-previous": "",
       "button-submitting": "Mengirim...",
       "error-instance-repository-exists": "Repositori instans sudah ada"
     }
