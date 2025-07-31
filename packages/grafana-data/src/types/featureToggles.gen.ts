@@ -278,6 +278,10 @@ export interface FeatureToggles {
   */
   kubernetesShortURLs?: boolean;
   /**
+  * Adds support for Kubernetes alerting and recording rules
+  */
+  kubernetesAlertingRules?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
