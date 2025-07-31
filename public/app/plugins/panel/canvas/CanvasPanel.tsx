@@ -50,6 +50,7 @@ export class CanvasPanel extends Component<Props, State> {
 
   readonly scene: Scene;
   private subs = new Subscription();
+  private queryEditorLoaded = false;
   needsReload = false;
   isEditing = locationService.getSearchObject().editPanel !== undefined;
 
@@ -111,10 +112,7 @@ export class CanvasPanel extends Component<Props, State> {
 
     this.panelContext = this.context;
     if (this.panelContext.onInstanceStateChange) {
-      this.panelContext.onInstanceStateChange({
-        scene: this.scene,
-        layer: this.scene.root,
-      });
+      this.panelContext.onInstanceStateChange({ scene: this.scene, layer: this.scene.root });
 
       this.subs.add(
         this.scene.selection.subscribe({
@@ -131,11 +129,7 @@ export class CanvasPanel extends Component<Props, State> {
               }
             });
 
-            this.panelContext?.onInstanceStateChange!({
-              scene: this.scene,
-              selected: v,
-              layer: this.scene.root,
-            });
+            this.panelContext?.onInstanceStateChange!({ scene: this.scene, selected: v, layer: this.scene.root });
           },
         })
       );
@@ -174,7 +168,27 @@ export class CanvasPanel extends Component<Props, State> {
       );
     }
 
+    // Reset the size update flag when entering edit mode
+    if (this.isEditing) {
+      this.queryEditorLoaded = false;
+    }
+
     canvasInstances.push(this);
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    // Check if we're in edit mode and dimensions have changed (indicating query editor loaded)
+    if (this.isEditing && !this.queryEditorLoaded) {
+      const dimensionsChanged = prevProps.width !== this.props.width || prevProps.height !== this.props.height;
+
+      if (dimensionsChanged) {
+        this.queryEditorLoaded = true;
+        // Small delay to ensure layout is completely settled
+        requestAnimationFrame(() => {
+          this.scene.updateSize(this.props.width, this.props.height);
+        });
+      }
+    }
   }
 
   componentWillUnmount() {
@@ -189,10 +203,7 @@ export class CanvasPanel extends Component<Props, State> {
   // even the editor gets current state from the same scene instance!
   onUpdateScene = (root: CanvasFrameOptions) => {
     const { onOptionsChange, options } = this.props;
-    onOptionsChange({
-      ...options,
-      root,
-    });
+    onOptionsChange({ ...options, root });
 
     this.setState({ refresh: this.state.refresh + 1 });
     activePanelSubject.next({ panel: this });
