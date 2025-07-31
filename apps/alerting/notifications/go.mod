@@ -3,8 +3,8 @@ module github.com/grafana/grafana/apps/alerting/notifications
 go 1.24.5
 
 require (
-	github.com/grafana/grafana-app-sdk v0.40.1
-	github.com/grafana/grafana-app-sdk/logging v0.40.0
+	github.com/grafana/grafana-app-sdk v0.40.2
+	github.com/grafana/grafana-app-sdk/logging v0.40.1
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
@@ -93,7 +93,7 @@ require (
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
-	google.golang.org/grpc v1.74.0 // indirect
+	google.golang.org/grpc v1.74.2 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

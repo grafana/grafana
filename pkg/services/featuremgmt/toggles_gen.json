@@ -1758,19 +1758,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesLibraryPanelConnections",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
-      },
-      "spec": {
-        "description": "Routes library panel connections requests from /api to using search",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesLibraryPanels",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-25T22:21:56Z"
@@ -2415,6 +2402,19 @@
     },
     {
       "metadata": {
+        "name": "postgresDSUsePGX",
+        "resourceVersion": "1753174666056",
+        "creationTimestamp": "2025-05-26T06:54:18Z",
+        "deletionTimestamp": "2025-06-03T12:45:07Z"
+      },
+      "spec": {
+        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "preferLibraryPanelTitle",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-17T11:21:21Z"
@@ -2745,6 +2745,18 @@
         "description": "Enables the new role picker drawer design",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "scanRowInvalidDashboardParseFallbackEnabled",
+        "resourceVersion": "1753730899886",
+        "creationTimestamp": "2025-07-28T19:28:19Z"
+      },
+      "spec": {
+        "description": "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {

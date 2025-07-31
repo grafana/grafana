@@ -1548,8 +1548,7 @@
       "group-not-editable": "Die ausgewählte Gruppe kann nicht bearbeitet werden",
       "group-not-editable-description": "Diese Gruppe gehört zu einer Datenquelle, die keine Bearbeitung unterstützt.",
       "page-title": "Regelgruppe bearbeiten",
-      "rule-group-error": "Fehler beim Laden der Regelgruppe",
-      "title": "Evaluierungsgruppe bearbeiten"
+      "rule-group-error": "Fehler beim Laden der Regelgruppe"
     },
     "group-loader": {
       "group-load-failed": "Die Regeln der Gruppe {{ groupName }} in {{ namespaceName }} konnten nicht geladen werden",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Führen Sie auf jeder Netzwerkebene Ping-, DNS-, HTTP/S- und TCP-Prüfungen durch.",
       "synthetic-monitoring-card-item-3": "Nutzen Sie mehr als 20 globale Tests oder private Tests hinter Ihrer Firewall.",
       "synthetic-monitoring-card-item-4": "Verfolgen Sie SLOs mit integrierten Warnungen im Stil von Prometheus – direkt über die Benutzeroberfläche.",
-      "synthetic-monitoring-card-title": "Synthetisches Monitoring",
-      "title-alerting": "Meldungen"
+      "synthetic-monitoring-card-title": "Synthetisches Monitoring"
     },
     "import-to-gma": {
       "action-button": "Importieren",
@@ -3740,6 +3738,7 @@
     "category-selected-connection": "Ausgewählte Verbindung",
     "category-selected-element": "Ausgewähltes Element ({{element}})",
     "category-size": "Größe",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3982,6 +3981,13 @@
       "name-vertical-align": "Vertikale Ausrichtung",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -7006,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": " Profi-Tipp: Sie können Datenquellen auch über Konfigurationsdateien festlegen. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Zurück",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Ohne Abfrage fortfahren"
@@ -7272,18 +7281,24 @@
       "split-tooltip": "Bereich teilen",
       "split-widen": "Bereich verbreitern"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Feedback geben",
-      "label-copied": "Kopiert!",
-      "label-export": "Exportieren",
-      "label-trace-id": "Trace-ID",
-      "title-share-thoughts-about-tracing-grafana": "Sagen Sie Ihre Meinung zum Tracing in Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Teilweises Trace",
-      "tooltip-url": "{{url}} oder {{target}} oder {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Schaltfläche „Filter löschen“",
