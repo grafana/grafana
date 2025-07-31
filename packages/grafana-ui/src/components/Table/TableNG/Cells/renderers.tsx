@@ -11,6 +11,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell, getStyles as getDataLinksStyles } from './DataLinksCell';
 import { GeoCell, getStyles as getGeoCellStyles } from './GeoCell';
 import { ImageCell, getStyles as getImageStyles } from './ImageCell';
+import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell';
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
 
@@ -45,19 +46,17 @@ const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
 const GEO_RENDERER: TableCellRenderer = (props) => <GeoCell value={props.value} height={props.height} />;
 
 const IMAGE_RENDERER: TableCellRenderer = (props) => (
-  <ImageCell
-    cellOptions={props.cellOptions}
-    field={props.field}
-    height={props.height}
-    value={props.value}
-    rowIdx={props.rowIdx}
-  />
+  <ImageCell cellOptions={props.cellOptions} field={props.field} value={props.value} rowIdx={props.rowIdx} />
 );
 
 const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />;
 
 const ACTIONS_RENDERER: TableCellRenderer = ({ field, rowIdx, getActions = () => [] }) => (
   <ActionsCell field={field} rowIdx={rowIdx} getActions={getActions} />
+);
+
+const MARKDOWN_RENDERER: TableCellRenderer = (props) => (
+  <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
 );
 
 const PILL_RENDERER: TableCellRenderer = (props) => <PillCell {...props} />;
@@ -119,6 +118,10 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], { renderer: TableCellRend
   [TableCellDisplayMode.Sparkline]: {
     renderer: SPARKLINE_RENDERER,
     getStyles: getSparklineCellStyles,
+  },
+  [TableCellDisplayMode.Markdown]: {
+    renderer: MARKDOWN_RENDERER,
+    getStyles: getMarkdownCellStyles,
   },
 };
 

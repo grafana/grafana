@@ -12520,6 +12520,7 @@
       "gauge": "Gauge",
       "image": "Image",
       "json": "JSON View",
+      "markdown": "Markdown + HTML",
       "pill": "Pill",
       "sparkline": "Sparkline"
     },
@@ -12583,6 +12584,7 @@
     "category-table": "Table",
     "category-table-footer": "Table footer",
     "cell-height-options": {
+      "label-auto": "Auto",
       "label-large": "Large",
       "label-medium": "Medium",
       "label-small": "Small"

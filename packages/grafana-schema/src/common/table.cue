@@ -4,7 +4,7 @@ package common
 // in the table such as colored text, JSON, gauge, etc.
 // The color-background-solid, gradient-gauge, and lcd-gauge
 // modes are deprecated in favor of new cell subOptions
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "data-links" | "custom" | "actions" | "pill" | "geo" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|DataLinks|Custom|Actions|Pill|Geo")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "data-links" | "custom" | "actions" | "pill" | "markdown" | "geo" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|DataLinks|Custom|Actions|Pill|Markdown|Geo")
 
 // Display mode to the "Colored Background" display
 // mode for table cells. Either displays a solid color (basic mode)
@@ -91,16 +91,26 @@ TablePillCellOptions: {
   type: TableCellDisplayMode & "pill"
 } & TableWrapTextOptions @cuetsy(kind="interface")
 
+TablePillCellOptions: {
+  type: TableCellDisplayMode & "pill"
+  color?: string
+  colorMode?: "auto" | "fixed" | "mapped"
+} @cuetsy(kind="interface")
+
+TableMarkdownCellOptions: {
+	type: TableCellDisplayMode & "markdown"
+} @cuetsy(kind="interface")
+
 TableGeoCellOptions: {
   type: TableCellDisplayMode & "geo"
-} @cuetsy(kind="interface")
+}
 
 // Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
-TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableGeoCellOptions @cuetsy(kind="type")
+TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | TableGeoCellOptions @cuetsy(kind="type")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.

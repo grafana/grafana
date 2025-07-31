@@ -2,7 +2,6 @@ import { SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
-  createTheme,
   DataFrame,
   DataFrameWithValue,
   DataLink,
@@ -13,11 +12,11 @@ import {
   LinkModel,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
+import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';
 
-import { COLUMN, TABLE } from './constants';
+import { COLUMN } from './constants';
 import { LineCounterEntry } from './types';
 import {
   extractPixelValue,
@@ -27,7 +26,6 @@ import {
   getCellLinks,
   getCellOptions,
   getComparator,
-  getDefaultRowHeight,
   getIsNestedTable,
   getAlignment,
   getJustifyContent,
@@ -781,34 +779,6 @@ describe('TableNG utils', () => {
       expect(extractPixelValue('')).toBe(0);
       expect(extractPixelValue(null as any)).toBe(0);
       expect(extractPixelValue(undefined as any)).toBe(0);
-    });
-  });
-
-  describe('getDefaultRowHeight', () => {
-    const theme = createTheme();
-
-    it('returns correct height for TableCellHeight.Sm', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Sm);
-      expect(result).toBe(36);
-    });
-
-    it('returns correct height for TableCellHeight.Md', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Md);
-      expect(result).toBe(42);
-    });
-
-    it('returns correct height for TableCellHeight.Lg', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Lg);
-      expect(result).toBe(TABLE.MAX_CELL_HEIGHT);
-    });
-
-    it('calculates height based on theme when cellHeight is undefined', () => {
-      const result = getDefaultRowHeight(theme, undefined as unknown as TableCellHeight);
-
-      // Calculate the expected result based on the theme values
-      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
-
-      expect(result).toBe(expected);
     });
   });
 

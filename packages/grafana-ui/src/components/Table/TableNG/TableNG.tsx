@@ -24,7 +24,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId, TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -65,7 +65,6 @@ import {
   getCellColors,
   getCellLinks,
   getCellOptions,
-  getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
@@ -82,6 +81,7 @@ export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
     data,
+    disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
@@ -158,7 +158,23 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
+  const defaultRowHeight = (() => {
+    switch (cellHeight) {
+      case TableCellHeight.Sm:
+        return 36;
+      case TableCellHeight.Md:
+        return 42;
+      case TableCellHeight.Lg:
+        return TABLE.MAX_CELL_HEIGHT;
+      case TableCellHeight.Auto:
+        return 'auto';
+      default: {
+        const bodyFontSize = theme.typography.fontSize;
+        const lineHeight = theme.typography.body.lineHeight;
+        return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
+      }
+    }
+  })();
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
@@ -210,7 +226,7 @@ export function TableNG(props: TableNGProps) {
     width: availableWidth,
     height,
     headerHeight,
-    footerHeight: hasFooter ? defaultRowHeight : 0,
+    footerHeight: hasFooter ? (typeof defaultRowHeight === 'number' ? defaultRowHeight : TABLE.MAX_CELL_HEIGHT) : 0,
     rowHeight,
   });
 
@@ -230,7 +246,8 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization,
+        enableVirtualization:
+          typeof enableVirtualization === 'boolean' ? enableVirtualization : cellHeight !== TableCellHeight.Auto,
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -272,7 +289,7 @@ export function TableNG(props: TableNGProps) {
         rowHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
-    [enableVirtualization, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
+    [enableVirtualization, cellHeight, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
   );
 
   interface Schema {
@@ -346,7 +363,7 @@ export function TableNG(props: TableNGProps) {
             )
           : undefined;
 
-        const shouldOverflow = shouldTextOverflow(field);
+        const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
         const textWrap = shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
@@ -413,7 +430,15 @@ export function TableNG(props: TableNGProps) {
           const value = props.row[props.column.key];
           // TODO: it would be nice to get rid of passing height down as a prop. but this value
           // is cached so the cost of calling for every cell is low.
-          const height = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
+          // NOTE: some cell types still require a height to be passed down, so that's why string-based
+          // cell types are going to just pass down the max cell height as a numeric height for those cells.
+          const height = (
+            typeof rowHeight === 'function'
+              ? rowHeight(props.row)
+              : typeof rowHeight === 'string'
+                ? TABLE.MAX_CELL_HEIGHT
+                : rowHeight
+          ) satisfies number;
           const frame = data;
 
           return (
@@ -430,6 +455,7 @@ export function TableNG(props: TableNGProps) {
                 cellInspect,
                 showFilters,
                 getActions: getCellActions,
+                disableSanitizeHtml,
               })}
               {showActions && (
                 <TableCellActions
@@ -539,7 +565,7 @@ export function TableNG(props: TableNGProps) {
 
           return (
             <RowExpander
-              height={defaultRowHeight}
+              height={typeof defaultRowHeight === 'string' ? TABLE.MAX_CELL_HEIGHT : defaultRowHeight}
               isExpanded={expandedRows.has(rowIdx)}
               onCellExpand={() => {
                 if (expandedRows.has(rowIdx)) {
@@ -593,6 +619,7 @@ export function TableNG(props: TableNGProps) {
     crossFilterRows,
     data,
     defaultRowHeight,
+    disableSanitizeHtml,
     enableSharedCrosshair,
     expandedRows,
     filter,

@@ -143,6 +143,8 @@ export interface BaseTableProps {
   getActions?: GetActionsFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
+  // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
+  disableSanitizeHtml?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -162,6 +164,7 @@ export interface TableCellRendererProps {
   cellInspect: boolean;
   showFilters: boolean;
   getActions?: GetActionsFunctionLocal;
+  disableSanitizeHtml?: boolean;
 }
 
 export type ContextMenuProps = {
@@ -213,7 +216,6 @@ export interface BarGaugeCellProps {
 export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  height: number;
   value: TableCellValue;
   rowIdx: number;
 }
@@ -238,6 +240,12 @@ export interface AutoCellProps {
   field: Field;
   value: TableCellValue;
   rowIdx: number;
+}
+
+export interface MarkdownCellProps {
+  field: Field;
+  rowIdx: number;
+  disableSanitizeHtml?: boolean;
 }
 
 export interface ActionCellProps {

@@ -19,7 +19,6 @@ import {
   FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
-  TableCellHeight,
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
@@ -40,26 +39,6 @@ import {
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
-
-/**
- * @internal
- * Returns the default row height based on the theme and cell height setting.
- */
-export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCellHeight): number {
-  const bodyFontSize = theme.typography.fontSize;
-  const lineHeight = theme.typography.body.lineHeight;
-
-  switch (cellHeight) {
-    case TableCellHeight.Sm:
-      return 36;
-    case TableCellHeight.Md:
-      return 42;
-    case TableCellHeight.Lg:
-      return TABLE.MAX_CELL_HEIGHT;
-  }
-
-  return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
-}
 
 /**
  * @internal

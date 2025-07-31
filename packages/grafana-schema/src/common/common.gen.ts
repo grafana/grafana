@@ -709,6 +709,7 @@ export enum TableCellDisplayMode {
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  Markdown = 'markdown',
   Pill = 'pill',
   Sparkline = 'sparkline',
 }
@@ -833,30 +834,6 @@ export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions 
   type: TableCellDisplayMode.ColorBackground;
 }
 
-export interface TablePillCellOptions extends TableWrapTextOptions {
-  type: TableCellDisplayMode.Pill;
-}
-
-export interface TableGeoCellOptions {
-  type: TableCellDisplayMode.Geo;
-}
-
-/**
- * Height of a table cell
- */
-export enum TableCellHeight {
-  Auto = 'auto',
-  Lg = 'lg',
-  Md = 'md',
-  Sm = 'sm',
-}
-
-/**
- * Table cell options. Each cell has a display mode
- * and other potential options for that display.
- */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableGeoCellOptions);
-
 /**
  * Use UTC/GMT timezone
  */
@@ -971,6 +948,34 @@ export enum ComparisonOperation {
   LTE = 'lte',
   NEQ = 'neq',
 }
+
+export interface TablePillCellOptions extends TableWrapTextOptions {
+  color?: string;
+  colorMode?: ('auto' | 'fixed' | 'mapped');
+  type: TableCellDisplayMode.Pill;
+}
+
+export interface TableMarkdownCellOptions {
+  type: TableCellDisplayMode.Markdown;
+}
+
+/**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Auto = 'auto',
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
+
+/**
+ * Table cell options. Each cell has a display mode
+ * and other potential options for that display.
+ */
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | {
+    type: TableCellDisplayMode.Geo
+  });
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
