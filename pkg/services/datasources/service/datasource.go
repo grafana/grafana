@@ -497,6 +497,12 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return fmt.Errorf("invalid jsonData")
 		}
 
+		if cmd.Type == "prometheus" {
+			if _, found := cmd.JsonData.CheckGet("azureCredentials"); found {
+				cmd.Type = "grafana-azureprometheus-datasource"
+			}
+		}
+
 		settings, err := s.prepareInstanceSettings(ctx,
 			&backend.DataSourceInstanceSettings{
 				UID:                     cmd.UID,
