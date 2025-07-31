@@ -340,7 +340,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
 		},
 	}
-	search := &slowSearchBackend{
+	search := &slowSearchBackendWithCache{
 		mockSearchBackend: mockSearchBackend{},
 	}
 	supplier := &TestDocumentBuilderSupplier{
@@ -362,10 +362,12 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
-	_, err = support.getOrCreateIndex(ctx, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
+	_, err = support.getOrCreateIndex(ctx, key, "test")
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
@@ -373,16 +375,53 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	search.wg.Wait()
 
 	require.NotEmpty(t, search.buildIndexCalls)
+
+	// Wait until new index is put into cache.
+	require.Eventually(t, func() bool {
+		idx, err := support.search.GetIndex(ctx, key)
+		return err == nil && idx != nil
+	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
+
+	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
+	_, err = support.getOrCreateIndex(ctx, key, "test")
+	require.NoError(t, err)
 }
 
-type slowSearchBackend struct {
+type slowSearchBackendWithCache struct {
 	mockSearchBackend
 	wg sync.WaitGroup
+
+	mu    sync.Mutex
+	cache map[NamespacedResource]ResourceIndex
 }
 
-func (m *slowSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *slowSearchBackendWithCache) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.cache[key], nil
+}
+
+func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
 	m.wg.Add(1)
 	defer m.wg.Done()
+
 	time.Sleep(1 * time.Second)
-	return m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder)
+
+	// Simulate erroring out when context is cancelled.
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.cache == nil {
+		m.cache = make(map[NamespacedResource]ResourceIndex)
+	}
+	m.cache[key] = idx
+	return idx, nil
 }
