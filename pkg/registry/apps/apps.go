@@ -25,13 +25,17 @@ import (
 // ProvideAppInstallers returns a list of app installers that can be used to install apps.
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
+	features featuremgmt.FeatureToggles,
 	playlistAppInstaller *playlist.PlaylistAppInstaller,
 	pluginsApplInstaller *plugins.PluginsAppInstaller,
 ) []appsdkapiserver.AppInstaller {
-	return []appsdkapiserver.AppInstaller{
+	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
-		pluginsApplInstaller,
 	}
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		installers = append(installers, pluginsApplInstaller)
+	}
+	return installers
 }
 
 var (
