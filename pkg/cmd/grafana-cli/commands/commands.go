@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsconsolidation"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -181,6 +182,17 @@ var adminCommands = []*cli.Command{
 				Name:   "re-encrypt-data-keys",
 				Usage:  "Rotates persisted data encryption keys. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsmigrations.ReEncryptDEKS),
+			},
+		},
+	},
+	{
+		Name:  "secrets-consolidation",
+		Usage: "Runs an operation that re-encrypts all encrypted values in your database with new data keys",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "consolidate",
+				Usage:  "Re-encrypts all encrypted values with new data keys and deletes the old deactivated data keys. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsconsolidation.ConsolidateSecrets),
 			},
 		},
 	},

@@ -38,3 +38,7 @@ type GlobalEncryptedValueStorage interface {
 	ListAll(ctx context.Context, opts ListOpts, untilTime *int64) ([]*EncryptedValue, error)
 	CountAll(ctx context.Context, untilTime *int64) (int64, error)
 }
+
+type ConsolidationService interface {
+	Consolidate(ctx context.Context) error
+}
