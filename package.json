@@ -94,7 +94,7 @@
     "@grafana/test-utils": "workspace:*",
     "@grafana/tsconfig": "^2.0.0",
     "@manypkg/get-packages": "^3.0.0",
-    "@npmcli/package-json": "^5.2.0",
+    "@npmcli/package-json": "^6.0.0",
     "@playwright/test": "1.54.1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.6.1",
     "@react-types/button": "3.13.0",
