@@ -1548,8 +1548,7 @@
       "group-not-editable": "Il gruppo selezionato non può essere modificato",
       "group-not-editable-description": "Questo gruppo appartiene a un'origine dati che non supporta la modifica.",
       "page-title": "Modifica gruppo di regole",
-      "rule-group-error": "Errore durante il caricamento del gruppo di regole",
-      "title": "Modifica il gruppo di valutazione"
+      "rule-group-error": "Errore durante il caricamento del gruppo di regole"
     },
     "group-loader": {
       "group-load-failed": "Impossibile caricare le regole dal gruppo {{ groupName }} in {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Avvisi"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Importa",
@@ -3740,6 +3738,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3982,6 +3981,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatico"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -7006,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": " Suggerimento: è inoltre possibile definire le origini dei dati tramite i file di configurazione. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Prec.",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Passa a senza query"
@@ -7272,18 +7281,24 @@
       "split-tooltip": "Dividi il riquadro",
       "split-widen": "Allarga riquadro"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Lascia un feedback",
-      "label-copied": "Copiato!",
-      "label-export": "Esporta",
-      "label-trace-id": "ID traccia",
-      "title-share-thoughts-about-tracing-grafana": "Condividi i tuoi pensieri sul tracciamento in Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Traccia parziale",
-      "tooltip-url": "{{url}} o {{target}} o {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tasto Cancella filtri",
