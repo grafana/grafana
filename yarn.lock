@@ -5083,36 +5083,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@manypkg/find-root@npm:^2.2.2":
-  version: 2.2.2
-  resolution: "@manypkg/find-root@npm:2.2.2"
+"@manypkg/find-root@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@manypkg/find-root@npm:3.1.0"
   dependencies:
-    "@manypkg/tools": "npm:^1.1.1"
-    find-up: "npm:^4.1.0"
-    fs-extra: "npm:^8.1.0"
-  checksum: 10/e9ce97bcab91df59e6bcb9e894bc2f8e0082635d97e50e579947f33ef67f6f66d7f3a6d938b6dc3e036c29aea10bb03d313989a74ee0b16fffbd46da1cc9eedf
+    "@manypkg/tools": "npm:^2.1.0"
+  checksum: 10/49d625ce57a142066ac8bc135219fcb924715e7f54ece98d36208034beeba20133c49e4bb6b636a5e7d0c0633f157a9c3523e65397839f487d88490c42bfab62
   languageName: node
   linkType: hard
 
-"@manypkg/get-packages@npm:^2.2.0":
-  version: 2.2.2
-  resolution: "@manypkg/get-packages@npm:2.2.2"
+"@manypkg/get-packages@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "@manypkg/get-packages@npm:3.1.0"
   dependencies:
-    "@manypkg/find-root": "npm:^2.2.2"
-    "@manypkg/tools": "npm:^1.1.1"
-  checksum: 10/90a6f08a0b79f8edefeddb34eb0f1dad9ae08f5a86fc0df02349111cb85a239feb5aefb20d82c097caff2181581b3ec59b043c21cafd32e6baf9af6b19cc9de4
+    "@manypkg/find-root": "npm:^3.1.0"
+    "@manypkg/tools": "npm:^2.1.0"
+  checksum: 10/f6c7e16fc99fc17138b0eeda2374ccd3279b9d520e87ddb25296738d83bb1345f67ff1bf6b759ec19d9df84fcb3dd20546eb2cdafb53c378fa4bcebeb693e6d3
   languageName: node
   linkType: hard
 
-"@manypkg/tools@npm:^1.1.1":
-  version: 1.1.1
-  resolution: "@manypkg/tools@npm:1.1.1"
+"@manypkg/tools@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "@manypkg/tools@npm:2.1.0"
   dependencies:
-    fs-extra: "npm:^8.1.0"
-    globby: "npm:^11.0.0"
     jju: "npm:^1.4.0"
-    read-yaml-file: "npm:^1.1.0"
-  checksum: 10/ddb94b02f5a02a1f42e44243abd0f3a680b795c11b722dc739236daf314540adcf7ea6e8cc9ff71e302ba3dcf3b97165ed6aeb49fec10a12a1a9e97a50b82b83
+    js-yaml: "npm:^4.1.0"
+    tinyglobby: "npm:^0.2.13"
+  checksum: 10/6da7cfe594e5943929954b55d74b0356e150ee8be001280202799483d83223a2f3af3eecfed4539feb6fb5ae21a0bba99debb85fd9cec9d09bece2d3f7490425
   languageName: node
   linkType: hard
 
@@ -16887,7 +16884,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fdir@npm:^6.4.3":
+"fdir@npm:^6.4.3, fdir@npm:^6.4.4":
   version: 6.4.6
   resolution: "fdir@npm:6.4.6"
   peerDependencies:
@@ -18081,7 +18078,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globby@npm:^11.0.0, globby@npm:^11.1.0":
+"globby@npm:^11.1.0":
   version: 11.1.0
   resolution: "globby@npm:11.1.0"
   dependencies:
@@ -18149,7 +18146,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graceful-fs@npm:4.2.11, graceful-fs@npm:^4.1.11, graceful-fs@npm:^4.1.15, graceful-fs@npm:^4.1.2, graceful-fs@npm:^4.1.5, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.10, graceful-fs@npm:^4.2.11, graceful-fs@npm:^4.2.4, graceful-fs@npm:^4.2.6, graceful-fs@npm:^4.2.8, graceful-fs@npm:^4.2.9":
+"graceful-fs@npm:4.2.11, graceful-fs@npm:^4.1.11, graceful-fs@npm:^4.1.15, graceful-fs@npm:^4.1.2, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.10, graceful-fs@npm:^4.2.11, graceful-fs@npm:^4.2.4, graceful-fs@npm:^4.2.6, graceful-fs@npm:^4.2.8, graceful-fs@npm:^4.2.9":
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
   checksum: 10/bf152d0ed1dc159239db1ba1f74fdbc40cb02f626770dcd5815c427ce0688c2635a06ed69af364396da4636d0408fcf7d4afdf7881724c3307e46aff30ca49e2
@@ -18214,7 +18211,7 @@ __metadata:
     "@locker/near-membrane-dom": "npm:0.13.6"
     "@locker/near-membrane-shared": "npm:0.13.6"
     "@locker/near-membrane-shared-dom": "npm:0.13.6"
-    "@manypkg/get-packages": "npm:^2.2.0"
+    "@manypkg/get-packages": "npm:^3.0.0"
     "@msagl/core": "npm:^1.1.19"
     "@msagl/parser": "npm:^1.1.19"
     "@npmcli/package-json": "npm:^5.2.0"
@@ -21228,7 +21225,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-yaml@npm:^3.10.0, js-yaml@npm:^3.13.1, js-yaml@npm:^3.6.1":
+"js-yaml@npm:^3.10.0, js-yaml@npm:^3.13.1":
   version: 3.14.1
   resolution: "js-yaml@npm:3.14.1"
   dependencies:
@@ -27620,18 +27617,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"read-yaml-file@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "read-yaml-file@npm:1.1.0"
-  dependencies:
-    graceful-fs: "npm:^4.1.5"
-    js-yaml: "npm:^3.6.1"
-    pify: "npm:^4.0.1"
-    strip-bom: "npm:^3.0.0"
-  checksum: 10/41ee5f075507ef0403328dd54e225a61c3149f915675ce7fd0fd791ddcce2e6c30a9fe0f76ffa7a465c1c157b9b4ad8ded1dcf47dc3b396103eeb013490bbc2e
-  languageName: node
-  linkType: hard
-
 "read@npm:^3.0.1":
   version: 3.0.1
   resolution: "read@npm:3.0.1"
@@ -30742,6 +30727,16 @@ __metadata:
     fdir: "npm:^6.4.3"
     picomatch: "npm:^4.0.2"
   checksum: 10/4ad28701fa9118b32ef0e27f409e0a6c5741e8b02286d50425c1f6f71e6d6c6ded9dd5bbbbb714784b08623c4ec4d150151f1d3d996cfabe0495f908ab4f7002
+  languageName: node
+  linkType: hard
+
+"tinyglobby@npm:^0.2.13":
+  version: 0.2.14
+  resolution: "tinyglobby@npm:0.2.14"
+  dependencies:
+    fdir: "npm:^6.4.4"
+    picomatch: "npm:^4.0.2"
+  checksum: 10/3d306d319718b7cc9d79fb3f29d8655237aa6a1f280860a217f93417039d0614891aee6fc47c5db315f4fcc6ac8d55eb8e23e2de73b2c51a431b42456d9e5764
   languageName: node
   linkType: hard
 
