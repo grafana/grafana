@@ -37,7 +37,6 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'Error', value: RuleHealth.Error },
 ];
 
-// Contact point selector is not supported in Alerting ListView V2 yet
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 interface RulesFilerProps {
