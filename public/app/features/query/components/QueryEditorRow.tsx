@@ -241,6 +241,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     // TODO redirect to query editor
   };
 
+  onExitQueryLibraryEditingMode = () => {
+    // Exit query library editing mode after successful update
+    this.props.onCancelQueryLibraryEdit?.();
+  };
+
   onCopyQuery = () => {
     const { query, onAddQuery, onQueryCopied } = this.props;
     const copy = cloneDeep(query);
@@ -396,7 +401,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        <MaybeQueryLibrarySaveButton query={query} queryLibraryRef={queryLibraryRef} app={this.props.app} />
+        <MaybeQueryLibrarySaveButton
+          query={query}
+          queryLibraryRef={queryLibraryRef}
+          app={this.props.app}
+          onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+        />
         {isEditingQueryLibrary && (
           <>
             <QueryOperationAction
@@ -581,9 +591,14 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 }
 
 // Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: { query: DataQuery; app?: CoreApp; queryLibraryRef?: string }) {
+function MaybeQueryLibrarySaveButton(props: {
+  query: DataQuery;
+  app?: CoreApp;
+  queryLibraryRef?: string;
+  onUpdateSuccess?: () => void;
+}) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app, props.queryLibraryRef);
+  return renderSaveQueryButton(props.query, props.app, props.queryLibraryRef, props.onUpdateSuccess);
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
