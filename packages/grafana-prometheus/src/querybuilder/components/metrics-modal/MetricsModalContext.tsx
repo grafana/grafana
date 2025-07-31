@@ -103,7 +103,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
 
           const queryString = regexifyLabelValuesQueryString(metricText);
           const filterArray = queryLabels ? formatPrometheusLabelFilters(queryLabels) : [];
-          const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
+          const match = `{__name__=~"(?i).*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
 
           const results = await languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
 

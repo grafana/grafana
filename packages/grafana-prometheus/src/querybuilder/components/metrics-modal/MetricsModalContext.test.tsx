@@ -208,7 +208,7 @@ describe('MetricsModalContext', () => {
       expect(mockLanguageProvider.queryLabelValues).toHaveBeenCalledWith(
         defaultTimeRange,
         '__name__',
-        '{__name__=~".*test.*"}'
+        '{__name__=~"(?i).*test.*"}'
       );
       expect(result.current.metricsData).toHaveLength(1);
     });
