@@ -457,6 +457,11 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
+  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+  * @default false
+  */
+  useScopeSingleNodeEndpoint?: boolean;
+  /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
   */
@@ -1073,6 +1078,10 @@ export interface FeatureToggles {
   * Enables adhoc filtering support for the dashboard datasource
   */
   dashboardDsAdHocFiltering?: boolean;
+  /**
+  * Supports __from and __to macros that always use the dashboard level time range
+  */
+  dashboardLevelTimeMacros?: boolean;
   /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
   * @default false

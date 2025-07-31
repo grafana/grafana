@@ -13,6 +13,7 @@ import {
   ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
+  TooltipDisplayMode,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -28,10 +29,12 @@ import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasCon
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { Connections2 } from 'app/plugins/panel/canvas/components/connections/Connections2';
+import { Options } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
+import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { CanvasFrameOptions } from '../frame';
 import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
@@ -75,6 +78,7 @@ export class Scene {
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
   zoomToContent?: boolean;
+  tooltipMode?: TooltipDisplayMode;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
@@ -90,7 +94,7 @@ export class Scene {
   setBackgroundCallback?: (anchorPoint: AnchorPoint) => void;
 
   tooltipCallback?: (tooltip: CanvasTooltipPayload | undefined) => void;
-  tooltip?: CanvasTooltipPayload;
+  tooltipPayload?: CanvasTooltipPayload;
 
   moveableActionCallback?: (moved: boolean) => void;
 
@@ -102,15 +106,16 @@ export class Scene {
   targetsToSelect = new Set<HTMLDivElement>();
 
   constructor(
-    cfg: CanvasFrameOptions,
-    enableEditing: boolean,
-    showAdvancedTypes: boolean,
-    panZoom: boolean,
-    zoomToContent: boolean,
+    options: Options,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, zoomToContent);
+    // TODO: Will need to update this approach for dashboard scenes
+    // migration (new dashboard edit experience)
+    const dashboard = getDashboardSrv().getCurrent();
+    const enableEditing = options.inlineEditing && dashboard?.editable;
+
+    this.root = this.load(options, enableEditing);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -142,15 +147,12 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(
-    cfg: CanvasFrameOptions,
-    enableEditing: boolean,
-    showAdvancedTypes: boolean,
-    panZoom: boolean,
-    zoomToContent: boolean
-  ) {
+  load(options: Options, enableEditing: boolean) {
+    const { root, showAdvancedTypes, panZoom, zoomToContent, tooltip } = options;
+    const tooltipMode = tooltip?.mode ?? TooltipDisplayMode.Single;
+
     this.root = new RootElement(
-      cfg ?? {
+      root ?? {
         type: 'frame',
         elements: [DEFAULT_CANVAS_ELEMENT_CONFIG],
       },
@@ -162,6 +164,7 @@ export class Scene {
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
     this.zoomToContent = zoomToContent;
+    this.tooltipMode = tooltipMode;
 
     setTimeout(() => {
       if (config.featureToggles.canvasPanelPanZoom) {
@@ -365,11 +368,13 @@ export class Scene {
   };
 
   render() {
-    const hasDataLinks = this.tooltip?.element?.getLinks && this.tooltip.element.getLinks({}).length > 0;
-    const hasActions = this.tooltip?.element?.options.actions && this.tooltip.element.options.actions.length > 0;
+    const hasDataLinks = this.tooltipPayload?.element?.getLinks && this.tooltipPayload.element.getLinks({}).length > 0;
+    const hasActions =
+      this.tooltipPayload?.element?.options.actions && this.tooltipPayload.element.options.actions.length > 0;
 
-    const isTooltipValid = hasDataLinks || hasActions || this.tooltip?.element?.data?.field;
-    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
+    const isTooltipValid = hasDataLinks || hasActions || this.tooltipPayload?.element?.data?.field;
+    const isTooltipEnabled = this.tooltipMode !== TooltipDisplayMode.None;
+    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid && isTooltipEnabled;
 
     const sceneDiv = (
       <>

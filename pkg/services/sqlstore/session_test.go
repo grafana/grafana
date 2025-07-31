@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 func TestIntegration_RetryingDisabled(t *testing.T) {
@@ -144,7 +144,7 @@ func getRetryErrors(t *testing.T, store *SQLStore) []error {
 	var retryErrors []error
 	switch store.GetDialect().DriverName() {
 	case migrator.SQLite:
-		retryErrors = []error{sqlite3.Error{Code: sqlite3.ErrBusy}, sqlite3.Error{Code: sqlite3.ErrLocked}}
+		retryErrors = []error{sqlite.TestErrBusy, sqlite.TestErrLocked}
 	}
 
 	if len(retryErrors) == 0 {

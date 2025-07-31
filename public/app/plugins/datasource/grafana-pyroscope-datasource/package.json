@@ -36,7 +36,7 @@
     "style-loader": "4.0.0",
     "ts-node": "10.9.2",
     "typescript": "5.8.3",
-    "webpack": "5.97.1"
+    "webpack": "5.101.0"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"

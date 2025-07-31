@@ -4,7 +4,7 @@ go 1.24.5
 
 require (
 	cuelang.org/go v0.11.1
-	github.com/grafana/grafana-app-sdk v0.40.1
+	github.com/grafana/grafana-app-sdk v0.40.2
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/stretchr/testify v1.10.0
@@ -44,7 +44,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.40.0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.40.1 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect

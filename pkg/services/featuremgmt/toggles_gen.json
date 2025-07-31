@@ -838,6 +838,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardLevelTimeMacros",
+        "resourceVersion": "1753435849295",
+        "creationTimestamp": "2025-07-25T09:30:49Z"
+      },
+      "spec": {
+        "description": "Supports __from and __to macros that always use the dashboard level time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-10-23T08:55:45Z"
@@ -3227,6 +3240,22 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "useScopeSingleNodeEndpoint",
+        "resourceVersion": "1753960766702",
+        "creationTimestamp": "2025-07-31T11:19:26Z"
+      },
+      "spec": {
+        "description": "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

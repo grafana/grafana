@@ -112,6 +112,10 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
   connections: [],
 };
 
+export interface CanvasTooltip {
+  mode: ui.TooltipDisplayMode;
+}
+
 export interface Options {
   /**
    * Enable inline editing
@@ -147,6 +151,10 @@ export interface Options {
    * Zoom to content
    */
   zoomToContent: boolean;
+  /**
+   * Controls tooltip options
+   */
+  tooltip: CanvasTooltip;
 }
 
 export const defaultOptions: Partial<Options> = {
