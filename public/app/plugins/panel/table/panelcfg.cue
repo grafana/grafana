@@ -44,8 +44,6 @@ composableKinds: PanelCfg: {
 					}
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
-          // When cellHeight is set to "custom", this value will be used for the height of the rows
-          cellHeightCustom?: number
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.TableFieldOptions

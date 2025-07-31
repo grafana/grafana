@@ -18,10 +18,6 @@ export interface Options {
    */
   cellHeight?: ui.TableCellHeight;
   /**
-   * When cellHeight is set to "custom", this value will be used for the height of the rows
-   */
-  cellHeightCustom?: number;
-  /**
    * Controls footer options
    */
   footer?: ui.TableFooterOptions;

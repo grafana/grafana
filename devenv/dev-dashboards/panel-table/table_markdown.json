@@ -80,7 +80,6 @@
       "id": 1,
       "options": {
         "cellHeight": "auto",
-        "cellHeightCustom": 200,
         "footer": {
           "countRows": false,
           "fields": "",
