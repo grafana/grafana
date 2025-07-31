@@ -286,6 +286,27 @@ export function SelectBase<T, Rest = {}>({
     noMultiValueWrap,
   };
 
+  // Auto-select 'all' option when no value is selected and 'all' option exists
+  const hasNoValue = isMulti
+    ? !selectedValue || (Array.isArray(selectedValue) && selectedValue.length === 0)
+    : !selectedValue;
+
+  if (hasNoValue && options.length > 0) {
+    const allOption = options.find(
+      (option) =>
+        option.value === 'all' ||
+        option.value === '*' ||
+        option.value === '.*' ||
+        (option.label && option.label.toLowerCase() === 'all')
+    );
+
+    if (allOption) {
+      selectedValue = isMulti ? [allOption] : allOption;
+      // Update the commonSelectProps to reflect the auto-selected value
+      commonSelectProps.value = isMulti ? selectedValue : selectedValue;
+    }
+  }
+
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
