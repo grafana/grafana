@@ -5,11 +5,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { useSelector } from 'app/types/store';
 
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
-import { useSelectionProvisioningStatus } from './BrowseActions/useSelectionProvisioningStatus';
 import { isSharedWithMe, canEditItemType } from './utils';
 
 export default function CheckboxCell({
@@ -20,12 +18,7 @@ export default function CheckboxCell({
 }: DashboardsTreeCellProps) {
   const item = row.item;
 
-  // Get current selection state to check for root folder conflicts
-  const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
-  const { firstSelectedRootFolder, getItemRootFolder } = useSelectionProvisioningStatus(
-    selectedItems,
-    false // We don't need parent provisioned check for checkbox logic
-  );
+  // We can remove the complex root folder conflict logic for now
 
   if (!isSelected) {
     return <CheckboxSpacer />;
@@ -43,7 +36,7 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  // we don't want to select root provisioned folder
+  // We don't want to select root provisioned folder
   const isRootProvisionedFolder = item.managedBy === ManagerKind.Repo && !item.parentUID;
   if (isRootProvisionedFolder) {
     return <CheckboxSpacer />;
@@ -54,14 +47,7 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  // Check if this item is from a different root folder than already selected items
-  const itemRootFolder = getItemRootFolder(item);
-  const isFromDifferentRootFolder =
-    firstSelectedRootFolder && itemRootFolder && itemRootFolder !== firstSelectedRootFolder;
-
-  if (isFromDifferentRootFolder) {
-    return <Checkbox disabled value={false} />;
-  }
+  // Simplified: removed complex root folder conflict logic
 
   const state = isSelected(item);
 

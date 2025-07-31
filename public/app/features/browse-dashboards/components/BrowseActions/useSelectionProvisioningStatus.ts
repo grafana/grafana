@@ -12,19 +12,19 @@ import { useSelector } from 'app/types/store';
 import { findItem } from '../../state/utils';
 import { DashboardTreeSelection } from '../../types';
 
+// This hook can be remove once searching endpoint returns provisioning status
+// It is used to determine if the selected items are provisioned or not, which is currently missing from the search API
 export function useSelectionProvisioningStatus(
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
   isParentProvisioned: boolean
 ) {
   const browseState = useSelector((state) => state.browseDashboards);
-
   const isProvisionedInstance = useIsProvisionedInstance();
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
   const provisioningEnabled = config.featureToggles.provisioning;
 
   const [status, setStatus] = useState({ hasProvisioned: false, hasNonProvisioned: false });
-
   const [folderCache, setFolderCache] = useState<Record<string, boolean>>({});
   const [dashboardCache, setDashboardCache] = useState<Record<string, boolean>>({});
 
@@ -39,59 +39,7 @@ export function useSelectionProvisioningStatus(
     []
   );
 
-  // Simplified: Get root folder for any item using existing browse state
-  const getItemRootFolder = useCallback(
-    (item: { uid: string; parentUID?: string; kind?: string }): string | undefined => {
-      const rootItems = browseState.rootItems?.items || [];
-      // If it's already a root-level item, return its UID (only for folders)
-      if (!item.parentUID) {
-        return item.kind === 'folder' ? item.uid : undefined;
-      }
-
-      // For nested items, find the top-level parent using existing findItem
-      let currentUID = item.parentUID;
-      while (currentUID) {
-        const parent = findItem(rootItems, browseState.childrenByParentUID, currentUID);
-        if (!parent?.parentUID) {
-          // Found the root folder
-          return parent?.uid;
-        }
-        currentUID = parent.parentUID;
-      }
-
-      return undefined;
-    },
-    [browseState]
-  );
-
-  // Simplified: Get first selected root folder from current selection
-  const firstSelectedRootFolder = useMemo(() => {
-    const folders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-    const dashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-
-    const allItems = [
-      ...folders.map((uid) => ({ uid, kind: 'folder' as const })),
-      ...dashboards.map((uid) => ({ uid, kind: 'dashboard' as const })),
-    ];
-
-    const rootItems = browseState.rootItems?.items || [];
-
-    for (const item of allItems) {
-      const itemFromState = findItem(rootItems, browseState.childrenByParentUID, item.uid);
-      if (itemFromState) {
-        const rootFolder = getItemRootFolder({
-          uid: item.uid,
-          parentUID: itemFromState.parentUID,
-          kind: item.kind,
-        });
-        if (rootFolder) {
-          return rootFolder;
-        }
-      }
-    }
-
-    return null;
-  }, [selectedItems, browseState, getItemRootFolder]);
+  // Simplified: removed complex root folder tracking logic
 
   const findItemInState = useCallback(
     (uid: string) => {
@@ -139,7 +87,6 @@ export function useSelectionProvisioningStatus(
   const checkItemProvisioning = useCallback(
     async (uid: string, isFolder: boolean): Promise<boolean> => {
       if (isSearching) {
-        // If searching, we need provisioning status with fetching metadata
         return isFolder ? await getFolderMeta(uid) : await getDashboardMeta(uid);
       }
 
@@ -213,7 +160,5 @@ export function useSelectionProvisioningStatus(
   return {
     hasProvisioned: status.hasProvisioned,
     hasNonProvisioned: status.hasNonProvisioned,
-    firstSelectedRootFolder,
-    getItemRootFolder,
   };
 }

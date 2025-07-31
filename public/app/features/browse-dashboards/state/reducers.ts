@@ -96,7 +96,7 @@ export function setItemSelectionState(
     return;
   }
 
-  // Prevent selection of root provisioned folders (but allow subitems)
+  // Prevent selection of root provisioned folders
   if (item.managedBy === ManagerKind.Repo && !item.parentUID) {
     return;
   }
