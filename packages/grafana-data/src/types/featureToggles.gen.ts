@@ -282,10 +282,6 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Routes library panel connections requests from /api to using search
-  */
-  kubernetesLibraryPanelConnections?: boolean;
-  /**
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
@@ -301,6 +297,10 @@ export interface FeatureToggles {
   * Log schema validation errors so they can be analyzed later
   */
   dashboardSchemaValidationLogging?: boolean;
+  /**
+  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
+  */
+  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
@@ -959,6 +959,10 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  postgresDSUsePGX?: boolean;
   /**
   * Enables creating alerts from Tempo data source
   */

@@ -3738,6 +3738,7 @@
     "category-selected-connection": "Selected connection",
     "category-selected-element": "Selected element ({{element}})",
     "category-size": "Size",
+    "category-tooltip": "Tooltip",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3980,6 +3981,13 @@
       "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "Tooltip mode",
+      "tooltip-mode-options": {
+        "label-disabled": "Disabled",
+        "label-enabled": "Enabled"
       }
     },
     "tree-navigation-editor": {
