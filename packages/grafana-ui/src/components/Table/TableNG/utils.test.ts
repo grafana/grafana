@@ -5,6 +5,7 @@ import {
   createTheme,
   DataFrame,
   DataFrameWithValue,
+  DataLink,
   DisplayValue,
   Field,
   FieldType,
@@ -873,13 +874,11 @@ describe('TableNG utils', () => {
         type: FieldType.string,
         config: {
           links: [
-            { title: 'Link 1', url: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
-            { title: 'Invalid Link', target: '_blank', origin: { datasourceUid: 'test' } } as LinkModel, // No href or onClick
+            { title: 'Link 1', url: 'http://example.com/1' },
+            { title: 'Invalid Link' } as DataLink, // No href or onClick
             {
               title: 'Link w',
               url: 'asdf',
-              target: '_blank',
-              origin: { datasourceUid: 'test' },
               onClick: jest.fn(() => {}),
             },
           ],
