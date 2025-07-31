@@ -13,6 +13,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export GOARCH=arm64
 fi
 
+# It's not used by default now that we have CGO-less builds, but keeping this here for a
+# little bit in case it causes issues for anyone.
 if [[ -n "$USE_ZIG" ]]; then
   echo "Using Zig for cross-compilation"
   export CGO_ENABLED=1
