@@ -470,13 +470,6 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
-			Name:            "kubernetesLibraryPanelConnections",
-			Description:     "Routes library panel connections requests from /api to using search",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-		},
-		{
 			Name:         "kubernetesDashboards",
 			Description:  "Use the kubernetes API in the frontend for dashboards",
 			Stage:        FeatureStageExperimental,
@@ -500,6 +493,12 @@ var (
 			Description: "Log schema validation errors so they can be analyzed later",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "scanRowInvalidDashboardParseFallbackEnabled",
+			Description: "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:            "datasourceQueryTypes",
@@ -769,6 +768,16 @@ var (
 			Owner:             grafanaAppPlatformSquad,
 			HideFromAdminPage: true,
 			Expression:        "false",
+		},
+		{
+			Name:              "useScopeSingleNodeEndpoint",
+			Description:       "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaOperatorExperienceSquad,
+			Expression:        "false",
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "promQLScope",
@@ -1856,6 +1865,13 @@ var (
 			Description:  "Enables adhoc filtering support for the dashboard datasource",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "dashboardLevelTimeMacros",
+			Description:  "Supports __from and __to macros that always use the dashboard level time range",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
 			FrontendOnly: true,
 		},
 		{

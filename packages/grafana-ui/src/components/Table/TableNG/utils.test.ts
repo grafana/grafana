@@ -5,6 +5,7 @@ import {
   createTheme,
   DataFrame,
   DataFrameWithValue,
+  DataLink,
   DisplayValue,
   Field,
   FieldType,
@@ -41,6 +42,8 @@ import {
   applySort,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
   wrapUwrapCount,
+  getDataLinksCounter,
+  getPillLineCounter,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -864,6 +867,58 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('getDataLinksCounter', () => {
+    it('counts number of valid links using getCellLinks', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {
+          links: [
+            { title: 'Link 1', url: 'http://example.com/1' },
+            { title: 'Invalid Link' } as DataLink, // No href or onClick
+            {
+              title: 'Link w',
+              url: 'asdf',
+              onClick: jest.fn(() => {}),
+            },
+          ],
+        },
+        values: ['value1'],
+      };
+
+      const counter = getDataLinksCounter();
+      expect(counter('my value', 100, field, 0)).toBe(2);
+    });
+  });
+
+  describe('getPillLineCounter', () => {
+    it('counts up the number of lines using the pill measuring method', () => {
+      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
+      expect(counter('tag1,tag2', 100, {} as Field, 0)).toBe(1);
+      expect(counter('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0)).toBe(3);
+    });
+
+    it('returns 0 if value is null', () => {
+      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
+      expect(counter(null, 100, {} as Field, 0)).toBe(0);
+    });
+
+    it('returns 0 if no pills are inferred', () => {
+      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
+      expect(counter('', 100, {} as Field, 0)).toBe(0);
+    });
+
+    it('caches the width measurement for the same value', () => {
+      const widthMeasurement = jest.fn((str) => str.length * 5);
+      const counter = getPillLineCounter(widthMeasurement);
+      counter('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0);
+      counter('tag1,tag2', 100, {} as Field, 0);
+      counter('tag2', 200, {} as Field, 0);
+      counter('tag2,tag3,tag2,tag4,tag4,tag2,tag5', 300, {} as Field, 0);
+      expect(widthMeasurement).toHaveBeenCalledTimes(6); // Should only call for unique values
+    });
+  });
+
   describe('buildHeaderLineCounters', () => {
     const ctx = {
       fontFamily: 'sans-serif',
@@ -916,7 +971,7 @@ describe('TableNG utils', () => {
       avgCharWidth: 7,
     };
 
-    it('returns an array of line counters for each column', () => {
+    it('sets up text line counters for each text column if wrapping is on', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
         {
@@ -946,6 +1001,42 @@ describe('TableNG utils', () => {
       expect(counters![0].fieldIdxs).toEqual([1]);
     });
 
+    it('sets up line counting for pills if present and wrapping is on', () => {
+      const fields: Field[] = [
+        {
+          name: 'Tags',
+          type: FieldType.string,
+          values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill, wrapText: true } } },
+        },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters![0].estimate).toEqual(expect.any(Function));
+      expect(counters![0].estimate!('tag1,tag2', 100, fields[0], 0)).toEqual(expect.any(Number));
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].counter('tag1,tag2', 100, fields[0], 0)).toEqual(expect.any(Number));
+      expect(counters![0].fieldIdxs).toEqual([0]);
+    });
+
+    it('sets up line counting for datalinks if present and wrapping is on', () => {
+      const fields: Field[] = [
+        {
+          name: 'Links',
+          type: FieldType.string,
+          values: ['http://example.com/1', 'http://example.com/2'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.DataLinks, wrapText: true } } },
+          getLinks: jest.fn((): LinkModel[] => [
+            { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
+            { title: 'Link 2', href: 'http://example.com/2', target: '_self', origin: { datasourceUid: 'test' } },
+          ]),
+        },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].counter('http://example.com/1', 100, fields[0], 0)).toEqual(expect.any(Number));
+      expect(counters![0].fieldIdxs).toEqual([0]);
+    });
+
     it('does not enable text counting for non-string fields', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
@@ -966,12 +1057,6 @@ describe('TableNG utils', () => {
       const counters = buildRowLineCounters(fields, ctx);
       expect(counters).toBeUndefined();
     });
-
-    it.todo('sets up line counting for pills if present and wrapping is on');
-
-    it.todo('sets up line counting for datalinks if present and wrapping is on');
-
-    it.todo('clamps the line count to the max wrapped lines for a field if set');
   });
 
   describe('getRowHeight', () => {

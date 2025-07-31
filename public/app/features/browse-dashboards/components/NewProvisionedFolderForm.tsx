@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -13,6 +12,10 @@ import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
 import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
+import {
+  useProvisionedRequestHandler,
+  ProvisionedOperationInfo,
+} from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
@@ -44,58 +47,60 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow, ref, title] = watch(['workflow', 'ref', 'title']);
+  const [workflow, title] = watch(['workflow', 'title']);
 
-  // TODO: replace with useProvisionedRequestHandler hook
-  useEffect(() => {
-    const appEvents = getAppEvents();
-    if (request.isSuccess && repository) {
-      onDismiss?.();
-
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [
-          t(
-            'browse-dashboards.new-provisioned-folder-form.alert-folder-created-successfully',
-            'Folder created successfully'
-          ),
-        ],
+  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
+    const prUrl = urls?.newPullRequestURL;
+    if (prUrl) {
+      const url = buildResourceBranchRedirectUrl({
+        paramName: 'new_pull_request_url',
+        paramValue: prUrl,
+        repoType: info.repoType,
       });
+      navigate(url);
+    }
+  };
 
-      const prUrl = request.data?.urls?.newPullRequestURL;
-      if (workflow === 'branch' && prUrl) {
-        const url = buildResourceBranchRedirectUrl({
-          paramName: 'new_pull_request_url',
-          paramValue: prUrl,
-          repoType: request.data?.repository?.type,
-        });
-        navigate(url);
-        return;
-      }
+  const onWriteSuccess = (resource: Resource<FolderDTO>) => {
+    // Navigation for new folders (resource-specific concern)
+    if (resource?.metadata?.name) {
+      navigate(`/dashboards/f/${resource.metadata.name}/`);
+      return;
+    }
 
-      // TODO: Update when the upsert type is fixed
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const folder = request.data.resource?.upsert as Resource;
-      if (folder?.metadata?.name) {
-        navigate(`/dashboards/f/${folder?.metadata?.name}/`);
-        return;
-      }
-
+    // Fallback to provisioning URL
+    if (repository?.name && request.data?.path) {
       let url = `${PROVISIONING_URL}/${repository.name}/file/${request.data.path}`;
       if (request.data.ref?.length) {
         url += '?ref=' + request.data.ref;
       }
       navigate(url);
-    } else if (request.isError) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder', 'Error creating folder'),
-          request.error,
-        ],
-      });
     }
-  }, [request.isSuccess, request.isError, request.error, ref, request.data, workflow, navigate, repository, onDismiss]);
+  };
+
+  const onError = (error: unknown) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [
+        t('browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder', 'Error creating folder'),
+        error,
+      ],
+    });
+  };
+
+  // Use the repository-type and resource-type aware provisioned request handler
+  useProvisionedRequestHandler<FolderDTO>({
+    request,
+    workflow,
+    repository,
+    resourceType: 'folder',
+    handlers: {
+      onDismiss,
+      onBranchSuccess,
+      onWriteSuccess: (_, resource) => onWriteSuccess(resource),
+      onError,
+    },
+  });
 
   const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
     const repoName = repository?.name;

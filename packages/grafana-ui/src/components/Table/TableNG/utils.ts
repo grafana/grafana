@@ -93,8 +93,11 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
 
   ctx.letterSpacing = `${letterSpacing}px`;
   ctx.font = font;
+  // 1/6 of the characters in this string are capitalized. Since the avgCharWidth is used for estimation, it's
+  // better that the estimation over-estimates the width than if it underestimates it, so we're a little on the
+  // aggressive side here and could even go more aggressive if we get complaints in the future.
   const txt =
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.";
+    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. 1234567890 ALL CAPS TO HELP WITH MEASUREMENT.";
   const txtWidth = ctx.measureText(txt).width;
   const avgCharWidth = txtWidth / txt.length + letterSpacing;
   const { count } = varPreLine(ctx);
@@ -152,10 +155,16 @@ export function getDataLinksCounter(): LineCounter {
   // when we render links, we need to filter out the invalid links. since the call to `getLinks` is expensive,
   // we'll cache the result and reuse it for every row in the table. this cache is cleared when line counts are
   // rebuilt anytime from the `useRowHeight` hook, and that includes adding and removing data links.
-  return (_value, _width, field, rowIdx) => {
+  return (_value, _width, field) => {
     const cacheKey = getDisplayName(field);
     if (linksCountCache[cacheKey] === undefined) {
-      linksCountCache[cacheKey] = getCellLinks(field, rowIdx)?.length ?? 0;
+      let count = 0;
+      for (const l of field.config?.links ?? []) {
+        if (l.onClick || l.url) {
+          count += 1;
+        }
+      }
+      linksCountCache[cacheKey] = count;
     }
 
     return linksCountCache[cacheKey];
@@ -167,6 +176,8 @@ const PILLS_SPACING = 12; // 6px horizontal padding on each side
 const PILLS_GAP = 4; // gap between pills
 
 export function getPillLineCounter(measureWidth: (value: string) => number): LineCounter {
+  const widthCache: Record<string, number> = {};
+
   return (value, width) => {
     if (value == null) {
       return 0;
@@ -181,7 +192,11 @@ export function getPillLineCounter(measureWidth: (value: string) => number): Lin
     let currentLineUse = width;
 
     for (const pillValue of pillValues) {
-      const rawWidth = measureWidth(pillValue);
+      let rawWidth = widthCache[pillValue];
+      if (rawWidth === undefined) {
+        rawWidth = measureWidth(pillValue);
+        widthCache[pillValue] = rawWidth;
+      }
       const pillWidth = rawWidth + PILLS_SPACING;
 
       if (currentLineUse + pillWidth + PILLS_GAP > width) {
@@ -246,19 +261,9 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
             typographyCtx.letterSpacing
           );
 
-          // when using pills, there's a common-sense assumption that values will be repeated.
-          // cache the results of width calculations to try to limit some of the measureText cost.
-          const preciseWidthCache: Record<string, number> = {};
-
           result.pillCounter = {
             estimate: getPillLineCounter((value) => value.length * pillTypographyCtx.avgCharWidth),
-            counter: getPillLineCounter((value) => {
-              if (preciseWidthCache[value] === undefined) {
-                const width = pillTypographyCtx.ctx.measureText(value).width;
-                preciseWidthCache[value] = width;
-              }
-              return preciseWidthCache[value];
-            }),
+            counter: getPillLineCounter((value) => pillTypographyCtx.ctx.measureText(value).width),
             fieldIdxs: [],
           };
         }

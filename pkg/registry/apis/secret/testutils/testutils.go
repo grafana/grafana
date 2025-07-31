@@ -87,6 +87,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
+	globalDataKeyStore, err := encryptionstorage.ProvideGlobalDataKeyStorage(database, tracer, nil)
+	require.NoError(t, err)
+
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
 	enc, err := cipher.ProvideAESGCMCipherService(tracer, usageStats)
@@ -120,7 +123,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		keeperService = setupCfg.KeeperService
 	}
 
-	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
+	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService, nil)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
@@ -135,6 +138,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
 	require.NoError(t, err)
 
+	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
+
 	return Sut{
 		SecureValueService:          secureValueService,
 		SecureValueMetadataStorage:  secureValueMetadataStorage,
@@ -145,6 +150,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		SQLKeeper:                   sqlKeeper,
 		Database:                    database,
 		AccessClient:                accessClient,
+		ConsolidationService:        consolidationService,
+		EncryptionManager:           encryptionManager,
+		GlobalDataKeyStore:          globalDataKeyStore,
 	}
 }
 
@@ -158,6 +166,9 @@ type Sut struct {
 	SQLKeeper                   *sqlkeeper.SQLKeeper
 	Database                    *database.Database
 	AccessClient                types.AccessClient
+	ConsolidationService        contracts.ConsolidationService
+	EncryptionManager           contracts.EncryptionManager
+	GlobalDataKeyStore          contracts.GlobalDataKeyStorage
 }
 
 type CreateSvConfig struct {
