@@ -677,7 +677,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		}()
 
 		// Process rules and implement per-group pagination
-		groupsFetched := 0
+		var groupsFetched int64
 		for rows.Next() {
 			rule := new(alertRule)
 			err = rows.Scan(rule)
@@ -699,7 +699,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			}
 			if key != cursor {
 				// Check if we've reached the group limit
-				if query.GroupLimit > 0 && groupsFetched == int(query.GroupLimit) {
+				if query.GroupLimit > 0 && groupsFetched == query.GroupLimit {
 					// Generate next token for the next group
 					nextToken = ngmodels.EncodeGroupCursor(cursor)
 					break
