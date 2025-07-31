@@ -290,15 +290,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.tempoVersion = response.data.version;
   };
 
-  async getNativeHistograms(timeRange?: TimeRange, metricName?: string): Promise<boolean> {
+  async getNativeHistograms(timeRange?: TimeRange): Promise<boolean> {
     if (!this.serviceMap?.datasourceUid) {
       return false;
     }
 
-    if (!metricName) {
-      // remove _bucket from the metric name to get the native histogram metric name
-      metricName = histogramMetric.replace('_bucket', '');
-    }
+    // remove _bucket from the metric name to get the native histogram metric name
+    const metricName = histogramMetric.replace('_bucket', '');
 
     try {
       // Get the Prometheus datasource instance
