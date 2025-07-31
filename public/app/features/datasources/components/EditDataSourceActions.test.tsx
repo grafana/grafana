@@ -71,14 +71,7 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      // Should render the Actions dropdown button
-      const actionsButton = screen.getByText('Actions');
-      expect(actionsButton).toBeInTheDocument();
-
-      // Click the dropdown to open the menu
-      fireEvent.click(actionsButton);
-
-      // Now the menu items should be visible
+      // Core actions should be rendered as separate buttons
       expect(screen.getByText('Explore data')).toBeInTheDocument();
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
     });
@@ -88,20 +81,14 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      // Should render just the "Build a dashboard" button directly (not in dropdown)
+      // Should render just the "Build a dashboard" button
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
-      // Should not render the Actions dropdown
-      expect(screen.queryByText('Actions')).not.toBeInTheDocument();
-      // Should not render explore action anywhere
+      // Should not render explore action
       expect(screen.queryByText('Explore data')).not.toBeInTheDocument();
     });
 
     it('should have correct href for explore action', () => {
       render(<EditDataSourceActions uid="test-uid" />);
-
-      // Click the dropdown to open the menu
-      const actionsButton = screen.getByText('Actions');
-      fireEvent.click(actionsButton);
 
       const exploreLink = screen.getByText('Explore data').closest('a');
       // The explore URL uses the datasource name, not uid, and includes context
@@ -113,10 +100,6 @@ describe('EditDataSourceActions', () => {
 
     it('should have correct href for build dashboard action', () => {
       render(<EditDataSourceActions uid="test-uid" />);
-
-      // Click the dropdown to open the menu
-      const actionsButton = screen.getByText('Actions');
-      fireEvent.click(actionsButton);
 
       const dashboardLink = screen.getByText('Build a dashboard').closest('a');
       expect(dashboardLink).toHaveAttribute('href', 'dashboard/new-with-ds/test-uid');
@@ -144,9 +127,9 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      // Click the dropdown to open the menu
-      const actionsButton = screen.getByText('Actions');
-      fireEvent.click(actionsButton);
+      // Click the Extensions dropdown to open the menu
+      const extensionsButton = screen.getByText('Extensions');
+      fireEvent.click(extensionsButton);
 
       expect(screen.getByText('Explore Logs')).toBeInTheDocument();
       expect(screen.getByText('Explore Traces')).toBeInTheDocument();
@@ -170,9 +153,9 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      // Click the dropdown to open the menu
-      const actionsButton = screen.getByText('Actions');
-      fireEvent.click(actionsButton);
+      // Click the Extensions dropdown to open the menu
+      const extensionsButton = screen.getByText('Extensions');
+      fireEvent.click(extensionsButton);
 
       expect(screen.getByText('Allowed Action')).toBeInTheDocument();
       expect(screen.queryByText('Disallowed Action')).not.toBeInTheDocument();
@@ -204,9 +187,9 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      // Click the dropdown to open the menu
-      const actionsButton = screen.getByText('Actions');
-      fireEvent.click(actionsButton);
+      // Click the Extensions dropdown to open the menu
+      const extensionsButton = screen.getByText('Extensions');
+      fireEvent.click(extensionsButton);
 
       const actionButton = screen.getByText('Clickable Action');
       fireEvent.click(actionButton);
@@ -230,9 +213,9 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      // Click the dropdown to open the menu
-      const actionsButton = screen.getByText('Actions');
-      fireEvent.click(actionsButton);
+      // Click the Extensions dropdown to open the menu
+      const extensionsButton = screen.getByText('Extensions');
+      fireEvent.click(extensionsButton);
 
       const actionButton = screen.getByText('Test Action');
       const linkElement = actionButton.closest('a');
@@ -254,10 +237,8 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      // Should render the Actions dropdown since user has explore rights
-      const actionsButton = screen.getByText('Actions');
-      fireEvent.click(actionsButton);
-
+      // Should not render the Extensions dropdown when isLoading is true
+      expect(screen.queryByText('Extensions')).not.toBeInTheDocument();
       expect(screen.queryByText('Should Not Appear')).not.toBeInTheDocument();
       // Core actions should still be there
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
@@ -269,11 +250,29 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      // Should render the Actions dropdown since user has explore rights
-      const actionsButton = screen.getByText('Actions');
-      fireEvent.click(actionsButton);
-
+      // Should not render the Extensions dropdown when there are no links
+      expect(screen.queryByText('Extensions')).not.toBeInTheDocument();
       // Should render core actions without errors
+      expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Explore data')).toBeInTheDocument();
+    });
+
+    it('should render Extensions dropdown only when there are plugin links', () => {
+      const mockLinks = [
+        createMockPluginLink({
+          id: 'test-extension',
+          title: 'Test Extension',
+          pluginId: 'grafana-lokiexplore-app',
+        }),
+      ];
+
+      setPluginLinksHook(() => ({ links: mockLinks, isLoading: false }));
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      // Should render the Extensions dropdown when there are plugin links
+      expect(screen.getByText('Extensions')).toBeInTheDocument();
+      // Core actions should still be there
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
       expect(screen.getByText('Explore data')).toBeInTheDocument();
     });
