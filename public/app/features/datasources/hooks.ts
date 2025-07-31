@@ -28,7 +28,12 @@ export function useRecentlyUsedDataSources(): [string[], (ds: DataSourceInstance
         );
         setStorage([...value, ds.uid]);
       } else {
-        setStorage([...value, ds.uid].slice(1, 6));
+        const newArray = [...value, ds.uid];
+        if (newArray.length > 6) {
+          setStorage(newArray.slice(1, 6));
+        } else {
+          setStorage(newArray);
+        }
       }
     },
     [value, setStorage]
