@@ -93,14 +93,12 @@ The following components will help you build a T-SQL query:
 - **Table** - Select a table from the drop-down. After selecting a database, the next drop-down displays all available tables in that database.
 
 - **Data operations** - _Optional_. Select an aggregation or a macro from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **garbage can icon** to remove data operations.
-
   - **Column** - Select a column on which to run the aggregation.
   - **Interval** - Select an interval from the drop-down. You'll see this option when you choose a `time group` macro from the drop-down.
   - **Fill** - _Optional_. Add a `FILL` method to populate missing time intervals with default values (such as NULL, 0, or a specified value) when no data exists for those intervals. This ensures continuity in the time series, avoiding gaps in visualizations.
   - **Alias** - _Optional_. Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
 
 - **Filter** - Toggle to add filters.
-
   - **Filter by column value** - _Optional_. If you toggle **Filter** you can add a column to filter by from the drop-down. To filter by additional columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added, use the `AND` or `OR` operators to define how conditions are evaluated. `AND` requires all conditions to be true, while `OR` requires any condition to be true. Use the second drop-down to select the filter value. To remove a filter, click the **X icon** next to it. If you select a `date-type` column, you can use macros from the operator list and choose `timeFilter` to insert the `$\_\_timeFilter` macro into your query with the selected date column.
 
     After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the `$\_\_timeFilter` macro to the query with the selected date column. Refer to [Macros](#macros) for more information.
