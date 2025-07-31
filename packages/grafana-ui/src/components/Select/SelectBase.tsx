@@ -294,7 +294,10 @@ export function SelectBase<T, Rest = {}>({
   if (hasNoValue && options.length > 0) {
     const allOption = options.find(
       (option) =>
-        option.value === 'all' || option.value === '*' || (option.label && option.label.toLowerCase() === 'all')
+        option.value === 'all' ||
+        option.value === '*' ||
+        option.value === '.*' ||
+        (option.label && option.label.toLowerCase() === 'all')
     );
 
     if (allOption) {
