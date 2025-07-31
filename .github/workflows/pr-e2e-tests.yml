@@ -55,7 +55,7 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', Dockerfile) }}"
+          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
           path: |
             build-dir
 
@@ -91,7 +91,6 @@ jobs:
 
       - name: Upload grafana.tar.gz
         uses: actions/upload-artifact@v4
-        id: upload
         with:
           retention-days: 1
           name: grafana-tar-gz
@@ -99,7 +98,6 @@ jobs:
 
       - name: Upload grafana docker tarball
         uses: actions/upload-artifact@v4
-        id: upload
         with:
           retention-days: 1
           name: grafana-docker-tar-gz
@@ -143,7 +141,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-latest
     needs:
       - build-grafana
     steps:
