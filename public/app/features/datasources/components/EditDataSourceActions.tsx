@@ -1,7 +1,7 @@
 import { PluginExtensionPoints } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { config, usePluginLinks } from '@grafana/runtime';
-import { Button, Dropdown, LinkButton, Menu } from '@grafana/ui';
+import { Button, Dropdown, LinkButton, Menu, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
@@ -34,11 +34,37 @@ export function EditDataSourceActions({ uid }: Props) {
   const links = allLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
 
   // Only render dropdown if there are multiple actions to show
-  const hasActions = hasExploreRights || (!isLoading && links.length > 0);
+  const hasActions = (!isLoading && links.length > 0);
 
-  if (!hasActions) {
-    // Always show at least the "Build a dashboard" action
-    return (
+  const actionsMenu = (
+    <Menu>
+      {hasActions &&
+        links.map((link) => (
+          <Menu.Item key={link.id} label={link.title} url={link.path} onClick={link.onClick} icon={link.icon} />
+        ))}
+    </Menu>
+  );
+
+  return (
+    <>
+      {hasExploreRights && (
+        <LinkButton
+          variant="secondary"
+          size="sm"
+          href={constructDataSourceExploreUrl(dataSource)}
+          onClick={() => {
+            trackDsConfigClicked('explore');
+            trackExploreClicked({
+              grafana_version: config.buildInfo.version,
+              datasource_uid: dataSource.uid,
+              plugin_name: dataSource.typeName,
+              path: window.location.pathname,
+            });
+          }}
+        >
+          <Trans i18nKey="datasources.edit-data-source-actions.explore-data">Explore data</Trans>
+        </LinkButton>
+      )}
       <LinkButton
         size="sm"
         variant="secondary"
@@ -55,51 +81,16 @@ export function EditDataSourceActions({ uid }: Props) {
       >
         <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
       </LinkButton>
-    );
-  }
-
-  const actionsMenu = (
-    <Menu>
-      {hasExploreRights && (
-        <Menu.Item
-          label={t('datasources.edit-data-source-actions.explore-data', 'Explore data')}
-          url={constructDataSourceExploreUrl(dataSource)}
-          onClick={() => {
-            trackDsConfigClicked('explore');
-            trackExploreClicked({
-              grafana_version: config.buildInfo.version,
-              datasource_uid: dataSource.uid,
-              plugin_name: dataSource.typeName,
-              path: window.location.pathname,
-            });
-          }}
-        />
-      )}
-      <Menu.Item
-        label={t('datasources.edit-data-source-actions.build-a-dashboard', 'Build a dashboard')}
-        url={`dashboard/new-with-ds/${dataSource.uid}`}
-        onClick={() => {
-          trackDsConfigClicked('build_a_dashboard');
-          trackCreateDashboardClicked({
-            grafana_version: config.buildInfo.version,
-            datasource_uid: dataSource.uid,
-            plugin_name: dataSource.typeName,
-            path: window.location.pathname,
-          });
-        }}
-      />
-      {!isLoading &&
-        links.map((link) => (
-          <Menu.Item key={link.id} label={link.title} url={link.path} onClick={link.onClick} icon={link.icon} />
-        ))}
-    </Menu>
-  );
-
-  return (
-    <Dropdown overlay={actionsMenu}>
-      <Button variant="secondary" size="sm" icon="angle-down">
-        <Trans i18nKey="datasources.edit-data-source-actions.actions">Actions</Trans>
-      </Button>
-    </Dropdown>
+      {
+        hasActions && (
+          <Dropdown overlay={actionsMenu}>
+            <Button variant="secondary" size="sm" icon="plug">
+              <Trans i18nKey="datasources.edit-data-source-actions.extensions">Extensions</Trans>
+              <Icon name="angle-down" />
+            </Button>
+          </Dropdown>
+        )
+      }
+    </>
   );
 }

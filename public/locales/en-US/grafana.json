@@ -6468,9 +6468,9 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
-      "actions": "Actions",
       "build-a-dashboard": "Build a dashboard",
-      "explore-data": "Explore data"
+      "explore-data": "Explore data",
+      "extensions": "Extensions"
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
