@@ -2771,6 +2771,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     "@types/uuid": "npm:10.0.0"
     d3-random: "npm:^3.0.1"
+    jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.3.1"

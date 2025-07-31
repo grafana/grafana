@@ -83,6 +83,7 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/grafana-pyroscope-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/jaeger',
+    '<rootDir>/public/app/plugins/datasource/loki',
     '<rootDir>/public/app/plugins/datasource/mysql',
     '<rootDir>/public/app/plugins/datasource/parca',
     '<rootDir>/public/app/plugins/datasource/tempo',
