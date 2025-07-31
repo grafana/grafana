@@ -84,7 +84,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
       return node;
     } catch (error) {
-      throw new Error(`Failed to load node ${scopeNodeId}` + error);
+      console.error('Failed to load node', error);
+      return undefined;
     }
   };
 

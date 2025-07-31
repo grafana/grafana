@@ -70,7 +70,16 @@ export class ScopesService implements ScopesContextValue {
 
     // Init from the URL when we first load
     const queryParams = new URLSearchParams(locationService.getLocation().search);
-    this.changeScopes(queryParams.getAll('scopes'), queryParams.get('scope_parent') ?? undefined);
+    const parentNodeId = queryParams.get('scope_parent');
+
+    this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined);
+
+    // Pre-load parent node, to prevent UI flickering
+    if (parentNodeId) {
+      this.selectorService.getScopeNode(parentNodeId).catch((error) => {
+        console.error('Failed to pre-load parent node', error);
+      });
+    }
 
     // Update scopes state based on URL.
     this.subscriptions.push(
