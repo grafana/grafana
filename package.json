@@ -104,7 +104,7 @@
     "@rsdoctor/webpack-plugin": "^0.4.6",
     "@rtk-query/codegen-openapi": "^2.0.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
-    "@stylistic/eslint-plugin-ts": "^3.0.0",
+    "@stylistic/eslint-plugin-ts": "^4.0.0",
     "@swc/core": "1.13.3",
     "@swc/helpers": "0.5.17",
     "@testing-library/dom": "10.4.0",
