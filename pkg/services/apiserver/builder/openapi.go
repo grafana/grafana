@@ -13,6 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -26,13 +27,14 @@ var (
 func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...openapi.GetOpenAPIDefinitions) openapi.GetOpenAPIDefinitions {
 	equalityInit.Do(func() {
 		// DataQuery has private variables, so it needs an explicit equality helper
-		apiequality.Semantic.AddFunc(
+		err := apiequality.Semantic.AddFunc(
 			func(a, b data.DataQuery) bool {
 				aa, _ := json.Marshal(a)
 				bb, _ := json.Marshal(b)
 				return bytes.Equal(aa, bb)
 			},
 		)
+		logging.DefaultLogger.Error("error initializing DataQuery apiequality", "err", err)
 	})
 
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
