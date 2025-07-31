@@ -163,6 +163,50 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 	}
 }
 
+// AwaitJobsWithStates waits for all jobs for a repository to complete and accepts multiple valid end states
+func (h *provisioningTestHelper) AwaitJobsWithStates(t *testing.T, repoName string, acceptedStates []string) {
+	t.Helper()
+
+	// First, we wait for all jobs for the repository to disappear (i.e. complete/fail).
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+		if assert.NoError(collect, err, "failed to list active jobs") {
+			for _, elem := range list.Items {
+				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
+				require.NoError(t, err)
+				if repo == repoName {
+					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
+					return
+				}
+			}
+		}
+	}, time.Second*10, time.Millisecond*25, "job queue must be empty")
+
+	// Then, as all jobs are now historic jobs, we make sure they are in an accepted state.
+	result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
+	require.NoError(t, err, "failed to list historic jobs")
+
+	list, err := result.ToList()
+	require.NoError(t, err, "results should be a list")
+	require.NotEmpty(t, list.Items, "expect at least one job")
+
+	for _, elem := range list.Items {
+		require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
+
+		state := mustNestedString(elem.Object, "status", "state")
+		
+		// Check if state is in accepted states
+		found := false
+		for _, acceptedState := range acceptedStates {
+			if state == acceptedState {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "job %s completed with unexpected state %s (expected one of %v): %+v", elem.GetName(), state, acceptedStates, elem.Object)
+	}
+}
+
 // RenderObject reads the filePath and renders it as a template with the given values.
 // The template is expected to be a YAML or JSON file.
 //
