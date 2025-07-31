@@ -146,13 +146,13 @@ export interface Options {
    */
   showAdvancedTypes: boolean;
   /**
-   * Zoom to content
-   */
-  zoomToContent: boolean;
-  /**
    * Controls tooltip options
    */
   tooltip: CanvasTooltip;
+  /**
+   * Zoom to content
+   */
+  zoomToContent: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
