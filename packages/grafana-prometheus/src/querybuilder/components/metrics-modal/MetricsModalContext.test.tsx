@@ -76,7 +76,7 @@ describe('MetricsModalContext', () => {
 
       expect(result.current).toBeDefined();
       expect(result.current.isLoading).toBe(true); // Initially loading
-      expect(result.current.metricsData).toEqual([]);
+      expect(result.current.filteredMetricsData).toEqual([]);
       expect(result.current.pagination).toEqual({
         pageNum: 1,
         resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
@@ -161,7 +161,7 @@ describe('MetricsModalContext', () => {
       expect(mockLanguageProvider.queryMetricsMetadata).toHaveBeenCalledWith(1000);
       expect(mockGenerateMetricData).toHaveBeenCalledWith('cpu_usage', mockLanguageProvider);
       expect(mockGenerateMetricData).toHaveBeenCalledWith('memory_usage', mockLanguageProvider);
-      expect(result.current.metricsData).toHaveLength(2);
+      expect(result.current.filteredMetricsData).toHaveLength(2);
     });
 
     it('should handle empty metadata response', async () => {
@@ -175,7 +175,7 @@ describe('MetricsModalContext', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.metricsData).toEqual([]);
+      expect(result.current.filteredMetricsData).toEqual([]);
     });
 
     it('should handle metadata fetch error', async () => {
@@ -189,7 +189,7 @@ describe('MetricsModalContext', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.metricsData).toEqual([]);
+      expect(result.current.filteredMetricsData).toEqual([]);
     });
   });
 
@@ -210,7 +210,7 @@ describe('MetricsModalContext', () => {
         '__name__',
         '{__name__=~"(?i).*test.*"}'
       );
-      expect(result.current.metricsData).toHaveLength(1);
+      expect(result.current.filteredMetricsData).toHaveLength(1);
     });
 
     it('should handle backend search error', async () => {
@@ -224,8 +224,89 @@ describe('MetricsModalContext', () => {
         await result.current.debouncedBackendSearch(defaultTimeRange, 'test');
       });
 
-      expect(result.current.metricsData).toEqual([]);
+      expect(result.current.filteredMetricsData).toEqual([]);
       expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('Filtering logic', () => {
+    it('should return all metrics when no types are selected', async () => {
+      mockGenerateMetricData.mockImplementation((metric) => ({
+        value: metric,
+        type: 'counter',
+        description: 'Test metric',
+      }));
+
+      (mockLanguageProvider.queryMetricsMetadata as jest.Mock).mockResolvedValue({
+        test_metric: { type: 'counter', help: 'Test metric' },
+      });
+
+      const { result } = renderHook(() => useMetricsModal(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.filteredMetricsData).toHaveLength(1);
+      expect(result.current.selectedTypes).toEqual([]);
+    });
+
+    it('should filter metrics by selected type', async () => {
+      mockGenerateMetricData.mockImplementation((metric) => ({
+        value: metric,
+        type: metric === 'counter_metric' ? 'counter' : 'gauge',
+        description: 'Test metric',
+      }));
+
+      (mockLanguageProvider.queryMetricsMetadata as jest.Mock).mockResolvedValue({
+        counter_metric: { type: 'counter', help: 'Counter metric' },
+        gauge_metric: { type: 'gauge', help: 'Gauge metric' },
+      });
+
+      const { result } = renderHook(() => useMetricsModal(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      act(() => {
+        result.current.setSelectedTypes([{ value: 'counter', label: 'Counter' }]);
+      });
+
+      expect(result.current.filteredMetricsData).toHaveLength(1);
+      expect(result.current.filteredMetricsData[0].value).toBe('counter_metric');
+    });
+
+    it('should handle metrics without type when "no type" is selected', async () => {
+      mockGenerateMetricData.mockImplementation((metric) => ({
+        value: metric,
+        type: metric === 'no_type_metric' ? undefined : 'counter',
+        description: 'Test metric',
+      }));
+
+      (mockLanguageProvider.queryMetricsMetadata as jest.Mock).mockResolvedValue({
+        counter_metric: { type: 'counter', help: 'Counter metric' },
+        no_type_metric: { help: 'Metric without type' },
+      });
+
+      const { result } = renderHook(() => useMetricsModal(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      act(() => {
+        result.current.setSelectedTypes([{ value: 'no type', label: 'No Type' }]);
+      });
+
+      expect(result.current.filteredMetricsData).toHaveLength(1);
+      expect(result.current.filteredMetricsData[0].value).toBe('no_type_metric');
     });
   });
 

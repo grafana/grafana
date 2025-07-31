@@ -3,7 +3,7 @@ import { ReactElement, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { t, Trans } from '@grafana/i18n';
-import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
@@ -22,44 +22,18 @@ export function ResultsTable(props: ResultsTableProps) {
   const { onChange, onClose, query } = props;
   const {
     isLoading,
-    metricsData,
+    filteredMetricsData,
     pagination: { pageNum, resultsPerPage },
     selectedTypes,
     searchedText,
   } = useMetricsModal();
 
-  const slicedMetrics = useMemo(() => {
-    let filteredMetrics = metricsData;
-    if (selectedTypes.length > 0) {
-      filteredMetrics = metricsData.filter((m: MetricData, idx) => {
-        // Matches type
-        const matchesSelectedType = selectedTypes.some((t) => {
-          if (m.type && t.value) {
-            return m.type.includes(t.value);
-          }
+  const slicedMetrics = useMemo(
+    () => filteredMetricsData.slice((pageNum - 1) * resultsPerPage, (pageNum - 1) * resultsPerPage + resultsPerPage),
+    [filteredMetricsData, pageNum, resultsPerPage]
+  );
 
-          if (!m.type && t.value === 'no type') {
-            return true;
-          }
-
-          return false;
-        });
-
-        // when a user filters for type, only return metrics with defined types
-        return matchesSelectedType;
-      });
-    }
-
-    const filteredAndPaginatedMetrics = filteredMetrics.slice(
-      (pageNum - 1) * resultsPerPage,
-      (pageNum - 1) * resultsPerPage + resultsPerPage
-    );
-
-    return filteredAndPaginatedMetrics;
-  }, [metricsData, pageNum, resultsPerPage, selectedTypes]);
-
-  const theme = useTheme2();
-  const styles = getResultsTableStyles(theme);
+  const styles = useStyles2(getResultsTableStyles);
 
   function selectMetric(metric: MetricData) {
     if (metric.value) {
@@ -75,7 +49,7 @@ export function ResultsTable(props: ResultsTableProps) {
         <td>
           <Highlighter
             textToHighlight={metric.description ?? ''}
-            searchWords={searchedText.split(' ')}
+            searchWords={[]}
             autoEscape
             highlightClassName={styles.matchHighLight}
           />

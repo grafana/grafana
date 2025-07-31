@@ -31,7 +31,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
 
   const {
     isLoading,
-    metricsData,
+    filteredMetricsData,
     debouncedBackendSearch,
     pagination,
     setPagination,
@@ -124,12 +124,12 @@ const MetricsModalContent = (props: MetricsModalProps) => {
         )}
       </div>
       <div className={styles.results}>
-        {metricsData && <ResultsTable onChange={onChange} onClose={onClose} query={query} />}
+        {filteredMetricsData && <ResultsTable onChange={onChange} onClose={onClose} query={query} />}
       </div>
       <div className={styles.resultsFooter}>
         <Pagination
           currentPage={pagination.pageNum ?? 1}
-          numberOfPages={calculatePageList(metricsData, pagination.resultsPerPage).length}
+          numberOfPages={calculatePageList(filteredMetricsData, pagination.resultsPerPage).length}
           onNavigate={(val: number) => setPagination({ ...pagination, pageNum: val ?? 1 })}
         />
       </div>

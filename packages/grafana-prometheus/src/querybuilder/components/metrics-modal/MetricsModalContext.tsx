@@ -33,7 +33,7 @@ type Pagination = {
 type MetricsModalContextValue = {
   isLoading: boolean;
   setIsLoading: (val: boolean) => void;
-  metricsData: MetricData[];
+  filteredMetricsData: MetricData[];
   debouncedBackendSearch: (
     timeRange: TimeRange,
     metricText: string,
@@ -65,6 +65,29 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
   });
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
   const [searchedText, setSearchedText] = useState('');
+
+  const filteredMetricsData = useMemo(() => {
+    if (selectedTypes.length === 0) {
+      return metricsData;
+    }
+
+    // Filter metrics based on selected types
+    return metricsData.filter((metric: MetricData) => {
+      return selectedTypes.some((selectedType) => {
+        // Handle metrics with defined types
+        if (metric.type && selectedType.value) {
+          return metric.type.includes(selectedType.value);
+        }
+
+        // Handle metrics without type when "no type" is selected
+        if (!metric.type && selectedType.value === 'no type') {
+          return true;
+        }
+
+        return false;
+      });
+    });
+  }, [metricsData, selectedTypes]);
 
   // Track the latest search ID to handle race conditions
   const latestSearchIdRef = useRef<number>(0);
@@ -140,7 +163,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
       value={{
         isLoading,
         setIsLoading,
-        metricsData,
+        filteredMetricsData,
         debouncedBackendSearch,
         pagination,
         setPagination,
