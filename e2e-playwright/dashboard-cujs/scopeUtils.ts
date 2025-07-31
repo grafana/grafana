@@ -21,7 +21,7 @@ export async function openScopesSelector(page: Page, testScopes: TestScope[]) {
           kind: 'ScopeNode',
           apiVersion: 'scope.grafana.app/v0alpha1',
           metadata: {
-            name: `sn-databases-l-${scope.name}`,
+            name: `${scope.name}`,
             namespace: 'default',
           },
           spec: {
@@ -31,7 +31,7 @@ export async function openScopesSelector(page: Page, testScopes: TestScope[]) {
             description: scope.title,
             disableMultiSelect: false,
             linkType: 'scope',
-            linkId: `scope-sn-databases-l-${scope.name}`,
+            linkId: `scope-${scope.name}`,
           },
         })),
       }),
@@ -44,9 +44,9 @@ export async function openScopesSelector(page: Page, testScopes: TestScope[]) {
   await responsePromise;
 }
 
-async function scopeSel(page: Page, selectedScope: TestScope): Promise<Response> {
+export async function scopeSelectRequest(page: Page, selectedScope: TestScope): Promise<Response> {
   await page.route(
-    `**/apis/scope.grafana.app/v0alpha1/namespaces/*/scopes/scope-sn-databases-l-${selectedScope.name}`,
+    `**/apis/scope.grafana.app/v0alpha1/namespaces/*/scopes/scope-${selectedScope.name}`,
     async (route) => {
       await route.fulfill({
         status: 200,
@@ -55,7 +55,7 @@ async function scopeSel(page: Page, selectedScope: TestScope): Promise<Response>
           kind: 'Scope',
           apiVersion: 'scope.grafana.app/v0alpha1',
           metadata: {
-            name: `scope-sn-databases-l-${selectedScope.name}`,
+            name: `scope-${selectedScope.name}`,
             namespace: 'default',
           },
           spec: {
@@ -68,23 +68,21 @@ async function scopeSel(page: Page, selectedScope: TestScope): Promise<Response>
     }
   );
 
-  return page.waitForResponse((response) =>
-    response.url().includes(`/scopes/scope-sn-databases-l-${selectedScope.name}`)
-  );
+  return page.waitForResponse((response) => response.url().includes(`/scopes/scope-${selectedScope.name}`));
 }
 
 export async function selectScope(page: Page, selectedScope: TestScope) {
   await page.waitForTimeout(500);
-  const responsePromise = scopeSel(page, selectedScope);
+  const responsePromise = scopeSelectRequest(page, selectedScope);
 
-  await page.getByTestId(`scopes-tree-sn-databases-l-${selectedScope.name}-checkbox`).click({ force: true });
+  await page.getByTestId(`scopes-tree-${selectedScope.name}-checkbox`).click({ force: true });
   await responsePromise;
 }
 
 export async function applyScopes(page: Page, scopes: TestScope[]) {
   const url: string =
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
-    scopes.map((scope) => `scope=scope-sn-databases-l-${scope.name}`).join('&');
+    scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
 
   await page.route(url, async (route) => {
     await route.fulfill({
@@ -99,7 +97,7 @@ export async function applyScopes(page: Page, scopes: TestScope[]) {
             metadata: {},
             spec: {
               dashboard: scope.dashboardUid ?? 'edediimbjhdz4b',
-              scope: `scope-sn-databases-l-${scope.name}`,
+              scope: `scope-${scope.name}`,
             },
             status: {
               dashboardTitle: scope.dashboardTitle ?? 'A tall dashboard',
@@ -115,7 +113,7 @@ export async function applyScopes(page: Page, scopes: TestScope[]) {
   const x: Array<Promise<Response>> = [];
 
   for (const scope of scopes) {
-    x.push(scopeSel(page, scope));
+    x.push(scopeSelectRequest(page, scope));
   }
 
   await page.getByTestId('scopes-selector-apply').click({ force: true });
