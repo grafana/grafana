@@ -8,31 +8,67 @@
 package v1beta1
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationActions":         schema_pkg_apis_dashboard_v1beta1_AnnotationActions(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationPermission":      schema_pkg_apis_dashboard_v1beta1_AnnotationPermission(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.Dashboard":                 schema_pkg_apis_dashboard_v1beta1_Dashboard(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess":           schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardConversionStatus": schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardJSONCodec":        schema_pkg_apis_dashboard_v1beta1_DashboardJSONCodec(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardList":             schema_pkg_apis_dashboard_v1beta1_DashboardList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMetadata":         schema_pkg_apis_dashboard_v1beta1_DashboardMetadata(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStatus":           schema_pkg_apis_dashboard_v1beta1_DashboardStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionInfo":      schema_pkg_apis_dashboard_v1beta1_DashboardVersionInfo(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionList":      schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardWithAccessInfo":   schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanel":              schema_pkg_apis_dashboard_v1beta1_LibraryPanel(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelList":          schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelSpec":          schema_pkg_apis_dashboard_v1beta1_LibraryPanelSpec(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelStatus":        schema_pkg_apis_dashboard_v1beta1_LibraryPanelStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.VersionsQueryOptions":      schema_pkg_apis_dashboard_v1beta1_VersionsQueryOptions(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured":                  v0alpha1.Unstructured{}.OpenAPIDefinition(),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationActions":                                      schema_pkg_apis_dashboard_v1beta1_AnnotationActions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationPermission":                                   schema_pkg_apis_dashboard_v1beta1_AnnotationPermission(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.Dashboard":                                              schema_pkg_apis_dashboard_v1beta1_Dashboard(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess":                                        schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationContainer":                           schema_pkg_apis_dashboard_v1beta1_DashboardAnnotationContainer(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationPanelFilter":                         schema_pkg_apis_dashboard_v1beta1_DashboardAnnotationPanelFilter(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationQuery":                               schema_pkg_apis_dashboard_v1beta1_DashboardAnnotationQuery(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationTarget":                              schema_pkg_apis_dashboard_v1beta1_DashboardAnnotationTarget(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardConversionStatus":                              schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDashboardLink":                                 schema_pkg_apis_dashboard_v1beta1_DashboardDashboardLink(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef":                                 schema_pkg_apis_dashboard_v1beta1_DashboardDataSourceRef(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataTransformerConfig":                         schema_pkg_apis_dashboard_v1beta1_DashboardDataTransformerConfig(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDynamicConfigValue":                            schema_pkg_apis_dashboard_v1beta1_DashboardDynamicConfigValue(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldColor":                                    schema_pkg_apis_dashboard_v1beta1_DashboardFieldColor(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldConfig":                                   schema_pkg_apis_dashboard_v1beta1_DashboardFieldConfig(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldConfigSource":                             schema_pkg_apis_dashboard_v1beta1_DashboardFieldConfigSource(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardGridPos":                                       schema_pkg_apis_dashboard_v1beta1_DashboardGridPos(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardJSONCodec":                                     schema_pkg_apis_dashboard_v1beta1_DashboardJSONCodec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardLibraryPanelRef":                               schema_pkg_apis_dashboard_v1beta1_DashboardLibraryPanelRef(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardList":                                          schema_pkg_apis_dashboard_v1beta1_DashboardList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMatcherConfig":                                 schema_pkg_apis_dashboard_v1beta1_DashboardMatcherConfig(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMetadata":                                      schema_pkg_apis_dashboard_v1beta1_DashboardMetadata(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardPanel":                                         schema_pkg_apis_dashboard_v1beta1_DashboardPanel(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardPanelOrRowPanel":                               schema_pkg_apis_dashboard_v1beta1_DashboardPanelOrRowPanel(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardRangeMap":                                      schema_pkg_apis_dashboard_v1beta1_DashboardRangeMap(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardRegexMap":                                      schema_pkg_apis_dashboard_v1beta1_DashboardRegexMap(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSnapshot":                                      schema_pkg_apis_dashboard_v1beta1_DashboardSnapshot(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSpec":                                          schema_pkg_apis_dashboard_v1beta1_DashboardSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSpecialValueMap":                               schema_pkg_apis_dashboard_v1beta1_DashboardSpecialValueMap(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStatus":                                        schema_pkg_apis_dashboard_v1beta1_DashboardStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStringOrArrayOfString":                         schema_pkg_apis_dashboard_v1beta1_DashboardStringOrArrayOfString(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStringOrMap":                                   schema_pkg_apis_dashboard_v1beta1_DashboardStringOrMap(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardThreshold":                                     schema_pkg_apis_dashboard_v1beta1_DashboardThreshold(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardThresholdsConfig":                              schema_pkg_apis_dashboard_v1beta1_DashboardThresholdsConfig(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardTimeOption":                                    schema_pkg_apis_dashboard_v1beta1_DashboardTimeOption(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardTimePickerConfig":                              schema_pkg_apis_dashboard_v1beta1_DashboardTimePickerConfig(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1FieldConfigSourceOverrides":             schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1FieldConfigSourceOverrides(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1RangeMapOptions":                        schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1RangeMapOptions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1RegexMapOptions":                        schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1RegexMapOptions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecTemplating":                         schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1SpecTemplating(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecTime":                               schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1SpecTime(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecialValueMapOptions":                 schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1SpecialValueMapOptions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMap":                                      schema_pkg_apis_dashboard_v1beta1_DashboardValueMap(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap": schema_pkg_apis_dashboard_v1beta1_DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult":                            schema_pkg_apis_dashboard_v1beta1_DashboardValueMappingResult(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVariableModel":                                 schema_pkg_apis_dashboard_v1beta1_DashboardVariableModel(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVariableOption":                                schema_pkg_apis_dashboard_v1beta1_DashboardVariableOption(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionInfo":                                   schema_pkg_apis_dashboard_v1beta1_DashboardVersionInfo(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionList":                                   schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardWithAccessInfo":                                schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanel":                                           schema_pkg_apis_dashboard_v1beta1_LibraryPanel(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelList":                                       schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelSpec":                                       schema_pkg_apis_dashboard_v1beta1_LibraryPanelSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelStatus":                                     schema_pkg_apis_dashboard_v1beta1_LibraryPanelStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.VersionsQueryOptions":                                   schema_pkg_apis_dashboard_v1beta1_VersionsQueryOptions(ref),
 	}
 }
 
@@ -126,7 +162,8 @@ func schema_pkg_apis_dashboard_v1beta1_Dashboard(ref common.ReferenceCallback) c
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Dashboard",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSpec"),
 						},
 					},
 					"status": {
@@ -140,7 +177,7 @@ func schema_pkg_apis_dashboard_v1beta1_Dashboard(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStatus", "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSpec", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -214,6 +251,201 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref common.ReferenceCallb
 	}
 }
 
+func schema_pkg_apis_dashboard_v1beta1_DashboardAnnotationContainer(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Contains the list of annotations that are associated with the dashboard. Annotations are used to overlay event markers and overlay event tags on graphs. Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API. See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"list": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of annotations",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationQuery"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationQuery"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardAnnotationPanelFilter(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"exclude": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Should the specified panels be included or excluded",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"ids": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel IDs that should be included or excluded",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: 0,
+										Type:    []string{"integer"},
+										Format:  "byte",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"ids"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardAnnotationQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FROM: AnnotationQuery in grafana-data/src/types/annotations.ts",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of annotation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Datasource where the annotations data is",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef"),
+						},
+					},
+					"enable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When enabled the annotation query is issued with every dashboard refresh",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Annotation queries can be toggled on or off at the top of the dashboard. When hide is true, the toggle is not shown in the dashboard.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"iconColor": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Color to use for the annotation event markers",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"filter": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Filters to apply when fetching annotations",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationPanelFilter"),
+						},
+					},
+					"target": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationTarget"),
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"builtIn": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Set to 1 for the standard annotation query all dashboards have by default.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+				},
+				Required: []string{"name", "datasource", "enable", "iconColor"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationPanelFilter", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationTarget", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardAnnotationTarget(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "these match the properties of the \"grafana\" datasouce that is default in most dashboards",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"limit": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Only required/valid for the grafana datasource... but code+tests is already depending on it so hard to change",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"matchAny": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Only required/valid for the grafana datasource... but code+tests is already depending on it so hard to change",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"tags": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Only required/valid for the grafana datasource... but code+tests is already depending on it so hard to change",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Only required/valid for the grafana datasource... but code+tests is already depending on it so hard to change",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"limit", "matchAny", "tags", "type"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -252,12 +484,518 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref common.Refe
 	}
 }
 
+func schema_pkg_apis_dashboard_v1beta1_DashboardDashboardLink(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Links with references to other dashboards or external resources",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Title to display with the link",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"icon": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Icon name to be displayed with the link",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tooltip": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Tooltip to display when the user hovers their mouse over it",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Link URL. Only required/valid if the type is link",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tags": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"asDropdown": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"targetBlank": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If true, the link will be opened in a new tab",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"includeVars": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If true, includes current template variables values in the link as query params",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"keepTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If true, includes current time range in the link as query params",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"title", "type", "icon", "tooltip", "tags", "asDropdown", "targetBlank", "includeVars", "keepTime"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardDataSourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Ref to a DataSource instance",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The plugin type-id",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Specific datasource instance",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardDataTransformerConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of transformer",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled transformations are skipped",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"filter": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional frame matcher. When missing it will be applied to all results",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMatcherConfig"),
+						},
+					},
+					"topic": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where to pull DataFrames from as input to transformation replaced with common.DataTopic",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Options to be passed to the transformer Valid options depend on the transformer id",
+							Type:        []string{"object"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"id", "options"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMatcherConfig"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardDynamicConfigValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"object"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"id"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardFieldColor(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Map a field to a color.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"mode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The main color scheme mode.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"fixedColor": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The fixed color value for fixed or shades color modes.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"seriesBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Some visualizations need to know how to assign a series color from by value color schemes.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"mode"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardFieldConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a field. A field can represent a single time series or table column. Field options allow you to change how the data is displayed in your visualizations.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"displayName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The display value for this field.  This supports template variables blank is auto",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"displayNameFromDS": {
+						SchemaProps: spec.SchemaProps{
+							Description: "This can be used by data sources that return and explicit naming structure for values and labels When this property is configured, this value is used rather than the default naming strategy.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Human readable field metadata",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "An explicit path to the field in the datasource.  When the frame meta includes a path, This will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and may be used to update the results",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"writeable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "True if data source can write a value to the path. Auth/authz are supported separately",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"filterable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "True if data source field supports ad-hoc filters",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"unit": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID availables in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"decimals": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Specify the number of decimals Grafana includes in the rendered value. If you leave this field blank, Grafana automatically truncates the number of decimals based on the value. For example 1.1234 will display as 1.12 and 100.456 will display as 100. To display all decimals, set the unit to `String`.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"min": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"max": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"mappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Convert input values into a display string",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"),
+									},
+								},
+							},
+						},
+					},
+					"thresholds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Map numeric values to states",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardThresholdsConfig"),
+						},
+					},
+					"color": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel color configuration",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldColor"),
+						},
+					},
+					"links": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The behavior when clicking on a result",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"noValue": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Alternative to empty string",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"custom": {
+						SchemaProps: spec.SchemaProps{
+							Description: "custom is specified by the FieldConfig field in panel plugin schemas.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldColor", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardThresholdsConfig", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardFieldConfigSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a field. A field can represent a single time series or table column. Field options allow you to change how the data is displayed in your visualizations.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"defaults": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Defaults are the options applied to all fields.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldConfig"),
+						},
+					},
+					"overrides": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides are the options applied to specific fields overriding the defaults.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1FieldConfigSourceOverrides"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"defaults", "overrides"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldConfig", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1FieldConfigSourceOverrides"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardGridPos(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Position and dimensions of a panel in the grid",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"h": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel height. The height is the number of rows from the top edge of the panel.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"w": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel width. The width is the number of columns from the left edge of the panel.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"x": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel x. The x coordinate is the number of columns from the left edge of the grid",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"y": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel y. The y coordinate is the number of rows from the top edge of the grid",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"static": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the panel is fixed within the grid. If true, the panel will not be affected by other panels' interactions",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"h", "w", "x", "y"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v1beta1_DashboardJSONCodec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "DashboardJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
 				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardLibraryPanelRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propagates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Library panel name",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Library panel uid",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name", "uid"},
 			},
 		},
 	}
@@ -308,6 +1046,35 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardList(ref common.ReferenceCallbac
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.Dashboard", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardMatcherConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation. It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The matcher id. This is used to find the matcher implementation from registry.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The matcher options. This is specific to the matcher implementation.",
+							Type:        []string{"object"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"id"},
+			},
+		},
 	}
 }
 
@@ -407,6 +1174,860 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardMetadata(ref common.ReferenceCal
 	}
 }
 
+func schema_pkg_apis_dashboard_v1beta1_DashboardPanel(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Dashboard panels are the basic visualization building blocks.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The panel plugin type id. This is used to find the plugin to display the panel.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"pluginVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"targets": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Depends on the panel plugin. See the plugin documentation for details.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Allows: true,
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"object"},
+													Format: "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel title.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel description.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"transparent": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether to display the panel without a background.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource used in all targets.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef"),
+						},
+					},
+					"gridPos": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Grid position.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardGridPos"),
+						},
+					},
+					"links": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel links.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDashboardLink"),
+									},
+								},
+							},
+						},
+					},
+					"repeat": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of template variable to repeat for.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"repeatDirection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Direction to repeat in if 'repeat' is set. `h` for horizontal, `v` for vertical.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxPerRow": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Option for repeated panels that controls max items per row Only relevant for horizontally repeated panels",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The maximum number of data points that the panel queries are retrieving.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"transformations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of transformations that are applied to the panel data before rendering. When there are multiple transformations, Grafana applies them in the order they are listed. Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataTransformerConfig"),
+									},
+								},
+							},
+						},
+					},
+					"interval": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables. This value must be formatted as a number followed by a valid time identifier like: \"40s\", \"3d\", etc. See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/query-options",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeFrom": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different time periods or days on the same dashboard. The value is formatted as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far), `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years). Note: Panel time overrides have no effect when the dashboard’s time range is absolute. See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/query-options",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeShift": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`. Note: Panel time overrides have no effect when the dashboard’s time range is absolute. See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/query-options",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hideTimeOverride": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Controls if the timeFrom or timeShift overrides are shown in the panel header",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"libraryPanel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Dynamically load the panel",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardLibraryPanelRef"),
+						},
+					},
+					"cacheTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Sets panel queries cache timeout.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"queryCachingTTL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides the data source configured time-to-live for a query cache item in milliseconds",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"fieldConfig": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Field options allow you to change how the data is displayed in your visualizations.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldConfigSource"),
+						},
+					},
+				},
+				Required: []string{"type"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDashboardLink", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataTransformerConfig", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldConfigSource", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardGridPos", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardLibraryPanelRef"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardPanelOrRowPanel(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FIXME: this is a union type that includes all properties from both Panel and RowPanel. This allows it to represent either a regular panel or a row panel, with all their respective fields. When generating types this was not happening, so we're adding it here manually.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The panel plugin type id. This is used to find the plugin to display the panel.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"pluginVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"targets": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Depends on the panel plugin. See the plugin documentation for details.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Allows: true,
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"object"},
+													Format: "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel title.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel description.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"transparent": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether to display the panel without a background.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource used in all targets.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef"),
+						},
+					},
+					"gridPos": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Grid position.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardGridPos"),
+						},
+					},
+					"links": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel links.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDashboardLink"),
+									},
+								},
+							},
+						},
+					},
+					"repeat": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of template variable to repeat for.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"repeatDirection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Direction to repeat in if 'repeat' is set. `h` for horizontal, `v` for vertical.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxPerRow": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Option for repeated panels that controls max items per row Only relevant for horizontally repeated panels",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The maximum number of data points that the panel queries are retrieving.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"transformations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of transformations that are applied to the panel data before rendering. When there are multiple transformations, Grafana applies them in the order they are listed. Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataTransformerConfig"),
+									},
+								},
+							},
+						},
+					},
+					"interval": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables. This value must be formatted as a number followed by a valid time identifier like: \"40s\", \"3d\", etc. See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/query-options",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeFrom": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different time periods or days on the same dashboard. The value is formatted as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far), `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years). Note: Panel time overrides have no effect when the dashboard’s time range is absolute. See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/query-options",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeShift": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`. Note: Panel time overrides have no effect when the dashboard’s time range is absolute. See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/query-options",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hideTimeOverride": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Controls if the timeFrom or timeShift overrides are shown in the panel header",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"libraryPanel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Dynamically load the panel",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardLibraryPanelRef"),
+						},
+					},
+					"cacheTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Sets panel queries cache timeout.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"queryCachingTTL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides the data source configured time-to-live for a query cache item in milliseconds",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"fieldConfig": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Field options allow you to change how the data is displayed in your visualizations.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldConfigSource"),
+						},
+					},
+					"collapsed": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether this row should be collapsed or not.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"panels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of panels in the row",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardPanel"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"type"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDashboardLink", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataTransformerConfig", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardFieldConfigSource", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardGridPos", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardLibraryPanelRef", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardPanel"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardRangeMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Range to match against and the result to apply when the value is within the range",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1RangeMapOptions"),
+						},
+					},
+				},
+				Required: []string{"type", "options"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1RangeMapOptions"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardRegexMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Regular expression to match against and the result to apply when the value matches the regex",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1RegexMapOptions"),
+						},
+					},
+				},
+				Required: []string{"type", "options"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1RegexMapOptions"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardSnapshot(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A dashboard snapshot shares an interactive dashboard publicly. It is a read-only version of a dashboard, and is not editable. It is possible to create a snapshot of a snapshot. Grafana strips away all sensitive information from the dashboard. Sensitive information stripped: queries (metric, template,annotation) and panel links.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"created": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Time when the snapshot was created",
+							Type:        []string{"string"},
+							Format:      "date-time",
+						},
+					},
+					"expires": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Time when the snapshot expires, default is never to expire",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Is the snapshot saved in an external grafana instance",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"externalUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "external url, if snapshot was shared in external grafana instance",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"originalUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "original url, url of the dashboard that was snapshotted",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the snapshot",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional, defined the unique key of the snapshot, required if external is true",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional, name of the snapshot",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"orgId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "org id of the snapshot",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"updated": {
+						SchemaProps: spec.SchemaProps{
+							Description: "last time when the snapshot was updated",
+							Type:        []string{"string"},
+							Format:      "date-time",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "url of the snapshot, if snapshot was shared internally",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"userId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "user id of the snapshot creator",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"created", "expires", "external", "externalUrl", "originalUrl", "id", "key", "name", "orgId", "updated", "userId"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique numeric identifier for the dashboard. `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique dashboard identifier that can be generated by anyone. string (8-40)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Title of dashboard.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Description of dashboard.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"revision": {
+						SchemaProps: spec.SchemaProps{
+							Description: "This property should only be used in dashboards defined by plugins.  It is a quick check to see if the version has changed since the last time.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"gnetId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tags": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Tags associated with dashboard.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"timezone": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Timezone of dashboard. Accepted values are IANA TZDB zone ID or \"browser\" or \"utc\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"editable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether a dashboard is editable or not.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"graphTooltip": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Configuration of dashboard cursor sync behavior. Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"time": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Time range for dashboard. Accepted values are relative time strings like {from: 'now-6h', to: 'now'} or absolute time strings like {from: '2020-07-10T08:00:00.000Z', to: '2020-07-10T14:00:00.000Z'}.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecTime"),
+						},
+					},
+					"timepicker": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Configuration of the time picker shown at the top of a dashboard.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardTimePickerConfig"),
+						},
+					},
+					"fiscalYearStartMonth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The month that the fiscal year starts on.  0 = January, 11 = December",
+							Type:        []string{"integer"},
+							Format:      "byte",
+						},
+					},
+					"liveNow": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When set to true, the dashboard will redraw panels at an interval matching the pixel width. This will keep data \"moving left\" regardless of the query refresh rate. This setting helps avoid dashboards presenting stale live data",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"weekStart": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Day when the week starts. Expressed by the name of the day in lowercase, e.g. \"monday\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"refresh": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Refresh rate of dashboard. Represented via interval string, e.g. \"5s\", \"1m\", \"1h\", \"1d\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"schemaVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Version of the JSON schema, incremented each time a Grafana update brings changes to said schema.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Version of the dashboard, incremented each time the dashboard is updated.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"panels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of dashboard panels",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardPanelOrRowPanel"),
+									},
+								},
+							},
+						},
+					},
+					"templating": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Configured template variables",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecTemplating"),
+						},
+					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Contains the list of annotations that are associated with the dashboard. Annotations are used to overlay event markers and overlay event tags on graphs. Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API. See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationContainer"),
+						},
+					},
+					"links": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Links with references to other dashboards or external websites.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDashboardLink"),
+									},
+								},
+							},
+						},
+					},
+					"snapshot": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Snapshot options. They are present only if the dashboard is a snapshot.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSnapshot"),
+						},
+					},
+					"preload": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When set to true, the dashboard will load all panels in the dashboard when it's loaded.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"schemaVersion"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAnnotationContainer", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDashboardLink", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardPanelOrRowPanel", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSnapshot", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardTimePickerConfig", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecTemplating", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecTime"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardSpecialValueMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecialValueMapOptions"),
+						},
+					},
+				},
+				Required: []string{"type", "options"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardV1beta1SpecialValueMapOptions"},
+	}
+}
+
 func schema_pkg_apis_dashboard_v1beta1_DashboardStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -424,6 +2045,726 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardStatus(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardConversionStatus"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardStringOrArrayOfString(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"String": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"ArrayOfString": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardStringOrMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"String": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"Map": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardThreshold(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded. Nulls currently appear here when serializing -Infinity to JSON.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"color": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"value", "color"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardThresholdsConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Thresholds configuration for the panel",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"mode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Thresholds mode.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"steps": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Must be sorted by 'value', first value is always -Infinity",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardThreshold"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"mode", "steps"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardThreshold"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardTimeOption(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Counterpart for TypeScript's TimeOption type.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"display": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"display", "from", "to"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardTimePickerConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Time picker configuration It defines the default config for the time picker and the refresh picker for the specific dashboard.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"hidden": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether timepicker is visible or not.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"refresh_intervals": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval options available in the refresh picker dropdown.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"quick_ranges": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Quick ranges for time picker.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardTimeOption"),
+									},
+								},
+							},
+						},
+					},
+					"nowDelay": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardTimeOption"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1FieldConfigSourceOverrides(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"matcher": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMatcherConfig"),
+						},
+					},
+					"properties": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDynamicConfigValue"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"matcher", "properties"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDynamicConfigValue", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMatcherConfig"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1RangeMapOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Min value of the range. It can be null which means -Infinity",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Max value of the range. It can be null which means +Infinity",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"result": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Config to apply when the value is within the range",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult"),
+						},
+					},
+				},
+				Required: []string{"from", "to", "result"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1RegexMapOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"pattern": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Regular expression to match against",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"result": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Config to apply when the value matches the regex",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult"),
+						},
+					},
+				},
+				Required: []string{"pattern", "result"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1SpecTemplating(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"list": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of configured template variables with their saved values along with some other metadata",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVariableModel"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVariableModel"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1SpecTime(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"from", "to"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardV1beta1SpecialValueMapOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"match": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Special value to match against",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"result": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Config to apply when the value matches the special value",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult"),
+						},
+					},
+				},
+				Required: []string{"match", "result"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardValueMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Map with <value_to_match>: ValueMappingResult. For example: { \"10\": { text: \"Perfection!\", color: \"green\" } }",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"type", "options"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMappingResult"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ValueMap": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMap"),
+						},
+					},
+					"RangeMap": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardRangeMap"),
+						},
+					},
+					"RegexMap": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardRegexMap"),
+						},
+					},
+					"SpecialValueMap": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSpecialValueMap"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardRangeMap", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardRegexMap", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSpecialValueMap", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardValueMap"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardValueMappingResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Result used as replacement with text and color when the value matches",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Text to display when the value matches",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"color": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Text to use when the value matches",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"icon": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Icon to display when the value matches. Only specific visualizations.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"index": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Position in the mapping array. Only used internally.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardVariableModel(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Type of variable",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of variable",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"label": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional display name",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Visibility configuration for the variable",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"skipUrlSync": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the variable value should be managed by URL query params or not",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Description of variable. It can be defined but `null`.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"query": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Query used to fetch values for a variable",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStringOrMap"),
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Data source used to fetch values for a variable. It can be defined but `null`.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef"),
+						},
+					},
+					"current": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shows current selected variable text/value on the dashboard",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVariableOption"),
+						},
+					},
+					"multi": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether multiple values can be selected or not from variable value list",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"allowCustomValue": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Allow custom values to be entered in the variable",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Options that can be selected for a variable.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVariableOption"),
+									},
+								},
+							},
+						},
+					},
+					"refresh": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Options to config when to refresh a variable",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"sort": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Options sort order",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"includeAll": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether all value option is available or not",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"allValue": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Custom all value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"regex": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional field, if you want to extract part of a series name or metric node segment. Named capture groups can be used to separate the display text and value.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"staticOptions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Additional static options for query variable",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVariableOption"),
+									},
+								},
+							},
+						},
+					},
+					"staticOptionsOrder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ordering of static options in relation to options returned from data source for query variable",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "name"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardDataSourceRef", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStringOrMap", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVariableOption"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardVariableOption(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Option to be selected in a variable.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"selected": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the option is selected or not",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Text to be displayed for the option",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStringOrArrayOfString"),
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Value of the option",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStringOrArrayOfString"),
+						},
+					},
+				},
+				Required: []string{"text", "value"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStringOrArrayOfString"},
 	}
 }
 
@@ -555,7 +2896,8 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref common.Refere
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Dashboard",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSpec"),
 						},
 					},
 					"status": {
@@ -575,7 +2917,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStatus", "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardSpec", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

@@ -35,12 +35,12 @@ func RegisterConversions(s *runtime.Scheme) error {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V1_to_V2alpha1(a.(*dashv1.Dashboard), b.(*dashv2alpha1.Dashboard), scope)
+		return Convert_V1beta1_to_V2alpha1(a.(*dashv1.Dashboard), b.(*dashv2alpha1.Dashboard), scope)
 	}); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V1_to_V2beta1(a.(*dashv1.Dashboard), b.(*dashv2beta1.Dashboard), scope)
+		return Convert_V1alpha1_to_V2beta1(a.(*dashv1.Dashboard), b.(*dashv2beta1.Dashboard), scope)
 	}); err != nil {
 		return err
 	}

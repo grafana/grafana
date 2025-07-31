@@ -14,7 +14,8 @@ import (
 func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
-	out.Spec.Object = in.Spec.Object
+	// FIXME: this conversion is not implemented yet
+	// out.Spec.Object = in.Spec.Object
 
 	out.Status = dashv1.DashboardStatus{
 		Conversion: &dashv1.DashboardConversionStatus{
@@ -22,12 +23,28 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 		},
 	}
 
-	if err := migration.Migrate(out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
+	// Create a new unstructured object from the v0 dashboard spec to be used for v1
+	unstructuredObj := make(map[string]interface{})
+	for k, v := range in.Spec.Object {
+		unstructuredObj[k] = v
+	}
+
+	if err := migration.Migrate(unstructuredObj, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = err.Error()
 	}
 
+	// TODO: Implement transformation from unstructuredObj to a valid v1 DashboardSpec.
+	// This function should convert the unstructured map into a strongly-typed v1beta1 DashboardSpec.
+	out.Spec = transformUnstructuredToV1DashboardSpec(unstructuredObj)
+
 	return nil
+}
+
+// TODO: Implement transformation from unstructuredObj to a valid v1 DashboardSpec.
+// This function should convert the unstructured map into a strongly-typed v1beta1 DashboardSpec.
+func transformUnstructuredToV1DashboardSpec(unstructuredObj map[string]interface{}) dashv1.DashboardSpec {
+	return dashv1.DashboardSpec{}
 }
 
 func Convert_V0_to_V2alpha1(in *dashv0.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {

@@ -29,7 +29,7 @@ func TestConversionMatrixExist(t *testing.T) {
 
 	versions := []v1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
-		&dashv1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
+		&dashv1.Dashboard{Spec: dashv1.DashboardSpec{Title: &[]string{"dashboardV1"}[0]}},
 		&dashv2alpha1.Dashboard{Spec: dashv2alpha1.DashboardSpec{Title: "dashboardV2alpha1"}},
 		&dashv2beta1.Dashboard{Spec: dashv2beta1.DashboardSpec{Title: "dashboardV2beta1"}},
 	}
