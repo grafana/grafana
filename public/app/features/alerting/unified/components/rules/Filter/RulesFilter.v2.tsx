@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
-import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -12,11 +11,13 @@ import {
   Combobox,
   ComboboxOption,
   FilterInput,
+  Icon,
   Input,
   Label,
   MultiCombobox,
   RadioButtonGroup,
   Stack,
+  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -24,6 +25,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
+import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { RuleHealth } from '../../../search/rulesSearchParser';
@@ -274,6 +276,34 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
     return Array.from(groupSet).sort();
   }, [grafanaPromRules, externalPromRulesQueries]);
 
+  // Fetch contact points using traditional alerting API as fallback
+  const { currentData: alertmanagerConfig, isLoading: isLoadingContactPoints } =
+    alertmanagerApi.useGetAlertmanagerConfigurationQuery(GRAFANA_RULES_SOURCE_NAME);
+
+  // Extract contact point names from alertmanager config
+  // Note: Using traditional API instead of ContactPointSelector from @grafana/alerting/unstable
+  // due to compatibility issues with the v0alpha1 API in some Grafana configurations
+  const contactPointOptions = useMemo(() => {
+    if (!alertmanagerConfig?.alertmanager_config?.receivers) {
+      return [];
+    }
+
+    return alertmanagerConfig.alertmanager_config.receivers.map((receiver) => ({
+      label: receiver.name,
+      value: receiver.name,
+    }));
+  }, [alertmanagerConfig]);
+
+  const contactPointPlaceholder = useMemo(() => {
+    if (isLoadingContactPoints) {
+      return t('common.loading', 'Loading...');
+    }
+    if (contactPointOptions.length === 0) {
+      return t('alerting.rules-filter.no-contact-points', 'No contact points available');
+    }
+    return t('alerting.notification-policies-filter.placeholder-search-by-contact-point', 'Choose a contact point');
+  }, [isLoadingContactPoints, contactPointOptions.length]);
+
   // Generate appropriate placeholder text
   const namespacePlaceholder = useMemo(() => {
     if (isLoadingNamespaces) {
@@ -404,30 +434,40 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
           {canRenderContactPointSelector && (
             <>
               <Label>
-                <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                <Stack gap={0.5} alignItems="center">
+                  <span>
+                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                  </span>
+                  <Tooltip
+                    content={
+                      <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
+                        Filters alert rules which route directly to the selected contact point. Alert rules routed to
+                        notification policies will not be displayed.
+                      </Trans>
+                    }
+                  >
+                    <Icon
+                      name="info-circle"
+                      size="sm"
+                      title={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
+                    />
+                  </Tooltip>
+                </Stack>
               </Label>
               <Controller
                 name="contactPoint"
                 control={control}
                 render={({ field }) => {
-                  // Debug logging to understand what's happening with contact points
-                  console.log('ContactPointSelector debug:', {
-                    value: field.value,
-                    // Add any other relevant info for debugging
-                  });
-
                   return (
-                    <ContactPointSelector
-                      value={field.value ?? null}
-                      placeholder={t(
-                        'alerting.notification-policies-filter.placeholder-search-by-contact-point',
-                        'Choose a contact point'
-                      )}
+                    <Combobox<string>
+                      placeholder={contactPointPlaceholder}
+                      options={contactPointOptions}
+                      onChange={(option) => field.onChange(option?.value || null)}
+                      value={field.value}
+                      loading={isLoadingContactPoints}
+                      disabled={isLoadingContactPoints || contactPointOptions.length === 0}
                       isClearable
-                      onChange={(contactPoint) => {
-                        console.log('ContactPointSelector onChange:', contactPoint);
-                        field.onChange(contactPoint?.spec.title ?? null);
-                      }}
+                      portalContainer={portalContainer}
                     />
                   );
                 }}
