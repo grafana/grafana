@@ -63,6 +63,7 @@ export function initializeFromURL(
               getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource),
             ];
           }
+
           return { exploreId, compact, range, panelsState, queries: validQueries, datasource: paneDatasource };
         });
       });
