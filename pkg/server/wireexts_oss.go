@@ -176,6 +176,7 @@ var wireExtsBaseCLISet = wire.NewSet(
 	featuremgmt.ProvideToggles,
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
+	setting.ProvideService, wire.Bind(new(setting.SettingsProvider), new(*setting.OSSSettingsProvider)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
 )
 
