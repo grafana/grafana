@@ -1,3 +1,5 @@
+import { screen } from '@testing-library/react';
+
 import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
@@ -69,6 +71,14 @@ describe('Tree', () => {
   afterEach(async () => {
     locationService.replace('');
     await resetScenes([fetchNodesSpy, fetchScopeSpy]);
+  });
+
+  it('Gives autofocus to search field when node is expanded', async () => {
+    await openSelector();
+    expect(screen.getByRole('textbox', { name: 'Search' })).not.toHaveFocus();
+
+    await expandResultApplications();
+    expect(screen.getByRole('textbox', { name: 'Search Applications' })).toHaveFocus();
   });
 
   it('Fetches scope details on select', async () => {
