@@ -143,10 +143,6 @@ jobs:
             path: e2e/various-suite
           - suite: dashboards-suite
             path: e2e/dashboards-suite
-          - suite: smoke-tests-suite
-            path: e2e/smoke-tests-suite
-          - suite: panels-suite
-            path: e2e/panels-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
             flags: --flags="--env dashboardScene=false"
@@ -198,6 +194,34 @@ jobs:
           path: videos
           retention-days: 1
 
+  run-storybook-test:
+    name: Verify Storybook (Playwright)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Storybook and E2E tests
+        run: yarn e2e:playwright:storybook
+
   run-playwright-tests:
     needs:
       - build-grafana
@@ -234,6 +258,7 @@ jobs:
   required-playwright-tests:
     needs:
       - run-playwright-tests
+      - run-storybook-test
       - build-grafana
     if: ${{ !cancelled() }}
     name: All Playwright tests complete

@@ -758,11 +758,37 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type ResourceRef = {
+  /** Group is the group of the resource, such as "dashboard.grafana.app". */
+  group?: string;
+  /** Kind is the type of resource, for example, "Dashboard". */
+  kind?: string;
+  /** Name is the name of the resource, such as a dashboard UID. */
+  name?: string;
+};
+export type DeleteJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash to delete from */
+  ref?: string;
+  /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
   /** Message to use when committing the changes in a single commit */
   message?: string;
+};
+export type MoveJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash that should move */
+  ref?: string;
+  /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+  /** Destination path for the move (e.g. "new-location/") */
+  targetPath?: string;
 };
 export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
@@ -779,24 +805,30 @@ export type SyncJobOptions = {
   incremental: boolean;
 };
 export type ExportJobOptions = {
-  /** Target branch for export (only git) */
+  /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
   /** Message to use when committing the changes in a single commit */
   message?: string;
-  /** Prefix in target file system */
+  /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {
   /** Possible enum values:
+     - `"delete"` deletes files in the remote repository
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"move"` moves files in the remote repository
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'migrate' | 'pr' | 'pull' | 'push';
+  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+  /** Delete when the action is `delete` */
+  delete?: DeleteJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
+  /** Move when the action is `move` */
+  move?: MoveJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
   /** Required when the action is `pull` */
