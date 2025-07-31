@@ -110,14 +110,14 @@ export function useProvisionedRequestHandler<T>({
 function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
   const { resourceType } = info;
 
-  if (resourceType === 'dashboard') {
-    return t('provisioned-resource-request-handler-dashboard', 'Dashboard saved successfully');
-  } else if (resourceType === 'folder') {
-    return t('provisioned-resource-request-handler-folder', 'Folder created successfully');
+  switch (resourceType) {
+    case 'dashboard':
+      return t('provisioned-resource-request-handler-dashboard', 'Dashboard saved successfully');
+    case 'folder':
+      return t('provisioned-resource-request-handler-folder', 'Folder created successfully');
+    default:
+      return t('provisioned-resource-request-handler', 'Resource saved successfully');
   }
-
-  // Fallback for new resource types
-  return t('provisioned-resource-request-handler', 'Resource saved successfully');
 }
 
 export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };

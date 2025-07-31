@@ -42,6 +42,7 @@ describe('useProvisionedRequestHandler', () => {
             title: 'Test Repository',
             workflows: [],
           },
+          resourceType: 'dashboard',
           handlers,
         })
       );
@@ -71,6 +72,7 @@ describe('useProvisionedRequestHandler', () => {
       renderHook(() =>
         useProvisionedRequestHandler({
           request,
+          resourceType: 'dashboard',
           handlers,
         })
       );
@@ -99,6 +101,7 @@ describe('useProvisionedRequestHandler', () => {
         useProvisionedRequestHandler({
           request,
           workflow: 'branch',
+          resourceType: 'dashboard',
           handlers,
         })
       );
@@ -132,6 +135,7 @@ describe('useProvisionedRequestHandler', () => {
         useProvisionedRequestHandler({
           request,
           workflow: 'write',
+          resourceType: 'dashboard',
           handlers,
         })
       );
