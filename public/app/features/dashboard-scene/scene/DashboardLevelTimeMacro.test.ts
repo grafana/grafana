@@ -65,13 +65,10 @@ describe('dashboardLevelTimeMacros', () => {
     expect(sceneGraph.interpolate(panel, '$__from')).toBe('1684818597073'); // Time shifted by 1h
     expect(sceneGraph.interpolate(panel, '$__to')).toBe('1684822197073'); // Time shifted by 1h
 
-    const unregisterFrom = sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
-    const unregisterTo = sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
+    sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
+    sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
 
     expect(sceneGraph.interpolate(panel, '$__from')).toBe('1684822197073'); // Dashboard level time range even when panel is time shifted
     expect(sceneGraph.interpolate(panel, '$__to')).toBe('1684825797073'); // Dashboard level time range even when panel is time shifted
-
-    unregisterFrom();
-    unregisterTo();
   });
 });
