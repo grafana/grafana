@@ -18,7 +18,7 @@ import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks
 import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
 import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
-import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { ProvisionedDashboardFormData } from '../shared';
 
@@ -60,25 +60,15 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onRequestError = (error: unknown) => {
+  const onRequestError = (error: unknown, info: ProvisionedOperationInfo) => {
     appEvents.publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'), error],
     });
   };
 
-  const onWriteSuccess = () => {
-    panelEditor?.onDiscard();
-    drawer.onClose();
-    locationService.partial({
-      viewPanel: null,
-      editPanel: null,
-    });
-  };
-
-  const onNewDashboardSuccess = (upsert: Resource<Dashboard>) => {
-    panelEditor?.onDiscard();
-    drawer.onClose();
+  const handleNewDashboard = (upsert: Resource<Dashboard>) => {
+    // Navigation for new dashboards
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: upsert.metadata.name,
@@ -86,34 +76,50 @@ export function SaveProvisionedDashboardForm({
         currentQueryParams: window.location.search,
       })
     );
-
     navigate(url);
   };
 
-  const onBranchSuccess = (ref: string, path: string) => {
+  const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    if (isNew && upsert?.metadata.name) {
+      handleNewDashboard(upsert);
+    } else {
+      locationService.partial({
+        viewPanel: null,
+        editPanel: null,
+      });
+    }
+  };
+
+  const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    if (isNew && upsert?.metadata?.name) {
+      handleNewDashboard(upsert);
+    } else {
+      const url = buildResourceBranchRedirectUrl({
+        baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        paramName: 'ref',
+        paramValue: ref,
+        repoType: info.repoType,
+      });
+      navigate(url);
+    }
+  };
+
+  const onDismiss = () => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     drawer.onClose();
-
-    const url = buildResourceBranchRedirectUrl({
-      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
-      paramName: 'ref',
-      paramValue: ref,
-      repoType: request.data?.repository?.type,
-    });
-    navigate(url);
   };
 
-  useProvisionedRequestHandler({
-    dashboard,
+  useProvisionedRequestHandler<Dashboard>({
     request,
     workflow,
+    resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess: ({ ref, path }) => onBranchSuccess(ref, path),
+      onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      onNewDashboardSuccess,
       onError: onRequestError,
+      onDismiss,
     },
-    isNew,
   });
 
   // Submit handler for saving the form data
