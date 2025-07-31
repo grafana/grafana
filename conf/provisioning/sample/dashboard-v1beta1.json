@@ -1,0 +1,257 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "test-v1beta1-annotations",
+    "annotations": {
+      "hello": "world"
+    },
+    "labels": {
+      "region": "west"
+    }
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "blue",
+          "name": "testdata-annos",
+          "target": {
+            "lines": 10,
+            "refId": "Anno",
+            "scenarioId": "annotations"
+          }
+        },
+        {
+          "enable": true,
+          "hide": false,
+          "iconColor": "blue",
+          "name": "no-ds-testdata-annos",
+          "target": {
+            "lines": 10,
+            "refId": "Anno",
+            "scenarioId": "annotations"
+          }
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "yellow",
+          "name": "prom-annos",
+          "target": {
+            "expr": "{action=\"add_client\"}",
+            "interval": "",
+            "lines": 10,
+            "refId": "Anno",
+            "scenarioId": "annotations"
+          }
+        },
+        {
+          "enable": true,
+          "hide": false,
+          "iconColor": "yellow",
+          "name": "no-ds-prom-annos",
+          "target": {
+            "expr": "{action=\"add_client\"}",
+            "interval": "",
+            "lines": 10,
+            "refId": "Anno",
+            "scenarioId": "annotations"
+          }
+        },
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "PBBCEC2D313BC06C3"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "red",
+          "name": "postgress-annos",
+          "target": {
+            "editorMode": "builder",
+            "format": "table",
+            "lines": 10,
+            "rawSql": "",
+            "refId": "Anno",
+            "scenarioId": "annotations",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        },
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "gdev-elasticsearch"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "red",
+          "name": "elastic - annos",
+          "tagsField": "asd",
+          "target": {
+            "lines": 10,
+            "query": "test query",
+            "refId": "Anno",
+            "scenarioId": "annotations"
+          },
+          "textField": "asd",
+          "timeEndField": "asdas",
+          "timeField": "asd"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "links": [],
+    "panels": [
+      {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "12.1.0-pre",
+        "targets": [
+          {
+            "refId": "A"
+          }
+        ],
+        "title": "New panel",
+        "type": "timeseries"
+      }
+    ],
+    "preload": false,
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Test: v1alpha1 dashboard with annotations",
+    "version": 8
+  }
+}
