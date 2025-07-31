@@ -724,6 +724,16 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
+ * Whenever we add text wrapping, we should add all text wrapping options at once
+ */
+export interface TableWrapTextOptions {
+  /**
+   * if true, wrap the text content of the cell
+   */
+  wrapText?: boolean;
+}
+
+/**
  * Sort by field state
  */
 export interface TableSortByFieldState {
@@ -756,17 +766,15 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
 /**
  * Auto mode table cell options
  */
-export interface TableAutoCellOptions {
+export interface TableAutoCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.Auto;
-  wrapText?: boolean;
 }
 
 /**
  * Colored text cell options
  */
-export interface TableColorTextCellOptions {
+export interface TableColorTextCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.ColorText;
-  wrapText?: boolean;
 }
 
 /**
@@ -788,7 +796,7 @@ export interface TableImageCellOptions {
 /**
  * Show data links in the cell
  */
-export interface TableDataLinksCellOptions {
+export interface TableDataLinksCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.DataLinks;
 }
 
@@ -819,11 +827,10 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
 /**
  * Colored background cell options
  */
-export interface TableColoredBackgroundCellOptions {
+export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions {
   applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
-  wrapText?: boolean;
 }
 
 /**
@@ -944,7 +951,7 @@ export enum ComparisonOperation {
 /**
  * Pill options
  */
-export interface TablePillCellOptions {
+export interface TablePillCellOptions extends TableWrapTextOptions {
   color?: string;
   colorMode?: ('auto' | 'fixed' | 'mapped');
   type: TableCellDisplayMode.Pill;

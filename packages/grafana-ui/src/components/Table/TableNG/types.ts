@@ -257,6 +257,12 @@ export interface ActionCellProps {
   getActions: GetActionsFunctionLocal;
 }
 
+export interface PillCellProps {
+  theme: GrafanaTheme2;
+  field: Field;
+  rowIdx: number;
+}
+
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
 
@@ -273,13 +279,14 @@ export interface ScrollPosition {
 
 export interface TypographyCtx {
   ctx: CanvasRenderingContext2D;
-  font: string;
+  fontFamily: string;
+  letterSpacing: number;
   avgCharWidth: number;
   estimateLines: LineCounter;
   wrappedCount: LineCounter;
 }
 
-export type LineCounter = (value: unknown, width: number) => number;
+export type LineCounter = (value: unknown, width: number, field: Field, rowIdx: number) => number;
 export interface LineCounterEntry {
   /**
    * given a values and the available width, returns the line count for that value
