@@ -265,7 +265,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	defer span.End()
 
 	defer func() {
-		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", "namespace", namespace, "name", name, "success", readErr != nil, "error", readErr)
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", "namespace", namespace, "name", name, "success", readErr == nil, "error", readErr)
 
 		s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
 		s.metrics.SecureValueMetadataGetCount.Inc()
