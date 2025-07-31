@@ -743,14 +743,18 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/icons/ @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/log_events.ts @grafana/dashboards-squad
+/public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /public/app/core/navigation/ @grafana/grafana-search-navigate-organise
 /public/app/core/profiler.ts @grafana/dashboards-squad
 /public/app/core/reducers/ @grafana/grafana-frontend-platform
 /public/app/core/selectors/ @grafana/grafana-frontend-platform
 /public/app/core/services/__mocks__/backend_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/backend_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/context_srv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/CorrelationsService.ts @grafana/datapro
 /public/app/core/services/echo/ @grafana/grafana-frontend-platform
 /public/app/core/services/FetchQueue* @grafana/grafana-frontend-platform
+/public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
 /public/app/core/services/keybindingSrv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mocks/subscribeTester.ts @grafana/grafana-frontend-platform
@@ -758,12 +762,10 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
 /public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
-/public/app/core/services/backend_srv.ts @grafana/grafana-frontend-platform
-/public/app/core/services/context_srv.ts @grafana/grafana-frontend-platform
-/public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
 /public/app/core/services/theme.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
-/public/app/core/specs/factors.test.ts
+/public/app/core/specs/factors.test.ts @grafana/dashboards-squad
 /public/app/core/specs/flatten.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/impression_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/rangeutil.test.ts @grafana/grafana-frontend-platform
@@ -781,16 +783,20 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/auth.ts @grafana/identity-access-team
 /public/app/core/utils/browser* @grafana/grafana-frontend-platform
 /public/app/core/utils/colors.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/ConfigProvider.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/ConfigProvider.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsSharedWorker.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/CorsWorker.tsx @grafana/grafana-frontend-platform
+/public/app/core/utils/CorsWorker.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/connectWithReduxStore.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/dag* @grafana/grafana-frontend-platform
 /public/app/core/utils/deferred.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/docsLinks.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/errors* @grafana/grafana-frontend-platform
 /public/app/core/utils/explore* @grafana/observability-traces-and-profiling
+/public/app/core/utils/factors.ts @grafana/dashboards-squad
 /public/app/core/utils/fetch* @grafana/grafana-frontend-platform
 /public/app/core/utils/flatten.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/isShallowEqual.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/kbn* @grafana/grafana-frontend-platform
 /public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
 /public/app/core/utils/object* @grafana/grafana-frontend-platform
 /public/app/core/utils/query* @grafana/grafana-datasources-core-services
@@ -801,6 +807,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/timePicker* @grafana/grafana-frontend-platform
 /public/app/core/utils/timeRegions* @grafana/dataviz-squad
 /public/app/core/utils/urlToken.ts @grafana/identity-access-team
+/public/app/core/utils/version.ts @grafana/partner-datasources
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 /public/app/features/actions/ @grafana/dataviz-squad
