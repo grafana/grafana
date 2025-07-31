@@ -74,7 +74,7 @@ jobs:
         run: |
           mkdir -p build-dir
           mv "$(grep 'grafana_.*tar.gz$' out.txt | grep -Fv -m1 'docker')" build-dir/grafana.tar.gz
-          mv "$(grep 'grafana_.*docker.tar.gz$' out.txt | grep -Fv -m1 'docker')" build-dir/grafana.docker.tar.gz
+          mv "$(grep 'grafana_.*docker.tar.gz$' out.txt)" build-dir/grafana.docker.tar.gz
 
       # If cache hit, validate the artifact is present
       - name: Validate artifact
