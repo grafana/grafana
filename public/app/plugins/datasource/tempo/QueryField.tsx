@@ -57,7 +57,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
 
     // indentify the service map can use native histograms
     const timeRange = this.props.range;
-    const nativeHistograms = await this.checkNativeHistograms(timeRange);
+    const nativeHistograms = await this.props.datasource.getNativeHistograms(timeRange);
 
     this.props.onChange({
       ...this.props.query,
@@ -76,12 +76,6 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
     ) {
       this.props.onRunQuery();
     }
-  }
-
-  async checkNativeHistograms(timeRange?: TimeRange): Promise<boolean> {
-    const { datasource } = this.props;
-    const nativeHistograms = await datasource.getNativeHistograms(timeRange);
-    return nativeHistograms;
   }
 
   onClearResults = () => {
