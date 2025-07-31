@@ -72,6 +72,8 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
     if (
       this.props.query.queryType === 'serviceMap' &&
       this.props.query.serviceMapUseNativeHistograms === undefined &&
+      // switch from tempo with native histograms to tempo without native histograms
+      this.props.query.serviceMapUseNativeHistograms !== nativeHistograms &&
       nativeHistograms
     ) {
       this.props.onRunQuery();
