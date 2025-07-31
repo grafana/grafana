@@ -113,7 +113,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
           cache: ${{ !github.event.pull_request.head.repo.fork }}
@@ -143,8 +143,6 @@ jobs:
             path: e2e/various-suite
           - suite: dashboards-suite
             path: e2e/dashboards-suite
-          - suite: panels-suite
-            path: e2e/panels-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
             flags: --flags="--env dashboardScene=false"

@@ -24,7 +24,6 @@ const getStyles = () => ({
     backgroundColor: 'transparent',
     border: 'none',
     color: 'inherit',
-    height: '100%',
     overflow: 'hidden',
     '&:focus': {
       backgroundColor: 'rgba(255, 255, 255, 0.25)',

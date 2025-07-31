@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -20,8 +20,8 @@ import { createContactPointSearchLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
-import { DataSourceIcon } from './Namespace';
 import { RuleListIcon, RuleOperation } from './RuleListIcon';
+import { RuleLocation } from './RuleLocation';
 import { calculateNextEvaluationEstimate } from './util';
 
 export interface AlertRuleListItemProps {
@@ -39,6 +39,7 @@ export interface AlertRuleListItemProps {
   instancesCount?: number;
   namespace?: string;
   group?: string;
+  groupUrl?: string;
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
   // used for alert rules that use simplified routing
@@ -65,6 +66,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     instancesCount = 0,
     namespace,
     group,
+    groupUrl,
     rulesSource,
     application,
     contactPoint,
@@ -81,7 +83,13 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+        <RuleLocation
+          namespace={namespace}
+          group={group}
+          groupUrl={groupUrl}
+          rulesSource={rulesSource}
+          application={application}
+        />
       </Text>
     );
   }
@@ -160,6 +168,7 @@ export function RecordingRuleListItem({
   name,
   namespace,
   group,
+  groupUrl,
   rulesSource,
   application,
   href,
@@ -175,7 +184,13 @@ export function RecordingRuleListItem({
   if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+        <RuleLocation
+          namespace={namespace}
+          group={group}
+          groupUrl={groupUrl}
+          rulesSource={rulesSource}
+          application={application}
+        />
       </Text>
     );
   }
@@ -206,6 +221,7 @@ interface RuleOperationListItemProps {
   name: string;
   namespace: string;
   group: string;
+  groupUrl?: string;
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
   operation: RuleOperation;
@@ -216,6 +232,7 @@ export function RuleOperationListItem({
   name,
   namespace,
   group,
+  groupUrl,
   rulesSource,
   application,
   operation,
@@ -227,7 +244,13 @@ export function RuleOperationListItem({
   if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+        <RuleLocation
+          namespace={namespace}
+          group={group}
+          groupUrl={groupUrl}
+          rulesSource={rulesSource}
+          application={application}
+        />
       </Text>
     );
   }
@@ -365,38 +388,6 @@ export const UnknownRuleListItem = ({ ruleName, groupIdentifier, ruleDefinition 
         </pre>
       </details>
     </Alert>
-  );
-};
-
-interface RuleLocationProps {
-  namespace: string;
-  group: string;
-  rulesSource?: RulesSourceIdentifier;
-  application?: RulesSourceApplication;
-}
-
-// @TODO make the datasource / namespace / group click-able to allow further filtering of the list
-export const RuleLocation = ({ namespace, group, rulesSource, application }: RuleLocationProps) => {
-  const isGrafanaApp = application === 'grafana';
-  const isDataSourceApp = !!rulesSource && !!application && !isGrafanaApp;
-
-  return (
-    <Stack direction="row" alignItems="center" gap={0.5}>
-      {isGrafanaApp && <Icon size="xs" name="folder" />}
-      {isDataSourceApp && (
-        <Tooltip content={rulesSource.name}>
-          <span>
-            <DataSourceIcon application={application} size={14} />
-          </span>
-        </Tooltip>
-      )}
-
-      <Stack direction="row" alignItems="center" gap={0}>
-        {namespace}
-        <Icon size="sm" name="angle-right" />
-        {group}
-      </Stack>
-    </Stack>
   );
 };
 
