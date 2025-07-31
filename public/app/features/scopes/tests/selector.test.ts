@@ -115,7 +115,7 @@ describe('Selector', () => {
       expectRecentScopeNotPresent('Mimir');
       await selectRecentScope('Grafana, Mimir');
 
-      expectScopesSelectorValue('Grafana, Mimir');
+      expectScopesSelectorValue('Grafana + Mimir');
     });
 
     it('recent scopes should not be visible when the first scope is selected', async () => {
