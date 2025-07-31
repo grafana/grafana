@@ -1,28 +1,37 @@
 import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
-import { DataSourceApi, getDefaultTimeRange } from '@grafana/data';
+import { DataSourceApi, getDefaultTimeRange, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/plugin-ui';
 
-import { promqlGrammar } from '../../../promql';
-import { getInitHints } from '../../../query_hints';
-import { buildVisualQueryFromString } from '../../parsing';
-import { OperationExplainedBox } from '../../shared/OperationExplainedBox';
-import { OperationList } from '../../shared/OperationList';
-import { OperationListExplained } from '../../shared/OperationListExplained';
-import { OperationsEditorRow } from '../../shared/OperationsEditorRow';
-import { QueryBuilderHints } from '../../shared/QueryBuilderHints';
-import { RawQuery } from '../../shared/RawQuery';
-import { promQueryModeller } from '../../shared/modeller_instance';
-import { QueryBuilderOperation } from '../../shared/types';
-import { PromVisualQuery } from '../../types';
-import { MetricsLabelsSection } from '../MetricsLabelsSection';
-import { EXPLAIN_LABEL_FILTER_CONTENT } from '../PromQueryBuilderExplained';
+import { PrometheusDatasource } from '../../datasource';
+import { promqlGrammar } from '../../promql';
+import { getInitHints } from '../../query_hints';
+import { buildVisualQueryFromString } from '../parsing';
+import { OperationExplainedBox } from '../shared/OperationExplainedBox';
+import { OperationList } from '../shared/OperationList';
+import { OperationListExplained } from '../shared/OperationListExplained';
+import { OperationsEditorRow } from '../shared/OperationsEditorRow';
+import { QueryBuilderHints } from '../shared/QueryBuilderHints';
+import { RawQuery } from '../shared/RawQuery';
+import { promQueryModeller } from '../shared/modeller_instance';
+import { QueryBuilderOperation } from '../shared/types';
+import { PromVisualQuery } from '../types';
 
-import { BaseQueryBuilderProps } from './types';
+import { MetricsLabelsSection } from './MetricsLabelsSection';
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 
-export const QueryBuilderContent = memo<BaseQueryBuilderProps>((props) => {
+interface QueryBuilderContentProps {
+  query: PromVisualQuery;
+  datasource: PrometheusDatasource;
+  onChange: (update: PromVisualQuery) => void;
+  onRunQuery: () => void;
+  data?: PanelData;
+  showExplain: boolean;
+}
+
+export const QueryBuilderContent = memo<QueryBuilderContentProps>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
 
