@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
@@ -135,7 +135,7 @@ export function useSortedRows(
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
-  rowHeight: number | string | ((row: TableRow) => number);
+  rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   headerHeight: number;
   footerHeight: number;
   paginationHeight?: number;
@@ -398,7 +398,7 @@ export function useRowHeight({
   defaultHeight,
   expandedRows,
   typographyCtx,
-}: UseRowHeightOptions): number | string | ((row: TableRow) => number) {
+}: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
   const hasWrappedCols = useMemo(() => lineCounters?.length ?? 0 > 0, [lineCounters]);
 

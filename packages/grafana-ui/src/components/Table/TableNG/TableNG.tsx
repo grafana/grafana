@@ -365,7 +365,7 @@ export function TableNG(props: TableNGProps) {
             )
           : undefined;
 
-        const shouldOverflow = shouldTextOverflow(field);
+        const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
@@ -385,6 +385,7 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.DataLinks:
           case TableCellDisplayMode.JSONView:
           case TableCellDisplayMode.Pill:
+          case TableCellDisplayMode.Markdown:
             cellClass = getCellStyles(
               theme,
               cellType,
@@ -980,9 +981,9 @@ const getCellStyles = (
     alignItems: 'center',
     textAlign,
     justifyContent: getJustifyContent(textAlign),
-    minHeight: '100%',
-    backgroundClip: 'padding-box !important', // helps when cells have a bg color
 
+    ...(isColorized && { backgroundClip: 'padding-box !important' }),
+    ...(shouldOverflow && { minHeight: '100%' }),
     ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
     ...(isMonospace && { fontFamily: 'monospace' }),
 
@@ -1050,6 +1051,23 @@ const getCellStyles = (
         fontSize: theme.typography.bodySmall.fontSize,
         lineHeight: theme.typography.bodySmall.lineHeight,
         whiteSpace: 'nowrap',
+      },
+    }),
+
+    ...(cellType === TableCellDisplayMode.Markdown && {
+      '& ol, & ul': {
+        paddingLeft: theme.spacing(1.5),
+      },
+      '& p': {
+        whiteSpace: 'pre-line',
+      },
+      '& a': {
+        color: theme.colors.primary.text,
+      },
+      // for elements like `p`, `h*`, etc. which have an inherent margin,
+      // we want to remove the bottom margin for the last one in the container.
+      '& > .markdown-container > *:last-child': {
+        marginBottom: 0,
       },
     }),
   });

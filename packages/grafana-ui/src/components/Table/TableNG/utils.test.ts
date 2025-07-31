@@ -16,7 +16,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode } from '@grafana/sc
 
 import { TableCellDisplayMode } from '../types';
 
-import { COLUMN, TABLE } from './constants';
+import { COLUMN } from './constants';
 import { LineCounterEntry } from './types';
 import {
   extractPixelValue,
