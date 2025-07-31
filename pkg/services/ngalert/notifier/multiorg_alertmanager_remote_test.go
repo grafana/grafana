@@ -51,36 +51,24 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	})
 
 	// Create the factory function for the MOA using the forked Alertmanager in remote secondary mode.
+	remoteAMCfg := remote.AlertmanagerConfig{
+		OrgID:             1,
+		URL:               testsrv.URL,
+		TenantID:          tenantID,
+		BasicAuthPassword: password,
+		DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
+	}
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
-		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			// Create internal Alertmanager.
-			internalAM, err := factoryFn(ctx, orgID)
-			require.NoError(t, err)
-
-			// Create remote Alertmanager.
-			externalAMCfg := remote.AlertmanagerConfig{
-				OrgID:             1,
-				URL:               testsrv.URL,
-				TenantID:          tenantID,
-				BasicAuthPassword: password,
-				DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
-			}
-			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			remoteAM, err := remote.NewAlertmanager(ctx, externalAMCfg, notifier.NewFileStore(orgID, kvStore), notifier.NewCrypto(secretsService, configStore, log.NewNopLogger()), remote.NoopAutogenFn, m, tracing.InitializeTracerForTest())
-			require.NoError(t, err)
-
-			// Use both Alertmanager implementations in the forked Alertmanager.
-			cfg := remote.RemoteSecondaryConfig{
-				Logger: nopLogger,
-				OrgID:  orgID,
-				Store:  configStore,
-				// Note that we're setting a sync interval of 10 seconds.
-				SyncInterval: 10 * time.Second,
-			}
-			return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
-		}
-	})
+	override := remote.NewRemoteSecondaryFactory(remoteAMCfg,
+		notifier.NewFileStore(remoteAMCfg.OrgID, kvStore),
+		configStore,
+		10*time.Second,
+		notifier.NewCrypto(secretsService, configStore, log.NewNopLogger()),
+		remote.NoopAutogenFn,
+		m.GetRemoteAlertmanagerMetrics(),
+		tracing.InitializeTracerForTest(),
+		false,
+	)
 
 	cfg := &setting.Cfg{
 		DataPath: t.TempDir(),
@@ -103,7 +91,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		secretsService,
 		featuremgmt.WithFeatures(),
 		nil,
-		override,
+		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)
 
