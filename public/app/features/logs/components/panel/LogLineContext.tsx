@@ -31,11 +31,13 @@ import { sortLogRows } from '../../utils';
 import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
 
+import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogList } from './LogList';
+import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
 
 interface LogLineContextProps {
-  log: LogRowModel;
+  log: LogRowModel | LogListModel;
   logOptionsStorageKey?: string;
   open: boolean;
   timeZone: TimeZone;
@@ -225,6 +227,20 @@ export const LogLineContext = memo(
       };
     }, [log.uid]);
 
+    const wrapLogMessage = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true;
+    const syntaxHighlighting = logOptionsStorageKey
+      ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
+      : true;
+    // @todo: Remove when the LogRows are deprecated
+    const logListModel =
+      log instanceof LogListModel
+        ? log
+        : new LogListModel(log, {
+            escape: false,
+            timeZone,
+            wrapLogMessage,
+          });
+
     return (
       <Modal
         isOpen={open}
@@ -249,7 +265,7 @@ export const LogLineContext = memo(
             </div>
           }
         >
-          <div>{log.entry}</div>
+          <LogLineDetailsLog log={logListModel} syntaxHighlighting={syntaxHighlighting} />
         </Collapse>
         <div className={styles.loadingIndicator}>
           {aboveState === LoadingState.Loading && (
@@ -286,11 +302,10 @@ export const LogLineContext = memo(
                 showControls
                 showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
                 sortOrder={sortOrder}
+                syntaxHighlighting={syntaxHighlighting}
                 timeRange={timeRange}
                 timeZone={timeZone}
-                wrapLogMessage={
-                  logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true
-                }
+                wrapLogMessage
               />
             )}
           </div>
