@@ -1,1 +1,1 @@
-import '@grafana/plugin-configs/jest/jest-setup.js';
+import '@grafana/plugin-configs/jest/jest-setup';

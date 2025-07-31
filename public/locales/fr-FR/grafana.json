@@ -1548,8 +1548,7 @@
       "group-not-editable": "Le groupe sélectionné ne peut pas être modifié",
       "group-not-editable-description": "Ce groupe appartient à une source de données qui ne prend pas en charge la modification.",
       "page-title": "Modifier le groupe de règles",
-      "rule-group-error": "Erreur lors du chargement du groupe de règles",
-      "title": "Modifier le groupe d’évaluation"
+      "rule-group-error": "Erreur lors du chargement du groupe de règles"
     },
     "group-loader": {
       "group-load-failed": "Échec du chargement des règles du groupe {{ groupName }} dans {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Effectuez des vérifications ping, DNS, HTTP/S et TCP à tous les niveaux du réseau.",
       "synthetic-monitoring-card-item-3": "Utilisez plus de 20 sondes mondiales ou déployez vos propres sondes privées derrière votre pare-feu.",
       "synthetic-monitoring-card-item-4": "Suivez vos SLO grâce à des alertes natives au format Prometheus, directement depuis l’interface utilisateur.",
-      "synthetic-monitoring-card-title": "Monitoring synthétique",
-      "title-alerting": "Alerte"
+      "synthetic-monitoring-card-title": "Monitoring synthétique"
     },
     "import-to-gma": {
       "action-button": "Importer",
@@ -3482,6 +3480,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Annuler",
       "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
       "confirmation-text": "Supprimer",
@@ -3515,6 +3514,10 @@
       "this-folder-is-empty": "Ce dossier est vide"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3522,15 +3525,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
@@ -3728,6 +3738,7 @@
     "category-selected-connection": "Connexion sélectionnée",
     "category-selected-element": "Élément sélectionné ({{element}})",
     "category-size": "Taille",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3970,6 +3981,13 @@
       "name-vertical-align": "Alignement vertical",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4567,6 +4585,7 @@
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5354,6 +5373,20 @@
       "invalid-json": "JSON non valide",
       "tags-expected-array": "balises attendues tableau",
       "tags-expected-strings": "balises attendues tableau de chaînes"
+    },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
     },
     "version-history-comparison": {
       "button-restore": "Restaurer la version {{version}}",
@@ -6979,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": " Conseil de pro : vous pouvez également définir des sources de données via des fichiers de configuration. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Précédent",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Passer en mode sans requête"
@@ -7245,18 +7281,24 @@
       "split-tooltip": "Scinder le panneau",
       "split-widen": "Élargir le panneau"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Publiez votre commentaire",
-      "label-copied": "Copié !",
-      "label-export": "Exporter",
-      "label-trace-id": "ID de trace",
-      "title-share-thoughts-about-tracing-grafana": "Veuillez partager vos réflexions sur les traces dans Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Trace partielle",
-      "tooltip-url": "{{url}} ou {{target}} ou {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Bouton Supprimer les filtres",
@@ -8272,6 +8314,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Effacer la sélection"
     },
@@ -8284,6 +8329,7 @@
       "aria-label-selected-color": "Couleur {{colorLabel}}"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Annuler",
       "confirmText-delete": ""
     },
@@ -8710,6 +8756,7 @@
       "footer-add-annotation": "Ajouter une annotation",
       "footer-click-to-action": "Cliquez pour {{actionTitle}}",
       "footer-click-to-navigate": "Cliquez pour ouvrir {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Horodatage"
     },
     "week-start-picker": {
@@ -11224,6 +11271,7 @@
       "starting": "Démarrage...",
       "status": {
         "title-error-running-job": "Erreur lors de l’exécution de la mission",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Synthèse",
@@ -11372,6 +11420,7 @@
       "label-current-step": "Étape actuelle",
       "label-pending-step": "Étape en attente"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11404,6 +11453,12 @@
       "alert-title": "Important : aucune donnée ou configuration ne sera perdue, mais les tableaux de bord seront temporairement indisponibles pendant quelques minutes.",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Choisir ce qui doit être synchronisé",
       "step-connect": "Connecter",
       "step-finish": "Choisir des paramètres supplémentaires",
@@ -11418,6 +11473,7 @@
     "wizard-content": {
       "button-cancel": "Annuler",
       "button-cancelling": "Annulation...",
+      "button-previous": "",
       "button-submitting": "Envoi…",
       "error-instance-repository-exists": "Le référentiel d’instances existe déjà"
     }

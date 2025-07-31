@@ -107,6 +107,30 @@ describe('RuleList - FilterView', () => {
 
     expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
   });
+
+  it('should render group names as clickable links', async () => {
+    render(
+      <FilterView
+        filterState={getFilter({
+          dataSourceNames: ['Mimir'],
+          groupName: 'test-group-4501',
+          ruleName: 'mimir-test-rule-1',
+        })}
+      />
+    );
+
+    await loadMoreResults();
+
+    const groupLink = await screen.findByRole('link', {
+      name: 'test-group-4501',
+    });
+
+    expect(groupLink).toBeInTheDocument();
+    expect(groupLink).toHaveAttribute(
+      'href',
+      '/alerting/mimir/namespaces/test-mimir-namespace/groups/test-group-4501/view'
+    );
+  });
 });
 
 async function loadMoreResults() {
