@@ -83,12 +83,8 @@ export class ScopesService implements ScopesContextValue {
 
         // If we have a parent node in the URL, fetch and expand it
         const parentNode = queryParams.get('scope_parent');
-        if (parentNode) {
-          this.selectorService.loadNode(parentNode);
-        }
-
         const scopes = queryParams.getAll('scopes');
-        //const scopesFromState = this.state.value.map((scope) => scope.metadata.name);
+
         if (scopes.length) {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user

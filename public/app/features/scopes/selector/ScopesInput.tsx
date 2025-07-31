@@ -7,6 +7,7 @@ import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getPathOfNode } from './scopesTreeUtils';
 import { NodesMap, ScopesMap, SelectedScope } from './types';
+import { useScopeNode } from './useScopeNode';
 
 export interface ScopesInputProps {
   nodes: NodesMap;
@@ -32,6 +33,10 @@ export function ScopesInput({
 }: ScopesInputProps) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
 
+  const parentNodeId = appliedScopes[0]?.parentNodeId;
+  const parentNode = useScopeNode(parentNodeId);
+  const parentNodeTitle = parentNode?.spec.title;
+
   useEffect(() => {
     setTooltipVisible(false);
   }, [appliedScopes]);
@@ -50,14 +55,6 @@ export function ScopesInput({
         .join(' + '),
     [appliedScopes, scopes]
   );
-
-  // const scopesGroup = useMemo(() => {
-  //   return getScopesPath(appliedScopes, nodes)?.[-1];
-  // }, [appliedScopes, nodes]);
-
-  const appliedScopeNodeIds = appliedScopes.map((s) => s.parentNodeId);
-  console.log('appliedScopeNodeIds', appliedScopeNodeIds);
-  const parentNodeTitle = appliedScopeNodeIds[0] ? nodes[appliedScopeNodeIds[0]]?.spec.title : undefined;
 
   const input = useMemo(
     () => (

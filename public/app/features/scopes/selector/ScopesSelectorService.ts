@@ -72,15 +72,20 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   }
 
   // Loads a node from the API and adds it to the nodes cache
-  public loadNode = async (scopeNodeId: string) => {
+  public getScopeNode = async (scopeNodeId: string) => {
+    if (this.state.nodes[scopeNodeId]) {
+      return this.state.nodes[scopeNodeId];
+    }
+
     try {
       const node = await this.apiClient.fetchScopeNode(scopeNodeId);
       if (node) {
         this.updateState({ nodes: { ...this.state.nodes, [node.metadata.name]: node } });
-        console.log('loaded node', node);
       }
+      return node;
     } catch (error) {
       console.error('Failed to load node', error);
+      return undefined;
     }
   };
 
@@ -253,7 +258,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // Fetch parent node if it is not already loaded
     if (scopes[0]?.parentNodeId && !this.state.nodes[scopes[0].parentNodeId]) {
-      this.loadNode(scopes[0].parentNodeId);
+      this.getScopeNode(scopes[0].parentNodeId);
     }
 
     // Fetches both dashboards and scope navigations
