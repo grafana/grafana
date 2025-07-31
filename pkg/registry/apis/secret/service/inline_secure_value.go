@@ -224,5 +224,40 @@ func (s *inlineSecureValueService) CreateInline(ctx context.Context, owner commo
 }
 
 func (s *inlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Context, owner common.ObjectReference, name string) error {
-	return fmt.Errorf("not implemented yet")
+	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.DeleteWhenOwnedByResource", trace.WithAttributes(
+		attribute.String("owner.namespace", owner.Namespace),
+		attribute.String("owner.apiGroup", owner.APIGroup),
+		attribute.String("owner.apiVersion", owner.APIVersion),
+		attribute.String("owner.kind", owner.Kind),
+		attribute.String("owner.name", owner.Name),
+		attribute.String("secureValue.name", name),
+	))
+	defer span.End()
+
+	authInfo, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return fmt.Errorf("missing auth info in context")
+	}
+
+	if owner.Namespace == "" || !authlib.NamespaceMatches(authInfo.GetNamespace(), owner.Namespace) {
+		return fmt.Errorf("owner namespace %s does not match auth info namespace %s", owner.Namespace, authInfo.GetNamespace())
+	}
+
+	if owner.APIGroup == "" || owner.APIVersion == "" || owner.Kind == "" || owner.Name == "" {
+		return fmt.Errorf("owner reference must have a valid API group, API version, kind and name")
+	}
+
+	owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
+	if err != nil {
+		return fmt.Errorf("error checking if secure value %s is owned by %v: %w", name, owner, err)
+	}
+
+	if owned {
+		if _, err := s.secureValueService.Delete(ctx, xkube.Namespace(owner.Namespace), name); err != nil {
+			return fmt.Errorf("error deleting secure value %s for owner %v: %w", name, owner, err)
+		}
+	}
+
+	// if it is not owned, this is a no-op
+	return nil
 }
