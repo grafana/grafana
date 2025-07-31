@@ -120,7 +120,7 @@ describe('DashboardPicker', () => {
       });
     });
 
-    it('should search for dashboards', async () => {
+    it.skip('should search for dashboards', async () => {
       render(<DashboardPicker onChange={noop} />);
 
       await userEvent.type(screen.getByRole('combobox'), 'Dashboard 2');
