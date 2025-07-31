@@ -780,7 +780,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
+	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService, registerer)
 	secureValueValidator := validator3.ProvideSecureValueValidator()
 	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
@@ -1341,7 +1341,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
+	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService, registerer)
 	secureValueValidator := validator3.ProvideSecureValueValidator()
 	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
