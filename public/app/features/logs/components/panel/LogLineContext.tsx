@@ -287,7 +287,7 @@ export const LogLineContext = memo(
                 syntaxHighlighting={syntaxHighlighting}
                 timeRange={timeRange}
                 timeZone={timeZone}
-                wrapLogMessage
+                wrapLogMessage={wrapLogMessage}
               />
             )}
           </div>
