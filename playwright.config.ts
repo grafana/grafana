@@ -32,6 +32,9 @@ export default defineConfig<PluginOptions>({
   },
   ...(!process.env.GRAFANA_URL && {
     webServer: {
+      // air now deletes the binary, so we check if we need to build it before trying to start the server
+      // see https://github.com/air-verse/air/issues/525
+      // if this gets resolved, we could remove the go build and rely on the binary being present as before
       command:
         'if [ ! -f ./bin/grafana ]; then make GO_BUILD_DEV=1 build-go-fast; fi && yarn e2e:plugin:build && ./e2e-playwright/start-server',
       url: DEFAULT_URL,
