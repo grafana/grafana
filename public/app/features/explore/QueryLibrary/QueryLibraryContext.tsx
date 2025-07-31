@@ -24,7 +24,11 @@ export type QueryLibraryContextType = {
   openDrawer: (
     datasourceFilters: string[],
     onSelectQuery: OnSelectQueryType,
-    options?: { isReplacingQuery?: boolean; context?: string }
+    options?: {
+      isReplacingQuery?: boolean;
+      context?: string;
+      highlightQuery?: string;
+    }
   ) => void;
   closeDrawer: () => void;
   isDrawerOpen: boolean;
