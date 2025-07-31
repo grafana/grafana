@@ -98,7 +98,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	rootFolder := RootFolder(r.repo.Config())
 	fid, ok := r.folders.Tree().DirPath(folder, rootFolder)
 	if !ok {
-		return "", fmt.Errorf("folder not found in tree: %s", folder)
+		return "", fmt.Errorf("folder not found in tree: %s, root folder: %s", folder, rootFolder)
 	}
 
 	fileName := slugify.Slugify(title) + ".json"
