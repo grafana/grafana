@@ -10,7 +10,7 @@ import {
   Field,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { InlineField, Select } from '@grafana/ui';
+import { Combobox, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -94,7 +94,7 @@ export const RegressionTransformerEditor = ({
           onChange={(v) => {
             onChange({ ...options, xFieldName: v });
           }}
-        ></FieldNamePicker>
+        />
       </InlineField>
       <InlineField
         labelWidth={LABEL_WIDTH}
@@ -107,19 +107,19 @@ export const RegressionTransformerEditor = ({
           onChange={(v) => {
             onChange({ ...options, yFieldName: v });
           }}
-        ></FieldNamePicker>
+        />
       </InlineField>
       <InlineField
         labelWidth={LABEL_WIDTH}
         label={t('transformers.regression-transformer-editor.label-model-type', 'Model type')}
       >
-        <Select
+        <Combobox
           value={options.modelType ?? DEFAULTS.modelType}
           onChange={(v) => {
             onChange({ ...options, modelType: v.value ?? DEFAULTS.modelType });
           }}
           options={modelTypeOptions}
-        ></Select>
+        />
       </InlineField>
       <InlineField
         labelWidth={LABEL_WIDTH}
@@ -134,14 +134,18 @@ export const RegressionTransformerEditor = ({
           onChange={(v) => {
             onChange({ ...options, predictionCount: v });
           }}
-        ></NumberInput>
+        />
       </InlineField>
       {options.modelType === ModelType.polynomial && (
         <InlineField
           labelWidth={LABEL_WIDTH}
           label={t('transformers.regression-transformer-editor.label-degree', 'Degree')}
+          tooltip={t(
+            'transformers.regression-transformer-editor.tooltip-high-degree-polynomial',
+            'Higher-degree polynomials (e.g., degree 4 or higher) can result in misleading trends and unstable fits. Proceed with caution.'
+          )}
         >
-          <Select<number>
+          <Combobox
             value={options.degree ?? DEFAULTS.degree}
             options={DEGREES.map((deg) => {
               return {
@@ -150,9 +154,9 @@ export const RegressionTransformerEditor = ({
               };
             })}
             onChange={(v) => {
-              onChange({ ...options, degree: v.value });
+              onChange({ ...options, degree: Number(v.value) });
             }}
-          ></Select>
+          />
         </InlineField>
       )}
     </>
