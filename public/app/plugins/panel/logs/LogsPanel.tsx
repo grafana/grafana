@@ -736,6 +736,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flex: 1,
     flexDirection: 'column',
+    overflow: 'hidden',
   }),
   controlledLogsContainer: css({
     height: '100%',
