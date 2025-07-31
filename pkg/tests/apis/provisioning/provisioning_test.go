@@ -2165,6 +2165,15 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, result.Error(), "should be able to create export job for first repo")
 	helper.AwaitJobsWithStates(t, repo1, []string{"success"})
 
+	// Verify that the first repository has claimed ownership of the dashboards
+	managedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo1, managedDash1.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard1 should be managed by first repo")
+
+	managedDash2, err := helper.DashboardsV2beta1.Resource.Get(ctx, dashboard2Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo1, managedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard2 should be managed by first repo")
+
 	// Create second repository - enable sync and set different target
 	const repo2 = "second-repository"
 	createBody2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
@@ -2233,20 +2242,11 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	files1After, err := countFilesInDir(helper.ProvisioningPath)
 	require.NoError(t, err)
 
-	// The key assertion: second repository should skip managed dashboards
-	// Since the first two dashboards are already managed by repo1, they should be skipped
-	// Dashboard3 has folder path issues but the important thing is that managed dashboards were skipped
-	expectedNewFiles := 0 // No files should be exported due to folder path issues with dashboard3
+	expectedNewFiles := 1 // No files should be exported due to folder path issues with dashboard3
 	actualNewFiles := files1After - files1Before
 	require.Equal(t, expectedNewFiles, actualNewFiles,
 		"second repository should skip managed dashboards and had folder issues with unmanaged dashboard (expected %d new files, got %d)",
 		expectedNewFiles, actualNewFiles)
-
-	// Verify dashboard3 is still unmanaged (due to folder path issues preventing export)
-	stillUnmanagedDash3, err := helper.DashboardsV0.Resource.Get(ctx, dashboard3Name, metav1.GetOptions{})
-	require.NoError(t, err)
-	manager3, found := stillUnmanagedDash3.GetAnnotations()[utils.AnnoKeyManagerIdentity]
-	require.True(t, !found || manager3 == "", "dashboard3 should still be unmanaged due to export folder issues")
 
 	// Verify dashboard1 and dashboard2 are still managed by repo1 (unchanged)
 	stillManagedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
@@ -2258,6 +2258,12 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err)
 	require.Equal(t, repo1, stillManagedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"dashboard2 should still be managed by first repo")
+
+	// Verify dashboard3 is now managed by repo2
+	stillManagedDash3, err := helper.DashboardsV0.Resource.Get(ctx, dashboard3Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo2, stillManagedDash3.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+		"dashboard3 should now be managed by second repo")
 }
 
 // Helper function to count files in a directory recursively
