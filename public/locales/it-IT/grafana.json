@@ -1548,8 +1548,7 @@
       "group-not-editable": "Il gruppo selezionato non può essere modificato",
       "group-not-editable-description": "Questo gruppo appartiene a un'origine dati che non supporta la modifica.",
       "page-title": "Modifica gruppo di regole",
-      "rule-group-error": "Errore durante il caricamento del gruppo di regole",
-      "title": "Modifica il gruppo di valutazione"
+      "rule-group-error": "Errore durante il caricamento del gruppo di regole"
     },
     "group-loader": {
       "group-load-failed": "Impossibile caricare le regole dal gruppo {{ groupName }} in {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Avvisi"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Importa",
@@ -3482,6 +3480,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Annulla",
       "cannot-move-folders": "Non è possibile spostare le cartelle",
       "confirmation-text": "Elimina",
@@ -3515,6 +3514,10 @@
       "this-folder-is-empty": "Questa cartella è vuota"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3522,15 +3525,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} regola di avviso",
@@ -3728,6 +3738,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3970,6 +3981,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatico"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4567,6 +4585,7 @@
     "edit-actions": {
       "add": "",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5354,6 +5373,20 @@
       "invalid-json": "JSON non valido",
       "tags-expected-array": "array con tag previsti",
       "tags-expected-strings": "array di stringhe con tag previsti"
+    },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
     },
     "version-history-comparison": {
       "button-restore": "Ripristina alla versione {{version}} ",
@@ -6979,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": " Suggerimento: è inoltre possibile definire le origini dei dati tramite i file di configurazione. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Prec.",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Passa a senza query"
@@ -7245,18 +7281,24 @@
       "split-tooltip": "Dividi il riquadro",
       "split-widen": "Allarga riquadro"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Lascia un feedback",
-      "label-copied": "Copiato!",
-      "label-export": "Esporta",
-      "label-trace-id": "ID traccia",
-      "title-share-thoughts-about-tracing-grafana": "Condividi i tuoi pensieri sul tracciamento in Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Traccia parziale",
-      "tooltip-url": "{{url}} o {{target}} o {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tasto Cancella filtri",
@@ -8272,6 +8314,9 @@
     "card": {
       "option": "opzione"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Cancella selezione"
     },
@@ -8284,6 +8329,7 @@
       "aria-label-selected-color": "Colore {{colorLabel}}"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Annulla",
       "confirmText-delete": ""
     },
@@ -8710,6 +8756,7 @@
       "footer-add-annotation": "Aggiungi annotazione",
       "footer-click-to-action": "Fai clic per {{actionTitle}}",
       "footer-click-to-navigate": "Fai clic per aprire {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Indicazione data/ora"
     },
     "week-start-picker": {
@@ -11224,6 +11271,7 @@
       "starting": "Avvio in corso...",
       "status": {
         "title-error-running-job": "Errore durante l'esecuzione dell'attività",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Indice",
@@ -11372,6 +11420,7 @@
       "label-current-step": "Passaggio corrente",
       "label-pending-step": "Passaggio in sospeso"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11404,6 +11453,12 @@
       "alert-title": "Importante: nessun dato o configurazione andrà perso, ma le dashboard non saranno disponibili per alcuni minuti.",
       "button-next": "Fine",
       "button-start": "Inizia la sincronizzazione",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Scegli cosa sincronizzare",
       "step-connect": "Connetti",
       "step-finish": "Scegli impostazioni aggiuntive",
@@ -11418,6 +11473,7 @@
     "wizard-content": {
       "button-cancel": "Annulla",
       "button-cancelling": "Annullamento in corso...",
+      "button-previous": "",
       "button-submitting": "Invio in corso...",
       "error-instance-repository-exists": "Il repository delle istanze esiste già"
     }

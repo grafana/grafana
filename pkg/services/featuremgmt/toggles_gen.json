@@ -838,6 +838,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardLevelTimeMacros",
+        "resourceVersion": "1753435849295",
+        "creationTimestamp": "2025-07-25T09:30:49Z"
+      },
+      "spec": {
+        "description": "Supports __from and __to macros that always use the dashboard level time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-10-23T08:55:45Z"
@@ -1731,19 +1744,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesClientDashboardsFolders",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-02-18T23:11:26Z"
-      },
-      "spec": {
-        "description": "Route the folder and dashboard service requests to k8s",
-        "stage": "GA",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T14:34:23Z"
@@ -1767,19 +1767,6 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "kubernetesLibraryPanelConnections",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
-      },
-      "spec": {
-        "description": "Routes library panel connections requests from /api to using search",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
       }
     },
     {
@@ -2428,6 +2415,19 @@
     },
     {
       "metadata": {
+        "name": "postgresDSUsePGX",
+        "resourceVersion": "1753174666056",
+        "creationTimestamp": "2025-05-26T06:54:18Z",
+        "deletionTimestamp": "2025-06-03T12:45:07Z"
+      },
+      "spec": {
+        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "preferLibraryPanelTitle",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-17T11:21:21Z"
@@ -2758,6 +2758,18 @@
         "description": "Enables the new role picker drawer design",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "scanRowInvalidDashboardParseFallbackEnabled",
+        "resourceVersion": "1753730899886",
+        "creationTimestamp": "2025-07-28T19:28:19Z"
+      },
+      "spec": {
+        "description": "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -3228,6 +3240,22 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "useScopeSingleNodeEndpoint",
+        "resourceVersion": "1753960766702",
+        "creationTimestamp": "2025-07-31T11:19:26Z"
+      },
+      "spec": {
+        "description": "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
