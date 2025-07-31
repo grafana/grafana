@@ -838,6 +838,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardLevelTimeMacros",
+        "resourceVersion": "1753435849295",
+        "creationTimestamp": "2025-07-25T09:30:49Z"
+      },
+      "spec": {
+        "description": "Supports __from and __to macros that always use the dashboard level time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-10-23T08:55:45Z"
