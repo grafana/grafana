@@ -684,7 +684,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/Branding/ @grafana/grafana-frontend-platform
 /public/app/core/components/Breadcrumbs/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/BouncingLoader/ @grafana/grafana-frontend-platform
-/public/app/core/components/CardButton/ @grafana/dashboards-squad
+/public/app/core/components/CardButton.tsx @grafana/dashboards-squad
 /public/app/core/components/CloseButton/ @grafana/grafana-frontend-platform
 /public/app/core/components/ColorScale/ @grafana/dataviz-squad
 /public/app/core/components/DynamicImports/ @grafana/grafana-search-navigate-organise
@@ -726,7 +726,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/core/components/Upgrade/ @grafana/grafana-operator-experience-squad
 /public/app/core/components/ValidationLabels/ @grafana/grafana-search-navigate-organise
-/public/app/core/components/VersionHistoryComparison/ @grafana/dashboards-squad
+/public/app/core/components/VersionHistory/ @grafana/dashboards-squad
 /public/app/core/config.ts @grafana/grafana-frontend-platform
 /public/app/core/constants.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
@@ -759,14 +759,22 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/theme.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/factors.test.ts
+/public/app/core/specs/flatten.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/impression_srv.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/rangeutil.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/store.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/ticks.test.ts
 /public/app/core/specs/time_series.test.ts @grafana/dataviz-squad
 /public/app/core/store.ts @grafana/grafana-frontend-platform
 /public/app/core/time_series2.ts @grafana/dataviz-squad
 /public/app/core/trustedTypePolicies.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/accessControl.ts @grafana/identity-access-team
+/public/app/core/utils/applyStateChanges.ts @grafana/dashboards-squad
+/public/app/core/utils/arrayMove.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/auth.ts @grafana/identity-access-team
 /public/app/core/utils/browser* @grafana/grafana-frontend-platform
+/public/app/core/utils/colors.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/ConfigProvider.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/connectWithReduxStore.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/deferred.ts @grafana/grafana-frontend-platform
