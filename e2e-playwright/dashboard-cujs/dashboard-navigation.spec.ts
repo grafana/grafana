@@ -1,11 +1,12 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { applyScopes, clickScopeNode, openScopesSelector, selectScope, TestScopeType } from './scopeUtils';
+import { applyScopes, openScopesSelector, selectScope, TestScope } from './scopeUtils';
 
 test.use({
   featureToggles: {
     scopeFilters: true,
     groupByVariable: true,
+    reloadDashboardsOnParamsChange: true,
   },
 });
 
@@ -22,37 +23,33 @@ test.describe(
     tag: ['@dashboard-cujs'],
   },
   () => {
-    test('test 0', async ({ gotoDashboardPage, selectors, page }) => {
+    test('scopes mock data', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
-      const testScopes: TestScopeType[] = [
+      const testScopes: TestScope[] = [
         {
-          name: 'databases',
-          title: 'Databases',
+          name: 'test-scope-01',
+          title: 'TestScope1',
+          filters: [{ key: 'namespace', operator: 'equals', value: 'test-scope-01' }],
+        },
+        {
+          name: 'test-scope-02',
+          title: 'TestScope2',
+          filters: [{ key: 'namespace', operator: 'equals', value: 'test-scope-02' }],
         },
       ];
 
       await openScopesSelector(page, testScopes);
-      await clickScopeNode(page, 'databases', [
-        { name: 'loki-dev-005', title: 'loki-dev-005' },
-        { name: 'loki-dev-006', title: 'loki-dev-006' },
-      ]);
-      await selectScope(page, 'databases', { name: 'loki-dev-005', title: 'loki-dev-005' }, [
-        { key: 'namespace', operator: 'equals', value: 'loki-dev-005' },
-      ]);
-      await selectScope(page, 'databases', { name: 'loki-dev-006', title: 'loki-dev-006' }, [
-        { key: 'namespace', operator: 'equals', value: 'loki-dev-006' },
-      ]);
-      await applyScopes(page, 'databases', [
-        { name: 'loki-dev-005', title: 'loki-dev-005' },
-        { name: 'loki-dev-006', title: 'loki-dev-006' },
-      ]);
+
+      await selectScope(page, testScopes[0]);
+      await selectScope(page, testScopes[1]);
+      await applyScopes(page, testScopes);
 
       await page.waitForTimeout(1000);
       expect(page.locator('[aria-label="Edit filter with key namespace"]')).toBeVisible();
     });
 
-    test('test 1', async ({ gotoDashboardPage, selectors, page }) => {
+    test('scopes through url', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: FIRST_DASHBOARD,
         queryParams: new URLSearchParams({ scopes: 'scope-sn-databases-l-loki-dev-005' }),
@@ -61,7 +58,7 @@ test.describe(
       expect(page.locator('[aria-label="Edit filter with key namespace"]')).toBeVisible();
     });
 
-    test('test 2', async ({ gotoDashboardPage, selectors, page }) => {
+    test('scopes live data', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: FIRST_DASHBOARD,
       });

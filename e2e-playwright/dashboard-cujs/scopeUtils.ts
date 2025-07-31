@@ -1,47 +1,14 @@
 import { Page, Response } from '@playwright/test';
 
-export type TestScopeType = {
+export type TestScope = {
   name: string;
   title: string;
+  filters: Array<{ key: string; value: string; operator: string }>;
+  dashboardUid?: string;
+  dashboardTitle?: string;
 };
 
-export async function openScopesSelector(page: Page, testScopes: TestScopeType[]) {
-  // Set up route interception
-  await page.route('**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_node_children*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        apiVersion: 'scope.grafana.app/v0alpha1',
-        kind: 'FindScopeNodeChildrenResults',
-        metadata: {},
-        items: testScopes.map((testScope) => ({
-          kind: 'ScopeNode',
-          apiVersion: 'scope.grafana.app/v0alpha1',
-          metadata: {
-            name: `sn-${testScope.name}`,
-            namespace: 'default',
-          },
-          spec: {
-            nodeType: 'container',
-            title: testScope.title,
-            description: testScope.title,
-            disableMultiSelect: false,
-          },
-        })),
-      }),
-    });
-  });
-
-  // Click the selector and wait for the network request
-  const responsePromise = page.waitForResponse((response) => response.url().includes('/find/scope_node_children'));
-
-  await page.getByTestId('scopes-selector-input').click();
-  await responsePromise;
-}
-
-export async function clickScopeNode(page: Page, nodeToClick: string, scopes: TestScopeType[]) {
-  // Set up route interception
+export async function openScopesSelector(page: Page, testScopes: TestScope[]) {
   await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_node_children*`, async (route) => {
     await route.fulfill({
       status: 200,
@@ -50,21 +17,21 @@ export async function clickScopeNode(page: Page, nodeToClick: string, scopes: Te
         apiVersion: 'scope.grafana.app/v0alpha1',
         kind: 'FindScopeNodeChildrenResults',
         metadata: {},
-        items: scopes.map((scope) => ({
+        items: testScopes.map((scope) => ({
           kind: 'ScopeNode',
           apiVersion: 'scope.grafana.app/v0alpha1',
           metadata: {
-            name: `sn-${nodeToClick}-l-${scope.name}`,
+            name: `sn-databases-l-${scope.name}`,
             namespace: 'default',
           },
           spec: {
-            parentName: nodeToClick,
+            parentName: 'databases',
             nodeType: 'leaf',
             title: scope.title,
             description: scope.title,
             disableMultiSelect: false,
             linkType: 'scope',
-            linkId: `scope-sn-${nodeToClick}-l-${scope.name}`,
+            linkId: `scope-sn-databases-l-${scope.name}`,
           },
         })),
       }),
@@ -73,18 +40,13 @@ export async function clickScopeNode(page: Page, nodeToClick: string, scopes: Te
 
   const responsePromise = page.waitForResponse((response) => response.url().includes('/find/scope_node_children'));
 
-  await page.getByTestId(`scopes-tree-sn-${nodeToClick}-expand`).click();
+  await page.getByTestId('scopes-selector-input').click();
   await responsePromise;
 }
 
-async function scopeSel(
-  page: Page,
-  parentNode: string,
-  selectedScope: TestScopeType,
-  filters: Array<{ key: string; value: string; operator: string }>
-): Promise<Response> {
+async function scopeSel(page: Page, selectedScope: TestScope): Promise<Response> {
   await page.route(
-    `**/apis/scope.grafana.app/v0alpha1/namespaces/*/scopes/scope-sn-${parentNode}-l-${selectedScope.name}`,
+    `**/apis/scope.grafana.app/v0alpha1/namespaces/*/scopes/scope-sn-databases-l-${selectedScope.name}`,
     async (route) => {
       await route.fulfill({
         status: 200,
@@ -93,13 +55,13 @@ async function scopeSel(
           kind: 'Scope',
           apiVersion: 'scope.grafana.app/v0alpha1',
           metadata: {
-            name: `scope-sn-${parentNode}-l-${selectedScope.name}`,
+            name: `scope-sn-databases-l-${selectedScope.name}`,
             namespace: 'default',
           },
           spec: {
             title: selectedScope.title,
             description: '',
-            filters: filters,
+            filters: selectedScope.filters,
           },
         }),
       });
@@ -107,28 +69,23 @@ async function scopeSel(
   );
 
   return page.waitForResponse((response) =>
-    response.url().includes(`/scopes/scope-sn-${parentNode}-l-${selectedScope.name}`)
+    response.url().includes(`/scopes/scope-sn-databases-l-${selectedScope.name}`)
   );
 }
 
-export async function selectScope(
-  page: Page,
-  parentNode: string,
-  selectedScope: TestScopeType,
-  filters: Array<{ key: string; value: string; operator: string }>
-) {
-  const responsePromise = scopeSel(page, parentNode, selectedScope, filters);
+export async function selectScope(page: Page, selectedScope: TestScope) {
+  await page.waitForTimeout(500);
+  const responsePromise = scopeSel(page, selectedScope);
 
-  await page.getByTestId(`scopes-tree-sn-${parentNode}-l-${selectedScope.name}-checkbox`).click({ force: true });
+  await page.getByTestId(`scopes-tree-sn-databases-l-${selectedScope.name}-checkbox`).click({ force: true });
   await responsePromise;
 }
 
-export async function applyScopes(page: Page, parentNode: string, scopes: TestScopeType[]) {
+export async function applyScopes(page: Page, scopes: TestScope[]) {
   const url: string =
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
-    scopes.map((scope) => `scope=scope-sn-${parentNode}-l-${scope.name}`).join('&');
+    scopes.map((scope) => `scope=scope-sn-databases-l-${scope.name}`).join('&');
 
-  // Set up route interception
   await page.route(url, async (route) => {
     await route.fulfill({
       status: 200,
@@ -141,12 +98,12 @@ export async function applyScopes(page: Page, parentNode: string, scopes: TestSc
             apiVersion: 'scope.grafana.app/v0alpha1',
             metadata: {},
             spec: {
-              dashboard: '06b1705e8960c1ad77caf7f3eba3caba',
-              scope: `scope-sn-${parentNode}-l-${scope.name}`,
+              dashboard: scope.dashboardUid ?? 'edediimbjhdz4b',
+              scope: `scope-sn-databases-l-${scope.name}`,
             },
             status: {
-              dashboardTitle: 'Mimir / rollout-operator',
-              groups: ['Mimir'],
+              dashboardTitle: scope.dashboardTitle ?? 'A tall dashboard',
+              groups: ['Dashboards'],
             },
           };
         }),
@@ -158,7 +115,7 @@ export async function applyScopes(page: Page, parentNode: string, scopes: TestSc
   const x: Array<Promise<Response>> = [];
 
   for (const scope of scopes) {
-    x.push(scopeSel(page, parentNode, scope, [{ key: 'namespace', value: scope.name, operator: 'equals' }]));
+    x.push(scopeSel(page, scope));
   }
 
   await page.getByTestId('scopes-selector-apply').click({ force: true });
