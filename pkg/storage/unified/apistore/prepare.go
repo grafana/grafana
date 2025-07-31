@@ -29,10 +29,14 @@ type objectForStorage struct {
 	grantPermissions string
 
 	// These secrets where created, should be cleaned up if storage fails
-	createdSecrets []string
+	createdSecureValues []string
 
 	// These should be deleted if storage succeeds
-	deleteSecrets []string
+	deleteSecureValues []string
+
+	// We know something changed
+	// This will ensure that the generation increments
+	hasChanged bool
 }
 
 // Called on create
@@ -89,7 +93,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(info.GetUID())
 	obj.SetGeneration(1) // the first time we write
 
-	_, err = handleSecureValues(ctx, s.opts.SecureValues, obj, nil)
+	err = handleSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
 	if err != nil {
 		return v, err
 	}
@@ -149,7 +153,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
-	changed, err := handleSecureValues(ctx, s.opts.SecureValues, obj, previous)
+	err = handleSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
 	if err != nil {
 		return v, err
 	}
@@ -160,21 +164,21 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 		}
 		// TODO: check that we can move the folder?
-		changed = true
+		v.hasChanged = true
 	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
-		changed = true // bump generation when deleted
-	} else if !changed {
+		v.hasChanged = true // bump generation when deleted
+	} else if !v.hasChanged {
 		spec, e1 := obj.GetSpec()
 		oldSpec, e2 := previous.GetSpec()
 		if e1 == nil && e2 == nil {
 			if !apiequality.Semantic.DeepEqual(spec, oldSpec) {
-				changed = true
+				v.hasChanged = true
 			}
 		}
 	}
 
 	// Mark the resource as changed
-	if changed {
+	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
 		obj.SetUpdatedBy(info.GetUID())
 		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())

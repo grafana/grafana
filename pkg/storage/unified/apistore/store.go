@@ -204,8 +204,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	rsp, err := s.store.Create(ctx, req)
-	if len(v.createdSecrets) > 0 && (err != nil || rsp.Error != nil) {
-		fmt.Printf("TODO, cleanup orphan secrets: %v\n", v.createdSecrets)
+	if len(v.createdSecureValues) > 0 && (err != nil || rsp.Error != nil) {
+		fmt.Printf("TODO, cleanup orphan secrets: %v\n", v.createdSecureValues)
 	}
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
@@ -607,10 +607,10 @@ func (s *Storage) GuaranteedUpdate(
 	// Only update (for real) if the bytes have changed
 	if !bytes.Equal(req.Value, existingBytes) {
 		updateResponse, err := s.store.Update(ctx, req)
+		if len(v.createdSecureValues) > 0 && (err != nil || updateResponse.Error != nil) {
+			fmt.Printf("TODO... remove the newly created secrets")
+		}
 		if err != nil {
-			if len(v.createdSecrets) > 0 {
-				fmt.Printf("TODO... remove the newly created secrets")
-			}
 			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if updateResponse.Error != nil {
@@ -618,7 +618,7 @@ func (s *Storage) GuaranteedUpdate(
 		}
 		rv = uint64(updateResponse.ResourceVersion)
 
-		if len(v.deleteSecrets) > 0 {
+		if len(v.deleteSecureValues) > 0 {
 			fmt.Printf("TODO... remove the deleted secrets")
 		}
 	}

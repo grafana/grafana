@@ -37,15 +37,14 @@ secure:
 `)
 	require.NoError(t, err)
 
-	store.On("UpdateSecureValues", mock.Anything, mock.Anything, mock.Anything).
-		Return(common.InlineSecureValues{
-			"a": common.InlineSecureValue{Name: "NAME"},
-			"b": common.InlineSecureValue{Name: "xyz"},
-		}, nil).Once()
+	info := &objectForStorage{}
 
-	changed, err := handleSecureValues(context.Background(), store, obj, nil)
+	store.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("secret")).
+		Return("NAME", nil).Once()
+
+	err = handleSecureValues(context.Background(), store, obj, nil, info)
 	require.NoError(t, err)
-	require.True(t, changed)
+	require.True(t, info.hasChanged)
 	secure, err := obj.GetSecureValues()
 	require.NoError(t, err)
 	require.JSONEq(t, `{
