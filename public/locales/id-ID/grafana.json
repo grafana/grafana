@@ -1542,8 +1542,7 @@
       "group-not-editable": "Grup yang dipilih tidak dapat diedit",
       "group-not-editable-description": "Grup ini termasuk dalam sumber data yang tidak mendukung pengeditan.",
       "page-title": "Edit grup aturan",
-      "rule-group-error": "Kesalahan saat memuat grup aturan",
-      "title": "Edit grup evaluasi"
+      "rule-group-error": "Kesalahan saat memuat grup aturan"
     },
     "group-loader": {
       "group-load-failed": "Gagal memuat aturan dari grup {{ groupName }} di {{ namespaceName }}",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "Jalankan pemeriksaan ping, DNS, HTTP/S, dan TCP di setiap layer jaringan.",
       "synthetic-monitoring-card-item-3": "Gunakan 20+ probe global atau probe pribadi di belakang firewall Anda.",
       "synthetic-monitoring-card-item-4": "Lacak SLO dengan peringatan yang mirip cara kerja Prometheus bawaan—langsung dari UI.",
-      "synthetic-monitoring-card-title": "Pemantauan Sintetis",
-      "title-alerting": "Alerting"
+      "synthetic-monitoring-card-title": "Pemantauan Sintetis"
     },
     "import-to-gma": {
       "action-button": "Impor",
@@ -3721,6 +3719,7 @@
     "category-selected-connection": "Koneksi yang dipilih",
     "category-selected-element": "Elemen yang dipilih ({{element}})",
     "category-size": "Ukuran",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3963,6 +3962,13 @@
       "name-vertical-align": "Rata vertikal",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -6984,6 +6990,9 @@
         "pro-tip-define-sources-through-configuration-files": " ProTip: Anda juga dapat menentukan sumber data melalui file konfigurasi. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Sebelumnya",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Buka tanpa kueri"
@@ -7250,18 +7259,24 @@
       "split-tooltip": "Pisahkan panel",
       "split-widen": "Lebarkan panel"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Berikan umpan balik",
-      "label-copied": "Disalin!",
-      "label-export": "Ekspor",
-      "label-trace-id": "ID Pelacakan",
-      "title-share-thoughts-about-tracing-grafana": "Bagikan pendapat Anda tentang pelacakan di Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Jejak parsial",
-      "tooltip-url": "{{url}} atau {{target}} atau {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tombol hapus filter",
