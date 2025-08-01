@@ -1,5 +1,3 @@
-import { Response } from '@playwright/test';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
 import scopesDashboard1 from '../dashboards/scopes-cujs/db1.json';
@@ -23,8 +21,6 @@ test.use({
     reloadDashboardsOnParamsChange: true,
   },
 });
-
-const MOCK_DATA = process.env.USE_LIVE_DATA;
 
 export const FIRST_DASHBOARD = process.env.USE_LIVE_DATA
   ? '30c27714f467e4fb6445c7a957fd15ed/mimir-overview-resources'
@@ -182,91 +178,66 @@ test.describe(
 
         await expect.soft(page.getByTestId('scopes-selector-input')).toHaveValue(secondLevelScopes[0].title!);
       });
-    });
 
-    test('scopes mock data regex', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+      // await test.step('scopes mock data regex', async () => {
+      //   //currently unsupported
+      //   return;
 
-      const testScopes: TestScope[] = [
-        {
-          name: 'scope-01',
-          title: 'scope-01',
-          filters: [{ key: 'user', operator: 'regex-match', value: 'test1|test2|test3' }],
-          dashboardTitle: 'Scopes Dashboard 2',
-          dashboardUid: SECOND_DASHBOARD,
-        },
-        {
-          name: 'scope-02',
-          title: 'scope-02',
-          filters: [{ key: 'user', operator: 'regex-match', value: 'test4|test5|test6' }],
-        },
-      ];
+      //   const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
-      await openScopesSelector(page, testScopes);
+      //   const testScopes: TestScope[] = [
+      //     {
+      //       name: 'scope-01',
+      //       title: 'scope-01',
+      //       filters: [{ key: 'user', operator: 'regex-match', value: 'test1|test2|test3' }],
+      //       dashboardTitle: 'Scopes Dashboard 2',
+      //       dashboardUid: SECOND_DASHBOARD,
+      //     },
+      //     {
+      //       name: 'scope-02',
+      //       title: 'scope-02',
+      //       filters: [{ key: 'user', operator: 'regex-match', value: 'test4|test5|test6' }],
+      //     },
+      //   ];
 
-      await selectScope(page, testScopes[0]);
-      await selectScope(page, testScopes[1]);
-      await applyScopes(page, testScopes);
+      //   await openScopesSelector(page, testScopes);
 
-      await page.waitForTimeout(1000);
-      expect(1).toBe(1);
-    });
+      //   await selectScope(page, testScopes[0]);
+      //   await selectScope(page, testScopes[1]);
+      //   await applyScopes(page, testScopes);
 
-    test('scopes mock data', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+      //   await page.waitForTimeout(1000);
+      //   expect(1).toBe(1);
+      // });
 
-      const testScopes: TestScope[] = [
-        {
-          name: 'test-scope-01',
-          title: 'TestScope1',
-          filters: [{ key: 'namespace', operator: 'equals', value: 'test-scope-01' }],
-          dashboardTitle: 'Scopes Dashboard 2',
-          dashboardUid: SECOND_DASHBOARD,
-        },
-        {
-          name: 'test-scope-02',
-          title: 'TestScope2',
-          filters: [{ key: 'namespace', operator: 'equals', value: 'test-scope-02' }],
-        },
-      ];
+      await test.step('1.6.Scope is being set through the url', async () => {
+        const scope: TestScope[] = [
+          {
+            name: 'test-scope-01',
+            title: 'TestScope1',
+            filters: [{ key: 'namespace', operator: 'equals', value: 'test-scope-01' }],
+            dashboardTitle: 'Scopes Dashboard 2',
+            dashboardUid: SECOND_DASHBOARD,
+          },
+          {
+            name: 'test-scope-02',
+            title: 'TestScope2',
+            filters: [{ key: 'namespace', operator: 'equals', value: 'test-scope-02' }],
+          },
+        ];
 
-      await openScopesSelector(page, testScopes);
+        const resp = scopeSelectRequest(page, scope[0]);
 
-      await selectScope(page, testScopes[0]);
-      await selectScope(page, testScopes[1]);
-      await applyScopes(page, testScopes);
+        await gotoDashboardPage({
+          uid: FIRST_DASHBOARD,
+          queryParams: new URLSearchParams({ scopes: 'scope-test-scope-01' }),
+        });
 
-      await page.waitForTimeout(1000);
-      expect(page.locator('[aria-label="Edit filter with key namespace"]')).toBeVisible();
-    });
+        await resp;
 
-    test('scopes through url', async ({ gotoDashboardPage, selectors, page }) => {
-      const testScopes: TestScope[] = [
-        {
-          name: 'test-scope-01',
-          title: 'TestScope1',
-          filters: [{ key: 'namespace', operator: 'equals', value: 'test-scope-01' }],
-          dashboardTitle: 'Scopes Dashboard 2',
-          dashboardUid: SECOND_DASHBOARD,
-        },
-        {
-          name: 'test-scope-02',
-          title: 'TestScope2',
-          filters: [{ key: 'namespace', operator: 'equals', value: 'test-scope-02' }],
-        },
-      ];
-
-      const responsePromise = scopeSelectRequest(page, testScopes[0]);
-
-      const dashboardPage = await gotoDashboardPage({
-        uid: FIRST_DASHBOARD,
-        queryParams: new URLSearchParams({ scopes: 'scope-test-scope-01' }),
+        await page.waitForTimeout(1000);
+        expect(page.locator('[aria-label="Edit filter with key namespace"]')).toBeVisible();
       });
-
-      await responsePromise;
-
-      await page.waitForTimeout(1000);
-      expect(page.locator('[aria-label="Edit filter with key namespace"]')).toBeVisible();
     });
   }
 );
