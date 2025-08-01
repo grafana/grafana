@@ -2129,6 +2129,10 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 
 	// Create the first repository with sync enabled
 	const repo1 = "first-repository"
+	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
+	err = os.MkdirAll(repo1Path, 0750)
+	require.NoError(t, err, "should be able to create repository path")
+
 	createBody1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo1,
 		"SyncEnabled": true,
@@ -2137,13 +2141,9 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	_, err = helper.Repositories.Resource.Create(ctx, createBody1, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create first repository")
 
-	// Copy dashboard files to first repository for sync
+	// Copy dashboard files to provisioning path
 	helper.CopyToProvisioningPath(t, "exportunifiedtorepository/dashboard-test-v1.yaml", "dashboard-test-v1.yaml")
 	helper.CopyToProvisioningPath(t, "exportunifiedtorepository/dashboard-test-v2beta1.yaml", "dashboard-test-v2beta1.yaml")
-
-	// Wait for first repository to sync and claim ownership of the dashboards
-	helper.SyncAndWait(t, repo1, nil)
-
 	// Debug: print file tree to see what was synced
 	printFileTree(t, helper.ProvisioningPath)
 
@@ -2163,7 +2163,10 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		Do(ctx)
 	require.NoError(t, result.Error(), "should be able to create export job for first repo")
 	helper.AwaitJobsWithStates(t, repo1, []string{"success"})
+	// Wait for first repository to sync
+	helper.SyncAndWait(t, repo1, nil)
 
+	printFileTree(t, helper.ProvisioningPath)
 	// Verify that the first repository has claimed ownership of the dashboards
 	managedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -2174,16 +2177,25 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.Equal(t, repo1, managedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard2 should be managed by first repo")
 
 	// Create second repository - enable sync and set different target
+
 	const repo2 = "second-repository"
+	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
+	err = os.MkdirAll(repo2Path, 0750)
+	require.NoError(t, err, "should be able to create seconrd repository path")
+
+	printFileTree(t, helper.ProvisioningPath)
+
 	createBody2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo2,
 		"SyncEnabled": true,
 		"SyncTarget":  "folder",
 	})
+
 	_, err = helper.Repositories.Resource.Create(ctx, createBody2, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create second repository")
+
 	// Wait for second repository to sync
-	helper.SyncAndWait(t, repo1, nil)
+	helper.SyncAndWait(t, repo2, nil)
 
 	// Validate that folders for both repositories exist
 	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
@@ -2213,9 +2225,9 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	manager, found := unmanagedDash3.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 	require.True(t, !found || manager == "", "dashboard3 should not be managed initially")
 
-	// Count files in first repo before second export
 	printFileTree(t, helper.ProvisioningPath)
-	files1Before, err := countFilesInDir(helper.ProvisioningPath)
+	// Count files in first repo before second export
+	files1Before, err := countFilesInDir(repo1Path)
 	require.NoError(t, err)
 
 	// Export from second repository - this should only export the unmanaged dashboard3
@@ -2237,8 +2249,12 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	// Wait for second repository export to complete
 	helper.AwaitJobsWithStates(t, repo2, []string{"success"})
 
+	// Wait for second repository to sync
+	helper.SyncAndWait(t, repo1, nil)
+	helper.SyncAndWait(t, repo2, nil)
+
 	printFileTree(t, helper.ProvisioningPath)
-	files1After, err := countFilesInDir(helper.ProvisioningPath)
+	files1After, err := countFilesInDir(repo1Path)
 	require.NoError(t, err)
 
 	expectedNewFiles := 1 // No files should be exported due to folder path issues with dashboard3
