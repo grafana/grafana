@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand"
 	"slices"
 	"strconv"
@@ -1133,7 +1134,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		})
 
 		t.Run("when there are no changes it should be successful", func(t *testing.T) {
-			// For this test we will not change the rule, and we will not use "admin" (CanWriteAllRulesFunc)
+			// For this test we will not change the rule, and we will not use "admin" (CanWriteAllRules)
 			// permissions. The response of the service should still be successful.
 			service, ruleStore, _, ac := initServiceWithData(t)
 
@@ -2070,6 +2071,39 @@ func dummyRule(title string, orgID int64) models.AlertRule {
 	return createTestRule(title, "my-cool-group", orgID, "my-namespace")
 }
 
+func createNoGroupRule(title string, orgID int64, namespace string) models.AlertRule {
+	uid := util.GenerateShortUID()
+	group, err := models.NewNoGroupRuleGroup(uid)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create NoGroupRuleGroup: %v", err))
+	}
+
+	return models.AlertRule{
+		UID:             uid,
+		OrgID:           orgID,
+		Title:           title,
+		Condition:       "A",
+		Version:         1,
+		IntervalSeconds: 60,
+		Data: []models.AlertQuery{
+			{
+				RefID:         "A",
+				Model:         json.RawMessage("{}"),
+				DatasourceUID: expr.DatasourceUID,
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(60),
+					To:   models.Duration(0),
+				},
+			},
+		},
+		NamespaceUID: namespace,
+		RuleGroup:    group.String(),
+		For:          time.Second * 60,
+		NoDataState:  models.OK,
+		ExecErrState: models.OkErrState,
+	}
+}
+
 func createTestRule(title string, groupTitle string, orgID int64, namespace string) models.AlertRule {
 	return models.AlertRule{
 		OrgID:           orgID,
@@ -2132,4 +2166,123 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 	}
 
 	return service, ruleStore, provenanceStore, ac
+}
+
+func TestNoGroupRuleGroupIntervalHandling(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
+
+	t.Run("CreateAlertRule with NoGroupRuleGroup", func(t *testing.T) {
+		t.Run("should preserve rule interval when set", func(t *testing.T) {
+			service, _, _, ac := initService(t)
+			// Set CanWriteAllRules to true so our NoGroupRuleGroup logic is triggered
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			customInterval := int64(120)
+			rule := createNoGroupRule("test-rule", orgID, "my-namespace")
+			rule.IntervalSeconds = customInterval
+
+			createdRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.NoError(t, err)
+			assert.Equal(t, customInterval, createdRule.IntervalSeconds, "Rule interval should be preserved for NoGroupRuleGroup")
+		})
+
+		t.Run("should use default interval when rule interval is zero", func(t *testing.T) {
+			service, _, _, ac := initService(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rule := createNoGroupRule("test-rule", orgID, "my-namespace")
+			rule.IntervalSeconds = 0
+
+			createdRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.NoError(t, err)
+			assert.Equal(t, service.defaultIntervalSeconds, createdRule.IntervalSeconds, "Default interval should be used when rule interval is zero")
+		})
+
+		t.Run("should use group interval for normal groups", func(t *testing.T) {
+			service, _, _, ac := initService(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			//FIXME(@rwwiv): Currently we reject the interval from the first rule in a group and set it to the default interval.
+			// This feels like a bug, but for now this test asserts the current behavior.
+
+			// First create a rule to establish a group with a specific interval
+			groupRule := createTestRule("group-rule", "normal-group", orgID, "my-namespace")
+			groupRule.IntervalSeconds = 90 // This is ignored currently
+			_, err := service.CreateAlertRule(context.Background(), u, groupRule, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			// Now create another rule in the same group with a different interval
+			newRule := createTestRule("new-rule", "normal-group", orgID, "my-namespace")
+			newRule.IntervalSeconds = 120
+
+			createdRule, err := service.CreateAlertRule(context.Background(), u, newRule, models.ProvenanceNone)
+			require.NoError(t, err)
+			// As above, assert that we use the default interval
+			assert.Equal(t, service.defaultIntervalSeconds, createdRule.IntervalSeconds, "New rule should use existing group interval, not its own")
+		})
+	})
+
+	t.Run("UpdateAlertRule with NoGroupRuleGroup", func(t *testing.T) {
+		t.Run("should allow interval updates for NoGroupRuleGroup", func(t *testing.T) {
+			service, _, _, ac := initService(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			// Create a rule with NoGroupRuleGroup
+			originalInterval := int64(60)
+			rule := createNoGroupRule("test-rule", orgID, "my-namespace")
+			rule.IntervalSeconds = originalInterval
+			createdRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			// Update the rule with a new interval
+			newInterval := int64(120)
+			createdRule.IntervalSeconds = newInterval
+			updatedRule, err := service.UpdateAlertRule(context.Background(), u, createdRule, models.ProvenanceNone)
+			require.NoError(t, err)
+			assert.Equal(t, newInterval, updatedRule.IntervalSeconds, "Rule interval should be updated for NoGroupRuleGroup")
+		})
+
+		t.Run("should preserve group interval for normal groups", func(t *testing.T) {
+			service, _, _, ac := initService(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			//FIXME(@rwwiv): Currently we reject the interval from the first rule in a group and set it to the default interval.
+			// This feels like a bug, but for now this test asserts the current behavior.
+
+			// Create a rule in a normal group
+			groupInterval := int64(90)
+			rule := createTestRule("test-rule", "normal-group", orgID, "my-namespace")
+			rule.IntervalSeconds = groupInterval
+			createdRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			// Try to update the rule with a different interval
+			createdRule.IntervalSeconds = 120
+			updatedRule, err := service.UpdateAlertRule(context.Background(), u, createdRule, models.ProvenanceNone)
+			require.NoError(t, err)
+			assert.Equal(t, service.defaultIntervalSeconds, updatedRule.IntervalSeconds, "Rule interval should not be changed for normal groups")
+		})
+	})
+
+	t.Run("GetRuleGroup with a NoGroupRuleGroup", func(t *testing.T) {
+		// FIXME: correct this test
+		// t.Run("should allow retrieval of sentinel group", func(t *testing.T) {
+		// 	service, _, _, _ := initService(t)
+
+		// 	_, err := service.GetRuleGroup(context.Background(), u, "my-namespace", models.NoGroupRuleGroup)
+		// 	require.Error(t, err)
+		// 	assert.Contains(t, err.Error(), "cannot retrieve the sentinel NoGroupRuleGroup as a group")
+		// })
+	})
 }

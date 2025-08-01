@@ -582,7 +582,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			uids = append(uids, rule.UID)
 		}
 		require.NoError(t, err)
-		rules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
+		rules, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
 		require.NoError(t, err)
 
 		updates := make([]models.UpdateRule, 0, len(rules))
@@ -649,7 +649,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			uids = append(uids, rule.UID)
 		}
 		require.NoError(t, err)
-		rules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
+		rules, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
 		require.NoError(t, err)
 
 		updates := make([]models.UpdateRule, 0, len(rules))
@@ -702,7 +702,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			uids = append(uids, rule.UID)
 		}
 		require.NoError(t, err)
-		rules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
+		rules, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: uids})
 		require.NoError(t, err)
 
 		updates := make([]models.UpdateRule, 0, len(rules))
@@ -769,7 +769,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, ids, len(rules))
 
-	dbRules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+	dbRules, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 		OrgID: 1,
 	})
 	require.NoError(t, err)
@@ -960,7 +960,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 	t.Run("should find rules by receiver name", func(t *testing.T) {
 		expected := getKeyMap(receiveRules)
-		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 			OrgID:        1,
 			ReceiverName: receiverName,
 		})
@@ -973,7 +973,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 	t.Run("should find rules by time interval name", func(t *testing.T) {
 		expected := getKeyMap(timeIntervalRules)
-		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 			OrgID:            1,
 			TimeIntervalName: timeIntervalName,
 		})
@@ -1009,7 +1009,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 				expected = append(expected, rule.GetKey())
 			}
 		}
-		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 			OrgID:            1,
 			ReceiverName:     receiver,
 			TimeIntervalName: intervalName,
@@ -1054,7 +1054,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			require.ElementsMatch(t, expected, invalidProvenance)
 			assert.Equal(t, len(expected), calledTimes)
 
-			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:        1,
 				ReceiverName: receiverName,
 			})
@@ -1072,7 +1072,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 				assert.Contains(t, expected, key)
 			}
 
-			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:        1,
 				ReceiverName: receiverName,
 			})
@@ -1090,7 +1090,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 				assert.Contains(t, expected, key)
 			}
 
-			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:        1,
 				ReceiverName: newName,
 			})
@@ -1100,7 +1100,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 				assert.Contains(t, expected, rule.GetKey())
 			}
 
-			actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			actual, _, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:        1,
 				ReceiverName: receiverName,
 			})
@@ -1142,7 +1142,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			require.ElementsMatch(t, expected, invalidProvenance)
 			assert.Equal(t, len(expected), calledTimes)
 
-			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:            1,
 				TimeIntervalName: timeIntervalName,
 			})
@@ -1160,7 +1160,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 				assert.Contains(t, expected, key)
 			}
 
-			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:            1,
 				TimeIntervalName: timeIntervalName,
 			})
@@ -1178,7 +1178,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 				assert.Contains(t, expected, key)
 			}
 
-			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			actual, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:            1,
 				TimeIntervalName: newName,
 			})
@@ -1188,7 +1188,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 				assert.Contains(t, expected, rule.GetKey())
 			}
 
-			actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			actual, _, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:            1,
 				TimeIntervalName: timeIntervalName,
 			})
@@ -1427,7 +1427,7 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 
 	t.Run("ListAlertRules", func(t *testing.T) {
 		t.Run("should find only group with exact case", func(t *testing.T) {
-			result, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			result, _, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:      1,
 				RuleGroups: []string{groupKey1.RuleGroup},
 			})
@@ -1785,7 +1785,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 					OrgID:                       orgID,
 					HasPrometheusRuleDefinition: tt.importedPrometheusRule,
 				}
-				result, err := store.ListAlertRules(context.Background(), query)
+				result, _, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)
 				require.ElementsMatch(t, tt.expectedRules, result)
 			})
