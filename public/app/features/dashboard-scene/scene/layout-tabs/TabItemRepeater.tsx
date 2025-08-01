@@ -70,7 +70,9 @@ export function TabItemRepeater({
   return (
     <>
       <tab.Component model={tab} key={tab.state.key!} />
-      {repeatedTabs?.map((tabClone) => <tabClone.Component model={tabClone} key={tabClone.state.key!} />)}
+      {repeatedTabs?.map((tabClone) => (
+        <tabClone.Component model={tabClone} key={tabClone.state.key!} />
+      ))}
     </>
   );
 }
