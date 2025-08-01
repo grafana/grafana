@@ -857,7 +857,6 @@ const (
 	RuleTypeFilterRecording
 )
 
-// Add this new struct
 type ListAlertRulesByGroupQuery struct {
 	OrgID         int64
 	RuleUIDs      []string
