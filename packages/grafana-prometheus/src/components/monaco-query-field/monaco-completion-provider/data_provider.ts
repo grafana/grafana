@@ -40,7 +40,6 @@ export class DataProvider {
   readonly languageProvider: PrometheusLanguageProviderInterface;
   readonly historyProvider: Array<HistoryItem<PromQuery>>;
 
-  // readonly metricNamesSuggestionLimit: number = DEFAULT_COMPLETION_LIMIT;
   readonly queryLabelKeys: typeof this.languageProvider.queryLabelKeys;
   readonly queryLabelValues: typeof this.languageProvider.queryLabelValues;
   /**
