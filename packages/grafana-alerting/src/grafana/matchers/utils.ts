@@ -2,37 +2,51 @@ import { parseFlags } from '@grafana/data';
 
 import { Label, LabelMatcher } from './types';
 
-export type LabelsMatch = Map<Label, LabelMatchResult>;
-type LabelMatchResult = {
-  match: boolean;
-  matcher: LabelMatcher | null;
-};
-type MatchingResult = {
+// LabelMatchDetails is a map of labels to their match results
+export type LabelMatchDetails = Map<
+  number, // index of the label in the labels array
+  {
+    match: boolean;
+    matcher: LabelMatcher | null;
+  }
+>;
+
+type LabelMatchingResult = {
+  // wether all of the labels match the given set of matchers
   matches: boolean;
-  labelsMatch: LabelsMatch;
+  // details of which labels matched which matcher
+  details: LabelMatchDetails;
 };
 
 // returns a match results for given set of matchers (from a policy for instance) and a set of labels
-export function matchLabels(matchers: LabelMatcher[], labels: Label[]): MatchingResult {
+export function matchLabels(matchers: LabelMatcher[], labels: Label[]): LabelMatchingResult {
   const matches = matchLabelsSet(matchers, labels);
 
   // create initial map of label => match result
-  const labelsMatch: LabelsMatch = new Map(labels.map((label) => [label, { match: false, matcher: null }]));
+  const details: LabelMatchDetails = new Map(
+    labels.map((_label, index) => [
+      index,
+      {
+        match: false,
+        matcher: null,
+      },
+    ])
+  );
 
   // for each matcher, check which label it matched for
   matchers.forEach((matcher) => {
-    const matchingLabel = labels.find((label) => isLabelMatch(matcher, label));
+    const matchingLabelIndex = labels.findIndex((label) => isLabelMatch(matcher, label));
 
     // record that matcher for the label
-    if (matchingLabel) {
-      labelsMatch.set(matchingLabel, {
+    if (matchingLabelIndex) {
+      details.set(matchingLabelIndex, {
         match: true,
         matcher,
       });
     }
   });
 
-  return { matches, labelsMatch };
+  return { matches, details };
 }
 
 // ⚠️ DO NOT USE THIS FUNCTION FOR ROUTE SELECTION ALGORITHM
@@ -62,7 +76,9 @@ export function matchLabelsSet(matchers: LabelMatcher[], labels: Label[]): boole
   }
   return true;
 }
-
+/**
+ * Checks if a label matcher matches any of the labels in the provided set.
+ */
 function isLabelMatchInSet(matcher: LabelMatcher, labels: Label[]): boolean {
   const { label, type, value } = matcher;
 

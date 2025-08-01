@@ -1,7 +1,7 @@
-import { isArray, pick, reduce } from 'lodash';
+import { isArray, pick, reduce, uniqueId } from 'lodash';
 
 import { Label } from '../matchers/types';
-import { LabelsMatch, matchLabels } from '../matchers/utils';
+import { LabelMatchDetails, matchLabels } from '../matchers/utils';
 
 import { Route } from './types';
 
@@ -11,7 +11,8 @@ export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
 export interface RouteMatchResult<T extends Route> {
   route: T;
-  labelsMatch: LabelsMatch;
+  labels: Label[];
+  matchDetails: LabelMatchDetails;
 }
 
 // Normalization should have happened earlier in the code
@@ -40,7 +41,7 @@ export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): 
 
   // If no child nodes were matches, the current node itself is a match.
   if (childMatches.length === 0) {
-    childMatches.push({ route, labelsMatch: matchResult.labelsMatch });
+    childMatches.push({ route, labels, matchDetails: matchResult.details });
   }
 
   return childMatches;
