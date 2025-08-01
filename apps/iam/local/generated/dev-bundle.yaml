@@ -2161,12 +2161,25 @@ data:
 
     [grafana-apiserver]
     storage_type = unified
+    storage_path = /etc/grafana-kubeconfig
 
     [unified_storage.folders.folder.grafana.app]
     dualWriterMode = 2
 
     [unified_storage.dashboards.dashboard.grafana.app]
     dualWriterMode = 2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-kubeconfig-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Mi
 ---
 apiVersion: v1
 kind: Service
@@ -2181,6 +2194,10 @@ spec:
       port: 443
       targetPort: 3000
       nodePort: 30443
+      protocol: TCP
+    - name: grafana-apiserver
+      port: 6443
+      targetPort: 6443
       protocol: TCP
   selector:
     name: grafana
@@ -2224,6 +2241,8 @@ spec:
               name: grafana-config
             - mountPath: /etc/grafana/provisioning/datasources
               name: grafana-datasources
+            - mountPath: /etc/grafana-kubeconfig
+              name: grafana-kubeconfig
       serviceAccount: grafana
       volumes:
         - configMap:
@@ -2232,9 +2251,9 @@ spec:
         - configMap:
             name: grafana-datasources
           name: grafana-datasources
-        - configMap:
-            name: grafana-apiserver-provisioning
-          name: grafana-apiserver-provisioning
+        - name: grafana-kubeconfig
+          persistentVolumeClaim:
+            claimName: grafana-kubeconfig-pvc
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -2442,6 +2461,17 @@ spec:
         - image: localhost/github.com/grafana/grafana/apps/iam/operator:latest
           imagePullPolicy: IfNotPresent
           name: iam-app-operator
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - |
+              echo "Waiting for kubeconfig file..."
+              while [ ! -f /etc/grafana-kubeconfig/grafana.kubeconfig ]; do
+                echo "Kubeconfig not found, waiting 5 seconds..."
+                sleep 5
+              done
+              echo "Kubeconfig found, starting operator..."
+              exec /usr/bin/operator
           env:
             - name: OTEL_HOST
               value: tempo.default.svc
@@ -2451,10 +2481,18 @@ spec:
               value: grpc
             - name: OTEL_SERVICE_NAME
               value: "iam-app-operator"
-
+            - name: KUBE_CONFIG_FILE
+              value: /etc/grafana-kubeconfig/grafana.kubeconfig
           ports:
             - containerPort: 9090
               name: metrics
+          volumeMounts:
+            - mountPath: /etc/grafana-kubeconfig
+              name: grafana-kubeconfig
+      volumes:
+        - name: grafana-kubeconfig
+          persistentVolumeClaim:
+            claimName: grafana-kubeconfig-pvc
 
 ---
 apiVersion: v1
