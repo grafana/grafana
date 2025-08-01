@@ -1,0 +1,355 @@
+{
+  "metadata": {
+    "name": "variable-conversions-test",
+    "creationTimestamp": null,
+    "labels": {
+      "test": "variable-conversions"
+    }
+  },
+  "spec": {
+    "annotations": {
+      "list": []
+    },
+    "description": "Testing all variable types and transformations",
+    "links": [],
+    "panels": [],
+    "tags": [
+      "test",
+      "variables"
+    ],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": false,
+            "text": "Prometheus",
+            "value": "prometheus-uid"
+          },
+          "description": "Select a data source",
+          "hide": 0,
+          "includeAll": false,
+          "label": "Data Source",
+          "multi": false,
+          "name": "datasource_var",
+          "options": [
+            {
+              "selected": true,
+              "text": "Prometheus",
+              "value": "prometheus-uid"
+            },
+            {
+              "selected": false,
+              "text": "InfluxDB",
+              "value": "influx-uid"
+            }
+          ],
+          "query": "prometheus",
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "type": "datasource"
+        },
+        {
+          "allValue": ".*",
+          "current": {
+            "selected": true,
+            "text": [
+              "All",
+              "localhost:9090"
+            ],
+            "value": [
+              "$__all",
+              "localhost:9090"
+            ]
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "definition": "label_values(up, instance)",
+          "description": "Available instances",
+          "hide": 1,
+          "includeAll": true,
+          "label": "Instance",
+          "multi": true,
+          "name": "query_var",
+          "options": [
+            {
+              "selected": false,
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "selected": true,
+              "text": "localhost:9090",
+              "value": "localhost:9090"
+            },
+            {
+              "selected": false,
+              "text": "localhost:9091",
+              "value": "localhost:9091"
+            }
+          ],
+          "query": "label_values(up, instance)",
+          "refresh": 2,
+          "regex": "/.*9090.*/",
+          "skipUrlSync": false,
+          "sort": 1,
+          "tagValuesQuery": "",
+          "tagsQuery": "",
+          "type": "query",
+          "useTags": false
+        },
+        {
+          "allValue": null,
+          "current": {
+            "selected": false,
+            "text": "prod",
+            "value": "prod"
+          },
+          "description": "Deployment environment",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Environment",
+          "multi": false,
+          "name": "custom_var",
+          "options": [
+            {
+              "selected": true,
+              "text": "prod",
+              "value": "prod"
+            },
+            {
+              "selected": false,
+              "text": "staging",
+              "value": "staging"
+            },
+            {
+              "selected": false,
+              "text": "dev",
+              "value": "dev"
+            }
+          ],
+          "query": "prod,staging,dev",
+          "skipUrlSync": false,
+          "type": "custom"
+        },
+        {
+          "allowCustomValue": true,
+          "baseFilters": [
+            {
+              "key": "environment",
+              "operator": "=",
+              "value": "production"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "defaultKeys": [
+            "job",
+            "instance"
+          ],
+          "description": "Add filters",
+          "filters": [
+            {
+              "key": "job",
+              "operator": "=",
+              "value": "prometheus"
+            }
+          ],
+          "hide": 0,
+          "label": "Filters",
+          "name": "adhoc_var",
+          "skipUrlSync": false,
+          "type": "adhoc"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "my-application",
+            "value": "my-application"
+          },
+          "description": "Application name constant",
+          "hide": 2,
+          "label": "App Name",
+          "name": "constant_var",
+          "query": "my-application",
+          "skipUrlSync": true,
+          "type": "const"
+        },
+        {
+          "auto": true,
+          "auto_count": 30,
+          "auto_min": "10s",
+          "current": {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          "description": "Time interval for queries",
+          "hide": 0,
+          "label": "Interval",
+          "name": "interval_var",
+          "options": [
+            {
+              "selected": false,
+              "text": "1m",
+              "value": "1m"
+            },
+            {
+              "selected": true,
+              "text": "5m",
+              "value": "5m"
+            },
+            {
+              "selected": false,
+              "text": "10m",
+              "value": "10m"
+            }
+          ],
+          "query": "1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+          "refresh": 2,
+          "skipUrlSync": false,
+          "type": "interval"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "error",
+            "value": "error"
+          },
+          "description": "Enter search term",
+          "hide": 0,
+          "label": "Search Term",
+          "name": "textbox_var",
+          "query": "default_search",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "current": {
+            "selected": true,
+            "text": [
+              "job",
+              "instance"
+            ],
+            "value": [
+              "job",
+              "instance"
+            ]
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "description": "Group results by field",
+          "hide": 0,
+          "label": "Group By",
+          "multi": true,
+          "name": "groupby_var",
+          "options": [
+            {
+              "selected": true,
+              "text": "job",
+              "value": "job"
+            },
+            {
+              "selected": true,
+              "text": "instance",
+              "value": "instance"
+            },
+            {
+              "selected": false,
+              "text": "region",
+              "value": "region"
+            }
+          ],
+          "query": "",
+          "skipUrlSync": false,
+          "type": "groupby"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "legacy_value",
+            "value": {
+              "__legacyStringValue": "legacy_string_content"
+            }
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "description": "Variable with legacy string value",
+          "hide": 0,
+          "label": "Legacy Variable",
+          "name": "legacy_string_var",
+          "query": "up",
+          "skipUrlSync": false,
+          "type": "query"
+        },
+        {
+          "allValue": "*",
+          "current": {
+            "selected": true,
+            "text": [
+              "All",
+              "host1",
+              "host2"
+            ],
+            "value": [
+              "$__all",
+              "host1",
+              "host2"
+            ]
+          },
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "elastic-uid"
+          },
+          "definition": "terms field:@host size:100",
+          "description": "Variable with complex query and all features",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Complex Query Variable",
+          "multi": true,
+          "name": "complex_query_var",
+          "options": [],
+          "query": {
+            "bucketAggs": [
+              {
+                "field": "@host",
+                "id": "2",
+                "type": "terms"
+              }
+            ],
+            "query": "*",
+            "size": 100
+          },
+          "refresh": 1,
+          "regex": "/host[0-9]+/",
+          "skipUrlSync": false,
+          "sort": 2,
+          "tagValuesQuery": "",
+          "tagsQuery": "",
+          "type": "query",
+          "useTags": true
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "title": "Variable Conversions Test Dashboard"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1",
+      "error": ""
+    }
+  }
+}

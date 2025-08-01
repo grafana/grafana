@@ -1,0 +1,232 @@
+{
+  "metadata": {
+    "name": "annotation-conversions-test",
+    "creationTimestamp": null,
+    "labels": {
+      "test": "annotation-conversions"
+    }
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        },
+        {
+          "builtIn": 0,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "red",
+          "name": "Prometheus Annotations",
+          "target": {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "interval": "1m",
+            "refId": "Anno",
+            "step": 60
+          },
+          "type": "prometheus"
+        },
+        {
+          "builtIn": false,
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "blue",
+          "name": "TestData Annotations",
+          "target": {
+            "lines": 10,
+            "refId": "Anno",
+            "scenarioId": "annotations"
+          },
+          "type": "testdata"
+        },
+        {
+          "builtIn": 0,
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "elastic-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "yellow",
+          "name": "Elasticsearch Annotations",
+          "tagsField": "tags",
+          "target": {
+            "query": "tags:deployment",
+            "refId": "Anno",
+            "timeField": "@timestamp"
+          },
+          "textField": "message",
+          "timeEndField": "end_time",
+          "timeField": "@timestamp",
+          "type": "elasticsearch"
+        },
+        {
+          "builtIn": 0,
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "green",
+          "name": "SQL Annotations",
+          "tagsColumn": "tags",
+          "target": {
+            "format": "table",
+            "rawSql": "SELECT time, title, text, tags FROM annotations WHERE $__timeFilter(time)",
+            "refId": "Anno"
+          },
+          "textColumn": "text",
+          "timeColumn": "time",
+          "titleColumn": "title",
+          "type": "sql"
+        },
+        {
+          "builtIn": 0,
+          "enable": true,
+          "hide": false,
+          "iconColor": "purple",
+          "name": "No Datasource Annotation",
+          "target": {
+            "expr": "static_annotation_query",
+            "refId": "Anno"
+          },
+          "type": "manual"
+        },
+        {
+          "builtIn": 0,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "enable": false,
+          "hide": true,
+          "iconColor": "gray",
+          "name": "Hidden Annotation",
+          "target": {
+            "expr": "disabled_query",
+            "refId": "Anno"
+          },
+          "type": "prometheus"
+        },
+        {
+          "builtIn": 0,
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-uid"
+          },
+          "enable": true,
+          "filter": {
+            "ids": [
+              1,
+              2,
+              3
+            ],
+            "list": [
+              {
+                "key": "service",
+                "operator": "=",
+                "value": "api"
+              },
+              {
+                "key": "environment",
+                "operator": "!=",
+                "value": "test"
+              }
+            ]
+          },
+          "hide": false,
+          "iconColor": "#FF5722",
+          "mappings": {
+            "tags": "labels",
+            "text": "description",
+            "time": "timestamp",
+            "title": "service"
+          },
+          "name": "Complex Filter Annotation",
+          "target": {
+            "query": "from(bucket: \"events\") |\u003e range(start: $__timeFrom, stop: $__timeTo) |\u003e filter(fn: (r) =\u003e r._measurement == \"deployments\")",
+            "refId": "Anno"
+          },
+          "type": "influxdb"
+        },
+        {
+          "builtIn": 0,
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "orange",
+          "name": "CloudWatch Annotations",
+          "showIn": 0,
+          "target": {
+            "dimensions": {
+              "InstanceId": "i-1234567890abcdef"
+            },
+            "metricName": "CPUUtilization",
+            "namespace": "AWS/EC2",
+            "refId": "Anno",
+            "statistic": "Average"
+          },
+          "type": "cloudwatch"
+        },
+        {
+          "builtIn": true,
+          "enable": false,
+          "hide": true,
+          "iconColor": "transparent",
+          "name": "Disabled Built-in Annotation",
+          "target": {},
+          "type": "builtin"
+        }
+      ]
+    },
+    "description": "Testing annotation transformations",
+    "links": [],
+    "panels": [],
+    "tags": [
+      "test",
+      "annotations"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "title": "Annotation Conversions Test Dashboard"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1",
+      "error": ""
+    }
+  }
+}

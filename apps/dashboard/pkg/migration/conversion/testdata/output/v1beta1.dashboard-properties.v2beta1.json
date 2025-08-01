@@ -1,0 +1,206 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "dashboard-properties-test",
+    "creationTimestamp": null,
+    "labels": {
+      "test": "dashboard-properties"
+    }
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "spec": {
+              "refId": "Anno"
+            }
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "blue",
+          "name": "Simple Annotation",
+          "builtIn": false
+        }
+      }
+    ],
+    "cursorSync": "Tooltip",
+    "description": "Testing dashboard-level property transformations including time settings, cursor sync, and links",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Simple Panel",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana",
+                      "version": "v0",
+                      "spec": {}
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {},
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "defaults": {},
+                    "overrides": []
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [
+      {
+        "title": "External Monitoring System",
+        "type": "",
+        "icon": "",
+        "tooltip": "",
+        "url": "https://monitoring.example.com/dashboard?from=${__from}\u0026to=${__to}",
+        "tags": null,
+        "asDropdown": false,
+        "targetBlank": true,
+        "includeVars": false,
+        "keepTime": false
+      },
+      {
+        "title": "Related Dashboards",
+        "type": "",
+        "icon": "",
+        "tooltip": "",
+        "url": "",
+        "tags": null,
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": false
+      },
+      {
+        "title": "Documentation",
+        "type": "",
+        "icon": "",
+        "tooltip": "",
+        "url": "https://docs.example.com/dashboard-guide",
+        "tags": null,
+        "asDropdown": false,
+        "targetBlank": true,
+        "includeVars": false,
+        "keepTime": false
+      },
+      {
+        "title": "Tag-based Link",
+        "type": "",
+        "icon": "",
+        "tooltip": "",
+        "url": "/dashboards/tag/alerts",
+        "tags": null,
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": false
+      }
+    ],
+    "liveNow": true,
+    "preload": true,
+    "tags": [
+      "test",
+      "properties",
+      "metadata"
+    ],
+    "timeSettings": {
+      "timezone": "America/New_York",
+      "from": "now-12h",
+      "to": "now",
+      "autoRefresh": "30s",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "weekStart": "sunday",
+      "fiscalYearStartMonth": 4,
+      "nowDelay": "1m"
+    },
+    "title": "Dashboard Properties Test",
+    "variables": [
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "simple_var",
+          "query": "value1,value2,value3",
+          "current": {
+            "text": "value1",
+            "value": "value1"
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
+      }
+    ]
+  },
+  "status": {}
+}

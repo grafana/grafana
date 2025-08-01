@@ -1,0 +1,358 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "metadata": {
+    "name": "variable-conversions-test",
+    "creationTimestamp": null,
+    "labels": {
+      "test": "variable-conversions"
+    }
+  },
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Off",
+    "description": "Testing all variable types and transformations",
+    "elements": {},
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": []
+      }
+    },
+    "links": [],
+    "preload": false,
+    "tags": [
+      "test",
+      "variables"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "weekStart": "monday",
+      "fiscalYearStartMonth": 0,
+      "nowDelay": ""
+    },
+    "title": "Variable Conversions Test Dashboard",
+    "variables": [
+      {
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "datasource_var",
+          "pluginId": "prometheus",
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "current": {
+            "text": "Prometheus",
+            "value": "prometheus-uid"
+          },
+          "options": [
+            {
+              "selected": true,
+              "text": "Prometheus",
+              "value": "prometheus-uid"
+            },
+            {
+              "text": "InfluxDB",
+              "value": "influx-uid"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "label": "Data Source",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Select a data source",
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "query_var",
+          "current": {
+            "text": [
+              "All",
+              "localhost:9090"
+            ],
+            "value": [
+              "$__all",
+              "localhost:9090"
+            ]
+          },
+          "label": "Instance",
+          "hide": "hideLabel",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
+          "description": "Available instances",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "query": {
+            "kind": "prometheus",
+            "spec": {
+              "__legacyStringValue": "label_values(up, instance)"
+            }
+          },
+          "regex": "/.*9090.*/",
+          "sort": "alphabeticalAsc",
+          "options": [
+            {
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "selected": true,
+              "text": "localhost:9090",
+              "value": "localhost:9090"
+            },
+            {
+              "text": "localhost:9091",
+              "value": "localhost:9091"
+            }
+          ],
+          "multi": true,
+          "includeAll": true,
+          "allValue": ".*",
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "custom_var",
+          "query": "prod,staging,dev",
+          "current": {
+            "text": "prod",
+            "value": "prod"
+          },
+          "options": [
+            {
+              "selected": true,
+              "text": "prod",
+              "value": "prod"
+            },
+            {
+              "text": "staging",
+              "value": "staging"
+            },
+            {
+              "text": "dev",
+              "value": "dev"
+            }
+          ],
+          "multi": false,
+          "includeAll": true,
+          "label": "Environment",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Deployment environment",
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "AdhocVariable",
+        "spec": {
+          "name": "adhoc_var",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "baseFilters": [],
+          "filters": [],
+          "defaultKeys": [],
+          "label": "Filters",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Add filters",
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "IntervalVariable",
+        "spec": {
+          "name": "interval_var",
+          "query": "1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+          "current": {
+            "text": "5m",
+            "value": "5m"
+          },
+          "options": [
+            {
+              "text": "1m",
+              "value": "1m"
+            },
+            {
+              "selected": true,
+              "text": "5m",
+              "value": "5m"
+            },
+            {
+              "text": "10m",
+              "value": "10m"
+            }
+          ],
+          "auto": true,
+          "auto_min": "10s",
+          "auto_count": 30,
+          "refresh": "onTimeRangeChanged",
+          "label": "Interval",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Time interval for queries"
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "textbox_var",
+          "current": {
+            "text": "error",
+            "value": "error"
+          },
+          "query": "default_search",
+          "label": "Search Term",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Enter search term"
+        }
+      },
+      {
+        "kind": "GroupByVariable",
+        "spec": {
+          "name": "groupby_var",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "current": {
+            "text": [
+              "job",
+              "instance"
+            ],
+            "value": [
+              "job",
+              "instance"
+            ]
+          },
+          "options": [
+            {
+              "selected": true,
+              "text": "job",
+              "value": "job"
+            },
+            {
+              "selected": true,
+              "text": "instance",
+              "value": "instance"
+            },
+            {
+              "text": "region",
+              "value": "region"
+            }
+          ],
+          "multi": true,
+          "label": "Group By",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Group results by field"
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "legacy_string_var",
+          "current": {
+            "text": "legacy_value",
+            "value": ""
+          },
+          "label": "Legacy Variable",
+          "hide": "dontHide",
+          "refresh": "never",
+          "skipUrlSync": false,
+          "description": "Variable with legacy string value",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "query": {
+            "kind": "prometheus",
+            "spec": {
+              "__legacyStringValue": "up"
+            }
+          },
+          "regex": "",
+          "sort": "disabled",
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "complex_query_var",
+          "current": {
+            "text": [
+              "All",
+              "host1",
+              "host2"
+            ],
+            "value": [
+              "$__all",
+              "host1",
+              "host2"
+            ]
+          },
+          "label": "Complex Query Variable",
+          "hide": "dontHide",
+          "refresh": "onDashboardLoad",
+          "skipUrlSync": false,
+          "description": "Variable with complex query and all features",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "elastic-uid"
+          },
+          "query": {
+            "kind": "elasticsearch",
+            "spec": {
+              "bucketAggs": [
+                {
+                  "field": "@host",
+                  "id": "2",
+                  "type": "terms"
+                }
+              ],
+              "query": "*",
+              "size": 100
+            }
+          },
+          "regex": "/host[0-9]+/",
+          "sort": "alphabeticalDesc",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allValue": "*",
+          "allowCustomValue": true
+        }
+      }
+    ]
+  },
+  "status": {}
+}
