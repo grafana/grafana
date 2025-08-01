@@ -1,7 +1,4 @@
-import {
-  Spec as DashboardV2Spec,
-  TabsLayoutTabKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec, TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';

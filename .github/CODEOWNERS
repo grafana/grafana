@@ -72,9 +72,12 @@
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 
+# Git Sync / App Platform Provisioning
 /pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
+/pkg/tests/apis/provisioning @grafana/grafana-git-ui-sync-team
+# Git Sync frontend owned by frontent team as a whole.
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
@@ -598,7 +601,7 @@
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /packages/grafana-schema/src/**/parca @grafana/oss-big-tent
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
-/packages/grafana-schema/src/**/publicdashboard @grafana/sharing-squad
+/packages/grafana-schema/src/**/publicdashboard @grafana/grafana-operator-experience-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad
