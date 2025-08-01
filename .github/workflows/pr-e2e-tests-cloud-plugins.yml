@@ -1,0 +1,59 @@
+name: End-to-end tests for cloud plugins
+
+on:
+  pull_request:
+    paths:
+      - pkg/tsdb/azuremonitor/**
+      - public/app/plugins/datasource/azuremonitor/**
+      - e2e/cloud-plugins-suite/azure-monitor.spec.ts
+  push:
+    branches:
+      - main
+      - release-*.*.*
+    paths:
+      - pkg/tsdb/azuremonitor/**
+      - public/app/plugins/datasource/azuremonitor/**
+      - e2e/cloud-plugins-suite/azure-monitor.spec.ts
+
+permissions: {}
+
+jobs:
+  run-azure-monitor-e2e:
+    name: E2E tests for azure monitor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    container:
+      # TODO
+      image: <something>
+    steps:
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Grafana
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
+
+      - name: Run E2E tests
+        run: yarn e2e:playwright --grep @cloud-plugins

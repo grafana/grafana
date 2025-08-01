@@ -92,6 +92,9 @@ func buildPlaywrightCommand(opts RunTestOpts) []string {
 	playwrightCommand := []string{
 		"yarn",
 		"e2e:playwright",
+		// exclude cloud plugins tests by default
+		// these require special credentials and run in a separate workflow in CI
+		"--grep-invert @cloud-plugins",
 		"--reporter",
 		strings.Join(playwrightReporters, ","),
 		"--output",
