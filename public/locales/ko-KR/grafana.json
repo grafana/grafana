@@ -3544,12 +3544,12 @@
       "tags-column": "태그"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "하위 정보를 검색할 수 없습니다"
@@ -3592,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "폴더 생성 중 오류 발생",
-      "alert-folder-created-successfully": "폴더가 성공적으로 생성되었습니다",
       "button-create": "생성",
       "button-creating": "생성 중...",
       "cancel": "취소",
@@ -3740,7 +3739,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3841,7 +3839,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -5625,6 +5622,7 @@
       "delete-read-only-file-message": "",
       "deleting": "삭제 중…",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다."
     },
     "description-label": {
@@ -5636,9 +5634,6 @@
           "edit-link": "링크 편집"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "이메일 메뉴 토글"
@@ -5797,6 +5792,7 @@
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5806,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -10982,6 +10979,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "이 기능은 현재 적극적으로 개발 중입니다. 최상의 경험과 최신 개선 사항 적용을 위해 Grafana의 <2>야간 빌드</2>를 사용하는 것이 좋습니다."
@@ -11834,7 +11834,7 @@
         "recommended": "권장",
         "results": "결과"
       },
-      "search": "검색"
+      "search": ""
     }
   },
   "search": {
@@ -12468,6 +12468,18 @@
       "label-large": "",
       "label-medium": "",
       "label-small": ""
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "선택하면 전체 행이 이 셀과 같은 색으로 표시됩니다.",
