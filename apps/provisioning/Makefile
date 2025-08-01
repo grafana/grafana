@@ -8,9 +8,9 @@ generate: install-app-sdk update-app-sdk
 build: generate
 	go build -o bin/provisioning ./cmd/operator
 
-.PHONY: build/operator
-build/operator: build
-	docker build -t provisioning:latest -f cmd/operator/Dockerfile .
+# .PHONY: build/operator
+# build/operator: build
+#	 docker build -t provisioning:latest -f cmd/operator/Dockerfile .
 
 .PHONY: clean
 clean:

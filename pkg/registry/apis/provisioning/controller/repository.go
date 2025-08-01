@@ -39,7 +39,7 @@ type RepositoryTester interface {
 	TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error)
 }
 
-const loggerName = "provisioning"
+const loggerName = "provisioning-repository-controller"
 
 const (
 	maxAttempts = 3
@@ -239,7 +239,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
 					{ "op": "remove", "path": "/metadata/finalizers" }
 				]`), v1.PatchOptions{
-				FieldManager: "provisioning",
+				FieldManager: "provisioning-controller",
 			})
 		return err // delete will be called again
 	}
