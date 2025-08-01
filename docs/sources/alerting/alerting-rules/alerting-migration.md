@@ -281,7 +281,7 @@ The `POST` endpoints can be used to import data source–managed alert rules. Th
 | POST     | `/convert/prometheus/config/v1/rules`                 | [Create or update multiple rule groups](#create-or-update-multiple-rule-groups) across multiple namespaces. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid). | None                                                                     |
 | POST     | `/convert/prometheus/config/v1/rules/:namespaceTitle` | Create or update a single rule group in a namespace. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid).                                                        | [Set rule group](/docs/mimir/latest/references/http-api/#set-rule-group) |
 
-The `GET` and `DELETE` endpoints work only with provisioned and imported alert rules.
+The `GET` and `DELETE` endpoints work only with provisioned and imported alert rules. All `GET` endpoints support both JSON and YAML response formats based on the `Accept` header: use `application/json` for JSON responses, or `application/yaml` for YAML responses. YAML is the default format when no `Accept` header is specified.
 
 | Endpoint | Method                                                       | Summary                                             | Mimir equivalent                                                                                     |
 | -------- | ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
