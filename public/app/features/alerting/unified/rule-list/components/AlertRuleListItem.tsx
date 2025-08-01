@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
-import { ReactNode, useEffect, useId } from 'react';
+import { ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
@@ -13,7 +13,7 @@ import { AlertLabels } from '../../components/AlertLabels';
 import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datasource';
 import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
@@ -49,6 +49,7 @@ export interface AlertRuleListItemProps {
   operation?: RuleOperation;
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
+  querySourceUIDs?: string[];
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -75,6 +76,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     actions = null,
     operation,
     showLocation = true,
+    querySourceUIDs = [],
   } = props;
 
   const listItemAriaId = useId();
@@ -92,6 +94,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         />
       </Text>
     );
+  }
+
+  if (querySourceUIDs.length > 0) {
+    metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
   if (!isPaused) {
@@ -179,6 +185,7 @@ export function RecordingRuleListItem({
   origin,
   actions,
   showLocation = true,
+  querySourceUIDs = [],
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -193,6 +200,10 @@ export function RecordingRuleListItem({
         />
       </Text>
     );
+  }
+
+  if (querySourceUIDs.length > 0) {
+    metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
   return (
@@ -292,6 +303,29 @@ function Summary({ content, error }: SummaryProps) {
 
   return null;
 }
+
+interface QuerySourceIconsProps {
+  queriedDatasourceUIDs: string[];
+}
+
+const QuerySourceIcons = memo(function QuerySourceIcons({ queriedDatasourceUIDs }: QuerySourceIconsProps) {
+  // Make icons unique - deduplicate datasource UIDs
+  const dataSources = Array.from(new Set(queriedDatasourceUIDs))
+    .map(getDataSourceByUid)
+    .filter((ds): ds is DataSourceInstanceSettings => ds !== undefined);
+
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      {dataSources.map((dataSource) => {
+        return (
+          <Tooltip key={dataSource.uid} content={dataSource.name}>
+            <DataSourceLogo dataSource={dataSource} />
+          </Tooltip>
+        );
+      })}
+    </Stack>
+  );
+});
 
 function RuleLabels({ labels }: { labels: Labels }) {
   const styles = useStyles2(getStyles);
@@ -417,3 +451,33 @@ export type RuleListItemCommonProps = Pick<
   AlertRuleListItemProps,
   Extract<keyof AlertRuleListItemProps, keyof RecordingRuleListItemProps>
 >;
+
+interface DataSourceLogoProps {
+  dataSource: DataSourceInstanceSettings;
+}
+
+const DataSourceLogo = forwardRef<HTMLImageElement, DataSourceLogoProps>(({ dataSource }, ref) => {
+  const styles = useStyles2(dataSourceLogoStyles);
+
+  return (
+    <img
+      ref={ref}
+      className={cx(styles.logo, {
+        [styles.filter]: dataSource.meta.builtIn,
+      })}
+      alt={`${dataSource.meta.name} logo`}
+      src={dataSource.meta.info.logos.small}
+    />
+  );
+});
+
+const dataSourceLogoStyles = (theme: GrafanaTheme2) => ({
+  logo: css({
+    height: '14px',
+    width: '14px',
+    borderRadius: theme.shape.radius.default,
+  }),
+  filter: css({
+    filter: `invert(${theme.isLight ? 1 : 0})`,
+  }),
+});
