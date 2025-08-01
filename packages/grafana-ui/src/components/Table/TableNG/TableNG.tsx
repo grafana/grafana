@@ -574,7 +574,6 @@ export function TableNG(props: TableNGProps) {
 
           return (
             <RowExpander
-              height={rowHeightFn(row)}
               isExpanded={expandedRows.has(rowIdx)}
               onCellExpand={() => {
                 if (expandedRows.has(rowIdx)) {
