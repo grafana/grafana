@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 
 import { TestDataSettings } from '../query/state/mocks/mockDataSource';
 
-import { useRecentlyUsedDataSources, LOCAL_STORAGE_KEY } from './hooks';
+import { useRecentlyUsedDataSources } from './hooks';
 
 // Mock react-use's useLocalStorage
 jest.mock('react-use', () => ({
