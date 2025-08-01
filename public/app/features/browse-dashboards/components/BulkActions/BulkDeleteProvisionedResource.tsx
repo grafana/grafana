@@ -27,6 +27,7 @@ import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
 import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { useBulkActionRequest } from './useBulkActionRequest';
+import { useFolderNameFromSelection } from './useFolderNameFromSelection';
 import {
   BulkActionFormData,
   BulkActionProvisionResourceProps,
@@ -203,7 +204,8 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkActionProvisionResourceProps) {
-  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUid });
+  const folderName = useFolderNameFromSelection({ folderUid, selectedItems });
+  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
