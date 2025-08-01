@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "选中此选项将优先使用带有 {{exampleParameter}} 参数的序列端点，而不是带有 {{exampleParameter}} 参数的标签值端点。虽然标签值端点在性能方面表现更好，但有些用户可能更喜欢序列，因为它具有 POST 方法，而标签值端点仅具有 GET 方法。"
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
@@ -307,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "使用 Prometheus API 上的其他调用，通过正则表达式搜索筛选指标名称。",
-        "disable-text-wrap": "禁用文本换行"
-      },
       "feedback-link": {
         "give-feedback": "提供反馈",
         "title-give-feedback": "指标浏览器是新功能，请告诉我们如何改进"
@@ -324,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -374,15 +371,10 @@
         "tooltip-metric": "可选：返回指定指标中标签名称的标签值列表。"
       },
       "metrics-modal": {
-        "additional-settings": "其他设置",
-        "aria-label-additional-settings": "附加设置",
         "aria-label-browse-metrics": "浏览指标",
         "currently-selected": "当前选择：{{selected}}",
         "metrics-pre-filtered": "这些指标已通过标签筛选器中选择的标签进行预筛选。",
-        "placeholder-results-per-page": "每页显示结果数",
-        "results-per-page": "每页结果数",
-        "title-metrics-explorer": "指标浏览器",
-        "results-amount_other": "显示 {{num}} 个结果（共 {{count}} 个）"
+        "title-metrics-explorer": "指标浏览器"
       },
       "nested-query": {
         "label": {
@@ -495,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "名称",
-        "select": "选择",
         "type": "类型"
       },
       "update-function-args": {

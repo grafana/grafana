@@ -1483,16 +1483,18 @@ If you have multiple types, it will default to string type. You can select how e
 
 {{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png" class="docs-image--no-shadow" max-width= "1100px" alt="Before and after transpose transformation" >}}
 
-### Regression analysis
+### Trendline
 
 Use this transformation to create a new data frame containing values predicted by a statistical model. This is useful for finding a trend in chaotic data. It works by fitting a mathematical function to the data, using either linear or polynomial regression. The data frame can then be used in a visualization to display a trendline.
 
 There are two different models:
 
-- **Linear regression** - Fits a linear function to the data.
+- **Linear** - Fits a linear function to the data.
   {{< figure src="/static/img/docs/transformations/linear-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series visualization with a straight line representing the linear function" >}}
-- **Polynomial regression** - Fits a polynomial function to the data.
+- **Polynomial** - Fits a polynomial function to the data.
   {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series visualization with a curved line representing the polynomial function" >}}
+
+> **Note:** This transformation was previously called regression analysis.
 
 [Table panel]: ref:table-panel
 [Calculation types]: ref:calculation-types
