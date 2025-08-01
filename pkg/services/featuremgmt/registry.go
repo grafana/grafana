@@ -1897,6 +1897,14 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "newClickhouseConfigPageDesign",
+			Description:  "Enables new design for the Clickhouse data source configuration page",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
 	}
 )
 
