@@ -2,14 +2,15 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { QueryTemplateRow } from 'app/extensions/query-library/types';
+
+import { QueryTemplateRow } from '../../../extensions/query-library/types';
 
 import { OnSelectQueryType } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
   onSelectQuery?: OnSelectQueryType;
-  options?: { isReplacingQuery?: boolean; onSave?: () => void; context?: string, highlightQuery?: string; };
+  options?: { isReplacingQuery?: boolean; onSave?: () => void; context?: string; highlightQuery?: string };
   query?: DataQuery;
 };
 
