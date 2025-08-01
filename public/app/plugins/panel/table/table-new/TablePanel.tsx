@@ -64,8 +64,6 @@ export function TablePanel(props: Props) {
 
   const disableSanitizeHtml = getConfig().disableSanitizeHtml;
 
-  console.log('disableVirtualization', options);
-
   const tableElement = (
     <TableNG
       height={tableHeight}
