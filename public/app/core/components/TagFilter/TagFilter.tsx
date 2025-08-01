@@ -157,7 +157,7 @@ export const TagFilter = ({
   return (
     <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
-        <button className={styles.clear} onClick={() => onTagChange([])}>
+        <button className={styles.clear} onClick={() => onTagChange([])} disabled={disabled}>
           <Trans i18nKey="tag-filter.clear-button">Clear tags</Trans>
         </button>
       )}
