@@ -810,7 +810,7 @@ describe('TableNG utils', () => {
             {
               name: 'test2',
               type: FieldType.string,
-              config: { custom: { cellOptions: { type: TableCellDisplayMode.Markdown, dynamicHeight: false } } },
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.Markdown, dynamicHeight: true } } },
               values: ['value1'],
             },
             {
