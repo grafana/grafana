@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,6 +13,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
+import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
@@ -23,9 +25,10 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
+  const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
 
   return (
-    <div className={styles.tabLayoutContainer}>
+    <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
         <DragDropContext
           onBeforeDragStart={(start) => model.forceSelectTab(start.draggableId)}
@@ -129,5 +132,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // consist of paddingTop + 0.125 = 9px
     minHeight: theme.spacing(1 + 0.125),
     paddingTop: theme.spacing(1),
+  }),
+  nestedTabsMargin: css({
+    marginLeft: theme.spacing(2),
   }),
 });
