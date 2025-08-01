@@ -21,7 +21,6 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 	// FIXME: we load the entire tree in memory
 	progress.SetMessage(ctx, "read folder tree from API server")
 
-	// Use the repository name as the root folder for resources with empty parent folders
 	tree := resources.NewEmptyFolderTree()
 	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
 		if tree.Count() >= resources.MaxNumberOfFolders {
