@@ -830,7 +830,7 @@ describe('TableNG utils', () => {
     });
 
     it('calculates height based on theme when cellHeight is undefined', () => {
-      const result = getDefaultRowHeight(theme, [], undefined as unknown as TableCellHeight);
+      const result = getDefaultRowHeight(theme, []);
 
       // Calculate the expected result based on the theme values
       const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
