@@ -420,10 +420,12 @@ function parseScopesFromLocalStorage(content: string | undefined): RecentScope[]
     return [];
   }
 
-  // Verify the structure of the parent node, and remove it if it is not valid
-  if (recentScopes[0]?.[0]?.parentNode) {
-    if (!hasValidScopeParentNode(recentScopes[0]?.[0])) {
-      recentScopes[0][0].parentNode = undefined;
+  // Verify the structure of the parent node for all recent scope sets, and remove it if it is not valid
+  for (const scopeSet of recentScopes) {
+    if (scopeSet[0]?.parentNode) {
+      if (!hasValidScopeParentNode(scopeSet[0])) {
+        scopeSet[0].parentNode = undefined;
+      }
     }
   }
 

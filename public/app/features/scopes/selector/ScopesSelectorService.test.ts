@@ -359,5 +359,81 @@ describe('ScopesSelectorService', () => {
       service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
       expect(service.state.nodes).toEqual({ 'test-scope-node': mockScopeWithValidParentNode.parentNode });
     });
+
+    it('should validate parent nodes across all recent scope sets', async () => {
+      // Create multiple scope sets with various parent node validity
+      const mockScopeWithValidParentNode: RecentScope = {
+        metadata: { name: 'valid-scope' },
+        spec: {
+          title: 'valid-scope',
+          type: 'scope',
+          category: 'scope',
+          description: 'valid scope',
+          filters: [],
+        },
+        parentNode: {
+          metadata: { name: 'valid-parent-node' },
+          spec: {
+            linkId: 'valid-scope',
+            linkType: 'scope',
+            parentName: '',
+            nodeType: 'container',
+            title: 'valid-parent-node',
+          },
+        },
+      };
+
+      const mockScopeWithInvalidParentNode1: RecentScope = {
+        metadata: { name: 'invalid-scope-1' },
+        spec: {
+          title: 'invalid-scope-1',
+          type: 'scope',
+          category: 'scope',
+          description: 'invalid scope 1',
+          filters: [],
+        },
+        parentNode: {
+          //@ts-expect-error
+          metadata: {},
+          //@ts-expect-error
+          spec: {},
+        },
+      };
+
+      const mockScopeWithInvalidParentNode2: RecentScope = {
+        metadata: { name: 'invalid-scope-2' },
+        spec: {
+          title: 'invalid-scope-2',
+          type: 'scope',
+          category: 'scope',
+          description: 'invalid scope 2',
+          filters: [],
+        },
+        parentNode: {
+          metadata: { name: 'invalid-parent-node-2' }, // missing spec
+          spec: {} as any, // invalid spec
+        },
+      };
+
+      // Set store value with multiple scope sets - some with invalid parent nodes
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([
+        [mockScopeWithInvalidParentNode1],
+        [mockScopeWithValidParentNode],
+        [mockScopeWithInvalidParentNode2],
+      ]);
+
+      // Create service with the existing store
+      service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
+
+      // Should only include the valid parent node
+      expect(service.state.nodes).toEqual({ 'valid-parent-node': mockScopeWithValidParentNode.parentNode });
+
+      // Verify that the invalid parent nodes were removed from the stored data
+      const recentScopes = service.getRecentScopes();
+      expect(recentScopes).toHaveLength(3);
+      expect(recentScopes[0][0].parentNode).toBeUndefined(); // invalid parent node should be removed
+      expect(recentScopes[1][0].parentNode).toEqual(mockScopeWithValidParentNode.parentNode); // valid parent node should remain
+      expect(recentScopes[2][0].parentNode).toBeUndefined(); // invalid parent node should be removed
+    });
   });
 });
