@@ -226,6 +226,9 @@ export const versionedComponents = {
           '10.3.0': 'data-testid Internal link switch',
           [MIN_GRAFANA_VERSION]: 'Internal link switch',
         },
+        codeModeMetricNamesSuggestionLimit: {
+          '11.1.0': 'data-testid code mode metric names suggestion limit',
+        },
         seriesLimit: {
           '12.0.2': 'data-testid maximum series limit',
         },
