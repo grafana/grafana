@@ -292,7 +292,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     const newScopes: RecentScope[] = structuredClone(scopes);
-    // Set parent node for the first scope
+    // Set parent node for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
     if (parentNode) {
       newScopes[0].parentNode = parentNode;
     }
