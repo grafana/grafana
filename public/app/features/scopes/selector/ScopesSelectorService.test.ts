@@ -81,7 +81,7 @@ describe('ScopesSelectorService', () => {
       delete: jest.fn(),
     } as unknown as Store;
 
-    service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
+    service = new ScopesSelectorService(apiClient, dashboardsService, store);
   });
 
   describe('updateNode', () => {
