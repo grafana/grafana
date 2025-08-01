@@ -355,8 +355,10 @@ github.com/grafana/grafana-plugin-sdk-go v0.278.0 h1:5/rIYparLi02pofdaag8wnjspMM
 github.com/grafana/grafana-plugin-sdk-go v0.278.0/go.mod h1:+8NXT/XUJ/89GV6FxGQ366NZ3nU+cAXDMd0OUESF9H4=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017 h1:Niy+KRDWHsUVqfhZQg0oZbAQFO6QcO6a4l9V/ouDEEs=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725152715-69d3b9023cec h1:cg1GbDVZ7goqDrqoMzqeN4AeAcD271MGYjOvdVTDwfw=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725152715-69d3b9023cec/go.mod h1:3ZgUe0E3rIhI026xF4DKFptOst/jpDHJ/Sn+bRODzI4=
+github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3 h1:MUyJnJE3GFj9QqA0sq7VOqWQkywYvH0/T4kwJfVQzJE=
+github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3/go.mod h1:qzFUVwLI1b5UIbVFxFydUYAsnOK27AgtA5so3EW8jM0=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956 h1:FzReg7qT3G+11ZsFFbtguMdx+w1w76bJCOOH1fWfDKs=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956/go.mod h1:RRvSjHH12/PnQaXraMO65jUhVu8n59mzvhfIMBETnV4=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b h1:QyJLJn3xwFTIXu9KPZujsrIUN0X8DdiR9b2h75L0AfI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:6OKkPWDB8PetDXqMVMOWL35iTCEUdpATwwpuew0k8+o=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
