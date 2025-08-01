@@ -23,13 +23,15 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     useIsConditionallyHidden(model);
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
-  const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
 
-  const myIndex = rows.findIndex((row) => row === model);
+  const myIndex = model
+    .getParentLayout()
+    .getRowsWithRepeats()
+    .findIndex((row) => row === model);
 
   const shouldGrow = !isCollapsed && fillScreen;
   const isHidden = isConditionallyHidden && !isEditing;
