@@ -106,7 +106,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 		var ok bool
 		fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
 		if !ok {
-			return "", fmt.Errorf("folder %s found in tree with root: %s", folder, rootFolder)
+			return "", fmt.Errorf("folder %s NOT found in tree with root: %s", folder, rootFolder)
 		}
 	}
 
