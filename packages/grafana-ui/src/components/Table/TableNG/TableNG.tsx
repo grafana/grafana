@@ -87,7 +87,7 @@ export function TableNG(props: TableNGProps) {
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
-    enableVirtualization = enablePagination !== true,
+    enableVirtualization,
     footerOptions,
     getActions = () => [],
     height,
@@ -236,7 +236,7 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization: enableVirtualization && rowHeight !== 'auto',
+        enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
