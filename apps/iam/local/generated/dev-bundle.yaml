@@ -1264,72 +1264,6 @@ rules:
       - list
       - watch
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: aggregator-access
-rules:
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["iam.grafana.app"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["folder.grafana.app"]
-    resources: ["folders"]
-    verbs: ["get", "list", "watch"]
-  - nonResourceURLs:
-      - "/openapi/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/iam.grafana.app/*"
-      - "/apis/folder.grafana.app/*"
-    verbs: ["*"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: aggregator-unauth-access-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: aggregator-access
-subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: system:unauthenticated
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -2160,6 +2094,31 @@ subjects:
     namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: job-checker
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: grafana:job-checker-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: job-checker
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: grafana:user-user-rolebinding
@@ -2176,56 +2135,6 @@ subjects:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-apiserver-provisioning
-  namespace: default
-  labels:
-    name: grafana
-data:
-  apiservices.yaml: |
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
-    - group: iam.grafana.app
-      version: v0alpha1
-      host: kubernetes.default.svc
-      port: 443
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
   name: grafana-config
   namespace: default
   labels:
@@ -2233,39 +2142,29 @@ metadata:
 data:
   grafana.ini: |
     app_mode = development
-    [analytics]
-    reporting_enabled = false
-    [tracing.opentelemetry.otlp]
-    address = tempo.default.svc:4317
+    target = all
+
     [auth.anonymous]
     enabled = false
-    [log.frontend]
-    enabled = true
+
     [server]
     http_port = 3000
-    root_url =
+    protocol = https
     router_logging = true
-    [unified_alerting]
-    enabled = true
-    [users]
-    default_theme = dark
+    enforce_domain = false
+
     [feature_toggles]
-    grafanaAPIServerEnsureKubectlAccess = true
-    kubernetesFolders = true
-    unifiedStorageSearch = true
-    unifiedStorageSearchUI = false
     grafanaAPIServerWithExperimentalAPIs = true
-    kubernetesDashboardsAPI = true
-    kubernetesCliDashboards = true
-    unifiedStorageSearchSprinkles = true
-    kubernetesFoldersServiceV2 = true
-    unifiedStorageSearchPermissionFiltering = true
-    kubernetesClientDashboardsFolders = true
-    kubernetesAggregator = true
+    grafanaAPIServerEnsureKubectlAccess = true
+    unifiedStorageSearchUI = true
+    unifiedStorageSearch = true
+
     [grafana-apiserver]
-    remote_services_file = /app-aggregator/apiservices.yaml
+    storage_type = unified
+
     [unified_storage.folders.folder.grafana.app]
     dualWriterMode = 2
+
     [unified_storage.dashboards.dashboard.grafana.app]
     dualWriterMode = 2
 ---
@@ -2278,14 +2177,14 @@ metadata:
     name: grafana
 spec:
   ports:
-    - name: grafana-grafana-metrics
-      port: 3000
+    - name: grafana-https
+      port: 443
       targetPort: 3000
-    - name: http
-      port: 80
-      targetPort: 3000
+      nodePort: 30443
+      protocol: TCP
   selector:
     name: grafana
+  type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -2310,7 +2209,7 @@ spec:
               value: ""
             - name: GF_PATHS_CONFIG
               value: /etc/grafana-config/grafana.ini
-          image: grafana/grafana-enterprise:12.0.0
+          image: grafana/grafana-enterprise:latest
           imagePullPolicy: IfNotPresent
           name: grafana
           ports:
@@ -2325,9 +2224,6 @@ spec:
               name: grafana-config
             - mountPath: /etc/grafana/provisioning/datasources
               name: grafana-datasources
-            - mountPath: /app-aggregator
-              name: grafana-apiserver-provisioning
-              readOnly: true
       serviceAccount: grafana
       volumes:
         - configMap:
@@ -2339,24 +2235,6 @@ spec:
         - configMap:
             name: grafana-apiserver-provisioning
           name: grafana-apiserver-provisioning
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: grafana-ingress
-  namespace: default
-spec:
-  rules:
-    - host: grafana.k3d.localhost
-      http:
-        paths:
-          - backend:
-              service:
-                name: grafana
-                port:
-                  number: 80
-            path: /
-            pathType: Prefix
 ---
 apiVersion: v1
 kind: ConfigMap
