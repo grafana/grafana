@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -597,17 +598,34 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 			GenerateRef()
 		ruleStore.PutRule(context.Background(), ruleInOtherFolder)
 
-		getResp := srv.RouteConvertPrometheusGetRuleGroup(rc, fldr.Title, groupKey.RuleGroup)
-		require.Equal(t, http.StatusOK, getResp.Status())
+		t.Run("YAML response", func(t *testing.T) {
+			getResp := srv.RouteConvertPrometheusGetRuleGroup(rc, fldr.Title, groupKey.RuleGroup)
+			require.Equal(t, http.StatusOK, getResp.Status())
 
-		var respGroup apimodels.PrometheusRuleGroup
-		err := yaml.Unmarshal(getResp.Body(), &respGroup)
-		require.NoError(t, err)
+			var respGroup apimodels.PrometheusRuleGroup
+			err := yaml.Unmarshal(getResp.Body(), &respGroup)
+			require.NoError(t, err)
 
-		require.Equal(t, groupKey.RuleGroup, respGroup.Name)
-		require.Equal(t, prommodel.Duration(time.Duration(rule.IntervalSeconds)*time.Second), respGroup.Interval)
-		require.Len(t, respGroup.Rules, 1)
-		require.Equal(t, promRule.Alert, respGroup.Rules[0].Alert)
+			require.Equal(t, groupKey.RuleGroup, respGroup.Name)
+			require.Equal(t, prommodel.Duration(time.Duration(rule.IntervalSeconds)*time.Second), respGroup.Interval)
+			require.Len(t, respGroup.Rules, 1)
+			require.Equal(t, promRule.Alert, respGroup.Rules[0].Alert)
+		})
+
+		t.Run("JSON response", func(t *testing.T) {
+			rc.Req.Header.Set("Accept", "application/json")
+			getResp := srv.RouteConvertPrometheusGetRuleGroup(rc, fldr.Title, groupKey.RuleGroup)
+			require.Equal(t, http.StatusOK, getResp.Status())
+
+			var jsonGroup apimodels.PrometheusRuleGroup
+			err := json.Unmarshal(getResp.Body(), &jsonGroup)
+			require.NoError(t, err)
+
+			require.Equal(t, groupKey.RuleGroup, jsonGroup.Name)
+			require.Equal(t, prommodel.Duration(time.Duration(rule.IntervalSeconds)*time.Second), jsonGroup.Interval)
+			require.Len(t, jsonGroup.Rules, 1)
+			require.Equal(t, promRule.Alert, jsonGroup.Rules[0].Alert)
+		})
 	})
 }
 
@@ -690,16 +708,32 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 			ruleStore.PutRule(context.Background(), rule)
 		}
 
-		response := srv.RouteConvertPrometheusGetNamespace(rc, fldr.Title)
-		require.Equal(t, http.StatusOK, response.Status())
+		t.Run("YAML response", func(t *testing.T) {
+			response := srv.RouteConvertPrometheusGetNamespace(rc, fldr.Title)
+			require.Equal(t, http.StatusOK, response.Status())
 
-		var respNamespaces map[string][]apimodels.PrometheusRuleGroup
-		err := yaml.Unmarshal(response.Body(), &respNamespaces)
-		require.NoError(t, err)
+			var respNamespaces map[string][]apimodels.PrometheusRuleGroup
+			err := yaml.Unmarshal(response.Body(), &respNamespaces)
+			require.NoError(t, err)
 
-		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Title)
-		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+			require.Len(t, respNamespaces, 1)
+			require.Contains(t, respNamespaces, fldr.Title)
+			require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		})
+
+		t.Run("JSON response", func(t *testing.T) {
+			rc.Req.Header.Set("Accept", "application/json")
+			response := srv.RouteConvertPrometheusGetNamespace(rc, fldr.Title)
+			require.Equal(t, http.StatusOK, response.Status())
+
+			var jsonNamespaces map[string][]apimodels.PrometheusRuleGroup
+			err := json.Unmarshal(response.Body(), &jsonNamespaces)
+			require.NoError(t, err)
+
+			require.Len(t, jsonNamespaces, 1)
+			require.Contains(t, jsonNamespaces, fldr.Title)
+			require.ElementsMatch(t, jsonNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		})
 	})
 }
 
@@ -821,17 +855,118 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 			ruleStore.PutRule(context.Background(), rule)
 		}
 
-		response := srv.RouteConvertPrometheusGetRules(rc)
-		require.Equal(t, http.StatusOK, response.Status())
+		t.Run("YAML response", func(t *testing.T) {
+			response := srv.RouteConvertPrometheusGetRules(rc)
+			require.Equal(t, http.StatusOK, response.Status())
 
-		var respNamespaces map[string][]apimodels.PrometheusRuleGroup
-		err := yaml.Unmarshal(response.Body(), &respNamespaces)
-		require.NoError(t, err)
+			var respNamespaces map[string][]apimodels.PrometheusRuleGroup
+			err := yaml.Unmarshal(response.Body(), &respNamespaces)
+			require.NoError(t, err)
 
-		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Title)
-		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+			require.Len(t, respNamespaces, 1)
+			require.Contains(t, respNamespaces, fldr.Title)
+			require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		})
+
+		t.Run("JSON response", func(t *testing.T) {
+			rc.Req.Header.Set("Accept", "application/json")
+			response := srv.RouteConvertPrometheusGetRules(rc)
+			require.Equal(t, http.StatusOK, response.Status())
+
+			var jsonNamespaces map[string][]apimodels.PrometheusRuleGroup
+			err := json.Unmarshal(response.Body(), &jsonNamespaces)
+			require.NoError(t, err)
+
+			require.Len(t, jsonNamespaces, 1)
+			require.Contains(t, jsonNamespaces, fldr.Title)
+			require.ElementsMatch(t, jsonNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		})
 	})
+}
+
+func TestConvertPrometheusResponse(t *testing.T) {
+	testData := map[string][]apimodels.PrometheusRuleGroup{
+		"test": {
+			{
+				Name: "test-group",
+				Rules: []apimodels.PrometheusRule{
+					{
+						Alert: "TestAlert",
+						Expr:  "up == 0",
+					},
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		acceptHeader  string
+		expectedType  string
+		checkResponse func(t *testing.T, body []byte)
+	}{
+		{
+			name:         "by default returns YAML",
+			expectedType: "text/yaml",
+			checkResponse: func(t *testing.T, body []byte) {
+				require.True(t, strings.Contains(string(body), "test-group"))
+				require.True(t, strings.Contains(string(body), "TestAlert"))
+				var result map[string][]apimodels.PrometheusRuleGroup
+				err := yaml.Unmarshal(body, &result)
+				require.NoError(t, err)
+			},
+		},
+		{
+			name:         "with application/json Accept header returns JSON",
+			acceptHeader: "application/json",
+			expectedType: "application/json",
+			checkResponse: func(t *testing.T, body []byte) {
+				require.True(t, strings.Contains(string(body), "test-group"))
+				require.True(t, strings.Contains(string(body), "TestAlert"))
+				var result map[string][]apimodels.PrometheusRuleGroup
+				err := json.Unmarshal(body, &result)
+				require.NoError(t, err)
+			},
+		},
+		{
+			name:         "with application/yaml accept header returns YAML",
+			acceptHeader: "application/yaml",
+			expectedType: "text/yaml",
+			checkResponse: func(t *testing.T, body []byte) {
+				require.True(t, strings.Contains(string(body), "test-group"))
+				require.True(t, strings.Contains(string(body), "TestAlert"))
+				var result map[string][]apimodels.PrometheusRuleGroup
+				err := yaml.Unmarshal(body, &result)
+				require.NoError(t, err)
+			},
+		},
+		{
+			name:         "with a header with both json and yaml returns JSON",
+			acceptHeader: "application/yaml, application/json",
+			expectedType: "application/json",
+			checkResponse: func(t *testing.T, body []byte) {
+				require.True(t, strings.Contains(string(body), "test-group"))
+				require.True(t, strings.Contains(string(body), "TestAlert"))
+				var result map[string][]apimodels.PrometheusRuleGroup
+				err := json.Unmarshal(body, &result)
+				require.NoError(t, err)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rc := createRequestCtx()
+			if tc.acceptHeader != "" {
+				rc.Req.Header.Set("Accept", tc.acceptHeader)
+			}
+
+			response := convertPrometheusResponse(rc, http.StatusOK, testData)
+
+			require.Equal(t, http.StatusOK, response.Status())
+			tc.checkResponse(t, response.Body())
+		})
+	}
 }
 
 func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {

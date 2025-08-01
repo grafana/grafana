@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -155,7 +156,7 @@ func NewConvertPrometheusSrv(
 
 // RouteConvertPrometheusGetRules returns all Grafana-managed alert rules in all namespaces (folders)
 // that were imported from a Prometheus-compatible source.
-// It responds with a YAML containing a mapping of folders to arrays of Prometheus rule groups.
+// It responds with JSON or YAML containing a mapping of folders to arrays of Prometheus rule groups.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.ReqContext) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
@@ -166,7 +167,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	if len(folders) == 0 || errors.Is(err, dashboards.ErrFolderNotFound) {
 		// If there is no such folder or no children, return empty response
 		// because mimirtool expects 200 OK response in this case.
-		return response.YAML(http.StatusOK, map[string][]apimodels.PrometheusRuleGroup{})
+		return convertPrometheusResponse(c, http.StatusOK, map[string][]apimodels.PrometheusRuleGroup{})
 	}
 	if err != nil {
 		logger.Error("Failed to get folders", "error", err)
@@ -193,7 +194,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 		return errorToResponse(err)
 	}
 
-	return response.YAML(http.StatusOK, namespaces)
+	return convertPrometheusResponse(c, http.StatusOK, namespaces)
 }
 
 // RouteConvertPrometheusDeleteNamespace deletes all rule groups that were imported from a Prometheus-compatible source
@@ -256,7 +257,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 }
 
 // RouteConvertPrometheusGetNamespace returns the Grafana-managed alert rules for a specified namespace (folder).
-// It responds with a YAML containing a mapping of a single folder to an array of Prometheus rule groups.
+// It responds with JSON or YAML containing a mapping of a single folder to an array of Prometheus rule groups.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmodel.ReqContext, namespaceTitle string) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
@@ -286,11 +287,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 		return errorToResponse(err)
 	}
 
-	return response.YAML(http.StatusOK, ns)
+	return convertPrometheusResponse(c, http.StatusOK, ns)
 }
 
 // RouteConvertPrometheusGetRuleGroup retrieves a single rule group for a given namespace (folder)
-// in Prometheus-compatible YAML format if it was imported from a Prometheus-compatible source.
+// in Prometheus-compatible JSON or YAML format if it was imported from a Prometheus-compatible source.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
@@ -332,7 +333,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 		return errorToResponse(err)
 	}
 
-	return response.YAML(http.StatusOK, promGroup)
+	return convertPrometheusResponse(c, http.StatusOK, promGroup)
 }
 
 // RouteConvertPrometheusPostRuleGroup converts a Prometheus rule group into a Grafana rule group
@@ -608,7 +609,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 		TemplateFiles:      extraCfg.TemplateFiles,
 	}
 
-	resp := response.YAML(http.StatusOK, respBody)
+	resp := convertPrometheusResponse(c, http.StatusOK, respBody)
 	resp.SetHeader(configIdentifierHeader, extraCfg.Identifier)
 	resp.SetHeader(mergeMatchersHeader, formatMergeMatchers(extraCfg.MergeMatchers))
 
@@ -807,4 +808,23 @@ func parseConfigIdentifierHeader(c *contextmodel.ReqContext) string {
 		return defaultConfigIdentifier
 	}
 	return identifier
+}
+
+// convertPrometheusResponse returns a JSON or YAML response based on the Accept header.
+// Default is YAML for backward compatibility with mimirtool.
+func convertPrometheusResponse(c *contextmodel.ReqContext, status int, body interface{}) *response.NormalResponse {
+	acceptHeader := c.Req.Header.Get("Accept")
+
+	for _, accept := range strings.Split(acceptHeader, ",") {
+		mediaType, _, err := mime.ParseMediaType(accept)
+		if err != nil {
+			continue
+		}
+
+		if mediaType == "application/json" {
+			return response.JSON(status, body)
+		}
+	}
+
+	return response.YAML(status, body)
 }
