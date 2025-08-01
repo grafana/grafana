@@ -65,7 +65,7 @@ test.describe(
     });
 
     test('Choose a scope', async ({ page, gotoDashboardPage }) => {
-      await test.step('View and select any scope', async () => {
+      await test.step('1.1.View and select any scope', async () => {
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         await openScopesSelector(page, testScopes);
@@ -92,7 +92,7 @@ test.describe(
         await expect.soft(filterEditButton).toBeVisible();
       });
 
-      await test.step('Select a scope across multiple types of production entities', async () => {
+      await test.step('1.2.Select a scope across multiple types of production entities', async () => {
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         await openScopesSelector(page, testScopes);
@@ -121,7 +121,29 @@ test.describe(
         await expect.soft(filterEditButton).toBeVisible();
       });
 
-      await test.step('View and select a recently viewed scope', async () => {
+      await test.step('1.3.View and select a scope configured by any team', async () => {
+        await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+
+        await openScopesSelector(page, testScopes);
+
+        const firstLevelScopes = testScopes[2].children!;
+        await expandScopesSelection(page, firstLevelScopes, testScopes[0].name);
+
+        const secondLevelScopes = firstLevelScopes[0].children!;
+        await expandScopesSelection(page, secondLevelScopes, firstLevelScopes[0].name);
+
+        const selectedScopes = [secondLevelScopes[0]];
+
+        for (const scope of selectedScopes) {
+          await selectScope(page, scope);
+        }
+
+        await applyScopes(page, []);
+
+        await expect.soft(page.getByTestId('scopes-selector-input')).toHaveValue(secondLevelScopes[0].title!);
+      });
+
+      await test.step('1.4.View and select a recently viewed scope', async () => {
         // this step depends on the previous ones because they set recent scopes
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
@@ -138,7 +160,7 @@ test.describe(
           .toHaveValue(`${scopes[0].title!}, ${scopes[1].title!}`);
       });
 
-      await test.step('View pre-completed production entity values as I type', async () => {
+      await test.step('1.5.View pre-completed production entity values as I type', async () => {
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         await openScopesSelector(page, testScopes);

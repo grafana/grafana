@@ -9,6 +9,8 @@ export type TestScope = {
   filters?: Array<{ key: string; value: string; operator: string }>;
   dashboardUid?: string;
   dashboardTitle?: string;
+  disableMultiSelect?: boolean;
+  addLinks?: boolean;
 };
 
 export async function scopeNodeChildrenRequest(
@@ -34,15 +36,12 @@ export async function scopeNodeChildrenRequest(
           spec: {
             title: scope.title,
             description: scope.title,
-            disableMultiSelect: false,
+            disableMultiSelect: scope.disableMultiSelect ?? false,
+            nodeType: scope.children ? 'container' : 'leaf',
             ...(parentName && {
               parentName,
             }),
-            ...(scope.children && {
-              nodeType: 'container',
-            }),
-            ...(!scope.children && {
-              nodeType: 'leaf',
+            ...(scope.addLinks && {
               linkType: 'scope',
               linkId: `scope-${scope.name}`,
             }),
@@ -112,9 +111,11 @@ export async function scopeSelectRequest(page: Page, selectedScope: TestScope): 
 
 export async function selectScope(page: Page, selectedScope: TestScope) {
   const click = async () => {
-    const checkbox = page.getByTestId(`scopes-tree-${selectedScope.name}-checkbox`);
-    await checkbox.scrollIntoViewIfNeeded();
-    await checkbox.click({ force: true });
+    const element = page.locator(
+      `[data-testid="scopes-tree-${selectedScope.name}-checkbox"], [data-testid="scopes-tree-${selectedScope.name}-radio"]`
+    );
+    await element.scrollIntoViewIfNeeded();
+    await element.click({ force: true });
   };
 
   if (USE_LIVE_DATA) {
