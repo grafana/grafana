@@ -1548,8 +1548,7 @@
       "group-not-editable": "O grupo selecionado não pode ser editado",
       "group-not-editable-description": "Este grupo pertence a uma origem de dados que não suporta edição.",
       "page-title": "Editar grupo de regras",
-      "rule-group-error": "Erro ao carregar grupo de regras",
-      "title": "Editar grupo de avaliação"
+      "rule-group-error": "Erro ao carregar grupo de regras"
     },
     "group-loader": {
       "group-load-failed": "Falha ao carregar regras do grupo {{ groupName }} em {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Alerta"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Importar",
@@ -3482,6 +3480,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Cancelar",
       "cannot-move-folders": "Não é possível mover as pastas",
       "confirmation-text": "Eliminar",
@@ -3515,6 +3514,10 @@
       "this-folder-is-empty": "Esta pasta está vazia"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3522,15 +3525,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} regra de alerta",
@@ -3553,12 +3563,12 @@
       "tags-column": "Etiquetas"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Não foi possível obter informações sobre os descendentes"
@@ -3601,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Erro ao criar a pasta",
-      "alert-folder-created-successfully": "Pasta criada com sucesso",
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
@@ -3728,6 +3737,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3748,7 +3758,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3849,7 +3858,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -3970,6 +3978,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Automóvel"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4567,6 +4582,7 @@
     "edit-actions": {
       "add": "Adicionar {{typeName}}",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5355,6 +5371,20 @@
       "tags-expected-array": "matriz de etiquetas esperada",
       "tags-expected-strings": "matriz de strings de etiquetas esperada"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Restaurar para a versão {{version}}",
       "label-view-json-diff": "Visualizar diferenças JSON",
@@ -5612,6 +5642,7 @@
       "delete-read-only-file-message": "",
       "deleting": "A eliminar...",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
     },
     "description-label": {
@@ -5623,9 +5654,6 @@
           "edit-link": "Editar link"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Alternar menu de e-mail"
@@ -5785,6 +5813,7 @@
       "usage-count_other": "Utilizado em {{count}} painéis de controlo"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5794,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6979,6 +7009,9 @@
         "pro-tip-define-sources-through-configuration-files": "Dica: também pode definir origens de dados através de ficheiros de configuração. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Anterior",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Sem consulta"
@@ -7245,18 +7278,24 @@
       "split-tooltip": "Dividir o painel",
       "split-widen": "Alargar painel"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Dar feedback",
-      "label-copied": "Copiado!",
-      "label-export": "Exportar",
-      "label-trace-id": "ID trace",
-      "title-share-thoughts-about-tracing-grafana": "Partilhe a sua opinião sobre o rastreamento na Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Trace parcial",
-      "tooltip-url": "{{url}} ou {{target}} ou {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Botão para limpar filtros",
@@ -8272,6 +8311,9 @@
     "card": {
       "option": "opção"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Limpar a seleção"
     },
@@ -8284,6 +8326,7 @@
       "aria-label-selected-color": "cor {{colorLabel}} "
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Cancelar",
       "confirmText-delete": ""
     },
@@ -8710,6 +8753,7 @@
       "footer-add-annotation": "Adicionar anotação",
       "footer-click-to-action": "Clique para {{actionTitle}}",
       "footer-click-to-navigate": "Clique para abrir {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Registo de data e hora"
     },
     "week-start-picker": {
@@ -10968,6 +11012,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Esta funcionalidade está atualmente em desenvolvimento ativo. Para a melhor experiência e as melhorias mais recentes, recomendamos a utilização da <2>compilação noturna</2> da Grafana."
@@ -11224,6 +11271,7 @@
       "starting": "A iniciar...",
       "status": {
         "title-error-running-job": "Erro ao executar tarefa",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Resumo",
@@ -11372,6 +11420,7 @@
       "label-current-step": "Passo atual",
       "label-pending-step": "Passo pendente"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11404,6 +11453,12 @@
       "alert-title": "Importante: não serão perdidos dados ou configurações, mas os painéis de controlo ficarão temporariamente indisponíveis durante alguns minutos.",
       "button-next": "Concluir",
       "button-start": "Iniciar sincronização",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Escolha o que sincronizar",
       "step-connect": "Conectar ",
       "step-finish": "Escolha as definições adicionais",
@@ -11418,6 +11473,7 @@
     "wizard-content": {
       "button-cancel": "Cancelar",
       "button-cancelling": "A cancelar... ",
+      "button-previous": "",
       "button-submitting": "A enviar...",
       "error-instance-repository-exists": "O repositório de instâncias já existe"
     }
@@ -11818,7 +11874,7 @@
         "recommended": "Recomendado",
         "results": "Resultados"
       },
-      "search": "Pesquisar"
+      "search": ""
     }
   },
   "search": {
@@ -12454,6 +12510,18 @@
       "label-large": "",
       "label-medium": "",
       "label-small": ""
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Se selecionado, toda a linha será colorida como esta célula seria.",

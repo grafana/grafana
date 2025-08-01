@@ -20,6 +20,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesNavbarPreference":       schema_pkg_apis_preferences_v0alpha1_PreferencesNavbarPreference(ref),
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesQueryHistoryPreference": schema_pkg_apis_preferences_v0alpha1_PreferencesQueryHistoryPreference(ref),
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesSpec":                   schema_pkg_apis_preferences_v0alpha1_PreferencesSpec(ref),
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesStatus":                 schema_pkg_apis_preferences_v0alpha1_PreferencesStatus(ref),
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesstatusOperatorState":    schema_pkg_apis_preferences_v0alpha1_PreferencesstatusOperatorState(ref),
 	}
 }
 
@@ -56,12 +58,18 @@ func schema_pkg_apis_preferences_v0alpha1_Preferences(ref common.ReferenceCallba
 							Ref:         ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesSpec"),
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesStatus"),
+						},
+					},
 				},
-				Required: []string{"metadata", "spec"},
+				Required: []string{"metadata", "spec", "status"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesSpec", "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -237,13 +245,6 @@ func schema_pkg_apis_preferences_v0alpha1_PreferencesSpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"locale": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Selected locale (beta)",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"queryHistory": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Explore query history preferences",
@@ -267,5 +268,100 @@ func schema_pkg_apis_preferences_v0alpha1_PreferencesSpec(ref common.ReferenceCa
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesCookiePreferences", "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesNavbarPreference", "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesQueryHistoryPreference"},
+	}
+}
+
+func schema_pkg_apis_preferences_v0alpha1_PreferencesStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"operatorStates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesstatusOperatorState"),
+									},
+								},
+							},
+						},
+					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.PreferencesstatusOperatorState"},
+	}
+}
+
+func schema_pkg_apis_preferences_v0alpha1_PreferencesstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
+			},
+		},
 	}
 }

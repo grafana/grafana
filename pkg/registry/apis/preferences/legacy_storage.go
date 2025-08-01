@@ -154,8 +154,6 @@ func toObj(ns string, name string, p *pref.Preference) preferences.Preferences {
 	}
 
 	if p.JSONData != nil {
-		obj.Spec.Locale = nil // ?????
-
 		obj.Spec.Language = asPointer(p.JSONData.Language)
 		obj.Spec.RegionalFormat = asPointer(p.JSONData.RegionalFormat)
 

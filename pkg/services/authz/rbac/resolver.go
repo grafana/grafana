@@ -81,9 +81,21 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 	}, nil
 }
 
+func permissionsDelegateResolverFunc(scope string) (string, error) {
+	if strings.TrimPrefix(scope, "permissions:type:") == "delegate" {
+		// The permissions:type:delegate scope does not have any discriminating value,
+		// so we return a wildcard to indicate that it applies to all roles.
+		return "*", nil
+	}
+	return "", fmt.Errorf("unsupported scope: %s", scope)
+}
+
 func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scopePrefix string) (ScopeResolverFunc, error) {
 	if scopePrefix == "teams:id:" {
 		return s.newTeamNameResolver(ctx, ns)
+	}
+	if scopePrefix == "permissions:type:" {
+		return permissionsDelegateResolverFunc, nil
 	}
 	// No resolver found for the given scope prefix.
 	return nil, nil

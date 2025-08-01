@@ -1548,8 +1548,7 @@
       "group-not-editable": "Die ausgewählte Gruppe kann nicht bearbeitet werden",
       "group-not-editable-description": "Diese Gruppe gehört zu einer Datenquelle, die keine Bearbeitung unterstützt.",
       "page-title": "Regelgruppe bearbeiten",
-      "rule-group-error": "Fehler beim Laden der Regelgruppe",
-      "title": "Evaluierungsgruppe bearbeiten"
+      "rule-group-error": "Fehler beim Laden der Regelgruppe"
     },
     "group-loader": {
       "group-load-failed": "Die Regeln der Gruppe {{ groupName }} in {{ namespaceName }} konnten nicht geladen werden",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Führen Sie auf jeder Netzwerkebene Ping-, DNS-, HTTP/S- und TCP-Prüfungen durch.",
       "synthetic-monitoring-card-item-3": "Nutzen Sie mehr als 20 globale Tests oder private Tests hinter Ihrer Firewall.",
       "synthetic-monitoring-card-item-4": "Verfolgen Sie SLOs mit integrierten Warnungen im Stil von Prometheus – direkt über die Benutzeroberfläche.",
-      "synthetic-monitoring-card-title": "Synthetisches Monitoring",
-      "title-alerting": "Meldungen"
+      "synthetic-monitoring-card-title": "Synthetisches Monitoring"
     },
     "import-to-gma": {
       "action-button": "Importieren",
@@ -3482,6 +3480,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Abbrechen",
       "cannot-move-folders": "Ordner können nicht verschoben werden",
       "confirmation-text": "Löschen",
@@ -3515,6 +3514,10 @@
       "this-folder-is-empty": "Dieser Ordner ist leer"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3522,15 +3525,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} Alarmierungsregel",
@@ -3553,12 +3563,12 @@
       "tags-column": "Tags"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Ordner erfolgreich gelöscht",
       "api-error": "Ordner konnte nicht gelöscht werden",
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
-      "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:"
+      "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nachfolgerinformationen können nicht abgerufen werden"
@@ -3601,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Fehler beim Erstellen des Ordners",
-      "alert-folder-created-successfully": "Der Ordner wurde erfolgreich erstellt",
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
@@ -3728,6 +3737,7 @@
     "category-selected-connection": "Ausgewählte Verbindung",
     "category-selected-element": "Ausgewähltes Element ({{element}})",
     "category-size": "Größe",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3748,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Auswahl experimenteller Elementtypen aktivieren",
-    "description-infinite-panning": "Unbegrenztes Schwenken aktivieren – nützlich für umfangreiche Leinwände. Warnung: Dies ist eine experimentelle Funktion und funktioniert momentan nur mit Elementen gut, die oben/links eingeschränkt sind",
     "description-inline-editing": "Direkte Bearbeitung des Panels aktivieren",
     "description-pan-zoom": "Schwenken und Zoomen aktivieren",
     "direction-options": {
@@ -3849,7 +3858,6 @@
     "name-align-text": "Text ausrichten",
     "name-color": "Textfarbe",
     "name-experimental-types": "Experimentelle Elementtypen",
-    "name-infinite-panning": "Unbegrenztes Schwenken",
     "name-inline-editing": "Inline-Bearbeitung",
     "name-pan-zoom": "Schwenken und Zoomen",
     "name-text": "Text",
@@ -3970,6 +3978,13 @@
       "name-vertical-align": "Vertikale Ausrichtung",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4567,6 +4582,7 @@
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5355,6 +5371,20 @@
       "tags-expected-array": "Array der jeweiligen Tags",
       "tags-expected-strings": "String-Array der jeweiligen Tags"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Auf Version {{version}} wiederherstellen",
       "label-view-json-diff": "JSON-Diff anzeigen",
@@ -5612,6 +5642,7 @@
       "delete-read-only-file-message": "Dieses Dashboard kann nicht direkt von Grafana aus gelöscht werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu löschen, entfernen Sie bitte die Datei aus Ihrem Git-Repository.",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
+      "success-message": "",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
     "description-label": {
@@ -5623,9 +5654,6 @@
           "edit-link": "Link bearbeiten"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Dashboard-Änderungen erfolgreich gespeichert"
     },
     "email-list": {
       "aria-label-emailmenu": "E-Mail-Menü umschalten"
@@ -5785,6 +5813,7 @@
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5794,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6979,6 +7009,9 @@
         "pro-tip-define-sources-through-configuration-files": " Profi-Tipp: Sie können Datenquellen auch über Konfigurationsdateien festlegen. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Zurück",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Ohne Abfrage fortfahren"
@@ -7245,18 +7278,24 @@
       "split-tooltip": "Bereich teilen",
       "split-widen": "Bereich verbreitern"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Feedback geben",
-      "label-copied": "Kopiert!",
-      "label-export": "Exportieren",
-      "label-trace-id": "Trace-ID",
-      "title-share-thoughts-about-tracing-grafana": "Sagen Sie Ihre Meinung zum Tracing in Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Teilweises Trace",
-      "tooltip-url": "{{url}} oder {{target}} oder {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Schaltfläche „Filter löschen“",
@@ -8272,6 +8311,9 @@
     "card": {
       "option": "Option"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Auswahl löschen"
     },
@@ -8284,6 +8326,7 @@
       "aria-label-selected-color": "{{colorLabel}} Farbe"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Abbrechen",
       "confirmText-delete": ""
     },
@@ -8710,6 +8753,7 @@
       "footer-add-annotation": "Anmerkung hinzufügen",
       "footer-click-to-action": "Klicken, um zu {{actionTitle}}",
       "footer-click-to-navigate": "Zum Öffnen von {{linkTitle}} klicken",
+      "footer-filter-for-value": "",
       "timestamp": "Zeitstempel"
     },
     "week-start-picker": {
@@ -10968,6 +11012,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Diese Funktion befindet sich momentan in der aktiven Entwicklung. Für die bestmögliche Nutzererfahrung und die neuesten Verbesserungen empfehlen wir die Nutzung von <2>Nightly Build</2> von Grafana."
@@ -11224,6 +11271,7 @@
       "starting": "Wird gestartet ...",
       "status": {
         "title-error-running-job": "Fehler bei der Ausführung des Auftrags",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Zusammenfassung",
@@ -11372,6 +11420,7 @@
       "label-current-step": "Aktueller Schritt",
       "label-pending-step": "Ausstehender Schritt"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11404,6 +11453,12 @@
       "alert-title": "Wichtig: Es gehen keine Daten oder Konfigurationen verloren, aber die Dashboards sind für einige Minuten vorübergehend nicht verfügbar.",
       "button-next": "Fertigstellen",
       "button-start": "Synchronisierung starten",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "step-connect": "Verbinden",
       "step-finish": "Zusätzliche Einstellungen auswählen",
@@ -11418,6 +11473,7 @@
     "wizard-content": {
       "button-cancel": "Abbrechen",
       "button-cancelling": "Abbrechen ...",
+      "button-previous": "",
       "button-submitting": "Übertragen …",
       "error-instance-repository-exists": "Das Instanz-Repository existiert bereits"
     }
@@ -11818,7 +11874,7 @@
         "recommended": "Empfohlen",
         "results": "Ergebnisse"
       },
-      "search": "Suche"
+      "search": ""
     }
   },
   "search": {
@@ -12454,6 +12510,18 @@
       "label-large": "Groß",
       "label-medium": "Mittel",
       "label-small": "Klein"
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Wenn dies ausgewählt ist, wird die gesamte Zeile so eingefärbt, wie es diese Zelle wäre.",
