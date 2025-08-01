@@ -66,6 +66,7 @@ import {
   getCellColors,
   getCellLinks,
   getCellOptions,
+  getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
@@ -160,23 +161,7 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = (() => {
-    switch (cellHeight) {
-      case TableCellHeight.Sm:
-        return 36;
-      case TableCellHeight.Md:
-        return 42;
-      case TableCellHeight.Lg:
-        return TABLE.MAX_CELL_HEIGHT;
-      case TableCellHeight.Auto:
-        return 'auto';
-      default: {
-        const bodyFontSize = theme.typography.fontSize;
-        const lineHeight = theme.typography.body.lineHeight;
-        return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
-      }
-    }
-  })();
+  const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
