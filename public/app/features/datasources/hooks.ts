@@ -29,7 +29,7 @@ export function useRecentlyUsedDataSources(): [string[], (ds: DataSourceInstance
         setStorage([...value, ds.uid]);
       } else {
         const newArray = [...value, ds.uid];
-        if (newArray.length > 6) {
+        if (newArray.length > 5) {
           setStorage(newArray.slice(1, 6));
         } else {
           setStorage(newArray);
