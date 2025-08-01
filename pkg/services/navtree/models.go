@@ -43,6 +43,7 @@ const (
 	NavIDDrilldown            = "drilldown"
 	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"
+	NavIDAIMachineLearning    = "ai-and-machine-learning"
 	NavIDTestingAndSynthetics = "testing-and-synthetics"
 	NavIDAlerting             = "alerting"
 	NavIDObservability        = "observability"
