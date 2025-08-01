@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
+      - release-*.*.*
   pull_request:
     branches:
-      - '**' 
+      - '**'
 
 env:
   ARCH: linux-amd64
@@ -28,7 +29,7 @@ jobs:
       - run: go version
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
           cache: 'yarn'
       - name: Install dependencies
         run: yarn install --immutable
@@ -40,7 +41,7 @@ jobs:
           runTests: false
       - name: Run dashboard scenes e2e
         run: yarn e2e:schema-v2 || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
-      
+
       - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
         if: failure()
         run: exit 0

@@ -54,7 +54,9 @@
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
+    "i18n-extract": "make i18n-extract",
     "betterer": "betterer --tsconfig ./scripts/cli/tsconfig.json",
+    "betterer:ci": "betterer ci --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:merge": "betterer merge --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:stats": "node ./scripts/cli/reportBettererStats.mjs",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
@@ -242,6 +244,7 @@
     "webpack-livereload-plugin": "3.0.2",
     "webpack-manifest-plugin": "5.0.0",
     "webpack-merge": "6.0.1",
+    "webpack-subresource-integrity": "^5.2.0-rc.1",
     "webpackbar": "^7.0.0",
     "yaml": "^2.0.0",
     "yargs": "^17.5.1"
@@ -431,7 +434,9 @@
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
     "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*"
+    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
+    "form-data@~2.3.2": "2.5.4",
+    "form-data@^4.0.0": "4.0.4"
   },
   "workspaces": {
     "packages": [

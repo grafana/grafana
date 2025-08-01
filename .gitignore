@@ -107,10 +107,12 @@ profile.cov
 /pkg/build/cmd/artifactspage.go
 /pkg/build/cmd/artifactspage.tmpl.html
 /pkg/build/cmd/exportversion.go
+/pkg/build/cmd/enterprise.go
 /pkg/server/wireexts_enterprise.go
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
 /public/app/extensions
+!/public/app/extensions/.keep
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -170,6 +172,7 @@ compilation-stats.json
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
 /e2e/extensions
+!/e2e/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
@@ -191,7 +194,7 @@ compilation-stats.json
 /docs/sources/packages_api
 
 # wire generated files
-**/wire_gen.go
+/pkg/server/enterprise_wire_gen.go
 
 # Auto-generated internationalization files
 public/locales/_build/
