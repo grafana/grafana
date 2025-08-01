@@ -13,7 +13,7 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { NodesMap, RecentScope, RecentScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
+import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -394,15 +394,7 @@ function isScopeLocalStorageV1(obj: unknown): obj is { scope: Scope } {
 }
 
 function isScopeObj(obj: unknown): obj is Scope {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'metadata' in obj &&
-    typeof obj['metadata'] === 'object' &&
-    obj['metadata'] !== null &&
-    'name' in obj['metadata'] &&
-    'spec' in obj
-  );
+  return ScopeSchema.safeParse(obj).success;
 }
 
 function hasValidScopeParentNode(obj: unknown): obj is RecentScope {
