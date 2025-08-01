@@ -191,11 +191,15 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 		return "Failed to unmarshal field capabilities response", "error"
 	}
 	if fieldCaps["error"] != nil {
-		if errorMessage, ok := fieldCaps["error"].(map[string]any)["reason"].(string); ok {
-			return fmt.Sprintf("Error validating index: %s", errorMessage), "warning"
-		} else {
+		errorMap, ok := fieldCaps["error"].(map[string]any)
+		if !ok {
 			return "Error validating index", "warning"
 		}
+		errorMessage, ok := errorMap["reason"].(string)
+		if !ok {
+			return "Error validating index", "warning"
+		}
+		return fmt.Sprintf("Error validating index: %s", errorMessage), "warning"
 	}
 
 	fields, ok := fieldCaps["fields"].(map[string]any)

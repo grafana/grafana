@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -51,9 +52,10 @@ func ProvideLegacyMigrator(
 	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
 	libraryPanelSvc librarypanels.Service,
 	accessControl accesscontrol.AccessControl,
+	features featuremgmt.FeatureToggles,
 ) LegacyMigrator {
 	dbp := legacysql.NewDatabaseProvider(sql)
-	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, libraryPanelSvc, sort.ProvideService(), accessControl)
+	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, libraryPanelSvc, sort.ProvideService(), accessControl, features)
 }
 
 type BlobStoreInfo struct {
@@ -309,11 +311,12 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		for _, row := range rows.rejected {
 			id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
 			a.log.Warn("rejected dashboard",
+				"namespace", opts.Namespace,
 				"dashboard", row.Dash.Name,
 				"uid", row.Dash.UID,
 				"id", id,
+				"version", row.Dash.Generation,
 				"stackId", opts.StackID,
-				"namespace", opts.Namespace,
 			)
 			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 		}

@@ -39,7 +39,7 @@ import (
 
 func ConvertDashboard_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.APIVersion = dashv2beta1.VERSION
+	out.APIVersion = dashv2beta1.APIVERSION
 	out.Kind = in.Kind
 
 	return convertDashboardSpec_V2alpha1_to_V2beta1(&in.Spec, &out.Spec, scope)

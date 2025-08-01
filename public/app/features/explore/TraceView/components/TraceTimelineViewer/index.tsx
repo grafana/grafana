@@ -40,7 +40,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
 
     '& .json-markup': {
       lineHeight: '17px',
-      fontSize: '13px',
       fontFamily: 'monospace',
       whiteSpace: 'pre-wrap',
     },
