@@ -1,7 +1,6 @@
 import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer, SetupServer } from 'msw/node';
 import { ComponentProps } from 'react';
 import * as React from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
@@ -9,13 +8,16 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import BrowseDashboardsPage from './BrowseDashboardsPage';
-import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
 import * as permissions from './permissions';
-const [mockTree, { dashbdD, folderA, folderA_folderA }] = wellFormedTree();
+
+setupMockServer();
+const [mockTree, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -111,7 +113,6 @@ jest.mock('app/features/browse-dashboards/api/services', () => {
 });
 
 describe('browse-dashboards BrowseDashboardsPage', () => {
-  let server: SetupServer;
   const mockPermissions = {
     canCreateDashboards: true,
     canEditDashboards: true,
@@ -123,33 +124,14 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     canDeleteDashboards: true,
   };
 
-  beforeAll(() => {
-    server = setupServer(
-      http.get('/api/folders/:uid', () => {
-        return HttpResponse.json({
-          title: folderA.item.title,
-          uid: folderA.item.uid,
-        });
-      }),
-      http.get('/api/search', () => {
-        return HttpResponse.json({});
-      }),
+  beforeEach(() => {
+    server.use(
       http.get('/api/search/sorting', () => {
         return HttpResponse.json({
           sortOptions: [],
         });
-      }),
-      http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/settings', () => {
-        return HttpResponse.json({
-          items: [],
-        });
       })
     );
-    server.listen();
-  });
-
-  afterAll(() => {
-    server.close();
   });
 
   beforeEach(() => {
@@ -170,7 +152,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       canDeleteDashboards: true,
     });
     jest.restoreAllMocks();
-    server.resetHandlers();
   });
 
   describe('at the root level', () => {
