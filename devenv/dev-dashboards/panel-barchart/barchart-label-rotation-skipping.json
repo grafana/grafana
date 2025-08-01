@@ -30,8 +30,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -107,8 +106,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"label\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 600000\n          }\n        },\n        {\n          \"name\": \"A-series\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {},\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"acquisition\",\n          \"extension\",\n          \"conductor\",\n          \"authorise\",\n          \"architect\",\n          \"illusion\",\n          \"congress\",\n          \"highlight\",\n          \"partnership\",\n          \"understanding\",\n          \"disagreement\",\n          \"personality\",\n          \"commerce\",\n          \"systematic\",\n          \"hesitate\",\n          \"business\",\n          \"manufacture\",\n          \"incredible\",\n          \"constitutional\",\n          \"prevalence\",\n          \"professor\",\n          \"entitlement\",\n          \"cooperation\",\n          \"sickness\",\n          \"contrast\",\n          \"reference\",\n          \"audience\",\n          \"discount\",\n          \"apparatus\",\n          \"disturbance\",\n          \"automatic\",\n          \"refrigerator\",\n          \"elaborate\",\n          \"sympathetic\",\n          \"integration\",\n          \"president\"\n        ],\n        [\n          306.78931659492116,\n          200.00696051101917,\n          164.90889283973593,\n          518.9385023737021,\n          999.9040675564702,\n          613.9689830172349,\n          773.2337077340269,\n          317.47395634701644,\n          748.3318338316539,\n          606.8039493787173,\n          426.27771317792866,\n          376.47735643253924,\n          66.30635081800493,\n          401.70654338415505,\n          108.86259550477234,\n          182.40284186231278,\n          867.7047958572101,\n          959.3957783599242,\n          396.7606089549935,\n          455.9625595614323,\n          685.4792456298062,\n          368.6567303946707,\n          157.06596562976327,\n          59.54120602048763,\n          406.72723615743973,\n          440.18247585615575,\n          516.0267558264891,\n          258.76006051667315,\n          952.966531725171,\n          554.8746357628739,\n          86.7279280805682,\n          781.2422516386563,\n          754.2723802427706,\n          435.0305712850233,\n          384.43181614983,\n          459.04164596738127\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
@@ -120,8 +118,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {

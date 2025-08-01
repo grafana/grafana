@@ -30,8 +30,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -110,8 +109,7 @@
         {
           "csvContent": "Time,Value,Name\n2022-09-01T05:00:00Z,100,Before\n2022-09-01T06:00:00Z,100,Middle",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_content"
@@ -122,8 +120,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -202,8 +199,7 @@
         {
           "csvContent": "Time,Value,Name\n2022-09-01T05:00:00Z,100,Before\n2022-09-01T07:00:00Z,100,After\n",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_content"
@@ -214,8 +210,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -294,8 +289,7 @@
         {
           "csvContent": "Time,Value,Name\n2022-09-01T06:00:00Z,100,Middle\n2022-09-01T07:00:00Z,100,After\n",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_content"
@@ -306,8 +300,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -386,8 +379,7 @@
         {
           "csvContent": "Time,Value,Name\n2022-09-01T04:00:00Z,100,Before1\n2022-09-01T05:00:00Z,100,Before2\n",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_content"
@@ -398,8 +390,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -478,8 +469,7 @@
         {
           "csvContent": "Time,Value,Name\n2022-09-01T07:00:00Z,100,After1\n2022-09-01T08:00:00Z,100,After2\n",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_content"

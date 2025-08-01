@@ -22,7 +22,9 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -36,8 +38,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -45,8 +46,7 @@
         },
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",

@@ -30,7 +30,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {

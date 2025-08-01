@@ -30,7 +30,9 @@
       ],
       "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
       "d3DivId": "d3_svg_4",
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "decimals": 2,
       "displayModes": [
         {
@@ -1148,7 +1150,9 @@
       ],
       "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
       "d3DivId": "d3_svg_5",
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "decimals": 2,
       "displayModes": [
         {
@@ -2227,7 +2231,9 @@
       ],
       "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
       "d3DivId": "d3_svg_2",
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "decimals": 2,
       "displayModes": [
         {

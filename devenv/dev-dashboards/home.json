@@ -29,7 +29,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -53,7 +53,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -77,7 +77,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -101,7 +101,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -125,7 +125,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -149,7 +149,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "gridPos": {
         "h": 13,
         "w": 6,

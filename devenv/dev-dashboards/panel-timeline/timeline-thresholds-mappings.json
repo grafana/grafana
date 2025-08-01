@@ -29,7 +29,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -92,8 +92,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -105,7 +104,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -176,8 +175,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -189,7 +187,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -260,8 +258,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -273,7 +270,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -369,8 +366,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -382,7 +378,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -486,8 +482,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -499,7 +494,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -616,8 +611,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -629,7 +623,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -692,8 +686,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"int64\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"thresholds\": {\n              \"mode\": \"absolute\",\n              \"steps\": [\n                {\n                  \"color\": \"green\",\n                  \"value\": null\n                },\n                {\n                  \"color\": \"#EAB839\",\n                  \"value\": 10\n                },\n                {\n                  \"color\": \"red\",\n                  \"value\": 15\n                },\n                {\n                  \"color\": \"#6ED0E0\",\n                  \"value\": 25\n                }\n              ]\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1674732835000,\n          1674736435000,\n          1674740035000,\n          1674743635000\n        ],\n        [\n          5,\n          10,\n          20,\n          30\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
@@ -705,7 +698,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -768,8 +761,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -777,8 +769,7 @@
         },
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "max": 30,
@@ -808,7 +799,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -891,8 +882,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"int64\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"thresholds\": {\n              \"mode\": \"absolute\",\n              \"steps\": [\n                {\n                  \"color\": \"green\",\n                  \"value\": null\n                }\n              ]\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1674732835000,\n          1674736435000,\n          1674740035000,\n          1674743635000,\n          1674747235000\n        ],\n        [\n          5,\n          null,\n          20,\n          null,\n          40\n        ]\n      ],\n      \"entities\": [null, { \"NaN\": [3]}]\n    }\n  }\n]",
           "refId": "A",
@@ -904,7 +894,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -976,8 +966,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"int64\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"thresholds\": {\n              \"mode\": \"absolute\",\n              \"steps\": [\n                {\n                  \"color\": \"green\",\n                  \"value\": null\n                }\n              ]\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1674732835000,\n          1674736435000,\n          1674740035000,\n          1674743635000,\n          1674747235000\n        ],\n        [\n          5,\n          null,\n          20,\n          null,\n          40\n        ]\n      ],\n      \"entities\": [null, { \"NaN\": [1]}]\n    }\n  }\n]",
           "refId": "A",
@@ -989,7 +978,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1071,8 +1060,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"int64\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"thresholds\": {\n              \"mode\": \"absolute\",\n              \"steps\": [\n                {\n                  \"color\": \"green\",\n                  \"value\": null\n                }\n              ]\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1674732835000,\n          1674736435000,\n          1674740035000,\n          1674743635000,\n          1674747235000,\n          1674750835000,\n          1674754235000,\n          1674757835000\n        ],\n        [\n          null,\n          null,\n          false,\n          true,\n          true,\n          false,\n          true,\n          null\n        ]\n      ],\n      \"entities\": [null, { \"NaN\": [0], \"Undefined\": [1]}]\n    }\n  }\n]",
           "refId": "A",

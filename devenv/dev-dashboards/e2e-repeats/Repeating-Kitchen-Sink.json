@@ -27,7 +27,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -115,7 +115,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -192,7 +192,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -267,7 +267,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {

@@ -28,7 +28,9 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -135,8 +137,7 @@
         {
           "csvFileName": "flight_info_by_state.csv",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_file"

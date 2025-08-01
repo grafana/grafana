@@ -28,7 +28,9 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 14,
         "w": 24,
@@ -39,8 +41,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "flame_graph"

@@ -40,7 +40,9 @@
         "mode": "opacity"
       },
       "dataFormat": "tsbuckets",
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 11,
         "w": 7,
@@ -58,8 +60,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "exponential_heatmap_bucket_data"
@@ -93,7 +94,9 @@
         "mode": "spectrum"
       },
       "dataFormat": "timeseries",
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 11,
         "w": 9,
@@ -111,8 +114,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 70,
           "min": 10,
@@ -151,7 +153,9 @@
         "mode": "spectrum"
       },
       "dataFormat": "timeseries",
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 11,
         "w": 8,
@@ -169,8 +173,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "exponential_heatmap_bucket_data"
@@ -204,7 +207,9 @@
         "mode": "opacity"
       },
       "dataFormat": "tsbuckets",
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 11,
         "w": 7,
@@ -222,8 +227,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "exponential_heatmap_bucket_data"
@@ -315,7 +319,9 @@
         "mode": "spectrum"
       },
       "dataFormat": "timeseries",
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 11,
         "w": 8,
@@ -333,8 +339,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "exponential_heatmap_bucket_data"

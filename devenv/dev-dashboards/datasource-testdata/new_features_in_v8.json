@@ -41,7 +41,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 8,
@@ -68,7 +68,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -165,7 +165,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 15,
@@ -345,7 +345,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 13,
@@ -372,7 +372,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -437,7 +437,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -527,7 +527,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 3,
@@ -554,7 +554,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -674,7 +674,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -767,7 +767,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 3,
@@ -794,7 +794,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 6,
@@ -821,7 +821,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -942,7 +942,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1063,7 +1063,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1184,7 +1184,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 8,
@@ -1211,7 +1211,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1315,7 +1315,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -1422,7 +1422,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -1529,7 +1529,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 5,
@@ -1556,7 +1556,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1771,7 +1771,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 5,
@@ -1798,7 +1798,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2107,7 +2107,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2416,7 +2416,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2541,7 +2541,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 3,
@@ -2568,7 +2568,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2673,7 +2673,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {

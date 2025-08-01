@@ -29,7 +29,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -128,7 +128,7 @@
       "type": "state-timeline"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -231,7 +231,7 @@
       "type": "state-timeline"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "description": "Should show gaps",
       "fieldConfig": {
         "defaults": {
@@ -334,7 +334,7 @@
       "type": "state-timeline"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {

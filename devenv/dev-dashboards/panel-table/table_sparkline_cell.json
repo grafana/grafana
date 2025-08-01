@@ -23,8 +23,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -78,8 +77,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "ca3da78e-6bcc-4a2a-a080-d338a14528ca"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -101,8 +99,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -158,8 +155,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "ca3da78e-6bcc-4a2a-a080-d338a14528ca"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -181,8 +177,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -238,8 +233,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "ca3da78e-6bcc-4a2a-a080-d338a14528ca"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -261,8 +255,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -320,8 +313,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "ca3da78e-6bcc-4a2a-a080-d338a14528ca"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -343,8 +335,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -402,8 +393,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "ca3da78e-6bcc-4a2a-a080-d338a14528ca"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -425,8 +415,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -486,8 +475,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "ca3da78e-6bcc-4a2a-a080-d338a14528ca"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -509,8 +497,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {

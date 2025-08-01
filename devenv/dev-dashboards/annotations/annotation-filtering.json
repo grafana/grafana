@@ -32,8 +32,7 @@
       },
       {
         "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
+          "type": "grafana-testdata-datasource"
         },
         "enable": true,
         "filter": {
@@ -50,8 +49,7 @@
       },
       {
         "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
+          "type": "grafana-testdata-datasource"
         },
         "enable": true,
         "filter": {
@@ -68,8 +66,7 @@
       },
       {
         "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
+          "type": "grafana-testdata-datasource"
         },
         "enable": true,
         "filter": {
@@ -94,7 +91,9 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -169,7 +168,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -244,7 +245,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -319,7 +322,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
