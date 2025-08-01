@@ -2,32 +2,27 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "kind": "Dashboard",
   "metadata": {
-    "name": "fa400625-2a44-4add-a369-e6c972eb4bd6",
-    "generation": 1,
-    "creationTimestamp": "2025-05-27T11:40:22Z",
-    "labels": {},
-    "annotations": {}
+    "name": "addfpww",
+    "namespace": "default",
+    "uid": "AvXN09JdxuVNDqODs5IYU2iStlk5ntizuPGIfY1ywZgX",
+    "resourceVersion": "1",
+    "generation": 2,
+    "creationTimestamp": "2025-07-31T13:37:11Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "6844"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "user:cejvsh18uudxcf",
+      "grafana.app/updatedBy": "user:cejvsh18uudxcf",
+      "grafana.app/updatedTimestamp": "2025-07-31T13:37:11Z",
+      "grafana.app/folder": "",
+      "grafana.app/saved-from-ui": "Grafana v12.2.0-pre (69d1226c9a)"
+    }
   },
   "spec": {
-    "annotations": [
-      {
-        "kind": "AnnotationQuery",
-        "spec": {
-          "builtIn": true,
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts",
-          "query": {
-            "group": "grafana",
-            "kind": "DataQuery",
-            "spec": {},
-            "version": "v0"
-          }
-        }
-      }
-    ],
+    "annotations": [],
     "cursorSync": "Off",
+    "description": "",
     "editable": true,
     "elements": {
       "panel-1": {
@@ -42,6 +37,9 @@
                   "spec": {
                     "hidden": false,
                     "query": {
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {},
@@ -60,7 +58,8 @@
           "links": [],
           "title": "New panel",
           "vizConfig": {
-            "kind": "timeseries",
+            "group": "timeseries",
+            "kind": "VizConfig",
             "spec": {
               "fieldConfig": {
                 "defaults": {
@@ -128,9 +127,9 @@
                   "mode": "single",
                   "sort": "none"
                 }
-              },
-              "pluginVersion": "12.1.0-pre"
-            }
+              }
+            },
+            "version": "12.2.0-pre"
           }
         }
       },
@@ -146,9 +145,15 @@
                   "spec": {
                     "hidden": false,
                     "query": {
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
-                      "spec": {},
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1
+                      },
                       "version": "v0"
                     },
                     "refId": "A"
@@ -164,7 +169,8 @@
           "links": [],
           "title": "New panel",
           "vizConfig": {
-            "kind": "timeseries",
+            "group": "timeseries",
+            "kind": "VizConfig",
             "spec": {
               "fieldConfig": {
                 "defaults": {
@@ -232,9 +238,9 @@
                   "mode": "single",
                   "sort": "none"
                 }
-              },
-              "pluginVersion": "12.1.0-pre"
-            }
+              }
+            },
+            "version": "12.2.0-pre"
           }
         }
       },
@@ -250,6 +256,9 @@
                   "spec": {
                     "hidden": false,
                     "query": {
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
                       "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {},
@@ -268,7 +277,8 @@
           "links": [],
           "title": "New panel",
           "vizConfig": {
-            "kind": "timeseries",
+            "group": "timeseries",
+            "kind": "VizConfig",
             "spec": {
               "fieldConfig": {
                 "defaults": {
@@ -336,9 +346,9 @@
                   "mode": "single",
                   "sort": "none"
                 }
-              },
-              "pluginVersion": "12.1.0-pre"
-            }
+              }
+            },
+            "version": "12.2.0-pre"
           }
         }
       }
@@ -402,7 +412,7 @@
       "timezone": "browser",
       "to": "now"
     },
-    "title": "Test V2 Dashboard",
+    "title": "TEST!!!!",
     "variables": []
   },
   "status": {}
