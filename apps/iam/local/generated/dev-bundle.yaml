@@ -2458,6 +2458,38 @@ spec:
     spec:
       serviceAccount: operator
       containers:
+        # Add nginx proxy sidecar
+        - name: nginx-proxy
+          image: nginx:alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Creating nginx config for proxy..."
+              cat > /etc/nginx/nginx.conf << 'EOF'
+              events {
+                worker_connections 1024;
+              }
+
+              stream {
+                upstream grafana_backend {
+                  server grafana.default.svc.cluster.local:6443;
+                }
+
+                server {
+                  listen 6443;
+                  listen [::]:6443;
+                  proxy_pass grafana_backend;
+                  proxy_timeout 10s;
+                  proxy_connect_timeout 5s;
+                }
+              }
+              EOF
+              echo "Starting nginx proxy..."
+              nginx -g 'daemon off;'
+          ports:
+            - containerPort: 6443
+              name: proxy
         - image: localhost/github.com/grafana/grafana/apps/iam/operator:latest
           imagePullPolicy: IfNotPresent
           name: iam-app-operator
@@ -2470,7 +2502,9 @@ spec:
                 echo "Kubeconfig not found, waiting 5 seconds..."
                 sleep 5
               done
-              echo "Kubeconfig found, starting operator..."
+              echo "Waiting for proxy to be ready..."
+              sleep 10  # Give socat time to start
+              echo "Kubeconfig found and proxy ready, starting operator..."
               exec /usr/bin/operator
           env:
             - name: OTEL_HOST
