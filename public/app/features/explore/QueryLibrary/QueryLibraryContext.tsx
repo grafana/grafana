@@ -9,7 +9,7 @@ import { OnSelectQueryType } from './types';
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
   onSelectQuery?: OnSelectQueryType;
-  options?: { isReplacingQuery?: boolean; onSave?: () => void; context?: string };
+  options?: { isReplacingQuery?: boolean; onSave?: () => void; context?: string, highlightQuery?: string; };
   query?: DataQuery;
 };
 

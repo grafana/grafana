@@ -1560,8 +1560,7 @@
       "group-not-editable": "Nie można edytować wybranej grupy",
       "group-not-editable-description": "Ta grupa należy do źródła danych, które nie obsługuje edycji.",
       "page-title": "Edytuj grupę reguł",
-      "rule-group-error": "Błąd podczas ładowania grupy reguł",
-      "title": "Edytuj grupę ocen"
+      "rule-group-error": "Błąd podczas ładowania grupy reguł"
     },
     "group-loader": {
       "group-load-failed": "Nie udało się wczytać reguł z grupy {{ groupName }} w przestrzeni nazw {{ namespaceName }}",
@@ -1595,8 +1594,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Alerty"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Importuj",
@@ -3603,12 +3601,12 @@
       "tags-column": "Znaczniki"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nie można pobrać informacji o elemencie potomnym"
@@ -3651,7 +3649,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Błąd podczas tworzenia folderu",
-      "alert-folder-created-successfully": "Folder został utworzony",
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
@@ -3778,6 +3775,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3798,7 +3796,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3899,7 +3896,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -4020,6 +4016,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatycznie"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -5679,6 +5682,7 @@
       "delete-read-only-file-message": "",
       "deleting": "Usuwanie…",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
     "description-label": {
@@ -5690,9 +5694,6 @@
           "edit-link": "Edytuj link"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Menu przełączania konta e-mail"
@@ -5854,6 +5855,7 @@
       "usage-count_other": "Używane na {{count}} pulpitach"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5863,6 +5865,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7050,6 +7053,9 @@
         "pro-tip-define-sources-through-configuration-files": " Wskazówka: źródła danych można też definiować za pomocą plików konfiguracyjnych. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Wstecz",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Bez zapytań"
@@ -7316,18 +7322,24 @@
       "split-tooltip": "Podziel okienko",
       "split-widen": "Poszerz okno"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Przekaż opinię",
-      "label-copied": "Skopiowano",
-      "label-export": "Eksport",
-      "label-trace-id": "Identyfikator śledzenia",
-      "title-share-thoughts-about-tracing-grafana": "Podziel się swoimi przemyśleniami na temat śledzenia w usłudze Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Częściowy ślad",
-      "tooltip-url": "{{url}}, {{target}} lub {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Przycisk Wyczyść filtry",
@@ -11066,6 +11078,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Ta funkcja jest obecnie aktywnie rozwijana. Aby uzyskać najlepsze wrażenia i najnowsze ulepszenia, zalecamy korzystanie z <2>nocnej kompilacji</2> aplikacji Grafana."
@@ -11939,7 +11954,7 @@
         "recommended": "Zalecane",
         "results": "Wyniki"
       },
-      "search": "Szukaj"
+      "search": ""
     }
   },
   "search": {
@@ -12579,6 +12594,18 @@
       "label-large": "",
       "label-medium": "",
       "label-small": ""
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "W przypadku zaznaczenia cały wiersz będzie kolorowy, tak jak ta komórka.",

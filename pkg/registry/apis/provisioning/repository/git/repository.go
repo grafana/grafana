@@ -790,6 +790,10 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
 	author, committer := r.createSignature(ctx)
 	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
+		if errors.Is(err, nanogit.ErrNothingToCommit) {
+			return repository.ErrNothingToCommit
+		}
+
 		return fmt.Errorf("commit changes: %w", err)
 	}
 	return nil

@@ -1542,8 +1542,7 @@
       "group-not-editable": "无法编辑所选组",
       "group-not-editable-description": "此组所属的数据源不支持编辑。",
       "page-title": "编辑规则组",
-      "rule-group-error": "加载规则组时出错",
-      "title": "编辑评估组"
+      "rule-group-error": "加载规则组时出错"
     },
     "group-loader": {
       "group-load-failed": "从 {{ namespaceName }} 的组 {{ groupName }} 中加载规则失败",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "在每个网络层运行 ping、DNS、HTTP/S 和 TCP 检查。",
       "synthetic-monitoring-card-item-3": "使用 20 多个全球探测点，或部署在防火墙后的私有探测点。",
       "synthetic-monitoring-card-item-4": "使用内置的 Prometheus 风格的警报功能，直接从用户界面跟踪 SLO。",
-      "synthetic-monitoring-card-title": "综合监测",
-      "title-alerting": "警报"
+      "synthetic-monitoring-card-title": "综合监测"
     },
     "import-to-gma": {
       "action-button": "导入",
@@ -3546,12 +3544,12 @@
       "tags-column": "标签"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "文件夹已成功删除",
       "api-error": "删除文件夹失败",
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除...",
-      "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响："
+      "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "无法检索后代信息"
@@ -3594,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "创建文件夹时出错",
-      "alert-folder-created-successfully": "文件夹创建成功",
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
@@ -3721,6 +3718,7 @@
     "category-selected-connection": "所选连接",
     "category-selected-element": "所选元素 ({{element}})",
     "category-size": "大小",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3741,7 +3739,6 @@
       }
     },
     "description-experimental-types": "启用实验元素类型的选择",
-    "description-infinite-panning": "启用无限平移 - 适用于内容宽广的画布。警告：这是一项实验性功能，目前仅适用于受顶部/左侧约束的元素",
     "description-inline-editing": "启用直接编辑面板",
     "description-pan-zoom": "启用平移和缩放",
     "direction-options": {
@@ -3842,7 +3839,6 @@
     "name-align-text": "对齐文字",
     "name-color": "文字颜色",
     "name-experimental-types": "实验性元素类型",
-    "name-infinite-panning": "无限平移",
     "name-inline-editing": "嵌入式编辑",
     "name-pan-zoom": "平移和缩放",
     "name-text": "文字",
@@ -3963,6 +3959,13 @@
       "name-vertical-align": "垂直对齐",
       "placeholder": {
         "auto": "自动"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -5619,6 +5622,7 @@
       "delete-read-only-file-message": "此数据面板无法直接从 Grafana 删除，因为存储库是只读的。要删除此数据面板，请从 Git 存储库中移除相应文件。",
       "deleting": "正在删除...",
       "drawer-title": "删除已预置的数据面板",
+      "success-message": "",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
     "description-label": {
@@ -5630,9 +5634,6 @@
           "edit-link": "编辑链接"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "数据面板更改已成功保存"
     },
     "email-list": {
       "aria-label-emailmenu": "切换电子邮件菜单"
@@ -5791,6 +5792,7 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5800,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6984,6 +6987,9 @@
         "pro-tip-define-sources-through-configuration-files": "专业提示：您还可以通过配置文件定义数据源。"
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "上一步",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "转为无查询"
@@ -7250,18 +7256,24 @@
       "split-tooltip": "拆分窗格",
       "split-widen": "宽窗格"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "提供反馈",
-      "label-copied": "已复制！",
-      "label-export": "导出",
-      "label-trace-id": "跟踪 ID",
-      "title-share-thoughts-about-tracing-grafana": "分享您对 Grafana 跟踪功能的看法。"
-    },
     "trace-page-header": {
-      "text-partial-trace": "部分跟踪",
-      "tooltip-url": "{{url}} 或 {{target}} 或 {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "清除筛选按钮",
@@ -10967,6 +10979,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
@@ -11819,7 +11834,7 @@
         "recommended": "推荐",
         "results": "结果"
       },
-      "search": "搜索"
+      "search": ""
     }
   },
   "search": {
@@ -12453,6 +12468,18 @@
       "label-large": "大",
       "label-medium": "中",
       "label-small": "小"
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "如果选中，整行将按此单元格的颜色显示。",
