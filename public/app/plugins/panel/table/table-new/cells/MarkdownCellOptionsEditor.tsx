@@ -15,6 +15,8 @@ export const MarkdownCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
+  console.log(cellOptions);
+
   return (
     <Field
       label={
@@ -33,7 +35,7 @@ export const MarkdownCellOptionsEditor = ({
         </Label>
       }
     >
-      <Switch onChange={onDynamicHeightChange} checked={cellOptions.dynamicHeight} />
+      <Switch onChange={onDynamicHeightChange} value={cellOptions.dynamicHeight} />
     </Field>
   );
 };

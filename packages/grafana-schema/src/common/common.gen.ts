@@ -846,6 +846,7 @@ export interface TableMarkdownCellOptions {
  * Height of a table cell
  */
 export enum TableCellHeight {
+  Auto = 'auto',
   Lg = 'lg',
   Md = 'md',
   Sm = 'sm',

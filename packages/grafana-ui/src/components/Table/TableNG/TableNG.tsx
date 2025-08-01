@@ -228,6 +228,17 @@ export function TableNG(props: TableNGProps) {
   });
   const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
+  // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
+  const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
+    if (typeof rowHeight === 'function') {
+      return rowHeight;
+    }
+    if (typeof rowHeight === 'string') {
+      return () => TABLE.MAX_CELL_HEIGHT;
+    }
+    return () => rowHeight;
+  }, [rowHeight]);
+
   const renderRow = useMemo(
     () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
     [data, enableSharedCrosshair, expandedRows, panelContext]
@@ -435,13 +446,7 @@ export function TableNG(props: TableNGProps) {
           // is cached so the cost of calling for every cell is low.
           // NOTE: some cell types still require a height to be passed down, so that's why string-based
           // cell types are going to just pass down the max cell height as a numeric height for those cells.
-          const height = (
-            typeof rowHeight === 'function'
-              ? rowHeight(props.row)
-              : typeof rowHeight === 'string'
-                ? TABLE.MAX_CELL_HEIGHT
-                : rowHeight
-          ) satisfies number;
+          const height = rowHeightFn(props.row);
           const frame = data;
 
           return (
@@ -569,7 +574,7 @@ export function TableNG(props: TableNGProps) {
 
           return (
             <RowExpander
-              height={typeof defaultRowHeight === 'string' ? TABLE.MAX_CELL_HEIGHT : defaultRowHeight}
+              height={rowHeightFn(row)}
               isExpanded={expandedRows.has(rowIdx)}
               onCellExpand={() => {
                 if (expandedRows.has(rowIdx)) {
@@ -622,7 +627,6 @@ export function TableNG(props: TableNGProps) {
     crossFilterOrder,
     crossFilterRows,
     data,
-    defaultRowHeight,
     disableSanitizeHtml,
     enableSharedCrosshair,
     expandedRows,
@@ -633,6 +637,7 @@ export function TableNG(props: TableNGProps) {
     onCellFilterAdded,
     panelContext,
     rowHeight,
+    rowHeightFn,
     rows,
     setFilter,
     showTypeIcons,
