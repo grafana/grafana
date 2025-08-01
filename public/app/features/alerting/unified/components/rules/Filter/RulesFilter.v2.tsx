@@ -181,7 +181,11 @@ export default function RulesFilter() {
                 role="region"
                 tabIndex={-1}
               >
-                <FilterOptions onSubmit={handleAdvancedFilters} onClear={handleClearFilters} />
+                <FilterOptions
+                  onSubmit={handleAdvancedFilters}
+                  onClear={handleClearFilters}
+                  pluginsFilterEnabled={pluginsFilterEnabled}
+                />
               </div>
             }
           >
@@ -200,9 +204,10 @@ export default function RulesFilter() {
 interface FilterOptionsProps {
   onSubmit: SubmitHandler<AdvancedFilters>;
   onClear: () => void;
+  pluginsFilterEnabled: boolean;
 }
 
-const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
+const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOptionsProps) => {
   const styles = useStyles2(getStyles);
   const theme = useStyles2((theme) => theme);
   const { filterState } = useRulesFilter();
@@ -567,6 +572,27 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
               />
             )}
           />
+          {pluginsFilterEnabled && (
+            <>
+              <Label>
+                <Trans i18nKey="alerting.rules-filter.plugin-rules">Plugin rules</Trans>
+              </Label>
+              <Controller
+                name="plugins"
+                control={control}
+                render={({ field }) => (
+                  <RadioButtonGroup<AdvancedFilters['plugins']>
+                    options={[
+                      { label: t('alerting.rules-filter.label.show', 'Show'), value: 'show' },
+                      { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
+                    ]}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </>
+          )}
         </div>
         <Stack direction="row" alignItems="center">
           <Button type="reset" variant="secondary">
