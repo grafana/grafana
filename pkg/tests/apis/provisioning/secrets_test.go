@@ -286,6 +286,9 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_Secrets_Update(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 	helper := runGrafana(t, useAppPlatformSecrets)
 	secretsService := helper.GetEnv().RepositorySecrets

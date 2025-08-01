@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/plugin/kubeconfig"
 	"github.com/grafana/grafana-app-sdk/simple"
 )
 
@@ -17,6 +18,7 @@ const (
 type Config struct {
 	OTelConfig    simple.OpenTelemetryConfig
 	WebhookServer WebhookServerConfig
+	KubeConfig    *kubeconfig.NamespacedConfig
 }
 
 type WebhookServerConfig struct {
@@ -70,6 +72,22 @@ func LoadConfigFromEnv() (*Config, error) {
 
 	cfg.WebhookServer.TLSCertPath = os.Getenv("WEBHOOK_CERT_PATH")
 	cfg.WebhookServer.TLSKeyPath = os.Getenv("WEBHOOK_KEY_PATH")
+
+	// Load the kube config
+	kubeConfigFile := os.Getenv("KUBE_CONFIG_FILE")
+	if kubeConfigFile != "" {
+		kubeConfig, err := LoadKubeConfigFromFile(kubeConfigFile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to load kubernetes configuration from file '%s': %w", kubeConfigFile, err)
+		}
+		cfg.KubeConfig = kubeConfig
+	} else {
+		kubeConfig, err := LoadInClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to load in-cluster kubernetes configuration: %w", err)
+		}
+		cfg.KubeConfig = kubeConfig
+	}
 
 	return &cfg, nil
 }

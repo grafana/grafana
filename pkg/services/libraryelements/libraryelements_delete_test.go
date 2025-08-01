@@ -14,6 +14,9 @@ import (
 )
 
 func TestIntegration_DeleteLibraryElement(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to delete a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.deleteHandler(sc.reqContext)

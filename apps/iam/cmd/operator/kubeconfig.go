@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/grafana/grafana-app-sdk/plugin/kubeconfig"
 )
@@ -29,7 +30,33 @@ func LoadKubeConfigFromEnv() (*kubeconfig.NamespacedConfig, error) {
 }
 
 // LoadKubeConfigFromFile loads a NamespacedConfig from a file on-disk (such as a mounted secret)
-func LoadKubeConfigFromFile() (*kubeconfig.NamespacedConfig, error) {
-	// TODO
-	return nil, fmt.Errorf("not implemented")
+func LoadKubeConfigFromFile(configPath string) (*kubeconfig.NamespacedConfig, error) {
+	// configPath := "/etc/grafana/grafana-apiserver/grafana.kubeconfig"
+
+	// Load the kubeconfig file
+	config, err := clientcmd.LoadFromFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load kubeconfig from %s: %w", configPath, err)
+	}
+
+	// Build the REST config from the kubeconfig
+	restConfig, err := clientcmd.NewDefaultClientConfig(*config, &clientcmd.ConfigOverrides{}).ClientConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create REST config: %w", err)
+	}
+
+	// Get the namespace from the current context, default to "default" if not set
+	namespace := "default"
+	if config.CurrentContext != "" {
+		if context, exists := config.Contexts[config.CurrentContext]; exists && context.Namespace != "" {
+			namespace = context.Namespace
+		}
+	}
+
+	restConfig.APIPath = "/apis"
+
+	return &kubeconfig.NamespacedConfig{
+		RestConfig: *restConfig,
+		Namespace:  namespace,
+	}, nil
 }

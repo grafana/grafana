@@ -73,7 +73,7 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const folderRepo = useSelector((state) => selectFolderRepository()(state, meta.folderUid));
   const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
 
   // Internal only;

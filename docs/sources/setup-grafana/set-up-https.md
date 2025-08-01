@@ -131,7 +131,6 @@ The instructions provided in this section are for a Debian-based Linux system. F
    ```
 
    These commands:
-
    - Uninstall `certbot` from your system if it has been installed using a package manager
    - Install `certbot` using `snapd`
 

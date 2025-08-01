@@ -37,6 +37,12 @@ const (
 
 	// JobActionMigrate acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
 	JobActionMigrate JobAction = "migrate"
+
+	// JobActionDelete deletes files in the remote repository
+	JobActionDelete JobAction = "delete"
+
+	// JobActionMove moves files in the remote repository
+	JobActionMove JobAction = "move"
 )
 
 // +enum
@@ -54,10 +60,13 @@ const (
 
 	// Finished with errors
 	JobStateError JobState = "error"
+
+	// Finished with some non-critical errors
+	JobStateWarning JobState = "warning"
 )
 
 func (j JobState) Finished() bool {
-	return j == JobStateSuccess || j == JobStateError
+	return j == JobStateSuccess || j == JobStateError || j == JobStateWarning
 }
 
 type JobSpec struct {
@@ -78,6 +87,12 @@ type JobSpec struct {
 
 	// Required when the action is `migrate`
 	Migrate *MigrateJobOptions `json:"migrate,omitempty"`
+
+	// Delete when the action is `delete`
+	Delete *DeleteJobOptions `json:"delete,omitempty"`
+
+	// Move when the action is `move`
+	Move *MoveJobOptions `json:"move,omitempty"`
 }
 
 type PullRequestJobOptions struct {
@@ -100,12 +115,17 @@ type SyncJobOptions struct {
 }
 
 type ExportJobOptions struct {
+	// Message to use when committing the changes in a single commit
+	Message string `json:"message,omitempty"`
+
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
 
+	// FIXME: we should validate this in admission hooks
 	// Target branch for export (only git)
 	Branch string `json:"branch,omitempty"`
 
+	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
 }
@@ -113,6 +133,51 @@ type ExportJobOptions struct {
 type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
+
+	// Message to use when committing the changes in a single commit
+	Message string `json:"message,omitempty"`
+}
+
+type DeleteJobOptions struct {
+	// Ref to the branch or commit hash to delete from
+	Ref string `json:"ref,omitempty"`
+	// Paths to be deleted. Examples:
+	// - dashboard.json (for a file)
+	// - a/b/c/other-dashboard.json (for a file)
+	// - nested/deep/ (for a directory)
+	// FIXME: we should validate this in admission hooks
+	Paths []string `json:"paths,omitempty"`
+
+	// Resources to delete
+	// This option has been created because currently the frontend does not use
+	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
+	// is it to use the paths.
+	Resources []ResourceRef `json:"resources,omitempty"`
+}
+
+type ResourceRef struct {
+	// Name is the name of the resource, such as a dashboard UID.
+	Name string `json:"name,omitempty"`
+
+	// Kind is the type of resource, for example, "Dashboard".
+	Kind string `json:"kind,omitempty"`
+
+	// Group is the group of the resource, such as "dashboard.grafana.app".
+	Group string `json:"group,omitempty"`
+}
+
+type MoveJobOptions struct {
+	// Ref to the branch or commit hash that should move
+	Ref string `json:"ref,omitempty"`
+	// Paths to be deleted. Examples:
+	// - dashboard.json (for a file)
+	// - a/b/c/other-dashboard.json (for a file)
+	// - nested/deep/ (for a directory)
+	// FIXME: we should validate this in admission hooks
+	Paths []string `json:"paths,omitempty"`
+
+	// Destination path for the move (e.g. "new-location/")
+	TargetPath string `json:"targetPath,omitempty"`
 }
 
 // The job status

@@ -1,5 +1,5 @@
 import { Meta, StoryFn } from '@storybook/react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import * as React from 'react';
 
 import { Divider } from '../Divider/Divider';
@@ -16,6 +16,8 @@ const FONT_WEIGHTS = [/*100, 200, 300, */ 400, 500 /*600, 700, 800, 900*/];
 export const TypographySamples: StoryFn = () => {
   const [fontWeight, setFontWeight] = useState(400);
   const [fontSize, setFontSize] = useState(30);
+  const fontWeightId = useId();
+  const fontSizeId = useId();
 
   const handleFontWeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFontWeight(Number(event.target.value));
@@ -29,6 +31,7 @@ export const TypographySamples: StoryFn = () => {
     <div style={{ fontSynthesis: 'none' }}>
       <Field label={`Font weight - ${fontWeight}`}>
         <input
+          id={fontWeightId}
           type="range"
           min={100}
           max={900}
@@ -41,6 +44,7 @@ export const TypographySamples: StoryFn = () => {
 
       <Field label={`Font size - ${fontSize}`}>
         <input
+          id={fontSizeId}
           type="range"
           min={8}
           max={100}

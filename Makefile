@@ -263,8 +263,8 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(bra) run
+run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
+	$(air) -c .air.toml
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -275,9 +275,9 @@ run-go: ## Build and run web server immediately.
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
-.PHONY: run-air
-run-air: ## Build and run backend, and watch for changes. See .air.toml for configuration.
-	$(air) -c .air.toml
+.PHONY: run-bra
+run-air: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
+	$(bra) run
 
 .PHONY: frontend-service-check
 frontend-service-check:

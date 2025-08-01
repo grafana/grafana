@@ -47,7 +47,7 @@ export function RuleListActions() {
       <Menu>
         <Menu.Group>
           <Menu.Item
-            label={t('alerting.rule-list.draft-new-rule', 'Draft a new rule')}
+            label={t('alerting.rule-list.new-rule-for-export', 'New alert rule for export')}
             icon="file-export"
             url="/alerting/export-new-rule"
           />

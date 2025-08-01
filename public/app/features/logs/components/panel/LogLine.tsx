@@ -372,15 +372,16 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     debug: '#6E9FFF',
     trace: '#6ed0e0',
     info: '#6CCF8E',
-    metadata: theme.colors.text.primary,
-    parsedField: theme.colors.text.primary,
+    metadata: theme.colors.text.secondary,
+    default: theme.colors.text.primary,
+    parsedField: theme.colors.text.secondary,
   };
 
   const hoverColor = tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
 
   return {
     logLine: css({
-      color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
+      color: colors.default,
       display: 'flex',
       gap: theme.spacing(0.5),
       flexDirection: 'row',
@@ -404,7 +405,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
       '& .log-syntax-highlight': {
         '.log-token-string': {
-          color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
+          color: colors.default,
         },
         '.log-token-duration': {
           color: theme.colors.success.text,
@@ -417,7 +418,6 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
         },
         '.log-token-key': {
           color: colors.parsedField,
-          opacity: 0.9,
           fontWeight: theme.typography.fontWeightMedium,
         },
         '.log-token-json-key': {

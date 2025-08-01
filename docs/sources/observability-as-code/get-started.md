@@ -68,17 +68,14 @@ Refer to the [Foundation SDK](../foundation-sdk) documentation for more informat
 If you're already using established Infrastructure as Code or other configuration management tools, Grafana offers integrations to manage resources within your existing workflows.
 
 - [Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/)
-
   - Use the Grafana Terraform provider to manage dashboards, alerts, and more.
   - Understand how to define and deploy resources using HCL/JSON configurations.
 
 - [Ansible](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/ansible/)
-
   - Learn to use the Grafana Ansible collection to manage Grafana Cloud resources, including folders and cloud stacks.
   - Write playbooks to automate resource provisioning through the Grafana API.
 
 - [Grafana Operator](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/grafana-operator/)
-
   - Utilize Kubernetes-native management with the Grafana Operator.
   - Manage dashboards, folders, and data sources via Kubernetes Custom Resources.
   - Integrate with GitOps workflows for seamless version control and deployment.

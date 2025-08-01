@@ -237,7 +237,11 @@ export class DefaultGridLayoutManager
     // when we duplicate a panel we don't want to clone the alert state
     delete panelData.state.data?.alertState;
 
-    const newPanel = new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) });
+    const newPanel = new VizPanel({
+      ...panelState,
+      $data: panelData,
+      key: getVizPanelKeyForPanelId(newPanelId),
+    });
 
     newGridItem = new DashboardGridItem({
       x: gridItem.state.x,
@@ -252,16 +256,38 @@ export class DefaultGridLayoutManager
       body: newPanel,
     });
 
-    if (gridItem.parent instanceof SceneGridRow) {
-      const row = gridItem.parent;
+    // No undo/redo support in legacy edit mode
+    if (!config.featureToggles.dashboardNewLayouts) {
+      if (gridItem.parent instanceof SceneGridRow) {
+        const row = gridItem.parent;
 
-      row.setState({ children: [...row.state.children, newGridItem] });
-      grid.forceRender();
+        row.setState({ children: [...row.state.children, newGridItem] });
+        grid.forceRender();
+        return;
+      }
+
+      grid.setState({ children: [...grid.state.children, newGridItem] });
+      this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
       return;
     }
 
-    grid.setState({ children: [...grid.state.children, newGridItem] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
+    const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
+      addedObject: newGridItem.state.body,
+      source: this,
+      perform: () => {
+        const oldGridItemIndex = parent.state.children.indexOf(gridItem);
+        const newChildrenArray = [...parent.state.children];
+        newChildrenArray.splice(oldGridItemIndex + 1, 0, newGridItem);
+        parent.setState({ children: newChildrenArray });
+      },
+      undo: () => {
+        parent.setState({
+          children: parent.state.children.filter((child) => child !== newGridItem),
+        });
+      },
+    });
   }
 
   public duplicate(): DashboardLayoutManager {

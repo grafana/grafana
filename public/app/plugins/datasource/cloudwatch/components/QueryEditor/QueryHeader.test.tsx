@@ -26,14 +26,19 @@ describe('QueryHeader', () => {
       { value: 'us-east-2', label: 'us-east-2' },
       { value: 'us-east-1', label: 'us-east-1' },
     ]);
-    it('should reset account id if new region is not monitoring account', async () => {
+    it('should reset account id and log groups if new region is not monitoring account', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const onChange = jest.fn();
       datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
       render(
         <QueryHeader
           datasource={datasource}
-          query={{ ...validMetricSearchBuilderQuery, region: 'us-east-1', accountId: 'all' }}
+          query={{
+            ...validMetricSearchBuilderQuery,
+            region: 'us-east-1',
+            accountId: 'all',
+            logGroups: [{ arn: 'arn', name: 'name' }],
+          }}
           onChange={onChange}
           onRunQuery={jest.fn()}
           dataIsStale={false}
@@ -45,10 +50,11 @@ describe('QueryHeader', () => {
         ...validMetricSearchBuilderQuery,
         region: 'us-east-2',
         accountId: undefined,
+        logGroups: [],
       });
     });
 
-    it('should not reset account id if new region is a monitoring account', async () => {
+    it('should reset log groups but not account id if new region is a monitoring account', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const onChange = jest.fn();
       datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
@@ -56,7 +62,12 @@ describe('QueryHeader', () => {
       render(
         <QueryHeader
           datasource={datasource}
-          query={{ ...validMetricSearchBuilderQuery, region: 'us-east-1', accountId: '123' }}
+          query={{
+            ...validMetricSearchBuilderQuery,
+            region: 'us-east-1',
+            accountId: '123',
+            logGroups: [{ arn: 'arn', name: 'name' }],
+          }}
           onChange={onChange}
           onRunQuery={jest.fn()}
           dataIsStale={false}
@@ -68,6 +79,7 @@ describe('QueryHeader', () => {
         ...validMetricSearchBuilderQuery,
         region: 'us-east-2',
         accountId: '123',
+        logGroups: [],
       });
     });
 

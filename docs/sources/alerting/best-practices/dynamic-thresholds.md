@@ -146,7 +146,6 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 1. Simulate a query (`$A`) that returns latencies for each service.
 
    Select **TestData** as the data source and configure the scenario.
-
    - Scenario: Random Walk
    - Alias: latency
    - Labels: service=api-$seriesIndex
@@ -179,7 +178,6 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
    For details on CSV format requirements, see [table data examples](ref:table-data-example).
 
 1. Add a new **Reduce** expression (`$C`).
-
    - Type: Reduce
    - Input: A
    - Function: Mean
@@ -188,7 +186,6 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
    This calculates the average latency for each service: `api-0`, `api-1`, etc.
 
 1. Add a new **Math** expression.
-
    - Type: Math
    - Expression: `$C > $B`
    - Set this expression as the **alert condition**.

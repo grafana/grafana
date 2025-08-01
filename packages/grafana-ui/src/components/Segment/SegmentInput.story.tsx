@@ -94,6 +94,7 @@ export const InputWithAutoFocus = () => {
         <InputComponent initialValue="test" key={i} />
       ))}
       <button
+        aria-label="Add"
         type="button"
         className="gf-form-label query-part"
         onClick={() => {

@@ -218,6 +218,9 @@ func TestIntegrationDashboardsAppV2alpha2(t *testing.T) {
 }
 
 func TestIntegrationLegacySupport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{

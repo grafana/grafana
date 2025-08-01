@@ -48,10 +48,10 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     return <PreviewBannerViewPR prParam={prURL} />;
   }
 
-  // Check if this is a GitHub link
-  const githubURL = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
-  if (githubURL) {
-    return <PreviewBannerViewPR prParam={githubURL} isNewPr />;
+  // Check if this is a repo link
+  const repoUrl = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
+  if (repoUrl) {
+    return <PreviewBannerViewPR prParam={repoUrl} isNewPr />;
   }
 
   return (

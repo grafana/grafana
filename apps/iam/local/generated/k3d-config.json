@@ -18,8 +18,8 @@
   },
   "ports": [
     {
-      "nodeFilters": ["loadbalancer"],
-      "port": "9999:80"
+      "nodeFilters": ["server:*"],
+      "port": "9999:30443"
     }
   ]
 }

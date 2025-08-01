@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Zaškrtnutím této možnosti upřednostníte koncový bod řady s parametrem {{exampleParameter}} před koncovým bodem hodnot štítků s parametrem {{exampleParameter}}. Zatímco koncový bod hodnot štítků je považován za výkonnější, někteří uživatelé mohou upřednostňovat řady kvůli metodě POST, zatímco koncový bod hodnot štítků má pouze metodu GET."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
@@ -207,6 +211,103 @@
         "label-auto": "",
         "label-custom": "",
         "label-verbose": ""
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
       }
     },
     "querybuilder": {
@@ -320,6 +421,13 @@
       "operation-param-editor": {
         "title-add": "Přidat {{name}}",
         "title-remove": "Odebrat {{name}}"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Nastavit dolní limit pro parametr kroku",

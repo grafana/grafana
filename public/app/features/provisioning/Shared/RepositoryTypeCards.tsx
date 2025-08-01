@@ -26,7 +26,11 @@ export function RepositoryTypeCards() {
             {gitProviders.map((config) => (
               <Card key={config.type} href={`${CONNECT_URL}/${config.type}`} className={styles.card} noMargin>
                 <Stack gap={2} alignItems="center">
-                  <Icon name={config.icon} size="xxl" />
+                  {config.logo ? (
+                    <img src={config.logo} alt={config.label} className={styles.logo} />
+                  ) : (
+                    <Icon name={config.icon} size="xxl" />
+                  )}
                   <Trans
                     i18nKey="provisioning.repository-type-cards.configure-with-provider"
                     values={{ provider: config.label }}
@@ -51,7 +55,11 @@ export function RepositoryTypeCards() {
           {otherProviders.map((config) => (
             <Card key={config.type} href={`${CONNECT_URL}/${config.type}`} className={styles.card} noMargin>
               <Stack gap={2} alignItems="center">
-                <Icon name={config.icon} size="xxl" />
+                {config.logo ? (
+                  <img src={config.logo} alt={config.label} className={styles.logo} />
+                ) : (
+                  <Icon name={config.icon} size="xxl" />
+                )}
                 {config.type === 'local' ? (
                   <Trans i18nKey="provisioning.repository-type-cards.configure-file">Configure file provisioning</Trans>
                 ) : (
@@ -75,6 +83,10 @@ function getStyles() {
   return {
     card: css({
       width: 220,
+    }),
+    logo: css({
+      width: 36,
+      height: 36,
     }),
   };
 }

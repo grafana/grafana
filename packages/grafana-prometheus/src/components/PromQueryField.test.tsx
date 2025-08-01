@@ -80,6 +80,19 @@ describe('PromQueryField', () => {
     expect(bcButton).toBeDisabled();
   });
 
+  it('renders no metrics chooser if hidden by props', async () => {
+    const props = {
+      ...defaultProps,
+      hideMetricsBrowser: true,
+    };
+    const queryField = render(<PromQueryField {...props} />);
+
+    // wait for component to render
+    await screen.findByTestId('dummy-code-input');
+
+    expect(queryField.queryByRole('button')).not.toBeInTheDocument();
+  });
+
   it('renders an initial hint if no data and initial hint provided', async () => {
     const props = defaultProps;
     props.datasource.lookupsDisabled = true;

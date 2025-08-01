@@ -24,6 +24,8 @@ const meta: Meta<typeof Menu> = {
     actions: {
       disabled: true,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
 };
 

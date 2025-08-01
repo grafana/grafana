@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/simple"
+	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/apis"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/apps/iam/pkg/watchers"
@@ -17,9 +18,9 @@ func Provider(appCfg app.SpecificConfig) app.Provider {
 }
 
 func New(cfg app.Config) (app.App, error) {
-	coreroleWatcher, err := watchers.NewCoreRoleWatcher()
+	FolderWatcher, err := watchers.NewFolderWatcher()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create CoreRoleWatcher: %w", err)
+		return nil, fmt.Errorf("unable to create FolderWatcher: %w", err)
 	}
 
 	config := simple.AppConfig{
@@ -39,8 +40,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: v0alpha1.GlobalRoleBindingKind(),
 			},
 			{
-				Kind:    v0alpha1.CoreRoleKind(),
-				Watcher: coreroleWatcher,
+				Kind: v0alpha1.CoreRoleKind(),
 			},
 			{
 				Kind: v0alpha1.RoleKind(),
@@ -64,6 +64,12 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: v0alpha1.ServiceAccountKind(),
 			},
 		},
+		UnmanagedKinds: []simple.AppUnmanagedKind{
+			{
+				Kind:    foldersKind.FolderKind(),
+				Watcher: FolderWatcher,
+			},
+		},
 	}
 
 	// Create the App
@@ -74,5 +80,6 @@ func New(cfg app.Config) (app.App, error) {
 
 	// Validate the capabilities against the provided manifest to make sure there isn't a mismatch
 	err = a.ValidateManifest(cfg.ManifestData)
+
 	return a, err
 }

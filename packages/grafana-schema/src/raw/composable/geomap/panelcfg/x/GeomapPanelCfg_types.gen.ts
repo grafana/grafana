@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.1.0-pre";
+export const pluginVersion = "12.2.0-pre";
 
 export interface Options {
   basemap: ui.MapLayerOptions;
@@ -33,6 +33,7 @@ export interface MapViewConfig {
   lon?: number;
   maxZoom?: number;
   minZoom?: number;
+  noRepeat?: boolean;
   padding?: number;
   shared?: boolean;
   zoom?: number;
@@ -43,6 +44,7 @@ export const defaultMapViewConfig: Partial<MapViewConfig> = {
   id: 'zero',
   lat: 0,
   lon: 0,
+  noRepeat: false,
   zoom: 1,
 };
 

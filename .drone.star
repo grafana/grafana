@@ -7,7 +7,6 @@
 This module returns a Drone configuration including pipelines and secrets.
 """
 
-load("scripts/drone/events/cron.star", "cronjobs")
 load("scripts/drone/events/main.star", "main_pipelines")
 load("scripts/drone/events/pr.star", "pr_pipelines")
 load(
@@ -37,6 +36,5 @@ def main(_ctx):
         publish_npm_pipelines() +
         publish_packages_pipeline() +
         rgm() +
-        cronjobs() +
         secrets()
     )

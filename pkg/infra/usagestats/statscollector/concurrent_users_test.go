@@ -28,6 +28,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, featuremgmt.WithFeatures())
 	s := createService(t, cfg, sqlStore, statsService)
@@ -46,6 +49,9 @@ func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
 }
 
 func TestIntegrationConcurrentUsersStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, featuremgmt.WithFeatures())
 	s := createService(t, cfg, sqlStore, statsService)

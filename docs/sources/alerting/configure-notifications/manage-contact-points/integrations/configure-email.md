@@ -53,7 +53,6 @@ For Grafana OSS, you enable email notifications by first configuring [SMTP setti
 1. Configure SMTP settings.
 
    Within the `[smtp]` settings section, specify the following parameters:
-
    - `enabled = true`: Enables SMTP.
    - `host`: The hostname or IP address of your SMTP server, and the port number of your SMTP server (commonly 25, 465, or 587). Default is `localhost:25`.
    - `user`: Your SMTP username (if authentication is required).

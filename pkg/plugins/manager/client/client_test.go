@@ -157,6 +157,9 @@ func TestCheckHealth(t *testing.T) {
 }
 
 func TestIntegrationCallResource(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	registry := fakes.NewFakePluginRegistry()
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{

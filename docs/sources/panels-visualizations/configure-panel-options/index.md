@@ -90,7 +90,6 @@ To configure repeating panels, follow these steps:
 1. Open the **Panel options** section of the panel editor pane.
 1. Under **Repeat options**, select a variable in the **Repeat by variable** drop-down list.
 1. Under **Repeat direction**, choose one of the following:
-
    - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can't mix other panels on a row with a repeated panel.
    - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 

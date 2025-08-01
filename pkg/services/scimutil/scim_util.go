@@ -44,23 +44,23 @@ func (s *SCIMUtil) IsUserSyncEnabled(ctx context.Context, orgID int64, staticEna
 	return staticEnabled
 }
 
-// AreNonProvisionedUsersAllowed checks if non-provisioned users are allowed using dynamic configuration with static fallback
-func (s *SCIMUtil) AreNonProvisionedUsersAllowed(ctx context.Context, orgID int64, staticAllowed bool) bool {
+// AreNonProvisionedUsersRejected checks if non-provisioned users are rejected using dynamic configuration with static fallback
+func (s *SCIMUtil) AreNonProvisionedUsersRejected(ctx context.Context, orgID int64, staticRejected bool) bool {
 	if s.k8sClient == nil {
 		s.logger.Debug("K8s client not configured, using static SCIM config for non-provisioned users")
-		return staticAllowed
+		return staticRejected
 	}
 
-	dynamicAllowed, dynamicConfigFetched := s.fetchDynamicSCIMSetting(ctx, orgID, "allowNonProvisionedUsers")
+	dynamicRejected, dynamicConfigFetched := s.fetchDynamicSCIMSetting(ctx, orgID, "rejectNonProvisionedUsers")
 
 	if dynamicConfigFetched {
-		s.logger.Debug("Using dynamic SCIM config for user sync", "orgID", orgID, "enabled", dynamicAllowed)
-		return dynamicAllowed
+		s.logger.Debug("Using dynamic SCIM config for user sync", "orgID", orgID, "enabled", dynamicRejected)
+		return dynamicRejected
 	}
 
 	// Fallback to static config if dynamic config wasn't fetched successfully
-	s.logger.Debug("Using static SCIM config for user sync", "orgID", orgID, "enabled", staticAllowed)
-	return staticAllowed
+	s.logger.Debug("Using static SCIM config for user sync", "orgID", orgID, "enabled", staticRejected)
+	return staticRejected
 }
 
 // fetchDynamicSCIMSetting attempts to retrieve a specific dynamic SCIM configuration setting
@@ -82,8 +82,8 @@ func (s *SCIMUtil) fetchDynamicSCIMSetting(ctx context.Context, orgID int64, set
 		enabled = scimConfig.EnableUserSync
 	case "group":
 		enabled = scimConfig.EnableGroupSync
-	case "allowNonProvisionedUsers":
-		enabled = scimConfig.AllowNonProvisionedUsers
+	case "rejectNonProvisionedUsers":
+		enabled = scimConfig.RejectNonProvisionedUsers
 	default:
 		s.logger.Error("Invalid setting type provided to fetchDynamicSCIMSetting", "settingType", settingType)
 		return false, false
@@ -108,9 +108,9 @@ func (s *SCIMUtil) getOrgSCIMConfig(ctx context.Context, orgID int64) (*SCIMConf
 
 // SCIMConfigSpec represents the spec part of a SCIMConfig resource
 type SCIMConfigSpec struct {
-	EnableUserSync           bool `json:"enableUserSync"`
-	EnableGroupSync          bool `json:"enableGroupSync"`
-	AllowNonProvisionedUsers bool `json:"allowNonProvisionedUsers"`
+	EnableUserSync            bool `json:"enableUserSync"`
+	EnableGroupSync           bool `json:"enableGroupSync"`
+	RejectNonProvisionedUsers bool `json:"rejectNonProvisionedUsers"`
 }
 
 // unstructuredToSCIMConfig converts an unstructured object to a SCIMConfigSpec
@@ -130,11 +130,11 @@ func (s *SCIMUtil) unstructuredToSCIMConfig(obj *unstructured.Unstructured) (*SC
 
 	enableUserSync, _, _ := unstructured.NestedBool(spec, "enableUserSync")
 	enableGroupSync, _, _ := unstructured.NestedBool(spec, "enableGroupSync")
-	allowNonProvisionedUsers, _, _ := unstructured.NestedBool(spec, "allowNonProvisionedUsers")
+	rejectNonProvisionedUsers, _, _ := unstructured.NestedBool(spec, "rejectNonProvisionedUsers")
 
 	return &SCIMConfigSpec{
-		EnableUserSync:           enableUserSync,
-		EnableGroupSync:          enableGroupSync,
-		AllowNonProvisionedUsers: allowNonProvisionedUsers,
+		EnableUserSync:            enableUserSync,
+		EnableGroupSync:           enableGroupSync,
+		RejectNonProvisionedUsers: rejectNonProvisionedUsers,
 	}, nil
 }

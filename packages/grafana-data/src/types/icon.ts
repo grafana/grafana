@@ -274,6 +274,8 @@ export const availableIconsIndex = {
   attach: true,
   'dollar-alt': true,
   'ai-sparkle': true,
+  bitbucket: true,
+  git: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

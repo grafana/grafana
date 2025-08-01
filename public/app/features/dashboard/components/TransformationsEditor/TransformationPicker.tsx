@@ -54,7 +54,8 @@ export function TransformationPicker(props: TransformationPickerProps) {
                     </Trans>
                     <br />
                     <Trans i18nKey="dashboard.transformation-picker.info-switch-to-table">
-                      It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
+                      It can help to switch to the Table visualization to understand what a transformation is
+                      doing.{' '}
                     </Trans>
                   </p>
                   <a

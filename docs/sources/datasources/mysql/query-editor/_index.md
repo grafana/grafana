@@ -89,7 +89,6 @@ The following components will help you build a MySQL query:
 - **Format** - Select a format response from the drop-down for the MySQL query. The default is **Table**. If you use the **Time series** format option, one of the columns must be `time`.
 
 - **Dataset** - Select a database to query from the drop-down.
-
   - **Table** - Select a table from the drop-down. Tables correspond to the chosen database.
 
   - **Data operations** - _Optional_ Select an aggregation from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **X** to remove a data operation. Click the **garbage can icon** to remove the entire column.
@@ -99,15 +98,12 @@ The following components will help you build a MySQL query:
   - **Alias** - _Optional_ Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
 
 - **Filter** - Toggle to add filters.
-
   - **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added you can add an `AND` operator to display all true conditions or an `OR` operator to display any true conditions. Use the second drop-down to choose a filter. To remove a filter, click the `X` button next to that filter's drop-down. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column.
 
 - **Group** - Toggle to add **Group by column**.
-
   - **Group by column** - Select a column to filter by from the drop-down. Click the **+ sign** to filter by multiple columns. Click the **X** to remove a filter.
 
 - **Order** - Toggle to add an ORDER BY statement.
-
   - **Order by** - Select a column to order by from the drop-down. Select ascending (`ASC`) or descending (`DESC`) order.
   - **Limit** - You can add an optional limit on the number of retrieved results. Default is 50.
 

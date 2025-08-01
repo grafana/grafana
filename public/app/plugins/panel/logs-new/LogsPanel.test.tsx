@@ -18,6 +18,11 @@ import { LogsPanel } from './LogsPanel';
 
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn(() => [true, jest.fn()]),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getAppEvents: jest.fn(),

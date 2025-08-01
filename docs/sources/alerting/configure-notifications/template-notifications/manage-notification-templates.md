@@ -57,7 +57,6 @@ To add an existing notification template to your contact point, complete the fol
 1. Click **Edit**.
    A dialog box opens where you can select notification templates.
 1. Click **Select notification template** or **Enter custom message** to customize a template or message
-
    - You can select an existing notification template and [preview](#preview-a-notification-template) it using the default payload.
    - You can also copy the notification template and use it in the **Enter custom message** tab.
 

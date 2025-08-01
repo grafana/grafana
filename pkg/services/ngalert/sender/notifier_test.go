@@ -1067,6 +1067,9 @@ func TestStop_DrainingEnabled(t *testing.T) {
 }
 
 func TestIntegrationApplyConfig(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	targetURL := "alertmanager:9093"
 	targetGroup := &targetgroup.Group{
 		Targets: []model.LabelSet{

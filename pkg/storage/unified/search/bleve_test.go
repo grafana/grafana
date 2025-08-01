@@ -1,6 +1,7 @@
 package search
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,8 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -736,23 +739,26 @@ func Test_isPathWithinRoot(t *testing.T) {
 	}
 }
 
-func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, dir string) *bleveBackend {
+func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, dir string) (*bleveBackend, prometheus.Gatherer) {
 	if dir == "" {
 		dir = t.TempDir()
 	}
+	reg := prometheus.NewRegistry()
+	metrics := resource.ProvideIndexMetrics(reg)
+
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          dir,
 		FileThreshold: int64(fileThreshold),
 		IndexCacheTTL: cacheTTL,
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.closeAllIndexes)
-	return backend
+	return backend, reg
 }
 
 func TestBleveInMemoryIndexExpiration(t *testing.T) {
-	backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+	backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
 
 	ns := resource.NamespacedResource{
 		Namespace: "test",
@@ -772,10 +778,18 @@ func TestBleveInMemoryIndexExpiration(t *testing.T) {
 	// Verify that builtIndex is now closed.
 	_, err = builtIndex.DocCount(context.Background(), "")
 	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+
+	// Verify that there are no open indexes.
+	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE index_server_open_indexes gauge
+		index_server_open_indexes{index_storage="memory"} 0
+		index_server_open_indexes{index_storage="file"} 0
+	`), "index_server_open_indexes"))
 }
 
 func TestBleveFileIndexExpiration(t *testing.T) {
-	backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+	backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
 
 	ns := resource.NamespacedResource{
 		Namespace: "test",
@@ -797,6 +811,13 @@ func TestBleveFileIndexExpiration(t *testing.T) {
 	cnt, err := builtIndex.DocCount(context.Background(), "")
 	require.NoError(t, err)
 	require.Equal(t, int64(1), cnt)
+
+	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE index_server_open_indexes gauge
+		index_server_open_indexes{index_storage="memory"} 0
+		index_server_open_indexes{index_storage="file"} 1
+	`), "index_server_open_indexes"))
 }
 
 func TestFileIndexIsReusedOnSameSizeAndRV(t *testing.T) {
@@ -808,13 +829,30 @@ func TestFileIndexIsReusedOnSameSizeAndRV(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	backend1, reg1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
 	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, indexTestDocs(ns, 10))
 	require.NoError(t, err)
+
+	// Verify one open index.
+	require.NoError(t, testutil.GatherAndCompare(reg1, bytes.NewBufferString(`
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE index_server_open_indexes gauge
+		index_server_open_indexes{index_storage="memory"} 0
+		index_server_open_indexes{index_storage="file"} 1
+	`), "index_server_open_indexes"))
+
 	backend1.closeAllIndexes()
 
+	// Verify that there are no open indexes after closeAllIndexes call.
+	require.NoError(t, testutil.GatherAndCompare(reg1, bytes.NewBufferString(`
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE index_server_open_indexes gauge
+		index_server_open_indexes{index_storage="memory"} 0
+		index_server_open_indexes{index_storage="file"} 0
+	`), "index_server_open_indexes"))
+
 	// We open new backend using same directory, and run indexing with same size (10) and RV (100). This should reuse existing index, and skip indexing.
-	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	backend2, reg2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
 	idx, err := backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, indexTestDocs(ns, 1000))
 	require.NoError(t, err)
 
@@ -822,6 +860,13 @@ func TestFileIndexIsReusedOnSameSizeAndRV(t *testing.T) {
 	cnt, err := idx.DocCount(context.Background(), "")
 	require.NoError(t, err)
 	require.Equal(t, int64(10), cnt)
+
+	require.NoError(t, testutil.GatherAndCompare(reg2, bytes.NewBufferString(`
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE index_server_open_indexes gauge
+		index_server_open_indexes{index_storage="memory"} 0
+		index_server_open_indexes{index_storage="file"} 1
+	`), "index_server_open_indexes"))
 }
 
 func TestFileIndexIsNotReusedOnDifferentSize(t *testing.T) {
@@ -833,13 +878,13 @@ func TestFileIndexIsNotReusedOnDifferentSize(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	backend1, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
 	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, indexTestDocs(ns, 10))
 	require.NoError(t, err)
 	backend1.closeAllIndexes()
 
 	// We open new backend using same directory, but with different size. Index should be rebuilt.
-	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	backend2, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
 	idx, err := backend2.BuildIndex(context.Background(), ns, 100, 100, nil, indexTestDocs(ns, 100))
 	require.NoError(t, err)
 
@@ -858,13 +903,13 @@ func TestFileIndexIsNotReusedOnDifferentRV(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	backend1, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
 	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, indexTestDocs(ns, 10))
 	require.NoError(t, err)
 	backend1.closeAllIndexes()
 
 	// We open new backend using same directory, but with different RV. Index should be rebuilt.
-	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	backend2, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
 	idx, err := backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 999999, nil, indexTestDocs(ns, 100))
 	require.NoError(t, err)
 
@@ -891,7 +936,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 		"file, file":           {false, false},
 	} {
 		t.Run(name, func(t *testing.T) {
-			backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+			backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
 
 			firstSize := 100
 			if testCase.firstInMemory {
@@ -900,9 +945,12 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), 100, nil, indexTestDocs(ns, firstSize))
 			require.NoError(t, err)
 
+			openInMemoryIndexes := 0
+
 			secondSize := 100
-			if testCase.firstInMemory {
+			if testCase.secondInMemory {
 				secondSize = 1
+				openInMemoryIndexes = 1
 			}
 			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), 100, nil, indexTestDocs(ns, secondSize))
 			require.NoError(t, err)
@@ -916,6 +964,13 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			cnt, err := secondIndex.DocCount(context.Background(), "")
 			require.NoError(t, err)
 			require.Equal(t, int64(secondSize), cnt)
+
+			require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
+				# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+				# TYPE index_server_open_indexes gauge
+				index_server_open_indexes{index_storage="memory"} %d
+				index_server_open_indexes{index_storage="file"} %d
+			`, openInMemoryIndexes, 1-openInMemoryIndexes)), "index_server_open_indexes"))
 		})
 	}
 }
@@ -946,7 +1001,7 @@ func indexTestDocs(ns resource.NamespacedResource, docs int) func(index resource
 func TestCleanOldIndexes(t *testing.T) {
 	dir := t.TempDir()
 
-	b := setupBleveBackend(t, 5, time.Nanosecond, dir)
+	b, _ := setupBleveBackend(t, 5, time.Nanosecond, dir)
 
 	t.Run("with skip", func(t *testing.T) {
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
@@ -970,4 +1025,37 @@ func TestCleanOldIndexes(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, files, 0)
 	})
+}
+
+func TestBleveIndexWithFailures(t *testing.T) {
+	t.Run("in-memory index", func(t *testing.T) {
+		testBleveIndexWithFailures(t, false)
+	})
+	t.Run("file-based index", func(t *testing.T) {
+		testBleveIndexWithFailures(t, true)
+	})
+}
+
+func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
+	backend, _ := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	size := int64(1)
+	if fileBased {
+		// size=100 is above FileThreshold (5), make it a file-based index.
+		size = 100
+	}
+	_, err := backend.BuildIndex(context.Background(), ns, size, 100, nil, func(index resource.ResourceIndex) (int64, error) {
+		return 0, fmt.Errorf("fail")
+	})
+	require.Error(t, err)
+
+	// Even though previous build of the index failed, new building of the index should work.
+	_, err = backend.BuildIndex(context.Background(), ns, size, 100, nil, indexTestDocs(ns, int(size)))
+	require.NoError(t, err)
 }

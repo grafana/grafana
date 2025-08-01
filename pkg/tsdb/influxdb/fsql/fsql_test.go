@@ -56,6 +56,9 @@ func (suite *FSQLTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func TestFSQLTestSuite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	suite.Run(t, new(FSQLTestSuite))
 }
 

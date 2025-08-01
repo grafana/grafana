@@ -156,6 +156,9 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestIntegrationGetUsageReport_IncludesMetrics(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, sqlStore, true)
 	metricName := "stats.test_metric.count"

@@ -9,7 +9,7 @@ import { GroupConditionItemType, ItemsWithConditionalRendering } from './types';
 interface Props {
   itemType: ItemsWithConditionalRendering;
   hasVariables: boolean;
-  onAdd: (itemType: GroupConditionItemType) => void;
+  onAdd: (option: SelectableValue<GroupConditionItemType>) => void;
 }
 
 export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: Props) => {
@@ -42,7 +42,7 @@ export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: 
       variant="secondary"
       label={t('dashboard.conditional-rendering.conditions.group.add.button', 'Add rule')}
       options={options}
-      onChange={({ value }) => onAdd(value!)}
+      onChange={(option) => onAdd(option)}
     />
   );
 };

@@ -34,6 +34,7 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
     canEditFolders: true,
     canViewPermissions: true,
     canSetPermissions: true,
+    canDeleteDashboards: true,
   };
 
   beforeEach(() => {

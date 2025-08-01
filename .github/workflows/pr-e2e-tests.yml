@@ -143,8 +143,6 @@ jobs:
             path: e2e/various-suite
           - suite: dashboards-suite
             path: e2e/dashboards-suite
-          - suite: smoke-tests-suite
-            path: e2e/smoke-tests-suite
           - suite: panels-suite
             path: e2e/panels-suite
           - suite: various-suite (old arch)
@@ -198,6 +196,34 @@ jobs:
           path: videos
           retention-days: 1
 
+  run-storybook-test:
+    name: Verify Storybook (Playwright)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Storybook and E2E tests
+        run: yarn e2e:playwright:storybook
+
   run-playwright-tests:
     needs:
       - build-grafana
@@ -234,6 +260,7 @@ jobs:
   required-playwright-tests:
     needs:
       - run-playwright-tests
+      - run-storybook-test
       - build-grafana
     if: ${{ !cancelled() }}
     name: All Playwright tests complete
@@ -286,6 +313,7 @@ jobs:
               /home/bench/tests/playwright-results.json
 
       - name: Upload HTML report
+        id: upload-html
         uses: actions/upload-artifact@v4
         with:
           name: playwright-html-${{ github.run_number }}
@@ -304,10 +332,13 @@ jobs:
       - name: Show test results
         env:
           FAILED: ${{ steps.check-jobs.outputs.any-failed }}
+          REPORT_URL: ${{ steps.upload-html.outputs.artifact-url }}
         # sed removes the leading `../../src/` from the paths
         run: |
-          npx playwright merge-reports --reporter list ./all-blob-reports | sed 's|\(\.\./\)\{1,\}src/|/|g'
+          npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
           if [ "$FAILED" = "true" ]; then
+            echo ""
+            echo "Download the test report from $REPORT_URL"
             exit 1
           fi
 

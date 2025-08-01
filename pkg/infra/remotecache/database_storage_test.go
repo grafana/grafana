@@ -12,6 +12,9 @@ import (
 )
 
 func TestIntegrationDatabaseStorageGarbageCollection(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlstore := db.InitTestDB(t)
 
 	db := &databaseCache{
@@ -59,6 +62,9 @@ func TestIntegrationDatabaseStorageGarbageCollection(t *testing.T) {
 }
 
 func TestIntegrationSecondSet(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	var err error
 	sqlstore := db.InitTestDB(t)
 

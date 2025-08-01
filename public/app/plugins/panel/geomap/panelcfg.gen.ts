@@ -31,6 +31,7 @@ export interface MapViewConfig {
   lon?: number;
   maxZoom?: number;
   minZoom?: number;
+  noRepeat?: boolean;
   padding?: number;
   shared?: boolean;
   zoom?: number;
@@ -41,6 +42,7 @@ export const defaultMapViewConfig: Partial<MapViewConfig> = {
   id: 'zero',
   lat: 0,
   lon: 0,
+  noRepeat: false,
   zoom: 1,
 };
 

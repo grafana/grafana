@@ -58,7 +58,7 @@ export function RepositoryCard({ repository }: Props) {
   };
 
   return (
-    <Card key={name}>
+    <Card noMargin key={name}>
       <Card.Figure>
         <Icon name={getRepositoryIcon()} size="xxl" />
       </Card.Figure>
