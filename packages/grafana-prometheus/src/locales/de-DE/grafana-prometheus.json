@@ -311,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filtern Sie Metriknamen per Regex-Suche und nutzen Sie dabei einen zusätzlichen Aufruf der Prometheus-API.",
-        "disable-text-wrap": "Textumbruch deaktivieren"
-      },
       "feedback-link": {
         "give-feedback": "Feedback geben",
         "title-give-feedback": "Der Metrik-Explorer ist neu. Bitte teilen Sie uns mit, wie wir ihn verbessern können."
@@ -328,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -378,16 +371,10 @@
         "tooltip-metric": "Optional: gibt eine Liste von Label-Werten für den Label-Namen in der angegebenen Metrik zurück."
       },
       "metrics-modal": {
-        "additional-settings": "Zusätzliche Einstellungen",
-        "aria-label-additional-settings": "Zusätzliche Einstellungen",
         "aria-label-browse-metrics": "Metriken durchsuchen",
         "currently-selected": "Aktuell ausgewählt: {{selected}}",
         "metrics-pre-filtered": "Diese Metriken wurden anhand der Labels, die in den Label-Filtern ausgewählt wurden, vorgefiltert.",
-        "placeholder-results-per-page": "Ergebnisse pro Seite",
-        "results-per-page": "Ergebnisse pro Seite",
-        "title-metrics-explorer": "Metrik-Explorer",
-        "results-amount_one": "{{num}} von {{count}} Ergebnissen werden angezeigt",
-        "results-amount_other": "{{num}} von {{count}} Ergebnissen werden angezeigt"
+        "title-metrics-explorer": "Metrik-Explorer"
       },
       "nested-query": {
         "label": {
@@ -500,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "Name",
-        "select": "Auswählen",
         "type": "Typ"
       },
       "update-function-args": {

@@ -311,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filtrez les noms de métriques par recherche d’expression régulière, en utilisant un appel supplémentaire sur l’API Prometheus.",
-        "disable-text-wrap": "Désactiver le retour à la ligne automatique"
-      },
       "feedback-link": {
         "give-feedback": "Publiez votre commentaire",
         "title-give-feedback": "L’explorateur de métriques est une nouvelle fonctionnalité ; faites-nous part de vos retours pour l’améliorer"
@@ -328,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -378,16 +371,10 @@
         "tooltip-metric": "Facultatif : renvoie une liste de valeurs d’étiquette pour le nom d’étiquette dans la métrique spécifiée."
       },
       "metrics-modal": {
-        "additional-settings": "Paramètres additionnels",
-        "aria-label-additional-settings": "Paramètres supplémentaires",
         "aria-label-browse-metrics": "Parcourir les métriques",
         "currently-selected": "Sélection actuelle : {{selected}}",
         "metrics-pre-filtered": "Ces métriques ont été pré-filtrées par les étiquettes choisies dans les filtres d’étiquettes.",
-        "placeholder-results-per-page": "résultats par page",
-        "results-per-page": "Résultats par page",
-        "title-metrics-explorer": "Explorateur de métriques",
-        "results-amount_one": "Affichage de {{num}} résultats sur {{count}}",
-        "results-amount_other": "Affichage de {{num}} résultats sur {{count}}"
+        "title-metrics-explorer": "Explorateur de métriques"
       },
       "nested-query": {
         "label": {
@@ -500,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "Nom",
-        "select": "Sélectionner",
         "type": "Type"
       },
       "update-function-args": {

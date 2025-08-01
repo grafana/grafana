@@ -311,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "透過正規表達式搜尋篩選指標名稱，並使用額外的 Prometheus API 呼叫。",
-        "disable-text-wrap": "停用文字換行"
-      },
       "feedback-link": {
         "give-feedback": "提供意見回饋",
         "title-give-feedback": "指標瀏覽器為新功能，請告訴我們如何改善"
@@ -328,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -378,15 +371,10 @@
         "tooltip-metric": "選擇性設定：回傳指定指標中該標籤名稱的標籤值清單。"
       },
       "metrics-modal": {
-        "additional-settings": "附加設定",
-        "aria-label-additional-settings": "附加設定",
         "aria-label-browse-metrics": "瀏覽指標",
         "currently-selected": "目前已選取：{{selected}}",
         "metrics-pre-filtered": "這些指標已透過標籤篩選條件中選擇的標籤進行預先篩選。",
-        "placeholder-results-per-page": "每頁顯示結果",
-        "results-per-page": "每頁顯示的結果",
-        "title-metrics-explorer": "指標瀏覽器",
-        "results-amount_other": "結果共 {{count}} 項，顯示 {{num}} 項"
+        "title-metrics-explorer": "指標瀏覽器"
       },
       "nested-query": {
         "label": {
@@ -499,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "名稱（名字）",
-        "select": "選取",
         "type": "類型"
       },
       "update-function-args": {

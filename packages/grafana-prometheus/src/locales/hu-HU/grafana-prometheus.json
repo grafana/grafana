@@ -311,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "A metrikanevek szűrése reguláris kifejezéses kereséssel, a Prometheus API további hívásával.",
-        "disable-text-wrap": "Sortörés letiltása"
-      },
       "feedback-link": {
         "give-feedback": "Visszajelzés küldése",
         "title-give-feedback": "A metrikaböngésző új, és számítunk az építő jellegű visszajelzésére"
@@ -328,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -378,16 +371,10 @@
         "tooltip-metric": "Opcionális: a megadott metrikában a címke nevéhez tartozó címkeértékek listáját adja vissza."
       },
       "metrics-modal": {
-        "additional-settings": "További beállítások",
-        "aria-label-additional-settings": "További beállítások",
         "aria-label-browse-metrics": "Metrikák böngészése",
         "currently-selected": "Jelenleg kiválasztott: {{selected}}",
         "metrics-pre-filtered": "Ezek a metrikák előszűrtek a címkeszűrőkben kiválasztott címkék alapján.",
-        "placeholder-results-per-page": "találat oldalanként",
-        "results-per-page": "Találatok száma oldalanként",
-        "title-metrics-explorer": "Metrikaböngésző",
-        "results-amount_one": "{{count}}/{{num}} találat megjelenítése",
-        "results-amount_other": "{{count}}/{{num}} találat megjelenítése"
+        "title-metrics-explorer": "Metrikaböngésző"
       },
       "nested-query": {
         "label": {
@@ -500,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "Név",
-        "select": "Kijelölés",
         "type": "Típus"
       },
       "update-function-args": {

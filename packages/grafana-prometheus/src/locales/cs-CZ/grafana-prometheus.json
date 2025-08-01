@@ -311,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filtrovat názvy metrik podle vyhledávání regulárních výrazů pomocí dalšího volání rozhraní Prometheus API.",
-        "disable-text-wrap": "Zakázat obtékání textu"
-      },
       "feedback-link": {
         "give-feedback": "Poskytnout zpětnou vazbu",
         "title-give-feedback": "Průzkumník metrik je nový. Dejte nám prosím vědět, jak ho můžeme vylepšit"
@@ -328,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -378,18 +371,10 @@
         "tooltip-metric": "Volitelné: vrátí seznam hodnot štítků pro název štítku v zadané metrice."
       },
       "metrics-modal": {
-        "additional-settings": "Dodatečná nastavení",
-        "aria-label-additional-settings": "Další nastavení",
         "aria-label-browse-metrics": "Procházet metriky",
         "currently-selected": "Aktuálně vybráno: {{selected}}",
         "metrics-pre-filtered": "Tyto metriky byly předem filtrovány štítky vybranými ve filtrech štítků.",
-        "placeholder-results-per-page": "výsledků na stránku",
-        "results-per-page": "Výsledky na stránku",
-        "title-metrics-explorer": "Průzkumník metrik",
-        "results-amount_one": "Zobrazuje se {{num}} z {{count}} výsledků",
-        "results-amount_few": "Zobrazuje se {{num}} z {{count}} výsledků",
-        "results-amount_many": "Zobrazuje se {{num}} z {{count}} výsledků",
-        "results-amount_other": "Zobrazuje se {{num}} z {{count}} výsledků"
+        "title-metrics-explorer": "Průzkumník metrik"
       },
       "nested-query": {
         "label": {
@@ -502,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "Název",
-        "select": "Vybrat",
         "type": "Typ"
       },
       "update-function-args": {

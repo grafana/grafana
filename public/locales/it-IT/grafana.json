@@ -3563,12 +3563,12 @@
       "tags-column": "Tag"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Impossibile recuperare le informazioni sui discendenti"
@@ -3611,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Errore durante la creazione della cartella",
-      "alert-folder-created-successfully": "Cartella creata con successo",
       "button-create": "Crea",
       "button-creating": "Creazione in corso...",
       "cancel": "Annulla",
@@ -3759,7 +3758,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3860,7 +3858,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -5645,6 +5642,7 @@
       "delete-read-only-file-message": "",
       "deleting": "Eliminazione in corso...",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
     },
     "description-label": {
@@ -5656,9 +5654,6 @@
           "edit-link": "Modifica i collegamenti"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Attiva/disattiva il menu e-mail"
@@ -5818,6 +5813,7 @@
       "usage-count_other": "Utilizzato su {{count}} dashboard"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5827,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -11015,6 +11012,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Questa funzione è attualmente in fase di sviluppo attivo. Per un'esperienza ottimale e gli ultimi miglioramenti, consigliamo di utilizzare la <2>nightly build</2> di Grafana."
@@ -11874,7 +11874,7 @@
         "recommended": "Consigliato",
         "results": "Risultati"
       },
-      "search": "Cerca"
+      "search": ""
     }
   },
   "search": {
@@ -12510,6 +12510,18 @@
       "label-large": "",
       "label-medium": "",
       "label-small": ""
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "",

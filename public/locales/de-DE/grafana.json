@@ -3563,12 +3563,12 @@
       "tags-column": "Tags"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Ordner erfolgreich gelöscht",
       "api-error": "Ordner konnte nicht gelöscht werden",
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
-      "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:"
+      "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nachfolgerinformationen können nicht abgerufen werden"
@@ -3611,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Fehler beim Erstellen des Ordners",
-      "alert-folder-created-successfully": "Der Ordner wurde erfolgreich erstellt",
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
@@ -3759,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Auswahl experimenteller Elementtypen aktivieren",
-    "description-infinite-panning": "Unbegrenztes Schwenken aktivieren – nützlich für umfangreiche Leinwände. Warnung: Dies ist eine experimentelle Funktion und funktioniert momentan nur mit Elementen gut, die oben/links eingeschränkt sind",
     "description-inline-editing": "Direkte Bearbeitung des Panels aktivieren",
     "description-pan-zoom": "Schwenken und Zoomen aktivieren",
     "direction-options": {
@@ -3860,7 +3858,6 @@
     "name-align-text": "Text ausrichten",
     "name-color": "Textfarbe",
     "name-experimental-types": "Experimentelle Elementtypen",
-    "name-infinite-panning": "Unbegrenztes Schwenken",
     "name-inline-editing": "Inline-Bearbeitung",
     "name-pan-zoom": "Schwenken und Zoomen",
     "name-text": "Text",
@@ -5645,6 +5642,7 @@
       "delete-read-only-file-message": "Dieses Dashboard kann nicht direkt von Grafana aus gelöscht werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu löschen, entfernen Sie bitte die Datei aus Ihrem Git-Repository.",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
+      "success-message": "",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
     "description-label": {
@@ -5656,9 +5654,6 @@
           "edit-link": "Link bearbeiten"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Dashboard-Änderungen erfolgreich gespeichert"
     },
     "email-list": {
       "aria-label-emailmenu": "E-Mail-Menü umschalten"
@@ -5818,6 +5813,7 @@
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5827,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -11015,6 +11012,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Diese Funktion befindet sich momentan in der aktiven Entwicklung. Für die bestmögliche Nutzererfahrung und die neuesten Verbesserungen empfehlen wir die Nutzung von <2>Nightly Build</2> von Grafana."
@@ -11874,7 +11874,7 @@
         "recommended": "Empfohlen",
         "results": "Ergebnisse"
       },
-      "search": "Suche"
+      "search": ""
     }
   },
   "search": {
@@ -12510,6 +12510,18 @@
       "label-large": "Groß",
       "label-medium": "Mittel",
       "label-small": "Klein"
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Wenn dies ausgewählt ist, wird die gesamte Zeile so eingefärbt, wie es diese Zelle wäre.",
