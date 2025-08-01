@@ -30,15 +30,13 @@ type folderTree struct {
 	tree    map[string]string
 	folders map[string]Folder
 	count   int
-	rootFolder string // Optional root folder for resources with empty parent
 }
 
 // In determines if the given folder is in the tree at all. That is, it answers "does the folder even exist in the Grafana instance?"
 // An empty folder string means the root folder, and is special-cased to always return true.
-// If rootFolder is set, it's also considered to be in the tree.
 func (t *folderTree) In(folder string) bool {
 	_, ok := t.tree[folder]
-	return ok || folder == "" || (t.rootFolder != "" && folder == t.rootFolder)
+	return ok || folder == ""
 }
 
 // DirPath creates the path to the directory with slashes, up to but not including the baseFolder.
@@ -57,10 +55,6 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	} else if folder == baseFolder {
 		// Zero-value: we're fine with the zv if we're working with the root folder here.
 		// Any other folder ID will have the correct metadata and no path (which is correct).
-		// Handle the special case where we're dealing with the rootFolder
-		if folder == t.rootFolder && folder != "" {
-			return Folder{ID: folder, Title: folder}, true
-		}
 		return t.folders[folder], true
 	}
 
@@ -72,14 +66,6 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	for parent != "" {
 		if parent == baseFolder {
 			ok = true
-			break
-		}
-		// Handle the case where parent is the rootFolder but not in folders map
-		if parent == t.rootFolder && t.rootFolder != "" {
-			if baseFolder == "" || baseFolder == t.rootFolder {
-				ok = true
-			}
-			fid.Path = safepath.Join(t.rootFolder, fid.Path)
 			break
 		}
 		// FIXME: missing slash here
@@ -127,29 +113,6 @@ func NewEmptyFolderTree() FolderTree {
 	}
 }
 
-// NewEmptyFolderWithRoot creates a folder tree with an optional root folder.
-// If rootFolder is not empty, resources with empty parent folders will use it as their parent.
-// The root folder itself is automatically added to the tree.
-func NewEmptyFolderWithRoot(rootFolder string) FolderTree {
-	tree := &folderTree{
-		tree:       make(map[string]string, 0),
-		folders:    make(map[string]Folder, 0),
-		rootFolder: rootFolder,
-	}
-	
-	// Add the root folder to the tree if it's specified
-	if rootFolder != "" {
-		tree.tree[rootFolder] = "" // Root folder has no parent (empty string)
-		tree.folders[rootFolder] = Folder{
-			ID:    rootFolder,
-			Title: rootFolder,
-		}
-		tree.count++
-	}
-	
-	return tree
-}
-
 func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
@@ -160,14 +123,7 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 		Title: meta.FindTitle(item.GetName()),
 		ID:    item.GetName(),
 	}
-	
-	// Use root folder for resources with empty parent folder if rootFolder is set
-	parentFolder := meta.GetFolder()
-	if parentFolder == "" && t.rootFolder != "" {
-		parentFolder = t.rootFolder
-	}
-	
-	t.tree[folder.ID] = parentFolder
+	t.tree[folder.ID] = meta.GetFolder()
 	t.folders[folder.ID] = folder
 	t.count++
 	return nil
