@@ -249,7 +249,7 @@ require (
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group
 )
 
-require github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3
+require github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3 // @grafana/grafana-app-platform-squad
 
 require (
 	cel.dev/expr v0.24.0 // indirect
