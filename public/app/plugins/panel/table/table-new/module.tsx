@@ -198,17 +198,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         name: t('table-new.name-enable-pagination', 'Enable pagination'),
         category,
         editor: PaginationEditor,
-      })
-      .addBooleanSwitch({
-        path: 'disableVirtualization',
-        name: t('table.name-disable-virtualized-table', 'Disable virtualized table'),
-        description: t(
-          'table.description-disable-virtualized-table',
-          'Use with caution - rendering performance is impacted. Rows render with their automatic heights.'
-        ),
-        category,
-        defaultValue: false,
-        showIf: (cfg) => cfg.footer?.enablePagination,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

@@ -93,6 +93,7 @@ TablePillCellOptions: {
 
 TableMarkdownCellOptions: {
 	type: TableCellDisplayMode & "markdown"
+  dynamicHeight?: bool
 } @cuetsy(kind="interface")
 
 // Height of a table cell
@@ -118,6 +119,4 @@ TableFieldOptions: {
 	hideHeader?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
-  // If true, virtualization is disabled and height is set to auto
-  disableVirtualization?: bool
 } @cuetsy(kind="interface")

@@ -87,7 +87,7 @@ export function TableNG(props: TableNGProps) {
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
-    enableVirtualization,
+    enableVirtualization = enablePagination !== true,
     footerOptions,
     getActions = () => [],
     height,
@@ -161,12 +161,12 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = getDefaultRowHeight(theme, enableVirtualization, cellHeight);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const defaultRowHeight = getDefaultRowHeight(theme, visibleFields, cellHeight);
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height, sortedRows);
   const availableWidth = useMemo(

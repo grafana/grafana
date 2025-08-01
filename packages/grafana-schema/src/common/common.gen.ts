@@ -838,6 +838,7 @@ export interface TablePillCellOptions extends TableWrapTextOptions {
 }
 
 export interface TableMarkdownCellOptions {
+  dynamicHeight?: boolean;
   type: TableCellDisplayMode.Markdown;
 }
 
@@ -978,10 +979,6 @@ export enum ComparisonOperation {
 export interface TableFieldOptions {
   align: FieldTextAlignment;
   cellOptions: TableCellOptions;
-  /**
-   * If true, virtualization is disabled and height is set to auto
-   */
-  disableVirtualization?: boolean;
   /**
    * This field is deprecated in favor of using cellOptions
    */

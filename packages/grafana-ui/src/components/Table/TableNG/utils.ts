@@ -48,10 +48,10 @@ export type CellNumLinesCalculator = (text: string, cellWidth: number) => number
  */
 export function getDefaultRowHeight(
   theme: GrafanaTheme2,
-  enableVirtualization?: boolean,
+  fields?: Field[],
   cellHeight?: TableCellHeight
 ): NonNullable<CSSProperties['height']> {
-  if (enableVirtualization === false) {
+  if (fields?.some((field) => field.config?.custom?.cellOptions?.dynamicHeight)) {
     return 'auto';
   }
 

@@ -792,12 +792,37 @@ describe('TableNG utils', () => {
       { input: TableCellHeight.Md, expected: 42 },
       { input: TableCellHeight.Lg, expected: TABLE.MAX_CELL_HEIGHT },
     ])('returns "$expected" for "$input"', ({ input, expected }) => {
-      const result = getDefaultRowHeight(theme, true, input);
+      const result = getDefaultRowHeight(theme, [], input);
       expect(result).toBe(expected);
     });
 
-    it('returns "auto" if enableVirtualization is false', () => {
-      expect(getDefaultRowHeight(theme, false, TableCellHeight.Sm)).toBe('auto');
+    it('returns "auto" if a field is present with the dynamicHeight cellOption  is false', () => {
+      expect(
+        getDefaultRowHeight(
+          theme,
+          [
+            {
+              name: 'test1',
+              type: FieldType.string,
+              config: {},
+              values: ['value1'],
+            },
+            {
+              name: 'test2',
+              type: FieldType.string,
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.Markdown, dynamicHeight: false } } },
+              values: ['value1'],
+            },
+            {
+              name: 'test3',
+              type: FieldType.number,
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+              values: [3],
+            },
+          ],
+          TableCellHeight.Sm
+        )
+      ).toBe('auto');
     });
 
     it('does not return "auto" if enableVirtualization is undefined', () => {
