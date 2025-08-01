@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
@@ -94,7 +94,7 @@ export function RuleListActions() {
   );
 
   return (
-    <>
+    <React.Fragment>
       <Stack direction="row" gap={1}>
         {canCreateRules && (
           <LinkButton variant="primary" icon="plus" href="/alerting/new/alerting">
@@ -109,7 +109,7 @@ export function RuleListActions() {
         </Dropdown>
       </Stack>
       {canExportRules && showExportDrawer && <GrafanaRulesExporter onClose={toggleShowExportDrawer} />}
-    </>
+    </React.Fragment>
   );
 }
 
