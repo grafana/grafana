@@ -271,7 +271,7 @@ export function createDashboardSceneFromDashboardModel(
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
   } else {
-    variables = createVariablesForDashboard(oldModel);
+    variables = createVariablesForDashboard(oldModel, options?.defaultVariables);
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
@@ -373,7 +373,7 @@ export function createDashboardSceneFromDashboardModel(
       preload: dto.preload ?? false,
       id: oldModel.id,
       isDirty: false,
-      links: oldModel.links || [],
+      links: [...(oldModel.links ?? []), ...(options?.defaultLinks ?? [])],
       meta: oldModel.meta,
       tags: oldModel.tags || [],
       title: oldModel.title,

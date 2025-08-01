@@ -1,5 +1,6 @@
 import { uniqueId } from 'lodash';
 
+import { TypedVariableModel } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -65,6 +66,7 @@ import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -74,6 +76,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
+import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV1 } from '../utils/variables';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -101,7 +104,10 @@ export type TypedVariableModelV2 =
   | AdhocVariableKind
   | SwitchVariableKind;
 
-export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
+export function transformSaveModelSchemaV2ToScene(
+  dto: DashboardWithAccessInfo<DashboardV2Spec>,
+  options?: LoadDashboardOptions
+): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
   const found = dashboard.annotations.some((item) => item.spec.builtIn);
@@ -179,8 +185,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     .get(dashboard.layout.kind)
     .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
-  //createLayoutManager(dashboard);
-
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title);
 
@@ -208,7 +212,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       preload: dashboard.preload,
       id: dashboardId,
       isDirty: false,
-      links: dashboard.links,
+      links: [...dashboard.links, ...(options?.defaultLinks ?? [])],
       meta,
       tags: dashboard.tags,
       title: dashboard.title,
@@ -224,7 +228,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         weekStart: dashboard.timeSettings.weekStart,
         UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
       }),
-      $variables: getVariables(dashboard, meta.isSnapshot ?? false),
+      $variables: getVariables(dashboard, meta.isSnapshot ?? false, options?.defaultVariables),
       $behaviors: [
         new behaviors.CursorSync({
           sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
@@ -269,19 +273,24 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   return dashboardScene;
 }
 
-function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
+function getVariables(
+  dashboard: DashboardV2Spec,
+  isSnapshot: boolean,
+  defaultVariables?: TypedVariableModel[]
+): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
   if (isSnapshot) {
     variables = createVariablesForSnapshot(dashboard);
   } else {
-    variables = createVariablesForDashboard(dashboard);
+    variables = createVariablesForDashboard(dashboard, defaultVariables);
   }
 
   return variables;
 }
 
-function createVariablesForDashboard(dashboard: DashboardV2Spec) {
+function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariables: TypedVariableModel[] = []) {
+  const isDefined = (v: SceneVariable | null): v is SceneVariable => Boolean(v);
   const variableObjects = dashboard.variables
     .map((v) => {
       try {
@@ -293,7 +302,21 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
     })
     // TODO: Remove filter
     // Added temporarily to allow skipping non-compatible variables
-    .filter((v): v is SceneVariable => Boolean(v));
+    .filter(isDefined);
+
+  // Default variables are defined using the `TypedVariableModel` type, so we are still using the V1 transformer to create a scene variable from them.
+  const defaultVariableObjects = defaultVariables
+    ? defaultVariables
+        .map((v) => {
+          try {
+            return createSceneVariableFromVariableModelV1(v);
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        })
+        .filter(isDefined)
+    : [];
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
@@ -301,7 +324,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   }
 
   return new SceneVariableSet({
-    variables: variableObjects,
+    variables: [...variableObjects, ...defaultVariableObjects],
   });
 }
 

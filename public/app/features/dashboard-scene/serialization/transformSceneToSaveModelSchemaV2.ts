@@ -91,19 +91,23 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
-    links: (sceneDash.links || []).map((link) => ({
-      title: link.title ?? defaultDashboardLink().title,
-      url: link.url ?? defaultDashboardLink().url,
-      type: link.type ?? defaultDashboardLinkType(),
-      icon: link.icon ?? defaultDashboardLink().icon,
-      tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
-      tags: link.tags ?? defaultDashboardLink().tags,
-      asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
-      keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
-      includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
-      targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
-      ...(link.placement !== undefined && { placement: link.placement }),
-    })),
+    links: (sceneDash.links || [])
+      // Links with a `source` property didn't come from the persisted JSON schema, so we also skip them
+      // from generating the JSON model from the scenes object.
+      .filter((link) => link.source === undefined)
+      .map((link) => ({
+        title: link.title ?? defaultDashboardLink().title,
+        url: link.url ?? defaultDashboardLink().url,
+        type: link.type ?? defaultDashboardLinkType(),
+        icon: link.icon ?? defaultDashboardLink().icon,
+        tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
+        tags: link.tags ?? defaultDashboardLink().tags,
+        asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
+        keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
+        includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
+        targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+        ...(link.placement !== undefined && { placement: link.placement }),
+      })),
     tags: sceneDash.tags ?? defaultDashboardV2Spec().tags,
     // EOF dashboard settings
 
