@@ -9357,6 +9357,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/eslint-scope@npm:^8.0.0":
+  version: 8.3.1
+  resolution: "@types/eslint-scope@npm:8.3.1"
+  dependencies:
+    "@types/eslint": "npm:*"
+    "@types/estree": "npm:*"
+  checksum: 10/54404a6473928b513b9ab3de9de34a52ed3b0524d010b0b068023539bd834617073b74e3052fc51d3c9bff2093d6b85c0af61de55e47c83d6685d4fa0d363d2b
+  languageName: node
+  linkType: hard
+
 "@types/eslint@npm:*, @types/eslint@npm:9.6.1":
   version: 9.6.1
   resolution: "@types/eslint@npm:9.6.1"
@@ -18309,7 +18319,7 @@ __metadata:
     "@types/d3-scale-chromatic": "npm:3.1.0"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/eslint": "npm:9.6.1"
-    "@types/eslint-scope": "npm:^3.7.7"
+    "@types/eslint-scope": "npm:^8.0.0"
     "@types/file-saver": "npm:2.0.7"
     "@types/glob": "npm:^8.0.0"
     "@types/google.analytics": "npm:^0.0.46"
