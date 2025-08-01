@@ -3623,11 +3623,7 @@
   "refresh": "",
   "revision": 1,
   "schemaVersion": 39,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "canvas"
-  ],
+  "tags": ["gdev", "panel-tests", "canvas"],
   "templating": {
     "list": []
   },

@@ -3826,11 +3826,7 @@
     }
   ],
   "schemaVersion": 37,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "canvas"
-  ],
+  "tags": ["gdev", "panel-tests", "canvas"],
   "templating": {
     "list": []
   },

@@ -38,9 +38,7 @@
         "enable": true,
         "filter": {
           "exclude": false,
-          "ids": [
-            1
-          ]
+          "ids": [1]
         },
         "iconColor": "red",
         "name": "Red, only panel 1",
@@ -58,9 +56,7 @@
         "enable": true,
         "filter": {
           "exclude": true,
-          "ids": [
-            1
-          ]
+          "ids": [1]
         },
         "iconColor": "yellow",
         "name": "Yellow - all except 1",
@@ -78,10 +74,7 @@
         "enable": true,
         "filter": {
           "exclude": false,
-          "ids": [
-            3,
-            4
-          ]
+          "ids": [3, 4]
         },
         "iconColor": "dark-purple",
         "name": "Purple only panel 3+4",

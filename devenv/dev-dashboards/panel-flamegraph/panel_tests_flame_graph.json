@@ -53,10 +53,7 @@
   "refresh": "",
   "revision": 1,
   "schemaVersion": 38,
-  "tags": [
-    "gdev",
-    "panel-tests"
-  ],
+  "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []
   },

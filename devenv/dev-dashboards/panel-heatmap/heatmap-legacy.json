@@ -360,11 +360,7 @@
     }
   ],
   "schemaVersion": 36,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },

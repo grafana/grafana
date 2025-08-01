@@ -640,12 +640,7 @@
         "fullHighlight": false,
         "groupWidth": 0.7,
         "legend": {
-          "calcs": [
-            "min",
-            "max",
-            "mean",
-            "variance"
-          ],
+          "calcs": ["min", "max", "mean", "variance"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -883,12 +878,7 @@
   ],
   "refresh": "",
   "schemaVersion": 39,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "barchart",
-    "graph-ng"
-  ],
+  "tags": ["gdev", "panel-tests", "barchart", "graph-ng"],
   "templating": {
     "list": []
   },

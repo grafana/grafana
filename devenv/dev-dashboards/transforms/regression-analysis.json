@@ -715,9 +715,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -1072,10 +1070,7 @@
   "preload": false,
   "refresh": "",
   "schemaVersion": 41,
-  "tags": [
-    "gdev",
-    "transform"
-  ],
+  "tags": ["gdev", "transform"],
   "templating": {
     "list": []
   },

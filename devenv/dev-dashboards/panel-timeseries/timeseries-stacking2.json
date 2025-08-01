@@ -984,9 +984,7 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "hidden",
           "placement": "right"
         },
@@ -1070,9 +1068,7 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "hidden",
           "placement": "right"
         },
@@ -1155,9 +1151,7 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "hidden",
           "placement": "right"
         },
@@ -3427,11 +3421,7 @@
   ],
   "refresh": false,
   "schemaVersion": 36,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },
