@@ -13,7 +13,7 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { NodesMap, RecentScope, ScopesMap, SelectedScope, TreeNode } from './types';
+import { NodesMap, RecentScope, RecentScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -405,22 +405,7 @@ function isScopeObj(obj: unknown): obj is Scope {
 }
 
 function hasValidScopeParentNode(obj: unknown): obj is RecentScope {
-  return (
-    isScopeObj(obj) &&
-    typeof obj === 'object' &&
-    obj !== null &&
-    'parentNode' in obj &&
-    typeof obj.parentNode === 'object' &&
-    obj.parentNode !== null &&
-    'metadata' in obj.parentNode &&
-    typeof obj.parentNode.metadata === 'object' &&
-    obj.parentNode.metadata !== null &&
-    'name' in obj.parentNode.metadata &&
-    'spec' in obj.parentNode &&
-    typeof obj.parentNode.spec === 'object' &&
-    obj.parentNode.spec !== null &&
-    'title' in obj.parentNode.spec
-  );
+  return RecentScopeSchema.safeParse(obj).success;
 }
 
 function parseScopesFromLocalStorage(content: string | undefined): RecentScope[][] {
