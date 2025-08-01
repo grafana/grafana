@@ -10,6 +10,7 @@ import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } fro
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 import { TextWrapOptionsEditor } from './cells/TextWrapOptionsEditor';
 
@@ -54,6 +55,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
     { value: TableCellDisplayMode.Sparkline, label: t('table.cell-types.sparkline', 'Sparkline') },
     { value: TableCellDisplayMode.JSONView, label: t('table.cell-types.json', 'JSON View') },
     { value: TableCellDisplayMode.Pill, label: t('table.cell-types.pill', 'Pill') },
+    { value: TableCellDisplayMode.Markdown, label: t('table.cell-types.markdown', 'Markdown + HTML') },
     { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
     { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
   ];
@@ -104,6 +106,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       )}
       {cellType === TableCellDisplayMode.Image && (
         <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {cellType === TableCellDisplayMode.Markdown && (
+        <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
     </div>
   );

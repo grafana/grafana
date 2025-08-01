@@ -12529,6 +12529,7 @@
       "gauge": "Gauge",
       "image": "Image",
       "json": "JSON View",
+      "markdown": "Markdown + HTML",
       "pill": "Pill",
       "sparkline": "Sparkline"
     },
@@ -12565,6 +12566,13 @@
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
+    },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
+      "label": {
+        "text-alpha": "Alpha"
+      },
+      "label-dynamic-height": "Dynamic height"
     },
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",

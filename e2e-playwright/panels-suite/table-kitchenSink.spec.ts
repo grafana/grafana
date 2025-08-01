@@ -225,7 +225,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // in a second, though.
     const smallRowStatus = await getRowStatus(page);
     expect(smallRowStatus.end).toBeGreaterThan(1);
-    expect(page.getByRole('grid').getByRole('row')).toHaveCount(smallRowStatus.end + 1);
+    expect(page.getByRole('grid').getByRole('row')).toHaveCount(smallRowStatus.end + 2); // +2 for header and footer rows
 
     // change cell height to Large
     await dashboardPage
@@ -235,7 +235,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       .click();
     const largeRowStatus = await getRowStatus(page);
     expect(largeRowStatus.end).toBeLessThan(smallRowStatus.end);
-    expect(page.getByRole('grid').getByRole('row')).toHaveCount(largeRowStatus.end + 1);
+    expect(page.getByRole('grid').getByRole('row')).toHaveCount(largeRowStatus.end + 2); // +2 for header and footer rows
 
     // click a page over with the directional nav
     await page.getByLabel('next page').click();

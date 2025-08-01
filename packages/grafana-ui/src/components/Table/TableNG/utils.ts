@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { CSSProperties } from 'react';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { Count, varPreLine } from 'uwrap';
@@ -45,9 +46,14 @@ export type CellNumLinesCalculator = (text: string, cellWidth: number) => number
  * @internal
  * Returns the default row height based on the theme and cell height setting.
  */
-export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCellHeight): number {
-  const bodyFontSize = theme.typography.fontSize;
-  const lineHeight = theme.typography.body.lineHeight;
+export function getDefaultRowHeight(
+  theme: GrafanaTheme2,
+  fields?: Field[],
+  cellHeight?: TableCellHeight
+): NonNullable<CSSProperties['height']> {
+  if (fields?.some((field) => field.config?.custom?.cellOptions?.dynamicHeight)) {
+    return 'auto';
+  }
 
   switch (cellHeight) {
     case TableCellHeight.Sm:
@@ -58,7 +64,7 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
       return TABLE.MAX_CELL_HEIGHT;
   }
 
-  return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
+  return TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
 }
 
 /**
