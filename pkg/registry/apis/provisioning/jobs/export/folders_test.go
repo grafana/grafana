@@ -298,49 +298,21 @@ func TestExportFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name == "test-repo-uid" && result.Action == repository.FileActionCreated
+					return result.Name == "parent-folder" && result.Action == repository.FileActionCreated
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name == "parent-uid" && result.Action == repository.FileActionCreated
+					return result.Name == "child-folder" && result.Action == repository.FileActionCreated
 				})).Return()
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name == "child-uid" && result.Action == repository.FileActionCreated
-				})).Return()
-				progress.On("TooManyErrors").Return(nil)
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("TooManyErrors").Return(nil)
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources) {
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
-					// With the new root folder implementation:
-					// - Root folder (test-repo) is automatically added
-					// - parent-folder now has test-repo as parent
-					// - child-folder has parent-folder as parent
-					expectedFolders := []resources.Folder{
-						{ID: "test-repo", Path: "test-repo"}, // root folder
-						{ID: "parent-folder", Path: "test-repo/parent-folder"},
-						{ID: "child-folder", Path: "test-repo/parent-folder/child-folder"},
-					}
-
-					if tree.Count() != len(expectedFolders) {
-						return false
-					}
-
-					for _, folder := range expectedFolders {
-						dir, ok := tree.DirPath(folder.ID, "")
-						if !ok || dir.Path != folder.Path {
-							return false
-						}
-					}
-
-					return true
+					return tree.Count() == 2
 				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
-					// Root folder should be processed first (shallowest depth)
-					require.NoError(t, fn(resources.Folder{ID: "test-repo-uid", Path: "grafana/test-repo"}, true, nil))
-					// Then parent folder
-					require.NoError(t, fn(resources.Folder{ID: "parent-uid", Path: "grafana/parent-folder"}, true, nil))
-					// Then child folder with nested path
-					require.NoError(t, fn(resources.Folder{ID: "child-uid", Path: "grafana/parent-folder/child-folder"}, true, nil))
+					require.NoError(t, fn(resources.Folder{ID: "parent-folder", Path: "grafana/parent-folder"}, true, nil))
+					require.NoError(t, fn(resources.Folder{ID: "child-folder", Path: "grafana/parent-folder/child-folder"}, true, nil))
+
 					return true
 				})).Return(nil)
 			},
