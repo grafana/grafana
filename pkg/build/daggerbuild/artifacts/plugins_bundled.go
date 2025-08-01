@@ -21,15 +21,19 @@ var (
 )
 
 type BundledPlugins struct {
-	Name      packages.Name
-	Src       *dagger.Directory
-	YarnCache *dagger.CacheVolume
-	Version   string
+	Name        packages.Name
+	Src         *dagger.Directory
+	YarnCache   *dagger.CacheVolume
+	Version     string
+	NodeModules *pipeline.Artifact
 }
 
 // The frontend does not have any artifact dependencies.
 func (f *BundledPlugins) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
-	return nil, nil
+	return []*pipeline.Artifact{
+		f.NodeModules,
+	}, nil
+
 }
 
 // Builder will return a node.js alpine container that matches the .nvmrc in the Grafana source repository
@@ -42,7 +46,11 @@ func (f *BundledPlugins) BuildFile(ctx context.Context, builder *dagger.Containe
 }
 
 func (f *BundledPlugins) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	return frontend.BuildPlugins(builder), nil
+	nodeModules, err := opts.Store.Directory(ctx, f.NodeModules)
+	if err != nil {
+		return nil, err
+	}
+	return frontend.BuildPlugins(builder, f.Src, nodeModules), nil
 }
 
 func (f *BundledPlugins) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
@@ -65,6 +73,10 @@ func (f *BundledPlugins) VerifyDirectory(ctx context.Context, client *dagger.Cli
 	panic("not implemented") // TODO: Implement
 }
 
+func (f *BundledPlugins) String() string {
+	return "bundled-plugins"
+}
+
 // Filename should return a deterministic file or folder name that this build will produce.
 // This filename is used as a map key for caching, so implementers need to ensure that arguments or flags that affect the output
 // also affect the filename to ensure that there are no collisions.
@@ -77,15 +89,20 @@ func (f *BundledPlugins) Filename(ctx context.Context) (string, error) {
 	return path.Join("bin", "bundled-plugins"), nil
 }
 
-func NewBundledPlugins(ctx context.Context, log *slog.Logger, artifact string, src *dagger.Directory, version string, cacheVolume *dagger.CacheVolume) (*pipeline.Artifact, error) {
+func NewBundledPlugins(ctx context.Context, log *slog.Logger, artifact string, src *dagger.Directory, version string, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
+	nodeModules, err := NewNodeModules(ctx, log, artifact, src, version, cache)
+	if err != nil {
+		return nil, err
+	}
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,
 		Flags:          BundledPluginsFlags,
 		Handler: &BundledPlugins{
-			Src:       src,
-			YarnCache: cacheVolume,
-			Version:   version,
+			Src:         src,
+			YarnCache:   cache,
+			Version:     version,
+			NodeModules: nodeModules,
 		},
 	})
 }

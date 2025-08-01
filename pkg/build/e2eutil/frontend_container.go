@@ -18,7 +18,7 @@ type Deps struct {
 // or run e2e tests.
 // Theoretically we would setup Playwright in e2e.go, but to optimise layer caching
 // we want it to happen before yarn install.
-func WithFrontendContainer(ctx context.Context, d *dagger.Client, yarnHostSrc *dagger.Directory) (*dagger.Container, error) {
+func WithFrontendContainer(ctx context.Context, d *dagger.Client, yarnHostSrc *dagger.Directory, yarnCache *dagger.CacheVolume) (*dagger.Container, error) {
 	deps, err := GetVersions(ctx, yarnHostSrc)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func WithFrontendContainer(ctx context.Context, d *dagger.Client, yarnHostSrc *d
 	nodeBase := WithNode(d, deps.NodeVersion)
 	playwrightBase := WithPlaywright(d, nodeBase, deps.PlaywrightVersion)
 
-	return WithYarnInstall(d, playwrightBase, yarnHostSrc), nil
+	return WithYarnInstall(d, playwrightBase, yarnHostSrc, yarnCache), nil
 }
 
 func GetVersions(ctx context.Context, src *dagger.Directory) (Deps, error) {
@@ -60,16 +60,10 @@ func WithNode(d *dagger.Client, version string) *dagger.Container {
 }
 
 func WithPlaywright(d *dagger.Client, base *dagger.Container, version string) *dagger.Container {
-	brCache := d.CacheVolume("playwright-browsers")
-	return base.
-		WithEnvVariable("PLAYWRIGHT_BROWSERS_PATH", "/playwright-cache").
-		WithMountedCache("/playwright-cache", brCache).
-		WithExec([]string{"npx", "-y", "playwright@" + version, "install", "--with-deps"})
+	return d.Container().From(fmt.Sprintf("mcr.microsoft.com/playwright:v%s", version))
 }
 
-func WithYarnInstall(d *dagger.Client, base *dagger.Container, yarnHostSrc *dagger.Directory) *dagger.Container {
-	yarnCache := d.CacheVolume("yarn-cache")
-
+func WithYarnInstall(d *dagger.Client, base *dagger.Container, yarnHostSrc *dagger.Directory, yarnCache *dagger.CacheVolume) *dagger.Container {
 	return base.
 		WithWorkdir("/src").
 		WithMountedCache("/.yarn", yarnCache).

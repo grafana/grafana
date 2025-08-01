@@ -219,6 +219,9 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		log   = opts.Log
 	)
 
+	b = b.
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo %s > VERSION", t.Version)})
+
 	log.Debug("Getting grafana dir from state...")
 	// The Grafana directory is used for other packaged data like Dockerfile, license.txt, etc.
 	grafanaDir := t.Grafana
@@ -317,6 +320,10 @@ func (t *Tarball) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error
 
 func (t *Tarball) Filename(ctx context.Context) (string, error) {
 	return packages.FileName(t.Name, t.Version, t.BuildID, t.Distribution, "tar.gz")
+}
+
+func (t *Tarball) String() string {
+	return "targz"
 }
 
 func verifyTarball(

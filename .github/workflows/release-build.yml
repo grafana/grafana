@@ -169,6 +169,7 @@ jobs:
             verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
