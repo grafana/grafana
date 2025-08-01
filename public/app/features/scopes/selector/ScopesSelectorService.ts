@@ -290,7 +290,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       return;
     }
 
-    const newScopes: RecentScope[] = scopes;
+    const newScopes: RecentScope[] = structuredClone(scopes);
     // Set parent node for the first scope
     if (parentNode) {
       newScopes[0].parentNode = parentNode;
