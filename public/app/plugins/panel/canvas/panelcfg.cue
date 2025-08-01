@@ -100,8 +100,8 @@ composableKinds: PanelCfg: {
 					showAdvancedTypes: bool | *true
 					// Enable pan and zoom
 					panZoom: bool | *true
-					// Enable infinite pan
-					infinitePan: bool | *true
+					// Zoom to content
+					zoomToContent: bool | *true
 					// The root element of canvas (frame), where all canvas elements are nested
 					// TODO: Figure out how to define a default value for this
 					root: {

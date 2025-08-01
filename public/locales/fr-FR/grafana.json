@@ -1548,8 +1548,7 @@
       "group-not-editable": "Le groupe sélectionné ne peut pas être modifié",
       "group-not-editable-description": "Ce groupe appartient à une source de données qui ne prend pas en charge la modification.",
       "page-title": "Modifier le groupe de règles",
-      "rule-group-error": "Erreur lors du chargement du groupe de règles",
-      "title": "Modifier le groupe d’évaluation"
+      "rule-group-error": "Erreur lors du chargement du groupe de règles"
     },
     "group-loader": {
       "group-load-failed": "Échec du chargement des règles du groupe {{ groupName }} dans {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Effectuez des vérifications ping, DNS, HTTP/S et TCP à tous les niveaux du réseau.",
       "synthetic-monitoring-card-item-3": "Utilisez plus de 20 sondes mondiales ou déployez vos propres sondes privées derrière votre pare-feu.",
       "synthetic-monitoring-card-item-4": "Suivez vos SLO grâce à des alertes natives au format Prometheus, directement depuis l’interface utilisateur.",
-      "synthetic-monitoring-card-title": "Monitoring synthétique",
-      "title-alerting": "Alerte"
+      "synthetic-monitoring-card-title": "Monitoring synthétique"
     },
     "import-to-gma": {
       "action-button": "Importer",
@@ -3565,12 +3563,12 @@
       "tags-column": "Balises"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Dossier supprimé avec succès",
       "api-error": "Échec de la suppression du dossier",
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
-      "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :"
+      "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Impossible de récupérer les informations descendantes"
@@ -3613,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Erreur de création du dossier",
-      "alert-folder-created-successfully": "Le dossier a bien été créé",
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
@@ -3740,6 +3737,7 @@
     "category-selected-connection": "Connexion sélectionnée",
     "category-selected-element": "Élément sélectionné ({{element}})",
     "category-size": "Taille",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3760,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Activer la sélection de types d’éléments expérimentaux",
-    "description-infinite-panning": "Activez le panoramique infini, utile pour les canvas étendus. Avertissement : il s’agit d’une fonctionnalité expérimentale qui ne fonctionne actuellement bien qu’avec des éléments contraints en haut/à gauche",
     "description-inline-editing": "Activer la modification directe du panneau",
     "description-pan-zoom": "Activer le zoom et le déplacement",
     "direction-options": {
@@ -3861,7 +3858,6 @@
     "name-align-text": "Alignement du texte",
     "name-color": "Couleur du texte",
     "name-experimental-types": "Types d’éléments expérimentaux",
-    "name-infinite-panning": "Panoramique infini",
     "name-inline-editing": "Édition en ligne",
     "name-pan-zoom": "Zoom et déplacement",
     "name-text": "Texte",
@@ -3982,6 +3978,13 @@
       "name-vertical-align": "Alignement vertical",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -5639,6 +5642,7 @@
       "delete-read-only-file-message": "Ce tableau de bord ne peut pas être supprimé directement depuis Grafana, car le dépôt est en lecture seule. Pour le supprimer, veuillez retirer le fichier de votre dépôt Git.",
       "deleting": "Suppression…",
       "drawer-title": "Supprimer le tableau de bord provisionné",
+      "success-message": "",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
     "description-label": {
@@ -5650,9 +5654,6 @@
           "edit-link": "Modifier le lien"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Modifications du tableau de bord enregistrées avec succès"
     },
     "email-list": {
       "aria-label-emailmenu": "Basculer vers le menu des e-mails"
@@ -5812,6 +5813,7 @@
       "usage-count_other": "Utilisé sur {{count}} tableaux de bord"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5821,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7006,6 +7009,9 @@
         "pro-tip-define-sources-through-configuration-files": " Conseil de pro : vous pouvez également définir des sources de données via des fichiers de configuration. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Précédent",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Passer en mode sans requête"
@@ -7272,18 +7278,24 @@
       "split-tooltip": "Scinder le panneau",
       "split-widen": "Élargir le panneau"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Publiez votre commentaire",
-      "label-copied": "Copié !",
-      "label-export": "Exporter",
-      "label-trace-id": "ID de trace",
-      "title-share-thoughts-about-tracing-grafana": "Veuillez partager vos réflexions sur les traces dans Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Trace partielle",
-      "tooltip-url": "{{url}} ou {{target}} ou {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Bouton Supprimer les filtres",
@@ -11000,6 +11012,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Cette fonctionnalité est actuellement en cours de développement. Pour une expérience optimale et les dernières améliorations, nous vous recommandons d’utiliser la <2>compilation nocturne</2> de Grafana."
@@ -11859,7 +11874,7 @@
         "recommended": "Recommandé",
         "results": "Résultats"
       },
-      "search": "Rechercher"
+      "search": ""
     }
   },
   "search": {
@@ -12495,6 +12510,18 @@
       "label-large": "Grand",
       "label-medium": "Moyen",
       "label-small": "Petit"
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Si cette option est sélectionnée, toute la ligne sera colorée comme cette cellule.",
