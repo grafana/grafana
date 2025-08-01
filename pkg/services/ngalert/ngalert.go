@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/alerting/lokiclient"
+	notificationhistorian "github.com/grafana/alerting/notificationhistorian"
 	"github.com/grafana/alerting/notify/nfstatus"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
@@ -693,7 +695,7 @@ func configureHistorianBackend(
 		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
 	}
 	if backend == historian.BackendTypeLoki {
-		lcfg, err := lokiclient.NewLokiConfig(cfg.LokiSettings)
+		lcfg, err := lokiconfig.NewLokiConfig(cfg.LokiSettings)
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
@@ -746,13 +748,13 @@ func configureNotificationHistorian(
 	}
 
 	met.Info.Set(1)
-	lcfg, err := lokiclient.NewLokiConfig(cfg.LokiSettings)
+	lcfg, err := lokiconfig.NewLokiConfig(cfg.LokiSettings)
 	if err != nil {
 		return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 	}
 	req := lokiclient.NewRequester()
 	logger := log.New("ngalert.notifier.historian").FromContext(ctx)
-	notificationHistorian := notifier.NewNotificationHistorian(logger, lcfg, req, met, tracer)
+	notificationHistorian := notificationhistorian.NewNotificationHistorian(logger, lcfg, req, met.BytesWritten, met.WriteDuration, met.WritesTotal, met.WritesFailed, tracer)
 
 	testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelFunc()
