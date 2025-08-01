@@ -263,9 +263,6 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 		}
 
 		outputRules = append(outputRules, r)
-		if groupsFetched == 0 {
-			groupsFetched++
-		}
 	}
 
 	return outputRules, nextToken, nil
