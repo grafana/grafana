@@ -963,7 +963,7 @@ const getCellStyles = (
 ) =>
   css({
     display: 'flex',
-    alignItems: 'center',
+    alignItems: cellType === TableCellDisplayMode.Markdown ? 'flex-start' : 'center',
     textAlign,
     justifyContent: getJustifyContent(textAlign),
 
@@ -978,7 +978,15 @@ const getCellStyles = (
       },
       ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
-        whiteSpace: isMonospace ? 'pre' : 'pre-line',
+        whiteSpace: (() => {
+          if (isMonospace) {
+            return 'pre';
+          }
+          if (cellType === TableCellDisplayMode.Markdown) {
+            return 'normal';
+          }
+          return 'pre-line';
+        })(),
         height: 'fit-content',
         minWidth: 'fit-content',
         ...(cellType === TableCellDisplayMode.Pill && {
