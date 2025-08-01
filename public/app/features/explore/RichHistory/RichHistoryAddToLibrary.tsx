@@ -12,7 +12,7 @@ type Props = {
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
-  const { openAddQueryModal, queryLibraryEnabled } = useQueryLibraryContext();
+  const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const buttonLabel = t('explore.rich-history-card.add-to-library', 'Add to library');
 
@@ -22,7 +22,15 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
         variant="secondary"
         aria-label={buttonLabel}
         onClick={() => {
-          openAddQueryModal(query, { onSave: () => setHasBeenSaved(true), context: 'rich-history' });
+          openDrawer({
+            query,
+            options: {
+              onSave: () => {
+                setHasBeenSaved(true);
+              },
+              context: 'rich-history',
+            },
+          });
         }}
       >
         {buttonLabel}

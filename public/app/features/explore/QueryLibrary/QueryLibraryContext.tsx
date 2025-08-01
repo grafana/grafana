@@ -2,8 +2,16 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { QueryTemplateRow } from 'app/extensions/query-library/types';
 
 import { OnSelectQueryType } from './types';
+
+export type QueryLibraryDrawerOptions = {
+  datasourceFilters?: string[];
+  onSelectQuery?: OnSelectQueryType;
+  options?: { isReplacingQuery?: boolean; onSave?: () => void; context?: string };
+  query?: DataQuery;
+};
 
 /**
  * Context with state and action to interact with Query Library. The Query Library feature consists of a drawer
@@ -21,27 +29,10 @@ export type QueryLibraryContextType = {
    * @param options.context Used for QueryEditor. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
    */
-  openDrawer: (
-    datasourceFilters: string[],
-    onSelectQuery: OnSelectQueryType,
-    options?: { isReplacingQuery?: boolean; context?: string }
-  ) => void;
+  openDrawer: (options: QueryLibraryDrawerOptions) => void;
   closeDrawer: () => void;
   isDrawerOpen: boolean;
-
-  /**
-   * Opens a modal for adding a query to the library.
-   * @param query Query to be saved
-   * @param options.onSave Callback that will be called after the query is saved.
-   * @param options.context Used for rendering QueryEditor. Should identify the context this is called from, like 'explore' or
-   *   'dashboard'.
-   * @param options.title Default title for the modal, can be overridden by the query title.
-   */
-  openAddQueryModal: (
-    query: DataQuery,
-    options?: { onSave?: () => void; context?: string; title?: string; isDuplicating?: boolean }
-  ) => void;
-  closeAddQueryModal: () => void;
+  onSave?: () => void;
 
   /**
    * Returns a predefined small button that can be used to save a query to the library.
@@ -50,6 +41,7 @@ export type QueryLibraryContextType = {
   renderSaveQueryButton: (query: DataQuery, app?: CoreApp) => ReactNode;
   queryLibraryEnabled: boolean;
   context: string;
+  setActiveQuery: (query?: QueryTemplateRow) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -57,8 +49,8 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   closeDrawer: () => {},
   isDrawerOpen: false,
 
-  openAddQueryModal: () => {},
-  closeAddQueryModal: () => {},
+  setActiveQuery: () => {},
+  onSave: () => {},
 
   renderSaveQueryButton: () => {
     return null;
