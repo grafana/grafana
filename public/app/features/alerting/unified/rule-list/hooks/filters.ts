@@ -22,12 +22,10 @@ export function groupFilter(
   const { name, file } = group;
   const { namespace, groupName } = filterState;
 
-  // Use fuzzy search for namespace
   if (namespace && !fuzzyMatches(file, namespace)) {
     return false;
   }
 
-  // Use fuzzy search for group name
   if (groupName && !fuzzyMatches(name, groupName)) {
     return false;
   }
@@ -41,17 +39,17 @@ export function groupFilter(
 export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   const { name, labels = {}, health, type } = rule;
 
-  // Free form words filter (uses fuzzy matching for each word)
-  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => fuzzyMatches(name, word))) {
-    return false;
+  if (filterState.freeFormWords.length > 0) {
+    const nameMatches = fuzzyMatches(name, filterState.freeFormWords.join(' '));
+    if (!nameMatches) {
+      return false;
+    }
   }
 
-  // Rule name filter (uses fuzzy matching)
   if (filterState.ruleName && !fuzzyMatches(name, filterState.ruleName)) {
     return false;
   }
 
-  // Labels filter
   if (filterState.labels.length > 0) {
     const matchers = compact(filterState.labels.map(looseParseMatcher));
     const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(labels, matchers);
@@ -68,12 +66,10 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
-  // Rule type filter
   if (filterState.ruleType && type !== filterState.ruleType) {
     return false;
   }
 
-  // Rule state filter (for alerting rules only)
   if (filterState.ruleState) {
     if (!prometheusRuleType.alertingRule(rule)) {
       return false;
@@ -83,7 +79,6 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
-  // Rule health filter
   if (filterState.ruleHealth && health !== filterState.ruleHealth) {
     return false;
   }
@@ -102,7 +97,6 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
-  // Dashboard UID filter
   if (filterState.dashboardUid) {
     if (!prometheusRuleType.alertingRule(rule)) {
       return false;
