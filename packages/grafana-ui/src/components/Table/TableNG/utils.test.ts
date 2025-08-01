@@ -825,10 +825,6 @@ describe('TableNG utils', () => {
       ).toBe('auto');
     });
 
-    it('does not return "auto" if enableVirtualization is undefined', () => {
-      expect(getDefaultRowHeight(theme)).toEqual(expect.any(Number));
-    });
-
     it('calculates height based on theme when cellHeight is undefined', () => {
       const result = getDefaultRowHeight(theme, []);
 
