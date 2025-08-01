@@ -115,8 +115,6 @@ DashboardLink: {
 	keepTime: bool | *false
 }
 
-// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
-// This type is widely used in the codebase and changing it will have a big impact
 DataSourceRef: {
 	// The plugin type-id
 	type?: string
@@ -391,14 +389,15 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-	query:      DataQueryKind
+	datasource?: DataSourceRef
+	query?:      DataQueryKind
 	enable:      bool
 	hide:        bool
 	iconColor:   string
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
-	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	legacyOptions?:     [string]: _ //Catch-all field for datasource-specific properties
 }
 
 AnnotationQueryKind: {
@@ -417,19 +416,15 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-	kind: "DataQuery"
-	group: string
-	version: string | *"v0"
-	// New type for datasource reference
-	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
-	datasource?: {
-		name?: string
-	}
+	// The kind of a DataQueryKind is the datasource type
+	kind: string
 	spec: [string]: _
 }
 
 PanelQuerySpec: {
 	query:       DataQueryKind
+	datasource?: DataSourceRef
+
 	refId:  string
 	hidden: bool
 }
@@ -732,6 +727,7 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
+	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""
 	sort:         VariableSort
@@ -742,6 +738,8 @@ QueryVariableSpec: {
 	allValue?:    string
 	placeholder?: string
 	allowCustomValue: bool | *true
+	staticOptions?: [...VariableOption]
+	staticOptionsOrder?: "before" | "after" | "sorted"
 }
 
 // Query variable kind

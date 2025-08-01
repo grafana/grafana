@@ -9,7 +9,14 @@ import (
 
 const UsageInsightsPrefix = "secrets_manager"
 
-// Provider is a key encryption key provider for envelope encryption
+type ProviderConfig struct {
+	CurrentProvider    ProviderID
+	AvailableProviders ProviderMap
+}
+
+type ProviderMap map[ProviderID]Provider
+
+// Provider is a fully configured key encryption key provider used for to encrypt and decrypt data keys for envelope encryption
 type Provider interface {
 	Encrypt(ctx context.Context, blob []byte) ([]byte, error)
 	Decrypt(ctx context.Context, blob []byte) ([]byte, error)
@@ -17,6 +24,7 @@ type Provider interface {
 
 type ProviderID string
 
+// Kind returns the kind of the provider, e.g. "secret_key", "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
 func (id ProviderID) Kind() (string, error) {
 	idStr := string(id)
 
@@ -28,18 +36,7 @@ func (id ProviderID) Kind() (string, error) {
 	return parts[0], nil
 }
 
+// KeyLabel returns a label for the data key that is unique to the current provider and today's date.
 func KeyLabel(providerID ProviderID) string {
 	return fmt.Sprintf("%s@%s", time.Now().Format("2006-01-02"), providerID)
-}
-
-type ProviderMap map[ProviderID]Provider
-
-// ProvideThirdPartyProviderMap fulfills the wire dependency needed by the encryption manager in OSS
-func ProvideThirdPartyProviderMap() ProviderMap {
-	return ProviderMap{}
-}
-
-// BackgroundProvider should be implemented for a provider that has a task that needs to be run in the background.
-type BackgroundProvider interface {
-	Run(ctx context.Context) error
 }

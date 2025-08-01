@@ -44,7 +44,7 @@ import {
   FieldConfig,
   FieldColor,
   defaultDataQueryKind,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha1/types.spec.gen';
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -232,9 +232,10 @@ export function vizPanelToSchemaV2(
         },
       },
       vizConfig: {
-        kind: vizPanel.state.pluginId,
+        kind: 'VizConfig',
+        group: vizPanel.state.pluginId,
+        version: vizPanel.state.pluginVersion ?? '',
         spec: {
-          pluginVersion: vizPanel.state.pluginVersion ?? '',
           options: vizPanel.state.options,
           fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
         },

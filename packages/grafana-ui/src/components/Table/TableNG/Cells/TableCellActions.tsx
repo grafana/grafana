@@ -1,5 +1,5 @@
-import { WKT } from 'ol/format';
-import { Geometry } from 'ol/geom';
+import WKT from 'ol/format/WKT';
+import Geometry from 'ol/geom/Geometry';
 
 import { FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -42,7 +42,8 @@ export function TableCellActions(props: TableCellActionsProps) {
                 dataProjection: 'EPSG:4326',
               });
               mode = TableCellInspectorMode.code;
-            } else if ('cellType' in cellOptions && cellOptions.cellType === TableCellDisplayMode.JSONView) {
+            }
+            if (cellOptions.type === TableCellDisplayMode.JSONView) {
               mode = TableCellInspectorMode.code;
             }
 
@@ -57,7 +58,7 @@ export function TableCellActions(props: TableCellActionsProps) {
       {showFilters && (
         <>
           <IconButton
-            name={'search-plus'}
+            name={'filter-plus'}
             aria-label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
             onClick={() => {
               onCellFilterAdded?.({
@@ -68,7 +69,7 @@ export function TableCellActions(props: TableCellActionsProps) {
             }}
           />
           <IconButton
-            name={'search-minus'}
+            name={'filter-minus'}
             aria-label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
             onClick={() => {
               onCellFilterAdded?.({

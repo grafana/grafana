@@ -73,5 +73,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   legend: css({
     marginBottom: 0,
+    padding: `${theme.spacing(0.5)} 0`,
   }),
 });

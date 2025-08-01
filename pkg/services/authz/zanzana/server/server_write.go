@@ -25,7 +25,7 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 }
 
 func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*authzextv1.WriteResponse, error) {
-	if err := authorize(ctx, req.GetNamespace()); err != nil {
+	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 

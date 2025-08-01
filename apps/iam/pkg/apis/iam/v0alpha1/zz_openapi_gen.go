@@ -186,6 +186,13 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"version": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -215,7 +222,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 						},
 					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "description", "version", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
@@ -740,6 +747,13 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 							Format:      "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"version": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -769,7 +783,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "description", "version", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{
@@ -1600,6 +1614,13 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 							Format:      "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"version": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -1629,7 +1650,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "description", "version", "group", "permissions"},
 			},
 		},
 		Dependencies: []string{

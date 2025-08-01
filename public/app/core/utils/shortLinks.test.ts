@@ -15,6 +15,17 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+beforeEach(() => {
+  Object.assign(navigator, {
+    clipboard: {
+      write: jest.fn().mockResolvedValue(undefined),
+      writeText: jest.fn().mockResolvedValue(undefined),
+    },
+  });
+
+  document.execCommand = jest.fn();
+});
+
 describe('createShortLink', () => {
   it('creates short link', async () => {
     const shortUrl = await createShortLink('www.verylonglinkwehavehere.com');
@@ -23,10 +34,33 @@ describe('createShortLink', () => {
 });
 
 describe('createAndCopyShortLink', () => {
-  it('copies short link to clipboard', async () => {
+  it('copies short link to clipboard via document.execCommand when navigator.clipboard is undefined', async () => {
+    Object.assign(navigator, {
+      clipboard: {
+        write: undefined,
+      },
+    });
     document.execCommand = jest.fn();
     await createAndCopyShortLink('www.verylonglinkwehavehere.com');
     expect(document.execCommand).toHaveBeenCalledWith('copy');
+  });
+
+  it('copies short link to clipboard via navigator.clipboard.writeText when ClipboardItem is undefined', async () => {
+    window.isSecureContext = true;
+    await createAndCopyShortLink('www.verylonglinkwehavehere.com');
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('www.short.com');
+  });
+
+  it('copies short link to clipboard via navigator.clipboard.write and ClipboardItem when it is defined', async () => {
+    global.ClipboardItem = jest.fn().mockImplementation(() => ({
+      type: 'text/plain',
+      size: 0,
+      slice: jest.fn(),
+      supports: jest.fn().mockReturnValue(true),
+      // eslint-disable-next-line
+    })) as any;
+    await createAndCopyShortLink('www.verylonglinkwehavehere.com');
+    expect(navigator.clipboard.write).toHaveBeenCalled();
   });
 });
 

@@ -29,6 +29,10 @@ This guide walks through:
 
 By the end, every change to your dashboard code will be automatically created or updated in your Grafana instance without manual intervention.
 
+{{< youtube id="cFnO8kVOaAI" >}}
+
+You can find the full example source code in the [intro-to-foundation-sdk repository](https://github.com/grafana/intro-to-foundation-sdk/tree/main/github-actions-example).
+
 ## 1. Generating the dashboard JSON
 
 Before deploying a dashboard, we need to define it in code using the Grafana Foundation SDK. We ran through an example of this in the Getting Started guide, however, in order to comply with the Kubernetes resource compatible API that Grafana exposes, we’ll make some changes to the code to output the dashboard JSON in the appropriate format.
@@ -167,7 +171,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24.4
+          go-version: 1.24.5
 
       - name: Verify Go version
         run: go version
@@ -208,7 +212,7 @@ This GitHub Action automates the deployment of a Grafana dashboard using the Fou
 The first few steps:
 
 - Check out the repository to access the project code.
-- Install Go 1.24.4 using the `actions/setup-go` action.
+- Install Go 1.24.5 using the `actions/setup-go` action.
 - Verify Go is properly installed.
 
 ### 2. Download and install `grafanactl`

@@ -51,7 +51,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		Resources: []schema.GroupResource{
 			{Group: folders.GROUP, Resource: folders.RESOURCE},
 			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
-			{Group: dashboard.GROUP, Resource: dashboard.LIBRARY_PANEL_RESOURCE},
 		},
 		LargeObjects: nil, // TODO... from config
 		Progress: func(count int, msg string) {
@@ -63,6 +62,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			}
 		},
 	}
+
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return err
+	}
+	featureToggles := featuremgmt.ProvideToggles(featureManager)
 
 	provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
 	if err != nil {
@@ -77,9 +82,10 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		nil, // no librarypanels.Service
 		sort.ProvideService(),
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		featureToggles,
 	)
 
-	client, err := newUnifiedClient(cfg, sqlStore)
+	client, err := newUnifiedClient(cfg, sqlStore, featureToggles)
 	if err != nil {
 		return err
 	}
@@ -216,12 +222,7 @@ func promptYesNo(prompt string) (bool, error) {
 	}
 }
 
-func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return nil, err
-	}
-	featureToggles := featuremgmt.ProvideToggles(featureManager)
+func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB, featureToggles featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
 		Cfg:      cfg,
 		Features: featureToggles,

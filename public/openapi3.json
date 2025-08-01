@@ -7360,6 +7360,8 @@
         "properties": {
           "errorCode": {
             "enum": [
+              "ALERT_RULES_QUOTA_REACHED",
+              "ALERT_RULES_GROUP_QUOTA_REACHED",
               "DATASOURCE_NAME_CONFLICT",
               "DATASOURCE_INVALID_URL",
               "DATASOURCE_ALREADY_MANAGED",
@@ -12115,7 +12117,7 @@
         "properties": {
           "Object": {
             "additionalProperties": {},
-            "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
+            "description": "Object is a JSON compatible map with string, float, int, bool, []any,\nor map[string]any children.",
             "type": "object"
           }
         },
@@ -16063,6 +16065,58 @@
         ]
       }
     },
+    "/anonymous/devices": {
+      "get": {
+        "operationId": "listDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/devicesResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Lists all devices within the last 30 days",
+        "tags": [
+          "devices"
+        ]
+      }
+    },
+    "/anonymous/search": {
+      "get": {
+        "operationId": "SearchDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/devicesSearchResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Lists all devices within the last 30 days",
+        "tags": [
+          "devices"
+        ]
+      }
+    },
     "/cloudmigration/migration": {
       "get": {
         "operationId": "getSessionList",
@@ -16585,6 +16639,724 @@
         "summary": "Deletes a cloud migration token.",
         "tags": [
           "migrations"
+        ]
+      }
+    },
+    "/convert/api/prom/rules": {
+      "get": {
+        "operationId": "RouteConvertPrometheusCortexGetRules",
+        "responses": {
+          "200": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrometheusNamespace"
+                }
+              }
+            },
+            "description": "PrometheusNamespace"
+          },
+          "403": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      },
+      "post": {
+        "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertPrometheusResponse"
+                }
+              }
+            },
+            "description": "ConvertPrometheusResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      }
+    },
+    "/convert/api/prom/rules/{NamespaceTitle}": {
+      "delete": {
+        "operationId": "RouteConvertPrometheusCortexDeleteNamespace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertPrometheusResponse"
+                }
+              }
+            },
+            "description": "ConvertPrometheusResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      },
+      "get": {
+        "operationId": "RouteConvertPrometheusCortexGetNamespace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrometheusNamespace"
+                }
+              }
+            },
+            "description": "PrometheusNamespace"
+          },
+          "403": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
+        "tags": [
+          "convert_prometheus"
+        ]
+      },
+      "post": {
+        "description": "If the group already exists and was not imported from a Prometheus-compatible source initially,\nit will not be replaced and an error will be returned.",
+        "operationId": "RouteConvertPrometheusCortexPostRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-datasource-uid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-recording-rules-paused",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-alert-rules-paused",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-target-datasource-uid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-folder-uid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-notification-receiver",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/PrometheusRuleGroup"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertPrometheusResponse"
+                }
+              }
+            },
+            "description": "ConvertPrometheusResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
+        "tags": [
+          "convert_prometheus"
+        ],
+        "x-raw-request": "true"
+      }
+    },
+    "/convert/api/prom/rules/{NamespaceTitle}/{Group}": {
+      "delete": {
+        "operationId": "RouteConvertPrometheusCortexDeleteRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertPrometheusResponse"
+                }
+              }
+            },
+            "description": "ConvertPrometheusResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      },
+      "get": {
+        "operationId": "RouteConvertPrometheusCortexGetRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrometheusRuleGroup"
+                }
+              }
+            },
+            "description": "PrometheusRuleGroup"
+          },
+          "403": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      }
+    },
+    "/convert/prometheus/config/v1/rules": {
+      "get": {
+        "operationId": "RouteConvertPrometheusGetRules",
+        "responses": {
+          "200": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrometheusNamespace"
+                }
+              }
+            },
+            "description": "PrometheusNamespace"
+          },
+          "403": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      },
+      "post": {
+        "operationId": "RouteConvertPrometheusPostRuleGroups",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertPrometheusResponse"
+                }
+              }
+            },
+            "description": "ConvertPrometheusResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      }
+    },
+    "/convert/prometheus/config/v1/rules/{NamespaceTitle}": {
+      "delete": {
+        "operationId": "RouteConvertPrometheusDeleteNamespace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertPrometheusResponse"
+                }
+              }
+            },
+            "description": "ConvertPrometheusResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      },
+      "get": {
+        "operationId": "RouteConvertPrometheusGetNamespace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrometheusNamespace"
+                }
+              }
+            },
+            "description": "PrometheusNamespace"
+          },
+          "403": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
+        "tags": [
+          "convert_prometheus"
+        ]
+      },
+      "post": {
+        "description": "If the group already exists and was not imported from a Prometheus-compatible source initially,\nit will not be replaced and an error will be returned.",
+        "operationId": "RouteConvertPrometheusPostRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-datasource-uid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-recording-rules-paused",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-alert-rules-paused",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-target-datasource-uid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-folder-uid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-grafana-alerting-notification-receiver",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/PrometheusRuleGroup"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertPrometheusResponse"
+                }
+              }
+            },
+            "description": "ConvertPrometheusResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
+        "tags": [
+          "convert_prometheus"
+        ],
+        "x-raw-request": "true"
+      }
+    },
+    "/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}": {
+      "delete": {
+        "operationId": "RouteConvertPrometheusDeleteRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertPrometheusResponse"
+                }
+              }
+            },
+            "description": "ConvertPrometheusResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
+        "tags": [
+          "convert_prometheus"
+        ]
+      },
+      "get": {
+        "operationId": "RouteConvertPrometheusGetRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "NamespaceTitle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrometheusRuleGroup"
+                }
+              }
+            },
+            "description": "PrometheusRuleGroup"
+          },
+          "403": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
+        "tags": [
+          "convert_prometheus"
         ]
       }
     },
@@ -23054,30 +23826,6 @@
         "tags": [
           "search"
         ]
-      },
-      "post": {
-        "operationId": "SearchDevices",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/devicesSearchResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Lists all devices within the last 30 days",
-        "tags": [
-          "devices"
-        ]
       }
     },
     "/search/sorting": {
@@ -23637,32 +24385,6 @@
         "summary": "Get Snapshot by Key.",
         "tags": [
           "snapshots"
-        ]
-      }
-    },
-    "/stats": {
-      "get": {
-        "operationId": "listDevices",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/devicesResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Lists all devices within the last 30 days",
-        "tags": [
-          "devices"
         ]
       }
     },

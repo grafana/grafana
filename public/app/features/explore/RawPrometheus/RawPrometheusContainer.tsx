@@ -32,12 +32,11 @@ interface PrometheusContainerState {
 function mapStateToProps(state: StoreState, { exploreId }: RawPrometheusContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { tableResult, rawPrometheusResult, range, queryResponse } = item;
+  const { rawPrometheusResult, range, queryResponse } = item;
   const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
-  const result = (tableResult?.length ?? 0) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
   const loading = queryResponse.state;
 
-  return { loading, tableResult: result, range };
+  return { loading, tableResult: rawPrometheusFrame, range };
 }
 
 const connector = connect(mapStateToProps, {});

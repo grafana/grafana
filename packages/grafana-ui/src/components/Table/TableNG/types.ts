@@ -131,6 +131,7 @@ export interface BaseTableProps {
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
   structureRev?: number;
+  transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
@@ -218,13 +219,6 @@ export interface ImageCellProps {
   rowIdx: number;
 }
 
-export interface JSONCellProps {
-  justifyContent: Property.JustifyContent;
-  value: TableCellValue;
-  field: Field;
-  rowIdx: number;
-}
-
 export interface DataLinksCellProps {
   field: Field;
   rowIdx: number;
@@ -245,15 +239,19 @@ export interface CellColors {
 export interface AutoCellProps {
   field: Field;
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
-  cellOptions: TableCellOptions;
 }
 
 export interface ActionCellProps {
   field: Field;
   rowIdx: number;
   getActions: GetActionsFunctionLocal;
+}
+
+export interface PillCellProps {
+  theme: GrafanaTheme2;
+  field: Field;
+  rowIdx: number;
 }
 
 // Comparator for sorting table values
@@ -268,4 +266,31 @@ export type ColumnTypes = Record<string, FieldType>;
 export interface ScrollPosition {
   x: number;
   y: number;
+}
+
+export interface TypographyCtx {
+  ctx: CanvasRenderingContext2D;
+  fontFamily: string;
+  letterSpacing: number;
+  avgCharWidth: number;
+  estimateLines: LineCounter;
+  wrappedCount: LineCounter;
+}
+
+export type LineCounter = (value: unknown, width: number, field: Field, rowIdx: number) => number;
+export interface LineCounterEntry {
+  /**
+   * given a values and the available width, returns the line count for that value
+   */
+  counter: LineCounter;
+  /**
+   * if getting an accurate line count is expensive, you can provide an estimate method
+   * which will be used when looping over the row. the counter method will only be invoked
+   * for the cell which is the maximum line count for the row.
+   */
+  estimate?: LineCounter;
+  /**
+   * indicates which field indexes of the visible fields this line counter applies to.
+   */
+  fieldIdxs: number[];
 }

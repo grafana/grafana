@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": ""
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
@@ -209,11 +213,104 @@
         "label-verbose": ""
       }
     },
-    "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "",
-        "disable-text-wrap": ""
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
       },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
+    "querybuilder": {
       "feedback-link": {
         "give-feedback": "Ge feedback",
         "title-give-feedback": ""
@@ -224,6 +321,26 @@
         "legend": "",
         "step": "",
         "type": ""
+      },
+      "get-placeholders": {
+        "browse": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
       },
       "handle-function": {
         "text": {
@@ -254,16 +371,10 @@
         "tooltip-metric": ""
       },
       "metrics-modal": {
-        "additional-settings": "",
-        "aria-label-additional-settings": "Ytterligare inställningar",
         "aria-label-browse-metrics": "",
         "currently-selected": "",
         "metrics-pre-filtered": "",
-        "placeholder-results-per-page": "",
-        "results-per-page": "",
-        "title-metrics-explorer": "",
-        "results-amount_one": "",
-        "results-amount_other": ""
+        "title-metrics-explorer": ""
       },
       "nested-query": {
         "label": {
@@ -295,6 +406,13 @@
       "operation-param-editor": {
         "title-add": "",
         "title-remove": ""
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "",
@@ -333,9 +451,6 @@
       "query-builder-hints": {
         "hint-details": ""
       },
-      "query-editor-hints": {
-        "hint-details": ""
-      },
       "query-editor-mode-toggle": {
         "editor-modes": {
           "label-builder": "",
@@ -368,8 +483,10 @@
       "results-table": {
         "content-descriptive-type": "",
         "description": "Beskrivning",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
         "name": "Namn",
-        "select": "Välj",
         "type": "Typ"
       },
       "update-function-args": {

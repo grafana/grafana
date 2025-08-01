@@ -431,7 +431,11 @@
   ],
   "refresh": false,
   "schemaVersion": 16,
-  "tags": ["gdev", "panel-tests"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "table"
+  ],
   "templating": {
     "list": []
   },
@@ -445,5 +449,5 @@
   "timezone": "browser",
   "title": "Panel Tests - Table",
   "uid": "pttable",
-  "version": 2
+  "version": 3
 }

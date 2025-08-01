@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/alerting",
-  "version": "12.1.0-pre",
+  "version": "12.2.0-pre",
   "description": "Grafana Alerting Library – Build vertical integrations on top of the industry-leading alerting solution",
   "keywords": [
     "typescript",
@@ -54,11 +54,11 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
-    "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
+    "clean": "rimraf ./dist ./compiled ./unstable ./testing ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
-    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json && rimraf ./unstable"
+    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=testing,unstable node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json && rimraf ./unstable ./testing"
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
@@ -75,10 +75,10 @@
     "react-redux": "^9.2.0",
     "rimraf": "^6.0.1",
     "rollup": "^4.22.4",
-    "rollup-plugin-esbuild": "6.2.0",
+    "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "type-fest": "^4.40.0",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",

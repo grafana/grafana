@@ -121,8 +121,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
 
           {requiresDbrpMapping && (
             <Alert severity="warning" title="InfluxQL requires DBRP mapping">
-              InfluxDB OSS 1.x and 2.x users must configure a Database + Retention Policy (DBRP) mapping via the CLI or
-              API before data can be queried.{' '}
+              {`${options.jsonData.product} requires a Database + Retention Policy (DBRP) mapping via the CLI or
+              API before data can be queried.`}{' '}
               <TextLink href="https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/" external>
                 Learn how to set this up
               </TextLink>

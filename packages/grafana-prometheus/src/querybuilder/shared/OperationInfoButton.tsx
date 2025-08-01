@@ -19,7 +19,7 @@ import { Button, Portal, useStyles2 } from '@grafana/ui';
 
 import { QueryBuilderOperation, QueryBuilderOperationDef } from './types';
 
-export interface Props {
+interface Props {
   operation: QueryBuilderOperation;
   def: QueryBuilderOperationDef;
 }

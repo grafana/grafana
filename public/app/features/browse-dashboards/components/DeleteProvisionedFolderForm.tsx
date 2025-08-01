@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -10,6 +10,11 @@ import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/ap
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
+import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
+import {
+  useProvisionedRequestHandler,
+  ProvisionedOperationInfo,
+} from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
 import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
@@ -22,7 +27,6 @@ interface FormProps extends DeleteProvisionedFolderFormProps {
   repository?: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   folder?: Folder;
-  isGitHub: boolean;
 }
 
 interface DeleteProvisionedFolderFormProps {
@@ -30,18 +34,11 @@ interface DeleteProvisionedFolderFormProps {
   onDismiss?: () => void;
 }
 
-function FormContent({
-  initialValues,
-  parentFolder,
-  repository,
-  workflowOptions,
-  folder,
-  isGitHub,
-  onDismiss,
-}: FormProps) {
+function FormContent({ initialValues, parentFolder, repository, workflowOptions, folder, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
 
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
+  const navigate = useNavigate();
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
@@ -63,45 +60,51 @@ function FormContent({
     });
   };
 
-  // TODO: move to a hook if this useEffect shared mostly the same logic as in NewProvisionedFolderForm
-  useEffect(() => {
-    if (request.isSuccess && repository) {
-      if (workflow === 'branch') {
-        // TODO: handle display banner https://github.com/grafana/git-ui-sync-project/issues/300
-        // TODO: implement when BE is ready
-        return;
-      }
-
-      if (workflow === 'write') {
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [
-            t(
-              'browse-dashboards.delete-provisioned-folder-form.alert-folder-deleted-successfully',
-              'Folder deleted successfully'
-            ),
-          ],
-        });
-        // Navigate back to parent folder if it exists, otherwise go to dashboards root
-        if (parentFolder?.parentUid) {
-          window.location.href = getFolderURL(parentFolder.parentUid);
-        } else {
-          window.location.href = '/dashboards';
-        }
-      }
-    }
-
-    if (request.isError) {
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'),
-          request.error,
-        ],
+  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
+    const prUrl = urls?.newPullRequestURL;
+    if (prUrl) {
+      const url = buildResourceBranchRedirectUrl({
+        paramName: 'new_pull_request_url',
+        paramValue: prUrl,
+        repoType: info.repoType,
       });
-      return;
+      navigate(url);
     }
-  }, [request, repository, workflow, parentFolder]);
+  };
+
+  const onWriteSuccess = () => {
+    // Navigate back to parent folder if it exists, otherwise go to dashboards root
+    if (parentFolder?.parentUid) {
+      window.location.href = getFolderURL(parentFolder.parentUid);
+    } else {
+      window.location.href = '/dashboards';
+    }
+  };
+
+  const onError = (error: unknown) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'), error],
+    });
+  };
+
+  // Use the repository-type and resource-type aware provisioned request handler
+  useProvisionedRequestHandler({
+    request,
+    workflow,
+    successMessage: t(
+      'browse-dashboards.delete-provisioned-folder-form.success-message',
+      'Folder deleted successfully'
+    ),
+    resourceType: 'folder',
+    repository,
+    handlers: {
+      onDismiss,
+      onBranchSuccess,
+      onWriteSuccess,
+      onError,
+    },
+  });
 
   return (
     <FormProvider {...methods}>
@@ -126,7 +129,7 @@ function FormContent({
             isNew={false}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            repository={repository}
           />
 
           {/* Delete / Cancel button */}
@@ -147,7 +150,7 @@ function FormContent({
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'delete',
     title: parentFolder?.title,
@@ -165,7 +168,6 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
       repository={repository}
       workflowOptions={workflowOptions}
       folder={folder}
-      isGitHub={isGitHub}
     />
   );
 }

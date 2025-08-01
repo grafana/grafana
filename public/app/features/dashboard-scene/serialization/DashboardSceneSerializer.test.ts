@@ -17,7 +17,7 @@ import {
   PanelKind,
   PanelSpec,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -43,6 +43,9 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     bootData: {
+      user: {
+        timezone: 'UTC',
+      },
       settings: {
         defaultDatasource: '-- Grafana --',
         datasources: {
@@ -565,14 +568,14 @@ describe('DashboardSceneSerializer', () => {
             variables: [
               {
                 kind: 'GroupByVariable',
+                group: 'ds',
+                datasource: {
+                  name: 'ds-uid',
+                },
                 spec: {
                   current: {
                     text: 'Host',
                     value: 'host',
-                  },
-                  datasource: {
-                    type: 'ds',
-                    uid: 'ds-uid',
                   },
                   name: 'GroupBy',
                   options: [
@@ -607,14 +610,14 @@ describe('DashboardSceneSerializer', () => {
             variables: [
               {
                 kind: 'AdhocVariable',
+                group: 'prometheus',
+                datasource: {
+                  name: 'gdev-prometheus',
+                },
                 spec: {
                   name: 'adhoc',
                   label: 'Adhoc Label',
                   description: 'Adhoc Description',
-                  datasource: {
-                    uid: 'gdev-prometheus',
-                    type: 'prometheus',
-                  },
                   hide: 'dontHide',
                   skipUrlSync: false,
                   filters: [],
@@ -864,14 +867,15 @@ describe('DashboardSceneSerializer', () => {
                 id: 1,
                 title: 'Panel 1',
                 vizConfig: {
-                  kind: 'graph',
+                  kind: 'VizConfig',
+                  group: 'graph',
+                  version: '1.0.0',
                   spec: {
                     fieldConfig: {
                       defaults: { custom: { lineWidth: 2 } },
                       overrides: [],
                     },
                     options: { legend: { show: true } },
-                    pluginVersion: '1.0.0',
                   },
                 },
               },
@@ -883,14 +887,15 @@ describe('DashboardSceneSerializer', () => {
 
         const panelSpec = saveAsModel.elements['panel-1'].spec as PanelSpec;
         expect(panelSpec.vizConfig).toMatchObject({
-          kind: 'graph',
+          kind: 'VizConfig',
+          group: 'graph',
+          version: '1.0.0',
           spec: {
             fieldConfig: {
               defaults: { custom: { lineWidth: 2 } },
               overrides: [],
             },
             options: { legend: { show: true } },
-            pluginVersion: '1.0.0',
           },
         });
       });
@@ -952,7 +957,7 @@ describe('DashboardSceneSerializer', () => {
           });
           const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
           // referencing index 1 as transformation adds built in annotation query
-          expect(saveAsModel.annotations[1].spec.query.datasource).toEqual({
+          expect(saveAsModel.annotations[1].spec.query?.datasource).toEqual({
             name: 'prometheus-uid',
           });
         });
@@ -1227,9 +1232,10 @@ describe('DashboardSceneSerializer', () => {
                 description: '',
                 links: [],
                 vizConfig: {
-                  kind: 'timeseries',
+                  kind: 'VizConfig',
+                  group: 'timeseries',
+                  version: '1.0.0',
                   spec: {
-                    pluginVersion: '1.0.0',
                     options: {},
                     fieldConfig: { defaults: {}, overrides: [] },
                   },
@@ -1278,9 +1284,10 @@ describe('DashboardSceneSerializer', () => {
                 description: '',
                 links: [],
                 vizConfig: {
-                  kind: 'timeseries',
+                  kind: 'VizConfig',
+                  group: 'timeseries',
+                  version: '1.0.0',
                   spec: {
-                    pluginVersion: '1.0.0',
                     options: {},
                     fieldConfig: { defaults: {}, overrides: [] },
                   },
