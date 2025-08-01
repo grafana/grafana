@@ -1,14 +1,21 @@
 import { Page, Response } from '@playwright/test';
 
+const USE_LIVE_DATA = process.env.USE_LIVE_DATA;
+
 export type TestScope = {
   name: string;
   title: string;
-  filters: Array<{ key: string; value: string; operator: string }>;
+  children?: TestScope[];
+  filters?: Array<{ key: string; value: string; operator: string }>;
   dashboardUid?: string;
   dashboardTitle?: string;
 };
 
-export async function openScopesSelector(page: Page, testScopes: TestScope[]) {
+export async function scopeNodeChildrenRequest(
+  page: Page,
+  scopes: TestScope[],
+  parentName?: string
+): Promise<Response> {
   await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_node_children*`, async (route) => {
     await route.fulfill({
       status: 200,
@@ -17,7 +24,7 @@ export async function openScopesSelector(page: Page, testScopes: TestScope[]) {
         apiVersion: 'scope.grafana.app/v0alpha1',
         kind: 'FindScopeNodeChildrenResults',
         metadata: {},
-        items: testScopes.map((scope) => ({
+        items: scopes.map((scope) => ({
           kind: 'ScopeNode',
           apiVersion: 'scope.grafana.app/v0alpha1',
           metadata: {
@@ -25,22 +32,54 @@ export async function openScopesSelector(page: Page, testScopes: TestScope[]) {
             namespace: 'default',
           },
           spec: {
-            parentName: 'databases',
-            nodeType: 'leaf',
             title: scope.title,
             description: scope.title,
             disableMultiSelect: false,
-            linkType: 'scope',
-            linkId: `scope-${scope.name}`,
+            ...(parentName && {
+              parentName,
+            }),
+            ...(scope.children && {
+              nodeType: 'container',
+            }),
+            ...(!scope.children && {
+              nodeType: 'leaf',
+              linkType: 'scope',
+              linkId: `scope-${scope.name}`,
+            }),
           },
         })),
       }),
     });
   });
 
-  const responsePromise = page.waitForResponse((response) => response.url().includes('/find/scope_node_children'));
+  return page.waitForResponse((response) => response.url().includes(`/find/scope_node_children`));
+}
 
-  await page.getByTestId('scopes-selector-input').click();
+export async function openScopesSelector(page: Page, scopes: TestScope[]) {
+  const click = async () => await page.getByTestId('scopes-selector-input').click();
+
+  if (USE_LIVE_DATA) {
+    await click();
+    return;
+  }
+
+  const responsePromise = scopeNodeChildrenRequest(page, scopes);
+
+  await click();
+  await responsePromise;
+}
+
+export async function expandScopesSelection(page: Page, scopes: TestScope[], parentScope: string) {
+  const click = async () => await page.getByTestId(`scopes-tree-${parentScope}-expand`).click();
+
+  if (USE_LIVE_DATA) {
+    await click();
+    return;
+  }
+
+  const responsePromise = scopeNodeChildrenRequest(page, scopes, parentScope);
+
+  await click();
   await responsePromise;
 }
 
@@ -72,14 +111,34 @@ export async function scopeSelectRequest(page: Page, selectedScope: TestScope): 
 }
 
 export async function selectScope(page: Page, selectedScope: TestScope) {
-  await page.waitForTimeout(500);
+  const click = async () => {
+    const checkbox = page.getByTestId(`scopes-tree-${selectedScope.name}-checkbox`);
+    await checkbox.scrollIntoViewIfNeeded();
+    await checkbox.click({ force: true });
+  };
+
+  if (USE_LIVE_DATA) {
+    await click();
+    return;
+  }
+
   const responsePromise = scopeSelectRequest(page, selectedScope);
 
-  await page.getByTestId(`scopes-tree-${selectedScope.name}-checkbox`).click({ force: true });
+  await click();
   await responsePromise;
 }
 
 export async function applyScopes(page: Page, scopes: TestScope[]) {
+  const click = async () => {
+    await page.getByTestId('scopes-selector-apply').scrollIntoViewIfNeeded();
+    await page.getByTestId('scopes-selector-apply').click({ force: true });
+  };
+
+  if (USE_LIVE_DATA) {
+    await click();
+    return;
+  }
+
   const url: string =
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
     scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
@@ -116,7 +175,7 @@ export async function applyScopes(page: Page, scopes: TestScope[]) {
     x.push(scopeSelectRequest(page, scope));
   }
 
-  await page.getByTestId('scopes-selector-apply').click({ force: true });
+  await click();
   await responsePromise;
   await Promise.all(x);
 }
