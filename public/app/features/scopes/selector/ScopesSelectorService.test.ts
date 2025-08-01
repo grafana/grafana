@@ -411,7 +411,8 @@ describe('ScopesSelectorService', () => {
         },
         parentNode: {
           metadata: { name: 'invalid-parent-node-2' }, // missing spec
-          spec: {} as any, // invalid spec
+          //@ts-expect-error - intentionally invalid spec for testing
+          spec: {},
         },
       };
 
