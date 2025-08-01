@@ -59,7 +59,10 @@ export function RuleListActions() {
           />
           {canExportRules && (
             <Menu.Item
-              label={t('alerting.grafana-rules.export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules', 'Export all Grafana-managed rules')}
+              label={t(
+                'alerting.grafana-rules.export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules',
+                'Export all Grafana-managed rules'
+              )}
               icon="download-alt"
               onClick={toggleShowExportDrawer}
             />
