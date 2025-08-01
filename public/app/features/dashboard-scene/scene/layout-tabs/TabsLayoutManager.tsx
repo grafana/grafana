@@ -139,7 +139,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({
-      tabs: this.getTabs().map((tab) => {
+      tabs: this.state.tabs.map((tab) => {
         const key = joinCloneKeys(ancestorKey, tab.state.key!);
 
         return tab.clone({
