@@ -8,9 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 )
 
@@ -32,14 +30,5 @@ func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMap
 		Spec:   spec,
 		Status: status,
 	}
-	meta, err := utils.MetaAccessor(p)
-	if err == nil {
-		meta.SetUpdatedTimestampMillis(v.LastSeenAt)
-		if v.Id > 0 {
-			meta.SetDeprecatedInternalID(v.Id) // nolint:staticcheck
-		}
-	}
-
-	p.UID = gapiutil.CalculateClusterWideUID(p)
 	return p
 }
