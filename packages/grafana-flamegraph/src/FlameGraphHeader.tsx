@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { useDebounce, usePrevious } from 'react-use';
 
-import { createContext } from '@grafana/assistant';
+import { ChatContextItem } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
@@ -33,7 +33,7 @@ type Props = {
 
   extraHeaderElements?: React.ReactNode;
 
-  assistantContext?: Array<ReturnType<typeof createContext>>;
+  assistantContext?: ChatContextItem[];
 };
 
 const FlameGraphHeader = ({

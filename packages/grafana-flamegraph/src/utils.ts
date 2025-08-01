@@ -1,6 +1,6 @@
-import { createContext } from '@grafana/assistant';
+import { ChatContextItem } from '@grafana/assistant';
 import { DataFrame } from '@grafana/data';
 
-export function getAssistantContextFromDataFrame(data: DataFrame): Array<ReturnType<typeof createContext>> {
+export function getAssistantContextFromDataFrame(data: DataFrame): ChatContextItem[] {
   return data.meta?.custom?.assistantContext || [];
 }

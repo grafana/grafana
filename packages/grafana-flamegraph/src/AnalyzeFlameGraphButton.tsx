@@ -1,8 +1,8 @@
-import { createContext, useAssistant } from '@grafana/assistant';
+import { ChatContextItem, useAssistant } from '@grafana/assistant';
 import { Button } from '@grafana/ui';
 
 type Props = {
-  assistantContext: Array<ReturnType<typeof createContext>>;
+  assistantContext: ChatContextItem[];
   className?: string;
 };
 
