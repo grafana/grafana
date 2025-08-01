@@ -8,8 +8,8 @@ import { TableCellDisplayMode } from '../../types';
 import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
 import { ImageCellProps } from '../types';
 
-export const ImageCell = ({ cellOptions, field, justifyContent, value, rowIdx }: ImageCellProps) => {
-  const styles = useStyles2(getStyles, justifyContent);
+export const ImageCell = ({ cellOptions, field, height, justifyContent, value, rowIdx }: ImageCellProps) => {
+  const styles = useStyles2(getStyles, height, justifyContent);
 
   const { text } = field.display!(value);
   const { alt, title } =
@@ -24,9 +24,9 @@ export const ImageCell = ({ cellOptions, field, justifyContent, value, rowIdx }:
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
+const getStyles = (_theme: GrafanaTheme2, height: number, justifyContent: Property.JustifyContent) => ({
   image: css({
-    height: '100%',
+    height,
     width: 'auto',
   }),
   imageContainer: css({
