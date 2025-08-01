@@ -1,18 +1,15 @@
-import {
-  addDays,
-  addHours,
-  differenceInCalendarDays,
-  differenceInMinutes,
-  format,
-  isBefore,
-  parseISO,
-  toDate,
-} from 'date-fns';
+import { addDays, addHours, differenceInCalendarDays, differenceInMinutes, isBefore, parseISO, toDate } from 'date-fns';
 import { Page } from 'playwright-core';
 
 import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const TIMEZONE_DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
+
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
 
 test.describe(
   'Dashboard time zone support',

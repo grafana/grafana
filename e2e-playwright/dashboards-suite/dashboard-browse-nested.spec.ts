@@ -9,7 +9,7 @@ const NUM_NESTED_DASHBOARDS = 60;
 
 test.use({
   featureToggles: {
-    tableNextGen: true,
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
   },
 });
 
@@ -107,7 +107,7 @@ test.describe.fixme(
       await expect(page.getByText('Nested folder 00')).toBeVisible();
 
       // Get the table body container for scrolling
-      const tableBody = page.getByRole('grid');
+      const tableBody = page.getByTestId(selectors.pages.BrowseDashboards.table.body).locator('> div');
 
       // Scroll the page and check visibility of next set of items
       await tableBody.evaluate((el) => el.scrollTo(0, 2100));
