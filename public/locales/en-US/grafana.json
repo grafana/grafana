@@ -12558,6 +12558,7 @@
     "description-cell-value-inspect": "Enable cell value inspection in a modal window",
     "description-column-filter": "Enables/disables field filters in table",
     "description-count-rows": "Display a single count for all data rows",
+    "description-disable-virtualized-table": "Use with caution - rendering performance is impacted. Rows render with their automatic heights.",
     "description-fields": "Select the fields that should be calculated",
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-wrap-header-text": "Enables text wrapping for column headers",
@@ -12575,6 +12576,7 @@
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
     "name-count-rows": "Count rows",
+    "name-disable-virtualized-table": "Disable virtualized table",
     "name-enable-paginations": "Enable pagination",
     "name-fields": "Fields",
     "name-hide-in-table": "Hide in table",
@@ -12593,7 +12595,6 @@
     "category-table": "Table",
     "category-table-footer": "Table footer",
     "cell-height-options": {
-      "label-auto": "Auto",
       "label-large": "Large",
       "label-medium": "Medium",
       "label-small": "Small"
