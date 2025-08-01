@@ -10,6 +10,7 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -127,6 +128,10 @@ func (g *GRPCDecryptClient) Close() error {
 }
 
 func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names []string) (map[string]contracts.DecryptResult, error) {
+	_, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
 	req := &decryptv1beta1.SecureValueDecryptRequest{
 		Namespace: namespace,
 		Names:     names,
