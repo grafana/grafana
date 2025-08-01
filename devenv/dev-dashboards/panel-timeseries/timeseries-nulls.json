@@ -29,10 +29,7 @@
     {
       "asDropdown": true,
       "icon": "external link",
-      "tags": [
-        "gdev",
-        "graph-ng"
-      ],
+      "tags": ["gdev", "graph-ng"],
       "title": "Graph Tests",
       "type": "dashboards"
     }
@@ -170,7 +167,8 @@
             "type": "grafana-testdata-datasource",
             "uid": "PD8C576611E62080A"
           },
-          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686730601000,\n          1686730610000,\n          1686730615000,\n          1686730635000,\n          1686730666000,\n          1686730679000,\n          1686730700000,\n          1686730705000\n        ],\n        [\n          97.56700088585262,\n          97.51875596242603,\n          97.88367836664669,\n          97.64813860191066,\n          97.46344237059202,\n          97.06932713353162,\n          97.11185691118344,\n          97.4315327939052\n        ],\n        [\n          96.17381933561288,\n          96.86449303671965,\n          95.5851820937877,\n          96.94658694041154,\n          96.7433590164638,\n          96.74913605945137,\n          95.61938577725707,\n          96.24186355022567\n        ],\n        [\n          99.69898997339244,\n          98.68620205532211,\n          99.5800005905314,\n          98.2998754185445,\n          98.02873998081307,\n          99.01798295660049,\n          97.95260164072228,\n          98.24811606848421\n        ],\n        [\n          \"ON\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"STANDBY\",\n          \"OFF\"\n        ]\n      ]\n    }\n  }\n]",          "refId": "A",
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686730601000,\n          1686730610000,\n          1686730615000,\n          1686730635000,\n          1686730666000,\n          1686730679000,\n          1686730700000,\n          1686730705000\n        ],\n        [\n          97.56700088585262,\n          97.51875596242603,\n          97.88367836664669,\n          97.64813860191066,\n          97.46344237059202,\n          97.06932713353162,\n          97.11185691118344,\n          97.4315327939052\n        ],\n        [\n          96.17381933561288,\n          96.86449303671965,\n          95.5851820937877,\n          96.94658694041154,\n          96.7433590164638,\n          96.74913605945137,\n          95.61938577725707,\n          96.24186355022567\n        ],\n        [\n          99.69898997339244,\n          98.68620205532211,\n          99.5800005905314,\n          98.2998754185445,\n          98.02873998081307,\n          99.01798295660049,\n          97.95260164072228,\n          98.24811606848421\n        ],\n        [\n          \"ON\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"STANDBY\",\n          \"OFF\"\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
           "scenarioId": "raw_frame"
         }
       ],
@@ -183,11 +181,7 @@
               {
                 "destinationType": "enum",
                 "enumConfig": {
-                  "text": [
-                    "OFF",
-                    "STANDBY",
-                    "ON"
-                  ]
+                  "text": ["OFF", "STANDBY", "ON"]
                 },
                 "targetField": "Status"
               }
@@ -305,11 +299,7 @@
               {
                 "destinationType": "enum",
                 "enumConfig": {
-                  "text": [
-                    "OFF",
-                    "STANDBY",
-                    "ON"
-                  ]
+                  "text": ["OFF", "STANDBY", "ON"]
                 },
                 "targetField": "Status"
               }
@@ -3428,15 +3418,7 @@
   "preload": false,
   "refresh": false,
   "schemaVersion": 41,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng",
-    "timeseries",
-    "trend",
-    "state-timeline",
-    "transform"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng", "timeseries", "trend", "state-timeline", "transform"],
   "templating": {
     "list": []
   },

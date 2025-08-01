@@ -108,12 +108,8 @@
       {
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "hide": 0,
         "includeAll": true,
@@ -149,12 +145,8 @@
       {
         "current": {
           "selected": true,
-          "text": [
-            "1"
-          ],
-          "value": [
-            "1"
-          ]
+          "text": ["1"],
+          "value": ["1"]
         },
         "hide": 0,
         "includeAll": true,

@@ -190,12 +190,7 @@
   ],
   "refresh": "",
   "schemaVersion": 39,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng",
-    "demo"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng", "demo"],
   "templating": {
     "list": []
   },

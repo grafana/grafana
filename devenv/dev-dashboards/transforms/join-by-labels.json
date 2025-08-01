@@ -65,9 +65,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -160,9 +158,7 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "frameIndex": 2,
@@ -225,9 +221,7 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -248,9 +242,7 @@
         {
           "id": "joinByLabels",
           "options": {
-            "join": [
-              "site"
-            ],
+            "join": ["site"],
             "value": "measure"
           }
         }
@@ -299,9 +291,7 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -330,10 +320,7 @@
     }
   ],
   "schemaVersion": 37,
-  "tags": [
-    "gdev",
-    "transform"
-  ],
+  "tags": ["gdev", "transform"],
   "templating": {
     "list": []
   },

@@ -1052,11 +1052,7 @@
   ],
   "refresh": "",
   "schemaVersion": 38,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },

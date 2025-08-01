@@ -30,9 +30,10 @@ enabled = true
 config_file = ./devenv/docker/blocks/auth/openldap-multiple/ldap_dev.toml
 ```
 
-## Available users and groups 
+## Available users and groups
 
 ### Srv1 (dc=srv1-grafana,dc=org)
+
 - admins
   - ldap-admin-srv1
 - editors

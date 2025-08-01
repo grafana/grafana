@@ -1086,12 +1086,7 @@
   "preload": false,
   "refresh": "",
   "schemaVersion": 41,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "state-timeline",
-    "graph-ng"
-  ],
+  "tags": ["gdev", "panel-tests", "state-timeline", "graph-ng"],
   "templating": {
     "list": []
   },

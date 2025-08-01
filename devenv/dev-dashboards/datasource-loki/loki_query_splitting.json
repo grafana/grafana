@@ -65,9 +65,7 @@
             "alias": "id_count",
             "mode": "reduceRow",
             "reduce": {
-              "include": [
-                "id"
-              ],
+              "include": ["id"],
               "reducer": "count"
             },
             "replaceFields": false
@@ -138,9 +136,7 @@
             "alias": "id_count",
             "mode": "reduceRow",
             "reduce": {
-              "include": [
-                "id"
-              ],
+              "include": ["id"],
               "reducer": "count"
             },
             "replaceFields": false
@@ -514,9 +510,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -607,9 +601,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -700,9 +692,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -816,9 +806,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -932,9 +920,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -1049,9 +1035,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
