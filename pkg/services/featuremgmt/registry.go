@@ -1655,6 +1655,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "grafanaAssistantInProfilesDrilldown",
+			Description:  "Enables integration with Grafana Assitant in Profiles Drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "postgresDSUsePGX",
 			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
 			Stage:       FeatureStageExperimental,

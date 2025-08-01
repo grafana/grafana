@@ -871,6 +871,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagGrafanaAssistantInProfilesDrilldown
+	// Enables integration with Grafana Assitant in Profiles Drilldown
+	FlagGrafanaAssistantInProfilesDrilldown = "grafanaAssistantInProfilesDrilldown"
+
 	// FlagPostgresDSUsePGX
 	// Enables using PGX instead of libpq for PostgreSQL datasource
 	FlagPostgresDSUsePGX = "postgresDSUsePGX"

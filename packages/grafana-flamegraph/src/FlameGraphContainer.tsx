@@ -78,6 +78,14 @@ export type Props = {
    * Whether or not to keep any focused item when the profile data changes.
    */
   keepFocusOnDataChange?: boolean;
+
+  /**
+   * If true, the assistant button will be shown in the header if available.
+   * This is needed mainly for Profiles Drilldown where in some cases we need to hide the button to show alternative
+   * option to use AI.
+   * @default true
+   */
+  showAnalyzeWithAssistant?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -94,6 +102,7 @@ const FlameGraphContainer = ({
   disableCollapsing,
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
+  showAnalyzeWithAssistant = true,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -294,7 +303,7 @@ const FlameGraphContainer = ({
             isDiffMode={dataContainer.isDiffFlamegraph()}
             setCollapsedMap={setCollapsedMap}
             collapsedMap={collapsedMap}
-            assistantContext={data ? getAssistantContextFromDataFrame(data) : undefined}
+            assistantContext={data && showAnalyzeWithAssistant ? getAssistantContextFromDataFrame(data) : undefined}
           />
         )}
 

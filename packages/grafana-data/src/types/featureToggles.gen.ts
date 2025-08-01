@@ -960,6 +960,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables integration with Grafana Assitant in Profiles Drilldown
+  */
+  grafanaAssistantInProfilesDrilldown?: boolean;
+  /**
   * Enables using PGX instead of libpq for PostgreSQL datasource
   */
   postgresDSUsePGX?: boolean;

@@ -3299,7 +3299,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.8.3"
   peerDependencies:
-    "@grafana/assistant": ^0.0.7
+    "@grafana/assistant": ^0.0.12
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
