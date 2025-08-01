@@ -25,12 +25,13 @@ jobs:
       contents: read
       id-token: write
     container:
-      # TODO
+      # TODO update with container image
       image: <something>
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
+          # TODO update with real vault paths
           repo_secrets: |
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
 
