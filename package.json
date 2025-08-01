@@ -167,7 +167,7 @@
     "@typescript-eslint/eslint-plugin": "8.38.0",
     "@typescript-eslint/parser": "8.38.0",
     "autoprefixer": "10.4.21",
-    "babel-loader": "9.2.1",
+    "babel-loader": "10.0.0",
     "blob-polyfill": "9.0.20240710",
     "browserslist": "^4.21.4",
     "chance": "^1.1.13",
