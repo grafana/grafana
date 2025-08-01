@@ -2,6 +2,7 @@ import { SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
+  createTheme,
   DataFrame,
   DataFrameWithValue,
   DataLink,
@@ -794,21 +795,6 @@ describe('TableNG utils', () => {
     ])('returns "$expected" for "$input"', ({ input, expected }) => {
       const result = getDefaultRowHeight(theme, input);
       expect(result).toBe(expected);
-    });
-
-    it('returns correct height for TableCellHeight.Md', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Md);
-      expect(result).toBe(42);
-    });
-
-    it('returns correct height for TableCellHeight.Lg', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Lg);
-      expect(result).toBe(TABLE.MAX_CELL_HEIGHT);
-    });
-
-    it('returns correct height for TableCellHeight.Auto', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Auto);
-      expect(result).toBe('auto');
     });
 
     it('calculates height based on theme when cellHeight is undefined', () => {
