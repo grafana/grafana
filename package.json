@@ -174,7 +174,7 @@
     "chrome-remote-interface": "0.33.3",
     "codeowners": "^5.1.1",
     "confusing-browser-globals": "^1.0.11",
-    "copy-webpack-plugin": "12.0.2",
+    "copy-webpack-plugin": "13.0.0",
     "core-js": "3.44.0",
     "crashme": "0.0.15",
     "css-loader": "7.1.2",
