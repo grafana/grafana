@@ -403,7 +403,7 @@ func TestStateMachine(t *testing.T) {
 			},
 			"decrypt": func(t *rapid.T) {
 				input := decryptGen.Draw(t, "decryptInput")
-				authCtx := testutils.CreateServiceAuthContext(t.Context(), input.decrypter, []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", input.name)})
+				authCtx := testutils.CreateServiceAuthContext(t.Context(), input.decrypter, input.namespace, []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", input.name)})
 				modelResult, modelErr := model.decrypt(input.decrypter, input.namespace, input.name)
 				result, err := sut.DecryptService.Decrypt(authCtx, input.namespace, input.name)
 				if err != nil || modelErr != nil {
@@ -440,7 +440,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sv.Status.Version, deletedSv.Status.Version)
 
-		authCtx := testutils.CreateServiceAuthContext(t.Context(), sv.Spec.Decrypters[0], []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", sv.Name)})
+		authCtx := testutils.CreateServiceAuthContext(t.Context(), sv.Spec.Decrypters[0], sv.Namespace, []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", sv.Name)})
 		result, err := sut.DecryptService.Decrypt(authCtx, sv.Namespace, sv.Name)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(result))
