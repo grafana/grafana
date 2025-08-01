@@ -42,6 +42,7 @@ type keySetHTTP struct {
 	url             string
 	log             log.Logger
 	client          *http.Client
+	bearerTokenPath string
 	cache           *remotecache.RemoteCache
 	cacheKey        string
 	cacheExpiration time.Duration
@@ -157,6 +158,7 @@ func (s *AuthService) initKeySet() error {
 		if urlParsed.Scheme != "https" && s.Cfg.Env != setting.Dev {
 			return ErrJWTSetURLMustHaveHTTPSScheme
 		}
+
 		var caCertPool *x509.CertPool
 		if s.Cfg.JWTAuth.TlsClientCa != "" {
 			s.log.Debug("reading ca from TlsClientCa path")
@@ -174,9 +176,11 @@ func (s *AuthService) initKeySet() error {
 				return fmt.Errorf("failed to decode provided PEM certs file from TlsClientCa")
 			}
 		}
+
 		s.keySet = &keySetHTTP{
-			url: urlStr,
-			log: s.log,
+			url:             urlStr,
+			log:             s.log,
+			bearerTokenPath: s.Cfg.JWTAuth.JWKSetBearerTokenFile,
 			client: &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
@@ -200,6 +204,14 @@ func (s *AuthService) initKeySet() error {
 			cacheExpiration: s.Cfg.JWTAuth.CacheTTL,
 			cache:           s.RemoteCache,
 		}
+
+		// Read Bearer token from file during init
+		// Done after keySetHTTP is created to ensure bearerTokenPath is set
+		if s.Cfg.JWTAuth.JWKSetBearerTokenFile != "" {
+			if _, err := s.keySet.(*keySetHTTP).getBearerToken(); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -207,6 +219,30 @@ func (s *AuthService) initKeySet() error {
 
 func (ks *keySetJWKS) Key(ctx context.Context, keyID string) ([]jose.JSONWebKey, error) {
 	return ks.JSONWebKeySet.Key(keyID), nil
+}
+
+func (ks *keySetHTTP) getBearerToken() (string, error) {
+	ks.log.Debug("reading token from JWKSetBearerTokenFile")
+	// nolint:gosec
+	// We can ignore the gosec G304 warning as `bearerTokenPath` originates from grafana configuration file
+	bytes, err := os.ReadFile(ks.bearerTokenPath)
+	if err != nil {
+		ks.log.Error("failed to setup JWKSetBearerTokenFile", "path", ks.bearerTokenPath, "error", err)
+		return "", fmt.Errorf("failed to read JWKSetBearerTokenFile: %w", err)
+	}
+
+	t := strings.TrimSpace(string(bytes))
+	if len(t) == 0 {
+		ks.log.Error("empty file configured for JWKSetBearerTokenFile", "path", ks.bearerTokenPath)
+		return "", fmt.Errorf("empty file configured for JWKSetBearerTokenFile")
+	}
+
+	if strings.HasPrefix(t, "Bearer ") {
+		return t, nil
+	}
+
+	// Prefix with Bearer if missing
+	return fmt.Sprintf("Bearer %s", t), nil
 }
 
 func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
@@ -228,6 +264,16 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ks.url, nil)
 	if err != nil {
 		return jwks, err
+	}
+
+	if ks.bearerTokenPath != "" {
+		token, err := ks.getBearerToken()
+		if err != nil {
+			return jwks, err
+		}
+
+		ks.log.Debug("adding Authorization header", "token_len", len(token))
+		req.Header.Set("Authorization", token)
 	}
 
 	resp, err := ks.client.Do(req)

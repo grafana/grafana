@@ -19,6 +19,7 @@ type AuthJWTSettings struct {
 	UsernameClaim           string
 	ExpectClaims            string
 	JWKSetURL               string
+	JWKSetBearerTokenFile   string
 	CacheTTL                time.Duration
 	KeyFile                 string
 	KeyID                   string
@@ -65,6 +66,7 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.UsernameClaim = valueAsString(authJWT, "username_claim", "")
 	jwtSettings.ExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
 	jwtSettings.JWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
+	jwtSettings.JWKSetBearerTokenFile = valueAsString(authJWT, "jwk_set_bearer_token_file", "")
 	jwtSettings.CacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
 	jwtSettings.KeyFile = valueAsString(authJWT, "key_file", "")
 	jwtSettings.KeyID = authJWT.Key("key_id").MustString("")
