@@ -84,6 +84,7 @@ COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
 COPY apps/shorturl apps/shorturl
+COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
