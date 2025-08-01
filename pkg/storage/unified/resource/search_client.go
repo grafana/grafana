@@ -175,7 +175,11 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 				s.logger.Debug("Background Search call to unified succeeded")
 
 				// Compare results when both are successful
-				s.compareSearchResults(legacyResponse, unifiedResponse, in.Options.Key)
+				var requestKey *resourcepb.ResourceKey
+				if in.Options != nil {
+					requestKey = in.Options.Key
+				}
+				s.compareSearchResults(legacyResponse, unifiedResponse, requestKey)
 			}
 		}()
 
@@ -196,7 +200,11 @@ func (s *searchWrapper) compareSearchResults(legacyResponse, unifiedResponse *re
 
 	matchPercentage := calculateMatchPercentage(legacyUIDs, unifiedUIDs)
 
-	resourceType := requestKey.Resource
+	// Determine resource type for labeling - handle nil safely
+	resourceType := "unknown"
+	if requestKey != nil && requestKey.Resource != "" {
+		resourceType = requestKey.Resource
+	}
 
 	s.logger.Debug("Search results comparison completed",
 		"resource_type", resourceType,
