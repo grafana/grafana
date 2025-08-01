@@ -3216,7 +3216,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/faro-core@npm:^1.13.2, @grafana/faro-core@npm:^1.19.0":
+"@grafana/faro-core@npm:^1.19.0":
   version: 1.19.0
   resolution: "@grafana/faro-core@npm:1.19.0"
   dependencies:
@@ -3237,7 +3237,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-tracing@npm:^1.13.2":
+"@grafana/faro-web-tracing@npm:^1.19.0":
   version: 1.19.0
   resolution: "@grafana/faro-web-tracing@npm:1.19.0"
   dependencies:
@@ -18221,9 +18221,9 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:8.0.0"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/faro-core": "npm:^1.13.2"
-    "@grafana/faro-web-sdk": "npm:^1.13.2"
-    "@grafana/faro-web-tracing": "npm:^1.13.2"
+    "@grafana/faro-core": "npm:^1.19.0"
+    "@grafana/faro-web-sdk": "npm:^1.19.0"
+    "@grafana/faro-web-tracing": "npm:^1.19.0"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.3.4"
     "@grafana/i18n": "workspace:*"
