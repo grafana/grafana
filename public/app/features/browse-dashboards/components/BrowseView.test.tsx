@@ -3,14 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { DashboardViewItem } from 'app/features/search/types';
-
-import { wellFormedTree } from '../fixtures/dashboardsTreeItem.fixture';
 
 import { BrowseView } from './BrowseView';
 
 const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
-  wellFormedTree();
+  getFolderFixtures();
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);

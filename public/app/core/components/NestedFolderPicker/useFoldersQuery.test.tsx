@@ -1,82 +1,26 @@
-import { act, renderHook } from '@testing-library/react';
+import { ReactNode } from 'react';
+import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { GrafanaConfig } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
-import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardViewItem } from '../../../features/search/types';
 
 import { useFoldersQuery } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
-const PAGE_SIZE = 10;
+const [_, { folderA, folderB, folderC }] = getFolderFixtures();
 
-const legacyResponse = {
-  status: 'fulfilled',
-  originalArgs: { parentUid: undefined, page: 1, limit: PAGE_SIZE, permission: 'Edit' },
-  data: [{ title: 'Legacy Folder', uid: 'legacy1', managedBy: undefined }],
+runtime.setBackendSrv(backendSrv);
+setupMockServer();
+
+const wrapper = ({ children }: { children: ReactNode }) => {
+  const ProviderWrapper = getWrapper({ renderWithRouter: true });
+  return <ProviderWrapper>{children}</ProviderWrapper>;
 };
-// Mock the legacy API client
-jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => {
-  const PAGE_SIZE = 10;
-  return {
-    PAGE_SIZE,
-    browseDashboardsAPI: {
-      endpoints: {
-        listFolders: {
-          select: jest.fn(() => () => legacyResponse),
-          initiate: jest.fn(() => ({
-            arg: { parentUid: undefined, page: 1, limit: PAGE_SIZE, permission: 'Edit' },
-            unsubscribe: jest.fn(),
-          })),
-        },
-      },
-    },
-  };
-});
-
-const appPlatfromResponse = {
-  status: 'fulfilled',
-  originalArgs: { name: 'general' },
-  data: {
-    items: [
-      {
-        metadata: { name: 'app1', annotations: {} },
-        spec: { title: 'AppPlatform Folder' },
-      },
-    ],
-  },
-};
-
-// Mock the appPlatform API client
-jest.mock('app/api/clients/folder/v1beta1', () => ({
-  folderAPIv1beta1: {
-    endpoints: {
-      getFolderChildren: {
-        select: jest.fn(() => () => appPlatfromResponse),
-        initiate: jest.fn((arg: unknown) => ({
-          arg,
-          unsubscribe: jest.fn(),
-        })),
-      },
-    },
-  },
-}));
-
-// Mock getPaginationPlaceholders to return empty array for simplicity
-jest.mock('app/features/browse-dashboards/state/utils', () => ({
-  getPaginationPlaceholders: jest.fn((): DashboardsTreeItem[] => []),
-}));
-
-// Mock useDispatch and useSelector to just pass through
-jest.mock('app/types/store', () => {
-  const mod = jest.requireActual('app/types/store');
-  return {
-    ...mod,
-    useDispatch: () => (val: unknown) => val,
-    useSelector: (selector: Function) => selector(),
-  };
-});
 
 describe('useFoldersQuery', () => {
   let configBackup: GrafanaConfig;
@@ -89,28 +33,40 @@ describe('useFoldersQuery', () => {
     runtime.config.featureToggles = configBackup.featureToggles;
   });
 
-  it('returns data using legacy api', () => {
-    runtime.config.featureToggles.foldersAppPlatformAPI = false;
-    const items = testFn();
-    expect((items[1].item as DashboardViewItem).title).toBe('Legacy Folder');
-  });
+  describe.each([
+    // foldersAppPlatformAPI enabled
+    true,
+    // foldersAppPlatformAPI disabled
+    false,
+  ])('foldersAppPlatformAPI feature toggle set to %s', (featureToggleState) => {
+    it('returns data using legacy api', async () => {
+      runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
+      const [_dashboardsContainer, ...items] = await testFn();
 
-  it('returns appPlatform hook result when foldersAppPlatformAPI is on', () => {
-    runtime.config.featureToggles.foldersAppPlatformAPI = true;
-    const items = testFn();
-    expect((items[1].item as DashboardViewItem).title).toBe('AppPlatform Folder');
+      const sortedItemTitles = items.map((item) => (item.item as DashboardViewItem).title).sort();
+      const expectedTitles = [folderA.item.title, folderB.item.title, folderC.item.title].sort();
+
+      expect(sortedItemTitles).toEqual(expectedTitles);
+    });
   });
 });
 
-function testFn() {
-  const { result } = renderHook(() => useFoldersQuery(true, {}));
+async function testFn() {
+  const { result } = renderHook(() => useFoldersQuery(true, {}), { wrapper });
 
-  expect(result.current.items).toEqual([getRootFolderItem()]);
+  expect(result.current.items[0]).toEqual(getRootFolderItem());
   expect(result.current.isLoading).toBe(false);
+
   act(() => {
     result.current.requestNextPage(undefined);
   });
 
-  expect(result.current.items.length).toBe(2);
+  expect(result.current.isLoading).toBe(true);
+
+  await waitFor(() => {
+    const withoutPaginationPlaceholders = result.current.items.filter((item) => item.item.kind !== 'ui');
+    return expect(withoutPaginationPlaceholders.length).toBeGreaterThan(1);
+  });
+
   return result.current.items;
 }
