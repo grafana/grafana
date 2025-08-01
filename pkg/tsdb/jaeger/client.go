@@ -115,7 +115,7 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 }
 
 func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResponse, error) {
-	u, err := url.JoinPath(j.url, "api/traces")
+	u, err := url.JoinPath(j.url, "/api/traces")
 	if err != nil {
 		return []TraceResponse{}, fmt.Errorf("failed to parse Jaeger URL: %w", err)
 	}
