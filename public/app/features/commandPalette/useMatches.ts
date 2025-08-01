@@ -5,7 +5,7 @@ import * as React from 'react';
 import { fuzzySearch } from '@grafana/data';
 
 // From https://github.dev/timc1/kbar/blob/main/src/useMatches.tsx
-// TODO: Go back to useMatches from kbar when https://github.com/timc1/kbar/issues/255 is fixed
+// We are using fuzzySearch here instead of kbar's implementation as it's more performant
 
 export const NO_GROUP = {
   name: 'none',
