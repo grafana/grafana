@@ -22,8 +22,7 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 	progress.SetMessage(ctx, "read folder tree from API server")
 
 	// Use the repository name as the root folder for resources with empty parent folders
-	// FIXME: we need the entire configuratino not only repo name
-	tree := resources.NewEmptyFolderWithRoot(repoName)
+	tree := resources.NewEmptyFolderTree()
 	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
 		if tree.Count() >= resources.MaxNumberOfFolders {
 			return errors.New("too many folders")
