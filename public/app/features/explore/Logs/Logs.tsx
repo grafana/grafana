@@ -768,7 +768,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      {!config.featureToggles.newLogsPanel && getRowContext && contextRow && (
+      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && getRowContext && contextRow && (
         <LogRowContextModal
           open={contextOpen}
           row={contextRow}
@@ -780,7 +780,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           timeZone={timeZone}
         />
       )}
-      {config.featureToggles.newLogsPanel && getRowContext && contextRow && (
+      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getRowContext && contextRow && (
         <LogLineContext
           open={contextOpen}
           log={contextRow}

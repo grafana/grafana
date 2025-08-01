@@ -532,7 +532,7 @@ export const LogsPanel = ({
 
   return (
     <>
-      {!config.featureToggles.newLogsPanel && contextRow && (
+      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && contextRow && (
         <LogRowContextModal
           open={contextRow !== null}
           row={contextRow}
@@ -543,7 +543,7 @@ export const LogsPanel = ({
           getLogRowContextUi={getLogRowContextUi}
         />
       )}
-      {config.featureToggles.newLogsPanel && getLogRowContext && contextRow && (
+      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getLogRowContext && contextRow && (
         <LogLineContext
           open={contextRow !== null}
           log={contextRow}
