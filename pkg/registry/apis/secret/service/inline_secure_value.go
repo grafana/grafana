@@ -35,13 +35,14 @@ func ProvideInlineSecureValueService(
 	}
 }
 
-func (s *inlineSecureValueService) CanReference(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) error {
+func (s *inlineSecureValueService) CanReference(ctx context.Context, owner common.ObjectReference, names ...string) error {
 	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.CanReference", trace.WithAttributes(
 		attribute.String("owner.namespace", owner.Namespace),
 		attribute.String("owner.apiGroup", owner.APIGroup),
 		attribute.String("owner.apiVersion", owner.APIVersion),
 		attribute.String("owner.kind", owner.Kind),
 		attribute.String("owner.name", owner.Name),
+		attribute.StringSlice("secureValueNames", names),
 	))
 	defer span.End()
 
@@ -58,31 +59,23 @@ func (s *inlineSecureValueService) CanReference(ctx context.Context, owner commo
 		return fmt.Errorf("owner reference must have a valid API group, API version, kind and name")
 	}
 
-	if len(values) == 0 {
+	if len(names) == 0 {
 		return fmt.Errorf("no inline secure values provided")
 	}
 
-	for field, value := range values {
-		if value.Name == "" {
-			return fmt.Errorf("field %s has an empty secure value name", field)
+	for _, name := range names {
+		if name == "" {
+			return fmt.Errorf("empty secure value name")
 		}
 
-		if !value.Create.IsZero() {
-			return fmt.Errorf("field %s has 'create' set, which is not allowed", field)
-		}
-
-		if value.Remove {
-			return fmt.Errorf("field %s has 'remove' set, which is not allowed", field)
-		}
-
-		owned, err := s.isSecureValueOwnedByResource(ctx, owner, value.Name)
+		owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
 		if err != nil {
-			return fmt.Errorf("field %s had an error checking secure value ownership: %w", field, err)
+			return err
 		}
 
 		if !owned {
-			if err := s.canIdentityReadSecureValue(ctx, xkube.Namespace(owner.Namespace), value.Name); err != nil {
-				return fmt.Errorf("field %s: identity cannot read secure value %s: %w", field, value.Name, err)
+			if err := s.canIdentityReadSecureValue(ctx, xkube.Namespace(owner.Namespace), name); err != nil {
+				return err
 			}
 		}
 	}

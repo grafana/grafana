@@ -48,18 +48,13 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSv2)
 
-		values := common.InlineSecureValues{
-			"fieldA": {Name: sv1},
-			"fieldB": {Name: sv2},
-		}
-
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{
 			"securevalues:read": {"securevalues:uid:" + sv2},
 		})
 
 		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, tu.AccessClient)
 
-		err = svc.CanReference(ctx, owner, values)
+		err = svc.CanReference(ctx, owner, sv1, sv2)
 		require.NoError(t, err)
 	})
 
@@ -67,7 +62,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		t.Parallel()
 
 		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
-		err := svc.CanReference(t.Context(), common.ObjectReference{}, common.InlineSecureValues{})
+		err := svc.CanReference(t.Context(), common.ObjectReference{})
 		require.Error(t, err)
 	})
 
@@ -79,7 +74,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		reqNs := "org-2345"
 		ctx := testutils.CreateUserAuthContext(t.Context(), reqNs, map[string][]string{})
 
-		err := svc.CanReference(ctx, owner, common.InlineSecureValues{})
+		err := svc.CanReference(ctx, owner)
 		require.Error(t, err)
 	})
 
@@ -90,7 +85,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
-		err := svc.CanReference(ctx, common.ObjectReference{}, common.InlineSecureValues{})
+		err := svc.CanReference(ctx, common.ObjectReference{})
 		require.Error(t, err)
 	})
 
@@ -105,23 +100,23 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
-		err := svc.CanReference(ctx, owner, common.InlineSecureValues{})
+		err := svc.CanReference(ctx, owner)
 		require.Error(t, err)
 
 		owner.APIGroup = "prometheus.datasource.grafana.app"
-		require.Error(t, svc.CanReference(ctx, owner, common.InlineSecureValues{}))
+		require.Error(t, svc.CanReference(ctx, owner))
 		owner.APIGroup = ""
 
 		owner.APIVersion = "v1alpha1"
-		require.Error(t, svc.CanReference(ctx, owner, common.InlineSecureValues{}))
+		require.Error(t, svc.CanReference(ctx, owner))
 		owner.APIVersion = ""
 
 		owner.Kind = "DataSourceConfig"
-		require.Error(t, svc.CanReference(ctx, owner, common.InlineSecureValues{}))
+		require.Error(t, svc.CanReference(ctx, owner))
 		owner.Kind = ""
 
 		owner.Name = "test-datasource"
-		require.Error(t, svc.CanReference(ctx, owner, common.InlineSecureValues{}))
+		require.Error(t, svc.CanReference(ctx, owner))
 		owner.Name = ""
 	})
 
@@ -132,58 +127,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
-		err := svc.CanReference(ctx, owner, common.InlineSecureValues{})
-		require.Error(t, err)
-	})
-
-	t.Run("when one of the secure values does not have a `name`, it returns an error", func(t *testing.T) {
-		t.Parallel()
-
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
-
-		values := common.InlineSecureValues{
-			"fieldA": {Name: ""},
-		}
-
-		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
-
-		err := svc.CanReference(ctx, owner, values)
-		require.Error(t, err)
-	})
-
-	t.Run("when one of the secure values has `create` field set, it returns an error", func(t *testing.T) {
-		t.Parallel()
-
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
-
-		values := common.InlineSecureValues{
-			"fieldA": {
-				Name:   "test-sv",
-				Create: common.NewSecretValue("test"),
-			},
-		}
-
-		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
-
-		err := svc.CanReference(ctx, owner, values)
-		require.Error(t, err)
-	})
-
-	t.Run("when one of the secure values has `remove` field set, it returns an error", func(t *testing.T) {
-		t.Parallel()
-
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
-
-		values := common.InlineSecureValues{
-			"fieldA": {
-				Name:   "test-sv",
-				Remove: true,
-			},
-		}
-
-		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
-
-		err := svc.CanReference(ctx, owner, values)
+		err := svc.CanReference(ctx, owner)
 		require.Error(t, err)
 	})
 
@@ -193,13 +137,9 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		tu := testutils.Setup(t)
 		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
-		values := common.InlineSecureValues{
-			"fieldA": {Name: "non-existent-sv"},
-		}
-
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
-		err := svc.CanReference(ctx, owner, values)
+		err := svc.CanReference(ctx, owner, "non-existent-sv")
 		require.Error(t, err)
 	})
 
@@ -225,15 +165,11 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSv1)
 
-		values := common.InlineSecureValues{
-			"fieldA": {Name: sv1},
-		}
-
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
 		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
-		err = svc.CanReference(ctx, owner, values)
+		err = svc.CanReference(ctx, owner, sv1)
 		require.Error(t, err)
 	})
 
@@ -249,15 +185,11 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		values := common.InlineSecureValues{
-			"fieldA": {Name: sv1},
-		}
-
 		ctx := identity.WithServiceIdentityContext(t.Context(), 1234)
 
 		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
-		err = svc.CanReference(ctx, owner, values)
+		err = svc.CanReference(ctx, owner, sv1)
 		require.Error(t, err)
 	})
 
@@ -273,22 +205,18 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		values := common.InlineSecureValues{
-			"fieldA": {Name: sv1},
-		}
-
 		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, tu.AccessClient)
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{
 			"securevalues:read": {"securevalues:uid:another-sv"}, // can read, but another resource!
 		})
 
-		err = svc.CanReference(ctx, owner, values)
+		err = svc.CanReference(ctx, owner, sv1)
 		require.Error(t, err)
 
 		ctx = testutils.CreateUserAuthContext(t.Context(), defaultNs, nil)
 
-		err = svc.CanReference(ctx, owner, values)
+		err = svc.CanReference(ctx, owner, sv1)
 		require.Error(t, err)
 	})
 }
