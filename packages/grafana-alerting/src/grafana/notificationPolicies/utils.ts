@@ -12,7 +12,7 @@ export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 export interface RouteMatchResult<T extends Route> {
   route: T;
   labels: Label[];
-  matchDetails: LabelMatchDetails;
+  matchDetails: LabelMatchDetails[];
 }
 
 // Normalization should have happened earlier in the code
@@ -65,7 +65,7 @@ export function computeInheritedTree<T extends Route>(parent: T): T {
 }
 
 // inherited properties are config properties that exist on the parent route (or its inherited properties) but not on the child route
-function getInheritedProperties(
+export function getInheritedProperties(
   parentRoute: Route,
   childRoute: Route,
   propertiesParentInherited?: InheritableProperties
@@ -105,4 +105,13 @@ function getInheritedProperties(
   );
 
   return inherited;
+}
+
+export type RouteWithID = Route & { id: string };
+export function addUniqueIdentifier(route: Route): RouteWithID {
+  return {
+    id: uniqueId('route-'),
+    ...route,
+    routes: route.routes?.map(addUniqueIdentifier) ?? [],
+  };
 }
