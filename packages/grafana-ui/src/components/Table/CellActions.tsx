@@ -1,6 +1,3 @@
-import { useCallback } from 'react';
-import * as React from 'react';
-
 import { t } from '@grafana/i18n';
 
 import { IconSize } from '../../types/icon';
@@ -9,7 +6,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip/types';
 
 import { TableCellInspectorMode } from './TableCellInspector';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
+import { TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
@@ -22,37 +19,13 @@ interface CommonButtonProps {
   tooltipPlacement: TooltipPlacement;
 }
 
-export function CellActions({
-  field,
-  cell,
-  previewMode,
-  showFilters,
-  onCellFilterAdded,
-  setInspectCell,
-}: CellActionProps) {
+export function CellActions({ field, cell, previewMode, setInspectCell }: CellActionProps) {
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const commonButtonProps: CommonButtonProps = {
     size: 'sm',
     tooltipPlacement: 'top',
   };
-
-  const onFilterFor = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (onCellFilterAdded) {
-        onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value });
-      }
-    },
-    [cell, field, onCellFilterAdded]
-  );
-  const onFilterOut = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (onCellFilterAdded) {
-        onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value });
-      }
-    },
-    [cell, field, onCellFilterAdded]
-  );
 
   return (
     <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
@@ -66,22 +39,6 @@ export function CellActions({
                 setInspectCell({ value: cell.value, mode: previewMode });
               }
             }}
-            {...commonButtonProps}
-          />
-        )}
-        {showFilters && (
-          <IconButton
-            name={'search-plus'}
-            onClick={onFilterFor}
-            tooltip={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
-            {...commonButtonProps}
-          />
-        )}
-        {showFilters && (
-          <IconButton
-            name={'search-minus'}
-            onClick={onFilterOut}
-            tooltip={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
             {...commonButtonProps}
           />
         )}
