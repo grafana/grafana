@@ -30,9 +30,10 @@ jobs:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          # TODO update with real vault paths
           repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+            AZURE_SP_APP_ID=cpp-azure-resourcemanager-credentials:application_id
+            AZURE_SP_PASSWORD=cpp-azure-resourcemanager-credentials:application_secret
+            AZURE_TENANT=cpp-azure-resourcemanager-credentials:tenant_id
 
       - uses: actions/checkout@v4
         with:
