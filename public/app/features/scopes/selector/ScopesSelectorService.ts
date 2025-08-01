@@ -275,6 +275,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       // If parentNodeId is provided, use it directly as the parent node
       // If not provided, try to get the parent from the scope node
+      // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
       const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
       const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
