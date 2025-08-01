@@ -117,12 +117,12 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResponse, error) {
 	u, err := url.JoinPath(j.url, "/api/traces")
 	if err != nil {
-		return []TraceResponse{}, fmt.Errorf("failed to join url path: %w", err)
+		return []TraceResponse{}, backend.DownstreamError(fmt.Errorf("failed to join url path: %w", err))
 	}
 
 	jaegerURL, err := url.Parse(u)
 	if err != nil {
-		return []TraceResponse{}, fmt.Errorf("failed to parse Jaeger URL: %w", err)
+		return []TraceResponse{}, backend.DownstreamError(fmt.Errorf("failed to parse Jaeger URL: %w", err))
 	}
 
 	var queryTags string
@@ -139,7 +139,7 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResp
 
 		marshaledTags, err := json.Marshal(tagMap)
 		if err != nil {
-			return []TraceResponse{}, fmt.Errorf("failed to convert tags to JSON: %w", err)
+			return []TraceResponse{}, backend.DownstreamError(fmt.Errorf("failed to convert tags to JSON: %w", err))
 		}
 
 		queryTags = string(marshaledTags)
