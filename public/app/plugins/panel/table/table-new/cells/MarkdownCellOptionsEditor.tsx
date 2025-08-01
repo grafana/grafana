@@ -15,8 +15,6 @@ export const MarkdownCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
-  console.log(cellOptions);
-
   return (
     <Field
       label={
