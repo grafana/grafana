@@ -101,7 +101,7 @@
     "@react-types/menu": "3.10.3",
     "@react-types/overlays": "3.9.0",
     "@react-types/shared": "3.31.0",
-    "@rsdoctor/webpack-plugin": "^0.4.6",
+    "@rsdoctor/webpack-plugin": "^1.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@stylistic/eslint-plugin-ts": "^4.0.0",
