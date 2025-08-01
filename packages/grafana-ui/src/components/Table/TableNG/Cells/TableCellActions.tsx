@@ -58,7 +58,7 @@ export function TableCellActions(props: TableCellActionsProps) {
       {showFilters && (
         <>
           <IconButton
-            name={'filter-for-value'}
+            name={'filter-plus'}
             aria-label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
             onClick={() => {
               onCellFilterAdded?.({
@@ -69,7 +69,7 @@ export function TableCellActions(props: TableCellActionsProps) {
             }}
           />
           <IconButton
-            name={'filter-out-value'}
+            name={'filter-minus'}
             aria-label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
             onClick={() => {
               onCellFilterAdded?.({
