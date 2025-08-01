@@ -10,6 +10,7 @@ import {
   expandScopesSelection,
   openScopesSelector,
   scopeSelectRequest,
+  searchScopes,
   selectScope,
   TestScope,
 } from './scopeUtils';
@@ -63,23 +64,102 @@ test.describe(
       }
     });
 
-    test('scopes with parent layers', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+    test('Choose a scope', async ({ page, gotoDashboardPage }) => {
+      await test.step('View and select any scope', async () => {
+        await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
-      await openScopesSelector(page, testScopes);
+        await openScopesSelector(page, testScopes);
 
-      const databaseScopes = testScopes[0].children!;
-      await expandScopesSelection(page, databaseScopes, 'sn-databases');
+        const firstLevelScopes = testScopes[0].children!;
+        await expandScopesSelection(page, firstLevelScopes, testScopes[0].name);
 
-      const mimirScopes = databaseScopes[0].children!;
-      await expandScopesSelection(page, mimirScopes, 'sn-databases-m');
+        const secondLevelScopes = firstLevelScopes[0].children!;
+        await expandScopesSelection(page, secondLevelScopes, firstLevelScopes[0].name);
 
-      await selectScope(page, mimirScopes[0]);
-      await selectScope(page, mimirScopes[1]);
-      await applyScopes(page, mimirScopes);
+        const selectedScopes = [secondLevelScopes[0]];
+        for (const scope of selectedScopes) {
+          await selectScope(page, scope);
+        }
+        await applyScopes(page, selectedScopes);
 
-      await page.waitForTimeout(1000);
-      expect(1).toBe(1);
+        await expect.soft(page.getByTestId('scopes-selector-input')).toHaveValue(secondLevelScopes[0].title!);
+        // Verify that scope filter is injected
+        const filterEditButton = page.locator(
+          `[aria-label="Edit filter with key ${secondLevelScopes[0].filters![0].key}"]`
+        );
+        // Ensure exactly one exists and it's visible
+        await expect.soft(filterEditButton).toHaveCount(1);
+        await expect.soft(filterEditButton).toBeVisible();
+      });
+
+      await test.step('Select a scope across multiple types of production entities', async () => {
+        await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+
+        await openScopesSelector(page, testScopes);
+
+        const firstLevelScopes = testScopes[0].children!;
+        await expandScopesSelection(page, firstLevelScopes, testScopes[0].name);
+
+        const secondLevelScopes = firstLevelScopes[0].children!;
+        await expandScopesSelection(page, secondLevelScopes, firstLevelScopes[0].name);
+
+        const selectedScopes = [secondLevelScopes[0], secondLevelScopes[1]];
+        for (const scope of selectedScopes) {
+          await selectScope(page, scope);
+        }
+        await applyScopes(page, selectedScopes);
+
+        await expect
+          .soft(page.getByTestId('scopes-selector-input'))
+          .toHaveValue(`${secondLevelScopes[0].title!}, ${secondLevelScopes[1].title!}`);
+        // Verify that scope filter is injected
+        const filterEditButton = page.locator(
+          `[aria-label="Edit filter with key ${secondLevelScopes[0].filters![0].key}"]`
+        );
+        // Ensure exactly one exists and it's visible
+        await expect.soft(filterEditButton).toHaveCount(1);
+        await expect.soft(filterEditButton).toBeVisible();
+      });
+
+      await test.step('View and select a recently viewed scope', async () => {
+        // this step depends on the previous ones because they set recent scopes
+        await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+
+        await openScopesSelector(page, testScopes);
+
+        await page.getByTestId('scopes-selector-recent-scopes-section').click();
+
+        const scopes = testScopes[0].children![0].children!;
+
+        await page.locator(`button:has(span:text("${scopes[0].title!}, ${scopes[1].title!}"))`).click();
+
+        await expect
+          .soft(page.getByTestId('scopes-selector-input'))
+          .toHaveValue(`${scopes[0].title!}, ${scopes[1].title!}`);
+      });
+
+      await test.step('View pre-completed production entity values as I type', async () => {
+        await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+
+        await openScopesSelector(page, testScopes);
+
+        const firstLevelScopes = testScopes[0].children!;
+        await expandScopesSelection(page, firstLevelScopes, testScopes[0].name);
+
+        const secondLevelScopes = firstLevelScopes[0].children!;
+        await expandScopesSelection(page, secondLevelScopes, firstLevelScopes[0].name);
+
+        await searchScopes(page, [secondLevelScopes[0]], secondLevelScopes[0].title);
+
+        // should be only one checkbox after search
+        await expect.soft(page.locator('input[type="checkbox"][data-testid^="scopes-tree"]')).toHaveCount(1);
+
+        await selectScope(page, secondLevelScopes[0]);
+
+        await applyScopes(page, [secondLevelScopes[0]]);
+
+        await expect.soft(page.getByTestId('scopes-selector-input')).toHaveValue(secondLevelScopes[0].title!);
+      });
     });
 
     test('scopes mock data regex', async ({ gotoDashboardPage, selectors, page }) => {
@@ -87,16 +167,16 @@ test.describe(
 
       const testScopes: TestScope[] = [
         {
-          name: 'outermeet-api',
-          title: 'outermeet-api',
-          filters: [{ key: 'borg_user', operator: 'regex-match', value: 'outermeet-api|test|mest' }],
+          name: 'scope-01',
+          title: 'scope-01',
+          filters: [{ key: 'user', operator: 'regex-match', value: 'test1|test2|test3' }],
           dashboardTitle: 'Scopes Dashboard 2',
           dashboardUid: SECOND_DASHBOARD,
         },
         {
-          name: 'meet-devices-ui',
-          title: 'meet-devices-ui',
-          filters: [{ key: 'borg_user', operator: 'regex-match', value: 'meet-devices-ui|test|mest' }],
+          name: 'scope-02',
+          title: 'scope-02',
+          filters: [{ key: 'user', operator: 'regex-match', value: 'test4|test5|test6' }],
         },
       ];
 
@@ -108,7 +188,6 @@ test.describe(
 
       await page.waitForTimeout(1000);
       expect(1).toBe(1);
-      // expect(page.locator('[aria-label="Edit filter with key borg_user"]')).toBeVisible();
     });
 
     test('scopes mock data', async ({ gotoDashboardPage, selectors, page }) => {
@@ -167,24 +246,5 @@ test.describe(
       await page.waitForTimeout(1000);
       expect(page.locator('[aria-label="Edit filter with key namespace"]')).toBeVisible();
     });
-
-    // test('scopes live data', async ({ gotoDashboardPage, selectors, page }) => {
-    //   const dashboardPage = await gotoDashboardPage({
-    //     uid: FIRST_DASHBOARD,
-    //   });
-
-    //   await page.getByTestId('scopes-selector-input').click();
-
-    //   await page.getByTestId(`scopes-tree-sn-databases-expand`).click();
-
-    //   await page.getByTestId(`scopes-tree-sn-databases-l-expand`).click();
-
-    //   await page.getByTestId(`scopes-tree-sn-databases-l-loki-dev-005-checkbox`).click({ force: true });
-    //   await page.getByTestId(`scopes-tree-sn-databases-l-loki-dev-006-checkbox`).click({ force: true });
-    //   await page.getByTestId('scopes-selector-apply').click({ force: true });
-
-    //   await page.waitForTimeout(2000);
-    //   expect(page.locator('[aria-label="Edit filter with key namespace"]')).toBeVisible();
-    // });
   }
 );

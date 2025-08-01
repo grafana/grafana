@@ -179,3 +179,17 @@ export async function applyScopes(page: Page, scopes: TestScope[]) {
   await responsePromise;
   await Promise.all(x);
 }
+
+export async function searchScopes(page: Page, resultScopes: TestScope[], value: string) {
+  const click = async () => await page.getByTestId('scopes-tree-search').fill(value);
+
+  if (USE_LIVE_DATA) {
+    await click();
+    return;
+  }
+
+  const responsePromise = scopeNodeChildrenRequest(page, resultScopes);
+
+  await click();
+  await responsePromise;
+}
