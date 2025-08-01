@@ -255,6 +255,36 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
+       it('should append -metrics to the request id', async () => {
+        const queries: CloudWatchMetricsQuery[] = [
+          {
+            id: '',
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
+            queryMode: 'Metrics',
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'AWS/EC2',
+            metricName: 'CPUUtilization',
+            dimensions: {
+              InstanceId: 'i-12345678',
+            },
+            statistic: 'Average',
+            period: '[[period]]',
+          },
+        ];
+
+        const { runner, queryMock, request } = setupMockedMetricsQueryRunner({
+          // DataSourceWithBackend runs toDataQueryResponse({response from CW backend})
+          response: toDataQueryResponse(resultsFromBEQuery),
+          variables: [periodIntervalVariable],
+        });
+
+        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
+          expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-metrics');
+        });
+      });
+
       it('should return series list', async () => {
         const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
           // DataSourceWithBackend runs toDataQueryResponse({response from CW backend})
