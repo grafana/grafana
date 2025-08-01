@@ -198,6 +198,7 @@ To display timestamps that are in seconds since epoch, multiply your timestamp v
 1. Click **Add transformation**.
 1. Select the **Add field from calculation** transformation.
 1. Set the following options:
+
    - **Mode** - **Binary operation**
    - **Operation**
      - Select your timestamp field

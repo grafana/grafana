@@ -86,6 +86,8 @@ You can alternatively use other sorting criteria, such as **Alphabetical**, to r
 In the above example, a Lucene query filters documents based on the `hostname` property using a variable named `$hostname`.
 The example also uses a variable in the _Terms_ group by field input box, which you can use to quickly change how data is grouped.
 
+To view an example dashboard on Grafana Play, see the [Elasticsearch Templated Dashboard](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1).
+
 ## Create a query
 
 Write the query using a custom JSON string, with the field mapped as a [keyword](https://www.elastic.co/guide/en/elasticsearch/reference/current/keyword.html#keyword) in the Elasticsearch index mapping.

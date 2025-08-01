@@ -46,9 +46,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-a-query-variable
   variable-best-practices:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#variable-best-practices
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#variable-best-practices
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#variable-best-practices
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/#variable-best-practices
 ---
 
 # InfluxDB template variables

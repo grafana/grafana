@@ -32,6 +32,7 @@ For general information on Grafana expressions, refer to [Write expression queri
 ## Before you begin
 
 - Enable SQL expressions under the feature toggle `sqlExpressions`.
+
   - If you self-host Grafana, you can find feature toggles in the configuration file `grafana.ini`.
 
 ```
@@ -157,10 +158,12 @@ Grafana supports three types of data source response formats:
 
 1. **Single Table-like Frame**:  
    This refers to data returned in a standard tabular structure, where all values are organized into rows and columns, similar to what you'd get from a SQL query.
+
    - **Example**: Any query against a SQL data source (e.g., PostgreSQL, MySQL) with the format set to Table.
 
 2. **Dataplane: Time Series Format**:  
    This format represents time series data with timestamps and associated values. It is typically returned from monitoring data sources.
+
    - **Example**: Prometheus or Loki Range Queries (queries that return a set of values over time).
 
 3. **Dataplane: Numeric Long Format**:  

@@ -184,14 +184,6 @@ The **Share view** option allows you to link the movement and zoom actions of mu
 You might need to reload the dashboard for this feature to work.
 {{< /admonition >}}
 
-#### No map repeating
-
-The **No map repeating** option prevents the base map tiles from repeating horizontally when you pan across the world. This constrains the view to a single instance of the world map and avoids visual confusion when displaying global datasets.
-
-{{< admonition type="note" >}}
-Enabling this option requires the map to reinitialize.
-{{< /admonition >}}
-
 ### Map layers options
 
 Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.

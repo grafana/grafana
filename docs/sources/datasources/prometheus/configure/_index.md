@@ -148,6 +148,7 @@ Use the IP address of the Prometheus container, or the hostname if you are using
 There are three authentication options for the Prometheus data source.
 
 - **Basic authentication** - The most common authentication method.
+
   - **User** - The username you use to connect to the data source.
   - **Password** - The password you use to connect to the data source.
 

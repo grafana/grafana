@@ -31,6 +31,7 @@ You can use an encryption key from Hashicorp Vault to encrypt secrets in the Gra
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.hashicorpvault.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
    <br><br>b. Fill in the section with the following values:
    <br>
+
    - `token`: a periodic service token used to authenticate within Hashicorp Vault.
    - `url`: URL of the Hashicorp Vault server.
    - `transit_engine_path`: mount point of the transit engine.

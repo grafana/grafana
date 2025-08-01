@@ -57,13 +57,15 @@ For detailed configuration steps specific to the identity provider, see:
 SCIM uses a specific process to establish and maintain user identity between the identity provider and Grafana:
 
 1. **Initial user lookup:**
+
    - The administrator configures SCIM at the Identity Provider, defining the **Unique identifier field**
    - The identity provider looks up each user in Grafana using this unique identifier field as a filter
    - The identity provider expects a single result from Grafana for each user
 
 2. **Identity linking based on lookup results:**
+
    - **If there's a single matching result:** The identity provider retrieves the user's unique ID at Grafana, saves it, confirms it can fetch the user's information, and updates the user's information in Grafana
-   - **If there are no matching results:** The identity provider attempts to create the user in Grafana. If successful, it retrieves and saves the user's unique ID for future operations. If a user with the same email address already exists in Grafana, the user is updated and will be managed by SCIM from that point forward.
+   - **If there are no matching results:** The identity provider attempts to create the user in Grafana. If successful, it retrieves and saves the user's unique ID for future operations. If there's a conflict with an existing user, the identity provider flags the error and Grafana logs the error message
    - The identity provider learns the relationship between the found Grafana user and the Grafana internal ID
    - The identity provider updates Grafana with the External ID
    - Grafana updates the authentication validations to expect this External ID
@@ -79,6 +81,10 @@ This process ensures secure and consistent user identification across both syste
 
 ### Existing Grafana users
 
+{{< admonition type="note" >}}
+Existing users must be assigned to the Grafana app in the identity provider to maintain access once SCIM is enabled.
+{{< /admonition >}}
+
 For users who already exist in the Grafana instance:
 
 - SCIM establishes the relationship through the External ID matching process
@@ -91,10 +97,12 @@ For users who already exist in the Grafana instance:
 To prevent conflicts and maintain consistent user management, disable or restrict other provisioning methods when implementing SCIM. This ensures that all new users are created through SCIM and prevents duplicate or conflicting user records.
 
 - SAML Just-in-Time (JIT) provisioning:
+
   - Disable `allow_sign_up` in SAML settings to prevent automatic user creation
   - Existing JIT-provisioned users will continue to work but should be migrated to SCIM
 
 - Terraform or API provisioning:
+
   - Stop creating new users through these methods
   - Existing users will continue to work but should be migrated to SCIM
   - Consider removing or archiving Terraform user creation resources
@@ -133,26 +141,31 @@ The migration process uses the same [user identification mechanism](#how-scim-id
 ### Migration steps
 
 1. **Prepare the identity provider:**
+
    - Ensure all existing Grafana users have corresponding accounts in your IDP
    - Verify that the unique identifier field (e.g., email, username, or object ID) matches between systems
    - Configure SCIM application in your IDP but don't assign users yet
 
 2. **Configure SCIM in Grafana:**
+
    - Set up SCIM endpoint and authentication as described in [Configure SCIM in Grafana](../../configure-scim-provisioning#configure-scim-in-grafana)
    - Enable `user_sync_enabled = true`
    - Configure the unique identifier field to match your IDP setup
 
 {{< admonition type="note" >}}
-To restrict login access to only SCIM-provisioned users, enable the `[auth.scim][reject_non_provisioned_users]` option. Cloud Portal users can always sign in regardless of this setting.
+When `user_sync_enabled = true`, non-provisioned users will be disallowed from logging in, except for `admin` and Grafana.com login.
+
+If you want to allow non-provisioned users to log in, enable the `[auth.scim][allow_non_provisioned_users]` option.
 
 ```ini
 [auth.scim]
-reject_non_provisioned_users = true
+allow_non_provisioned_users = true
 ```
 
 {{< /admonition >}}
 
 3. **Test the matching mechanism:**
+
    - Use the SCIM API to verify that existing users can be found using the unique identifier:
 
    ```bash
@@ -163,6 +176,7 @@ reject_non_provisioned_users = true
    - This should return exactly one user record for each existing user
 
 4. **Assign users in the IDP:**
+
    - Begin assigning existing users to the Grafana application in your IDP
    - The SCIM identification process will automatically link existing Grafana users with their IDP identities
    - Monitor the process for any conflicts or errors
@@ -275,6 +289,19 @@ Team membership maintenance:
 ## Troubleshooting
 
 ### User provisioning issues
+
+#### Error: "User already exists in Grafana"
+
+**Cause:** The unique identifier field is not working as expected, causing conflicts during user creation.
+
+**Solution:** Test the unique identifier field to ensure it returns a single, unique user:
+
+```bash
+curl --location 'https://{$GRAFANA_URL}/apis/scim.grafana.app/v0alpha1/namespaces/{$STACK_ID}/Users?filter=userName eq "username@email.com"' \
+--header 'Authorization: Bearer glsa_xxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+The response should return exactly one user. If not, configure a different unique identifier field in your identity provider, or remove the duplicate users from Grafana.
 
 #### Error: "invalid namespace"
 

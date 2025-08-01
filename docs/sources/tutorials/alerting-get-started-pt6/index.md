@@ -39,6 +39,7 @@ In this tutorial you will learn how to:
 ## Before you begin
 
 - **Interactive learning environment**
+
   - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt6/). It’s a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
@@ -149,10 +150,12 @@ To keep track of these metrics you can set up a visualization for CPU usage and 
 The time-series visualization supports alert rules to provide more context in the form of annotations and alert rule state. Follow these steps to create a visualization to monitor the application’s metrics.
 
 1. Log in to Grafana:
+
    - Navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
    - Username and password: `admin`
 
 1. Create a time series panel:
+
    - Navigate to **Dashboards**.
    - Click **+ Create dashboard**.
    - Click **+ Add visualization**.
@@ -160,6 +163,7 @@ The time-series visualization supports alert rules to provide more context in th
    - Enter a title for your panel, e.g., **CPU and Memory Usage**.
 
 1. Add queries for metrics:
+
    - In the query area, copy and paste the following PromQL query:
 
      ** switch to **Code** mode if not already selected **
@@ -173,6 +177,7 @@ The time-series visualization supports alert rules to provide more context in th
    This query should display the simulated CPU usage data for the **prod** environment.
 
 1. Add memory usage query:
+
    - Click **+ Add query**.
    - In the query area, paste the following PromQL query:
 
@@ -214,6 +219,7 @@ Make it short and descriptive, as this will appear in your alert notification. F
    ```
 
 1. **Alert condition**
+
    - Enter 75 as the value for **WHEN QUERY IS ABOVE** to set the threshold for the alert.
    - Click **Preview alert rule condition** to run the queries.
 

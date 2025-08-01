@@ -304,6 +304,7 @@ To edit or delete filters, follow these steps:
 
 1. On the dashboard, click anywhere on the filter you want to change.
 1. Do one of the following:
+
    - To edit the operator or value of a filter, click anywhere on the filter and update it.
 
      ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)

@@ -112,11 +112,6 @@ RUN update-ca-certificates --fresh
 
 # Reassume the nonroot user for the service execution.
 USER nonroot
-
-# Some CA certificates also need to explicitly be included in the user's network security services database.
-# certutil is shipped in v4.0.8 and onwards of the image.
-RUN mkdir -p /home/nonroot/.pki/nssdb
-RUN certutil -d sql:/home/nonroot/.pki/nssdb -A -n internal-root-ca -t C -i /usr/local/share/ca-certificates/rootCA.crt
 ```
 
 {{< admonition type="note" >}}

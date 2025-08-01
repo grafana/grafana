@@ -48,6 +48,7 @@ You can start a playlist in four different view modes. View modes determine how 
 1. Find the desired playlist and click **Start playlist**.
 1. In the dialog box that opens, select one of the [four playlist modes](#playlist-modes) available.
 1. Disable any dashboard controls that you don't want displayed while the list plays; these controls are enabled and visible by default. Select from:
+
    - **Time and refresh**
    - **Variables**
    - **Dashboard links**
@@ -99,6 +100,7 @@ You can edit a playlist including adding, removing, and rearranging the order of
 1. Click **Dashboards** in the main menu.
 1. Click **Playlists**.
 1. Find the playlist you want to update and click **Edit playlist**. Do one or more of the following:
+
    - Edit - Update the name and time interval.
    - Add dashboards - Search for dashboards by title or tag to add them to the playlist.
    - Rearrange dashboards - Click and drag the dashboards into your desired order.

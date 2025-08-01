@@ -101,6 +101,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 {{< /shared >}}
 
 1. In the dialog box that opens, do one of the following:
+
    - Select one of your existing data sources.
    - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
    - Click **Configure a new data source** to set up a new one (Admins only).
@@ -126,6 +127,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
+
    - [Configure value mappings](ref:configure-value-mappings)
    - [Visualization-specific options](ref:visualization-specific-options)
    - [Override field values](ref:override-field-values)

@@ -109,6 +109,7 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    ```
 
    Where:
+
    - `helm install`: Installs the chart by deploying it on the Kubernetes cluster
    - `my-grafana`: The logical chart name that you provided
    - `grafana/grafana`: The repository and package name to install
@@ -146,6 +147,7 @@ This section describes the steps you must complete to access Grafana via web bro
    ```
 
    This command will print out the chart notes. You will the output `NOTES` that provide the complete instructions about:
+
    - How to decode the login password for the Grafana admin account
    - Access Grafana service to the web browser
 

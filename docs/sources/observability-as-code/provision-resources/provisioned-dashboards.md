@@ -97,6 +97,7 @@ Saving changes requires opening a pull request in your GitHub repository.
 1. Click **Save dashboard**.
 
 1. On the **Provisioned dashboard** panel, choose the options you want to use:
+
    - **Update default refresh value**: Check this box to make the current refresh the new default.
    - **Update default variable values**: Check this box to make the current values the new default.
    - **Path**: Provide the path for your repository, ending in a JSON or YAML file.

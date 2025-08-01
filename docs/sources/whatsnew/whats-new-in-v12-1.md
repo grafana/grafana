@@ -27,6 +27,7 @@ posts:
     items:
       - whats-new/2025-06-30-transformations-regression-analysis.md
       - whats-new/2025-07-14-custom-variable-support-in-visualization-actions.md
+      - whats-new/2025-07-14-static-options-for-query-variable.md
       - whats-new/2025-07-10-server-configurable-quick-time-ranges-for-dashboards.md
       - whats-new/2025-07-14-enhanced-custom-currency-format-display-exact-financial-values.md
   - title: Authentication and authorization
@@ -46,7 +47,7 @@ We have one more community contributor to thank for this release. [Chris Hodges]
 
 Keep reading to learn about what else we have in store for 12.1.
 
-{{< youtube id=Umy-kCKkMQM >}}
+<!-- {{< youtube id=Umy-kCKkMQM >}} -->
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v12.1, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v12.1/).
 

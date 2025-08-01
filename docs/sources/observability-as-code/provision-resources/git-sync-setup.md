@@ -87,6 +87,7 @@ This token needs to be added to your Git Sync configuration to enable read and w
 1. Create a new token using [Create new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
 1. Under **Permissions**, expand **Repository permissions**.
 1. Set these permissions for Git Sync:
+
    - **Contents**: Read and write permission
    - **Metadata**: Read-only permission
    - **Pull requests**: Read and write permission

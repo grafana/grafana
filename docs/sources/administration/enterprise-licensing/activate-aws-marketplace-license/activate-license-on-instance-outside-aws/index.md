@@ -44,6 +44,7 @@ To install Grafana, refer to the documentation specific to your implementation.
 To retrieve your license, Grafana Enterprise requires access to your AWS account and license information. To grant access, create an IAM user in AWS with access to the license, and pass its credentials as environment variables on the host or container where Grafana is running. These environment variables allow Grafana to retrieve license details from AWS.
 
 1. In the AWS License Manager service, create an IAM policy with the following permissions:
+
    - `"license-manager:CheckoutLicense"`
    - `"license-manager:ListReceivedLicenses"`
    - `"license-manager:GetLicenseUsage"`
@@ -92,6 +93,7 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
 1. Attach the policy you created to the IAM user.
 
 1. Add the following values as environment variables to the host or container running Grafana:
+
    - AWS region
    - IAM user's access key ID
    - IAM user's secret access key

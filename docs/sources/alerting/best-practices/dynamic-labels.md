@@ -233,6 +233,7 @@ This setup reproduces label flapping and shows how dynamic label values affect a
 1. Simulate a query (`$A`) that returns a noisy signal.
 
    Select **TestData** as the data source and configure the scenario.
+
    - Scenario: Random Walk
    - Series count: 1
    - Start value: 51
@@ -240,6 +241,7 @@ This setup reproduces label flapping and shows how dynamic label values affect a
    - Spread: 100 (ensures large changes between consecutive data points)
 
 1. Add an expression.
+
    - Type: Reduce
    - Input: A
    - Function: Last (to get the most recent value)

@@ -76,6 +76,7 @@ Folders help you organize and group dashboards, which is useful when you have ma
 
 1. Click **Dashboards** in the primary menu.
 1. Do one of the following:
+
    - On the **Dashboards** page, click **New** and select **New folder** in the drop-down.
    - Click an existing folder and on the folder’s page, click **New** and select **New folder** in the drop-down.
 

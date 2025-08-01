@@ -276,6 +276,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
    This is different to [mute timings](ref:mute-timings), which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
 
 1. In **Configure no data and error handling**, you can define the alerting behavior and alerting state for two scenarios:
+
    - When the evaluation returns **No data** or all values are null.
    - When the evaluation returns **Error** or timeout.
 
@@ -296,6 +297,7 @@ Complete the following steps to set up notifications.
 1. Configure who receives a notification when an alert rule fires by either choosing **Select contact point** or **Use notification policy**.
 
    **Select contact point**
+
    1. Choose this option to select an existing [contact point](ref:contact-points).
 
       All notifications for this alert rule are sent to this contact point automatically and notification policies aren't used.
@@ -303,6 +305,7 @@ Complete the following steps to set up notifications.
    1. You can also optionally select a mute or active timing as well as groupings and timings to define when not to send notifications.
 
    **Use notification policy**
+
    1. Choose this option to use the [notification policy tree](ref:notification-policies) to handle alert notifications.
 
       All notifications for this alert rule are managed by the notification policy tree, which routes alerts based on their labels.

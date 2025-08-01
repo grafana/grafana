@@ -28,6 +28,7 @@ Grafana supports user authentication through Okta, which is useful when you want
 1. Click **Create**.
 1. On the **General Settings** tab, enter a name for your Grafana integration. You can also upload a logo.
 1. On the **Configure SAML** tab, enter the SAML information related to your Grafana instance:
+
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
    - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, by default it is the `/saml/metadata` endpoint of your Grafana instance (for example `https://example.grafana.com/saml/metadata`). This could be configured differently, but the value here must match the `entity_id` setting of the SAML settings of Grafana.
    - Leave the default values for **Name ID format** and **Application username**.
