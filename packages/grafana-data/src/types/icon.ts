@@ -120,6 +120,8 @@ export const availableIconsIndex = {
   'file-export': true,
   'file-landscape-alt': true,
   filter: true,
+  'filter-plus': true,
+  'filter-minus': true,
   flip: true,
   folder: true,
   font: true,
