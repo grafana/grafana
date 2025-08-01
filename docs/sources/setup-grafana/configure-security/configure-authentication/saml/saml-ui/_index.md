@@ -14,7 +14,7 @@ weight: 510
 # Configure SAML authentication using the Grafana user interface
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) version 10.0 and later, and [Grafana Cloud Pro or Advanced](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) version 10.0 and later, and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML using the Grafana configuration file, refer to [Configure SAML authentication using the configuration file](../#configure-saml-using-the-grafana-config-file).
@@ -40,7 +40,7 @@ To follow this guide, you need:
   These permissions are granted by `fixed:authentication.config:writer` role.
   By default, this role is granted to Grafana server administrator in self-hosted instances and to Organization admins in Grafana Cloud instances.
 
-- Grafana instance running Grafana version 10.0 or later with [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) or [Grafana Cloud Pro or Advanced](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-cloud/) license.
+- Grafana instance running Grafana version 10.0 or later with [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 
 ## Steps To Configure SAML Authentication
 
