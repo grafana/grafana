@@ -71,6 +71,24 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     });
   }
 
+  // Loads a node from the API and adds it to the nodes cache
+  public getScopeNode = async (scopeNodeId: string) => {
+    if (this.state.nodes[scopeNodeId]) {
+      return this.state.nodes[scopeNodeId];
+    }
+
+    try {
+      const node = await this.apiClient.fetchScopeNode(scopeNodeId);
+      if (node) {
+        this.updateState({ nodes: { ...this.state.nodes, [node.metadata.name]: node } });
+      }
+      return node;
+    } catch (error) {
+      console.error('Failed to load node', error);
+      return undefined;
+    }
+  };
+
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
     const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
@@ -160,11 +178,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
     });
 
-    // TODO: if we do global search we may not have a prent node loaded. We have the ID but there is not an API that
+    // TODO: if we do global search we may not have a parent node loaded. We have the ID but there is not an API that
     //   would allow us to load scopeNode by ID right now so this can be undefined which means we skip the
     //   disableMultiSelect check.
     const parentNode = this.state.nodes[scopeNode.spec.parentName!];
-    const selectedScope = { scopeId: scopeNode.spec.linkId, scopeNodeId: scopeNode.metadata.name };
+    const selectedScope = {
+      scopeId: scopeNode.spec.linkId,
+      scopeNodeId: scopeNode.metadata.name,
+      parentNodeId: parentNode?.metadata.name,
+    };
 
     // if something is selected we look at parent and see if we are selecting in the same category or not. As we
     // cannot select in multiple categories we only need to check the first selected node. It is possible we have
@@ -214,8 +236,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[]) => {
-    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id })));
+  changeScopes = (scopeNames: string[], parentNodeId?: string) => {
+    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id, parentNodeId: parentNodeId })));
   };
 
   /**

@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Memeriksa opsi ini akan mengutamakan titik akhir data seri dengan {{exampleParameter}} parameter daripada titik akhir nilai label dengan {{exampleParameter}} parameter. Meskipun titik akhir nilai label dianggap memiliki kinerja yang lebih baik, beberapa pengguna mungkin lebih menyukai data seri karena memiliki metode POST, sementara titik akhir nilai label hanya memiliki metode GET."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
@@ -307,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filter nama metrik dengan pencarian regex, menggunakan panggilan tambahan pada API Prometheus.",
-        "disable-text-wrap": "Nonaktifkan pemenggalan teks otomatis"
-      },
       "feedback-link": {
         "give-feedback": "Berikan umpan balik",
         "title-give-feedback": "Penjelajah metrik ini masih baru, beri tahu kami cara untuk meningkatkannya"
@@ -324,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -374,15 +371,10 @@
         "tooltip-metric": "Opsional: mengembalikan daftar nilai label untuk nama label dalam metrik yang ditentukan."
       },
       "metrics-modal": {
-        "additional-settings": "Pengaturan Tambahan",
-        "aria-label-additional-settings": "Pengaturan tambahan",
         "aria-label-browse-metrics": "Telusuri metrik",
         "currently-selected": "Sedang dipilih: {{selected}}",
         "metrics-pre-filtered": "Metrik ini telah difilter sebelumnya berdasarkan label yang dipilih di filter label.",
-        "placeholder-results-per-page": "hasil per halaman",
-        "results-per-page": "Hasil per halaman",
-        "title-metrics-explorer": "Penjelajah metrik",
-        "results-amount_other": "Menampilkan {{num}} dari {{count}} hasil"
+        "title-metrics-explorer": "Penjelajah metrik"
       },
       "nested-query": {
         "label": {
@@ -495,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "Nama",
-        "select": "Pilih",
         "type": "Jenis"
       },
       "update-function-args": {
