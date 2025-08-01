@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { FolderPicker } from '@grafana/runtime';
-import { Box, Button, Field, Stack } from '@grafana/ui';
+import { Alert, Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   CreateRepositoryFilesWithPathApiArg,
@@ -26,6 +26,7 @@ import { useSelector } from 'app/types/store';
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
 import { findItem } from '../../state/utils';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
+import { useRepositoryValidation } from '../BrowseActions/useRepositoryValidation';
 import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 
 import { MoveResultFailed } from './BulkActionFailureBanner';
@@ -281,10 +282,11 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   // Check if we're on the root browser dashboards page
   const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
 
-  // If no folderUid, get repository name from selected items
-  const selectedFolderUid = isRootPage
-    ? Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid])[0]
-    : undefined;
+  // Validate repository consistency using reusable hook
+  const { allFromSameRepo, commonRepository } = useRepositoryValidation(selectedItems);
+
+  // If no folderUid, use the common repository name
+  const selectedFolderUid = isRootPage ? commonRepository : undefined;
 
   const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid || selectedFolderUid });
 
@@ -299,7 +301,23 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   };
 
   if (!repository) {
-    return null;
+    return (
+      <Alert title="Repository not found" severity="error">
+        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.error-repository-not-found">
+          Repository not found
+        </Trans>
+      </Alert>
+    );
+  }
+
+  if (!allFromSameRepo) {
+    return (
+      <Alert title="Error" severity="error">
+        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.error-repository-not-same">
+          All selected items must be from the same repository
+        </Trans>
+      </Alert>
+    );
   }
 
   return (
