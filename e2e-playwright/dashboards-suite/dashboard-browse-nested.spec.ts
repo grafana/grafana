@@ -15,7 +15,7 @@ test.use({
 
 // TODO change this test so it doesn't conflict with the existing dashboard browse test
 // probably needs a separate user
-test.describe.skip(
+test.describe.fixme(
   'Dashboard browse (nested)',
   {
     tag: ['@dashboards'],
