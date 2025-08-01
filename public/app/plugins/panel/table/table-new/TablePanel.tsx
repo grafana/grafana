@@ -64,6 +64,8 @@ export function TablePanel(props: Props) {
 
   const disableSanitizeHtml = getConfig().disableSanitizeHtml;
 
+  console.log('disableVirtualization', options);
+
   const tableElement = (
     <TableNG
       height={tableHeight}
@@ -77,6 +79,7 @@ export function TablePanel(props: Props) {
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       footerOptions={options.footer}
+      enableVirtualization={!options.disableVirtualization}
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
       timeRange={timeRange}

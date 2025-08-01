@@ -48,10 +48,12 @@ export type CellNumLinesCalculator = (text: string, cellWidth: number) => number
  */
 export function getDefaultRowHeight(
   theme: GrafanaTheme2,
+  enableVirtualization?: boolean,
   cellHeight?: TableCellHeight
 ): NonNullable<CSSProperties['height']> {
-  const bodyFontSize = theme.typography.fontSize;
-  const lineHeight = theme.typography.body.lineHeight;
+  if (enableVirtualization === false) {
+    return 'auto';
+  }
 
   switch (cellHeight) {
     case TableCellHeight.Sm:
@@ -60,11 +62,9 @@ export function getDefaultRowHeight(
       return 42;
     case TableCellHeight.Lg:
       return TABLE.MAX_CELL_HEIGHT;
-    case TableCellHeight.Auto:
-      return 'auto';
   }
 
-  return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
+  return TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
 }
 
 /**

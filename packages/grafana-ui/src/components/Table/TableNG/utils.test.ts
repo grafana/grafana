@@ -791,14 +791,21 @@ describe('TableNG utils', () => {
       { input: TableCellHeight.Sm, expected: 36 },
       { input: TableCellHeight.Md, expected: 42 },
       { input: TableCellHeight.Lg, expected: TABLE.MAX_CELL_HEIGHT },
-      { input: TableCellHeight.Auto, expected: 'auto' },
     ])('returns "$expected" for "$input"', ({ input, expected }) => {
-      const result = getDefaultRowHeight(theme, input);
+      const result = getDefaultRowHeight(theme, true, input);
       expect(result).toBe(expected);
     });
 
+    it('returns "auto" if enableVirtualization is false', () => {
+      expect(getDefaultRowHeight(theme, false, TableCellHeight.Sm)).toBe('auto');
+    });
+
+    it('does not return "auto" if enableVirtualization is undefined', () => {
+      expect(getDefaultRowHeight(theme)).toBe(expect.any(Number));
+    });
+
     it('calculates height based on theme when cellHeight is undefined', () => {
-      const result = getDefaultRowHeight(theme, undefined as unknown as TableCellHeight);
+      const result = getDefaultRowHeight(theme, true, undefined as unknown as TableCellHeight);
 
       // Calculate the expected result based on the theme values
       const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;

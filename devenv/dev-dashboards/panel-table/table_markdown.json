@@ -79,8 +79,10 @@
       },
       "id": 1,
       "options": {
-        "cellHeight": "auto",
+        "disableVirtualization": true,
+        "cellHeight": "lg",
         "footer": {
+          "enablePagination": true,
           "countRows": false,
           "fields": "",
           "reducer": [

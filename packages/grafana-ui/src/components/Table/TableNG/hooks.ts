@@ -174,7 +174,8 @@ export function usePaginatedRows(
       return rowHeight;
     }
 
-    // when using auto-sized rows, we're just going to have to pick a number.
+    // when using auto-sized rows, we're just going to have to pick a number. the alternative
+    // is to measure each row, which we could do but would be expensive.
     if (typeof rowHeight === 'string') {
       return TABLE.MAX_CELL_HEIGHT;
     }
@@ -386,7 +387,7 @@ interface UseRowHeightOptions {
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
-  defaultHeight: number | string;
+  defaultHeight: NonNullable<CSSProperties['height']>;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }

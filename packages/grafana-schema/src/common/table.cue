@@ -96,7 +96,7 @@ TableMarkdownCellOptions: {
 } @cuetsy(kind="interface")
 
 // Height of a table cell
-TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
+TableCellHeight: "sm" | "md" | "lg" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
@@ -118,4 +118,6 @@ TableFieldOptions: {
 	hideHeader?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
+  // If true, virtualization is disabled and height is set to auto
+  disableVirtualization?: bool
 } @cuetsy(kind="interface")

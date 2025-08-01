@@ -138,7 +138,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             { value: TableCellHeight.Sm, label: t('table-new.cell-height-options.label-small', 'Small') },
             { value: TableCellHeight.Md, label: t('table-new.cell-height-options.label-medium', 'Medium') },
             { value: TableCellHeight.Lg, label: t('table-new.cell-height-options.label-large', 'Large') },
-            { value: TableCellHeight.Auto, label: t('table-new.cell-height-options.label-auto', 'Auto') },
           ],
         },
       })
@@ -199,6 +198,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         name: t('table-new.name-enable-pagination', 'Enable pagination'),
         category,
         editor: PaginationEditor,
+      })
+      .addBooleanSwitch({
+        path: 'disableVirtualization',
+        name: t('table.name-disable-virtualized-table', 'Disable virtualized table'),
+        description: t(
+          'table.description-disable-virtualized-table',
+          'Use with caution - rendering performance is impacted. Rows render with their automatic heights.'
+        ),
+        category,
+        defaultValue: false,
+        showIf: (cfg) => cfg.footer?.enablePagination,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

@@ -845,7 +845,6 @@ export interface TableMarkdownCellOptions {
  * Height of a table cell
  */
 export enum TableCellHeight {
-  Auto = 'auto',
   Lg = 'lg',
   Md = 'md',
   Sm = 'sm',
@@ -979,6 +978,10 @@ export enum ComparisonOperation {
 export interface TableFieldOptions {
   align: FieldTextAlignment;
   cellOptions: TableCellOptions;
+  /**
+   * If true, virtualization is disabled and height is set to auto
+   */
+  disableVirtualization?: boolean;
   /**
    * This field is deprecated in favor of using cellOptions
    */

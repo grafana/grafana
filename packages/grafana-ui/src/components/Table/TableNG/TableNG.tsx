@@ -26,7 +26,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId, TableCellHeight } from '@grafana/schema';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -161,7 +161,7 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
+  const defaultRowHeight = getDefaultRowHeight(theme, enableVirtualization, cellHeight);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
@@ -233,8 +233,7 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization:
-          typeof enableVirtualization === 'boolean' ? enableVirtualization : cellHeight !== TableCellHeight.Auto,
+        enableVirtualization,
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -276,7 +275,7 @@ export function TableNG(props: TableNGProps) {
         rowHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
-    [enableVirtualization, cellHeight, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
+    [enableVirtualization, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
   );
 
   interface Schema {
@@ -351,7 +350,7 @@ export function TableNG(props: TableNGProps) {
           : undefined;
 
         const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
-        const shouldWrap = shouldTextWrap(field);
+        const shouldWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
@@ -960,16 +959,26 @@ const getCellStyles = (
   shouldOverflow: boolean,
   isColorized: boolean,
   isMonospace: boolean
-) =>
-  css({
+) => {
+  const whiteSpace: CSSProperties['whiteSpace'] = (() => {
+    if (isMonospace) {
+      return 'pre';
+    }
+    if (cellType === TableCellDisplayMode.Markdown) {
+      return 'normal';
+    }
+    return 'pre-line';
+  })();
+
+  return css({
     display: 'flex',
-    alignItems: cellType === TableCellDisplayMode.Markdown ? 'flex-start' : 'center',
+    alignItems: 'center',
     textAlign,
     justifyContent: getJustifyContent(textAlign),
 
     ...(isColorized && { backgroundClip: 'padding-box !important' }),
     ...(shouldOverflow && { minHeight: '100%' }),
-    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
+    ...(shouldWrap && { whiteSpace }),
     ...(isMonospace && { fontFamily: 'monospace' }),
 
     '&:hover, &[aria-selected=true]': {
@@ -978,15 +987,7 @@ const getCellStyles = (
       },
       ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
-        whiteSpace: (() => {
-          if (isMonospace) {
-            return 'pre';
-          }
-          if (cellType === TableCellDisplayMode.Markdown) {
-            return 'normal';
-          }
-          return 'pre-line';
-        })(),
+        whiteSpace,
         height: 'fit-content',
         minWidth: 'fit-content',
         ...(cellType === TableCellDisplayMode.Pill && {
@@ -1064,3 +1065,4 @@ const getCellStyles = (
       },
     }),
   });
+};

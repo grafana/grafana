@@ -35,6 +35,10 @@ export interface Options {
    * Used to control row sorting
    */
   sortBy?: Array<ui.TableSortByFieldState>;
+  /***
+   * When set, the table will not use virtualization and will render all rows with their automatic heights.
+   */
+  disableVirtualization?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
