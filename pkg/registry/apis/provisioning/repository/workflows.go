@@ -3,7 +3,7 @@ package repository
 import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
