@@ -2499,7 +2499,8 @@
       "metadata": {
         "name": "prometheusCodeModeMetricNamesSearch",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-04-04T20:38:23Z"
+        "creationTimestamp": "2024-04-04T20:38:23Z",
+        "deletionTimestamp": "2025-08-01T07:53:50Z"
       },
       "spec": {
         "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
