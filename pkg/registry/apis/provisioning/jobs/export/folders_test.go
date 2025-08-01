@@ -317,7 +317,7 @@ func TestExportFolders(t *testing.T) {
 					// - parent-folder now has test-repo as parent
 					// - child-folder has parent-folder as parent
 					expectedFolders := []resources.Folder{
-						{ID: "test-repo", Path: "test-repo"},                                    // root folder
+						{ID: "test-repo", Path: "test-repo"}, // root folder
 						{ID: "parent-folder", Path: "test-repo/parent-folder"},
 						{ID: "child-folder", Path: "test-repo/parent-folder/child-folder"},
 					}
