@@ -81,13 +81,19 @@ Alert instances are routed for [notifications](ref:notifications) in two scenari
 
 ## Evaluation group
 
+{{< shared id="evaluation-group-basics" >}}
+
 Every alert rule and recording rule is assigned to an evaluation group.
 
 Each evaluation group contains an **evaluation interval** that determines how frequently the rule is checked. For instance, the evaluation may occur every `10s`, `30s`, `1m`, `10m`, etc.
 
+{{< /shared >}}
+
 Rules can be evaluated concurrently or sequentially. For details, see [How rules are evaluated within a group](ref:evaluation-within-a-group).
 
 ## Pending period
+
+{{< shared id="pending-period-basics" >}}
 
 You can set a **Pending period** to prevent unnecessary notifications caused by temporary issues.
 
@@ -98,6 +104,8 @@ This ensures the condition breach is stable before the alert transitions to the 
 - **Normal** -> **Pending** -> **Alerting**<sup>\*</sup>
 
 You can also set the **Pending period** to zero to skip the **Pending** state entirely and transition to **Alerting** immediately.
+
+{{< /shared >}}
 
 ## Keep firing for
 
