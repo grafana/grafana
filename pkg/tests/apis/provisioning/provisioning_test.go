@@ -2256,11 +2256,17 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	files1After, err := countFilesInDir(repo1Path)
 	require.NoError(t, err)
 
-	expectedNewFiles := 1 // No files should be exported due to folder path issues with dashboard3
 	actualNewFiles := files1After - files1Before
-	require.Equal(t, expectedNewFiles, actualNewFiles,
+	require.Equal(t, 0, actualNewFiles,
 		"second repository should skip managed dashboards and had folder issues with unmanaged dashboard (expected %d new files, got %d)",
-		expectedNewFiles, actualNewFiles)
+		0, actualNewFiles)
+
+	// Verify files in the second repository
+	files2After, err := countFilesInDir(repo2Path)
+	require.NoError(t, err)
+	require.Equal(t, 1, files2After,
+		"second repository should only export the unmanaged dashboard (expected %d new files, got %d)",
+		1, files2After)
 
 	// Verify dashboard1 and dashboard2 are still managed by repo1 (unchanged)
 	stillManagedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
