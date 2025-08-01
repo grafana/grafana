@@ -52,6 +52,7 @@ import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRow
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
+import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
@@ -767,7 +768,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      {getRowContext && contextRow && (
+      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && getRowContext && contextRow && (
         <LogRowContextModal
           open={contextOpen}
           row={contextRow}
@@ -777,6 +778,21 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           getLogRowContextUi={getLogRowContextUi}
           logsSortOrder={logsSortOrder}
           timeZone={timeZone}
+        />
+      )}
+      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getRowContext && contextRow && (
+        <LogLineContext
+          open={contextOpen}
+          log={contextRow}
+          onClose={onCloseContext}
+          getRowContext={(row, options) => getRowContext(row, contextRow, options)}
+          getRowContextQuery={getRowContextQuery}
+          getLogRowContextUi={getLogRowContextUi}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
+          timeZone={timeZone}
+          displayedFields={displayedFields}
+          onClickShowField={showField}
+          onClickHideField={hideField}
         />
       )}
       <PanelChrome

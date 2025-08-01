@@ -1890,6 +1890,13 @@ var (
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "newLogContext",
+			Description:  "New Log Context component",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 

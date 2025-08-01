@@ -370,7 +370,7 @@ export function getScrollbarWidth() {
 }
 
 export interface ScrollToLogsEventPayload {
-  scrollTo: 'top' | 'bottom';
+  scrollTo: 'top' | 'bottom' | string;
 }
 
 export class ScrollToLogsEvent extends BusEventWithPayload<ScrollToLogsEventPayload> {

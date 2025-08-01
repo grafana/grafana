@@ -310,7 +310,7 @@ function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, 
 export const SCROLLING_THRESHOLD = 1e3;
 
 // To get more logs, the difference between the visible range and the current range should be 1 second or more.
-function canScrollTop(
+export function canScrollTop(
   visibleRange: AbsoluteTimeRange,
   currentRange: TimeRange,
   timeZone: TimeZone,

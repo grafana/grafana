@@ -1091,4 +1091,8 @@ export interface FeatureToggles {
   * Enable adhoc filter buttons in visualization tooltips
   */
   adhocFiltersInTooltips?: boolean;
+  /**
+  * New Log Context component
+  */
+  newLogContext?: boolean;
 }
