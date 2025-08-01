@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
@@ -1628,27 +1627,6 @@ func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenera
 	return rule
 }
 
-func createFolder(tb testing.TB, store *DBstore, uid, title string, orgID int64, parentUID string) {
-	tb.Helper()
-	u := &user.SignedInUser{
-		UserID:         1,
-		OrgID:          orgID,
-		OrgRole:        org.RoleAdmin,
-		IsGrafanaAdmin: true,
-	}
-
-	_, err := store.FolderService.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          uid,
-		OrgID:        orgID,
-		Title:        title,
-		Description:  "",
-		SignedInUser: u,
-		ParentUID:    parentUID,
-	})
-
-	require.NoError(tb, err)
-}
-
 func setupFolderService(t testing.TB, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
@@ -2174,7 +2152,6 @@ func createManyRules(tb testing.TB, store *DBstore, ruleGen *models.AlertRuleGen
 	namespaceUIDs := make([]string, numFolders)
 	for i := range namespaceUIDs {
 		namespaceUIDs[i] = fmt.Sprintf("ns-%d", i)
-		createFolder(tb, store, namespaceUIDs[i], fmt.Sprintf("folder-%d", i), 1, "")
 	}
 	for i := 0; i < numRules; i++ {
 		gen := ruleGen.With(
