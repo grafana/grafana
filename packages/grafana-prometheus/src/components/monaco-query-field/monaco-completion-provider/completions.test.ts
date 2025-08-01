@@ -31,9 +31,6 @@ const metrics = {
 
 beforeEach(() => {
   dataProvider = new DataProvider(dataProviderSettings);
-  jest.replaceProperty(config, 'featureToggles', {
-    prometheusCodeModeMetricNamesSearch: true,
-  });
 });
 
 afterEach(() => {
