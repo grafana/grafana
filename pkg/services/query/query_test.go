@@ -78,6 +78,38 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 		assert.Len(t, parsedReq.getFlattenedQueries(), 2)
 	})
 
+	t.Run("Test a simple single datasource query with missing time range", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`)
+		mr.From = ""
+		mr.To = ""
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.False(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 1)
+		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+		queries := parsedReq.getFlattenedQueries()
+		assert.Len(t, queries, 2)
+
+		for _, q := range queries {
+			require.Equal(t, int64(0), q.query.TimeRange.From.UnixMilli())
+			require.Equal(t, int64(0), q.query.TimeRange.To.UnixMilli())
+		}
+	})
+
 	t.Run("Test a single datasource query with expressions", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{

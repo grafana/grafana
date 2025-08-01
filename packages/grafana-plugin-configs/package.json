@@ -9,7 +9,7 @@
   "type": "module",
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "@swc/core": "1.10.12",
+    "@swc/core": "1.13.3",
     "@swc/helpers": "^0.5.0",
     "@swc/jest": "^0.2.26",
     "@types/eslint": "9.6.1",
@@ -25,8 +25,8 @@
     "jest-environment-jsdom": "29.7.0",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
-    "typescript": "5.8.3",
-    "webpack": "5.97.1",
+    "typescript": "5.9.2",
+    "webpack": "5.101.0",
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-virtual-modules": "^0.6.2"
   },
