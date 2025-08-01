@@ -32,7 +32,7 @@ export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptio
 
 function transposeDataFrame(options: TransposeTransformerOptions, data: DataFrame[]): DataFrame[] {
   cacheFieldDisplayNames(data);
-  const emptyValue = options.emptyValue || SpecialValue.Null;
+  const emptyValue = options.emptyValue ?? SpecialValue.Empty;
 
   return data.map((frame) => {
     const firstField = frame.fields[0];
