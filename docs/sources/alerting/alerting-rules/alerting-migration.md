@@ -288,6 +288,7 @@ The `GET` and `DELETE` endpoints work only with provisioned and imported alert r
 | -------- | ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | GET      | `/convert/prometheus/config/v1/rules`                        | Get all imported rule groups across all namespaces. | [List rule groups](/docs/mimir/latest/references/http-api/#list-rule-groups)                         |
 | GET      | `/convert/prometheus/config/v1/rules/:namespaceTitle`        | Get imported rule groups in a specific namespace.   | [Get rule groups by namespace](/docs/mimir/latest/references/http-api/#get-rule-groups-by-namespace) |
+| GET      | `/convert/prometheus/config/v1/rules/:namespaceTitle/:group` | Get imported rule group in a specific namespace.    | [Get rule group](/docs/mimir/latest/references/http-api/#get-rule-group)                             |
 | DELETE   | `/convert/prometheus/config/v1/rules/:namespaceTitle`        | Delete all imported alert rules in a namespace.     | [Delete namespace](/docs/mimir/latest/references/http-api/#delete-namespace)                         |
 | DELETE   | `/convert/prometheus/config/v1/rules/:namespaceTitle/:group` | Delete a specific imported rule group.              | [Delete rule group](/docs/mimir/latest/references/http-api/#delete-rule-group)                       |
 
