@@ -3533,6 +3533,13 @@
       "button-move": "Move",
       "button-moving": "Moving...",
       "deleting": "Deleting",
+      "error": {
+        "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
+        "read-only-saving-message": "Repository is read-only. {{readOnlyMessage}}",
+        "read-only-title": "This repository is read only",
+        "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
+        "repository-not-found-title": "Repository not found"
+      },
       "error-file-content-not-found": "File content not found",
       "error-path-not-found": "Path not found",
       "error-target-folder-path-missing": "Target folder path is missing",
@@ -5639,11 +5646,9 @@
       "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
-      "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
-      "success-message": "Dashboard deleted successfully",
-      "title-this-repository-is-read-only": "This repository is read only"
+      "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
       "description": "Description"
@@ -6015,7 +6020,6 @@
       "api-error": "Error saving dashboard",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
-      "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "file-path": "<0>File path:</0> {{filePath}}",
       "label-description": "Description",
@@ -6027,7 +6031,6 @@
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
-      "title-this-repository-is-read-only": "This repository is read only",
       "title-validation-failed": "Dashboard title validation failed."
     },
     "scenes-new-rule-from-panel-button": {

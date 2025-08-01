@@ -25,6 +25,7 @@ import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 import { MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
+import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { useBulkActionRequest } from './useBulkActionRequest';
 import {
   BulkActionFormData,
@@ -202,7 +203,7 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkActionProvisionResourceProps) {
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
+  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
@@ -214,8 +215,8 @@ export function BulkDeleteProvisionedResource({
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository) {
-    return null;
+  if (!repository || isReadOnlyRepo) {
+    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
   }
 
   return (

@@ -22,6 +22,7 @@ import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
+import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
 import { validateFolderName } from './NewFolderForm';
 import { formatFolderName, hasFolderNameCharactersToReplace } from './utils';
 
@@ -213,14 +214,20 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 }
 
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'create',
     title: '', // Empty title for new folders
   });
 
-  if (!initialValues) {
-    return null;
+  if (isReadOnlyRepo || !initialValues) {
+    return (
+      <RepoInvalidStateBanner
+        noRepository={!initialValues}
+        isReadOnlyRepo={isReadOnlyRepo}
+        readOnlyMessage="To delete this folder, please remove the folder from your repository."
+      />
+    );
   }
 
   return (
