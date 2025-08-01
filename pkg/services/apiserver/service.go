@@ -304,8 +304,16 @@ func (s *service) start(ctx context.Context) error {
 		return errs[0]
 	}
 
+	if errs := o.APIEnablementOptions.Validate(s.scheme); len(errs) != 0 {
+		return errs[0]
+	}
+
 	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
 	if err := o.ApplyTo(serverConfig); err != nil {
+		return err
+	}
+
+	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
 		return err
 	}
 
@@ -395,6 +403,7 @@ func (s *service) start(ctx context.Context) error {
 		s.storageStatus,
 		s.dualWriterMetrics,
 		s.builderMetrics,
+		serverConfig.MergedResourceConfig,
 	); err != nil {
 		return err
 	}
