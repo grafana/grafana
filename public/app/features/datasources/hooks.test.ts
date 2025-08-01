@@ -43,7 +43,7 @@ describe('useRecentlyUsedDataSources', () => {
   describe('adding data sources', () => {
     it('should add a new data source to an empty list', () => {
       const { result } = renderHook(() => useRecentlyUsedDataSources());
-      const dataSource = TestDataSettings;
+      const dataSource = { ...TestDataSettings, uid: 'test-uid' };
 
       act(() => {
         result.current[1](dataSource);
@@ -57,7 +57,7 @@ describe('useRecentlyUsedDataSources', () => {
       mockUseLocalStorage.mockReturnValue([existingValues, mockSetStorage]);
 
       const { result } = renderHook(() => useRecentlyUsedDataSources());
-      const dataSource = TestDataSettings;
+      const dataSource = { ...TestDataSettings, uid: 'test-uid' };
 
       act(() => {
         result.current[1](dataSource);
@@ -84,7 +84,7 @@ describe('useRecentlyUsedDataSources', () => {
       mockUseLocalStorage.mockReturnValue([existingValues, mockSetStorage]);
 
       const { result } = renderHook(() => useRecentlyUsedDataSources());
-      const dataSource = TestDataSettings;
+      const dataSource = { ...TestDataSettings, uid: 'test-uid' };
 
       act(() => {
         result.current[1](dataSource);
@@ -101,7 +101,7 @@ describe('useRecentlyUsedDataSources', () => {
       mockUseLocalStorage.mockReturnValue([existingValues, mockSetStorage]);
 
       const { result } = renderHook(() => useRecentlyUsedDataSources());
-      const dataSource = TestDataSettings;
+      const dataSource = { ...TestDataSettings, uid: 'test-uid' };
 
       act(() => {
         result.current[1](dataSource);
