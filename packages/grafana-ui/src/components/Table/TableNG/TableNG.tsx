@@ -161,7 +161,7 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
+  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
