@@ -1036,8 +1036,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 
 		// Verify dashboard still exists in Grafana with same content but may have updated path references
 		helper.SyncAndWait(t, repo, nil)
-		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		require.NoError(t, err, "dashboard should still exist in Grafana after move")
+		require.Eventually(t, func() bool {
+			_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+			return err == nil
+		}, 10*time.Second, 100*time.Millisecond, "dashboard should still exist in Grafana after move") // Using Eventually to account for potential delays in dashboards APIs.
 	})
 
 	t.Run("move file to nested path without ref", func(t *testing.T) {
