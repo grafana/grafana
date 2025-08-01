@@ -24,6 +24,7 @@ import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
 
+// just a harmless little comment to trigger the workflow
 export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureMonitorDataSourceJsonData> {
   annotations = {
     prepareAnnotation: migrateAnnotation,
