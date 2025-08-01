@@ -209,7 +209,7 @@ export function getCompletionProvider(
 
       return {
         suggestions,
-        incomplete: dataProvider.monacoSettings.suggestionsIncomplete,
+        // incomplete: dataProvider.monacoSettings.suggestionsIncomplete,
       };
     });
   };

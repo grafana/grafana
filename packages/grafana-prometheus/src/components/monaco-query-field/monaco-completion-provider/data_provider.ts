@@ -40,7 +40,7 @@ export class DataProvider {
   readonly languageProvider: PrometheusLanguageProviderInterface;
   readonly historyProvider: Array<HistoryItem<PromQuery>>;
 
-  readonly metricNamesSuggestionLimit: number = DEFAULT_COMPLETION_LIMIT;
+  // readonly metricNamesSuggestionLimit: number = DEFAULT_COMPLETION_LIMIT;
   readonly queryLabelKeys: typeof this.languageProvider.queryLabelKeys;
   readonly queryLabelValues: typeof this.languageProvider.queryLabelValues;
   /**
@@ -50,13 +50,14 @@ export class DataProvider {
    * This is useful with fuzzy searching items to provide as Monaco autocomplete suggestions.
    */
   private inputInRange: string;
-  private suggestionsIncomplete: boolean;
+
+  // private suggestionsIncomplete: boolean;
 
   constructor(params: DataProviderParams) {
     this.languageProvider = params.languageProvider;
     this.historyProvider = params.historyProvider;
     this.inputInRange = '';
-    this.suggestionsIncomplete = false;
+    // this.suggestionsIncomplete = false;
 
     this.queryLabelKeys = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.queryLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
@@ -111,14 +112,14 @@ export class DataProvider {
     return result;
   }
 
-  private enableAutocompleteSuggestionsUpdate(): void {
-    this.suggestionsIncomplete = true;
-    dispatchEvent(
-      new CustomEvent(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, {
-        detail: { limit: this.metricNamesSuggestionLimit, datasourceUid: this.languageProvider.datasource.uid },
-      })
-    );
-  }
+  // private enableAutocompleteSuggestionsUpdate(): void {
+  //   this.suggestionsIncomplete = true;
+  //   dispatchEvent(
+  //     new CustomEvent(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, {
+  //       detail: { limit: this.metricNamesSuggestionLimit, datasourceUid: this.languageProvider.datasource.uid },
+  //     })
+  //   );
+  // }
 
   private setInputInRange(textInput: string): void {
     this.inputInRange = textInput;
@@ -134,10 +135,10 @@ export class DataProvider {
        * we need to instruct Monaco to update the completions on every input change, so that the
        * completions reflect the current input.
        */
-      enableAutocompleteSuggestionsUpdate: this.enableAutocompleteSuggestionsUpdate.bind(this),
+      // enableAutocompleteSuggestionsUpdate: this.enableAutocompleteSuggestionsUpdate.bind(this),
       inputInRange: this.inputInRange,
       setInputInRange: this.setInputInRange.bind(this),
-      suggestionsIncomplete: this.suggestionsIncomplete,
+      // suggestionsIncomplete: this.suggestionsIncomplete,
     };
   }
 }
