@@ -25,8 +25,7 @@ jobs:
       contents: read
       id-token: write
     container:
-      # TODO update with container image
-      image: <something>
+      image: us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -56,5 +55,12 @@ jobs:
           verb: run
           args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
 
+      - name: Deploy resources
+        run: |
+          ./cpp-e2e/scripts/ci-run.sh azure ${{ github.ref_name }} deploy
       - name: Run E2E tests
         run: yarn e2e:playwright --grep @cloud-plugins
+        
+      - name: Destroy resources
+        run: |
+          ./cpp-e2e/scripts/ci-run.sh azure ${{ github.ref_name }} destroy
