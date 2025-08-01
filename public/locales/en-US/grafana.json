@@ -9362,6 +9362,15 @@
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "Center matched line",
+      "newer-logs": "newer",
+      "no-more-logs-available": "No more logs available.",
+      "older-logs": "older",
+      "open-in-split-view": "Open in split view",
+      "title-log-context": "Log context",
+      "title-log-line": "Referenced log line"
+    },
     "log-line-details": {
       "clear-search": "Clear",
       "close": "Close log details",
@@ -12573,7 +12582,10 @@
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "text-wrap-options": {
+      "label-wrap-text": "Wrap text"
+    }
   },
   "table-new": {
     "category-cell-options": "Cell options",

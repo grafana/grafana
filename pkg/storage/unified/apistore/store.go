@@ -607,20 +607,19 @@ func (s *Storage) GuaranteedUpdate(
 	// Only update (for real) if the bytes have changed
 	if !bytes.Equal(req.Value, existingBytes) {
 		updateResponse, err := s.store.Update(ctx, req)
-		if len(v.createdSecureValues) > 0 && (err != nil || updateResponse.Error != nil) {
-			fmt.Printf("TODO... remove the newly created secrets")
-		}
 		if err != nil {
+			fmt.Printf("TODO... remove the newly created secrets")
 			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if updateResponse.Error != nil {
+			fmt.Printf("TODO... remove the newly created secrets")
 			return resource.GetError(updateResponse.Error)
 		}
-		rv = uint64(updateResponse.ResourceVersion)
-
 		if len(v.deleteSecureValues) > 0 {
 			fmt.Printf("TODO... remove the deleted secrets")
 		}
+
+		rv = uint64(updateResponse.ResourceVersion)
 	}
 
 	if _, err := s.convertToObject(req.Value, destination); err != nil {
