@@ -64,7 +64,8 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "markdown"
+                  "type": "markdown",
+                  "dynamicHeight": true
                 }
               }
             ]
@@ -79,7 +80,6 @@
       },
       "id": 1,
       "options": {
-        "disableVirtualization": true,
         "cellHeight": "lg",
         "footer": {
           "enablePagination": true,
