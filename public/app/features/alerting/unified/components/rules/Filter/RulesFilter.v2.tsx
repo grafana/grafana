@@ -513,7 +513,6 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
           <Label>
             <Trans i18nKey="alerting.search.property.state">State</Trans>
           </Label>
-          {/* Should be able to select multiple states? */}
           <Controller
             name="ruleState"
             control={control}
