@@ -19,12 +19,14 @@ import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
+  focusLogLine?: (log: LogListModel) => void;
   log: LogListModel;
   logs: LogListModel[];
 }
 
-export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
+export const LogLineDetailsComponent = memo(({ focusLogLine, log, logs }: LogLineDetailsComponentProps) => {
+  const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
+    useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -101,7 +103,7 @@ export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsCompon
 
   return (
     <>
-      <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
+      <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
       <div className={styles.componentWrapper}>
         <ControlledCollapse
           className={styles.collapsable}
@@ -110,7 +112,7 @@ export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsCompon
           isOpen={logLineOpen}
           onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
         >
-          <LogLineDetailsLog log={log} />
+          <LogLineDetailsLog log={log} syntaxHighlighting={syntaxHighlighting ?? true} />
         </ControlledCollapse>
         {displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse

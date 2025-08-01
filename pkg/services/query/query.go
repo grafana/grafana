@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -97,6 +98,12 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
 func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	fromAlert := false
+	for header, val := range s.headers {
+		if header == models.FromAlertHeaderName && val == "true" {
+			fromAlert = true
+		}
+	}
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
 	if err != nil {
@@ -104,7 +111,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 
 	// If there are expressions, handle them and return
-	if parsedReq.hasExpression {
+	if parsedReq.hasExpression || fromAlert {
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
 	// If there is only one datasource, query it and return
@@ -216,6 +223,7 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 		dataSourceRequestValidator: validations.ProvideValidator(),
 		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
 		headers:                    headers,
+		concurrentQueryLimit:       16, // TODO: make it configurable
 	}
 	return s.QueryData(ctx, nil, false, reqDTO)
 }
@@ -295,7 +303,12 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		return s.pluginClient.QueryData(ctx, req)
 	} else { // multi tenant flow
 		// transform request from backend.QueryDataRequest to k8s request
-		k8sReq := &data.QueryDataRequest{}
+		k8sReq := &data.QueryDataRequest{
+			TimeRange: data.TimeRange{
+				From: req.Queries[0].TimeRange.From.Format(time.RFC3339),
+				To:   req.Queries[0].TimeRange.To.Format(time.RFC3339),
+			},
+		}
 		for _, q := range req.Queries {
 			var dataQuery data.DataQuery
 			err := json.Unmarshal(q.JSON, &dataQuery)

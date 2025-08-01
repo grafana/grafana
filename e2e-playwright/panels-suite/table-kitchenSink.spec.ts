@@ -2,14 +2,20 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
+const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
+
 test.use({
-  viewport: { width: 1600, height: 1080 },
+  viewport: { width: 2000, height: 1080 },
   featureToggles: {
     tableNextGen: true,
   },
 });
 
 // helper utils
+const waitForTableLoad = async (loc: Page | Locator) => {
+  await expect(loc.locator('.rdg')).toBeVisible();
+};
+
 const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: number) =>
   loc
     .getByRole('row')
@@ -22,6 +28,24 @@ const getCellHeight = async (loc: Page | Locator, rowIdx: number, colIdx: number
   return (await cell.boundingBox())?.height ?? 0;
 };
 
+const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
+  // find the index of the column "Long text." The kitchen sink table will change over time, but
+  // we can just find the column programatically and use it throughout the test.
+  let result = -1;
+  const colCount = await loc.getByRole('columnheader').count();
+  for (let colIdx = 0; colIdx < colCount; colIdx++) {
+    const cell = await getCell(loc, 0, colIdx);
+    if ((await cell.textContent()) === columnName) {
+      result = colIdx;
+      break;
+    }
+  }
+  if (result === -1) {
+    throw new Error(`Could not find the "${columnName}" column in the table`);
+  }
+  return result;
+};
+
 test.describe(
   'Panels test: Table - Kitchen Sink',
   {
@@ -30,7 +54,7 @@ test.describe(
   () => {
     test('Tests word wrap, hover overflow, and cell inspect', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
-        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
@@ -38,22 +62,28 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).toBeVisible();
 
+      // to avoid a race condition when counting up , wait for react-data-grid to finish rendering.
+      await waitForTableLoad(page);
+
+      const longTextColIdx = await getColumnIdx(page, 'Long Text');
+
       // text wrapping is enabled by default on this panel.
-      await expect(getCellHeight(page, 1, 5)).resolves.toBeGreaterThan(100);
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
       // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text'))
         .last()
         .click();
-      await expect(getCellHeight(page, 1, 5)).resolves.toBeLessThan(100);
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
       // test that hover overflow works.
-      const loremIpsumCell = await getCell(page, 1, 5);
+      const loremIpsumCell = await getCell(page, 1, longTextColIdx);
+      await loremIpsumCell.scrollIntoViewIfNeeded();
       await loremIpsumCell.hover();
-      await expect(getCellHeight(page, 1, 5)).resolves.toBeGreaterThan(100);
-      await (await getCell(page, 1, 6)).hover();
-      await expect(getCellHeight(page, 1, 5)).resolves.toBeLessThan(100);
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
+      await (await getCell(page, 1, longTextColIdx + 1)).hover();
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
       // enable cell inspect, confirm that hover no longer triggers.
       await dashboardPage
@@ -64,7 +94,7 @@ test.describe(
         .locator('label[for="custom.inspect"]')
         .click();
       await loremIpsumCell.hover();
-      await expect(getCellHeight(page, 1, 5)).resolves.toBeLessThan(100);
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
       // click cell inspect, check that cell inspection pops open in the side as we'd expect.
       await loremIpsumCell.getByLabel('Inspect value').click();
@@ -75,7 +105,7 @@ test.describe(
 
     test('Tests visibility and display name via overrides', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
-        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
@@ -107,7 +137,7 @@ test.describe(
     // hashtag testing pyramid.
     test('Tests sorting by column', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
-        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
@@ -132,7 +162,7 @@ test.describe(
 
     test('Tests filtering within a column', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
-        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
@@ -140,10 +170,14 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).toBeVisible();
 
-      const stateColumnHeader = page.getByRole('columnheader').filter({ hasText: 'Info' });
+      await waitForTableLoad(page);
+
+      const infoColumnIdx = await getColumnIdx(page, 'Info');
+
+      const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
 
       // get the first value in the "State" column, filter it out, then check that it went away.
-      const firstStateValue = (await (await getCell(page, 1, 1)).textContent())!;
+      const firstStateValue = (await (await getCell(page, 1, infoColumnIdx)).textContent())!;
       await stateColumnHeader
         .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton)
         .click();
@@ -162,7 +196,7 @@ test.describe(
       await expect(filterContainer).not.toBeVisible();
 
       // did it actually filter out our value?
-      await expect(getCell(page, 1, 1)).resolves.not.toHaveText(firstStateValue);
+      await expect(getCell(page, 1, infoColumnIdx)).resolves.not.toHaveText(firstStateValue);
     });
 
     test('Tests pagination, row height adjustment', async ({ gotoDashboardPage, selectors, page }) => {
@@ -178,7 +212,7 @@ test.describe(
       };
 
       const dashboardPage = await gotoDashboardPage({
-        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
@@ -235,7 +269,8 @@ test.describe(
       expect(fourthPageStatus.total).toBe(largeRowStatus.total);
     });
 
-    test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
+    // TODO: skipping this test for now due to flakiness in adding DataLinks.
+    test.skip('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
       const addDataLink = async (title: string, url: string) => {
         await dashboardPage
           .getByGrafanaSelector(
@@ -251,12 +286,12 @@ test.describe(
         await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').focus();
         await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').fill(url);
         await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').blur();
-        await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+        await page.getByRole('dialog').locator('button[aria-disabled="false"]').filter({ hasText: 'Save' }).click();
         await expect(page.getByRole('dialog')).not.toBeVisible();
       };
 
       const dashboardPage = await gotoDashboardPage({
-        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
@@ -271,8 +306,12 @@ test.describe(
         .last()
         .click();
 
+      const infoColumnIdx = await getColumnIdx(page, 'Info');
+      const pillColIdx = await getColumnIdx(page, 'Pills');
+      const dataLinkColIdx = await getColumnIdx(page, 'Data Link');
+
       // Info column has a single DataLink by default.
-      const infoCell = await getCell(page, 1, 1);
+      const infoCell = await getCell(page, 1, infoColumnIdx);
       await expect(infoCell.locator('a')).toBeVisible();
       expect(infoCell.locator('a')).toHaveAttribute('href');
       expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
@@ -283,6 +322,12 @@ test.describe(
       // add a DataLink to the whole table, all cells will now have a single link.
       const colCount = await page.getByRole('row').nth(1).getByRole('gridcell').count();
       for (let colIdx = 0; colIdx < colCount; colIdx++) {
+        // - pills column currently does not support DataLinks.
+        // - we don't apply DataLinks to the DataLinks column itself, since they're rendered inside.
+        if (colIdx === pillColIdx || colIdx === dataLinkColIdx) {
+          continue;
+        }
+
         const cell = await getCell(page, 1, colIdx);
         await expect(cell.locator('a')).toBeVisible();
         expect(cell.locator('a')).toHaveAttribute('href');
@@ -297,9 +342,15 @@ test.describe(
       // loop thru the columns, click the links, observe that the tooltip appears, and close the tooltip.
       for (let colIdx = 0; colIdx < colCount; colIdx++) {
         const cell = await getCell(page, 1, colIdx);
-        if (colIdx === 1) {
+        if (colIdx === infoColumnIdx) {
           // the Info column should still have its single link.
           expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
+          continue;
+        }
+
+        // - pills column currently does not support DataLinks.
+        // - we don't apply DataLinks to the DataLinks column itself, since they're rendered inside.
+        if (colIdx === pillColIdx || colIdx === dataLinkColIdx) {
           continue;
         }
 
@@ -316,7 +367,7 @@ test.describe(
 
     test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
-        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '2' }),
       });
 

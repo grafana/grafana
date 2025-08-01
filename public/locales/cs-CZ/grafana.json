@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1559,11 +1560,11 @@
       "group-not-editable": "Vybranou skupinu nelze upravit",
       "group-not-editable-description": "Tato skupina patří ke zdroji dat, který nepodporuje úpravy.",
       "page-title": "Upravit skupinu pravidel",
-      "rule-group-error": "Chyba při načítání skupiny pravidel",
-      "title": "Upravit hodnotící skupinu"
+      "rule-group-error": "Chyba při načítání skupiny pravidel"
     },
     "group-loader": {
-      "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}"
+      "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Probíhá odstranění skupiny"
@@ -1593,8 +1594,7 @@
       "synthetic-monitoring-card-item-2": "Spusťte kontroly pingu, DNS, HTTP/S a TCP na každé síťové vrstvě.",
       "synthetic-monitoring-card-item-3": "Použijte více než 20 globálních nebo soukromých sond za firewallem.",
       "synthetic-monitoring-card-item-4": "Sledujte SLO pomocí vestavěných Prometheus výstrah přímo z uživatelského rozhraní.",
-      "synthetic-monitoring-card-title": "Syntetické monitorování",
-      "title-alerting": "Výstrahy"
+      "synthetic-monitoring-card-title": "Syntetické monitorování"
     },
     "import-to-gma": {
       "action-button": "Importovat",
@@ -2486,7 +2486,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurovat",
-      "draft-new-rule": "Navrhnout nové pravidlo",
       "ds-error": {
         "title": "Nelze načíst pravidla pro tento zdroj dat"
       },
@@ -2512,6 +2511,7 @@
       "new-alert-rule": "Nové pravidlo výstrahy",
       "new-datasource-recording-rule": "Nové pravidlo nahrávání zdroje dat",
       "new-grafana-recording-rule": "Nové pravidlo nahrávání Grafany",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Zobrazit více…"
       },
@@ -2828,6 +2828,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Obnovit náhled",
+      "empty-state": "",
       "label-preview": "Náhled",
       "refresh": "Obnovit"
     },
@@ -3385,6 +3386,9 @@
       "text-badge-enabled": "Povoleno",
       "text-badge-not-enabled": "Není povoleno"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Koncový bod .well-known / openid-configuration pro vašeho poskytovatele identity",
       "title-open-id-connect-discovery-url": "Adresa URL OpenID Connect Discovery"
@@ -3502,7 +3506,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Zrušit",
       "cannot-move-folders": "Složky nelze přesunout",
       "confirmation-text": "Odstranit",
@@ -3535,6 +3539,37 @@
     "browse-view": {
       "this-folder-is-empty": "Tato složka je prázdná"
     },
+    "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
+      "failed-alert_one": "",
+      "failed-alert_few": "",
+      "failed-alert_many": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": ""
+    },
+    "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
+      "deleting": "",
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} pravidlo výstrahy",
       "alertRule_few": "{{count}} pravidlo výstrahy",
@@ -3566,12 +3601,12 @@
       "tags-column": "Tagy"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Složka byla úspěšně odstraněna",
       "api-error": "Složku se nepodařilo odstranit",
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
       "button-deleting": "Probíhá odstraňování…",
-      "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:"
+      "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nelze načíst informace o následovníkovi"
@@ -3595,6 +3630,7 @@
       "empty-message": "Nebyly nalezeny žádné složky",
       "error-title": "Chyba při načítání složek",
       "non-folder-item": "Bez složky {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Vyhledat složky",
       "unknown-error": "Neznámá chyba"
     },
@@ -3613,7 +3649,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Chyba při vytváření složky",
-      "alert-folder-created-successfully": "Složka úspěšně vytvořena",
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
@@ -3740,6 +3775,7 @@
     "category-selected-connection": "Vybrané připojení",
     "category-selected-element": "Vybraný prvek ({{element}})",
     "category-size": "Velikost",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3760,7 +3796,6 @@
       }
     },
     "description-experimental-types": "Povolit výběr experimentálních typů prvků",
-    "description-infinite-panning": "Povolit nekonečné posouvání – užitečné pro rozsáhlá plátna. Upozornění: Jedná se o experimentální funkci, která v současné době funguje pouze s prvky, které jsou omezeny nahoře/vlevo",
     "description-inline-editing": "Povolit přímé úpravy panelu",
     "description-pan-zoom": "Povolit posouvání a přiblížení",
     "direction-options": {
@@ -3861,7 +3896,6 @@
     "name-align-text": "Zarovnat text",
     "name-color": "Barva textu",
     "name-experimental-types": "Experimentální typy prvků",
-    "name-infinite-panning": "Nekonečné posouvání",
     "name-inline-editing": "Přímé upravování",
     "name-pan-zoom": "Posouvání a přiblížení",
     "name-text": "Text",
@@ -3982,6 +4016,13 @@
       "name-vertical-align": "Vertikální zarovnání",
       "placeholder": {
         "auto": "Automaticky"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4578,6 +4619,11 @@
     },
     "edit-actions": {
       "add": "Přidat {{typeName}}",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Přesunout {{typeName}}",
       "panel-background": "Změnit pozadí panelu",
       "panel-description": "Změnit popis panelu",
@@ -4592,6 +4638,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Nástěnka",
+        "element": "",
         "local-variable": "Lokální proměnná",
         "multiple-elements": "Více prvků",
         "multiple-elements-delete-text": "Opravdu chcete odstranit tyto prvky?",
@@ -5364,6 +5411,20 @@
       "tags-expected-array": "očekávané pole tagů",
       "tags-expected-strings": "očekávané pole řetězců tagů"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Obnovit na verzi {{version}}",
       "label-view-json-diff": "Zobrazit rozdíl JSON",
@@ -5621,6 +5682,7 @@
       "delete-read-only-file-message": "Tuto nástěnku nelze odstranit přímo z Grafany, protože úložiště je pouze pro čtení. Chcete-li tuto nástěnku odstranit, odeberte soubor z úložiště Git.",
       "deleting": "Probíhá odstranění…",
       "drawer-title": "Odstranit zajištěnou nástěnku",
+      "success-message": "",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
     "description-label": {
@@ -5632,9 +5694,6 @@
           "edit-link": "Upravit odkaz"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Změny na nástěnce úspěšně uloženy"
     },
     "email-list": {
       "aria-label-emailmenu": "Přepnout e-mailovou nabídku"
@@ -5796,6 +5855,7 @@
       "usage-count_other": "Použito na {{count}} nástěnkách"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5805,7 +5865,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -5971,8 +6031,8 @@
         "title-someone-else-has-updated-this-dashboard": "Tuto nástěnku aktualizoval jiný uživatel",
         "would-still-dashboard": "Chcete přesto tuto nástěnku uložit?"
       },
-      "schema-v2-library-panels-export": "Funkce dynamické nástěnky panelu je experimentální a nemá plnou funkčnost srovnatelnou se současným chováním nástěnek. Je založena na novém formátu schématu, který nepodporuje panely knihovny. To znamená, že při exportu nástěnky pro použití v jiné instanci nebudeme zahrnovat panely knihoven. Jejich podpora je naplánována v rámci <2>životního cyklu</2> funkce.",
-      "schema-v2-library-panels-export-title": "Schéma nástěnky V2 zatím nepodporuje export panelů knihoven pro použití v jiné instanci",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Nástěnka byla nevratně změněna"
     },
     "save-dashboard-form-common-options": {
@@ -6993,6 +7053,9 @@
         "pro-tip-define-sources-through-configuration-files": " Pro tip: Zdroje dat můžete definovat také prostřednictvím konfiguračních souborů. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Předch.",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Vyhnout se dotazům"
@@ -7178,6 +7241,7 @@
           "start-time": "Čas zahájení:"
         }
       },
+      "share-span": "",
       "warnings": "Varování"
     },
     "span-filters": {
@@ -7258,18 +7322,24 @@
       "split-tooltip": "Rozdělit podokno",
       "split-widen": "Rozšířit podokno"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Poskytnout zpětnou vazbu",
-      "label-copied": "Zkopírováno!",
-      "label-export": "Exportovat",
-      "label-trace-id": "ID trasování",
-      "title-share-thoughts-about-tracing-grafana": "Podělte se o svůj názor na trasování v Grafaně."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Částečné trasování",
-      "tooltip-url": "{{url}} nebo {{target}} nebo {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tlačítko Vymazat filtry",
@@ -7525,6 +7595,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7584,6 +7655,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -7757,6 +7829,409 @@
       }
     }
   },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "",
+            "name-g-unit": "",
+            "name-meters-sec": ""
+          },
+          "name": ""
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "",
+            "name-arc-seconds": "",
+            "name-degrees": "",
+            "name-gradian": "",
+            "name-radians": ""
+          },
+          "name": ""
+        },
+        "area": {
+          "formats": {
+            "name-acres": "",
+            "name-hectares": "",
+            "name-square-feet": "",
+            "name-square-meters": "",
+            "name-square-miles": ""
+          },
+          "name": ""
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "",
+            "name-true-false": "",
+            "name-yes-no": ""
+          },
+          "name": ""
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "",
+            "name-flops": "",
+            "name-gflops": "",
+            "name-mflops": "",
+            "name-pflops": "",
+            "name-tflops": "",
+            "name-yflops": "",
+            "name-zflops": ""
+          },
+          "name": ""
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "",
+            "name-g-nm3": "",
+            "name-mg-dl": "",
+            "name-mg-m3": "",
+            "name-mg-nm3": "",
+            "name-mmol-l": "",
+            "name-ng-m3": "",
+            "name-ng-nm3": "",
+            "name-ppb": "",
+            "name-ppm": "",
+            "name-ug-m3": "",
+            "name-ug-nm3": ""
+          },
+          "name": ""
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "",
+            "name-brl": "",
+            "name-btc": "",
+            "name-chf": "",
+            "name-czk": "",
+            "name-dkk": "",
+            "name-eur": "",
+            "name-gbp": "",
+            "name-idr": "",
+            "name-ils": "",
+            "name-inr": "",
+            "name-isk": "",
+            "name-jpy": "",
+            "name-krw": "",
+            "name-mbtc": "",
+            "name-myr": "",
+            "name-nok": "",
+            "name-php": "",
+            "name-pln": "",
+            "name-pyg": "",
+            "name-rub": "",
+            "name-sek": "",
+            "name-try": "",
+            "name-uah": "",
+            "name-ubtc": "",
+            "name-usd": "",
+            "name-uyu": "",
+            "name-vnd": "",
+            "name-xpf": "",
+            "name-zar": ""
+          },
+          "name": ""
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "",
+            "name-bits-si": "",
+            "name-bytes-iec": "",
+            "name-bytes-si": "",
+            "name-gibibytes": "",
+            "name-gigabytes": "",
+            "name-kibibytes": "",
+            "name-kilobytes": "",
+            "name-mebibytes": "",
+            "name-megabytes": "",
+            "name-pebibytes": "",
+            "name-petabytes": "",
+            "name-tebibytes": "",
+            "name-terabytes": ""
+          },
+          "name": ""
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "",
+            "name-bits-sec-si": "",
+            "name-bytes-sec-iec": "",
+            "name-bytes-sec-si": "",
+            "name-gibibits-sec": "",
+            "name-gibibytes-sec": "",
+            "name-gigabits-sec": "",
+            "name-gigabytes-sec": "",
+            "name-kibibits-sec": "",
+            "name-kibibytes-sec": "",
+            "name-kilobits-sec": "",
+            "name-kilobytes-sec": "",
+            "name-mebibits-sec": "",
+            "name-mebibytes-sec": "",
+            "name-megabits-sec": "",
+            "name-megabytes-sec": "",
+            "name-packets-sec": "",
+            "name-pebibits-sec": "",
+            "name-pebibytes-sec": "",
+            "name-petabits-sec": "",
+            "name-petabytes-sec": "",
+            "name-tebibits-sec": "",
+            "name-tebibytes-sec": "",
+            "name-terabits-sec": "",
+            "name-terabytes-sec": ""
+          },
+          "name": ""
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "",
+            "name-datetime-iso": "",
+            "name-datetime-iso-no-date": "",
+            "name-datetime-local": "",
+            "name-datetime-local-no-date": "",
+            "name-datetime-us": "",
+            "name-datetime-us-no-date": "",
+            "name-from-now": ""
+          },
+          "name": ""
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "",
+            "name-ampere-hour": "",
+            "name-decibel-milliwatt": "",
+            "name-electron-volt": "",
+            "name-farad": "",
+            "name-femtofarad": "",
+            "name-gigawatt": "",
+            "name-henry": "",
+            "name-joule": "",
+            "name-kiloampere": "",
+            "name-kiloampere-hour": "",
+            "name-kiloohm": "",
+            "name-kilovolt": "",
+            "name-kilovolt-ampere": "",
+            "name-kilovolt-ampere-reactive": "",
+            "name-kilowatt": "",
+            "name-kilowatt-hour": "",
+            "name-kilowatt-min": "",
+            "name-lumens": "",
+            "name-megaohm": "",
+            "name-megawatt": "",
+            "name-megawatt-hour": "",
+            "name-microfarad": "",
+            "name-microhenry": "",
+            "name-milliampere": "",
+            "name-milliampere-hour": "",
+            "name-millihenry": "",
+            "name-milliohm": "",
+            "name-millivolt": "",
+            "name-milliwatt": "",
+            "name-nanofarad": "",
+            "name-ohm": "",
+            "name-picofarad": "",
+            "name-volt": "",
+            "name-volt-ampere": "",
+            "name-volt-ampere-reactive": "",
+            "name-watt": "",
+            "name-watt-hour": "",
+            "name-watt-hour-per-kg": "",
+            "name-watt-square-meter": ""
+          },
+          "name": ""
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "",
+            "name-cubic-feet-sec": "",
+            "name-cubic-meters-sec": "",
+            "name-gallons-min": "",
+            "name-litre-hour": "",
+            "name-litre-min": "",
+            "name-lux": "",
+            "name-millilitre-min": ""
+          },
+          "name": ""
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "",
+            "name-kilonewtons": "",
+            "name-newton-meters": "",
+            "name-newtons": ""
+          },
+          "name": ""
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "",
+            "name-gigahashes-sec": "",
+            "name-hashes-sec": "",
+            "name-kilohashes-sec": "",
+            "name-megahashes-sec": "",
+            "name-petahashes-sec": "",
+            "name-terahashes-sec": ""
+          },
+          "name": ""
+        },
+        "length": {
+          "formats": {
+            "name-feet": "",
+            "name-inch": "",
+            "name-kilometer": "",
+            "name-meter": "",
+            "name-mile": "",
+            "name-millimeter": ""
+          },
+          "name": ""
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "",
+            "name-kilogram": "",
+            "name-metric-ton": "",
+            "name-milligram": "",
+            "name-pound": ""
+          },
+          "name": ""
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "",
+            "name-decibel": "",
+            "name-hexadecimal": "",
+            "name-hexadecimal-0x": "",
+            "name-humidity": "",
+            "name-locale": "",
+            "name-number": "",
+            "name-percent-1": "",
+            "name-percent-100": "",
+            "name-pixels": "",
+            "name-scientific": "",
+            "name-short": "",
+            "name-si-short": "",
+            "name-string": ""
+          },
+          "name": ""
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "",
+            "name-hectopascals": "",
+            "name-inches-mercury": "",
+            "name-kilobars": "",
+            "name-kilopascals": "",
+            "name-millibars": "",
+            "name-pascals": "",
+            "name-psi": ""
+          },
+          "name": ""
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "",
+            "name-curie": "",
+            "name-exposure": "",
+            "name-gray": "",
+            "name-microsievert": "",
+            "name-microsievert-hour": "",
+            "name-millisievert": "",
+            "name-millisievert-hour": "",
+            "name-rad": "",
+            "name-rem": "",
+            "name-roentgen": "",
+            "name-sievert": "",
+            "name-sievert-hour": ""
+          },
+          "name": ""
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "",
+            "name-gigahertz": "",
+            "name-hertz": "",
+            "name-kilohertz": "",
+            "name-megahertz": "",
+            "name-radians-sec": "",
+            "name-rpm": ""
+          },
+          "name": ""
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "",
+            "name-fahrenheit": "",
+            "name-kelvin": ""
+          },
+          "name": ""
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "",
+            "name-counts-sec": "",
+            "name-events-min": "",
+            "name-events-sec": "",
+            "name-io-ops-sec": "",
+            "name-messages-min": "",
+            "name-messages-sec": "",
+            "name-ops-min": "",
+            "name-ops-sec": "",
+            "name-reads-min": "",
+            "name-reads-sec": "",
+            "name-records-min": "",
+            "name-records-sec": "",
+            "name-requests-min": "",
+            "name-requests-sec": "",
+            "name-rows-min": "",
+            "name-rows-sec": "",
+            "name-writes-min": "",
+            "name-writes-sec": ""
+          },
+          "name": ""
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "",
+            "name-clock-s": "",
+            "name-days": "",
+            "name-duration-dhms": "",
+            "name-duration-hms": "",
+            "name-duration-ms": "",
+            "name-duration-s": "",
+            "name-hertz": "",
+            "name-hours": "",
+            "name-microseconds": "",
+            "name-milliseconds": "",
+            "name-minutes": "",
+            "name-nanoseconds": "",
+            "name-seconds": "",
+            "name-timeticks": ""
+          },
+          "name": ""
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "",
+            "name-knot": "",
+            "name-meters-second": "",
+            "name-miles-hour": ""
+          },
+          "name": ""
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "",
+            "name-cubic-meter": "",
+            "name-gallons": "",
+            "name-litre": "",
+            "name-millilitre": "",
+            "name-normal-cubic-meter": ""
+          },
+          "name": ""
+        }
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -7880,6 +8355,9 @@
     "card": {
       "option": "možnost"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Vymazat výběr"
     },
@@ -7892,6 +8370,7 @@
       "aria-label-selected-color": "{{colorLabel}} barva"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Zrušit",
       "confirmText-delete": ""
     },
@@ -7996,6 +8475,60 @@
       "previous-label": "Předchozí měsíc",
       "select-placeholder": "Vyberte datum/čas"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Zavřít"
     },
@@ -8042,6 +8575,20 @@
       "description-fields-with-value": "Nastavit vlastnosti pro pole s podmínkou reduktoru",
       "field-name-picker": {
         "placeholder": "Vyberte pole"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "Pole s názvem odpovídajícím regulárnímu výrazu",
       "name-fields-by-query": "Pole vrácená dotazem",
@@ -8147,7 +8694,10 @@
         "no-data": ""
       },
       "no-values-label": "Žádné hodnoty",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tagy"
@@ -8247,6 +8797,7 @@
       "footer-add-annotation": "Přidat vysvětlivku",
       "footer-click-to-action": "Klikněte pro {{actionTitle}}",
       "footer-click-to-navigate": "Klikněte pro otevření {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Časová známka"
     },
     "week-start-picker": {
@@ -8896,8 +9447,11 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Žádná pole k zobrazení.",
+      "open-assistant": "",
       "pin-line": "Připnout protokol",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "Žádné výsledky k zobrazení."
       },
@@ -8912,6 +9466,9 @@
       "copy-log": "Kopírovat řádek protokolu",
       "hide-details": "Zobrazit podrobnosti protokolu",
       "icon-label": "Nabídka protokolu",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Připnout protokol",
       "show-context": "Zobrazit kontext",
       "show-details": "Skrýt podrobnosti protokolu",
@@ -9745,7 +10302,9 @@
       "aria-label": "Nápověda"
     },
     "invite-user": {
-      "invite-new-member-button": "Pozvat nového člena"
+      "invite-button": "Pozvat",
+      "invite-new-member-button": "Pozvat nového člena",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Přidat do záložek",
@@ -10509,16 +11068,41 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Tato funkce je v současné době v aktivním vývoji. Pro nejlepší zážitek a nejnovější vylepšení doporučujeme použít <2>noční sestavení</2> Grafany."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Pojmenujte jasně toto připojení k úložišti",
@@ -10529,10 +11113,18 @@
       "label-display-name": "Zobrazované jméno",
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
       "text-loading-resource-information": "Načítání informací o zdroji…",
+      "dashboards-count_one": "",
+      "dashboards-count_few": "",
+      "dashboards-count_many": "",
+      "dashboards-count_other": "",
       "files-count_one": "Počet souborů: {{count}}",
       "files-count_few": "Počet souborů: {{count}}",
       "files-count_many": "Počet souborů: {{count}}",
-      "files-count_other": "Počet souborů: {{count}}"
+      "files-count_other": "Počet souborů: {{count}}",
+      "folders-count_one": "",
+      "folders-count_few": "",
+      "folders-count_many": "",
+      "folders-count_other": ""
     },
     "check-repository": {
       "check": "Kontrola"
@@ -10543,36 +11135,20 @@
       "button-save": "Uložit",
       "button-saving": "Ukládání…",
       "description-enabled": "Jakmile je povoleno automatické tažení, cíl nelze změnit.",
-      "description-path": "Cesta k dílčímu adresáři v úložišti Git",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
-      "description-repository-url": "Zadejte adresu URL úložiště GitHub",
       "description-title": "Člověkem čitelný název konfigurace",
       "error-required": "Toto pole je povinné.",
       "error-save-repository": "Nastavení úložiště se nepodařilo uložit",
-      "error-valid-github-url": "Zadejte platnou adresu URL úložiště GitHub",
       "label-automatic-pulling": "Automatické vyžádání",
-      "label-branch": "Větev",
       "label-enabled": "Povoleno",
-      "label-github-token": "Token GitHubu",
       "label-interval-seconds": "Interval (sekundy)",
-      "label-local-path": "Místní cesta",
-      "label-path": "Cesta",
-      "label-pr-workflow": "Povolit možnost pull request při ukládání",
       "label-repository-type": "Typ úložiště",
-      "label-repository-url": "Adresa URL úložiště",
       "label-target": "Cíl",
       "label-title": "Název",
       "option-entire-instance": "Celá instance",
-      "option-github": "GitHub",
-      "option-local": "Místní",
       "option-managed-folder": "Spravovaná složka",
-      "placeholder-branch": "hlavní",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Moje konfigurace",
-      "placeholder-select-repository-type": "Vyberte typ úložiště"
+      "placeholder-my-config": "Moje konfigurace"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Nakonfigurujte webhooky</0> a získejte okamžité aktualizace v Grafaně ihned po potvrzení změn. Před zveřejněním zkontrolujte a schvalte změny pomocí pull requestů.",
@@ -10586,26 +11162,7 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurovat",
-      "configure-file": "Konfigurovat zajištění souborů",
-      "configure-git-sync": "Konfigurovat synchronizaci Git",
       "repository-limit-info-alert": "Bylo dosaženo limitu úložiště ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Větev, která bude použita pro úložiště GitHub",
-      "description-github-path": "Toto je cesta k dílčímu adresáři ve vašem úložišti GitHub, kde budou uloženy a zajištěny nástěnky",
-      "description-paste-your-git-hub-personal-access-token": "Vložte svůj osobní přístupový token GitHub",
-      "description-repository-url": "Vložte adresu URL svého úložiště GitHub",
-      "error-field-required": "Toto pole je povinné.",
-      "error-invalid-github-url": "Zadejte platnou adresu URL úložiště GitHub",
-      "label-access-token": "Přístupový token GitHub",
-      "label-branch": "Název pobočky",
-      "label-local-path": "Místní cesta",
-      "label-path": "Cesta k dílčímu adresáři v úložišti",
-      "label-repository-url": "Adresa URL úložiště GitHub",
-      "placeholder-branch": "hlavní",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
@@ -10638,17 +11195,17 @@
       "title-instant-updates-requests-webhooks": "Okamžité aktualizace a pull requesty pomocí webhooků.",
       "title-visual-previews-in-pull-requests": "Vizuální náhledy v pull requestech s vykreslením obrázků"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Specifikace úlohy",
-      "summary": "Shrnutí",
-      "title-error": "Chyba"
+      "summary": "Shrnutí"
     },
     "features-list": {
       "actions": {
         "set-up-required-feature-toggles": "Nastavit povinné přepínače funkcí"
       },
-      "manage-dashboards-provision-updates-automatically": "Spravuje nástěnky jako kód v GitHubu a automaticky zajišťujte aktualizace",
-      "manage-your-dashboards-with-remote-provisioning": "Začněte s GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Ukládejte nástěnky do úložiště s pevně nastavenou verzí pro lepší organizaci a sledování historie"
     },
     "file-history-page": {
@@ -10669,18 +11226,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Přidá náhled obrázku změn nástěnky v pull requestech. Obrázky nástěnek Grafana budou sdíleny ve vašem úložišti Git a uvidí je každý, kdo má přístup k úložišti.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Vyžaduje vykreslení obrázků. <2>Nastavit vykreslování obrázků</2>",
-      "description-often-shall-instance-updates-git-hub": "Jak často bude instance stahovat aktualizace z GitHubu?",
-      "description-pr-enable-description": "Umožňuje uživatelům zvolit, zda se má při ukládání změn otevřít pull request. Pokud úložiště neumožňuje přímé změny hlavní větve, může být stále vyžadován pull request.",
+      "description-preview-requirements": "",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
-      "description-webhooks-enable": "Umožňuje uživatelům zvolit, zda se má při ukládání změn otevřít pull request. Pokud úložiště neumožňuje přímé změny hlavní větve, může být stále vyžadován pull request.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Povolit náhledy nástěnek v pull requestech",
-      "label-pr-workflow": "Povolit možnost pull request při ukládání",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Jen pro čtení",
-      "label-update-instance-interval-seconds": "Interval aktualizace instance (sekundy)",
-      "placeholder": "60",
-      "text-setup-later": "Toto můžete kdykoli nastavit později",
-      "title-enhance-github": "Vylepšete své zkušenosti s GitHubem"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
@@ -10711,6 +11266,57 @@
       "header": "Zajišťování",
       "subtitle-provisioning-feature": "Zobrazujte a spravujte vazby zajištění"
     },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
     "history-view": {
       "not-found": "Nenalezeno"
     },
@@ -10737,9 +11343,18 @@
       "starting": "Spouštění…",
       "status": {
         "title-error-running-job": "Chyba při spouštění úlohy",
-        "title-job-completed-successfully": "Úloha byla úspěšně dokončena"
+        "title-success-running-job": "",
+        "title-warning-running-job": ""
       },
-      "summary": "Shrnutí"
+      "summary": "Shrnutí",
+      "title": {
+        "error-fetching-active-job": ""
+      }
+    },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
     },
     "mode-options": {
       "folder": {
@@ -10765,7 +11380,7 @@
     },
     "repository-actions": {
       "settings": "Nastavení",
-      "source-code": "Zdrojový kód"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10830,6 +11445,24 @@
       "title-legacy-storage": "Starší verze úložiště",
       "title-queued-for-deletion": "Zařazeno do fronty k odstranění"
     },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
+    },
     "resource-view": {
       "base": "Základ",
       "dashboard-preview": "Náhled nástěnky",
@@ -10859,6 +11492,12 @@
       "label-current-step": "Aktuální krok",
       "label-pending-step": "Nevyřízený krok"
     },
+    "success-title-default": "",
+    "sync-job": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": ""
+    },
     "sync-repository": {
       "body-edit-configuration": "Upravit konfiguraci",
       "button-edit": "Upravit",
@@ -10869,9 +11508,6 @@
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
-      "error-no-job-id": "Nepodařilo se spustit úlohu",
-      "error-no-repository-name": "Nebyl zadán žádný název úložiště",
-      "error-starting-job": "Chyba při spouštění úlohy",
       "synchronization-description": "Zahrnout předložení pro každou historickou hodnotu",
       "synchronization-options": "Možnosti synchronizace"
     },
@@ -10880,6 +11516,7 @@
       "go-to": "Přejít na",
       "make-sure": "Nezapomeňte zahrnout tato oprávnění"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Během tohoto procesu nebude možné vytvářet, upravovat ani odstraňovat zdroje. V posledním kroku zmizí.",
       "alert-point-2": "Po zajištění se zdroje znovu zobrazí a budou spravovány prostřednictvím externího úložiště.",
@@ -10888,6 +11525,12 @@
       "alert-title": "Důležité: Nebudou ztracena žádná data ani konfigurace, ale nástěnky budou na několik minut dočasně nedostupné.",
       "button-next": "Dokončit",
       "button-start": "Zahájit synchronizaci",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Vyberte, co chcete synchronizovat",
       "step-connect": "Připojit",
       "step-finish": "Vybrat další nastavení",
@@ -10902,6 +11545,7 @@
     "wizard-content": {
       "button-cancel": "Zrušit",
       "button-cancelling": "Probíhá zrušení…",
+      "button-previous": "",
       "button-submitting": "Odesílání…",
       "error-instance-repository-exists": "Instance úložiště už existuje"
     }
@@ -11310,7 +11954,7 @@
         "recommended": "Doporučeno",
         "results": "Výsledky"
       },
-      "search": "Hledat"
+      "search": ""
     }
   },
   "search": {
@@ -11951,6 +12595,18 @@
       "label-medium": "Střední",
       "label-small": "Malé"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Pokud je vybrán, celý řádek bude barevný jako tato buňka.",
       "description-wrap-text": "Pokud bude vybraný text zabalen na šířku textu v nakonfigurovaném sloupci",
@@ -11959,7 +12615,6 @@
       },
       "label-apply-to-entire-row": "Použít na celý řádek",
       "label-background-display-mode": "Režim zobrazení pozadí",
-      "label-wrap-text": "Zalomení textu",
       "wrap-text": "Zalomení textu"
     },
     "column-alignment-options": {
@@ -12942,7 +13597,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -12964,6 +13619,9 @@
         }
       },
       "regression": "regrese",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Počet bodů X, Y k předpovědi"
     },
     "rename-by-regex-transformer": {

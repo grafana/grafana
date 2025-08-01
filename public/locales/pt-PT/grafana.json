@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1547,11 +1548,11 @@
       "group-not-editable": "O grupo selecionado não pode ser editado",
       "group-not-editable-description": "Este grupo pertence a uma origem de dados que não suporta edição.",
       "page-title": "Editar grupo de regras",
-      "rule-group-error": "Erro ao carregar grupo de regras",
-      "title": "Editar grupo de avaliação"
+      "rule-group-error": "Erro ao carregar grupo de regras"
     },
     "group-loader": {
-      "group-load-failed": "Falha ao carregar regras do grupo {{ groupName }} em {{ namespaceName }}"
+      "group-load-failed": "Falha ao carregar regras do grupo {{ groupName }} em {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "O grupo está a ser eliminado"
@@ -1581,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Alerta"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Importar",
@@ -2466,7 +2466,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configurar",
-      "draft-new-rule": "Elabore o rascunho de uma nova regra",
       "ds-error": {
         "title": "Não é possível carregar regras para esta origem de dados"
       },
@@ -2492,6 +2491,7 @@
       "new-alert-rule": "Nova regra de alerta",
       "new-datasource-recording-rule": "Nova regra de gravação da origem de dados",
       "new-grafana-recording-rule": "Nova regra de gravação da Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Mostrar mais... "
       },
@@ -2802,6 +2802,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Recarregar a pré-visualização",
+      "empty-state": "",
       "label-preview": "Pré-visualizar",
       "refresh": "Atualizar"
     },
@@ -3359,6 +3360,9 @@
       "text-badge-enabled": "Ativado",
       "text-badge-not-enabled": "Não ativado"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "O ponto final .well-known/openid-configuration para o seu IdP",
       "title-open-id-connect-discovery-url": "URL de descoberta do OpenID Connect"
@@ -3476,7 +3480,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Cancelar",
       "cannot-move-folders": "Não é possível mover as pastas",
       "confirmation-text": "Eliminar",
@@ -3509,6 +3513,35 @@
     "browse-view": {
       "this-folder-is-empty": "Esta pasta está vazia"
     },
+    "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": ""
+    },
+    "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
+      "deleting": "",
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} regra de alerta",
       "alertRule_other": "{{count}} regras de alerta",
@@ -3530,12 +3563,12 @@
       "tags-column": "Etiquetas"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Não foi possível obter informações sobre os descendentes"
@@ -3559,6 +3592,7 @@
       "empty-message": "Nenhuma pasta encontrada",
       "error-title": "Erro ao carregar pastas",
       "non-folder-item": "Não pasta {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Pesquisar pastas",
       "unknown-error": "Erro desconhecido"
     },
@@ -3577,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Erro ao criar a pasta",
-      "alert-folder-created-successfully": "Pasta criada com sucesso",
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
@@ -3704,6 +3737,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3724,7 +3758,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3825,7 +3858,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -3946,6 +3978,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Automóvel"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4542,6 +4581,11 @@
     },
     "edit-actions": {
       "add": "Adicionar {{typeName}}",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Alterar fundo do painel",
       "panel-description": "Alterar descrição do painel",
@@ -4556,6 +4600,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Painel de controlo",
+        "element": "",
         "local-variable": "Variável local",
         "multiple-elements": "Vários elementos",
         "multiple-elements-delete-text": "Tem a certeza de que pretende eliminar estes elementos?",
@@ -5326,6 +5371,20 @@
       "tags-expected-array": "matriz de etiquetas esperada",
       "tags-expected-strings": "matriz de strings de etiquetas esperada"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Restaurar para a versão {{version}}",
       "label-view-json-diff": "Visualizar diferenças JSON",
@@ -5583,6 +5642,7 @@
       "delete-read-only-file-message": "",
       "deleting": "A eliminar...",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
     },
     "description-label": {
@@ -5594,9 +5654,6 @@
           "edit-link": "Editar link"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Alternar menu de e-mail"
@@ -5756,6 +5813,7 @@
       "usage-count_other": "Utilizado em {{count}} painéis de controlo"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5765,7 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -5931,8 +5989,8 @@
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel de controlo",
         "would-still-dashboard": "Ainda pretende guardar este painel de controlo?"
       },
-      "schema-v2-library-panels-export": "A funcionalidade do painel de controlo dinâmico é experimental e não tem paridade de funcionalidade total com o comportamento atual dos painéis de controlo. Baseia-se num novo formato de esquema, que não suporta painéis de biblioteca. Isto significa que, ao exportar o painel de controlo para o utilizar noutra instância, não incluiremos painéis de biblioteca. Tencionamos suportá-los à medida que avançamos no <2>ciclo de vida</2> da funcionalidade.",
-      "schema-v2-library-panels-export-title": "O Esquema de Painel de Controlo V2 ainda não suporta a exportação de painéis de biblioteca para serem utilizados noutra instância",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Painel de controlo alterado de forma irreversível"
     },
     "save-dashboard-form-common-options": {
@@ -6951,6 +7009,9 @@
         "pro-tip-define-sources-through-configuration-files": "Dica: também pode definir origens de dados através de ficheiros de configuração. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Anterior",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Sem consulta"
@@ -7136,6 +7197,7 @@
           "start-time": "Hora de início:"
         }
       },
+      "share-span": "",
       "warnings": "Avisos"
     },
     "span-filters": {
@@ -7216,18 +7278,24 @@
       "split-tooltip": "Dividir o painel",
       "split-widen": "Alargar painel"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Dar feedback",
-      "label-copied": "Copiado!",
-      "label-export": "Exportar",
-      "label-trace-id": "ID trace",
-      "title-share-thoughts-about-tracing-grafana": "Partilhe a sua opinião sobre o rastreamento na Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Trace parcial",
-      "tooltip-url": "{{url}} ou {{target}} ou {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Botão para limpar filtros",
@@ -7483,6 +7551,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7542,6 +7611,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -7715,6 +7785,409 @@
       }
     }
   },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "",
+            "name-g-unit": "",
+            "name-meters-sec": ""
+          },
+          "name": ""
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "",
+            "name-arc-seconds": "",
+            "name-degrees": "",
+            "name-gradian": "",
+            "name-radians": ""
+          },
+          "name": ""
+        },
+        "area": {
+          "formats": {
+            "name-acres": "",
+            "name-hectares": "",
+            "name-square-feet": "",
+            "name-square-meters": "",
+            "name-square-miles": ""
+          },
+          "name": ""
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "",
+            "name-true-false": "",
+            "name-yes-no": ""
+          },
+          "name": ""
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "",
+            "name-flops": "",
+            "name-gflops": "",
+            "name-mflops": "",
+            "name-pflops": "",
+            "name-tflops": "",
+            "name-yflops": "",
+            "name-zflops": ""
+          },
+          "name": ""
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "",
+            "name-g-nm3": "",
+            "name-mg-dl": "",
+            "name-mg-m3": "",
+            "name-mg-nm3": "",
+            "name-mmol-l": "",
+            "name-ng-m3": "",
+            "name-ng-nm3": "",
+            "name-ppb": "",
+            "name-ppm": "",
+            "name-ug-m3": "",
+            "name-ug-nm3": ""
+          },
+          "name": ""
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "",
+            "name-brl": "",
+            "name-btc": "",
+            "name-chf": "",
+            "name-czk": "",
+            "name-dkk": "",
+            "name-eur": "",
+            "name-gbp": "",
+            "name-idr": "",
+            "name-ils": "",
+            "name-inr": "",
+            "name-isk": "",
+            "name-jpy": "",
+            "name-krw": "",
+            "name-mbtc": "",
+            "name-myr": "",
+            "name-nok": "",
+            "name-php": "",
+            "name-pln": "",
+            "name-pyg": "",
+            "name-rub": "",
+            "name-sek": "",
+            "name-try": "",
+            "name-uah": "",
+            "name-ubtc": "",
+            "name-usd": "",
+            "name-uyu": "",
+            "name-vnd": "",
+            "name-xpf": "",
+            "name-zar": ""
+          },
+          "name": ""
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "",
+            "name-bits-si": "",
+            "name-bytes-iec": "",
+            "name-bytes-si": "",
+            "name-gibibytes": "",
+            "name-gigabytes": "",
+            "name-kibibytes": "",
+            "name-kilobytes": "",
+            "name-mebibytes": "",
+            "name-megabytes": "",
+            "name-pebibytes": "",
+            "name-petabytes": "",
+            "name-tebibytes": "",
+            "name-terabytes": ""
+          },
+          "name": ""
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "",
+            "name-bits-sec-si": "",
+            "name-bytes-sec-iec": "",
+            "name-bytes-sec-si": "",
+            "name-gibibits-sec": "",
+            "name-gibibytes-sec": "",
+            "name-gigabits-sec": "",
+            "name-gigabytes-sec": "",
+            "name-kibibits-sec": "",
+            "name-kibibytes-sec": "",
+            "name-kilobits-sec": "",
+            "name-kilobytes-sec": "",
+            "name-mebibits-sec": "",
+            "name-mebibytes-sec": "",
+            "name-megabits-sec": "",
+            "name-megabytes-sec": "",
+            "name-packets-sec": "",
+            "name-pebibits-sec": "",
+            "name-pebibytes-sec": "",
+            "name-petabits-sec": "",
+            "name-petabytes-sec": "",
+            "name-tebibits-sec": "",
+            "name-tebibytes-sec": "",
+            "name-terabits-sec": "",
+            "name-terabytes-sec": ""
+          },
+          "name": ""
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "",
+            "name-datetime-iso": "",
+            "name-datetime-iso-no-date": "",
+            "name-datetime-local": "",
+            "name-datetime-local-no-date": "",
+            "name-datetime-us": "",
+            "name-datetime-us-no-date": "",
+            "name-from-now": ""
+          },
+          "name": ""
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "",
+            "name-ampere-hour": "",
+            "name-decibel-milliwatt": "",
+            "name-electron-volt": "",
+            "name-farad": "",
+            "name-femtofarad": "",
+            "name-gigawatt": "",
+            "name-henry": "",
+            "name-joule": "",
+            "name-kiloampere": "",
+            "name-kiloampere-hour": "",
+            "name-kiloohm": "",
+            "name-kilovolt": "",
+            "name-kilovolt-ampere": "",
+            "name-kilovolt-ampere-reactive": "",
+            "name-kilowatt": "",
+            "name-kilowatt-hour": "",
+            "name-kilowatt-min": "",
+            "name-lumens": "",
+            "name-megaohm": "",
+            "name-megawatt": "",
+            "name-megawatt-hour": "",
+            "name-microfarad": "",
+            "name-microhenry": "",
+            "name-milliampere": "",
+            "name-milliampere-hour": "",
+            "name-millihenry": "",
+            "name-milliohm": "",
+            "name-millivolt": "",
+            "name-milliwatt": "",
+            "name-nanofarad": "",
+            "name-ohm": "",
+            "name-picofarad": "",
+            "name-volt": "",
+            "name-volt-ampere": "",
+            "name-volt-ampere-reactive": "",
+            "name-watt": "",
+            "name-watt-hour": "",
+            "name-watt-hour-per-kg": "",
+            "name-watt-square-meter": ""
+          },
+          "name": ""
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "",
+            "name-cubic-feet-sec": "",
+            "name-cubic-meters-sec": "",
+            "name-gallons-min": "",
+            "name-litre-hour": "",
+            "name-litre-min": "",
+            "name-lux": "",
+            "name-millilitre-min": ""
+          },
+          "name": ""
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "",
+            "name-kilonewtons": "",
+            "name-newton-meters": "",
+            "name-newtons": ""
+          },
+          "name": ""
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "",
+            "name-gigahashes-sec": "",
+            "name-hashes-sec": "",
+            "name-kilohashes-sec": "",
+            "name-megahashes-sec": "",
+            "name-petahashes-sec": "",
+            "name-terahashes-sec": ""
+          },
+          "name": ""
+        },
+        "length": {
+          "formats": {
+            "name-feet": "",
+            "name-inch": "",
+            "name-kilometer": "",
+            "name-meter": "",
+            "name-mile": "",
+            "name-millimeter": ""
+          },
+          "name": ""
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "",
+            "name-kilogram": "",
+            "name-metric-ton": "",
+            "name-milligram": "",
+            "name-pound": ""
+          },
+          "name": ""
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "",
+            "name-decibel": "",
+            "name-hexadecimal": "",
+            "name-hexadecimal-0x": "",
+            "name-humidity": "",
+            "name-locale": "",
+            "name-number": "",
+            "name-percent-1": "",
+            "name-percent-100": "",
+            "name-pixels": "",
+            "name-scientific": "",
+            "name-short": "",
+            "name-si-short": "",
+            "name-string": ""
+          },
+          "name": ""
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "",
+            "name-hectopascals": "",
+            "name-inches-mercury": "",
+            "name-kilobars": "",
+            "name-kilopascals": "",
+            "name-millibars": "",
+            "name-pascals": "",
+            "name-psi": ""
+          },
+          "name": ""
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "",
+            "name-curie": "",
+            "name-exposure": "",
+            "name-gray": "",
+            "name-microsievert": "",
+            "name-microsievert-hour": "",
+            "name-millisievert": "",
+            "name-millisievert-hour": "",
+            "name-rad": "",
+            "name-rem": "",
+            "name-roentgen": "",
+            "name-sievert": "",
+            "name-sievert-hour": ""
+          },
+          "name": ""
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "",
+            "name-gigahertz": "",
+            "name-hertz": "",
+            "name-kilohertz": "",
+            "name-megahertz": "",
+            "name-radians-sec": "",
+            "name-rpm": ""
+          },
+          "name": ""
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "",
+            "name-fahrenheit": "",
+            "name-kelvin": ""
+          },
+          "name": ""
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "",
+            "name-counts-sec": "",
+            "name-events-min": "",
+            "name-events-sec": "",
+            "name-io-ops-sec": "",
+            "name-messages-min": "",
+            "name-messages-sec": "",
+            "name-ops-min": "",
+            "name-ops-sec": "",
+            "name-reads-min": "",
+            "name-reads-sec": "",
+            "name-records-min": "",
+            "name-records-sec": "",
+            "name-requests-min": "",
+            "name-requests-sec": "",
+            "name-rows-min": "",
+            "name-rows-sec": "",
+            "name-writes-min": "",
+            "name-writes-sec": ""
+          },
+          "name": ""
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "",
+            "name-clock-s": "",
+            "name-days": "",
+            "name-duration-dhms": "",
+            "name-duration-hms": "",
+            "name-duration-ms": "",
+            "name-duration-s": "",
+            "name-hertz": "",
+            "name-hours": "",
+            "name-microseconds": "",
+            "name-milliseconds": "",
+            "name-minutes": "",
+            "name-nanoseconds": "",
+            "name-seconds": "",
+            "name-timeticks": ""
+          },
+          "name": ""
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "",
+            "name-knot": "",
+            "name-meters-second": "",
+            "name-miles-hour": ""
+          },
+          "name": ""
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "",
+            "name-cubic-meter": "",
+            "name-gallons": "",
+            "name-litre": "",
+            "name-millilitre": "",
+            "name-normal-cubic-meter": ""
+          },
+          "name": ""
+        }
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -7838,6 +8311,9 @@
     "card": {
       "option": "opção"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Limpar a seleção"
     },
@@ -7850,6 +8326,7 @@
       "aria-label-selected-color": "cor {{colorLabel}} "
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Cancelar",
       "confirmText-delete": ""
     },
@@ -7954,6 +8431,60 @@
       "previous-label": "Mês anterior",
       "select-placeholder": "Selecione data/hora"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Fechar"
     },
@@ -8000,6 +8531,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -8105,7 +8650,10 @@
         "no-data": ""
       },
       "no-values-label": "Nenhum valor",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Etiquetas"
@@ -8205,6 +8753,7 @@
       "footer-add-annotation": "Adicionar anotação",
       "footer-click-to-action": "Clique para {{actionTitle}}",
       "footer-click-to-navigate": "Clique para abrir {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Registo de data e hora"
     },
     "week-start-picker": {
@@ -8838,8 +9387,11 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": ""
       },
@@ -8854,6 +9406,9 @@
       "copy-log": "Copiar linha de registo",
       "hide-details": "Mostrar detalhes do registo",
       "icon-label": "Menu de registo",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Afixar registo",
       "show-context": "Mostrar contexto",
       "show-details": "Ocultar detalhes do registo",
@@ -9687,7 +10242,9 @@
       "aria-label": "Ajuda"
     },
     "invite-user": {
-      "invite-new-member-button": "Convidar um novo membro"
+      "invite-button": "Convidar",
+      "invite-new-member-button": "Convidar um novo membro",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Adicionar aos Marcadores",
@@ -10445,16 +11002,41 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Esta funcionalidade está atualmente em desenvolvimento ativo. Para a melhor experiência e as melhorias mais recentes, recomendamos a utilização da <2>compilação noturna</2> da Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Adicione um nome claro para esta ligação de repositório",
@@ -10465,8 +11047,12 @@
       "label-display-name": "Nome do visor",
       "placeholder-my-repository-connection": "A minha ligação de repositório",
       "text-loading-resource-information": "A carregar informações de recursos...",
+      "dashboards-count_one": "",
+      "dashboards-count_other": "",
       "files-count_one": "{{count}} ficheiro",
-      "files-count_other": "{{count}} ficheiros"
+      "files-count_other": "{{count}} ficheiros",
+      "folders-count_one": "",
+      "folders-count_other": ""
     },
     "check-repository": {
       "check": "Verificar"
@@ -10477,36 +11063,20 @@
       "button-save": "Guardar",
       "button-saving": "A guardar...",
       "description-enabled": "Assim que a extração automática estiver ativada, o alvo não pode ser alterado.",
-      "description-path": "Caminho para um subdiretório no repositório Git",
       "description-read-only": "Os recursos não podem ser modificados através da Grafana.",
-      "description-repository-url": "Introduza o URL do repositório GitHub",
       "description-title": "Um nome legível para a configuração",
       "error-required": "Este campo é obrigatório.",
       "error-save-repository": "Não foi possível guardar as definições do repositório",
-      "error-valid-github-url": "Introduza um URL de repositório GitHub válido",
       "label-automatic-pulling": "Extração automática",
-      "label-branch": "Ramo",
       "label-enabled": "Ativado",
-      "label-github-token": "Token do GitHub",
       "label-interval-seconds": "Intervalo (segundos)",
-      "label-local-path": "Caminho local",
-      "label-path": "Caminho",
-      "label-pr-workflow": "Ativar a opção de pedido de extração ao guardar",
       "label-repository-type": "Tipo de repositório",
-      "label-repository-url": "URL do repositório",
       "label-target": "Destino",
       "label-title": "Título",
       "option-entire-instance": "Instância inteira",
-      "option-github": "GitHub",
-      "option-local": "Local",
       "option-managed-folder": "Pasta gerida",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "ghp_oSeuTokenAqui1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/nomedeutilizador/nome-repositorio",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/caminho/para/repo",
-      "placeholder-my-config": "A minha configuração",
-      "placeholder-select-repository-type": "Selecionar tipo de repositório"
+      "placeholder-my-config": "A minha configuração"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Configure webhooks</0> para obter atualizações instantâneas na Grafana assim que as alterações forem efetuadas. Reveja e aprove as alterações com pedidos de extração antes da sua publicação.",
@@ -10520,26 +11090,7 @@
     },
     "connect-repository-button": {
       "configure": "Configurar",
-      "configure-file": "Configurar o provisionamento de ficheiros",
-      "configure-git-sync": "Configurar sincronização do Git",
       "repository-limit-info-alert": "Limite do repositório atingido ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Ramo a utilizar para o repositório GitHub",
-      "description-github-path": "Este é o caminho para um subdiretório no seu repositório GitHub onde os painéis de controlo serão armazenados e provisionados a partir de",
-      "description-paste-your-git-hub-personal-access-token": "Cole o seu token de acesso pessoal do GitHub",
-      "description-repository-url": "Colar o URL do seu repositório GitHub",
-      "error-field-required": "Este campo é obrigatório.",
-      "error-invalid-github-url": "Introduza um URL de repositório GitHub válido",
-      "label-access-token": "Token de acesso do GitHub",
-      "label-branch": "Nome do ramo",
-      "label-local-path": "Caminho local",
-      "label-path": "Caminho para o subdiretório no repositório",
-      "label-repository-url": "URL do repositório Github",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/caminho/para/repo"
     },
     "delete-repository-button": {
       "button-delete": "Eliminar",
@@ -10572,17 +11123,17 @@
       "title-instant-updates-requests-webhooks": "Atualizações instantâneas e pedidos de extração com webhooks.",
       "title-visual-previews-in-pull-requests": "Pré-visualizações em pedidos de extração com renderização de imagens"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Definição do trabalho",
-      "summary": "Resumo",
-      "title-error": "Erro"
+      "summary": "Resumo"
     },
     "features-list": {
       "actions": {
         "set-up-required-feature-toggles": "Configure as opções de funcionalidades necessárias"
       },
-      "manage-dashboards-provision-updates-automatically": "Gerir painéis de controlo como código no GitHub e fornecer atualizações automaticamente",
-      "manage-your-dashboards-with-remote-provisioning": "Começar a utilizar o GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Armazenar painéis em armazenamento controlado por versão para melhor organização e acompanhamento do histórico"
     },
     "file-history-page": {
@@ -10603,18 +11154,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Adicionar uma pré-visualização de imagem das alterações do painel de controlo nos pedidos de extração. As imagens dos seus painéis de controlo Grafana serão partilhadas no seu repositório Git e visíveis para qualquer pessoa com acesso ao repositório.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Requer renderização de imagens. <2>Configurar a renderização de imagens</2>",
-      "description-often-shall-instance-updates-git-hub": "Com que frequência a instância deve obter atualizações do GitHub?",
-      "description-pr-enable-description": "Permite que os utilizadores escolham se desejam abrir um pedido pull ao guardar as alterações. Se o repositório não permitir alterações diretas ao ramo principal, ainda poderá ser necessário um pedido pull.",
+      "description-preview-requirements": "",
       "description-read-only": "Os recursos não podem ser modificados através da Grafana.",
-      "description-webhooks-enable": "Permite que os utilizadores escolham se desejam abrir um pedido pull ao guardar as alterações. Se o repositório não permitir alterações diretas ao ramo principal, ainda poderá ser necessário um pedido pull.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Ativar as pré-visualizações do painel de controlo em pedidos de extração",
-      "label-pr-workflow": "Ativar a opção de pedido de extração ao guardar",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Apenas para leitura",
-      "label-update-instance-interval-seconds": "Atualizar intervalo de instância (segundos)",
-      "placeholder": "60",
-      "text-setup-later": "Pode sempre configurar isto mais tarde",
-      "title-enhance-github": "Melhore a sua experiência GitHub"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Não foram encontrados resultados que correspondam à sua consulta",
@@ -10645,6 +11194,57 @@
       "header": "Provisionamento",
       "subtitle-provisioning-feature": "Ver e gerir as suas ligações de provisionamento"
     },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
     "history-view": {
       "not-found": "Não encontrado"
     },
@@ -10671,9 +11271,18 @@
       "starting": "A iniciar...",
       "status": {
         "title-error-running-job": "Erro ao executar tarefa",
-        "title-job-completed-successfully": "Trabalho concluído com sucesso"
+        "title-success-running-job": "",
+        "title-warning-running-job": ""
       },
-      "summary": "Resumo"
+      "summary": "Resumo",
+      "title": {
+        "error-fetching-active-job": ""
+      }
+    },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
     },
     "mode-options": {
       "folder": {
@@ -10699,7 +11308,7 @@
     },
     "repository-actions": {
       "settings": "Definições",
-      "source-code": "Código da origem"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10764,6 +11373,24 @@
       "title-legacy-storage": "Armazenamento herdado",
       "title-queued-for-deletion": "Em fila para eliminação"
     },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
+    },
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Pré-visualização do painel de controlo",
@@ -10793,6 +11420,12 @@
       "label-current-step": "Passo atual",
       "label-pending-step": "Passo pendente"
     },
+    "success-title-default": "",
+    "sync-job": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": ""
+    },
     "sync-repository": {
       "body-edit-configuration": "Editar a configuração",
       "button-edit": "Editar",
@@ -10803,9 +11436,6 @@
       "tooltip-unhealthy-repository": "Não foi possível obter um repositório que não está em bom estado"
     },
     "synchronize-step": {
-      "error-no-job-id": "Falha ao iniciar a tarefa",
-      "error-no-repository-name": "Nenhum nome de repositório fornecido",
-      "error-starting-job": "Erro ao iniciar a tarefa",
       "synchronization-description": "Incluir commits para cada valor histórico",
       "synchronization-options": "Opções de sincronização"
     },
@@ -10814,6 +11444,7 @@
       "go-to": "Aceda a",
       "make-sure": "Certifique-se de incluir estas permissões"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Os recursos não poderão ser criados, editados ou eliminados durante este processo. No último passo, irão desaparecer.",
       "alert-point-2": "Assim que o provisionamento estiver concluído, os recursos reaparecerão e serão geridos através de um armazenamento externo.",
@@ -10822,6 +11453,12 @@
       "alert-title": "Importante: não serão perdidos dados ou configurações, mas os painéis de controlo ficarão temporariamente indisponíveis durante alguns minutos.",
       "button-next": "Concluir",
       "button-start": "Iniciar sincronização",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Escolha o que sincronizar",
       "step-connect": "Conectar ",
       "step-finish": "Escolha as definições adicionais",
@@ -10836,6 +11473,7 @@
     "wizard-content": {
       "button-cancel": "Cancelar",
       "button-cancelling": "A cancelar... ",
+      "button-previous": "",
       "button-submitting": "A enviar...",
       "error-instance-repository-exists": "O repositório de instâncias já existe"
     }
@@ -11236,7 +11874,7 @@
         "recommended": "Recomendado",
         "results": "Resultados"
       },
-      "search": "Pesquisar"
+      "search": ""
     }
   },
   "search": {
@@ -11873,6 +12511,18 @@
       "label-medium": "",
       "label-small": ""
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Se selecionado, toda a linha será colorida como esta célula seria.",
       "description-wrap-text": "Se o texto selecionado for ajustado à largura do texto na coluna configurada",
@@ -11881,7 +12531,6 @@
       },
       "label-apply-to-entire-row": "Aplicar a toda a linha",
       "label-background-display-mode": "Modo de exibição de fundo",
-      "label-wrap-text": "Ajustar texto",
       "wrap-text": "Ajustar texto"
     },
     "column-alignment-options": {
@@ -12864,7 +13513,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -12886,6 +13535,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Número de pontos X, Y para prever"
     },
     "rename-by-regex-transformer": {

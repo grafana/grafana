@@ -4,18 +4,31 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-    paths:
-      - .github/workflows/pr-go-workspace-check.yml
-      - go.mod
-      - go.sum
-      - go.work
-      - go.work.sum
-      - '**/go.mod'
-      - '**/go.sum'
-      - '**.go'
+
+permissions: {}
 
 jobs:
-  check:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/pr-go-workspace-check.yml
+
+  check-workspace:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     name: Go Workspace Check
     runs-on: ubuntu-latest
 
@@ -26,7 +39,7 @@ jobs:
         persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
+      uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
       with:
         cache: false
         go-version-file: go.mod
@@ -47,6 +60,8 @@ jobs:
       run: ./scripts/go-workspace/validate-dockerfile.sh
 
   check-wire:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     name: Check Wire Changes
     runs-on: ubuntu-latest
 
@@ -61,7 +76,7 @@ jobs:
         persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
+      uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
       with:
         cache: false
         go-version-file: go.mod
@@ -114,3 +129,29 @@ jobs:
           fi
           exit 1
         fi
+
+  # This is the job that is actually required by rulesets.
+  # We want to only require one job instead of all the individual tests.
+  # Future work also allows us to start skipping some tests based on changed files.
+  required-go-workspace-check:
+    needs:
+      - check-workspace
+      - check-wire
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional jobs will fail the entire requirement check.
+    if: always()
+
+    name: All Go Workspace Checks complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the checks
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"

@@ -166,11 +166,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables right panel for the plugins details page
-  * @default true
-  */
-  pluginsDetailsRightPanel?: boolean;
-  /**
   * Enables previous SQL data source dataset dropdown behavior
   */
   sqlDatasourceDatabaseSelection?: boolean;
@@ -257,11 +252,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Allow core plugins to be loaded as external
-  * @default true
-  */
-  externalCorePlugins?: boolean;
-  /**
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;
@@ -296,11 +286,6 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Route the folder and dashboard service requests to k8s
-  * @default true
-  */
-  kubernetesClientDashboardsFolders?: boolean;
-  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -312,6 +297,10 @@ export interface FeatureToggles {
   * Log schema validation errors so they can be analyzed later
   */
   dashboardSchemaValidationLogging?: boolean;
+  /**
+  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
+  */
+  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
@@ -353,6 +342,10 @@ export interface FeatureToggles {
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   */
   alertmanagerRemoteSecondary?: boolean;
+  /**
+  * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
+  */
+  alertingProvenanceLockWrites?: boolean;
   /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
@@ -397,6 +390,10 @@ export interface FeatureToggles {
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Enables time comparison option in supported panels
+  */
+  timeComparison?: boolean;
   /**
   * Enables infinite scrolling for the Logs panel in Explore and Dashboards
   * @default true
@@ -460,6 +457,11 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
+  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+  * @default false
+  */
+  useScopeSingleNodeEndpoint?: boolean;
+  /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
   */
@@ -473,6 +475,10 @@ export interface FeatureToggles {
   * Enables SQL Expressions, which can execute SQL queries against data source results.
   */
   sqlExpressions?: boolean;
+  /**
+  * Enables column autocomplete for SQL Expressions
+  */
+  sqlExpressionsColumnAutoComplete?: boolean;
   /**
   * Enables the group to nested table transformation
   * @default true
@@ -749,6 +755,11 @@ export interface FeatureToggles {
   */
   alertingAIGenAlertRules?: boolean;
   /**
+  * Enable AI-generated feedback from the Grafana UI.
+  * @default false
+  */
+  alertingAIFeedback?: boolean;
+  /**
   * Enable AI-improve alert rules labels and annotations.
   * @default false
   */
@@ -847,10 +858,6 @@ export interface FeatureToggles {
   * @default true
   */
   grafanaconThemes?: boolean;
-  /**
-  * Loads plugins from CDN synchronously
-  */
-  pluginsCDNSyncLoader?: boolean;
   /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
@@ -958,6 +965,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  postgresDSUsePGX?: boolean;
+  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;
@@ -987,6 +998,10 @@ export interface FeatureToggles {
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
+  /**
+  * Enables create, delete, and update mutations for resources owned by IAM identity
+  */
+  kubernetesAuthnMutation?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1059,4 +1074,25 @@ export interface FeatureToggles {
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
+  /**
+  * Enables adhoc filtering support for the dashboard datasource
+  */
+  dashboardDsAdHocFiltering?: boolean;
+  /**
+  * Supports __from and __to macros that always use the dashboard level time range
+  */
+  dashboardLevelTimeMacros?: boolean;
+  /**
+  * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
+  * @default false
+  */
+  alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enable adhoc filter buttons in visualization tooltips
+  */
+  adhocFiltersInTooltips?: boolean;
+  /**
+  * New Log Context component
+  */
+  newLogContext?: boolean;
 }

@@ -2655,8 +2655,6 @@ If `true`, propagate the tracing context to the plugin backend and enable tracin
 
 Load an external version of a core plugin if it has been installed.
 
-Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
-
 <hr>
 
 ### `[plugin.grafana-image-renderer]`
