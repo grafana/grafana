@@ -26,6 +26,7 @@ jobs:
       id-token: write
     container:
       image: us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest
+    if: ${{ ! github.event.pull_request.head.repo.fork }}
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -61,7 +62,7 @@ jobs:
           ./cpp-e2e/scripts/ci-run.sh azure ${{ github.ref_name }} deploy
       - name: Run E2E tests
         run: yarn e2e:playwright --grep @cloud-plugins
-        
+
       - name: Destroy resources
         run: |
           ./cpp-e2e/scripts/ci-run.sh azure ${{ github.ref_name }} destroy
