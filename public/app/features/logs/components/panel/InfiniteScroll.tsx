@@ -122,7 +122,7 @@ export const InfiniteScroll = ({
       loadMore?.(newRange ?? getVisibleRange(logs), scrollDirection);
 
       reportInteraction('grafana_logs_infinite_scrolling', {
-        direction: 'bottom',
+        direction: scrollDirection,
         sort_order: sortOrder,
       });
     },
