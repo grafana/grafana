@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
 
-import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
+import { canScrollBottom, canScrollTop, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
@@ -105,7 +105,10 @@ export const InfiniteScroll = ({
 
   const onLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {
-      const newRange = canScrollBottom(getVisibleRange(logs), timeRange, timeZone, sortOrder);
+      const newRange =
+        scrollDirection === ScrollDirection.Bottom
+          ? canScrollBottom(getVisibleRange(logs), timeRange, timeZone, sortOrder)
+          : canScrollTop(getVisibleRange(logs), timeRange, timeZone, sortOrder);
       if (!newRange && infiniteScrollMode === 'interval') {
         setInfiniteLoaderState('out-of-bounds');
         return;
