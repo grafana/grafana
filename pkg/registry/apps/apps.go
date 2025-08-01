@@ -8,7 +8,6 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
@@ -32,7 +31,6 @@ func ProvideAppInstallers(
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{playlistAppInstaller}
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
-		logger.Debug("Kubernetes Short URLs feature is enabled")
 		installers = append(installers, shorturlAppInstaller)
 	}
 	return installers
