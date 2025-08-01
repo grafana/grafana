@@ -2137,14 +2137,12 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		"Name":        repo1,
 		"SyncEnabled": true,
 		"SyncTarget":  "folder",
+		"Path":        repo1Path,
 	})
 	_, err = helper.Repositories.Resource.Create(ctx, createBody1, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create first repository")
 
-	// Copy dashboard files to provisioning path
-	helper.CopyToProvisioningPath(t, "exportunifiedtorepository/dashboard-test-v1.yaml", "dashboard-test-v1.yaml")
-	helper.CopyToProvisioningPath(t, "exportunifiedtorepository/dashboard-test-v2beta1.yaml", "dashboard-test-v2beta1.yaml")
-	// Debug: print file tree to see what was synced
+	// Print file tree before export
 	printFileTree(t, helper.ProvisioningPath)
 
 	// Initial export
@@ -2189,6 +2187,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		"Name":        repo2,
 		"SyncEnabled": true,
 		"SyncTarget":  "folder",
+		"Path":        repo2Path,
 	})
 
 	_, err = helper.Repositories.Resource.Create(ctx, createBody2, metav1.CreateOptions{})
