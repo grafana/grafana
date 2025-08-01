@@ -18,7 +18,9 @@ import (
 
 func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMapper) *shorturl.ShortURL {
 	spec := shorturl.ShortURLSpec{
-		Path:       v.Path,
+		Path: v.Path,
+	}
+	status := shorturl.ShortURLStatus{
 		LastSeenAt: v.LastSeenAt,
 	}
 	p := &shorturl.ShortURL{
@@ -29,7 +31,8 @@ func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMap
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
 			Namespace:         namespacer(v.OrgId),
 		},
-		Spec: spec,
+		Spec:   spec,
+		Status: status,
 	}
 	meta, err := utils.MetaAccessor(p)
 	if err == nil {
@@ -45,10 +48,10 @@ func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMap
 
 func convertToLegacyResource(p *shorturl.ShortURL, orgId int64) (*shorturls.ShortUrl, error) {
 	return &shorturls.ShortUrl{
-		Uid:        p.Spec.Uid,
+		Uid:        p.Name,
 		OrgId:      orgId,
 		Path:       p.Spec.Path,
-		LastSeenAt: p.Spec.LastSeenAt,
+		LastSeenAt: p.Status.LastSeenAt,
 	}, nil
 }
 

@@ -77,8 +77,7 @@ func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 		utils.TableColumns{
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "UID", Type: "string", Format: "string", Description: "The random string identifier"},
-				{Name: "Path", Type: "string", Format: "string", Description: "The short url path"},
+				{Name: "Path", Type: "string", Format: "string", Description: "The url path"},
 				{Name: "Last Seen At", Type: "number"},
 			},
 			Reader: func(obj any) ([]interface{}, error) {
@@ -88,9 +87,8 @@ func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 				}
 				return []interface{}{
 					m.Name,
-					m.Spec.Uid,
 					m.Spec.Path,
-					m.Spec.LastSeenAt,
+					m.Status.LastSeenAt,
 				}, nil
 			},
 		},

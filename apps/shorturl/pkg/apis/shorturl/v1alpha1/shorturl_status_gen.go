@@ -22,6 +22,8 @@ func NewShortURLstatusOperatorState() *ShortURLstatusOperatorState {
 
 // +k8s:openapi-gen=true
 type ShortURLStatus struct {
+	// The last time the short URL was used, 0 is the initial value
+	LastSeenAt int64 `json:"lastSeenAt"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]ShortURLstatusOperatorState `json:"operatorStates,omitempty"`

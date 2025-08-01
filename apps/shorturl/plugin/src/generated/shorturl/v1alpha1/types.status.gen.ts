@@ -18,6 +18,8 @@ export const defaultOperatorState = (): OperatorState => ({
 });
 
 export interface Status {
+	// The last time the short URL was used, 0 is the initial value
+	lastSeenAt: number;
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	operatorStates?: Record<string, OperatorState>;
@@ -26,5 +28,6 @@ export interface Status {
 }
 
 export const defaultStatus = (): Status => ({
+	lastSeenAt: 0,
 });
 
