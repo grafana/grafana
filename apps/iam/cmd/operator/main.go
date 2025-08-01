@@ -27,13 +27,6 @@ func main() {
 		panic(err)
 	}
 
-	// Load the kube config
-	kubeConfig, err := LoadInClusterConfig()
-	if err != nil {
-		logging.DefaultLogger.With("error", err).Error("Unable to load kubernetes configuration")
-		panic(err)
-	}
-
 	// Set up tracing
 	if cfg.OTelConfig.Host != "" {
 		simple.SetTraceProvider(simple.OpenTelemetryConfig{
@@ -46,7 +39,7 @@ func main() {
 
 	// Create the operator config and the runner
 	operatorConfig := operator.RunnerConfig{
-		KubeConfig: kubeConfig.RestConfig,
+		KubeConfig: cfg.KubeConfig.RestConfig,
 		WebhookConfig: operator.RunnerWebhookConfig{
 			Port: cfg.WebhookServer.Port,
 			TLSConfig: k8s.TLSConfig{
