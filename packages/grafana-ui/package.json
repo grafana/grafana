@@ -203,7 +203,7 @@
     "sass-loader": "16.0.5",
     "storybook": "^8.6.2",
     "style-loader": "4.0.0",
-    "typescript": "5.8.3",
+    "typescript": "5.9.2",
     "webpack": "5.101.0"
   },
   "peerDependencies": {
