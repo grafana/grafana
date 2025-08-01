@@ -876,7 +876,9 @@
     "list": [
       {
         "current": {},
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "*",
         "hide": 0,
         "includeAll": true,

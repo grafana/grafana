@@ -30,8 +30,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -80,8 +79,7 @@
         {
           "csvContent": "x,y1,y2\n1,8,12\n2,6,13\n3,7,9\n5,9,7\n6,5,9",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -166,8 +164,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -216,8 +213,7 @@
         {
           "csvContent": "x,y,count\n1,4,10\n1,6,11\n2,5,30\n2,4,22\n3,6,17",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"

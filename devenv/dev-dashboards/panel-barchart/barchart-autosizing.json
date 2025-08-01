@@ -29,7 +29,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -105,7 +105,7 @@
       "type": "barchart"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "description": "Should be smaller given the longer value",
       "fieldConfig": {
         "defaults": {
@@ -183,7 +183,7 @@
       "type": "barchart"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -259,7 +259,7 @@
       "type": "barchart"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -416,7 +416,7 @@
       "type": "barchart"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -493,7 +493,7 @@
       "type": "barchart"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "description": "",
       "fieldConfig": {
         "defaults": {

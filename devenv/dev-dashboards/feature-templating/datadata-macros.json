@@ -24,8 +24,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "gridPos": {
         "h": 3,
@@ -49,8 +48,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -112,8 +110,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -166,8 +163,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -179,8 +175,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -234,8 +229,7 @@
         {
           "csvFileName": "browser_marketshare.csv",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_file"
@@ -254,8 +248,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "Since this is using getFrameDisplayName it works kind badly (especially with testdata) and only returns the  `Series (refId)`. \n\nSo this should show:\n* Series (Query1)\n* Series (Query2)",
       "fieldConfig": {
@@ -311,8 +304,7 @@
         {
           "alias": "",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "Query1",
           "scenarioId": "random_walk",
@@ -321,8 +313,7 @@
         {
           "alias": "",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "Query2",
@@ -335,8 +326,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -395,8 +385,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "labels": "cluster=US",
           "refId": "A",
@@ -408,8 +397,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -492,8 +480,7 @@
           "alias": "10,20,30,40",
           "csvContent": "Time, value, test\n\"2023-03-24T17:12:12.347Z\", 10,hello\n\"2023-03-24T17:22:12.347Z\", 20,asd\n\"2023-03-24T17:32:12.347Z\", 30,asd2\n\"2023-03-24T17:42:12.347Z\", 40,as34\n",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -502,8 +489,7 @@
           "alias": "5,6,7",
           "csvContent": "Time, value, test\n\"2023-03-24T17:12:12.347Z\", 5,hello\n\"2023-03-24T17:22:12.347Z\", 6,asd\n\"2023-03-24T17:42:12.347Z\", 7,as34\n",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_content"
@@ -520,8 +506,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -580,8 +565,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "labels": "cluster=US",
           "refId": "A",
@@ -593,8 +577,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "The stat display names should be \n*  Stockholm = Bad\n* New York = Good \n",
       "fieldConfig": {
@@ -645,8 +628,7 @@
           "alias": "",
           "csvContent": "name, value, name2\nStockholm, 10, Good\nNew York, 15, Bad",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -657,8 +639,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "The stat display names should be \n*  Stockholm = Bad\n* New York = Good \n",
       "fieldConfig": {
@@ -721,8 +702,7 @@
           "alias": "",
           "csvContent": "name, value, name2\nStockholm, 10, Good\nNew York, 15, Bad",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -733,8 +713,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "The stat display names should be \n*  Stockholm = Bad\n* New York = Good \n",
       "fieldConfig": {
@@ -791,8 +770,7 @@
           "alias": "",
           "csvContent": "name, value, name2\nStockholm, 10, Good\nNew York, 15, Bad",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"

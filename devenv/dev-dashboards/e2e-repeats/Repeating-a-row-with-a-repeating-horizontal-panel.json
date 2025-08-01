@@ -41,7 +41,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {

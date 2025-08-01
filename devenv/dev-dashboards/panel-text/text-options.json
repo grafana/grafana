@@ -29,7 +29,9 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -50,8 +52,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -61,7 +62,9 @@
       "type": "text"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -82,8 +85,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -93,7 +95,9 @@
       "type": "text"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -114,8 +118,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -125,7 +128,9 @@
       "type": "text"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -146,8 +151,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -169,8 +173,7 @@
           "value": ["$__all"]
         },
         "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
+          "type": "grafana-testdata-datasource"
         },
         "definition": "*",
         "hide": 0,
@@ -198,8 +201,7 @@
           "value": ["$__all"]
         },
         "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
+          "type": "grafana-testdata-datasource"
         },
         "definition": "$datacenter.*",
         "hide": 0,
@@ -227,8 +229,7 @@
           "value": ["AAA", "ACB"]
         },
         "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
+          "type": "grafana-testdata-datasource"
         },
         "definition": "$datacenter.$server.*",
         "hide": 0,
