@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -101,6 +102,23 @@ func exportResource(ctx context.Context,
 			Resource: resource,
 			Group:    gvk.Group,
 			Action:   repository.FileActionCreated,
+		}
+
+		// Check if resource is already managed by a repository
+		meta, err := utils.MetaAccessor(item)
+		if err != nil {
+			result.Action = repository.FileActionIgnored
+			result.Error = fmt.Errorf("extract meta accessor: %w", err)
+			progress.Record(ctx, result)
+			return nil
+		}
+
+		manager, _ := meta.GetManagerProperties()
+		// Skip if already managed by any manager (repository, file provisioning, etc.)
+		if manager.Identity != "" {
+			result.Action = repository.FileActionIgnored
+			progress.Record(ctx, result)
+			return nil
 		}
 
 		if shim != nil {

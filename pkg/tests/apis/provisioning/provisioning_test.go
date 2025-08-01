@@ -2107,3 +2107,196 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		}, time.Second*10, time.Millisecond*100, "Expected move job to handle non-existent resource")
 	})
 }
+
+func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	// Create some unmanaged dashboards directly in Grafana first
+	dashboard1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+	dashboard1Obj, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create first dashboard")
+	dashboard1Name := dashboard1Obj.GetName()
+
+	dashboard2 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	dashboard2Obj, err := helper.DashboardsV2beta1.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create second dashboard")
+	dashboard2Name := dashboard2Obj.GetName()
+
+	// Create the first repository with sync enabled
+	const repo1 = "first-repository"
+	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
+	err = os.MkdirAll(repo1Path, 0750)
+	require.NoError(t, err, "should be able to create repository path")
+
+	createBody1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo1,
+		"SyncEnabled": true,
+		"SyncTarget":  "folder",
+		"Path":        repo1Path,
+	})
+	_, err = helper.Repositories.Resource.Create(ctx, createBody1, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create first repository")
+
+	// Print file tree before export
+	printFileTree(t, helper.ProvisioningPath)
+
+	// Initial export
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo1).
+		SubResource("jobs").
+		SetHeader("Content-Type", "application/json").
+		Body(asJSON(&provisioning.JobSpec{
+			Push: &provisioning.ExportJobOptions{
+				Folder: "", // export entire instance
+				Path:   "", // no prefix necessary for testing
+			},
+		})).
+		Do(ctx)
+	require.NoError(t, result.Error(), "should be able to create export job for first repo")
+	helper.AwaitJobsWithStates(t, repo1, []string{"success"})
+	// Wait for first repository to sync
+	helper.SyncAndWait(t, repo1, nil)
+
+	printFileTree(t, helper.ProvisioningPath)
+	// Verify that the first repository has claimed ownership of the dashboards
+	managedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo1, managedDash1.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard1 should be managed by first repo")
+
+	managedDash2, err := helper.DashboardsV2beta1.Resource.Get(ctx, dashboard2Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo1, managedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard2 should be managed by first repo")
+
+	// Create second repository - enable sync and set different target
+
+	const repo2 = "second-repository"
+	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
+	err = os.MkdirAll(repo2Path, 0750)
+	require.NoError(t, err, "should be able to create seconrd repository path")
+
+	printFileTree(t, helper.ProvisioningPath)
+
+	createBody2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo2,
+		"SyncEnabled": true,
+		"SyncTarget":  "folder",
+		"Path":        repo2Path,
+	})
+
+	_, err = helper.Repositories.Resource.Create(ctx, createBody2, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create second repository")
+
+	// Wait for second repository to sync
+	helper.SyncAndWait(t, repo2, nil)
+
+	// Validate that folders for both repositories exist
+	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err, "should be able to list folders")
+
+	var repo1FolderFound, repo2FolderFound bool
+	for _, folder := range folders.Items {
+		if folder.GetName() == repo1 {
+			repo1FolderFound = true
+		}
+		if folder.GetName() == repo2 {
+			repo2FolderFound = true
+		}
+	}
+	require.True(t, repo1FolderFound, "folder for first repository %s should exist after sync", repo1)
+	require.True(t, repo2FolderFound, "folder for second repository %s should exist after sync", repo2)
+
+	// Create a third dashboard that won't be claimed by the first repo
+	dashboard3 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v0.yaml")
+	dashboard3Obj, err := helper.DashboardsV0.Resource.Create(ctx, dashboard3, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create third dashboard")
+	dashboard3Name := dashboard3Obj.GetName()
+
+	// Verify dashboard3 is not managed by anyone initially
+	unmanagedDash3, err := helper.DashboardsV0.Resource.Get(ctx, dashboard3Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	manager, found := unmanagedDash3.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+	require.True(t, !found || manager == "", "dashboard3 should not be managed initially")
+
+	printFileTree(t, helper.ProvisioningPath)
+	// Count files in first repo before second export
+	files1Before, err := countFilesInDir(repo1Path)
+	require.NoError(t, err)
+
+	// Export from second repository - this should only export the unmanaged dashboard3
+	result = helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo2).
+		SubResource("jobs").
+		SetHeader("Content-Type", "application/json").
+		Body(asJSON(&provisioning.JobSpec{
+			Push: &provisioning.ExportJobOptions{
+				Folder: "", // export entire instance
+				Path:   "", // no prefix necessary for testing
+			},
+		})).
+		Do(ctx)
+	require.NoError(t, result.Error(), "should be able to create export job for second repo")
+
+	// Wait for second repository export to complete
+	helper.AwaitJobsWithStates(t, repo2, []string{"success"})
+
+	// Wait for second repository to sync
+	helper.SyncAndWait(t, repo1, nil)
+	helper.SyncAndWait(t, repo2, nil)
+
+	printFileTree(t, helper.ProvisioningPath)
+	files1After, err := countFilesInDir(repo1Path)
+	require.NoError(t, err)
+
+	actualNewFiles := files1After - files1Before
+	require.Equal(t, 0, actualNewFiles,
+		"second repository should skip managed dashboards and had folder issues with unmanaged dashboard (expected %d new files, got %d)",
+		0, actualNewFiles)
+
+	// Verify files in the second repository
+	files2After, err := countFilesInDir(repo2Path)
+	require.NoError(t, err)
+	require.Equal(t, 1, files2After,
+		"second repository should only export the unmanaged dashboard (expected %d new files, got %d)",
+		1, files2After)
+
+	// Verify dashboard1 and dashboard2 are still managed by repo1 (unchanged)
+	stillManagedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo1, stillManagedDash1.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+		"dashboard1 should still be managed by first repo")
+
+	stillManagedDash2, err := helper.DashboardsV2beta1.Resource.Get(ctx, dashboard2Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo1, stillManagedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+		"dashboard2 should still be managed by first repo")
+
+	// Verify dashboard3 is now managed by repo2
+	stillManagedDash3, err := helper.DashboardsV0.Resource.Get(ctx, dashboard3Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo2, stillManagedDash3.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+		"dashboard3 should now be managed by second repo")
+}
+
+// Helper function to count files in a directory recursively
+func countFilesInDir(rootPath string) (int, error) {
+	count := 0
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			count++
+		}
+		return nil
+	})
+	return count, err
+}

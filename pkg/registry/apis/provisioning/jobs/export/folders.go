@@ -32,8 +32,9 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 		}
 
 		manager, _ := meta.GetManagerProperties()
-		if manager.Identity == repoName {
-			return nil // skip it... already in tree?
+		// Skip if already managed by any manager (repository, file provisioning, etc.)
+		if manager.Identity != "" {
+			return nil
 		}
 
 		return tree.AddUnstructured(item)

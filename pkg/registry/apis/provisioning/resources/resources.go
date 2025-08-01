@@ -92,19 +92,29 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	if title == "" {
 		title = name
 	}
-	folder := meta.GetFolder()
 
+	folder := meta.GetFolder()
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
-	fid, ok := r.folders.Tree().DirPath(folder, rootFolder)
-	if !ok {
-		return "", fmt.Errorf("folder not found in tree: %s", folder)
+
+	// If no folder is specified in the file, set it to the root to ensure everything is written under it
+	var fid Folder
+	if folder == "" {
+		fid = Folder{ID: rootFolder}
+		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
+	} else {
+		var ok bool
+		fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
+		if !ok {
+			return "", fmt.Errorf("folder %s NOT found in tree with root: %s", folder, rootFolder)
+		}
 	}
 
 	fileName := slugify.Slugify(title) + ".json"
 	if fid.Path != "" {
 		fileName = safepath.Join(fid.Path, fileName)
 	}
+
 	if options.Path != "" {
 		fileName = safepath.Join(options.Path, fileName)
 	}

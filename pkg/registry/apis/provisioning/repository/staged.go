@@ -7,8 +7,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/nanogit"
 )
+
+// ErrNothingToPush indicates that there are no changes to push to the remote repository
+var ErrNothingToPush = errors.New("nothing to push")
+
+// ErrNothingToCommit indicates that there are no changes to commit
+var ErrNothingToCommit = errors.New("nothing to commit")
 
 //go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
 type WrapWithStageFn func(ctx context.Context, repo Repository, stageOptions StageOptions, fn func(repo Repository, staged bool) error) error
@@ -83,7 +88,7 @@ func WrapWithStageAndPushIfPossible(
 	}
 
 	if err = staged.Push(ctx); err != nil {
-		if errors.Is(err, nanogit.ErrNothingToPush) {
+		if errors.Is(err, ErrNothingToPush) || errors.Is(err, ErrNothingToCommit) {
 			return nil // OK, already pushed
 		}
 		return fmt.Errorf("wrapped push error: %w", err)
