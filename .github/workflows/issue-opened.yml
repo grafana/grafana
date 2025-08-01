@@ -88,7 +88,12 @@ jobs:
           private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
           permission-members: read
           permission-issues: write
-
+      - name: Checkout
+        uses: actions/checkout@v4 # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/auto-triager
       - name: Check if member of grafana org
         id: check-if-grafana-org-member
         continue-on-error: true
