@@ -140,6 +140,15 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			expConnStr: "user='user' host='host' dbname='database' password='password' sslmode='verify-full' " +
 				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
+		{
+			desc:        "No password",
+			host:        "host",
+			user:        "user",
+			password:    "",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' host='host' dbname='database' sslmode='verify-full'",
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
