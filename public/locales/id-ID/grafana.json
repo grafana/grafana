@@ -1542,8 +1542,7 @@
       "group-not-editable": "Grup yang dipilih tidak dapat diedit",
       "group-not-editable-description": "Grup ini termasuk dalam sumber data yang tidak mendukung pengeditan.",
       "page-title": "Edit grup aturan",
-      "rule-group-error": "Kesalahan saat memuat grup aturan",
-      "title": "Edit grup evaluasi"
+      "rule-group-error": "Kesalahan saat memuat grup aturan"
     },
     "group-loader": {
       "group-load-failed": "Gagal memuat aturan dari grup {{ groupName }} di {{ namespaceName }}",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "Jalankan pemeriksaan ping, DNS, HTTP/S, dan TCP di setiap layer jaringan.",
       "synthetic-monitoring-card-item-3": "Gunakan 20+ probe global atau probe pribadi di belakang firewall Anda.",
       "synthetic-monitoring-card-item-4": "Lacak SLO dengan peringatan yang mirip cara kerja Prometheus bawaan—langsung dari UI.",
-      "synthetic-monitoring-card-title": "Pemantauan Sintetis",
-      "title-alerting": "Alerting"
+      "synthetic-monitoring-card-title": "Pemantauan Sintetis"
     },
     "import-to-gma": {
       "action-button": "Impor",
@@ -3469,6 +3467,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Batalkan",
       "cannot-move-folders": "Folder tidak dapat dipindahkan",
       "confirmation-text": "Hapus",
@@ -3502,21 +3501,32 @@
       "this-folder-is-empty": "Folder ini kosong"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_other": ""
     },
     "bulk-delete-resources-form": {
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_other": "{{count}} aturan peringatan",
@@ -3534,12 +3544,12 @@
       "tags-column": "Tag"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Folder berhasil dihapus",
       "api-error": "Gagal menghapus folder",
       "button-cancel": "Batalkan",
       "button-delete": "Hapus",
       "button-deleting": "Menghapus...",
-      "delete-warning": "Ini akan menghapus folder ini dan semua subfoldernya. Secara keseluruhan, ini akan memengaruhi:"
+      "delete-warning": "Ini akan menghapus folder ini dan semua subfoldernya. Secara keseluruhan, ini akan memengaruhi:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Tidak dapat mengambil informasi turunan"
@@ -3582,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Kesalahan saat membuat folder",
-      "alert-folder-created-successfully": "Folder berhasil dibuat",
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
@@ -3709,6 +3718,7 @@
     "category-selected-connection": "Koneksi yang dipilih",
     "category-selected-element": "Elemen yang dipilih ({{element}})",
     "category-size": "Ukuran",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3729,7 +3739,6 @@
       }
     },
     "description-experimental-types": "Aktifkan pemilihan jenis elemen eksperimental",
-    "description-infinite-panning": "Aktifkan fitur geser tak terbatas - berguna untuk kanvas yang luas. Peringatan: ini adalah fitur eksperimental dan saat ini hanya berfungsi dengan baik dengan elemen yang dibatasi terhadap sudut atas/kiri",
     "description-inline-editing": "Aktifkan pengeditan panel secara langsung",
     "description-pan-zoom": "Aktifkan geser dan zoom",
     "direction-options": {
@@ -3830,7 +3839,6 @@
     "name-align-text": "Ratakan teks",
     "name-color": "Warna teks",
     "name-experimental-types": "Jenis elemen eksperimental",
-    "name-infinite-panning": "Geser tak terbatas",
     "name-inline-editing": "Pengeditan inline",
     "name-pan-zoom": "Geser dan zoom",
     "name-text": "Teks",
@@ -3951,6 +3959,13 @@
       "name-vertical-align": "Rata vertikal",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4548,6 +4563,7 @@
     "edit-actions": {
       "add": "Tambahkan {{typeName}}",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5335,6 +5351,20 @@
       "tags-expected-array": "tag array yang diharapkan",
       "tags-expected-strings": "tag array yang diharapkan dari string"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Pulihkan ke versi {{version}}",
       "label-view-json-diff": "Lihat diff JSON",
@@ -5592,6 +5622,7 @@
       "delete-read-only-file-message": "Dasbor ini tidak dapat dihapus langsung dari Grafana karena repositori bersifat hanya-baca. Untuk menghapus dasbor ini, harap hapus file dari repositori Git Anda.",
       "deleting": "Menghapus...",
       "drawer-title": "Hapus Dasbor yang Disediakan",
+      "success-message": "",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
     "description-label": {
@@ -5603,9 +5634,6 @@
           "edit-link": "Edit tautan"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Perubahan dasbor berhasil disimpan"
     },
     "email-list": {
       "aria-label-emailmenu": "Alihkan tombol menu email"
@@ -5764,6 +5792,7 @@
       "usage-count_other": "Digunakan pada {{count}} dasbor"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5773,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6957,6 +6987,9 @@
         "pro-tip-define-sources-through-configuration-files": " ProTip: Anda juga dapat menentukan sumber data melalui file konfigurasi. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Sebelumnya",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Buka tanpa kueri"
@@ -7223,18 +7256,24 @@
       "split-tooltip": "Pisahkan panel",
       "split-widen": "Lebarkan panel"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Berikan umpan balik",
-      "label-copied": "Disalin!",
-      "label-export": "Ekspor",
-      "label-trace-id": "ID Pelacakan",
-      "title-share-thoughts-about-tracing-grafana": "Bagikan pendapat Anda tentang pelacakan di Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Jejak parsial",
-      "tooltip-url": "{{url}} atau {{target}} atau {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tombol hapus filter",
@@ -7490,6 +7529,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7549,6 +7589,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8248,6 +8289,9 @@
     "card": {
       "option": "opsi"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Hapus pilihan"
     },
@@ -8260,6 +8304,7 @@
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Batalkan",
       "confirmText-delete": ""
     },
@@ -8686,6 +8731,7 @@
       "footer-add-annotation": "Tambahkan anotasi",
       "footer-click-to-action": "Klik untuk {{actionTitle}} ",
       "footer-click-to-navigate": "Klik untuk membuka {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Stempel Waktu"
     },
     "week-start-picker": {
@@ -10933,6 +10979,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Fitur ini saat ini sedang dalam pengembangan aktif. Untuk pengalaman terbaik dan peningkatan terbaru, kami merekomendasikan Anda untuk menggunakan <2>versi nightly </2> Grafana."
@@ -11186,6 +11235,7 @@
       "starting": "Memulai...",
       "status": {
         "title-error-running-job": "Kesalahan saat menjalankan pekerjaan",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Ringkasan",
@@ -11334,6 +11384,7 @@
       "label-current-step": "Langkah saat ini",
       "label-pending-step": "Langkah tertunda"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11366,6 +11417,12 @@
       "alert-title": "Penting: Tidak ada data atau konfigurasi yang akan hilang, tetapi dasbor tidak akan tersedia sementara selama beberapa menit.",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Pilih item yang akan disinkronkan",
       "step-connect": "Hubungkan",
       "step-finish": "Pilih pengaturan tambahan",
@@ -11380,6 +11437,7 @@
     "wizard-content": {
       "button-cancel": "Batalkan",
       "button-cancelling": "Membatalkan...",
+      "button-previous": "",
       "button-submitting": "Mengirim...",
       "error-instance-repository-exists": "Repositori instans sudah ada"
     }
@@ -11776,7 +11834,7 @@
         "recommended": "Disarankan",
         "results": "Hasil"
       },
-      "search": "Cari"
+      "search": ""
     }
   },
   "search": {
@@ -12410,6 +12468,18 @@
       "label-large": "Besar",
       "label-medium": "Sedang",
       "label-small": "Kecil"
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Jika dipilih, seluruh baris akan berwarna seperti sel ini.",
@@ -13401,7 +13471,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13423,6 +13493,9 @@
         }
       },
       "regression": "regresi",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Jumlah poin X,Y untuk diprediksi"
     },
     "rename-by-regex-transformer": {

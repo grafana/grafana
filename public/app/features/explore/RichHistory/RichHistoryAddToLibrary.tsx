@@ -22,7 +22,7 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
         variant="secondary"
         aria-label={buttonLabel}
         onClick={() => {
-          openAddQueryModal(query, { onSave: () => setHasBeenSaved(true), context: 'richHistory' });
+          openAddQueryModal(query, { onSave: () => setHasBeenSaved(true), context: 'rich-history' });
         }}
       >
         {buttonLabel}

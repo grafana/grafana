@@ -63,11 +63,20 @@ export function ScopesTree({
     }
   }
 
+  // Used as a label and placeholder for search field
+  const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
+  const searchArea = tree.scopeNodeId === '' ? '' : nodeTitle;
+
   const lastExpandedNode = !anyChildExpanded && tree.expanded;
 
   return (
     <>
-      <ScopesTreeSearch anyChildExpanded={anyChildExpanded} onNodeUpdate={onNodeUpdate} treeNode={tree} />
+      <ScopesTreeSearch
+        anyChildExpanded={anyChildExpanded}
+        searchArea={searchArea}
+        onNodeUpdate={onNodeUpdate}
+        treeNode={tree}
+      />
       {tree.scopeNodeId === '' &&
         !anyChildExpanded &&
         recentScopes &&

@@ -75,6 +75,24 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ nodes: { ...this.state.nodes, ...parentNodes } });
   }
 
+  // Loads a node from the API and adds it to the nodes cache
+  public getScopeNode = async (scopeNodeId: string) => {
+    if (this.state.nodes[scopeNodeId]) {
+      return this.state.nodes[scopeNodeId];
+    }
+
+    try {
+      const node = await this.apiClient.fetchScopeNode(scopeNodeId);
+      if (node) {
+        this.updateState({ nodes: { ...this.state.nodes, [node.metadata.name]: node } });
+      }
+      return node;
+    } catch (error) {
+      console.error('Failed to load node', error);
+      return undefined;
+    }
+  };
+
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
     const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
@@ -164,7 +182,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
     });
 
-    // TODO: if we do global search we may not have a prent node loaded. We have the ID but there is not an API that
+    // TODO: if we do global search we may not have a parent node loaded. We have the ID but there is not an API that
     //   would allow us to load scopeNode by ID right now so this can be undefined which means we skip the
     //   disableMultiSelect check.
     const parentNode = this.state.nodes[scopeNode.spec.parentName!];

@@ -1,7 +1,7 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
@@ -26,6 +26,7 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
+import { isV2StoredVersion } from './utils';
 
 export const K8S_V1_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
@@ -116,7 +117,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
 
       // This could come as conversion error from v0 or v2 to V1.
-      if (dash.status?.conversion?.failed && dash.status.conversion.storedVersion === 'v2alpha1') {
+      if (dash.status?.conversion?.failed && isV2StoredVersion(dash.status.conversion.storedVersion)) {
         throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
       }
 

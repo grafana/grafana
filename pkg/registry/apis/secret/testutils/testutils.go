@@ -59,6 +59,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	}
 
 	tracer := noop.NewTracerProvider().Tracer("test")
+
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
 	database := database.ProvideDatabase(testDB, tracer)
@@ -77,13 +78,16 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	})
 
 	defaultKey := "SdlklWklckeLS"
-	cfg := &setting.Cfg{
-		SecretsManagement: setting.SecretsManagerSettings{
-			CurrentEncryptionProvider: "secret_key.v1",
-			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
-		},
+	cfg := setting.NewCfg()
+	cfg.SecretsManagement = setting.SecretsManagerSettings{
+		DecryptServerType:         "local",
+		CurrentEncryptionProvider: "secret_key.v1",
+		ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
+	require.NoError(t, err)
+
+	globalDataKeyStore, err := encryptionstorage.ProvideGlobalDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
@@ -107,6 +111,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	encryptedValueStorage, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
+	// Initialize global encrypted value storage with a fake db
+	globalEncryptedValueStorage, err := encryptionstorage.ProvideGlobalEncryptedValueStorage(database, tracer)
+	require.NoError(t, err)
+
 	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
@@ -115,36 +123,52 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		keeperService = setupCfg.KeeperService
 	}
 
-	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
+	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService, nil)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
-	decryptService := decrypt.ProvideDecryptService(decryptStorage)
+	testCfg := setting.NewCfg()
+	testCfg.SecretsManagement = setting.SecretsManagerSettings{
+		DecryptServerType: "local",
+	}
+
+	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
+	require.NoError(t, err)
+
+	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
 
 	return Sut{
-		SecureValueService:         secureValueService,
-		SecureValueMetadataStorage: secureValueMetadataStorage,
-		DecryptStorage:             decryptStorage,
-		DecryptService:             decryptService,
-		EncryptedValueStorage:      encryptedValueStorage,
-		SQLKeeper:                  sqlKeeper,
-		Database:                   database,
-		AccessClient:               accessClient,
+		SecureValueService:          secureValueService,
+		SecureValueMetadataStorage:  secureValueMetadataStorage,
+		DecryptStorage:              decryptStorage,
+		DecryptService:              decryptService,
+		EncryptedValueStorage:       encryptedValueStorage,
+		GlobalEncryptedValueStorage: globalEncryptedValueStorage,
+		SQLKeeper:                   sqlKeeper,
+		Database:                    database,
+		AccessClient:                accessClient,
+		ConsolidationService:        consolidationService,
+		EncryptionManager:           encryptionManager,
+		GlobalDataKeyStore:          globalDataKeyStore,
 	}
 }
 
 type Sut struct {
-	SecureValueService         contracts.SecureValueService
-	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
-	DecryptStorage             contracts.DecryptStorage
-	DecryptService             contracts.DecryptService
-	EncryptedValueStorage      contracts.EncryptedValueStorage
-	SQLKeeper                  *sqlkeeper.SQLKeeper
-	Database                   *database.Database
-	AccessClient               types.AccessClient
+	SecureValueService          contracts.SecureValueService
+	SecureValueMetadataStorage  contracts.SecureValueMetadataStorage
+	DecryptStorage              contracts.DecryptStorage
+	DecryptService              contracts.DecryptService
+	EncryptedValueStorage       contracts.EncryptedValueStorage
+	GlobalEncryptedValueStorage contracts.GlobalEncryptedValueStorage
+	SQLKeeper                   *sqlkeeper.SQLKeeper
+	Database                    *database.Database
+	AccessClient                types.AccessClient
+	ConsolidationService        contracts.ConsolidationService
+	EncryptionManager           contracts.EncryptionManager
+	GlobalDataKeyStore          contracts.GlobalDataKeyStorage
 }
 
 type CreateSvConfig struct {
