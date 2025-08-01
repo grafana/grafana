@@ -1,6 +1,8 @@
 import { t } from '@grafana/i18n';
+import { DashboardViewItem } from 'app/features/search/types';
 
 import { findItem } from '../../state/utils';
+import { DashboardViewItemCollection } from '../../types';
 
 export function buildBreakdownString(
   folderCount: number,
@@ -32,7 +34,10 @@ export function buildBreakdownString(
 // Utility: Get root folder for any item (reusing existing pattern from reducers.ts)
 export function getItemRootFolder(
   item: { uid: string; parentUID?: string; kind?: string },
-  browseState: { rootItems?: { items: any[] }; childrenByParentUID: Record<string, any> }
+  browseState: {
+    rootItems?: { items: DashboardViewItem[] };
+    childrenByParentUID: Record<string, DashboardViewItemCollection>;
+  }
 ): string | undefined {
   const rootItems = browseState.rootItems?.items || [];
 

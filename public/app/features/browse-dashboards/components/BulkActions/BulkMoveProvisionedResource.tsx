@@ -20,6 +20,7 @@ import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/compo
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
@@ -277,7 +278,15 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 }
 
 export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
+  // Check if we're on the root browser dashboards page
+  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+
+  // If no folderUid, get repository name from selected items
+  const selectedFolderUid = isRootPage
+    ? Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid])[0]
+    : undefined;
+
+  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid || selectedFolderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';

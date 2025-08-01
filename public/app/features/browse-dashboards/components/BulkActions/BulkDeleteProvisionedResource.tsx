@@ -15,6 +15,7 @@ import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/compo
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
@@ -202,9 +203,18 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkActionProvisionResourceProps) {
-  // repo name
+  // Check if we're on the root browser dashboards page
+  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
 
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
+  // If no folderUid, get repository name from selected items
+  const selectedFolderUid = isRootPage
+    ? Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid])[0]
+    : undefined;
+
+  // For root provisioned folders, the folder UID is the repository name
+  const { repository, folder } = useGetResourceRepositoryView({
+    folderName: folderUid || selectedFolderUid,
+  });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
@@ -215,9 +225,6 @@ export function BulkDeleteProvisionedResource({
     ref: `bulk-delete/${timestamp}`,
     workflow: getDefaultWorkflow(repository),
   };
-
-  console.log('selectedItems', selectedItems);
-  console.log(repository, folderUid, folder);
 
   if (!repository) {
     return null;
