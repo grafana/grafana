@@ -51,13 +51,10 @@ export class DataProvider {
    */
   private inputInRange: string;
 
-  // private suggestionsIncomplete: boolean;
-
   constructor(params: DataProviderParams) {
     this.languageProvider = params.languageProvider;
     this.historyProvider = params.historyProvider;
     this.inputInRange = '';
-    // this.suggestionsIncomplete = false;
 
     this.queryLabelKeys = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.queryLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
@@ -112,33 +109,14 @@ export class DataProvider {
     return result;
   }
 
-  // private enableAutocompleteSuggestionsUpdate(): void {
-  //   this.suggestionsIncomplete = true;
-  //   dispatchEvent(
-  //     new CustomEvent(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, {
-  //       detail: { limit: this.metricNamesSuggestionLimit, datasourceUid: this.languageProvider.datasource.uid },
-  //     })
-  //   );
-  // }
-
   private setInputInRange(textInput: string): void {
     this.inputInRange = textInput;
   }
 
   get monacoSettings() {
     return {
-      /**
-       * Enable autocomplete suggestions update on every input change.
-       *
-       * @remarks
-       * If fuzzy search is used in `getCompletions` to trim down results to improve performance,
-       * we need to instruct Monaco to update the completions on every input change, so that the
-       * completions reflect the current input.
-       */
-      // enableAutocompleteSuggestionsUpdate: this.enableAutocompleteSuggestionsUpdate.bind(this),
       inputInRange: this.inputInRange,
       setInputInRange: this.setInputInRange.bind(this),
-      // suggestionsIncomplete: this.suggestionsIncomplete,
     };
   }
 }
