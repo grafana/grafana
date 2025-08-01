@@ -1,7 +1,7 @@
-import { regexifyLabelValuesQueryString } from '../../parsingUtils';
-import { QueryBuilderLabelFilter } from '../../shared/types';
+import { regexifyLabelValuesQueryString } from '../parsingUtils';
+import { QueryBuilderLabelFilter } from '../shared/types';
 
-export const formatPrometheusLabelFiltersToString = (
+const formatPrometheusLabelFiltersToString = (
   queryString: string,
   labelsFilters: QueryBuilderLabelFilter[] | undefined
 ): string => {

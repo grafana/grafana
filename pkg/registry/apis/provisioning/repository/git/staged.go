@@ -219,12 +219,24 @@ func (r *stagedGitRepository) Push(ctx context.Context) error {
 		if message == "" {
 			message = "Staged changes"
 		}
+
 		if err := r.commit(ctx, r.writer, message); err != nil {
 			return err
 		}
 	}
 
-	return r.writer.Push(ctx)
+	err := r.writer.Push(ctx)
+	if err != nil {
+		// Convert nanogit-specific errors to repository-level errors to avoid leaky abstraction
+		if errors.Is(err, nanogit.ErrNothingToPush) {
+			return repository.ErrNothingToPush
+		}
+		if errors.Is(err, nanogit.ErrNothingToCommit) {
+			return repository.ErrNothingToCommit
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *stagedGitRepository) Remove(ctx context.Context) error {

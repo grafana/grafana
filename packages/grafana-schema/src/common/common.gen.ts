@@ -833,6 +833,30 @@ export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions 
   type: TableCellDisplayMode.ColorBackground;
 }
 
+export interface TablePillCellOptions extends TableWrapTextOptions {
+  type: TableCellDisplayMode.Pill;
+}
+
+export interface TableMarkdownCellOptions {
+  type: TableCellDisplayMode.Markdown;
+}
+
+/**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Auto = 'auto',
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
+
+/**
+ * Table cell options. Each cell has a display mode
+ * and other potential options for that display.
+ */
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
+
 /**
  * Use UTC/GMT timezone
  */
@@ -947,38 +971,6 @@ export enum ComparisonOperation {
   LTE = 'lte',
   NEQ = 'neq',
 }
-
-/**
- * Pill options
- */
-export interface TablePillCellOptions extends TableWrapTextOptions {
-  color?: string;
-  colorMode?: ('auto' | 'fixed' | 'mapped');
-  type: TableCellDisplayMode.Pill;
-}
-
-/**
- * Markdown options
- */
-export interface TableMarkdownCellOptions {
-  type: TableCellDisplayMode.Markdown;
-}
-
-/**
- * Height of a table cell
- */
-export enum TableCellHeight {
-  Auto = 'auto',
-  Lg = 'lg',
-  Md = 'md',
-  Sm = 'sm',
-}
-
-/**
- * Table cell options. Each cell has a display mode
- * and other potential options for that display.
- */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
