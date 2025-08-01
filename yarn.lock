@@ -3590,11 +3590,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.28.6":
-  version: 6.28.6
-  resolution: "@grafana/scenes-react@npm:6.28.6"
+"@grafana/scenes-react@npm:6.29.0":
+  version: 6.29.0
+  resolution: "@grafana/scenes-react@npm:6.29.0"
   dependencies:
-    "@grafana/scenes": "npm:6.28.6"
+    "@grafana/scenes": "npm:6.29.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3606,13 +3606,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/55dfe20a6454f218b7c5ab2dc728678885d48e53656d046c125b555b201891e121e0960e108229372c2d70336cfe3dade9b392ed001fef90aec57cbcc13f76ca
+  checksum: 10/3cf401ecb143d4bf130ea406b2d6e789c1ac49f5490f4fa80e2cc330d84cee434d4543ae58ad0cae228e1b3b73972888bb95eed217a9d2fa0524088361710878
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.28.6":
-  version: 6.28.6
-  resolution: "@grafana/scenes@npm:6.28.6"
+"@grafana/scenes@npm:6.29.0":
+  version: 6.29.0
+  resolution: "@grafana/scenes@npm:6.29.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3632,7 +3632,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/fcfcf663e2eb63ad25fad27ec50af8590b1a6c9e802927e8e457bf2f81d04cf971c2f12f456a04a502c929ec7a1d50ef7118baee095134b133ecc92b269a6907
+  checksum: 10/ab28ab9a8612e51e189e7ae497cbe3be709515a917deb35e05be3b142c0d541acf22b441501eb6c162ba4bc7da443672ac13312b68f3dbf64ab8556aacdc2999
   languageName: node
   linkType: hard
 
@@ -18253,8 +18253,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.28.6"
-    "@grafana/scenes-react": "npm:6.28.6"
+    "@grafana/scenes": "npm:6.29.0"
+    "@grafana/scenes-react": "npm:6.29.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
