@@ -34,6 +34,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
                 <AppChrome>
                   <AppNotificationList />
                   <Stack gap={0} grow={1} direction="column">
+                    <AppChromeExtensionPoint />
                     {props.pageBanners.map((Banner, index) => (
                       <Banner key={index.toString()} />
                     ))}
@@ -42,7 +43,6 @@ export function RouterWrapper(props: RouterWrapperProps) {
                   {props.bodyRenderHooks.map((Hook, index) => (
                     <Hook key={index.toString()} />
                   ))}
-                  <AppChromeExtensionPoint />
                 </AppChrome>
                 <ModalRoot />
               </ModalsContextProvider>
