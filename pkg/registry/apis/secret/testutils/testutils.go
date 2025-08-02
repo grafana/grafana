@@ -269,6 +269,7 @@ func CreateOBOAuthContext(
 	requester := &identity.StaticRequester{
 		Namespace: namespace,
 		Type:      types.TypeUser,
+		OrgID:     1,
 		UserID:    1,
 		Permissions: map[int64]map[string][]string{
 			1: userPermissions,
