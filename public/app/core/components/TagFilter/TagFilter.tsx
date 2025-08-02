@@ -26,6 +26,7 @@ export interface Props {
   tagOptions: () => Promise<TermCount[]>;
   tags: string[];
   width?: number;
+  disabled?: boolean;
 }
 
 const filterOption = (option: SelectableValue<string>, searchQuery: string) => {
@@ -44,6 +45,7 @@ export const TagFilter = ({
   tagOptions,
   tags,
   width,
+  disabled,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -155,7 +157,7 @@ export const TagFilter = ({
   return (
     <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
-        <button className={styles.clear} onClick={() => onTagChange([])}>
+        <button className={styles.clear} onClick={() => onTagChange([])} disabled={disabled}>
           <Trans i18nKey="tag-filter.clear-button">Clear tags</Trans>
         </button>
       )}
@@ -164,6 +166,7 @@ export const TagFilter = ({
         {...selectOptions}
         prefix={<Icon name="tag-alt" />}
         aria-label={t('tag-filter.select-aria-label', 'Tag filter')}
+        disabled={disabled}
       />
     </div>
   );
