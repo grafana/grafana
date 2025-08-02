@@ -157,8 +157,17 @@ For more information on JWKS endpoints, refer to [Auth0 docs](https://auth0.com/
 
 jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json
 
-# Cache TTL for data loaded from http endpoint.
+# When the JWKS url requires an 'Authorization: Bearer <TOKEN>' header
+# jwk_set_bearer_token_file = /path/to/bearer_token
+
+# Cache duration for https endpoint response.
 cache_ttl = 60m
+
+# File containing one or more custom PEM Encoded CA Certificates
+# tls_client_ca = /path/to/ca.crt
+
+# Skip CA Verification entirely
+# tls_skip_verify_insecure = false
 ```
 
 {{< admonition type="note" >}}
