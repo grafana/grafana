@@ -259,28 +259,18 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
               };
             });
           case CalculateFieldMode.TemplateExpression:
-            return data.map((frame) => {
-              if (options.template?.expression !== undefined) {
-                let newFieldVals: Array<string | undefined>;
-                if (options.template?.replaceFn !== undefined) {
-                  newFieldVals = Array.from({ length: frame.length }, (_, i) => {
-                    const fieldVars: ScopedVars = {};
-                    frame.fields.forEach((field) => {
-                      fieldVars[field.name] = {
-                        value: field.values[i],
-                      };
-                    });
-                    const outVal = options.template?.replaceFn(options.template.expression, fieldVars);
-                    console.log('replacefn exists', i, outVal);
-                    return outVal;
+            if (options.template?.expression !== undefined) {
+              return data.map((frame) => {
+                const newFieldVals = Array.from({ length: frame.length }, (_, i) => {
+                  const fieldVars: ScopedVars = {};
+                  frame.fields.forEach((field) => {
+                    fieldVars[field.name] = {
+                      value: field.values[i],
+                    };
                   });
-                } else {
-                  console.log('replacefn not exists');
-                  newFieldVals = Array.from({ length: frame.length }, () => {
-                    return options.template?.expression;
-                  });
-                }
-                console.log('newFieldVals', newFieldVals);
+                  const replaced = ctx.interpolate(options.template!.expression, fieldVars);
+                  return replaced;
+                });
                 const f: Field = {
                   name: options.alias ?? 'Field',
                   type: FieldType.string,
@@ -291,10 +281,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                   ...frame,
                   fields: options.replaceFields ? [f] : [...frame.fields, f],
                 };
-              } else {
-                return frame;
-              }
-            });
+              });
+            } else {
+              return data;
+            }
         }
 
         // Nothing configured
