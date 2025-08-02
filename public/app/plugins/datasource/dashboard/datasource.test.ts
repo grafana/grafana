@@ -569,6 +569,101 @@ describe('DashboardDatasource', () => {
         expect(result.length).toBe(2);
       });
     });
+
+    describe('getFiltersApplicability', () => {
+      const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
+      const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+      beforeEach(() => {
+        config.featureToggles.dashboardDsAdHocFiltering = true;
+      });
+
+      afterEach(() => {
+        config.featureToggles.dashboardDsAdHocFiltering = originalToggleValue;
+      });
+
+      it('should return empty array when feature toggle is disabled', async () => {
+        config.featureToggles.dashboardDsAdHocFiltering = false;
+
+        const result = await ds.getFiltersApplicability({
+          filters: [{ key: 'name', operator: '=', value: 'test' }],
+        });
+
+        expect(result).toEqual([]);
+      });
+
+      it('should mark supported operators as applicable', async () => {
+        const result = await ds.getFiltersApplicability({
+          filters: [
+            { key: 'name', operator: '=', value: 'John' },
+            { key: 'age', operator: '!=', value: '25' },
+          ],
+        });
+
+        expect(result).toEqual([
+          { key: 'name', applicable: true },
+          { key: 'age', applicable: true },
+        ]);
+      });
+
+      it('should mark unsupported operators as not applicable with reason', async () => {
+        const result = await ds.getFiltersApplicability({
+          filters: [
+            { key: 'name', operator: '>', value: 'John' },
+            { key: 'age', operator: '<', value: '25' },
+            { key: 'score', operator: '=~', value: 'pattern' },
+          ],
+        });
+
+        expect(result).toEqual([
+          {
+            key: 'name',
+            applicable: false,
+            reason: "Operator '>' is not supported. Only '=' and '!=' operators are supported.",
+          },
+          {
+            key: 'age',
+            applicable: false,
+            reason: "Operator '<' is not supported. Only '=' and '!=' operators are supported.",
+          },
+          {
+            key: 'score',
+            applicable: false,
+            reason: "Operator '=~' is not supported. Only '=' and '!=' operators are supported.",
+          },
+        ]);
+      });
+
+      it('should handle mixed applicable and non-applicable filters', async () => {
+        const result = await ds.getFiltersApplicability({
+          filters: [
+            { key: 'name', operator: '=', value: 'John' },
+            { key: 'age', operator: '>', value: '25' },
+            { key: 'status', operator: '!=', value: 'active' },
+          ],
+        });
+
+        expect(result).toEqual([
+          { key: 'name', applicable: true },
+          {
+            key: 'age',
+            applicable: false,
+            reason: "Operator '>' is not supported. Only '=' and '!=' operators are supported.",
+          },
+          { key: 'status', applicable: true },
+        ]);
+      });
+
+      it('should handle empty filters array', async () => {
+        const result = await ds.getFiltersApplicability({ filters: [] });
+        expect(result).toEqual([]);
+      });
+
+      it('should handle missing options', async () => {
+        const result = await ds.getFiltersApplicability();
+        expect(result).toEqual([]);
+      });
+    });
   });
 });
 
