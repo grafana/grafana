@@ -3,7 +3,9 @@ import * as React from 'react';
 import { locationService } from '@grafana/runtime';
 import store from 'app/core/store';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
+import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import {
@@ -33,9 +35,38 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
   const queryParams = locationService.getSearch();
   const updateQueryParams = locationService.partial;
   const allAvailableAlertManagers = useAlertManagersByPermission(accessType);
-  const availableAlertManagers = allAvailableAlertManagers.availableInternalDataSources.concat(
-    allAvailableAlertManagers.availableExternalDataSources
-  );
+
+  // Fetch extra configs to include in available alertmanagers
+  const { data: extraConfigs } = alertmanagerApi.endpoints.getExtraAlertmanagerConfigs.useQuery();
+
+  const availableAlertManagers = React.useMemo(() => {
+    const regularAlertManagers = allAvailableAlertManagers.availableInternalDataSources.concat(
+      allAvailableAlertManagers.availableExternalDataSources
+    );
+
+    const extraConfigDataSources: AlertManagerDataSource[] = (extraConfigs || []).map((config) => ({
+      name: `__grafana-converted-extra-config-${config.identifier}`,
+      displayName: `${config.identifier} (Extra Config)`,
+      imgUrl: grafanaIconSvg,
+      hasConfigurationAPI: false, // Extra configs don't support full alertmanager API
+      handleGrafanaManagedAlerts: true,
+    }));
+
+    // List in order: Grafana -> Extra Configs -> Alertmanager Datasources
+    const grafanaAlertmanager = regularAlertManagers.find((am) => am.name === GRAFANA_RULES_SOURCE_NAME);
+    const datasourceAlertmanagers = regularAlertManagers.filter((am) => am.name !== GRAFANA_RULES_SOURCE_NAME);
+
+    const orderedAlertManagers: AlertManagerDataSource[] = [];
+
+    if (grafanaAlertmanager) {
+      orderedAlertManagers.push(grafanaAlertmanager);
+    }
+
+    orderedAlertManagers.push(...extraConfigDataSources);
+    orderedAlertManagers.push(...datasourceAlertmanagers);
+
+    return orderedAlertManagers;
+  }, [allAvailableAlertManagers, extraConfigs]);
 
   const updateSelectedAlertmanager = React.useCallback(
     (selectedAlertManager: string) => {
@@ -73,7 +104,18 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
     ? desiredAlertmanager
     : undefined;
 
-  const selectedAlertmanagerConfig = getAlertmanagerDataSourceByName(selectedAlertmanager)?.jsonData;
+  // For extra configs, we create a mock jsonData since they don't exist in regular datasources
+  const selectedAlertmanagerConfig = React.useMemo(() => {
+    if (selectedAlertmanager?.startsWith('__grafana-converted-extra-config-')) {
+      // Extra configs are view-only
+      const config: AlertManagerDataSourceJsonData = {
+        implementation: AlertManagerImplementation.prometheus,
+        handleGrafanaManagedAlerts: true,
+      };
+      return config;
+    }
+    return getAlertmanagerDataSourceByName(selectedAlertmanager)?.jsonData;
+  }, [selectedAlertmanager]);
 
   // determine if we're dealing with an Alertmanager data source that supports the ruler API
   const isGrafanaAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;

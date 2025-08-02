@@ -52,6 +52,7 @@ export enum DataSourceType {
 
 export interface AlertManagerDataSource {
   name: string;
+  displayName?: string;
   imgUrl: string;
   meta?: DataSourceInstanceSettings['meta'];
   hasConfigurationAPI?: boolean;
@@ -300,6 +301,11 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
   }
+
+  if (dataSourceName.startsWith('__grafana-converted-extra-config-')) {
+    return dataSourceName;
+  }
+
   const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
