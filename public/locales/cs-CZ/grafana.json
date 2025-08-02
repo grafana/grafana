@@ -9422,6 +9422,15 @@
       "show-more": "zobrazit více",
       "tooltip-error": "Chyba: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Vymazat",
       "close": "Zavřít podrobnosti protokolu",
@@ -12604,6 +12613,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12641,6 +12651,13 @@
       "label-alt-text": "Alternativní text",
       "label-title-text": "Text názvu"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Výpočet",
     "name-cell-height": "Výška buňky",
     "name-cell-type": "Typ buňky",
@@ -12657,7 +12674,10 @@
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-wrap-header-text": "Zalomit text záhlaví",
     "placeholder-column-width": "auto.",
-    "placeholder-fields": "Všechna číselná pole"
+    "placeholder-fields": "Všechna číselná pole",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Možnosti buněk",

@@ -9362,6 +9362,15 @@
       "show-more": "meer",
       "tooltip-error": "Fout: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Wissen",
       "close": "Logboekdetails sluiten",
@@ -12520,6 +12529,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12557,6 +12567,13 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Titeltekst"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Berekening",
     "name-cell-height": "Celhoogte",
     "name-cell-type": "Type cel",
@@ -12573,7 +12590,10 @@
     "name-show-table-header": "Header tabel tonen",
     "name-wrap-header-text": "Koptekst laten teruglopen",
     "placeholder-column-width": "automatisch",
-    "placeholder-fields": "Alle numerieke velden"
+    "placeholder-fields": "Alle numerieke velden",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Celopties",

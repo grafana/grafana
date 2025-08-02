@@ -9332,6 +9332,15 @@
       "show-more": "顯示更多",
       "tooltip-error": "錯誤：{{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "清除",
       "close": "關閉紀錄詳細資訊",
@@ -12478,6 +12487,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12515,6 +12525,13 @@
       "label-alt-text": "替代文字",
       "label-title-text": "標題文字"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "計算",
     "name-cell-height": "儲存格高度",
     "name-cell-type": "儲存格類型",
@@ -12531,7 +12548,10 @@
     "name-show-table-header": "顯示表格頁首",
     "name-wrap-header-text": "換行標題文字",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "所有數值欄位"
+    "placeholder-fields": "所有數值欄位",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "儲存格選項",

@@ -9362,6 +9362,15 @@
       "show-more": "afficher plus",
       "tooltip-error": "Erreur : {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Effacer",
       "close": "Fermer les détails du log",
@@ -12520,6 +12529,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12557,6 +12567,13 @@
       "label-alt-text": "Texte alternatif",
       "label-title-text": "Texte du titre"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Calcul",
     "name-cell-height": "Hauteur de cellule",
     "name-cell-type": "Type de cellule",
@@ -12573,7 +12590,10 @@
     "name-show-table-header": "Afficher l’en-tête du tableau",
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Tous les champs numériques"
+    "placeholder-fields": "Tous les champs numériques",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Options de cellule",

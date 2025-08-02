@@ -9362,6 +9362,15 @@
       "show-more": "mehr anzeigen",
       "tooltip-error": "Fehler: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Löschen",
       "close": "Logdetails schließen",
@@ -12520,6 +12529,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12557,6 +12567,13 @@
       "label-alt-text": "Alt-Text",
       "label-title-text": "Titeltext"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Berechnung",
     "name-cell-height": "Zellenhöhe",
     "name-cell-type": "Zellentyp",
@@ -12573,7 +12590,10 @@
     "name-show-table-header": "Tabellenüberschirft anzeigen",
     "name-wrap-header-text": "Kopfzeilentext umbrechen",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alle numerischen Felder"
+    "placeholder-fields": "Alle numerischen Felder",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Zellenoptionen",
