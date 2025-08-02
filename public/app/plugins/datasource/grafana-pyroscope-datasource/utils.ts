@@ -1,7 +1,16 @@
 import { invert } from 'lodash';
 import Prism, { Grammar, Token } from 'prismjs';
 
-import { AbstractLabelMatcher, AbstractLabelOperator } from '@grafana/data';
+import { createContext, ItemDataType } from '@grafana/assistant';
+import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  DataFrame,
+  DataQueryResponse,
+  DataQueryRequest,
+} from '@grafana/data';
+
+import { GrafanaPyroscopeDataQuery } from './dataquery.gen';
 
 export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {
   const labelMatchers: AbstractLabelMatcher[] = [];
@@ -131,3 +140,48 @@ export const grammar: Grammar = {
   },
   punctuation: /[{}(),.]/,
 };
+
+export function enrichDataFrameWithAssistantContentMapper(
+  request: DataQueryRequest<GrafanaPyroscopeDataQuery>,
+  datasourceName: string
+) {
+  const validTargets = request.targets;
+  return (response: DataQueryResponse) => {
+    response.data = response.data.map((data: DataFrame) => {
+      if (data.meta?.preferredVisualisationType !== 'flamegraph') {
+        return data;
+      }
+
+      const query = validTargets.find((target) => target.refId === data.refId);
+      if (!query || !query.datasource?.uid || !query.datasource?.type) {
+        return data;
+      }
+
+      const context = [
+        createContext(ItemDataType.Datasource, {
+          datasourceName: datasourceName,
+          datasourceUid: query.datasource.uid,
+          datasourceType: query.datasource.type,
+        }),
+        createContext(ItemDataType.Structured, {
+          title: 'Analyze Flame Graph',
+          data: {
+            start: request.range.from.valueOf(),
+            end: request.range.to.valueOf(),
+            profile_type_id: query.profileTypeId,
+            label_selector: query.labelSelector,
+            operation: 'execute',
+          },
+        }),
+      ];
+
+      data.meta = data.meta || {};
+      data.meta.custom = {
+        ...data.meta.custom,
+        assistantContext: context,
+      };
+      return data;
+    });
+    return response;
+  };
+}
