@@ -61,6 +61,12 @@ Use this transformation to add a new field calculated from two other fields. Eac
     - **Stddev** - Calculates the moving standard deviation.
     - **Variance** - Calculates the moving variance.
   - **Row index** - Insert a field with the row index.
+  - **Template expression** - Insert a field with the value generated from a template expression. The expression can paste the value of other fields by using the {field} syntax, with optional modifiers for padding.
+    - **No alignment** - Pastes the contents of 'field': {field}
+    - **Left alignment** - Pastes the contents of 'field' aligned left with default padding character, padded to 10 characters: {field:<10}
+    - **Right alignment** - Pastes the contents of 'field' aligned right with default padding character, padded to 10 characters: {field:>10}
+    - **Center alignment** -  Pastes the contents of 'field' center aligned with default padding character, padded to 10 characters: {field:^10}
+    - **Custom padding character** -  Pastes the contents of 'field' center aligned with an underscore padding character, padded to 10 characters: {field:_^10}
 - **Field name** - Select the names of fields you want to use in the calculation for the new field.
 - **Calculation** - If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
 - **Operation** - If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
@@ -515,6 +521,7 @@ Use this transformation to customize the output of a string field. This transfor
 - **Kebab case** - Formats all characters in the string in lowercase and uses dashes instead of spaces between words.
 - **Trim** - Removes all leading and trailing spaces from the string.
 - **Substring** - Returns a substring of the string, using the specified start and end positions.
+- **Affix** - Adds a prefix or suffix to the field. Allows pasting of values of other fields using {fieldName} with padding modifiers (see Add field from calculation:Template).
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.`;
     },
