@@ -5,6 +5,8 @@ import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
+import { getIsReadOnlyRepo } from '../utils/repository';
+
 interface GetResourceRepositoryArgs {
   name?: string; // the repository name
   folderName?: string; // folder we are targeting
@@ -15,6 +17,7 @@ interface RepositoryViewData {
   folder?: Folder;
   isLoading?: boolean;
   isInstanceManaged: boolean;
+  isReadOnlyRepo: boolean;
 }
 
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
@@ -29,17 +32,17 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
   );
 
   if (!provisioningEnabled) {
-    return { isLoading: false, isInstanceManaged: false };
+    return { isLoading: false, isInstanceManaged: false, isReadOnlyRepo: false };
   }
 
   if (isSettingsLoading || isFolderLoading) {
-    return { isLoading: true, isInstanceManaged: false };
+    return { isLoading: true, isInstanceManaged: false, isReadOnlyRepo: false };
   }
 
   const items = settingsData?.items ?? [];
 
   if (!items.length) {
-    return { folder, isInstanceManaged: false };
+    return { folder, isInstanceManaged: false, isReadOnlyRepo: false };
   }
 
   const instanceRepo = items.find((repo) => repo.target === 'instance');
@@ -52,6 +55,7 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
         repository,
         folder,
         isInstanceManaged,
+        isReadOnlyRepo: getIsReadOnlyRepo(repository),
       };
     }
   }
@@ -65,6 +69,7 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
         repository,
         folder,
         isInstanceManaged,
+        isReadOnlyRepo: getIsReadOnlyRepo(repository),
       };
     }
 
@@ -77,6 +82,7 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
           repository,
           folder,
           isInstanceManaged,
+          isReadOnlyRepo: getIsReadOnlyRepo(repository),
         };
       }
     }
@@ -86,5 +92,6 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
     repository: instanceRepo,
     folder,
     isInstanceManaged,
+    isReadOnlyRepo: getIsReadOnlyRepo(instanceRepo),
   };
 };
