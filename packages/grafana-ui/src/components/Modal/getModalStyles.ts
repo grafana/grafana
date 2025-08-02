@@ -7,7 +7,6 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
 
   return {
     modal: css({
-      position: 'fixed',
       zIndex: theme.zIndex.modal,
       background: theme.colors.background.primary,
       boxShadow: theme.shadows.z3,
@@ -15,14 +14,17 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.border.weak}`,
       backgroundClip: 'padding-box',
       outline: 'none',
-      width: '750px',
-      maxWidth: '100%',
-      left: 0,
-      right: 0,
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      top: '10%',
-      maxHeight: '80%',
+
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+
+      width: '100%',
+      maxWidth: '750px',
+
+      maxHeight: '100%',
+
       display: 'flex',
       flexDirection: 'column',
     }),
@@ -40,7 +42,10 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       minHeight: '42px',
-      margin: theme.spacing(1, 2, 0, 2),
+      margin: theme.spacing(1, 1, 0, 1),
+      [theme.breakpoints.up('md')]: {
+        margin: theme.spacing(1, 2, 0, 2),
+      },
     }),
     modalHeaderWithTabs: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -70,8 +75,11 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     }),
     modalContent: css({
       overflow: 'auto',
-      padding: theme.spacing(3),
+      padding: theme.spacing(1, 2, 2, 2),
       width: '100%',
+      [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(3),
+      },
     }),
     modalButtonRow: css({
       paddingTop: theme.spacing(3),
