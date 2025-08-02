@@ -40,7 +40,10 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       minHeight: '42px',
-      margin: theme.spacing(1, 2, 0, 2),
+      margin: theme.spacing(1, 1, 0, 1),
+      [theme.breakpoints.up('md')]: {
+        margin: theme.spacing(1, 2, 0, 2),
+      },
     }),
     modalHeaderWithTabs: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -70,8 +73,11 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     }),
     modalContent: css({
       overflow: 'auto',
-      padding: theme.spacing(3),
+      padding: theme.spacing(1, 2, 2, 2),
       width: '100%',
+      [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(3),
+      },
     }),
     modalButtonRow: css({
       paddingTop: theme.spacing(3),
