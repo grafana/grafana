@@ -982,8 +982,17 @@ spec:
               value: grpc
             - name: OTEL_SERVICE_NAME
               value: "iam-app-operator"
-            - name: KUBE_CONFIG_FILE
-              value: /etc/grafana-kubeconfig/grafana.kubeconfig
+            # TODO: enable for Single Tenant Grafana as the source of folders
+            #- name: KUBE_CONFIG_FILE
+            #  value: /etc/grafana-kubeconfig/grafana.kubeconfig
+            # The following three settings are if you want MT Folder App as the source of folders
+            # Useful for testing auth for the deployments
+            - name: FOLDER_APP_URL
+              value: http://host.docker.internal:6446
+            - name: AUTH_TOKEN_EXCHANGE_URL
+              value: https://host.docker.internal:6481/sign/access-token
+            - name: AUTH_TOKEN
+              value: "ThisIsMySecretToken"
           ports:
             - containerPort: 9090
               name: metrics
