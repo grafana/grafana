@@ -254,9 +254,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, createdName)
 
-		decryptAuthCtx := testutils.CreateServiceAuthContext(t.Context(), serviceIdentity, owner.Namespace, []string{"secret.grafana.app/securevalues:decrypt"})
-
-		decryptedValues, err := tu.DecryptService.Decrypt(decryptAuthCtx, owner.Namespace, createdName)
+		decryptedValues, err := tu.DecryptService.Decrypt(t.Context(), serviceIdentity, owner.Namespace, []string{createdName})
 		require.NoError(t, err)
 
 		decryptedResult, ok := decryptedValues[createdName]
