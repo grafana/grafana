@@ -20,6 +20,8 @@ export function getRecentScopesActions(): CommandPaletteAction[] {
       id: recentScope.map((scope) => scope.spec.title).join(', '),
       name: recentScope.map((scope) => scope.spec.title).join(', '),
       section: t('command-palette.section.recent-scopes', 'Recent scopes'),
+      // Only show the parent of the first scope for now
+      subtitle: recentScope[0]?.parentNode?.spec.title,
       priority: RECENT_SCOPES_PRIORITY,
       perform: () => {
         scopesSelectorService.changeScopes(recentScope.map((scope) => scope.metadata.name));
