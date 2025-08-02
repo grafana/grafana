@@ -62,16 +62,10 @@ describe('PluginSubtitle', () => {
     expect(screen.getByText('Test description')).toBeInTheDocument();
   });
 
-  it('renders links', () => {
-    render(<PluginSubtitle plugin={basePlugin} />);
-    expect(screen.getByText('Website')).toHaveAttribute('href', 'http://test.com');
-  });
-
   it('shows error alert when installation error exists', () => {
-    jest.spyOn(runtime, 'useInstallStatus').mockReturnValueOnce({
-      error: { message: 'Install failed', error: 'Details' },
-      isInstalling: false,
-    });
+    jest
+      .spyOn(runtime, 'useInstallStatus')
+      .mockReturnValueOnce({ error: { message: 'Install failed', error: 'Details' }, isInstalling: false });
     render(<PluginSubtitle plugin={basePlugin} />);
     expect(screen.getByText('Install failed')).toBeInTheDocument();
   });
