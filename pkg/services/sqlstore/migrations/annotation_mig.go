@@ -100,6 +100,7 @@ func addAnnotationMig(mg *Migrator) {
 		},
 		Indices: []*Index{
 			{Cols: []string{"annotation_id", "tag_id"}, Type: UniqueIndex},
+			{Cols: []string{"tag_id", "annotation_id"}, Type: UniqueIndex},
 		},
 	}
 
