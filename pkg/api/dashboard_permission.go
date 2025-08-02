@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route GET /dashboards/uid/{uid}/permissions dashboard_permissions getDashboardPermissionsListByUID
+// swagger:route GET /dashboards/uid/{uid}/permissions dashboards permissions getDashboardPermissionsListByUID
 //
 // Gets all existing permissions for the given dashboard.
 //
@@ -29,11 +29,11 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /dashboards/id/{DashboardID}/permissions dashboard_permissions getDashboardPermissionsListByID
+// swagger:route GET /dashboards/id/{DashboardID}/permissions dashboards permissions getDashboardPermissionsListByID
 //
 // Gets all existing permissions for the given dashboard.
 //
-// Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead
+// Please refer to [updated API](#/dashboards/getDashboardPermissionsListByUID) instead
 //
 // Deprecated: true
 //
@@ -89,7 +89,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
-// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions updateDashboardPermissionsByUID
+// swagger:route POST /dashboards/uid/{uid}/permissions dashboards permissions updateDashboardPermissionsByUID
 //
 // Updates permissions for a dashboard.
 //
@@ -103,11 +103,11 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /dashboards/id/{DashboardID}/permissions dashboard_permissions updateDashboardPermissionsByID
+// swagger:route POST /dashboards/id/{DashboardID}/permissions dashboards permissions updateDashboardPermissionsByID
 //
 // Updates permissions for a dashboard.
 //
-// Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead
+// Please refer to [updated API](#/dashboards/updateDashboardPermissionsByUID) instead
 //
 // This operation will remove existing permissions if they’re not included in the request.
 //
