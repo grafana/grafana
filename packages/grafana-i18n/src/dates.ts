@@ -1,5 +1,19 @@
+import type {
+  DurationFormatConstructor,
+  DurationFormatOptions as _DurationFormatOptions,
+  DurationInput as _DurationInput,
+} from '@formatjs/intl-durationformat/src/types';
 import deepEqual from 'fast-deep-equal';
 import memoize, { AnyFn, Memoized } from 'micro-memoize';
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Intl {
+    const DurationFormat: DurationFormatConstructor;
+    type DurationFormatOptions = _DurationFormatOptions;
+    type DurationInput = _DurationInput;
+  }
+}
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 
