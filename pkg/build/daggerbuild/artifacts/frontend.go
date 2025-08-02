@@ -26,15 +26,18 @@ var FrontendInitializer = Initializer{
 }
 
 type Frontend struct {
-	Enterprise bool
-	Version    string
-	Src        *dagger.Directory
-	YarnCache  *dagger.CacheVolume
+	Enterprise  bool
+	Version     string
+	Src         *dagger.Directory
+	YarnCache   *dagger.CacheVolume
+	NodeModules *pipeline.Artifact
 }
 
 // The frontend does not have any artifact dependencies.
 func (f *Frontend) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
-	return nil, nil
+	return []*pipeline.Artifact{
+		f.NodeModules,
+	}, nil
 }
 
 // Builder will return a node.js alpine container that matches the .nvmrc in the Grafana source repository
@@ -47,7 +50,11 @@ func (f *Frontend) BuildFile(ctx context.Context, builder *dagger.Container, opt
 }
 
 func (f *Frontend) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	return frontend.Build(builder, f.Version), nil
+	nodeModules, err := opts.Store.Directory(ctx, f.NodeModules)
+	if err != nil {
+		return nil, err
+	}
+	return frontend.Build(builder, f.Version, f.Src, nodeModules), nil
 }
 
 func (f *Frontend) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
@@ -89,6 +96,10 @@ func (f *Frontend) VerifyDirectory(ctx context.Context, client *dagger.Client, d
 	return nil
 }
 
+func (t *Frontend) String() string {
+	return "frontend"
+}
+
 func NewFrontendFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	options, err := pipeline.ParseFlags(artifact, FrontendFlags)
 	if err != nil {
@@ -119,15 +130,20 @@ func NewFrontendFromString(ctx context.Context, log *slog.Logger, artifact strin
 }
 
 func NewFrontend(ctx context.Context, log *slog.Logger, artifact, version string, enterprise bool, src *dagger.Directory, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
+	nodeModules, err := NewNodeModules(ctx, log, artifact, src, version, cache)
+	if err != nil {
+		return nil, err
+	}
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,
 		Flags:          FrontendFlags,
 		Handler: &Frontend{
-			Enterprise: enterprise,
-			Version:    version,
-			Src:        src,
-			YarnCache:  cache,
+			NodeModules: nodeModules,
+			Enterprise:  enterprise,
+			Version:     version,
+			Src:         src,
+			YarnCache:   cache,
 		},
 	})
 }
