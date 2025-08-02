@@ -360,6 +360,35 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -run IntegrationMemcached -covermode=atomic -timeout=2m \
 		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
+.PHONY: test-go-with-code-owners
+test-go-with-code-owners: ## Run Go tests with code owner identification for failures. Usage: make test-go-with-code-owners TEST_ARGS="./pkg/expr"
+	@echo "run go tests with code owner identification"
+	./scripts/codeowners-tools/test-with-owners.sh $(if $(TEST_ARGS),$(TEST_ARGS),-v -short -timeout=30m ./pkg/...)
+
+.PHONY: get-codeowner
+get-codeowner: ## Get code owner for a specific file path. Usage: make get-codeowner FILE="pkg/expr/graph_test.go"
+	@if [ -z "$(FILE)" ]; then \
+		printf "\033[1;31m❌ Error: FILE parameter is required\033[0m\n"; \
+		printf "\033[1;34m📖 Usage:\033[0m make get-codeowner FILE=path/to/file.go\n"; \
+		printf "\033[1;32m💡 Example:\033[0m make get-codeowner FILE=pkg/api/api.go\n"; \
+		exit 1; \
+	fi
+	@printf "\033[1;34m🔍 Looking up code owner for:\033[0m $(FILE)\n"
+	@printf "\033[0;36m═══════════════════════════════════════════════════════════════\033[0m\n"
+	@owner_output=$$(./scripts/codeowners-tools/get-owner.sh . "$(FILE)" 2>/dev/null); \
+	if [ $$? -eq 0 ] && [ -n "$$owner_output" ]; then \
+		owner=$$(echo "$$owner_output" | sed 's/Code owner for [^:]*: //'); \
+		printf "\033[1;32m👤 Code Owner:\033[0m \033[1;33m$$owner\033[0m\n"; \
+		printf "\033[1;35m📁 File/Path:\033[0m $(FILE)\n"; \
+	else \
+		printf "\033[1;31m❌ No code owner found for:\033[0m $(FILE)\n"; \
+		printf "\033[0;33m💭 This might mean:\033[0m\n"; \
+		printf "   • File is not covered by CODEOWNERS\n"; \
+		printf "   • File path doesn't exist\n"; \
+		printf "   • Pattern matching issue\n"; \
+	fi
+	@printf "\033[0;36m═══════════════════════════════════════════════════════════════\033[0m\n"
+
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
