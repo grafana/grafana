@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -58,6 +59,85 @@ func (t translation) HasFolderSupport() bool {
 	return t.folderSupport
 }
 
+// resourcePermissionTranslation handles the special case of resource permissions
+// where the name format is "{group}-{resource}-{id}" and needs to be translated
+// to the target resource's permission scope and actions.
+// Currently focused on dashboards only.
+type resourcePermissionTranslation struct {
+	mapper MapperRegistry
+}
+
+// Case 1:
+// Group: iam.grafana.app
+// Resource: resourcepermissions
+// Name: dashboard.grafana.app_dashboards_dash123
+// Verb: create
+
+// This should translate to:
+// dashboards.permissions:write
+// Scope: dashboards:uid:dash123
+
+// Case 2:
+// Group: iam.grafana.app
+// Resource: resourcepermissions
+// Name: folders.grafana.app_folders_fold123
+// Verb: create
+
+// This should translate to:
+// folders.permissions:write
+// Scope: folders:uid:fold123
+
+// Problem the action function only takes the verb and not the resource name
+// therefore it's impossible to determine the correct action (e.g. dashboards vs folders).
+
+func (r resourcePermissionTranslation) Action(verb string) (string, bool) {
+	switch verb {
+	case utils.VerbGet, utils.VerbList, utils.VerbWatch:
+		return r.resource + ".permissions:read", true
+	case utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch:
+		return r.resource + ".permissions:write", true
+	case utils.VerbDelete, utils.VerbDeleteCollection:
+		return r.resource + ".permissions:write", true
+	default:
+		return "", false
+	}
+}
+
+func (r resourcePermissionTranslation) Scope(name string) string {
+	parts := strings.Split(name, "_")
+	if len(parts) < 3 {
+		return ""
+	}
+	if parts[0] != "dashboard.grafana.app" && parts[0] != "folders.grafana.app" {
+		return ""
+	}
+	mapper, ok := r.mapper.Get(parts[0], parts[1])
+	if !ok {
+		return ""
+	}
+	return mapper.Scope(parts[2])
+}
+
+func (r resourcePermissionTranslation) Prefix() string {
+	// Dashboard resource permissions target dashboard resources
+	return "dashboards:uid:"
+}
+
+func (r resourcePermissionTranslation) AllActions() []string {
+	return []string{
+		"dashboards.permissions:read",
+		"dashboards.permissions:write",
+	}
+}
+
+func (r resourcePermissionTranslation) HasFolderSupport() bool {
+	return false // Resource permissions themselves don't support folders
+}
+
+func newResourcePermissionTranslation() Mapping {
+	return resourcePermissionTranslation{}
+}
+
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
@@ -67,9 +147,9 @@ type MapperRegistry interface {
 	GetAll(group string) []Mapping
 }
 
-type mapper map[string]map[string]translation
+type mapper map[string]map[string]Mapping
 
-func newResourceTranslation(resource string, attribute string, folderSupport bool) translation {
+func newResourceTranslation(resource string, attribute string, folderSupport bool) Mapping {
 	defaultMapping := func(r string) map[string]string {
 		return map[string]string{
 			utils.VerbGet:              fmt.Sprintf("%s:read", r),
@@ -94,7 +174,7 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 }
 
 func NewMapperRegistry() MapperRegistry {
-	mapper := mapper(map[string]map[string]translation{
+	mapper := mapper(map[string]map[string]Mapping{
 		"dashboard.grafana.app": {
 			"dashboards": newResourceTranslation("dashboards", "uid", true),
 		},
@@ -103,8 +183,9 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"iam.grafana.app": {
 			// Teams is a special case. We translate user permissions from id to uid based.
-			"teams":     newResourceTranslation("teams", "uid", false),
-			"coreroles": newResourceTranslation("roles", "uid", false),
+			"teams":               newResourceTranslation("teams", "uid", false),
+			"coreroles":           newResourceTranslation("roles", "uid", false),
+			"resourcepermissions": newResourcePermissionTranslation(),
 			"roles": translation{
 				resource:  "roles",
 				attribute: "uid",
@@ -151,7 +232,7 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 		return nil, false
 	}
 
-	return &t, true
+	return t, true
 }
 
 func (m mapper) GetAll(group string) []Mapping {
@@ -162,7 +243,7 @@ func (m mapper) GetAll(group string) []Mapping {
 
 	translations := make([]Mapping, 0, len(resources))
 	for _, t := range resources {
-		translations = append(translations, &t)
+		translations = append(translations, t)
 	}
 
 	return translations
