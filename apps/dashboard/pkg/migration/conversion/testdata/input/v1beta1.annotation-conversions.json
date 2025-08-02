@@ -1,0 +1,219 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "annotation-conversions-test",
+    "labels": {
+      "test": "annotation-conversions"
+    }
+  },
+  "spec": {
+    "title": "Annotation Conversions Test Dashboard",
+    "description": "Testing annotation transformations",
+    "tags": ["test", "annotations"],
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        },
+        {
+          "name": "Prometheus Annotations",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "red",
+          "target": {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "refId": "Anno",
+            "interval": "1m",
+            "step": 60
+          },
+          "builtIn": 0,
+          "type": "prometheus"
+        },
+        {
+          "name": "TestData Annotations",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "blue",
+          "target": {
+            "lines": 10,
+            "refId": "Anno",
+            "scenarioId": "annotations"
+          },
+          "builtIn": false,
+          "type": "testdata"
+        },
+        {
+          "name": "Elasticsearch Annotations",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "elastic-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "yellow",
+          "target": {
+            "query": "tags:deployment",
+            "timeField": "@timestamp",
+            "refId": "Anno"
+          },
+          "textField": "message",
+          "tagsField": "tags",
+          "timeField": "@timestamp",
+          "timeEndField": "end_time",
+          "builtIn": 0,
+          "type": "elasticsearch"
+        },
+        {
+          "name": "SQL Annotations",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "green",
+          "target": {
+            "format": "table",
+            "rawSql": "SELECT time, title, text, tags FROM annotations WHERE $__timeFilter(time)",
+            "refId": "Anno"
+          },
+          "textColumn": "text",
+          "titleColumn": "title",
+          "tagsColumn": "tags",
+          "timeColumn": "time",
+          "builtIn": 0,
+          "type": "sql"
+        },
+        {
+          "name": "No Datasource Annotation",
+          "enable": true,
+          "hide": false,
+          "iconColor": "purple",
+          "target": {
+            "expr": "static_annotation_query",
+            "refId": "Anno"
+          },
+          "builtIn": 0,
+          "type": "manual"
+        },
+        {
+          "name": "Hidden Annotation",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus-uid"
+          },
+          "enable": false,
+          "hide": true,
+          "iconColor": "gray",
+          "target": {
+            "expr": "disabled_query",
+            "refId": "Anno"
+          },
+          "builtIn": 0,
+          "type": "prometheus"
+        },
+        {
+          "name": "Complex Filter Annotation",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-uid" 
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "#FF5722",
+          "target": {
+            "query": "from(bucket: \"events\") |> range(start: $__timeFrom, stop: $__timeTo) |> filter(fn: (r) => r._measurement == \"deployments\")",
+            "refId": "Anno"
+          },
+          "filter": {
+            "ids": [1, 2, 3],
+            "list": [
+              {
+                "key": "service",
+                "operator": "=",
+                "value": "api"
+              },
+              {
+                "key": "environment",
+                "operator": "!=",
+                "value": "test"
+              }
+            ]
+          },
+          "mappings": {
+            "title": "service",
+            "text": "description",
+            "time": "timestamp",
+            "tags": "labels"
+          },
+          "builtIn": 0,
+          "type": "influxdb"
+        },
+        {
+          "name": "CloudWatch Annotations",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-uid"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "orange",
+          "target": {
+            "namespace": "AWS/EC2",
+            "metricName": "CPUUtilization",
+            "dimensions": {
+              "InstanceId": "i-1234567890abcdef"
+            },
+            "statistic": "Average",
+            "refId": "Anno"
+          },
+          "showIn": 0,
+          "builtIn": 0,
+          "type": "cloudwatch"
+        },
+        {
+          "name": "Disabled Built-in Annotation",
+          "builtIn": true,
+          "enable": false,
+          "hide": true,
+          "iconColor": "transparent",
+          "target": {},
+          "type": "builtin"
+        }
+      ]
+    },
+    "panels": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "links": []
+  }
+} 

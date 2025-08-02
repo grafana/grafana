@@ -1,0 +1,311 @@
+{
+  "metadata": {
+    "name": "panel-conversions-test",
+    "creationTimestamp": null,
+    "labels": {
+      "test": "panel-conversions"
+    }
+  },
+  "spec": {
+    "annotations": {
+      "list": []
+    },
+    "description": "Testing panel to elements conversion",
+    "editable": true,
+    "links": [],
+    "panels": [
+      {
+        "cacheTimeout": "60s",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "lineWidth": 1
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "interval": "1m",
+        "links": [
+          {
+            "targetBlank": true,
+            "title": "External Link",
+            "url": "https://example.com"
+          }
+        ],
+        "maxDataPoints": 300,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "pluginVersion": "10.0.0",
+        "targets": [
+          {
+            "expr": "up",
+            "hide": false,
+            "interval": "30s",
+            "refId": "A"
+          },
+          {
+            "expr": "cpu_usage",
+            "hide": true,
+            "interval": "1m",
+            "refId": "B"
+          }
+        ],
+        "title": "Regular Timeseries Panel",
+        "transformations": [
+          {
+            "id": "reduce",
+            "options": {
+              "reducers": [
+                "mean"
+              ]
+            }
+          }
+        ],
+        "transparent": true,
+        "type": "timeseries"
+      },
+      {
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "libraryPanel": {
+          "name": "Shared Stats Panel",
+          "uid": "library-panel-uid-123"
+        },
+        "title": "Library Panel Reference",
+        "type": "stat"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "id": 3,
+        "panels": [],
+        "repeat": "server",
+        "title": "Row Panel",
+        "type": "row"
+      },
+      {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "testdata"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          }
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 8,
+          "x": 0,
+          "y": 9
+        },
+        "id": 4,
+        "maxPerRow": 4,
+        "options": {},
+        "repeat": "region",
+        "repeatDirection": "h",
+        "targets": [
+          {
+            "refId": "A",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "Panel in Row",
+        "type": "graph"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 15
+        },
+        "id": 5,
+        "panels": [
+          {
+            "datasource": {
+              "type": "postgres",
+              "uid": "postgres-uid"
+            },
+            "fieldConfig": {
+              "defaults": {},
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 16
+            },
+            "id": 6,
+            "options": {
+              "showHeader": true
+            },
+            "targets": [
+              {
+                "format": "table",
+                "rawSql": "SELECT * FROM metrics",
+                "refId": "A"
+              }
+            ],
+            "title": "Hidden Panel in Collapsed Row",
+            "type": "table"
+          }
+        ],
+        "title": "Collapsed Row",
+        "type": "row"
+      },
+      {
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "elastic-uid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "continuous-GrYlRd"
+            },
+            "custom": {
+              "orientation": "horizontal"
+            }
+          }
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 16,
+          "x": 8,
+          "y": 9
+        },
+        "hideTimeOverride": true,
+        "id": 7,
+        "links": [
+          {
+            "targetBlank": false,
+            "title": "Drill Down",
+            "url": "/d/detailed-view"
+          }
+        ],
+        "maxDataPoints": 1000,
+        "options": {
+          "barWidth": 0.97,
+          "groupWidth": 0.7,
+          "orientation": "horizontal"
+        },
+        "pluginVersion": "9.5.0",
+        "queryCachingTTL": "300",
+        "targets": [
+          {
+            "bucketAggs": [
+              {
+                "field": "@timestamp",
+                "id": "2",
+                "type": "date_histogram"
+              }
+            ],
+            "query": "*",
+            "refId": "A"
+          }
+        ],
+        "timeFrom": "1h",
+        "timeShift": "1h",
+        "title": "Complex Panel with All Features",
+        "transformations": [
+          {
+            "id": "groupBy",
+            "options": {
+              "fields": {
+                "status": {
+                  "aggregations": [
+                    "count"
+                  ],
+                  "operation": "groupby"
+                }
+              }
+            }
+          },
+          {
+            "id": "sortBy",
+            "options": {
+              "sort": [
+                {
+                  "desc": true,
+                  "field": "count"
+                }
+              ]
+            }
+          }
+        ],
+        "type": "barchart"
+      }
+    ],
+    "preload": false,
+    "tags": [
+      "test",
+      "panels"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "title": "Panel Conversions Test Dashboard"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1",
+      "error": ""
+    }
+  }
+}
