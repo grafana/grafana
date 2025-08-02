@@ -4,6 +4,7 @@ import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOption
 import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
@@ -39,6 +40,9 @@ const dataSources = {
 };
 
 setupDataSources(dataSources.default);
+
+// Setup plugin extensions hook to prevent setPluginLinksHook errors
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {

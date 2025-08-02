@@ -17,6 +17,7 @@ import { captureRequests, serializeRequests } from './mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from './mocks/server/handlers/search';
 import { testWithFeatureToggles } from './test/test-utils';
 import { setupDataSources } from './testSetup/datasources';
+import { setupPluginsExtensionsHook } from './testSetup/plugins';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -45,6 +46,10 @@ const dataSources = {
     { alerting: true, module: 'core:plugin/prometheus' }
   ),
 };
+
+// Setup plugin extensions hook to prevent setPluginLinksHook errors
+setupPluginsExtensionsHook();
+
 describe('RuleEditor grafana recording rules', () => {
   beforeEach(() => {
     jest.clearAllMocks();
