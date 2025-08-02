@@ -13,7 +13,7 @@ env:
 
 jobs:
   dashboard-schema-v2-e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores
     continue-on-error: true
     if: github.event.pull_request.draft == false
     steps:
@@ -32,12 +32,10 @@ jobs:
           cache: 'yarn'
       - name: Install dependencies
         run: yarn install --immutable
+      - name: Install Playwright browsers
+        run: yarn playwright install --with-deps chromium
       - name: Build grafana
         run: make build
-      - name: Install Cypress dependencies
-        uses: cypress-io/github-action@b8ba51a856ba5f4c15cf39007636d4ab04f23e3c
-        with:
-          runTests: false
       - name: Run dashboard scenes e2e
         run: yarn e2e:schema-v2 || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
 

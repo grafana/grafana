@@ -2,6 +2,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const PAGE_UNDER_TEST = 'dtpl2Ctnk/repeating-an-empty-row';
 
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
+
 test.describe(
   'Repeating empty rows',
   {

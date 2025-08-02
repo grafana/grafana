@@ -7,6 +7,7 @@ test.use({
     scenes: true,
     newDashboardSharingComponent: true,
     sharingDashboardImage: true, // Enable the export image feature
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
   },
 });
 

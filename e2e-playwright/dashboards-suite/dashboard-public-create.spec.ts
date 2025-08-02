@@ -3,6 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.use({
   featureToggles: {
     newDashboardSharingComponent: false,
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
   },
 });
 

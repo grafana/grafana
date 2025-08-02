@@ -5,6 +5,7 @@ const DASHBOARD_UID = 'ZqZnVvFZz';
 test.use({
   featureToggles: {
     newDashboardSharingComponent: false, // Use legacy sharing component for this test
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
   },
 });
 
