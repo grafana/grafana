@@ -37,6 +37,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
     const styles = useStyles2(getStyles);
     const [isOpen, toggleOpen] = useToggle(false);
     const isAlerting = app === CoreApp.UnifiedAlerting;
+    const isMetricsStreamingEnabled = metricsStreaming && !isAlerting;
 
     if (!query.hasOwnProperty('limit')) {
       query.limit = DEFAULT_LIMIT;
@@ -93,7 +94,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
       `Step: ${query.step || 'auto'}`,
       `Type: ${query.metricsQueryType === MetricsQueryType.Range ? 'Range' : 'Instant'}`,
       '|',
-      `Streaming: ${metricsStreaming ? 'Enabled' : 'Disabled'}`,
+      `Streaming: ${isMetricsStreamingEnabled ? 'Enabled' : 'Disabled'}`,
       // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
     ];
 
@@ -179,7 +180,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
             </EditorField>
 
             <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
-              <div>{metricsStreaming ? 'Enabled' : 'Disabled'}</div>
+              <div>{isMetricsStreamingEnabled ? 'Enabled' : 'Disabled'}</div>
             </EditorField>
             {/*<EditorField*/}
             {/*  label="Exemplars"*/}
