@@ -58,6 +58,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
 
   const scrollToLogLine = useCallback(() => {
     focusLogLine?.(log);
+    reportInteractionWrapper('logs_log_line_details_header_scroll_to_clicked');
   }, [focusLogLine, log]);
 
   const copyLogLine = useCallback(() => {
