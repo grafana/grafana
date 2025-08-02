@@ -3,7 +3,6 @@ import {
   sceneGraph,
   SceneGridItemLike,
   SceneGridRow,
-  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   VizPanel,
@@ -12,7 +11,15 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { isClonedKey, joinCloneKeys } from '../../utils/clone';
+import {
+  containsCloneKey,
+  getCloneKey,
+  getLastKeyFromClone,
+  getOriginalKey,
+  isClonedKey,
+  isClonedKeyOf,
+  joinCloneKeys,
+} from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -123,20 +130,23 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return this.state.rows.length === 1;
   }
 
-  public getOutlineChildren() {
-    const outlineChildren: SceneObject[] = [];
+  public getRowsWithRepeats(): RowItem[] {
+    const rowsWithRepeats: RowItem[] = [];
 
     for (const row of this.state.rows) {
-      outlineChildren.push(row);
+      rowsWithRepeats.push(row);
 
       if (row.state.repeatedRows) {
         for (const clone of row.state.repeatedRows!) {
-          outlineChildren.push(clone);
+          rowsWithRepeats.push(clone);
         }
       }
     }
+    return rowsWithRepeats;
+  }
 
-    return outlineChildren;
+  public getOutlineChildren() {
+    return this.getRowsWithRepeats();
   }
 
   public removeRow(row: RowItem) {
@@ -161,6 +171,40 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {
+    // fromIndex and toIndex include repeated row so we need to find original indexes
+    const allRows = this.getRowsWithRepeats();
+    const objectToMove = allRows[fromIndex];
+    let destinationRow = allRows[toIndex];
+
+    if (containsCloneKey(getLastKeyFromClone(destinationRow.state.key!))) {
+      if (isClonedKeyOf(destinationRow.state.key!, objectToMove.state.key!)) {
+        // moving row between its clones
+        return;
+      }
+      const originalRowKey = getCloneKey(getOriginalKey(destinationRow.state.key!), 0);
+      const originalRowIndex = allRows.findIndex((row) => row.state.key === originalRowKey);
+
+      if (originalRowIndex !== -1) {
+        destinationRow = allRows[originalRowIndex];
+      }
+    }
+
+    const originalFromIndex = this.state.rows.findIndex((row) => row === objectToMove);
+    const originalToIndex = this.state.rows.findIndex((row) => row === destinationRow);
+
+    dashboardEditActions.moveElement({
+      source: this,
+      movedObject: objectToMove,
+      perform: () => {
+        this.rearrangeRows(originalFromIndex, originalToIndex);
+      },
+      undo: () => {
+        this.rearrangeRows(originalToIndex, originalFromIndex);
+      },
+    });
+  }
+
+  private rearrangeRows(fromIndex: number, toIndex: number) {
     const rows = [...this.state.rows];
     const [removed] = rows.splice(fromIndex, 1);
     rows.splice(toIndex, 0, removed);
