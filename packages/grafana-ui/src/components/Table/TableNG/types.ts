@@ -189,7 +189,6 @@ export interface TableCellActionsProps {
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
-  height: number;
   onCellExpand: (e: SyntheticEvent) => void;
   isExpanded?: boolean;
 }

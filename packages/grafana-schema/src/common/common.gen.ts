@@ -834,6 +834,10 @@ export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions 
   type: TableCellDisplayMode.ColorBackground;
 }
 
+export interface TablePillCellOptions extends TableWrapTextOptions {
+  type: TableCellDisplayMode.Pill;
+}
+
 /**
  * Use UTC/GMT timezone
  */
@@ -949,13 +953,8 @@ export enum ComparisonOperation {
   NEQ = 'neq',
 }
 
-export interface TablePillCellOptions extends TableWrapTextOptions {
-  color?: string;
-  colorMode?: ('auto' | 'fixed' | 'mapped');
-  type: TableCellDisplayMode.Pill;
-}
-
 export interface TableMarkdownCellOptions {
+  dynamicHeight?: boolean;
   type: TableCellDisplayMode.Markdown;
 }
 

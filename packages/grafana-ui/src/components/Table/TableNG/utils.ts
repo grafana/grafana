@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { CSSProperties } from 'react';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { Count, varPreLine } from 'uwrap';
@@ -19,6 +20,7 @@ import {
   FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
+  TableCellHeight,
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
@@ -39,6 +41,31 @@ import {
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
+
+/**
+ * @internal
+ * Returns the default row height based on the theme and cell height setting.
+ */
+export function getDefaultRowHeight(
+  theme: GrafanaTheme2,
+  fields?: Field[],
+  cellHeight?: TableCellHeight
+): NonNullable<CSSProperties['height']> {
+  if (fields?.some((field) => field.config?.custom?.cellOptions?.dynamicHeight)) {
+    return 'auto';
+  }
+
+  switch (cellHeight) {
+    case TableCellHeight.Sm:
+      return 36;
+    case TableCellHeight.Md:
+      return 42;
+    case TableCellHeight.Lg:
+      return TABLE.MAX_CELL_HEIGHT;
+  }
+
+  return TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
+}
 
 /**
  * @internal

@@ -91,10 +91,9 @@ TablePillCellOptions: {
   type: TableCellDisplayMode & "pill"
 } & TableWrapTextOptions @cuetsy(kind="interface")
 
-TablePillCellOptions: {
-  type: TableCellDisplayMode & "pill"
-  color?: string
-  colorMode?: "auto" | "fixed" | "mapped"
+TableMarkdownCellOptions: {
+	type: TableCellDisplayMode & "markdown"
+  dynamicHeight?: bool
 } @cuetsy(kind="interface")
 
 TableMarkdownCellOptions: {

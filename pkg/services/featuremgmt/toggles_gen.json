@@ -2152,6 +2152,19 @@
     },
     {
       "metadata": {
+        "name": "newLogContext",
+        "resourceVersion": "1754044501326",
+        "creationTimestamp": "2025-08-01T10:35:01Z"
+      },
+      "spec": {
+        "description": "New Log Context component",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "newLogsPanel",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-02-04T17:40:17Z"

@@ -125,6 +125,12 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], { renderer: TableCellRend
   },
 };
 
+// TODO: come up with a more elegant way to handle this.
+const STRING_ONLY_RENDERERS = new Set<TableCellOptions['type']>([
+  TableCellDisplayMode.Markdown,
+  TableCellDisplayMode.Pill,
+]);
+
 /** @internal */
 export function getCellRenderer(field: Field, cellOptions: TableCellOptions): TableCellRenderer {
   const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
@@ -132,9 +138,7 @@ export function getCellRenderer(field: Field, cellOptions: TableCellOptions): Ta
     return CELL_RENDERERS[getAutoRendererDisplayMode(field)].renderer;
   }
 
-  // FIXME: come up with a better place to put this?
-  // TODO: add support boolean, enum, (maybe int). but for now just string fields
-  if (cellType === TableCellDisplayMode.Pill && field.type !== FieldType.string) {
+  if (STRING_ONLY_RENDERERS.has(cellType) && field.type !== FieldType.string) {
     return AUTO_RENDERER;
   }
 

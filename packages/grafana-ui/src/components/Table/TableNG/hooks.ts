@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties } from 'react';
+import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
@@ -174,7 +174,8 @@ export function usePaginatedRows(
       return rowHeight;
     }
 
-    // when using auto-sized rows, we're just going to have to pick a number.
+    // when using auto-sized rows, we're just going to have to pick a number. the alternative
+    // is to measure each row, which we could do but would be expensive.
     if (typeof rowHeight === 'string') {
       return TABLE.MAX_CELL_HEIGHT;
     }
@@ -219,7 +220,7 @@ export function usePaginatedRows(
   }, [width, height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!enabled) {
       return;
     }
@@ -386,7 +387,7 @@ interface UseRowHeightOptions {
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
-  defaultHeight: number | string;
+  defaultHeight: NonNullable<CSSProperties['height']>;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }

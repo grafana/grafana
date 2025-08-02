@@ -3601,12 +3601,12 @@
       "tags-column": "Теги"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Невозможно получить информацию о потомках"
@@ -3649,7 +3649,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Ошибка при создании папки",
-      "alert-folder-created-successfully": "Папка создана",
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
@@ -3797,7 +3796,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3898,7 +3896,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -5685,6 +5682,7 @@
       "delete-read-only-file-message": "",
       "deleting": "Удаление...",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
     "description-label": {
@@ -5696,9 +5694,6 @@
           "edit-link": "Редактировать ссылку"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Переключить меню электронной почты"
@@ -5860,6 +5855,7 @@
       "usage-count_other": "Используется на {{count}} дашбордах"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5869,6 +5865,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -11081,6 +11078,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "В настоящее время эта функция находится в стадии активной разработки. Чтобы обеспечить максимальное удобство пользования и получить доступ к последним улучшениям, рекомендуем использовать <2>ночную сборку</2> Grafana."
@@ -11954,7 +11954,7 @@
         "recommended": "Рекомендуемые",
         "results": "Результаты"
       },
-      "search": "Поиск"
+      "search": ""
     }
   },
   "search": {
@@ -12594,6 +12594,18 @@
       "label-large": "",
       "label-medium": "",
       "label-small": ""
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "При выборе этого параметра вся строка будет окрашена аналогично этой ячейке.",

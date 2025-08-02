@@ -10,6 +10,7 @@ import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } fro
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 import { TextWrapOptionsEditor } from './cells/TextWrapOptionsEditor';
 
@@ -105,6 +106,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       )}
       {cellType === TableCellDisplayMode.Image && (
         <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {cellType === TableCellDisplayMode.Markdown && (
+        <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
     </div>
   );

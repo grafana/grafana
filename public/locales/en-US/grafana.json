@@ -9362,6 +9362,15 @@
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "Center matched line",
+      "newer-logs": "newer",
+      "no-more-logs-available": "No more logs available.",
+      "older-logs": "older",
+      "open-in-split-view": "Open in split view",
+      "title-log-context": "Log context",
+      "title-log-line": "Referenced log line"
+    },
     "log-line-details": {
       "clear-search": "Clear",
       "close": "Close log details",
@@ -12557,6 +12566,13 @@
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
+    },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
+      "label": {
+        "text-alpha": "Alpha"
+      },
+      "label-dynamic-height": "Dynamic height"
     },
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",

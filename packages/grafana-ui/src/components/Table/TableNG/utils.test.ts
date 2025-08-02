@@ -2,6 +2,7 @@ import { SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
+  createTheme,
   DataFrame,
   DataFrameWithValue,
   DataLink,
@@ -12,11 +13,11 @@ import {
   LinkModel,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';
 
-import { COLUMN } from './constants';
+import { COLUMN, TABLE } from './constants';
 import { LineCounterEntry } from './types';
 import {
   extractPixelValue,
@@ -42,6 +43,7 @@ import {
   wrapUwrapCount,
   getDataLinksCounter,
   getPillLineCounter,
+  getDefaultRowHeight,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -779,6 +781,57 @@ describe('TableNG utils', () => {
       expect(extractPixelValue('')).toBe(0);
       expect(extractPixelValue(null as any)).toBe(0);
       expect(extractPixelValue(undefined as any)).toBe(0);
+    });
+  });
+
+  describe('getDefaultRowHeight', () => {
+    const theme = createTheme();
+
+    it.each([
+      { input: TableCellHeight.Sm, expected: 36 },
+      { input: TableCellHeight.Md, expected: 42 },
+      { input: TableCellHeight.Lg, expected: TABLE.MAX_CELL_HEIGHT },
+    ])('returns "$expected" for "$input"', ({ input, expected }) => {
+      const result = getDefaultRowHeight(theme, [], input);
+      expect(result).toBe(expected);
+    });
+
+    it('returns "auto" if a field is present with the dynamicHeight cellOption  is false', () => {
+      expect(
+        getDefaultRowHeight(
+          theme,
+          [
+            {
+              name: 'test1',
+              type: FieldType.string,
+              config: {},
+              values: ['value1'],
+            },
+            {
+              name: 'test2',
+              type: FieldType.string,
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.Markdown, dynamicHeight: true } } },
+              values: ['value1'],
+            },
+            {
+              name: 'test3',
+              type: FieldType.number,
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+              values: [3],
+            },
+          ],
+          TableCellHeight.Sm
+        )
+      ).toBe('auto');
+    });
+
+    it('calculates height based on theme when cellHeight is undefined', () => {
+      const result = getDefaultRowHeight(theme, []);
+
+      // Calculate the expected result based on the theme values
+      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
+
+      expect(result).toBe(expected);
     });
   });
 
