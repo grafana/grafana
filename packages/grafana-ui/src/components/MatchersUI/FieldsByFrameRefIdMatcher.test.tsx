@@ -109,4 +109,10 @@ describe('RefIDMultiPicker', () => {
     expect(mockOnChange).toHaveBeenLastCalledWith(['A', 'B']);
     /* eslint-enable testing-library/prefer-user-event */
   });
+
+  it('Should display a refID that does not exist in the selection', async () => {
+    multiSetup({ value: '/^(?:merge-A-B-C)$/' });
+    const removeButton = await screen.findByLabelText('Remove');
+    expect(removeButton.previousSibling).toHaveTextContent('merge-A-B-C');
+  });
 });
