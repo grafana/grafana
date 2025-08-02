@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, Stack } from '@grafana/ui';
+import { Alert, Box, Button, Stack } from '@grafana/ui';
 import {
   DeleteRepositoryFilesWithPathApiArg,
   DeleteRepositoryFilesWithPathApiResponse,
@@ -10,16 +10,18 @@ import {
   useDeleteRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
 import { findItem } from '../../state/utils';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
+import { useRepositoryValidation } from '../BrowseActions/useRepositoryValidation';
 import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 
 import { MoveResultFailed } from './BulkActionFailureBanner';
@@ -202,7 +204,21 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkActionProvisionResourceProps) {
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
+  // Check if we're on the root browser dashboards page
+  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+
+  // Validate repository consistency using reusable hook
+  const { allFromSameRepo, commonRepository } = useRepositoryValidation(selectedItems);
+
+  console.log('Repository validation:', { allFromSameRepo, commonRepository });
+
+  // If no folderUid, use the common repository name
+  const selectedFolderUid = isRootPage ? commonRepository : undefined;
+
+  // For root provisioned folders, the folder UID is the repository name
+  const { repository, folder } = useGetResourceRepositoryView({
+    folderName: folderUid || selectedFolderUid,
+  });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
@@ -215,7 +231,23 @@ export function BulkDeleteProvisionedResource({
   };
 
   if (!repository) {
-    return null;
+    return (
+      <Alert title="Repository not found" severity="error">
+        <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.error-repository-not-found">
+          Repository not found
+        </Trans>
+      </Alert>
+    );
+  }
+
+  if (!allFromSameRepo) {
+    return (
+      <Alert title="Error" severity="error">
+        <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.error-repository-not-same">
+          All selected items must be from the same repository
+        </Trans>
+      </Alert>
+    );
   }
 
   return (
@@ -225,7 +257,7 @@ export function BulkDeleteProvisionedResource({
       initialValues={initialValues}
       repository={repository}
       workflowOptions={workflowOptions}
-      folderPath={folderPath}
+      folderPath={isRootPage ? '/' : folderPath}
     />
   );
 }

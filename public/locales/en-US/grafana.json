@@ -3526,7 +3526,9 @@
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-path-not-found": "Path not found"
+      "error-path-not-found": "Path not found",
+      "error-repository-not-found": "Repository not found",
+      "error-repository-not-same": "All selected items must be from the same repository"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",

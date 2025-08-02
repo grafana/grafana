@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { FolderPicker } from '@grafana/runtime';
-import { Box, Button, Field, Stack } from '@grafana/ui';
+import { Alert, Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   CreateRepositoryFilesWithPathApiArg,
@@ -20,11 +20,13 @@ import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/compo
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
 import { findItem } from '../../state/utils';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
+import { useRepositoryValidation } from '../BrowseActions/useRepositoryValidation';
 import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 
 import { MoveResultFailed } from './BulkActionFailureBanner';
@@ -277,7 +279,16 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 }
 
 export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
+  // Check if we're on the root browser dashboards page
+  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+
+  // Validate repository consistency using reusable hook
+  const { allFromSameRepo, commonRepository } = useRepositoryValidation(selectedItems);
+
+  // If no folderUid, use the common repository name
+  const selectedFolderUid = isRootPage ? commonRepository : undefined;
+
+  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid || selectedFolderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
@@ -290,7 +301,23 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   };
 
   if (!repository) {
-    return null;
+    return (
+      <Alert title="Repository not found" severity="error">
+        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.error-repository-not-found">
+          Repository not found
+        </Trans>
+      </Alert>
+    );
+  }
+
+  if (!allFromSameRepo) {
+    return (
+      <Alert title="Error" severity="error">
+        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.error-repository-not-same">
+          All selected items must be from the same repository
+        </Trans>
+      </Alert>
+    );
   }
 
   return (
