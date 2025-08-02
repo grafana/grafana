@@ -21,7 +21,7 @@ weight: 320
 # Configure SCIM with Azure AD
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 This guide explains how to configure SCIM provisioning with Azure AD to automate user and team management in Grafana.
@@ -45,7 +45,7 @@ Refer to the [SAML authentication with Azure AD documentation](../../configure-a
 
 Before configuring SCIM with Azure AD, ensure you have:
 
-- Grafana Enterprise or Grafana Cloud Advanced
+- Grafana Enterprise or a paid Grafana Cloud account with SCIM provisioning enabled.
 - Admin access to both Grafana and Azure AD
 - SCIM feature enabled in Grafana
 

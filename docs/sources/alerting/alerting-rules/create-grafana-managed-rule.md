@@ -161,7 +161,7 @@ You can find the public data sources that support alert rules in the [Grafana Pl
 In Grafana Cloud, the number of Grafana-managed alert rules you can create depends on your Grafana Cloud plan.
 
 - Free Forever plan: You can create up to 100 free alert rules, with each alert rule having a maximum of 1000 alert instances.
-- All paid plans (Pro and Advanced): They have a soft limit of 2000 alert rules and support unlimited alert instances. To increase the limit, open a support ticket from the [Cloud portal](/docs/grafana-cloud/account-management/support/).
+- All paid plans: They have a soft limit of 2000 alert rules and support unlimited alert instances. To increase the limit, open a support ticket from the [Cloud portal](/docs/grafana-cloud/account-management/support/).
 
 ### Permissions
 
