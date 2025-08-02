@@ -7,8 +7,8 @@ import (
 )
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
-func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
-	migratorInstance.init(dsInfoProvider)
+func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider, panelProvider schemaversion.PanelPluginInfoProvider) {
+	migratorInstance.init(dsInfoProvider, panelProvider)
 }
 
 // Migrate migrates the given dashboard to the target version.
@@ -30,9 +30,9 @@ type migrator struct {
 	migrations map[int]schemaversion.SchemaVersionMigrationFunc
 }
 
-func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider) {
+func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider, panelProvider schemaversion.PanelPluginInfoProvider) {
 	initOnce.Do(func() {
-		m.migrations = schemaversion.GetMigrations(dsInfoProvider)
+		m.migrations = schemaversion.GetMigrations(dsInfoProvider, panelProvider)
 		close(m.ready)
 	})
 }
@@ -57,7 +57,7 @@ func (m *migrator) migrate(dash map[string]interface{}, targetVersion int) error
 	for nextVersion := inputVersion + 1; nextVersion <= targetVersion; nextVersion++ {
 		if migration, ok := m.migrations[nextVersion]; ok {
 			if err := migration(dash); err != nil {
-				return schemaversion.NewMigrationError("migration failed", inputVersion, nextVersion)
+				return schemaversion.NewMigrationError("migration failed: "+err.Error(), inputVersion, nextVersion)
 			}
 			dash["schemaVersion"] = nextVersion
 		}
