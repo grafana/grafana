@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
+import { Action } from 'rxjs/internal/scheduler/Action';
 
-import { createDataFrame, createTheme, Field, FieldType } from '@grafana/data';
+import { ActionType, createDataFrame, createTheme, Field, FieldType, HttpRequestMethod } from '@grafana/data';
 
 import { TableCellOptions, TableCellDisplayMode, TableCustomCellOptions } from '../../types';
 
@@ -89,7 +90,9 @@ describe('TableNG Cells renderers', () => {
           cellOptions,
           cellInspect: false,
           showFilters: false,
-          justifyContent: 'flex-start',
+          getActions: jest.fn(() => [
+            { title: 'Action', onClick: jest.fn(() => {}), confirmation: jest.fn(), style: {} },
+          ]),
         })
       );
 
@@ -110,7 +113,6 @@ describe('TableNG Cells renderers', () => {
             cellOptions,
             cellInspect: false,
             showFilters: false,
-            justifyContent: 'flex-start',
           })
         );
       }, iterations);
@@ -123,8 +125,8 @@ describe('TableNG Cells renderers', () => {
         { type: TableCellDisplayMode.JSONView, fieldType: FieldType.string },
         { type: TableCellDisplayMode.Image, fieldType: FieldType.string },
         { type: TableCellDisplayMode.DataLinks, fieldType: FieldType.string },
-        { type: TableCellDisplayMode.Actions, fieldType: FieldType.string },
         { type: TableCellDisplayMode.ColorText, fieldType: FieldType.string },
+        { type: TableCellDisplayMode.Actions, fieldType: FieldType.string },
         { type: TableCellDisplayMode.ColorBackground, fieldType: FieldType.string },
         { type: TableCellDisplayMode.Auto, fieldType: FieldType.string },
       ] as const)('should render $type cell into the document', ({ type, fieldType }) => {

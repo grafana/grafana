@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
+
 import { renderMarkdown } from '@grafana/data';
 
 import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
-import { MarkdownCellProps } from '../types';
+import { MarkdownCellProps, TableCellStyles } from '../types';
 
 export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCellProps) {
   return (
@@ -15,3 +17,26 @@ export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCel
     </MaybeWrapWithLink>
   );
 }
+
+export const getStyles: TableCellStyles = (theme) =>
+  css({
+    // TODO: I want to figure out how to avoid the !important
+    '&, &:hover, &[aria-selected=true]': {
+      whiteSpace: 'normal !important',
+    },
+
+    '& ol, & ul': {
+      paddingLeft: theme.spacing(1.5),
+    },
+    '& p': {
+      whiteSpace: 'pre-line',
+    },
+    '& a': {
+      color: theme.colors.primary.text,
+    },
+    // for elements like `p`, `h*`, etc. which have an inherent margin,
+    // we want to remove the bottom margin for the last one in the container.
+    '& > .markdown-container > *:last-child': {
+      marginBottom: 0,
+    },
+  });

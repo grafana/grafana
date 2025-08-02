@@ -704,6 +704,7 @@ export enum TableCellDisplayMode {
   Custom = 'custom',
   DataLinks = 'data-links',
   Gauge = 'gauge',
+  Geo = 'geo',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
   JSONView = 'json-view',
@@ -837,27 +838,6 @@ export interface TablePillCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.Pill;
 }
 
-export interface TableMarkdownCellOptions {
-  dynamicHeight?: boolean;
-  type: TableCellDisplayMode.Markdown;
-}
-
-/**
- * Height of a table cell
- */
-export enum TableCellHeight {
-  Auto = 'auto',
-  Lg = 'lg',
-  Md = 'md',
-  Sm = 'sm',
-}
-
-/**
- * Table cell options. Each cell has a display mode
- * and other potential options for that display.
- */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
-
 /**
  * Use UTC/GMT timezone
  */
@@ -972,6 +952,29 @@ export enum ComparisonOperation {
   LTE = 'lte',
   NEQ = 'neq',
 }
+
+export interface TableMarkdownCellOptions {
+  dynamicHeight?: boolean;
+  type: TableCellDisplayMode.Markdown;
+}
+
+/**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Auto = 'auto',
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
+
+/**
+ * Table cell options. Each cell has a display mode
+ * and other potential options for that display.
+ */
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | {
+    type: TableCellDisplayMode.Geo
+  });
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
