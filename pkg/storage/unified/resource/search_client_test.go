@@ -418,3 +418,127 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		unifiedClient.AssertExpectations(t)
 	})
 }
+
+func TestExtractUIDs(t *testing.T) {
+	tests := []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+		expected map[string]bool
+	}{
+		{
+			name:     "nil response",
+			response: nil,
+			expected: map[string]bool{},
+		},
+		{
+			name: "empty results",
+			response: &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Rows: []*resourcepb.ResourceTableRow{},
+				},
+			},
+			expected: map[string]bool{},
+		},
+		{
+			name: "single result",
+			response: &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Rows: []*resourcepb.ResourceTableRow{
+						{
+							Key: &resourcepb.ResourceKey{
+								Name: "test-uid-1",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]bool{"test-uid-1": true},
+		},
+		{
+			name: "multiple results",
+			response: &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Rows: []*resourcepb.ResourceTableRow{
+						{
+							Key: &resourcepb.ResourceKey{
+								Name: "test-uid-1",
+							},
+						},
+						{
+							Key: &resourcepb.ResourceKey{
+								Name: "test-uid-2",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]bool{"test-uid-1": true, "test-uid-2": true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractUIDs(tt.response)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestCalculateMatchPercentage(t *testing.T) {
+	tests := []struct {
+		name        string
+		legacyUIDs  map[string]bool
+		unifiedUIDs map[string]bool
+		expected    float64
+	}{
+		{
+			name:        "both empty",
+			legacyUIDs:  map[string]bool{},
+			unifiedUIDs: map[string]bool{},
+			expected:    100.0,
+		},
+		{
+			name:        "legacy empty, unified has results",
+			legacyUIDs:  map[string]bool{},
+			unifiedUIDs: map[string]bool{"uid1": true},
+			expected:    0.0,
+		},
+		{
+			name:        "legacy has results, unified empty",
+			legacyUIDs:  map[string]bool{"uid1": true},
+			unifiedUIDs: map[string]bool{},
+			expected:    0.0,
+		},
+		{
+			name:        "perfect match",
+			legacyUIDs:  map[string]bool{"uid1": true, "uid2": true},
+			unifiedUIDs: map[string]bool{"uid1": true, "uid2": true},
+			expected:    100.0,
+		},
+		{
+			name:        "partial match",
+			legacyUIDs:  map[string]bool{"uid1": true, "uid2": true},
+			unifiedUIDs: map[string]bool{"uid1": true, "uid3": true},
+			expected:    33.33333333333333, // 1 match out of 3 unique UIDs
+		},
+		{
+			name:        "no match",
+			legacyUIDs:  map[string]bool{"uid1": true, "uid2": true},
+			unifiedUIDs: map[string]bool{"uid3": true, "uid4": true},
+			expected:    0.0,
+		},
+		{
+			name:        "legacy subset of unified",
+			legacyUIDs:  map[string]bool{"uid1": true},
+			unifiedUIDs: map[string]bool{"uid1": true, "uid2": true},
+			expected:    50.0, // 1 match out of 2 unique UIDs
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := calculateMatchPercentage(tt.legacyUIDs, tt.unifiedUIDs)
+			assert.InDelta(t, tt.expected, result, 0.001)
+		})
+	}
+}
