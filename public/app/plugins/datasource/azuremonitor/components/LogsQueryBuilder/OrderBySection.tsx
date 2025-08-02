@@ -13,6 +13,8 @@ import {
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
 import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorOption } from '../../types/types';
+import { addValueToOptions } from '../../utils/common';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
@@ -20,9 +22,15 @@ interface OrderBySectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
-export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumns, buildAndUpdateQuery }) => {
+export const OrderBySection: React.FC<OrderBySectionProps> = ({
+  query,
+  allColumns,
+  buildAndUpdateQuery,
+  variableOptionGroup,
+}) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const hasLoadedOrderBy = useRef(false);
@@ -54,10 +62,7 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
           ? selectedColumns
           : allColumns.map((col) => col.name);
 
-  const columnOptions = allAvailableColumns.map((col) => ({
-    label: col,
-    value: col,
-  }));
+  const selectableColumns = allAvailableColumns.map((col) => ({ label: col, value: col }));
 
   const orderOptions: Array<SelectableValue<string>> = [
     { label: 'Ascending', value: 'asc' },
@@ -126,7 +131,7 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
                     aria-label={t('components.order-by-section.aria-label-order-by-column', 'Order by column')}
                     width={inputFieldSize}
                     value={entry.property?.name ? { label: entry.property.name, value: entry.property.name } : null}
-                    options={columnOptions}
+                    options={addValueToOptions(selectableColumns, variableOptionGroup, entry.property.name)}
                     onChange={(e) => e.value && handleOrderByChange(index, 'column', e.value)}
                   />
                   <Label style={{ margin: '9px 9px 0 9px' }}>
