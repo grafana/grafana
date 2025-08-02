@@ -144,6 +144,7 @@ describe('v1 dashboard API', () => {
 
     const api = new K8sDashboardAPI();
     const result = await api.getDashboardDTO('test');
+    expect(result.meta.slug).toBe('test');
     expect(result.meta.isFolder).toBe(false);
     expect(result.meta.folderId).toBe(1);
     expect(result.meta.folderTitle).toBe('New Folder');
@@ -204,6 +205,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
+        expect(result.slug).toBe('new-dashboard-saved');
         expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
@@ -229,6 +231,7 @@ describe('v1 dashboard API', () => {
           folderUid: 'test',
         });
 
+        expect(result.slug).toBe('new-dashboard-saved');
         expect(result.uid).toBe('adh59cn');
         expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
@@ -248,6 +251,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
+        expect(result.slug).toBe('new-dashboard-saved');
         expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
@@ -274,6 +278,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
+        expect(result.slug).toBe('new-dashboard-saved');
         expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
