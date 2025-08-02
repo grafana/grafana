@@ -39,6 +39,8 @@ composableKinds: PanelCfg: {
 					alignValue?: ui.TimelineValueAlignment & (*"left" | _)
 					//Enables pagination when > 0
 					perPage?: number & >=1 | *20
+					//Optional list of states to display (all states shown if empty)
+					selectedStates?: [...string]
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.AxisConfig
