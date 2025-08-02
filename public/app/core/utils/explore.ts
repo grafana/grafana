@@ -93,7 +93,11 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     .map((q) => q.value);
 
   const exploreState = JSON.stringify({
-    [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
+    [generateExploreId()]: {
+      range: toURLRange(timeRange.raw),
+      queries: interpolatedQueries,
+      datasource: dsRef?.uid,
+    },
   });
   return locationUtil.assureBaseUrl(urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 }));
 }

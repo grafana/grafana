@@ -51,7 +51,12 @@ export type QueryLibraryContextType = {
    * Returns a predefined small button that can be used to save a query to the library.
    * @param query
    */
-  renderSaveQueryButton: (query: DataQuery, app?: CoreApp) => ReactNode;
+  renderSaveQueryButton: (
+    query: DataQuery,
+    app?: CoreApp,
+    queryLibraryRef?: string,
+    onUpdateSuccess?: () => void
+  ) => ReactNode;
   queryLibraryEnabled: boolean;
   context: string;
 };
