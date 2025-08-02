@@ -1,5 +1,6 @@
+import { css, cx } from '@emotion/css';
 import $ from 'jquery';
-import { PureComponent } from 'react';
+import { useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import {
@@ -13,6 +14,7 @@ import {
 } from '@grafana/data';
 import { VizTextDisplayOptions, VizOrientation } from '@grafana/schema';
 
+import { useStyles2 } from '../../themes/ThemeContext';
 import { calculateFontSize } from '../../utils/measureText';
 import { clearButtonStyles } from '../Button/Button';
 
@@ -32,29 +34,24 @@ export interface Props {
   orientation?: VizOrientation;
 }
 
-export class Gauge extends PureComponent<Props> {
-  canvasElement: HTMLDivElement | null = null;
+export const Gauge = React.memo((props: Props) => {
+  const canvasElement = useRef<HTMLDivElement>(null);
 
-  static defaultProps: Partial<Props> = {
-    showThresholdMarkers: true,
-    showThresholdLabels: false,
-    field: {
-      min: 0,
-      max: 100,
-      thresholds: DEFAULT_THRESHOLDS,
-    },
-  };
-
-  componentDidMount() {
-    this.draw();
-  }
-
-  componentDidUpdate() {
-    this.draw();
-  }
-
-  draw() {
-    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value, orientation } = this.props;
+  const draw = () => {
+    const {
+      field = {
+        min: 0,
+        max: 100,
+        thresholds: DEFAULT_THRESHOLDS,
+      },
+      showThresholdLabels = false,
+      showThresholdMarkers = true,
+      width,
+      height,
+      theme,
+      value,
+      orientation,
+    } = props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     // If the gauge is in vertical layout, we need to set the width of the gauge to the height of the gauge
@@ -72,7 +69,7 @@ export class Gauge extends PureComponent<Props> {
     const valueWidth =
       valueWidthBase -
       ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0) + (showThresholdLabels ? 10 : 0)) * 2 + 10);
-    const fontSize = this.props.text?.valueSize ?? calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
+    const fontSize = props.text?.valueSize ?? calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
     const thresholdLabelFontSize = Math.max(fontSize / 2.5, 12);
 
     let min = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -140,73 +137,68 @@ export class Gauge extends PureComponent<Props> {
     };
 
     try {
-      if (this.canvasElement) {
-        $.plot(this.canvasElement, [plotSeries], options);
+      if (canvasElement.current) {
+        $.plot(canvasElement.current, [plotSeries], options);
       }
     } catch (err) {
       console.error('Gauge rendering error', err, options, value);
     }
-  }
-
-  renderVisualization = () => {
-    const { width, value, height, onClick, text, theme, orientation } = this.props;
-    const autoProps = calculateGaugeAutoProps(width, height, value.title, orientation);
-
-    // If the gauge is in vertical layout, we need to set the width of the gauge to the height of the gauge
-    const gaugeWidth = orientation === VizOrientation.Vertical ? `${autoProps.gaugeHeight}px` : '100%';
-
-    const gaugeElement = (
-      <div
-        style={{ height: `${autoProps.gaugeHeight}px`, width: gaugeWidth }}
-        ref={(element) => (this.canvasElement = element)}
-      />
-    );
-
-    return (
-      <>
-        {onClick ? (
-          <button className={clearButtonStyles(theme)} type="button" onClick={onClick}>
-            {gaugeElement}
-          </button>
-        ) : (
-          gaugeElement
-        )}
-        {autoProps.showLabel && (
-          <div
-            style={{
-              textAlign: 'center',
-              fontSize: text?.titleSize ?? autoProps.titleFontSize,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              position: 'relative',
-              width: gaugeWidth,
-              top: '-4px',
-              cursor: 'default',
-            }}
-          >
-            {value.title}
-          </div>
-        )}
-      </>
-    );
   };
 
-  render() {
-    return (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}
-        className={this.props.className}
-      >
-        {this.renderVisualization()}
-      </div>
-    );
-  }
+  useEffect(() => {
+    draw();
+  });
+
+  const styles = useStyles2(getStyles);
+  const { width, value, height, onClick, text, theme, orientation } = props;
+  const autoProps = calculateGaugeAutoProps(width, height, value.title, orientation);
+
+  // If the gauge is in vertical layout, we need to set the width of the gauge to the height of the gauge
+  const gaugeWidth = orientation === VizOrientation.Vertical ? `${autoProps.gaugeHeight}px` : '100%';
+
+  const gaugeElement = <div style={{ height: `${autoProps.gaugeHeight}px`, width: gaugeWidth }} ref={canvasElement} />;
+
+  return (
+    <div className={cx(props.className, styles.wrapper)}>
+      {onClick ? (
+        <button className={clearButtonStyles(theme)} type="button" onClick={onClick}>
+          {gaugeElement}
+        </button>
+      ) : (
+        gaugeElement
+      )}
+      {autoProps.showLabel && (
+        <div
+          className={styles.title}
+          style={{
+            fontSize: text?.titleSize ?? autoProps.titleFontSize,
+            width: gaugeWidth,
+          }}
+        >
+          {value.title}
+        </div>
+      )}
+    </div>
+  );
+});
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    }),
+    title: css({
+      textAlign: 'center',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      top: '-4px',
+      cursor: 'default',
+    }),
+  };
 }
