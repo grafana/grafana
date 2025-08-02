@@ -32,9 +32,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	authtypes "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -60,6 +60,9 @@ type StorageOptions struct {
 
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
+
+	// Process inline secure values
+	SecureValues secrets.InlineSecureValueSupport
 
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
@@ -183,25 +186,27 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	var err error
-	var permissions string
-	req := &resourcepb.CreateRequest{}
-	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
+	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
 	}
-
+	req := &resourcepb.CreateRequest{
+		Value: v.raw.Bytes(),
+	}
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
 
-	grantPermissions, err := afterCreatePermissionCreator(ctx, req.Key, permissions, obj, s.opts.Permissions)
+	grantPermissions, err := afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {
 		return err
 	}
 
 	rsp, err := s.store.Create(ctx, req)
+	if len(v.createdSecureValues) > 0 && (err != nil || rsp.Error != nil) {
+		fmt.Printf("TODO, cleanup orphan secrets: %v\n", v.createdSecureValues)
+	}
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
 	}
@@ -305,6 +310,11 @@ func (s *Storage) Delete(
 	if rsp.Error != nil {
 		return resource.GetError(rsp.Error)
 	}
+
+	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+		fmt.Printf("failed to delete inline secure values (now orphans)")
+	}
+
 	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
 		return err
 	}
@@ -588,7 +598,7 @@ func (s *Storage) GuaranteedUpdate(
 		break
 	}
 
-	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
+	v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
@@ -598,11 +608,17 @@ func (s *Storage) GuaranteedUpdate(
 	if !bytes.Equal(req.Value, existingBytes) {
 		updateResponse, err := s.store.Update(ctx, req)
 		if err != nil {
+			fmt.Printf("TODO... remove the newly created secrets")
 			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if updateResponse.Error != nil {
+			fmt.Printf("TODO... remove the newly created secrets")
 			return resource.GetError(updateResponse.Error)
 		}
+		if len(v.deleteSecureValues) > 0 {
+			fmt.Printf("TODO... remove the deleted secrets")
+		}
+
 		rv = uint64(updateResponse.ResourceVersion)
 	}
 
