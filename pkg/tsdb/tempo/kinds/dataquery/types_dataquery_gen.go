@@ -42,6 +42,8 @@ type TempoQuery struct {
 	ServiceMapQuery *StringOrArrayOfString `json:"serviceMapQuery,omitempty"`
 	// Use service.namespace in addition to service.name to uniquely identify a service.
 	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
+	// Whether to use native histograms for service map queries
+	ServiceMapUseNativeHistograms *bool `json:"serviceMapUseNativeHistograms,omitempty"`
 	// Defines the maximum number of traces that are returned from Tempo
 	Limit *int64 `json:"limit,omitempty"`
 	// Defines the maximum number of spans per spanset that are returned from Tempo
