@@ -1,8 +1,10 @@
+import { PluginExtensionPoints } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { LinkButton } from '@grafana/ui';
+import { config, usePluginLinks } from '@grafana/runtime';
+import { Button, Dropdown, LinkButton, Menu, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
+import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
@@ -14,6 +16,34 @@ interface Props {
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
   const hasExploreRights = contextSrv.hasAccessToExplore();
+
+  // Fetch plugin extension links
+  const { links: allLinks, isLoading } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigActions,
+    context: {
+      dataSource: {
+        type: dataSource.type,
+        uid: dataSource.uid,
+        name: dataSource.name,
+        typeName: dataSource.typeName,
+      },
+    },
+    limitPerPlugin: 1,
+  });
+
+  const links = allLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
+
+  // Only render dropdown if there are multiple actions to show
+  const hasActions = !isLoading && links.length > 0;
+
+  const actionsMenu = (
+    <Menu>
+      {hasActions &&
+        links.map((link) => (
+          <Menu.Item key={link.id} label={link.title} url={link.path} onClick={link.onClick} icon={link.icon} />
+        ))}
+    </Menu>
+  );
 
   return (
     <>
@@ -51,6 +81,14 @@ export function EditDataSourceActions({ uid }: Props) {
       >
         <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
       </LinkButton>
+      {hasActions && (
+        <Dropdown overlay={actionsMenu}>
+          <Button variant="secondary" size="sm" icon="plug">
+            <Trans i18nKey="datasources.edit-data-source-actions.extensions">Extensions</Trans>
+            <Icon name="angle-down" />
+          </Button>
+        </Dropdown>
+      )}
     </>
   );
 }
