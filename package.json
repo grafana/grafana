@@ -21,7 +21,7 @@
     "e2e:enterprise": "./e2e/start-and-run-suite enterprise",
     "e2e:enterprise:dev": "./e2e/start-and-run-suite enterprise dev",
     "e2e:enterprise:debug": "./e2e/start-and-run-suite enterprise debug",
-    "e2e:playwright": "yarn playwright test",
+    "e2e:playwright": "yarn playwright test --grep-invert @cloud-plugins",
     "e2e:playwright:storybook": "yarn playwright test -c playwright.storybook.config.ts",
     "e2e:acceptance": "yarn playwright test --grep @acceptance",
     "e2e:storybook": "PORT=9001 ./e2e/run-suite storybook true",
