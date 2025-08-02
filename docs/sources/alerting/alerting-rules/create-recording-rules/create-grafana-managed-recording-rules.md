@@ -81,7 +81,7 @@ To create a new Grafana-managed recording rule:
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Scroll to the **Grafana-managed section** and click **+New recording rule**.
+1. At the top of the Alert rules page, click **More** -> **New Grafana recording rule**.
 
 1. Enter the names to identify your recording rule and metric.
 
