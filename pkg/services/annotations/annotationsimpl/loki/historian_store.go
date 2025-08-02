@@ -8,7 +8,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
+	"github.com/grafana/alerting/lokiclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -61,7 +62,7 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db d
 	if !useStore(cfg) {
 		return nil
 	}
-	lokiCfg, err := lokiclient.NewLokiConfig(cfg.LokiSettings)
+	lokiCfg, err := lokiconfig.NewLokiConfig(cfg.LokiSettings)
 	if err != nil {
 		// this config error is already handled elsewhere
 		return nil
