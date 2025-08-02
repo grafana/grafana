@@ -22,7 +22,9 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -145,8 +147,7 @@
         {
           "csvContent": "Speed (RPM),Torque (NM),Power (kW)\n0,,\n500,,\n800,180,20\n1500,215,40\n2000,227,50\n2500,230,62\n3000,233,75\n3500,236,86\n4000,234,92\n4500,230,100\n5000,220,107\n5500,210,110\n6000,178,106\n6500,120,92\n7000,,\n",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -158,12 +159,7 @@
   ],
   "refresh": "",
   "schemaVersion": 38,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng",
-    "trend"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng", "trend"],
   "templating": {
     "list": []
   },

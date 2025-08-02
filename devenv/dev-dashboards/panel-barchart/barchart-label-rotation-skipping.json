@@ -1,319 +1,309 @@
 {
-    "annotations": {
-      "list": [
-        {
-          "builtIn": 1,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts",
-          "target": {
-            "limit": 100,
-            "matchAny": false,
-            "tags": [],
-            "type": "dashboard"
-          },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
           "type": "dashboard"
-        }
-      ]
-    },
-    "editable": true,
-    "fiscalYearStartMonth": 0,
-    "graphTooltip": 0,
-    "id": 530,
-    "links": [],
-    "liveNow": false,
-    "panels": [
-      {
-        "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
         },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "fillOpacity": 80,
-              "gradientMode": "none",
-              "hideFrom": {
-                "legend": false,
-                "tooltip": false,
-                "viz": false
-              },
-              "lineWidth": 1,
-              "scaleDistribution": {
-                "type": "linear"
-              },
-              "thresholdsStyle": {
-                "mode": "off"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green"
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            },
-            "unit": "decmbytes"
-          },
-          "overrides": []
-        },
-        "gridPos": {
-          "h": 14,
-          "w": 11,
-          "x": 0,
-          "y": 0
-        },
-        "id": 2,
-        "maxDataPoints": 30,
-        "options": {
-          "barRadius": 0,
-          "barWidth": 0.97,
-          "groupWidth": 0.7,
-          "legend": {
-            "calcs": [],
-            "displayMode": "list",
-            "placement": "bottom",
-            "showLegend": true
-          },
-          "orientation": "vertical",
-          "showValue": "auto",
-          "stacking": "none",
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          },
-          "xTickLabelMaxLength": 6,
-          "xTickLabelRotation": 45,
-          "xTickLabelSpacing": 100
-        },
-        "targets": [
-          {
-            "datasource": {
-              "type": "testdata",
-              "uid": "PD8C576611E62080A"
-            },
-            "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"label\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 600000\n          }\n        },\n        {\n          \"name\": \"A-series\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {},\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"acquisition\",\n          \"extension\",\n          \"conductor\",\n          \"authorise\",\n          \"architect\",\n          \"illusion\",\n          \"congress\",\n          \"highlight\",\n          \"partnership\",\n          \"understanding\",\n          \"disagreement\",\n          \"personality\",\n          \"commerce\",\n          \"systematic\",\n          \"hesitate\",\n          \"business\",\n          \"manufacture\",\n          \"incredible\",\n          \"constitutional\",\n          \"prevalence\",\n          \"professor\",\n          \"entitlement\",\n          \"cooperation\",\n          \"sickness\",\n          \"contrast\",\n          \"reference\",\n          \"audience\",\n          \"discount\",\n          \"apparatus\",\n          \"disturbance\",\n          \"automatic\",\n          \"refrigerator\",\n          \"elaborate\",\n          \"sympathetic\",\n          \"integration\",\n          \"president\"\n        ],\n        [\n          306.78931659492116,\n          200.00696051101917,\n          164.90889283973593,\n          518.9385023737021,\n          999.9040675564702,\n          613.9689830172349,\n          773.2337077340269,\n          317.47395634701644,\n          748.3318338316539,\n          606.8039493787173,\n          426.27771317792866,\n          376.47735643253924,\n          66.30635081800493,\n          401.70654338415505,\n          108.86259550477234,\n          182.40284186231278,\n          867.7047958572101,\n          959.3957783599242,\n          396.7606089549935,\n          455.9625595614323,\n          685.4792456298062,\n          368.6567303946707,\n          157.06596562976327,\n          59.54120602048763,\n          406.72723615743973,\n          440.18247585615575,\n          516.0267558264891,\n          258.76006051667315,\n          952.966531725171,\n          554.8746357628739,\n          86.7279280805682,\n          781.2422516386563,\n          754.2723802427706,\n          435.0305712850233,\n          384.43181614983,\n          459.04164596738127\n        ]\n      ]\n    }\n  }\n]",
-            "refId": "A",
-            "scenarioId": "raw_frame"
-          }
-        ],
-        "title": "Panel Title",
-        "type": "barchart"
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 530,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
       },
-      {
-        "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "palette-classic"
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "custom": {
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "axisSoftMin": 0,
-              "fillOpacity": 80,
-              "gradientMode": "none",
-              "hideFrom": {
-                "legend": false,
-                "tooltip": false,
-                "viz": false
-              },
-              "lineWidth": 0,
-              "scaleDistribution": {
-                "type": "linear"
-              },
-              "thresholdsStyle": {
-                "mode": "off"
-              }
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
             },
-            "decimals": 7,
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green"
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
+            "thresholdsStyle": {
+              "mode": "off"
             }
           },
-          "overrides": []
-        },
-        "gridPos": {
-          "h": 14,
-          "w": 13,
-          "x": 11,
-          "y": 0
-        },
-        "id": 5,
-        "options": {
-          "barRadius": 0,
-          "barWidth": 1,
-          "groupWidth": 0.82,
-          "legend": {
-            "calcs": [
-              "max"
-            ],
-            "displayMode": "list",
-            "placement": "right",
-            "showLegend": true
-          },
-          "orientation": "horizontal",
-          "showValue": "auto",
-          "stacking": "none",
-          "text": {},
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          },
-          "xTickLabelRotation": 45,
-          "xTickLabelSpacing": 0
-        },
-        "targets": [
-          {
-            "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, -5\nLondon, 10, 1\nLong value, 15,10",
-            "refId": "A",
-            "scenarioId": "csv_content"
-          }
-        ],
-        "title": "Auto  sizing & auto show values",
-        "type": "barchart"
-      },
-      {
-        "datasource": {
-          "type": "datasource",
-          "uid": "-- Dashboard --"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "fillOpacity": 80,
-              "gradientMode": "none",
-              "hideFrom": {
-                "legend": false,
-                "tooltip": false,
-                "viz": false
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
               },
-              "lineWidth": 1,
-              "scaleDistribution": {
-                "type": "linear"
-              },
-              "thresholdsStyle": {
-                "mode": "off"
+              {
+                "color": "red",
+                "value": 80
               }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green"
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            },
-            "unit": "decmbytes"
+            ]
           },
-          "overrides": []
+          "unit": "decmbytes"
         },
-        "gridPos": {
-          "h": 18,
-          "w": 24,
-          "x": 0,
-          "y": 14
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 11,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "maxDataPoints": 30,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "id": 3,
-        "maxDataPoints": 20,
-        "options": {
-          "barRadius": 0,
-          "barWidth": 0.97,
-          "groupWidth": 0.7,
-          "legend": {
-            "calcs": [],
-            "displayMode": "list",
-            "placement": "bottom",
-            "showLegend": true
+        "orientation": "vertical",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelMaxLength": 6,
+        "xTickLabelRotation": 45,
+        "xTickLabelSpacing": 100
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
           },
-          "orientation": "horizontal",
-          "showValue": "auto",
-          "stacking": "none",
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"label\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 600000\n          }\n        },\n        {\n          \"name\": \"A-series\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {},\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"acquisition\",\n          \"extension\",\n          \"conductor\",\n          \"authorise\",\n          \"architect\",\n          \"illusion\",\n          \"congress\",\n          \"highlight\",\n          \"partnership\",\n          \"understanding\",\n          \"disagreement\",\n          \"personality\",\n          \"commerce\",\n          \"systematic\",\n          \"hesitate\",\n          \"business\",\n          \"manufacture\",\n          \"incredible\",\n          \"constitutional\",\n          \"prevalence\",\n          \"professor\",\n          \"entitlement\",\n          \"cooperation\",\n          \"sickness\",\n          \"contrast\",\n          \"reference\",\n          \"audience\",\n          \"discount\",\n          \"apparatus\",\n          \"disturbance\",\n          \"automatic\",\n          \"refrigerator\",\n          \"elaborate\",\n          \"sympathetic\",\n          \"integration\",\n          \"president\"\n        ],\n        [\n          306.78931659492116,\n          200.00696051101917,\n          164.90889283973593,\n          518.9385023737021,\n          999.9040675564702,\n          613.9689830172349,\n          773.2337077340269,\n          317.47395634701644,\n          748.3318338316539,\n          606.8039493787173,\n          426.27771317792866,\n          376.47735643253924,\n          66.30635081800493,\n          401.70654338415505,\n          108.86259550477234,\n          182.40284186231278,\n          867.7047958572101,\n          959.3957783599242,\n          396.7606089549935,\n          455.9625595614323,\n          685.4792456298062,\n          368.6567303946707,\n          157.06596562976327,\n          59.54120602048763,\n          406.72723615743973,\n          440.18247585615575,\n          516.0267558264891,\n          258.76006051667315,\n          952.966531725171,\n          554.8746357628739,\n          86.7279280805682,\n          781.2422516386563,\n          754.2723802427706,\n          435.0305712850233,\n          384.43181614983,\n          459.04164596738127\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
           },
-          "xTickLabelMaxLength": 5,
-          "xTickLabelRotation": 45,
-          "xTickLabelSpacing": 100
-        },
-        "targets": [
-          {
-            "datasource": {
-              "type": "datasource",
-              "uid": "-- Dashboard --"
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "panelId": 2,
-            "refId": "A"
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 7,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           }
-        ],
-        "title": "Panel Title",
-        "type": "barchart"
-      }
-    ],
-    "schemaVersion": 37,
-      "tags": [
-      "gdev",
-      "panel-tests",
-      "barchart",
-      "graph-ng"
-    ],
-    "templating": {
-      "list": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 13,
+        "x": 11,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 1,
+        "groupWidth": 0.82,
+        "legend": {
+          "calcs": ["max"],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "text": {},
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 45,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, -5\nLondon, 10, 1\nLong value, 15,10",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Auto  sizing & auto show values",
+      "type": "barchart"
     },
-    "time": {
-      "from": "now-6h",
-      "to": "now"
-    },
-    "timepicker": {},
-    "timezone": "",
-    "title": "BarChart - Label Rotation & Skipping",
-    "uid": "xCmMwXdVz",
-    "version": 20,
-    "weekStart": ""
-  }
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decmbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 18,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 3,
+      "maxDataPoints": 20,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelMaxLength": 5,
+        "xTickLabelRotation": 45,
+        "xTickLabelSpacing": 100
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 2,
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "barchart"
+    }
+  ],
+  "schemaVersion": 37,
+  "tags": ["gdev", "panel-tests", "barchart", "graph-ng"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "BarChart - Label Rotation & Skipping",
+  "uid": "xCmMwXdVz",
+  "version": 20,
+  "weekStart": ""
+}
