@@ -24,10 +24,10 @@ export function useFolderNameFromSelection({ folderUid, selectedItems }: Props) 
     }
 
     // Helper to walk up tree and find provisioned folder
-    const findProvisionedParent = (itemUid: string): string | null => {
+    const findProvisionedParent = (itemUid: string): string | undefined => {
       const item = findItem(rootItems?.items || [], childrenByParentUID, itemUid);
       if (!item) {
-        return null;
+        return undefined;
       }
 
       if (item.managedBy === ManagerKind.Repo) {
@@ -36,7 +36,7 @@ export function useFolderNameFromSelection({ folderUid, selectedItems }: Props) 
       if (item.parentUID) {
         return findProvisionedParent(item.parentUID);
       }
-      return null;
+      return undefined;
     };
 
     // Try folders, then dashboards
