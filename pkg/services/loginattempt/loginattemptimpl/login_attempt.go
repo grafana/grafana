@@ -63,7 +63,7 @@ func (s *Service) Reset(ctx context.Context, username string) error {
 }
 
 func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
-	if s.cfg.DisableBruteForceLoginProtection {
+	if s.cfg.DisableUsernameLoginProtection {
 		return true, nil
 	}
 
