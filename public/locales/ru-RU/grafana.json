@@ -9422,6 +9422,15 @@
       "show-more": "больше",
       "tooltip-error": "Ошибка: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "",
       "close": "",
@@ -12604,6 +12613,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12641,6 +12651,13 @@
       "label-alt-text": "Альтернативный текст",
       "label-title-text": "Текст заголовка"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "",
     "name-cell-height": "",
     "name-cell-type": "",
@@ -12657,7 +12674,10 @@
     "name-show-table-header": "",
     "name-wrap-header-text": "",
     "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "placeholder-fields": "",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "",
