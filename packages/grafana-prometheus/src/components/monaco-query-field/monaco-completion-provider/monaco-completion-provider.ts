@@ -64,12 +64,9 @@ function getTriggerType(
 ): TriggerType {
   // Manual trigger (Ctrl+Space) - always full completions
   if (state.isManualTriggerRequested) {
-    // Reset the flag after use to prevent it from staying active
-    state.isManualTriggerRequested = false;
     return 'full';
   }
 
-  // Trigger characters - always full completions
   const charBeforeCursor = model.getValueInRange({
     startLineNumber: position.lineNumber,
     endLineNumber: position.lineNumber,
@@ -120,14 +117,14 @@ export function getCompletionProvider(
     const adjustedPosition = getAdjustedPosition(position);
     const offset = model.getOffsetAt(adjustedPosition);
     const situation = getSituation(model.getValue(), offset);
-    
+
     // Early exit if no situation detected
     if (situation === null) {
       return Promise.resolve({ suggestions: [], incomplete: false });
     }
 
     const triggerType: TriggerType = getTriggerType(word, model, position, state);
-    
+
     return getCompletions(situation, dataProvider, timeRange, word?.word, triggerType).then((items) => {
       // Monaco by-default alphabetically orders the items.
       // We use a number-as-string sortkey to maintain our custom order
@@ -148,7 +145,7 @@ export function getCompletionProvider(
             }
           : undefined,
       }));
-      
+
       return { suggestions, incomplete: dataProvider.monacoSettings.suggestionsIncomplete };
     });
   };
