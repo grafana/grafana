@@ -117,7 +117,10 @@ func (s *inlineSecureValueService) isSecureValueOwnedByResource(ctx context.Cont
 			return true, nil // The secure value is owned by the same owner reference, pass!
 		}
 
-		return false, fmt.Errorf("secure value %s is not owned by %v but by %v", name, owner, actualOwner)
+		return false, fmt.Errorf(
+			"secure value %s is not owned by %s/%s/%s/%s but by %s/%s/%s",
+			name, owner.APIGroup, owner.APIVersion, owner.Kind, owner.Name, actualOwner.APIVersion, actualOwner.Kind, actualOwner.Name,
+		)
 	}
 
 	// not owned
@@ -200,7 +203,7 @@ func (s *inlineSecureValueService) CreateInline(ctx context.Context, owner commo
 			OwnerReferences: []metav1.OwnerReference{owner.ToOwnerReference()},
 		},
 		Spec: secretv1beta1.SecureValueSpec{
-			Description: fmt.Sprintf("Inline secure value for %s/%s in %s/%s", owner.Kind, owner.Name, owner.APIVersion, owner.APIVersion),
+			Description: fmt.Sprintf("Inline secure value for %s/%s in %s/%s", owner.Kind, owner.Name, owner.APIGroup, owner.APIVersion),
 			Value:       &secret,
 			Decrypters: []string{
 				serviceIdentity,

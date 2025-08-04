@@ -9332,6 +9332,15 @@
       "show-more": "tampilkan lebih banyak",
       "tooltip-error": "Kesalahan: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Hapus",
       "close": "Tutup detail log",
@@ -12478,6 +12487,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12515,6 +12525,13 @@
       "label-alt-text": "Teks alt",
       "label-title-text": "Teks judul"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Perhitungan",
     "name-cell-height": "Tinggi sel",
     "name-cell-type": "Jenis sel",
@@ -12531,7 +12548,10 @@
     "name-show-table-header": "Tampilkan header tabel",
     "name-wrap-header-text": "Bungkus teks header",
     "placeholder-column-width": "otomatis",
-    "placeholder-fields": "Semua Bidang Numerik"
+    "placeholder-fields": "Semua Bidang Numerik",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Opsi sel",

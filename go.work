@@ -12,7 +12,9 @@ use (
 	./apps/iam
 	./apps/investigations
 	./apps/playlist
+	./apps/provisioning
 	./apps/secret
+	./apps/shorturl
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apiserver

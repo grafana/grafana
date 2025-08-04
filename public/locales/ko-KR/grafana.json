@@ -9332,6 +9332,15 @@
       "show-more": "더 보기",
       "tooltip-error": "오류: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "",
       "close": "",
@@ -12478,6 +12487,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12515,6 +12525,13 @@
       "label-alt-text": "대체 텍스트",
       "label-title-text": "제목 텍스트"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "",
     "name-cell-height": "",
     "name-cell-type": "",
@@ -12531,7 +12548,10 @@
     "name-show-table-header": "",
     "name-wrap-header-text": "",
     "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "placeholder-fields": "",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "",
