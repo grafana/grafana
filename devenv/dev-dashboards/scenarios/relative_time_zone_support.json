@@ -24,8 +24,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -68,9 +67,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -79,8 +76,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -92,8 +88,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -136,9 +131,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -147,8 +140,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk",

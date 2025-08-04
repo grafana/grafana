@@ -24,7 +24,6 @@ The container will expose port `3389` and `6636` as LDAP and LDAPS.
 
 The container will expose port `9000` for API and Admin interface.
 
-
 ## LDAP Setup
 
 The following changes are needed at Grafana's configuration file.
@@ -90,13 +89,13 @@ signout_redirect_url = http://localhost:9000/application/o/grafana-oidc/end-sess
 
 ## Available users and groups
 
-*authentik admin*: 
+_authentik admin_:
 
 - username: akadmin
 - email: admin@localhost
 - password: admin
 
-*grafana logins*:
+_grafana logins_:
 
 - username: authentik-admin
 - password: grafana

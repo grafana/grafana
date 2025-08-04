@@ -50,7 +50,9 @@
       },
       "type": "canvas",
       "title": "Wind Energy",
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "pluginVersion": "9.4.0-pre",
       "fieldConfig": {
         "defaults": {
@@ -1132,8 +1134,7 @@
         {
           "csvContent": "w1_rpm, w1_energy_output, w1_status, w2_rpm, w2_energy_output, w2_status, w3_rpm, w3_energy_output, w3_status, w4_rpm, w4_energy_output, w4_status\n12, 1.2, operational, 22, 1.8, operational, 8, 0.6, operational, 0, 0, needs maintenance",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1141,7 +1142,9 @@
       ]
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 15,
         "w": 6,
@@ -1176,7 +1179,9 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3310,8 +3315,7 @@
         {
           "csvContent": "Status_12, Status_13, Status_14, Throughput_12, Throughput_13, Throughput_14, Color_12, Color_13, Color_14\nReady, Blocked, Ready, 205, 0, 205, red, Red, Green",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "Conveyor Controller",
           "scenarioId": "csv_content"
@@ -3321,7 +3325,9 @@
       "type": "canvas"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 18,
         "w": 6,
@@ -3356,7 +3362,9 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3582,8 +3590,7 @@
         {
           "csvContent": "house_draw, battery_charge, solar_output\n1.1, 2.2, 3.3",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -3593,7 +3600,9 @@
       "type": "canvas"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 15,
         "w": 6,
@@ -3615,7 +3624,9 @@
       "type": "text"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3792,8 +3803,7 @@
         {
           "csvContent": "solar_output, battery_draw\n0.0, 2.2",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -3803,7 +3813,9 @@
       "type": "canvas"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 15,
         "w": 6,
@@ -3826,11 +3838,7 @@
     }
   ],
   "schemaVersion": 37,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "canvas"
-  ],
+  "tags": ["gdev", "panel-tests", "canvas"],
   "templating": {
     "list": []
   },

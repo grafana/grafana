@@ -19,7 +19,9 @@
   "links": [],
   "panels": [
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -149,7 +151,9 @@
       "type": "bargauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 10,
         "w": 16,
@@ -231,7 +235,9 @@
       "type": "bargauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 10,
         "w": 6,
@@ -328,7 +334,9 @@
       "type": "bargauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 22,
         "w": 2,
@@ -375,7 +383,9 @@
       "type": "bargauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 12,
         "w": 22,
@@ -509,7 +519,9 @@
       "type": "bargauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "gridPos": {
         "h": 8,
         "w": 24,

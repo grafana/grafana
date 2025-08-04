@@ -28,4 +28,4 @@ To collect profiles with pyroscope, you need to run Grafana with the following e
 export GF_DIAGNOSTICS_PROFILING_ENABLED=true
 export GF_DIAGNOSTICS_PROFILING_ADDR=0.0.0.0
 make run
-``````
+```

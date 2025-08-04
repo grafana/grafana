@@ -29,7 +29,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -319,7 +319,7 @@
       "type": "geomap"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -431,11 +431,7 @@
     }
   ],
   "schemaVersion": 36,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "geomap"
-  ],
+  "tags": ["gdev", "panel-tests", "geomap"],
   "templating": {
     "list": []
   },
