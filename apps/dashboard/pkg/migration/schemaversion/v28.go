@@ -193,9 +193,6 @@ func (m *v28Migrator) getDefaultStatOptions() map[string]interface{} {
 func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{}, defaults map[string]interface{}) {
 	// Extract angular options
 	angularOpts := m.extractAngularOptions(panel)
-	if angularOpts == nil {
-		return
-	}
 
 	// Set up basic options
 	options := m.getDefaultStatOptions()
@@ -334,21 +331,19 @@ func (m *v28Migrator) applySharedSinglestatMigration(defaults map[string]interfa
 // Helper functions
 
 func (m *v28Migrator) extractAngularOptions(panel map[string]interface{}) map[string]interface{} {
-	// Handle different angular options structures
-	if angular, ok := panel["angular"].(map[string]interface{}); ok {
-		return angular
-	}
-
 	// Some panels might have angular options directly in the root
 	// Check for common angular properties
-	angularProps := []string{"valueName", "format", "decimals", "thresholds", "colors", "gauge", "sparkline"}
+	angularProps := []string{
+		"valueName", "tableColumn", "format", "decimals", "nullPointMode", "nullText",
+		"thresholds", "colors", "valueMaps", "gauge", "sparkline", "colorBackground", "colorValue",
+	}
 	for _, prop := range angularProps {
 		if _, exists := panel[prop]; exists {
 			return panel
 		}
 	}
 
-	return nil
+	return map[string]interface{}{}
 }
 
 func (m *v28Migrator) getReducerForValueName(valueName string) string {
