@@ -81,6 +81,18 @@ func LoadConfigFromEnv() (*Config, error) {
 			return nil, fmt.Errorf("unable to load kubernetes configuration from file '%s': %w", kubeConfigFile, err)
 		}
 		cfg.KubeConfig = kubeConfig
+	} else if folderAppURL := os.Getenv("FOLDER_APP_URL"); folderAppURL != "" {
+		exchangeUrl := os.Getenv("AUTH_TOKEN_EXCHANGE_URL")
+		authToken := os.Getenv("AUTH_TOKEN")
+		if exchangeUrl == "" || authToken == "" {
+			return nil, fmt.Errorf("AUTH_TOKEN_EXCHANGE_URL and AUTH_TOKEN must be set when FOLDER_APP_URL is set")
+		}
+
+		kubeConfig, err := LoadKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken)
+		if err != nil {
+			return nil, fmt.Errorf("unable to load kubernetes configuration from folder app URL '%s': %w", folderAppURL, err)
+		}
+		cfg.KubeConfig = kubeConfig
 	} else {
 		kubeConfig, err := LoadInClusterConfig()
 		if err != nil {
