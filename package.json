@@ -54,6 +54,7 @@
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
     "i18n-extract": "make i18n-extract",
     "betterer": "betterer",
+    "betterer:ci": "betterer ci --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:json": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/bettererResultsToJson.ts",
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
