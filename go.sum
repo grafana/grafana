@@ -1634,8 +1634,8 @@ github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3 
 github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3/go.mod h1:qzFUVwLI1b5UIbVFxFydUYAsnOK27AgtA5so3EW8jM0=
 github.com/grafana/grafana/apps/secret v0.0.0-20250804062607-343fe4dadf51 h1:7Ye9dLxWESPVk4NmIbBvUF9IwFbPH1R+PvpuvpaIBu0=
 github.com/grafana/grafana/apps/secret v0.0.0-20250804062607-343fe4dadf51/go.mod h1:pS2M5ILsHx9VNTM96glLtCjCVXHWyfGcT34WHvbbMtM=
-github.com/grafana/grafana/apps/shorturl v0.0.0-20250804135326-a33cc8d636d0 h1:6a9ZfaR2v7Jiu1JqK+SZ2gqYL4Z6eGeXL/uGZ92Fbcw=
-github.com/grafana/grafana/apps/shorturl v0.0.0-20250804135326-a33cc8d636d0/go.mod h1:6F043DPw1shYLpIAAlbww4BMDtRtVX5MetfUf0s2zoA=
+github.com/grafana/grafana/apps/shorturl v0.0.0-20250804143233-5f4097a15979 h1:FDKrUqZfkHui6v7jRiDF5XtgLkvtwmPu8vZE73dE/5g=
+github.com/grafana/grafana/apps/shorturl v0.0.0-20250804143233-5f4097a15979/go.mod h1:6F043DPw1shYLpIAAlbww4BMDtRtVX5MetfUf0s2zoA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250627191313-2f1a6ae1712b h1:ei01IFqmnXkOrrVvsT3CYe+i5xYra3SCX7Wsu3PMsDU=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:+H4Va9jDJlGQJjAN+OFD/hLx2I/yEzDRMQLaKecvgAc=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956 h1:FzReg7qT3G+11ZsFFbtguMdx+w1w76bJCOOH1fWfDKs=
