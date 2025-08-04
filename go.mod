@@ -237,6 +237,7 @@ require (
 	github.com/grafana/grafana/apps/iam v0.0.0-20250627191313-2f1a6ae1712b // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250627191313-2f1a6ae1712b // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/preferences v0.0.0-20250804141919-269afe9296e3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/secret v0.0.0-20250804062607-343fe4dadf51 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956 // @grafana/grafana-app-platform-squad
@@ -251,6 +252,8 @@ require (
 )
 
 require github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3 // @grafana/grafana-app-platform-squad
+
+require github.com/grafana/grafana/apps/shorturl v0.0.0-20250804135326-a33cc8d636d0
 
 require (
 	cel.dev/expr v0.24.0 // indirect
