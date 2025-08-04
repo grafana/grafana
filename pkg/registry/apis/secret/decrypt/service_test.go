@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -49,7 +48,7 @@ func TestDecryptService(t *testing.T) {
 		decryptService, err := ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
-		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1")
+		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", []string{"secure-value-1"})
 		require.NotNil(t, resp)
 		require.NoError(t, err)
 		require.EqualValues(t, decryptedValuesResp, resp)
@@ -78,7 +77,7 @@ func TestDecryptService(t *testing.T) {
 		decryptService, err := ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
-		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1", "secure-value-2")
+		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", []string{"secure-value-1", "secure-value-2"})
 		require.NotNil(t, resp)
 		require.NoError(t, err)
 		require.EqualValues(t, decryptedValuesResp, resp)
@@ -106,7 +105,7 @@ func TestDecryptService(t *testing.T) {
 		decryptService, err := ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
-		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1", "secure-value-2")
+		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", []string{"secure-value-1", "secure-value-2"})
 		require.NotNil(t, resp)
 		require.NoError(t, err)
 		require.EqualValues(t, decryptedValuesResp, resp)
@@ -236,9 +235,8 @@ func TestDecryptService(t *testing.T) {
 		t.Cleanup(func() { require.NoError(t, decryptService.Close()) })
 
 		svcIdentity := "provsysoning-test"
-		authCtx := identity.WithServiceIdentityContext(ctx, 1, identity.WithServiceIdentityName(svcIdentity))
 
-		result, err := decryptService.Decrypt(authCtx, namespace, "secure-value-1")
+		result, err := decryptService.Decrypt(t.Context(), svcIdentity, namespace, []string{"secure-value-1"})
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)

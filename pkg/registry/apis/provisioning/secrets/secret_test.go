@@ -266,8 +266,9 @@ func TestSecretsService_Decrypt(t *testing.T) {
 						// Verify that the context is not nil (the service creates a new StaticRequester)
 						return ctx != nil
 					}),
+					svcName,
 					"test-namespace",
-					"test-secret",
+					[]string{"test-secret"},
 				).Return(map[string]secret.DecryptResult{
 					"test-secret": mockResult,
 				}, nil)
@@ -283,8 +284,9 @@ func TestSecretsService_Decrypt(t *testing.T) {
 					mock.MatchedBy(func(ctx context.Context) bool {
 						return ctx != nil
 					}),
+					svcName,
 					"test-namespace",
-					"test-secret",
+					[]string{"test-secret"},
 				).Return(nil, errors.New("decrypt service error"))
 			},
 			expectedError: "decrypt service error",
@@ -298,8 +300,9 @@ func TestSecretsService_Decrypt(t *testing.T) {
 					mock.MatchedBy(func(ctx context.Context) bool {
 						return ctx != nil
 					}),
+					svcName,
 					"test-namespace",
-					"test-secret",
+					[]string{"test-secret"},
 				).Return(map[string]secret.DecryptResult{}, nil)
 			},
 			expectedError: secret.ErrDecryptNotFound.Error(),
@@ -315,8 +318,9 @@ func TestSecretsService_Decrypt(t *testing.T) {
 					mock.MatchedBy(func(ctx context.Context) bool {
 						return ctx != nil
 					}),
+					svcName,
 					"test-namespace",
-					"test-secret",
+					[]string{"test-secret"},
 				).Return(map[string]secret.DecryptResult{
 					"test-secret": mockResult,
 				}, nil)
@@ -363,8 +367,9 @@ func TestSecretsService_Decrypt_ServiceIdentityContext(t *testing.T) {
 			// At minimum, verify the context is not nil and is different from the original
 			return ctx != nil
 		}),
+		svcName,
 		"test-namespace",
-		"test-secret",
+		[]string{"test-secret"},
 	).Return(map[string]secret.DecryptResult{
 		"test-secret": mockResult,
 	}, nil)

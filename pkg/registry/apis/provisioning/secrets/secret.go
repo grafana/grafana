@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/setting"
@@ -109,13 +107,7 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 }
 
 func (s *secretsService) Decrypt(ctx context.Context, namespace string, name string) ([]byte, error) {
-	ns, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return nil, err
-	}
-	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID, identity.WithServiceIdentityName(svcName))
-
-	results, err := s.decryptSvc.Decrypt(ctx, namespace, name)
+	results, err := s.decryptSvc.Decrypt(ctx, svcName, namespace, []string{name})
 	if err != nil {
 		return nil, err
 	}
@@ -132,12 +124,6 @@ func (s *secretsService) Decrypt(ctx context.Context, namespace string, name str
 }
 
 func (s *secretsService) Delete(ctx context.Context, namespace string, name string) error {
-	ns, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return err
-	}
-
-	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID, identity.WithServiceIdentityName(svcName))
 	client, err := s.secureValues.Client(ctx, namespace)
 	if err != nil {
 		return err

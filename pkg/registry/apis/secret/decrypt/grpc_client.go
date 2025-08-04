@@ -10,7 +10,7 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -127,25 +127,11 @@ func (g *GRPCDecryptClient) Close() error {
 	return nil
 }
 
-func (g *GRPCDecryptClient) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, errors.New("missing auth info in context")
+func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names []string) (map[string]contracts.DecryptResult, error) {
+	_, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
 	}
-
-	// Up until here the identity is the one set by the internal service, but when the request goes out to the gRPC server,
-	// the aggregator will use the access token which contains a different service identity for grafana as a whole.
-	// This is used for logging purposes only.
-	serviceIdentityList, ok := authInfo.GetExtra()[authnlib.ServiceIdentityKey]
-	if !ok || len(serviceIdentityList) != 1 {
-		return nil, errors.New("invalid service identity in auth info")
-	}
-
-	serviceIdentity := serviceIdentityList[0]
-	if len(serviceIdentity) == 0 {
-		return nil, errors.New("empty service identity in auth info")
-	}
-
 	req := &decryptv1beta1.SecureValueDecryptRequest{
 		Namespace: namespace,
 		Names:     names,
@@ -154,7 +140,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, namespace string, names
 	// Decryption will still use the service identity from the auth token,
 	// but we also pass the service identity from the request metadata for auditing purposes.
 	md := metadata.New(map[string]string{
-		contracts.HeaderGrafanaServiceIdentityName: serviceIdentity,
+		contracts.HeaderGrafanaServiceIdentityName: serviceName,
 	})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 

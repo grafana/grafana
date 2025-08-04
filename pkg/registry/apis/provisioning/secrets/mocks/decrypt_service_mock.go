@@ -67,16 +67,9 @@ func (_c *MockDecryptService_Close_Call) RunAndReturn(run func() error) *MockDec
 	return _c
 }
 
-// Decrypt provides a mock function with given fields: ctx, namespace, names
-func (_m *MockDecryptService) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
-	_va := make([]interface{}, len(names))
-	for _i := range names {
-		_va[_i] = names[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, namespace)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
+// Decrypt provides a mock function with given fields: ctx, serviceName, namespace, names
+func (_m *MockDecryptService) Decrypt(ctx context.Context, serviceName string, namespace string, names []string) (map[string]contracts.DecryptResult, error) {
+	ret := _m.Called(ctx, serviceName, namespace, names)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Decrypt")
@@ -84,19 +77,19 @@ func (_m *MockDecryptService) Decrypt(ctx context.Context, namespace string, nam
 
 	var r0 map[string]contracts.DecryptResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) (map[string]contracts.DecryptResult, error)); ok {
-		return rf(ctx, namespace, names...)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) (map[string]contracts.DecryptResult, error)); ok {
+		return rf(ctx, serviceName, namespace, names)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) map[string]contracts.DecryptResult); ok {
-		r0 = rf(ctx, namespace, names...)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) map[string]contracts.DecryptResult); ok {
+		r0 = rf(ctx, serviceName, namespace, names)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]contracts.DecryptResult)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, ...string) error); ok {
-		r1 = rf(ctx, namespace, names...)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, []string) error); ok {
+		r1 = rf(ctx, serviceName, namespace, names)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -111,22 +104,16 @@ type MockDecryptService_Decrypt_Call struct {
 
 // Decrypt is a helper method to define mock.On call
 //   - ctx context.Context
+//   - serviceName string
 //   - namespace string
-//   - names ...string
-func (_e *MockDecryptService_Expecter) Decrypt(ctx interface{}, namespace interface{}, names ...interface{}) *MockDecryptService_Decrypt_Call {
-	return &MockDecryptService_Decrypt_Call{Call: _e.mock.On("Decrypt",
-		append([]interface{}{ctx, namespace}, names...)...)}
+//   - names []string
+func (_e *MockDecryptService_Expecter) Decrypt(ctx interface{}, serviceName interface{}, namespace interface{}, names interface{}) *MockDecryptService_Decrypt_Call {
+	return &MockDecryptService_Decrypt_Call{Call: _e.mock.On("Decrypt", ctx, serviceName, namespace, names)}
 }
 
-func (_c *MockDecryptService_Decrypt_Call) Run(run func(ctx context.Context, namespace string, names ...string)) *MockDecryptService_Decrypt_Call {
+func (_c *MockDecryptService_Decrypt_Call) Run(run func(ctx context.Context, serviceName string, namespace string, names []string)) *MockDecryptService_Decrypt_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]string, len(args)-2)
-		for i, a := range args[2:] {
-			if a != nil {
-				variadicArgs[i] = a.(string)
-			}
-		}
-		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]string))
 	})
 	return _c
 }
@@ -136,7 +123,7 @@ func (_c *MockDecryptService_Decrypt_Call) Return(_a0 map[string]contracts.Decry
 	return _c
 }
 
-func (_c *MockDecryptService_Decrypt_Call) RunAndReturn(run func(context.Context, string, ...string) (map[string]contracts.DecryptResult, error)) *MockDecryptService_Decrypt_Call {
+func (_c *MockDecryptService_Decrypt_Call) RunAndReturn(run func(context.Context, string, string, []string) (map[string]contracts.DecryptResult, error)) *MockDecryptService_Decrypt_Call {
 	_c.Call.Return(run)
 	return _c
 }
