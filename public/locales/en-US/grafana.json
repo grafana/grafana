@@ -13005,6 +13005,20 @@
       "tooltip-specify-the-output-format": "Specify the output format.",
       "tooltip-timezone-manually": "Set the timezone of the date manually"
     },
+    "convert-frame-type-transformer-editor": {
+      "convert-frame-type": "Convert frame type",
+      "description": {
+        "convert-frame-type": "Convert frame data topic (e.g., series to annotations/exemplars)."
+      },
+      "label": {
+        "annotations": "Annotations",
+        "annotations-description": "Convert to annotations format",
+        "target-data-topic": "Target data topic"
+      },
+      "placeholder": {
+        "data-topic": "Select data topic"
+      }
+    },
     "cumulative-options-editor": {
       "label-calculation": "Calculation",
       "label-field": "Field",
