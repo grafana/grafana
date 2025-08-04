@@ -70,7 +70,7 @@ func TestService_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.BruteForceLoginProtectionMaxAttempts = maxInvalidLoginAttempts
-			cfg.DisableBruteForceLoginProtection = tt.disabled
+			cfg.DisableUsernameLoginProtection = tt.disabled
 			service := &Service{
 				store: fakeStore{
 					ExpectedCount: tt.loginAttempts,
@@ -92,7 +92,7 @@ func TestIntegrationUserLoginAttempts(t *testing.T) {
 	}
 	ctx := context.Background()
 	cfg := setting.NewCfg()
-	cfg.DisableBruteForceLoginProtection = false
+	cfg.DisableUsernameLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 5
 	db := db.InitTestDB(t)
 	service := ProvideService(db, cfg, nil)
