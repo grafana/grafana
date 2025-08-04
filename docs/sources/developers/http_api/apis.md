@@ -48,21 +48,21 @@ These APIs will also uses semantic versioning with three stability levels:
 | Beta  | `v1beta1`  | More stable than alpha, but may still have some changes                     | For early production use | No                  |
 | GA    | `v1`       | Generally Available. Stable with backward compatibility guarantees          | For production use       | Yes                 |
 
-#### Alpha 
+#### Alpha
 
-Alpha versions should not be served unless explicitly enabled by a feature flag, and should be considered completely experimental and subject to major changes. 
-An Alpha version may undergo breaking changes without adding an additional version, and should not be relied upon by production workflows. 
+Alpha versions should not be served unless explicitly enabled by a feature flag, and should be considered completely experimental and subject to major changes.
+An Alpha version may undergo breaking changes without adding an additional version, and should not be relied upon by production workflows.
 
 #### Beta
 
-Beta versions should not contain breaking changes in the schema, but still may be subject to changes in handling logic or semantics. 
+Beta versions should not contain breaking changes in the schema, but still may be subject to changes in handling logic or semantics.
 Breaking schema changes require a new published beta version (such as publishing `v1beta2` for breaking changes to the `v1beta1` schema).
-While beta versions are no longer considered experimental like alpha versions, they should still be disabled by default and require a feature flag to enable. 
+While beta versions are no longer considered experimental like alpha versions, they should still be disabled by default and require a feature flag to enable.
 
 #### GA
 
-GA versions are enabled by default, and can be treated as completely stable. The only changes that can be made to these APIs are bug fixes, 
-and any other changes should instead result in a new published version of the API. 
+GA versions are enabled by default, and can be treated as completely stable. The only changes that can be made to these APIs are bug fixes,
+and any other changes should instead result in a new published version of the API.
 
 ### Namespace (`<namespace>`)
 
