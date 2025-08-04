@@ -1,13 +1,12 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/transport"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/plugin/kubeconfig"
@@ -37,27 +36,18 @@ func LoadKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken string)
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	proxyURL, err := url.Parse(folderAppURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse folder app URL: %w", err)
-	}
-
-	transport := &http.Transport{
-		Proxy: http.ProxyURL(proxyURL),
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-
-	roundTripper := &authRoundTripper{
-		tokenExchangeClient: tokenExchangeClient,
-		transport:           transport,
-	}
-
 	return &kubeconfig.NamespacedConfig{
 		RestConfig: rest.Config{
-			Host:      folderAppURL,
-			Transport: roundTripper,
+			Host: folderAppURL,
+			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
+				return &authRoundTripper{
+					tokenExchangeClient: tokenExchangeClient,
+					transport:           rt,
+				}
+			}),
+			TLSClientConfig: rest.TLSClientConfig{
+				Insecure: true,
+			},
 		},
 		Namespace: "default",
 	}, nil
