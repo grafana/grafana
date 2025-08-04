@@ -3758,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Enable selection of experimental element types",
-    "description-infinite-panning": "Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained",
     "description-inline-editing": "Enable editing the panel directly",
     "description-pan-zoom": "Enable pan and zoom",
     "direction-options": {
@@ -3859,7 +3858,6 @@
     "name-align-text": "Align text",
     "name-color": "Text color",
     "name-experimental-types": "Experimental element types",
-    "name-infinite-panning": "Infinite panning",
     "name-inline-editing": "Inline editing",
     "name-pan-zoom": "Pan and zoom",
     "name-text": "Text",
@@ -9365,6 +9363,15 @@
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "Center matched line",
+      "newer-logs": "newer",
+      "no-more-logs-available": "No more logs available.",
+      "older-logs": "older",
+      "open-in-split-view": "Open in split view",
+      "title-log-context": "Log context",
+      "title-log-line": "Referenced log line"
+    },
     "log-line-details": {
       "clear-search": "Clear",
       "close": "Close log details",
@@ -12514,6 +12521,19 @@
       "label-medium": "Medium",
       "label-small": "Small"
     },
+    "cell-types": {
+      "actions": "Actions",
+      "auto": "Auto",
+      "color-background": "Colored background",
+      "color-text": "Colored text",
+      "data-links": "Data links",
+      "gauge": "Gauge",
+      "image": "Image",
+      "json": "JSON View",
+      "markdown": "Markdown + HTML",
+      "pill": "Pill",
+      "sparkline": "Sparkline"
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
       "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
@@ -12548,6 +12568,13 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
+      "label": {
+        "text-alpha": "Alpha"
+      },
+      "label-dynamic-height": "Dynamic height"
+    },
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12564,7 +12591,10 @@
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "text-wrap-options": {
+      "label-wrap-text": "Wrap text"
+    }
   },
   "table-new": {
     "category-cell-options": "Cell options",
@@ -13279,22 +13309,6 @@
       "label-row": "Row",
       "name": {
         "grouping-to-matrix": "Grouping to matrix"
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Boolean false value",
-          "boolean-true-value": "Boolean true value",
-          "empty-string": "Empty string",
-          "null-value": "Null value",
-          "number-value": "Number 0 value"
-        },
-        "label": {
-          "empty": "Empty",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13647,6 +13661,22 @@
         "perform-spatial-operations": "Perform spatial operations",
         "reformat": "Reformat",
         "reorder-and-rename": "Reorder and rename"
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "Boolean false value",
+          "boolean-true": "Boolean true value",
+          "empty-string": "Empty String",
+          "null-value": "Null value",
+          "number-value": "Number 0 value"
+        },
+        "label": {
+          "boolean-false": "False",
+          "boolean-true": "True",
+          "empty-string": "Empty",
+          "null-value": "Null",
+          "number-value": "Zero"
+        }
       }
     },
     "wide-info": {

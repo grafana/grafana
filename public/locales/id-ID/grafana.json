@@ -3544,12 +3544,12 @@
       "tags-column": "Tag"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Folder berhasil dihapus",
       "api-error": "Gagal menghapus folder",
       "button-cancel": "Batalkan",
       "button-delete": "Hapus",
       "button-deleting": "Menghapus...",
-      "delete-warning": "Ini akan menghapus folder ini dan semua subfoldernya. Secara keseluruhan, ini akan memengaruhi:"
+      "delete-warning": "Ini akan menghapus folder ini dan semua subfoldernya. Secara keseluruhan, ini akan memengaruhi:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Tidak dapat mengambil informasi turunan"
@@ -3592,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Kesalahan saat membuat folder",
-      "alert-folder-created-successfully": "Folder berhasil dibuat",
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
@@ -3740,7 +3739,6 @@
       }
     },
     "description-experimental-types": "Aktifkan pemilihan jenis elemen eksperimental",
-    "description-infinite-panning": "Aktifkan fitur geser tak terbatas - berguna untuk kanvas yang luas. Peringatan: ini adalah fitur eksperimental dan saat ini hanya berfungsi dengan baik dengan elemen yang dibatasi terhadap sudut atas/kiri",
     "description-inline-editing": "Aktifkan pengeditan panel secara langsung",
     "description-pan-zoom": "Aktifkan geser dan zoom",
     "direction-options": {
@@ -3841,7 +3839,6 @@
     "name-align-text": "Ratakan teks",
     "name-color": "Warna teks",
     "name-experimental-types": "Jenis elemen eksperimental",
-    "name-infinite-panning": "Geser tak terbatas",
     "name-inline-editing": "Pengeditan inline",
     "name-pan-zoom": "Geser dan zoom",
     "name-text": "Teks",
@@ -5625,6 +5622,7 @@
       "delete-read-only-file-message": "Dasbor ini tidak dapat dihapus langsung dari Grafana karena repositori bersifat hanya-baca. Untuk menghapus dasbor ini, harap hapus file dari repositori Git Anda.",
       "deleting": "Menghapus...",
       "drawer-title": "Hapus Dasbor yang Disediakan",
+      "success-message": "",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
     "description-label": {
@@ -5636,9 +5634,6 @@
           "edit-link": "Edit tautan"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Perubahan dasbor berhasil disimpan"
     },
     "email-list": {
       "aria-label-emailmenu": "Alihkan tombol menu email"
@@ -5797,6 +5792,7 @@
       "usage-count_other": "Digunakan pada {{count}} dasbor"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5806,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -9335,6 +9332,15 @@
       "show-more": "tampilkan lebih banyak",
       "tooltip-error": "Kesalahan: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Hapus",
       "close": "Tutup detail log",
@@ -10982,6 +10988,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Fitur ini saat ini sedang dalam pengembangan aktif. Untuk pengalaman terbaik dan peningkatan terbaru, kami merekomendasikan Anda untuk menggunakan <2>versi nightly </2> Grafana."
@@ -11834,7 +11843,7 @@
         "recommended": "Disarankan",
         "results": "Hasil"
       },
-      "search": "Cari"
+      "search": ""
     }
   },
   "search": {
@@ -12469,6 +12478,19 @@
       "label-medium": "Sedang",
       "label-small": "Kecil"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Jika dipilih, seluruh baris akan berwarna seperti sel ini.",
       "description-wrap-text": "Jika teks yang dipilih akan dipecah sesuai lebar teks di kolom yang telah dikonfigurasi",
@@ -12503,6 +12525,13 @@
       "label-alt-text": "Teks alt",
       "label-title-text": "Teks judul"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Perhitungan",
     "name-cell-height": "Tinggi sel",
     "name-cell-type": "Jenis sel",
@@ -12519,7 +12548,10 @@
     "name-show-table-header": "Tampilkan header tabel",
     "name-wrap-header-text": "Bungkus teks header",
     "placeholder-column-width": "otomatis",
-    "placeholder-fields": "Semua Bidang Numerik"
+    "placeholder-fields": "Semua Bidang Numerik",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Opsi sel",
