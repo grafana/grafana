@@ -179,8 +179,6 @@ export const InfiniteScroll = ({
     };
   }, []);
 
-  console.log(infiniteLoaderState);
-
   const loadMoreTop = useCallback(() => {
     if (resetStateTimeout.current) {
       clearTimeout(resetStateTimeout.current);
