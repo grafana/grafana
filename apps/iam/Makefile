@@ -15,7 +15,6 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 .PHONY: deps
 deps:
 	@go mod tidy
-	@go work vendor
 
 .PHONY: build
 build: build/operator
