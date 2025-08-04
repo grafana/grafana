@@ -45,7 +45,7 @@ type QueryAPIBuilder struct {
 
 	tracer                 tracing.Tracer
 	metrics                *metrics.ExprMetrics
-	clientSupplier         clientapi.DataSourceClientSupplier
+	clientSupplier         clientapi.InstanceProvider
 	registry               query.DataSourceApiServerRegistry
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
@@ -54,7 +54,7 @@ type QueryAPIBuilder struct {
 
 func NewQueryAPIBuilder(
 	features featuremgmt.FeatureToggles,
-	clientSupplier clientapi.DataSourceClientSupplier,
+	clientSupplier clientapi.InstanceProvider,
 	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
 	registerer prometheus.Registerer,
