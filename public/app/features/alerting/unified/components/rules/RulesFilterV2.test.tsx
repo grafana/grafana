@@ -6,6 +6,7 @@ import { locationService, setPluginComponentsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
+import * as analytics from '../../Analytics';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 // Mock contextSrv before importing the component since permission check happens at module level
@@ -14,6 +15,10 @@ jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 import RulesFilterV2 from './Filter/RulesFilter.v2';
 
 setupMswServer();
+
+jest.spyOn(analytics, 'trackFilterButtonClick');
+jest.spyOn(analytics, 'trackFilterButtonApplyClick');
+jest.spyOn(analytics, 'trackFilterButtonClearClick');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -74,7 +79,6 @@ const ui = {
 beforeEach(() => {
   locationService.replace({ search: '' });
   jest.clearAllMocks();
-  jest.restoreAllMocks();
 
   // Reset plugin components hook to default (no plugins)
   setPluginComponentsHook(() => ({
@@ -151,6 +155,48 @@ describe('RulesFilterV2', () => {
       const { user } = render(<RulesFilterV2 />);
       await user.click(ui.filterButton.get());
       expect(screen.queryByText('Plugin rules')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Analytics Tracking', () => {
+    it('Should track filter button clicks when opening popup', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.click(ui.filterButton.get());
+
+      expect(analytics.trackFilterButtonClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should track clear button clicks', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.click(ui.filterButton.get());
+      await user.click(ui.clearButton.get());
+
+      expect(analytics.trackFilterButtonClearClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should track apply button clicks with filter values', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.click(ui.filterButton.get());
+      await user.click(ui.applyButton.get());
+
+      expect(analytics.trackFilterButtonApplyClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should not track filter button click when filter button is clicked to close popup', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.click(ui.filterButton.get());
+      expect(analytics.trackFilterButtonClick).toHaveBeenCalledTimes(1);
+
+      await user.click(document.body);
+
+      jest.clearAllMocks();
+
+      await user.click(ui.filterButton.get());
+      expect(analytics.trackFilterButtonClick).toHaveBeenCalledTimes(1);
     });
   });
 });
