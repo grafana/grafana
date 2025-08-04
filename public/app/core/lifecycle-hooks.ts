@@ -1,5 +1,5 @@
 import { initDevFeatures } from 'app/dev';
-import { notifyIfMockApiEnabled } from 'app/dev-utils';
+import { notifyIfMockApiEnabled, notifyWeAreHiring } from 'app/dev-utils';
 
 /**
  * Lifecycle tasks that need to be run prior to app initialization,
@@ -14,5 +14,6 @@ export async function preInitTasks() {
  * such as notifying if mock APIs are enabled
  */
 export async function postInitTasks() {
+  notifyWeAreHiring();
   notifyIfMockApiEnabled();
 }
