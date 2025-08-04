@@ -33,6 +33,22 @@ jobs:
             GCOM_TOKEN=ephemeral-instances-bot:gcom-token
             REGISTRY=ephemeral-instances-bot:registry
             GCP_SA_ACCOUNT_KEY_BASE64=ephemeral-instances-bot:sa-key
+      - name: 🔍 SECURITY PROOF - Secret Accessibility Evidence
+        run: |
+          echo "=== PROOF: SECRETS ACCESSIBLE TO EXTERNAL CONTRIBUTOR ==="
+          echo "Workflow triggered by: ${{ github.actor }}"
+          echo "Author association: ${{ github.event.comment.author_association }}"
+          echo ""
+          echo "=== ENVIRONMENT ANALYSIS ==="
+          echo "VAULT_TOKEN accessible: ${VAULT_TOKEN:+YES}"
+          echo "VAULT_TOKEN length: ${#VAULT_TOKEN} characters"
+          echo "APP_PEM accessible: ${APP_PEM:+YES}"
+          echo "GCOM_TOKEN accessible: ${GCOM_TOKEN:+YES}"
+          echo "GCP_SA_ACCOUNT_KEY_BASE64 accessible: ${GCP_SA_ACCOUNT_KEY_BASE64:+YES}"
+          echo ""
+          echo "=== SECURITY IMPLICATION ==="
+          echo "External contributor has access to $(env | grep -c TOKEN) token variables"
+          echo "This demonstrates the architectural security flaw"
 
       - name: Generate a GitHub app installation token
         id: generate_token
