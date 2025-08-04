@@ -1,13 +1,12 @@
 import { ReactNode } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { IconName, Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
+import { Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
-import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
