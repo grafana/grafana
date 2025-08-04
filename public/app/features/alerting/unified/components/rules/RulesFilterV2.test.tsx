@@ -2,7 +2,7 @@ import { render, screen } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { ComponentTypeWithExtensionMeta, PluginExtensionComponentMeta, PluginExtensionTypes } from '@grafana/data';
-import { locationService, setPluginComponentsHook } from '@grafana/runtime';
+import { config, locationService, setPluginComponentsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
@@ -12,6 +12,7 @@ import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 // Mock contextSrv before importing the component since permission check happens at module level
 jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
+import RulesFilter from './Filter/RulesFilter';
 import RulesFilterV2 from './Filter/RulesFilter.v2';
 
 setupMswServer();
@@ -85,6 +86,41 @@ beforeEach(() => {
     components: [],
     isLoading: false,
   }));
+});
+
+describe('RulesFilter Feature Flag', () => {
+  const originalFeatureToggle = config.featureToggles.alertingFilterV2;
+
+  afterEach(() => {
+    config.featureToggles.alertingFilterV2 = originalFeatureToggle;
+  });
+
+  it('Should render RulesFilterV2 when alertingFilterV2 feature flag is enabled', async () => {
+    config.featureToggles.alertingFilterV2 = true;
+
+    render(<RulesFilter />);
+
+    // Wait for suspense to resolve and check that the V2 filter button is present
+    await screen.findByRole('button', { name: 'Filter' });
+    expect(ui.filterButton.get()).toBeInTheDocument();
+    expect(ui.searchInput.get()).toBeInTheDocument();
+  });
+
+  it('Should render RulesFilterV1 when alertingFilterV2 feature flag is disabled', async () => {
+    config.featureToggles.alertingFilterV2 = false;
+
+    render(<RulesFilter />);
+
+    // Wait for suspense to resolve and check V1 structure
+    await screen.findByText('Search');
+
+    // V1 has search input but no V2-style filter button
+    expect(ui.searchInput.get()).toBeInTheDocument();
+    expect(ui.filterButton.query()).not.toBeInTheDocument();
+
+    // V1 has a help icon next to the search input
+    expect(screen.getByText('Search')).toBeInTheDocument();
+  });
 });
 
 describe('RulesFilterV2', () => {
