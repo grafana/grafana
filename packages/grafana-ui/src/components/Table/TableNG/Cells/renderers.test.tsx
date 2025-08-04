@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
-import { Action } from 'rxjs/internal/scheduler/Action';
 
-import { ActionType, createDataFrame, createTheme, Field, FieldType, HttpRequestMethod } from '@grafana/data';
+import { createDataFrame, createTheme, Field, FieldType } from '@grafana/data';
 
 import { TableCellOptions, TableCellDisplayMode, TableCustomCellOptions } from '../../types';
 
