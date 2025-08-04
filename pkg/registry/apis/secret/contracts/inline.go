@@ -7,8 +7,8 @@ import (
 )
 
 type InlineSecureValueSupport interface {
-	// Check that the request user can reference a secret in the context of a given resource (owner)
-	CanReference(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) error
+	// Check that the request user can reference secure value names in the context of a given resource (owner)
+	CanReference(ctx context.Context, owner common.ObjectReference, names ...string) error
 
 	// CreateInline creates a secret that is owned by the referenced object
 	// returns the name of the created secret or an error

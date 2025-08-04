@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
+import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
-import { TableColumnResizeActionCallback } from '../types';
+import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
 import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
@@ -15,6 +15,7 @@ import {
   getRowHeight,
   buildHeaderLineCounters,
   buildRowLineCounters,
+  getCellOptions,
 } from './utils';
 
 // Helper function to get displayed value
@@ -134,7 +135,7 @@ export function useSortedRows(
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
-  rowHeight: number | ((row: TableRow) => number);
+  rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   headerHeight: number;
   footerHeight: number;
   paginationHeight?: number;
@@ -171,6 +172,12 @@ export function usePaginatedRows(
 
     if (typeof rowHeight === 'number') {
       return rowHeight;
+    }
+
+    // when using auto-sized rows, we're just going to have to pick a number. the alternative
+    // is to measure each row, which we could do but would be expensive.
+    if (typeof rowHeight === 'string') {
+      return TABLE.MAX_CELL_HEIGHT;
     }
 
     // we'll just measure 100 rows to estimate
@@ -213,7 +220,7 @@ export function usePaginatedRows(
   }, [width, height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!enabled) {
       return;
     }
@@ -380,7 +387,7 @@ interface UseRowHeightOptions {
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
-  defaultHeight: number;
+  defaultHeight: NonNullable<CSSProperties['height']>;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
@@ -392,7 +399,7 @@ export function useRowHeight({
   defaultHeight,
   expandedRows,
   typographyCtx,
-}: UseRowHeightOptions): number | ((row: TableRow) => number) {
+}: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
   const hasWrappedCols = useMemo(() => lineCounters?.length ?? 0 > 0, [lineCounters]);
 
@@ -403,7 +410,7 @@ export function useRowHeight({
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
-    if (!hasNestedFrames && !hasWrappedCols) {
+    if ((!hasNestedFrames && !hasWrappedCols) || typeof defaultHeight === 'string') {
       return defaultHeight;
     }
 
@@ -437,7 +444,15 @@ export function useRowHeight({
           defaultHeight,
           lineCounters,
           TABLE.LINE_HEIGHT,
-          TABLE.CELL_PADDING * 2
+          (field, numLines) => {
+            // Pill cells have vertical padding between each row
+            if (getCellOptions(field).type === TableCellDisplayMode.Pill) {
+              return TABLE.CELL_PADDING * (numLines - 1) + TABLE.CELL_PADDING * 2;
+            }
+
+            // default vertical padding for cells
+            return TABLE.CELL_PADDING * 2;
+          }
         );
       }
       return result;

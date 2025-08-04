@@ -55,7 +55,7 @@
     "jest": "29.7.0",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
-    "typescript": "5.8.3",
+    "typescript": "5.9.2",
     "webpack": "5.101.0"
   },
   "peerDependencies": {
