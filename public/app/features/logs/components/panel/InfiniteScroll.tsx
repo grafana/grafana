@@ -30,7 +30,7 @@ interface Props {
   logs: LogListModel[];
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
-  setInitialScrollPosition: () => void;
+  setInitialScrollPosition: (log?: LogListModel) => void;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
@@ -72,6 +72,7 @@ export const InfiniteScroll = ({
   const lastLogOfPage = useRef<string[]>([]);
   const styles = useStyles2(getStyles, virtualization);
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -84,6 +85,9 @@ export const InfiniteScroll = ({
       setInfiniteLoaderState(
         logs.length === prevLogs.length && infiniteScrollMode === 'interval' ? 'out-of-bounds' : 'idle'
       );
+      if (scrollToLogLineRef.current) {
+        setAutoScroll(true);
+      }
     } else {
       lastLogOfPage.current = [];
       setAutoScroll(true);
@@ -98,7 +102,8 @@ export const InfiniteScroll = ({
 
   useEffect(() => {
     if (autoScroll) {
-      setInitialScrollPosition();
+      setInitialScrollPosition(scrollToLogLineRef.current);
+      scrollToLogLineRef.current = undefined;
       setAutoScroll(false);
     }
   }, [autoScroll, setInitialScrollPosition]);
@@ -116,6 +121,7 @@ export const InfiniteScroll = ({
       if (scrollDirection === ScrollDirection.Bottom) {
         lastLogOfPage.current.push(logs[logs.length - 1].uid);
       } else {
+        scrollToLogLineRef.current = logs[0];
         lastLogOfPage.current.push(logs[0].uid);
       }
       setInfiniteLoaderState('loading');

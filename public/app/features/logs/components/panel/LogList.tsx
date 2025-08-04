@@ -365,16 +365,20 @@ const LogListComponent = ({
     [debouncedResetAfterIndex, virtualization, widthContainer]
   );
 
-  const handleScrollPosition = useCallback(() => {
-    if (permalinkedLogId) {
-      const index = processedLogs.findIndex((log) => log.uid === permalinkedLogId);
-      if (index >= 0) {
-        listRef.current?.scrollToItem(index, 'start');
-        return;
+  const handleScrollPosition = useCallback(
+    (log?: LogListModel) => {
+      const scrollToUID = log ? log.uid : permalinkedLogId;
+      if (scrollToUID) {
+        const index = processedLogs.findIndex((log) => log.uid === scrollToUID);
+        if (index >= 0) {
+          listRef.current?.scrollToItem(index, 'start');
+          return;
+        }
       }
-    }
-    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
-  }, [initialScrollPosition, permalinkedLogId, processedLogs]);
+      listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+    },
+    [initialScrollPosition, permalinkedLogId, processedLogs]
+  );
 
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
