@@ -466,8 +466,6 @@ require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-ac
 
 require github.com/urfave/cli/v3 v3.3.8 // @grafana/grafana-backend-group
 
-require github.com/grafana/grafana/pkg/build v0.0.0-20250804190500-279adadb1572 // @grafana/grafana-backend-group
-
 require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go/longrunning v0.6.7 // indirect
@@ -479,6 +477,7 @@ require (
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cncf/xds/go v0.0.0-20250501225837-2ac532fd4443 // indirect
+	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
@@ -486,7 +485,6 @@ require (
 	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
-	github.com/google/go-github/v70 v70.0.0 // indirect
 	github.com/grafana/grafana-app-sdk v0.19.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // indirect
 	github.com/grafana/sqlds/v4 v4.1.0 // indirect
