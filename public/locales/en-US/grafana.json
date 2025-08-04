@@ -2243,6 +2243,9 @@
       "title-attention": "Attention",
       "title-manage-contact-point-permissions": "Manage contact point permissions"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": "Open external link"
+    },
     "receivers-section": {
       "button-more": "More",
       "new-menu": {
@@ -11081,6 +11084,9 @@
     },
     "check-repository": {
       "check": "Check"
+    },
+    "code-block": {
+      "aria-label-copy": "Copy code to clipboard"
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
