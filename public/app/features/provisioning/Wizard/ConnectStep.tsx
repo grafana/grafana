@@ -7,7 +7,7 @@ import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields, getLocalProviderFields } from './fields';
-import { WizardFormData } from './types';
+import { InstructionAvailability, RepoType, WizardFormData } from './types';
 
 export function ConnectStep() {
   const {
@@ -26,11 +26,11 @@ export function ConnectStep() {
   // Get field configurations based on provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
+  const hasTokenInstructions = getHasTokenInstructions(type);
 
   return (
     <Stack direction="column" gap={2}>
-      {/*TODO: Add same permission info for other providers*/}
-      {type === 'github' && <TokenPermissionsInfo />}
+      {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
 
       {gitFields && (
         <>
@@ -143,4 +143,8 @@ export function ConnectStep() {
       )}
     </Stack>
   );
+}
+
+function getHasTokenInstructions(type: RepoType): type is InstructionAvailability {
+  return type === 'github' || type === 'gitlab' || type === 'bitbucket';
 }

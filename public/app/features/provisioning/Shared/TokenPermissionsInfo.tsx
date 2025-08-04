@@ -1,44 +1,31 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
 
-export function TokenPermissionsInfo() {
+import { InstructionAvailability } from '../Wizard/types';
+
+export function TokenPermissionsInfo({ type }: { type: InstructionAvailability }) {
   const styles = useStyles2(getStyles);
+  const { tokenText, createTokenLink, createTokenButtonText } = connectStepInstruction()[type];
 
   return (
     <div className={styles.container}>
-      {/* GitHub UI is English only, so these strings are not translated */}
-      {/* eslint-disable @grafana/i18n/no-untranslated-strings */}
       <Stack gap={0.5} wrap={'wrap'}>
         <Trans i18nKey="provisioning.token-permissions-info.go-to">Go to</Trans>
-        <TextLink external href="https://github.com/settings/personal-access-tokens/new">
-          GitHub Personal Access Tokens
+        <TextLink external href={createTokenLink}>
+          {tokenText}
         </TextLink>
         <Trans i18nKey="provisioning.token-permissions-info.and-click">and click</Trans>
-        <strong>"Fine-grained token".</strong>
+        <strong>"{createTokenButtonText}".</strong>
         <Trans i18nKey="provisioning.token-permissions-info.make-sure">Make sure to include these permissions</Trans>:
       </Stack>
-      {/* eslint-enable @grafana/i18n/no-untranslated-strings */}
 
       <ul className={styles.permissionsList}>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <li>
-          Content: <span className={styles.accessLevel}>Read and write</span>
-        </li>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <li>
-          Metadata: <span className={styles.accessLevel}>Read only</span>
-        </li>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <li>
-          Pull requests: <span className={styles.accessLevel}>Read and write</span>
-        </li>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <li>
-          Webhooks: <span className={styles.accessLevel}>Read and write</span>
-        </li>
+        {getPermissionsForProvider(type).map((permission) => (
+          <AccessLevelField key={permission.name} label={permission.name} access={permission.access} />
+        ))}
       </ul>
     </div>
   );
@@ -70,5 +57,88 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(0.25, 0.5),
     }),
+  };
+}
+
+type Permission = {
+  name: string;
+  access: string;
+};
+
+function getPermissionsForProvider(type: InstructionAvailability): Permission[] {
+  switch (type) {
+    case 'github':
+      // GitHub UI is English only, so these strings are not translated
+      return [
+        { name: 'Contents', access: 'Read and write' },
+        { name: 'Metadata', access: 'Read only' },
+        { name: 'Pull requests', access: 'Read and write' },
+        { name: 'Webhooks', access: 'Read and write' },
+      ];
+    case 'gitlab':
+      return [
+        {
+          name: t('provisioning.gitlab.permissions.api', 'api'),
+          access: t('provisioning.gitlab.permissions.api-read-write', 'Read and write'),
+        },
+        {
+          name: t('provisioning.gitlab.permissions.repository-label', 'repository'),
+          access: t('provisioning.gitlab.permissions.repository-read-write', 'Read and write'),
+        },
+        {
+          name: t('provisioning.gitlab.permissions.user-label', 'user'),
+          access: t('provisioning.gitlab.permissions.user-read', 'Read only'),
+        },
+      ];
+    case 'bitbucket':
+      return [
+        {
+          name: t('provisioning.bitbucket.permissions.repository-label', 'Repositories'),
+          access: t('provisioning.bitbucket.permissions.repository-read-write-admin', 'Read, Write, and Admin'),
+        },
+        {
+          name: t('provisioning.bitbucket.permissions.pull-requests-label', 'Pull requests'),
+          access: t('provisioning.bitbucket.permissions.pull-requests-read-write', 'Read and Write'),
+        },
+        {
+          name: t('provisioning.bitbucket.permissions.webhooks-label', 'Webhooks'),
+          access: t('provisioning.bitbucket.permissions.webhooks-read-write', 'Read and Write'),
+        },
+      ];
+    default:
+      return [];
+  }
+}
+
+function AccessLevelField({ label, access }: { label: string; access: string }) {
+  const styles = useStyles2(getStyles);
+  return (
+    <li>
+      {label}: <span className={styles.accessLevel}>{access}</span>
+    </li>
+  );
+}
+
+function connectStepInstruction() {
+  return {
+    bitbucket: {
+      createTokenLink: 'https://id.atlassian.com/manage-profile/security/api-tokens',
+      tokenText: t('provisioning.token-permissions-info.bitbucket.token-text', 'Bitbucket Personal Access Token'),
+      createTokenButtonText: t(
+        'provisioning.token-permissions-info.bitbucket.create-token-button',
+        'Create API token with scopes'
+      ),
+    },
+    gitlab: {
+      createTokenLink: 'https://gitlab.com/-/user_settings/personal_access_tokens',
+      tokenText: t('provisioning.token-permissions-info.gitlab.token-text', 'GitLab Personal Access Token'),
+      createTokenButtonText: t('provisioning.token-permissions-info.gitlab.create-token-button', 'Add new token'),
+    },
+    // GitHub UI is English only, so these strings are not translated
+    github: {
+      createTokenLink: 'https://github.com/settings/personal-access-tokens/new',
+      tokenText: 'GitHub Personal Access Token',
+      createTokenButtonText: 'Fine-grained token',
+    },
   };
 }

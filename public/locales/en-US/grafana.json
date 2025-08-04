@@ -11034,6 +11034,14 @@
       "branch-required": "Branch is required",
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
+      "permissions": {
+        "pull-requests-label": "Pull requests",
+        "pull-requests-read-write": "Read and Write",
+        "repository-label": "Repositories",
+        "repository-read-write-admin": "Read, Write, and Admin",
+        "webhooks-label": "Webhooks",
+        "webhooks-read-write": "Read and Write"
+      },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
       "token-description": "Bitbucket App Password with repository permissions",
@@ -11244,6 +11252,14 @@
       "branch-required": "Branch is required",
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
+      "permissions": {
+        "api": "api",
+        "api-read-write": "Read and write",
+        "repository-label": "repository",
+        "repository-read-write": "Read and write",
+        "user-label": "user",
+        "user-read": "Read only"
+      },
       "pr-workflow-description": "Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.",
       "pr-workflow-label": "Enable merge request option when saving",
       "token-description": "GitLab Project Access Token with repository permissions",
@@ -11450,6 +11466,14 @@
     },
     "token-permissions-info": {
       "and-click": "and click",
+      "bitbucket": {
+        "create-token-button": "Create API token with scopes",
+        "token-text": "Bitbucket Personal Access Token"
+      },
+      "gitlab": {
+        "create-token-button": "Add new token",
+        "token-text": "GitLab Personal Access Token"
+      },
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
