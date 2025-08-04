@@ -5,22 +5,36 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/apis"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/apps/iam/pkg/watchers"
+	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
+	"k8s.io/client-go/rest"
 )
 
 func Provider(appCfg app.SpecificConfig) app.Provider {
 	return simple.NewAppProvider(apis.LocalManifest(), appCfg, New)
 }
 
+func getPatchClient(restConfig rest.Config, kind resource.Kind) (operator.PatchClient, error) {
+	clientGenerator := k8s.NewClientRegistry(restConfig, k8s.ClientConfig{})
+	return clientGenerator.ClientFor(kind)
+}
+
 func New(cfg app.Config) (app.App, error) {
-	FolderWatcher, err := watchers.NewFolderWatcher()
+	patchClient, err := getPatchClient(cfg.KubeConfig, foldersKind.FolderKind())
 	if err != nil {
-		return nil, fmt.Errorf("unable to create FolderWatcher: %w", err)
+		return nil, fmt.Errorf("unable to create patch client for FolderReconciler: %w", err)
+	}
+
+	folderReconciler, err := reconcilers.NewFolderReconciler(patchClient)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create FolderReconciler: %w", err)
 	}
 
 	config := simple.AppConfig{
@@ -66,8 +80,8 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		UnmanagedKinds: []simple.AppUnmanagedKind{
 			{
-				Kind:    foldersKind.FolderKind(),
-				Watcher: FolderWatcher,
+				Kind:       foldersKind.FolderKind(),
+				Reconciler: folderReconciler,
 			},
 		},
 	}
