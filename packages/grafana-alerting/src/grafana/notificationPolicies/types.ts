@@ -7,7 +7,7 @@ import { LabelMatcher } from '../matchers/types';
 export type Route = OverrideProperties<
   RoutingTreeRoute,
   {
-    matchers: LabelMatcher[];
+    matchers?: LabelMatcher[];
     routes: Route[];
   }
 >;

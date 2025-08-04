@@ -32,7 +32,7 @@ export function matchLabels(matchers: LabelMatcher[], labels: Label[]): LabelMat
     const matchingLabelIndex = labels.findIndex((label) => isLabelMatch(matcher, label));
 
     // record that matcher for the label
-    if (matchingLabelIndex) {
+    if (matchingLabelIndex > -1) {
       details[matchingLabelIndex].match = true;
       details[matchingLabelIndex].matcher = matcher;
     }
