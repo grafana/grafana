@@ -848,6 +848,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .betterer.results @grafanabot
 .betterer.ts @grafana/grafana-frontend-platform
+eslint-suppressions.json @grafanabot
 
 # Design system
 /public/img/icons/unicons/ @grafana/design-system
