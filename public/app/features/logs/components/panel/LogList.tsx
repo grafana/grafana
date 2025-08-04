@@ -245,11 +245,7 @@ const LogListComponent = ({
     wrapLogMessage,
   } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
-  const [listHeight, setListHeight] = useState(
-    app === CoreApp.Explore
-      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
-      : containerElement.clientHeight
-  );
+  const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
@@ -329,18 +325,14 @@ const LogListComponent = ({
 
   useEffect(() => {
     const handleResize = debounce(() => {
-      setListHeight(
-        (app === CoreApp.Explore
-          ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
-          : containerElement.clientHeight) - (searchVisible ? LOG_LIST_SEARCH_HEIGHT : 0)
-      );
+      setListHeight(getListHeight(containerElement, app, searchVisible));
     }, 50);
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [app, containerElement.clientHeight, searchVisible]);
+  }, [app, containerElement, searchVisible]);
 
   useLayoutEffect(() => {
     if (widthRef.current === widthContainer.clientWidth) {
@@ -555,4 +547,12 @@ function handleScrollToEvent(event: ScrollToLogsEvent, logs: LogListModel[], lis
       list?.scrollToItem(index, 'center');
     }
   }
+}
+
+function getListHeight(containerElement: HTMLDivElement, app: CoreApp, searchVisible = false) {
+  return (
+    (app === CoreApp.Explore
+      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+      : containerElement.clientHeight) - (searchVisible ? LOG_LIST_SEARCH_HEIGHT : 0)
+  );
 }
