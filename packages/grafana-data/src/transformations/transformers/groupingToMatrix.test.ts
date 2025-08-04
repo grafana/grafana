@@ -21,7 +21,7 @@ describe('Grouping to Matrix', () => {
     const seriesA = toDataFrame({
       name: 'A',
       fields: [
-        { name: 'Time', type: FieldType.time, values: [1000, 1001, 1002] },
+        { name: 'Time', type: FieldType.time, values: [1000, 1001, 1002], config: { interval: 60000 } },
         { name: 'Value', type: FieldType.number, values: [1, 2, 3] },
       ],
     });
@@ -33,7 +33,9 @@ describe('Grouping to Matrix', () => {
           name: 'Time\\Time',
           type: FieldType.time,
           values: [1000, 1001, 1002],
-          config: {},
+          config: {
+            interval: 60000,
+          },
         },
         {
           name: '1000',
