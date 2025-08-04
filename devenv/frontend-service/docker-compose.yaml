@@ -32,7 +32,6 @@ services:
       GF_DATABASE_NAME: grafana
       GF_DATABASE_USER: grafana
       GF_DATABASE_PASSWORD: grafana
-      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /grafana/conf/dev-dashboards/home.json
     ports:
       - '3011:3000'
 
