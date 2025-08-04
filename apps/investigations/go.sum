@@ -333,8 +333,8 @@ github.com/gorilla/mux v1.6.2/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2z
 github.com/gorilla/mux v1.7.1/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
-github.com/grafana/alerting v0.0.0-20250725130805-615c8286e14b h1:mfUAq/N+mS82EcE35hDXWtfVY7UhTjzZxzssvFt9tvQ=
-github.com/grafana/alerting v0.0.0-20250725130805-615c8286e14b/go.mod h1:VKxaR93Gff0ZlO2sPcdPVob1a/UzArFEW5zx3Bpyhls=
+github.com/grafana/alerting v0.0.0-20250729175202-b4b881b7b263 h1:hcr/AmPB0KL4H+gCEFIdKUnkihTxGAkAOiZA7GDYoL8=
+github.com/grafana/alerting v0.0.0-20250729175202-b4b881b7b263/go.mod h1:VKxaR93Gff0ZlO2sPcdPVob1a/UzArFEW5zx3Bpyhls=
 github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 h1:vVPT0i5Y1vI6qzecYStV2yk7cHKrC3Pc7AgvwT5KydQ=
 github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43/go.mod h1:1fWkOiL+m32NBgRHZtlZGz2ji868tPZACYbqP3nBRJI=
 github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 h1:NlkGMnVi/oUn6Cr90QbJYpQJ4FnjyAIG9Ex5GtTZIzw=
@@ -355,8 +355,10 @@ github.com/grafana/grafana-plugin-sdk-go v0.278.0 h1:5/rIYparLi02pofdaag8wnjspMM
 github.com/grafana/grafana-plugin-sdk-go v0.278.0/go.mod h1:+8NXT/XUJ/89GV6FxGQ366NZ3nU+cAXDMd0OUESF9H4=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017 h1:Niy+KRDWHsUVqfhZQg0oZbAQFO6QcO6a4l9V/ouDEEs=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725152715-69d3b9023cec h1:cg1GbDVZ7goqDrqoMzqeN4AeAcD271MGYjOvdVTDwfw=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725152715-69d3b9023cec/go.mod h1:3ZgUe0E3rIhI026xF4DKFptOst/jpDHJ/Sn+bRODzI4=
+github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3 h1:MUyJnJE3GFj9QqA0sq7VOqWQkywYvH0/T4kwJfVQzJE=
+github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3/go.mod h1:qzFUVwLI1b5UIbVFxFydUYAsnOK27AgtA5so3EW8jM0=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956 h1:FzReg7qT3G+11ZsFFbtguMdx+w1w76bJCOOH1fWfDKs=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956/go.mod h1:RRvSjHH12/PnQaXraMO65jUhVu8n59mzvhfIMBETnV4=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b h1:QyJLJn3xwFTIXu9KPZujsrIUN0X8DdiR9b2h75L0AfI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:6OKkPWDB8PetDXqMVMOWL35iTCEUdpATwwpuew0k8+o=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=

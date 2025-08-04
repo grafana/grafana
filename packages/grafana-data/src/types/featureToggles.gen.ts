@@ -457,6 +457,11 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
+  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+  * @default false
+  */
+  useScopeSingleNodeEndpoint?: boolean;
+  /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
   */
@@ -1086,4 +1091,8 @@ export interface FeatureToggles {
   * Enable adhoc filter buttons in visualization tooltips
   */
   adhocFiltersInTooltips?: boolean;
+  /**
+  * New Log Context component
+  */
+  newLogContext?: boolean;
 }

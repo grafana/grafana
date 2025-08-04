@@ -10,7 +10,7 @@ require (
 	github.com/grafana/grafana-app-sdk v0.40.2
 	github.com/grafana/grafana-app-sdk/logging v0.40.1
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725144121-b1592b5e36d2
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3
@@ -126,12 +126,13 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250725130805-615c8286e14b // indirect
+	github.com/grafana/alerting v0.0.0-20250729175202-b4b881b7b263 // indirect
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914 // indirect
 	github.com/grafana/grafana-aws-sdk v1.0.4 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // indirect
+	github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect

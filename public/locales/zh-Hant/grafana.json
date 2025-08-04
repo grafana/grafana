@@ -3544,12 +3544,12 @@
       "tags-column": "標籤"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "已成功刪除資料夾",
       "api-error": "無法刪除資料夾",
       "button-cancel": "取消",
       "button-delete": "刪除",
       "button-deleting": "正在刪除…",
-      "delete-warning": "這將刪除此資料夾及其所有子資料夾。總體而言，這會影響："
+      "delete-warning": "這將刪除此資料夾及其所有子資料夾。總體而言，這會影響：",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "無法擷取子系資訊"
@@ -3592,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "建立資料夾時發生錯誤",
-      "alert-folder-created-successfully": "已成功建立資料夾",
       "button-create": "建立",
       "button-creating": "正在建立…",
       "cancel": "取消",
@@ -3740,7 +3739,6 @@
       }
     },
     "description-experimental-types": "啟用實驗元素類型的選擇",
-    "description-infinite-panning": "啟用無限平移 - 適用於寬敞的畫布。警告：這是一項實驗功能，目前僅適用於頂端/左側受限的元素",
     "description-inline-editing": "啟用直接編輯面板",
     "description-pan-zoom": "啟用平移和縮放",
     "direction-options": {
@@ -3841,7 +3839,6 @@
     "name-align-text": "對齊文字",
     "name-color": "文字色彩",
     "name-experimental-types": "實驗性元素類型",
-    "name-infinite-panning": "無限平移",
     "name-inline-editing": "直接編輯",
     "name-pan-zoom": "平移和縮放",
     "name-text": "文字",
@@ -5625,6 +5622,7 @@
       "delete-read-only-file-message": "由於儲存庫為唯讀，因此無法直接從 Grafana 刪除此儀表板。若要刪除此儀表板，請從您的 Git 儲存庫中移除該檔案。",
       "deleting": "正在刪除…",
       "drawer-title": "刪除已佈建的儀表板",
+      "success-message": "",
       "title-this-repository-is-read-only": "此存放庫為唯讀"
     },
     "description-label": {
@@ -5636,9 +5634,6 @@
           "edit-link": "編輯連結"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "儀表板變更已成功儲存"
     },
     "email-list": {
       "aria-label-emailmenu": "切換電子郵件選單"
@@ -5797,6 +5792,7 @@
       "usage-count_other": "用於 {{count}} 個儀表板"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5806,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -9335,6 +9332,15 @@
       "show-more": "顯示更多",
       "tooltip-error": "錯誤：{{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "清除",
       "close": "關閉紀錄詳細資訊",
@@ -10982,6 +10988,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "此功能目前正在積極開發中。為了獲得最佳體驗和最新改進版本，建議使用 Grafana 的<2>夜間版本</2>。"
@@ -11834,7 +11843,7 @@
         "recommended": "建議",
         "results": "結果"
       },
-      "search": "搜尋"
+      "search": ""
     }
   },
   "search": {
@@ -12469,6 +12478,19 @@
       "label-medium": "中",
       "label-small": "小"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "若選取，整列將以此儲存格的顏色顯示。",
       "description-wrap-text": "若選取，文字將依配置欄位的寬度換行",
@@ -12503,6 +12525,13 @@
       "label-alt-text": "替代文字",
       "label-title-text": "標題文字"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "計算",
     "name-cell-height": "儲存格高度",
     "name-cell-type": "儲存格類型",
@@ -12519,7 +12548,10 @@
     "name-show-table-header": "顯示表格頁首",
     "name-wrap-header-text": "換行標題文字",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "所有數值欄位"
+    "placeholder-fields": "所有數值欄位",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "儲存格選項",
