@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": ""
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
@@ -307,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "",
-        "disable-text-wrap": ""
-      },
       "feedback-link": {
         "give-feedback": "Enviar comentarios",
         "title-give-feedback": ""
@@ -324,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -374,16 +371,10 @@
         "tooltip-metric": ""
       },
       "metrics-modal": {
-        "additional-settings": "",
-        "aria-label-additional-settings": "Configuraciones adicionales",
         "aria-label-browse-metrics": "",
         "currently-selected": "",
         "metrics-pre-filtered": "",
-        "placeholder-results-per-page": "",
-        "results-per-page": "",
-        "title-metrics-explorer": "",
-        "results-amount_one": "",
-        "results-amount_other": ""
+        "title-metrics-explorer": ""
       },
       "nested-query": {
         "label": {
@@ -496,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "Nombre",
-        "select": "Seleccionar",
         "type": "Tipo"
       },
       "update-function-args": {

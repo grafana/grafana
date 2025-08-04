@@ -23,8 +23,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -79,10 +78,6 @@
               {
                 "id": "max",
                 "value": 100
-              },
-              {
-                "id": "custom.width",
-                "value": 300
               }
             ]
           },
@@ -280,13 +275,75 @@
                   "type": "auto",
                   "wrapText": true
                 }
+              },
+              {
+                "id": "custom.width",
+                "value": 300
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pills"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "pill"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data Link"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "data-links"
+                }
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Product",
+                    "url": "${__value.text}"
+                  },
+                  {
+                    "targetBlank": true,
+                    "title": "Grafana",
+                    "url": "https://grafana.com"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gauge"
+            },
+            "properties": []
           }
         ]
       },
       "gridPos": {
-        "h": 18,
+        "h": 15,
         "w": 24,
         "x": 0,
         "y": 0
@@ -297,10 +354,8 @@
         "footer": {
           "countRows": false,
           "enablePagination": false,
-          "fields": "",
-          "reducer": [
-            "max"
-          ],
+          "fields": ["Min", "Max"],
+          "reducer": ["max"],
           "show": true
         },
         "frameIndex": 0,
@@ -311,17 +366,15 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "random_walk_table"
         },
         {
-          "csvContent": "Info,Image,Long Text\ndown,https://placecats.com/millie/300/300,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec eu pretium tortor. Cras venenatis sapien sed mauris gravida, ut scelerisque est fringilla. Cras lorem diam, facilisis nec malesuada in, vulputate vel enim. Etiam fringilla nisi quis felis blandit tincidunt. Cras id lacus ornare, ullamcorper nisl eget, bibendum odio. Pellentesque imperdiet, leo a imperdiet venenatis, ligula risus venenatis quam, vel euismod magna nisi sit amet leo.\"\nup,https://placecats.com/neo/300/300,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor. Aliquam ac tellus eget dui facilisis tempor eu id nulla. Maecenas ultrices turpis eu elementum imperdiet. Fusce eget rhoncus mi, et egestas lectus. Mauris facilisis auctor enim sed malesuada. Maecenas placerat ultricies metus vitae viverra. In hac habitasse platea dictumst. Mauris ipsum nisl, dictum eu aliquam eleifend, rutrum id orci. Nullam eget dui et odio eleifend porttitor.\"\nup fast,https://placecats.com/bella/300/300,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum. Suspendisse vitae rutrum arcu. Donec sed tellus vel lectus bibendum vestibulum. Sed eu felis non velit dictum pulvinar eu et leo. Aenean et dignissim arcu. Nam luctus at neque quis efficitur. Fusce tempus at nibh a imperdiet. Nullam malesuada ac magna at facilisis. Duis pretium aliquam eros. Donec pharetra dignissim dolor non bibendum. Ut gravida mi id urna tempus, at ullamcorper felis vulputate. Duis congue augue ex, sed finibus leo ornare ut. Mauris non quam sodales, dignissim lorem eget, tincidunt mauris. Aliquam ut velit auctor, vestibulum metus sed, mollis massa.\"\ndown fast,https://placecats.com/neo_2/300/300,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus. Fusce consectetur feugiat magna, eu tempor nibh vestibulum ac. Aliquam erat volutpat. Vivamus sit amet viverra enim. Quisque mollis odio nulla, nec vulputate sem placerat in. Etiam dolor sapien, pulvinar in accumsan at, consequat eget nisi. Nunc condimentum neque magna, congue consectetur dui efficitur interdum. Nam lobortis fringilla maximus. Vestibulum eu dui a velit condimentum eleifend consequat nec lectus.\"",
+          "csvContent": "Info,Image,Pills,Data Link,Long Text\ndown,https://placecats.com/millie/200/400,hello,https://grafana.com,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec eu pretium tortor. Cras venenatis sapien sed mauris gravida, ut scelerisque est fringilla. Cras lorem diam, facilisis nec malesuada in, vulputate vel enim. Etiam fringilla nisi quis felis blandit tincidunt. Cras id lacus ornare, ullamcorper nisl eget, bibendum odio. Pellentesque imperdiet, leo a imperdiet venenatis, ligula risus venenatis quam, vel euismod magna nisi sit amet leo.\"\nup,https://placecats.com/neo/200/400,\"[1,2,3,\"\"foo\"\",\"\"bar\"\"]\",https://grafana.com/solutions/kubernetes/,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor. Aliquam ac tellus eget dui facilisis tempor eu id nulla. Maecenas ultrices turpis eu elementum imperdiet. Fusce eget rhoncus mi, et egestas lectus. Mauris facilisis auctor enim sed malesuada. Maecenas placerat ultricies metus vitae viverra. In hac habitasse platea dictumst. Mauris ipsum nisl, dictum eu aliquam eleifend, rutrum id orci. Nullam eget dui et odio eleifend porttitor.\"\nup fast,https://placecats.com/bella/200/400,\"foo,1,4,beep\",https://k6.io/,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum. Suspendisse vitae rutrum arcu. Donec sed tellus vel lectus bibendum vestibulum. Sed eu felis non velit dictum pulvinar eu et leo. Aenean et dignissim arcu. Nam luctus at neque quis efficitur. Fusce tempus at nibh a imperdiet. Nullam malesuada ac magna at facilisis. Duis pretium aliquam eros. Donec pharetra dignissim dolor non bibendum. Ut gravida mi id urna tempus, at ullamcorper felis vulputate. Duis congue augue ex, sed finibus leo ornare ut. Mauris non quam sodales, dignissim lorem eget, tincidunt mauris. Aliquam ut velit auctor, vestibulum metus sed, mollis massa.\"\ndown fast,https://placecats.com/neo_2/200/400,\"foo,bar,baz,a longer one,bim\",https://grafana.com/products/cloud/,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus. Fusce consectetur feugiat magna, eu tempor nibh vestibulum ac. Aliquam erat volutpat. Vivamus sit amet viverra enim. Quisque mollis odio nulla, nec vulputate sem placerat in. Etiam dolor sapien, pulvinar in accumsan at, consequat eget nisi. Nunc condimentum neque magna, congue consectetur dui efficitur interdum. Nam lobortis fringilla maximus. Vestibulum eu dui a velit condimentum eleifend consequat nec lectus.\"",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "B",
           "scenarioId": "csv_content"
@@ -344,12 +397,14 @@
             },
             "includeByName": {},
             "indexByName": {
-              "A": 7,
+              "A": 9,
+              "Data Link": 8,
               "Image": 5,
               "Info": 1,
-              "Long Text": 6,
+              "Long Text": 7,
               "Max A": 3,
               "Min A": 2,
+              "Pills": 6,
               "State A": 4,
               "Time A": 0
             },
@@ -419,7 +474,6 @@
         }
       ],
       "datasource": {
-        "uid": "PD8C576611E62080A",
         "type": "grafana-testdata-datasource"
       },
       "options": {
@@ -427,9 +481,7 @@
         "cellHeight": "sm",
         "footer": {
           "show": false,
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "countRows": false,
           "fields": ""
         }
@@ -444,8 +496,7 @@
       {
         "baseFilters": [],
         "datasource": {
-          "type": "grafana-testdata-datasource",
-          "uid": "PD8C576611E62080A"
+          "type": "grafana-testdata-datasource"
         },
         "filters": [],
         "name": "Filters",
@@ -461,5 +512,5 @@
   "timezone": "",
   "title": "Panel Tests - Table - Kitchen Sink",
   "uid": "dcb9f5e9-8066-4397-889e-864b99555dbb",
-  "version": 1
+  "version": 2
 }

@@ -51,6 +51,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationParseMetricRequest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
@@ -73,6 +76,38 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 		assert.Len(t, parsedReq.parsedQueries, 1)
 		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
 		assert.Len(t, parsedReq.getFlattenedQueries(), 2)
+	})
+
+	t.Run("Test a simple single datasource query with missing time range", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`)
+		mr.From = ""
+		mr.To = ""
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.False(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 1)
+		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+		queries := parsedReq.getFlattenedQueries()
+		assert.Len(t, queries, 2)
+
+		for _, q := range queries {
+			require.Equal(t, int64(0), q.query.TimeRange.From.UnixMilli())
+			require.Equal(t, int64(0), q.query.TimeRange.To.UnixMilli())
+		}
 	})
 
 	t.Run("Test a single datasource query with expressions", func(t *testing.T) {
@@ -272,6 +307,9 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 }
 
 func TestIntegrationQueryDataMultipleSources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		query1, err := simplejson.NewJson([]byte(`
@@ -455,6 +493,9 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 }
 
 func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("can run a simple datasource query with a mt ds client", func(t *testing.T) {
 		stubbedResponse := &backend.QueryDataResponse{Responses: make(backend.Responses)}
 		testClient := &testClient{

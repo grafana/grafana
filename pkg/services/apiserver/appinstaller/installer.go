@@ -8,17 +8,19 @@ import (
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstore "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/kube-openapi/pkg/common"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
 type LegacyStorageGetterFunc func(schema.GroupVersionResource) grafanarest.Storage
@@ -29,13 +31,6 @@ type LegacyStorageProvider interface {
 
 type AuthorizerProvider interface {
 	GetAuthorizer() authorizer.Authorizer
-}
-
-type APIEnablementProvider interface {
-	// Do not implement this unless you have special circumstances! This is a list of resources that are allowed to be accessed in v0alpha1,
-	// to prevent accidental exposure of experimental APIs. While developing, use the feature flag `grafanaAPIServerWithExperimentalAPIs`.
-	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
-	GetAllowedV0Alpha1Resources() []string
 }
 
 type AppInstallerConfig struct {
@@ -132,9 +127,9 @@ func InstallAPIs(
 	dualWriteService dualwrite.Service,
 	dualWriterMetrics *grafanarest.DualWriterMetrics,
 	builderMetrics *builder.BuilderMetrics,
+	apiResourceConfig *serverstore.ResourceConfig,
 ) error {
 	logger := logging.FromContext(ctx)
-
 	for _, installer := range appInstallers {
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
 		wrapper := &serverWrapper{
@@ -149,6 +144,7 @@ func InstallAPIs(
 			dualWriteService:  dualWriteService,
 			dualWriterMetrics: dualWriterMetrics,
 			builderMetrics:    builderMetrics,
+			apiResourceConfig: apiResourceConfig,
 		}
 		if err := installer.InstallAPIs(wrapper, restOpsGetter); err != nil {
 			return fmt.Errorf("failed to install APIs for app %s: %w", installer.ManifestData().AppName, err)

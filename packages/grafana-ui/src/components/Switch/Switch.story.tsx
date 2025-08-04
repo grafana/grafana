@@ -1,5 +1,5 @@
 import { Meta, StoryFn } from '@storybook/react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useId } from 'react';
 import * as React from 'react';
 
 import { Field } from '../Forms/Field';
@@ -61,7 +61,12 @@ export const Uncontrolled: StoryFn<typeof Switch> = (args) => {
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
     [setChecked]
   );
-  return <Switch value={checked} disabled={args.disabled} onChange={onChange} invalid={args.invalid} />;
+  const id = useId();
+  return (
+    <Field label="Uncontrolled switch" disabled={args.disabled} invalid={args.invalid}>
+      <Switch id={id} value={checked} onChange={onChange} />
+    </Field>
+  );
 };
 
 export default meta;

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/i18n",
-  "version": "12.1.0-pre",
+  "version": "12.2.0-pre",
   "description": "Grafana Internationalization Library",
   "keywords": [
     "grafana",
@@ -67,7 +67,7 @@
     "@types/react": "18.3.18",
     "rollup": "^4.22.4",
     "rollup-plugin-copy": "3.5.0",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "peerDependencies": {
     "react": ">=18"

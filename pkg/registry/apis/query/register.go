@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ builder.APIGroupBuilder = (*QueryAPIBuilder)(nil)
@@ -44,7 +45,7 @@ type QueryAPIBuilder struct {
 
 	tracer                 tracing.Tracer
 	metrics                *metrics.ExprMetrics
-	clientSupplier         clientapi.DataSourceClientSupplier
+	clientSupplier         clientapi.InstanceProvider
 	registry               query.DataSourceApiServerRegistry
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
@@ -53,7 +54,7 @@ type QueryAPIBuilder struct {
 
 func NewQueryAPIBuilder(
 	features featuremgmt.FeatureToggles,
-	clientSupplier clientapi.DataSourceClientSupplier,
+	clientSupplier clientapi.InstanceProvider,
 	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
 	registerer prometheus.Registerer,
@@ -93,7 +94,9 @@ func NewQueryAPIBuilder(
 	}, nil
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles,
+func RegisterAPIService(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dataSourcesService datasources.DataSourceService,
 	pluginStore pluginstore.Store,
@@ -126,9 +129,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 
 	builder, err := NewQueryAPIBuilder(
 		features,
-		&CommonDataSourceClientSupplier{
-			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider, accessControl),
-		},
+		client.NewSingleTenantClientSupplier(cfg, features, pluginClient, pCtxProvider, accessControl),
 		ar,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
 		registerer,

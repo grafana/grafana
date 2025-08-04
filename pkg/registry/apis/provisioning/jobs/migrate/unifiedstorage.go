@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -37,7 +37,9 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{},
+			Push: &provisioning.ExportJobOptions{
+				Message: options.Message,
+			},
 		},
 	}
 	if err := m.exportWorker.Process(ctx, repo, exportJob, progress); err != nil {
