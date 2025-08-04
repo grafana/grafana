@@ -71,7 +71,6 @@ async function provisionAzureMonitorDatasources(
   await configPage.saveAndTest();
 }
 
-// TODO unskip when we've figured out how to populate the credentials in CI
 test.describe(
   'Azure Monitor datasource',
   {
