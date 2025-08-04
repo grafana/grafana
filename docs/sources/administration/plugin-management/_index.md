@@ -83,11 +83,11 @@ The most common way to install a plugin is through the Grafana UI, but alternati
 1. Click the plugin's logo.
 1. Click **Install**.
 
-To see additional ways to install plugins refer to [Install a plugin](/plugin-install). 
+To see additional ways to install plugins refer to [Install a plugin](/plugin-install).
 
 ## Manage your plugins
 
-We strongly recommend running the latest plugin version. Use [Grafana Advisor](../grafana-advisor/#plugins) to check the status of your data sources and plugins. 
+We strongly recommend running the latest plugin version. Use [Grafana Advisor](../grafana-advisor/#plugins) to check the status of your data sources and plugins.
 
 ### Update a plugin
 
@@ -146,7 +146,7 @@ To enable backend communication between plugins:
 
 ## Isolate plugin code with the Frontend Sandbox
 
-You can use the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox) to securely isolate plugin frontend code from the main Grafana application. 
+You can use the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox) to securely isolate plugin frontend code from the main Grafana application.
 
 ## Learn more
 
