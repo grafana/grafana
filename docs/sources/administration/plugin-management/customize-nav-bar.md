@@ -14,7 +14,7 @@ keywords:
   - customize
   - configuration
   - grafana.ini
-weight: 100
+weight: 300
 ---
 
 # Customize navigation placement of plugin pages

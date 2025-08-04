@@ -16,7 +16,7 @@ keywords:
   - grafana.ini
   - sandbox
   - frontend
-weight: 300
+weight: 400
 ---
 
 # Isolate plugin code with the Plugin Frontend Sandbox
