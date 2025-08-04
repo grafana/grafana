@@ -4,15 +4,25 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  SpecialValue,
+  SelectableValue,
 } from '@grafana/data';
 import { TransposeTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
 import darkImage from '../images/dark/transpose.svg';
 import lightImage from '../images/light/transpose.svg';
+import { getEmptyOptions } from '../utils';
 
 export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
+  const onSelectEmptyValue = (value?: SelectableValue<SpecialValue>) => {
+    onChange({
+      ...options,
+      emptyValue: value?.value,
+    });
+  };
+
   return (
     <>
       <InlineFieldRow>
@@ -40,6 +50,11 @@ export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIP
             onChange={(e) => onChange({ ...options, restFieldsName: e.currentTarget.value })}
             width={25}
           />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={t('transformers.grouping-to-matrix-transformer-editor.label-empty-value', 'Empty value')}>
+          <Select options={getEmptyOptions()} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
         </InlineField>
       </InlineFieldRow>
     </>

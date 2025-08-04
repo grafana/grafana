@@ -17,7 +17,7 @@ import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/groupingToMatrix.svg';
 import lightImage from '../images/light/groupingToMatrix.svg';
-import { useAllFieldNamesFromDataFrames } from '../utils';
+import { getEmptyOptions, useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({
   input,
@@ -61,49 +61,6 @@ export const GroupingToMatrixTransformerEditor = ({
     [onChange, options]
   );
 
-  const specialValueOptions: Array<SelectableValue<SpecialValue>> = [
-    {
-      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.null', 'Null'),
-      value: SpecialValue.Null,
-      description: t(
-        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.null-value',
-        'Null value'
-      ),
-    },
-    {
-      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.true', 'True'),
-      value: SpecialValue.True,
-      description: t(
-        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.boolean-true-value',
-        'Boolean true value'
-      ),
-    },
-    {
-      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.false', 'False'),
-      value: SpecialValue.False,
-      description: t(
-        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.boolean-false-value',
-        'Boolean false value'
-      ),
-    },
-    {
-      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.zero', 'Zero'),
-      value: SpecialValue.Zero,
-      description: t(
-        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.number-value',
-        'Number 0 value'
-      ),
-    },
-    {
-      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.empty', 'Empty'),
-      value: SpecialValue.Empty,
-      description: t(
-        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.empty-string',
-        'Empty string'
-      ),
-    },
-  ];
-
   const onSelectEmptyValue = useCallback(
     (value: SelectableValue<SpecialValue>) => {
       onChange({
@@ -143,7 +100,7 @@ export const GroupingToMatrixTransformerEditor = ({
           />
         </InlineField>
         <InlineField label={t('transformers.grouping-to-matrix-transformer-editor.label-empty-value', 'Empty value')}>
-          <Select options={specialValueOptions} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
+          <Select options={getEmptyOptions()} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
         </InlineField>
       </InlineFieldRow>
     </>

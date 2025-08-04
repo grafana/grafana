@@ -1559,7 +1559,7 @@ ${buildImageContent(
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
-If you have multiple types it will default to string type.
+If you have multiple types, it will default to string type. You can select how empty cells should be represented.
 
 **Before Transformation:**
 
