@@ -78,16 +78,16 @@ function getPermissionsForProvider(type: InstructionAvailability): Permission[] 
     case 'gitlab':
       return [
         {
-          name: t('provisioning.gitlab.permissions.api', 'api'),
-          access: t('provisioning.gitlab.permissions.api-read-write', 'Read and write'),
-        },
-        {
-          name: t('provisioning.gitlab.permissions.repository-label', 'repository'),
+          name: t('provisioning.gitlab.permissions.repository-label', 'Repository'),
           access: t('provisioning.gitlab.permissions.repository-read-write', 'Read and write'),
         },
         {
-          name: t('provisioning.gitlab.permissions.user-label', 'user'),
+          name: t('provisioning.gitlab.permissions.user-label', 'User'),
           access: t('provisioning.gitlab.permissions.user-read', 'Read only'),
+        },
+        {
+          name: t('provisioning.gitlab.permissions.api', 'API'),
+          access: t('provisioning.gitlab.permissions.api-read-write', 'Read and write'),
         },
       ];
     case 'bitbucket':

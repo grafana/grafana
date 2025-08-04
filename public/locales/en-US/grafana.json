@@ -11253,11 +11253,11 @@
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
       "permissions": {
-        "api": "api",
+        "api": "API",
         "api-read-write": "Read and write",
-        "repository-label": "repository",
+        "repository-label": "Repository",
         "repository-read-write": "Read and write",
-        "user-label": "user",
+        "user-label": "User",
         "user-read": "Read only"
       },
       "pr-workflow-description": "Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.",
