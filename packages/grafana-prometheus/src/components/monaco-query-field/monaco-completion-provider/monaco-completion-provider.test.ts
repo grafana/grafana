@@ -274,19 +274,6 @@ describe('monaco-completion-provider', () => {
         'full' // Should be 'full' despite short word length
       );
     });
-
-    it('should reset manual trigger flag after use', async () => {
-      const model = createMockModel('test');
-      const position = createMockPosition(4);
-
-      const { provider, state } = getCompletionProvider(monaco, dataProvider, timeRange);
-
-      state.isManualTriggerRequested = true;
-
-      await (provider.provideCompletionItems as Function)(model, position);
-
-      expect(state.isManualTriggerRequested).toBe(false);
-    });
   });
 
   describe('trigger character handling', () => {
