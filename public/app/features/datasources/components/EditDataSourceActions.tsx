@@ -38,10 +38,9 @@ export function EditDataSourceActions({ uid }: Props) {
 
   const actionsMenu = (
     <Menu>
-      {hasActions &&
-        links.map((link) => (
-          <Menu.Item key={link.id} label={link.title} url={link.path} onClick={link.onClick} icon={link.icon} />
-        ))}
+      {links.map((link) => (
+        <Menu.Item key={link.id} label={link.title} url={link.path} onClick={link.onClick} icon={link.icon} />
+      ))}
     </Menu>
   );
 
