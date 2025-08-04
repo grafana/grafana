@@ -145,7 +145,6 @@ export const InfiniteScroll = ({
         return;
       }
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);
-      console.log(scrollDirection);
       lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
       if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top') {
