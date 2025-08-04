@@ -71,7 +71,6 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
 
     # test_steps = [a, b] + [c, d] + [e, f]...
     test_steps = postgres_integration_tests_steps() + \
-                 mysql_integration_tests_steps("mysql57", "5.7") + \
                  mysql_integration_tests_steps("mysql80", "8.0") + \
                  redis_integration_tests_steps() + \
                  memcached_integration_tests_steps() + \

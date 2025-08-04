@@ -10,7 +10,6 @@ load(
 def integration_test_services_volumes():
     return [
         {"name": "postgres", "temp": {"medium": "memory"}},
-        {"name": "mysql57", "temp": {"medium": "memory"}},
         {"name": "mysql80", "temp": {"medium": "memory"}},
     ]
 
@@ -30,18 +29,6 @@ def integration_test_services():
             ],
         },
         {
-            "name": "mysql57",
-            "image": images["mysql5"],
-            "environment": {
-                "MYSQL_ROOT_PASSWORD": "rootpass",
-                "MYSQL_DATABASE": "grafana_tests",
-                "MYSQL_USER": "grafana",
-                "MYSQL_PASSWORD": "password",
-            },
-            "volumes": [{"name": "mysql57", "path": "/var/lib/mysql"}],
-            "commands": ["docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"],
-        },
-        {
             "name": "mysql80",
             "image": images["mysql8"],
             "environment": {
@@ -57,7 +44,7 @@ def integration_test_services():
             "name": "mimir_backend",
             "image": images["mimir"],
             "environment": {},
-            "commands": ["/bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled"],
+            "commands": ["/bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled -alertmanager.utf8-strict-mode-enabled"],
         },
         {
             "name": "redis",

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.24.4
+go 1.24.5
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -23,8 +23,6 @@ require (
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-release-guild
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
-	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-release-guild
-	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-release-guild
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect; @grafana/grafana-backend-group
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
@@ -32,15 +30,15 @@ require (
 	github.com/urfave/cli v1.22.15 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0 // indirect; @grafana/plugins-platform-backend
-	go.opentelemetry.io/otel v1.35.0 // indirect; @grafana/grafana-backend-group
+	go.opentelemetry.io/otel v1.35.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.35.0 // indirect; @grafana/grafana-backend-group
-	go.opentelemetry.io/otel/trace v1.35.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/crypto v0.38.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/mod v0.24.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.40.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	go.opentelemetry.io/otel/trace v1.35.0 // @grafana/grafana-backend-group
+	golang.org/x/crypto v0.39.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/mod v0.25.0 // @grafana/grafana-backend-group
+	golang.org/x/net v0.41.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.14.0 // indirect; @grafana/alerting-backend
-	golang.org/x/text v0.25.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/sync v0.15.0 // @grafana/alerting-backend
+	golang.org/x/text v0.26.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.8.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.215.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.72.1 // indirect; @grafana/plugins-platform-backend
@@ -70,7 +68,6 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect; @grafana/grafana-app-platform-squad
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -90,7 +87,13 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-require dagger.io/dagger v0.11.8-rc.2
+require (
+	dagger.io/dagger v0.11.8-rc.2
+	github.com/Masterminds/semver v1.5.0
+	github.com/google/go-github/v70 v70.0.0
+	github.com/quasilyte/go-ruleguard/dsl v0.3.22
+	github.com/urfave/cli/v3 v3.3.8
+)
 
 require (
 	cel.dev/expr v0.23.1 // indirect
@@ -110,6 +113,7 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
