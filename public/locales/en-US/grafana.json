@@ -1494,6 +1494,7 @@
       "title-drawer": "Export {{groupName}} rules"
     },
     "grafana-rules": {
+      "export-all-grafana-rules-aria-label-export-all-grafana-rules": "export all grafana rules",
       "export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules": "Export all Grafana-managed rules",
       "no-rules-found": "No rules found.",
       "tooltip-create-new-grafanamanaged-recording-rule": "Create new Grafana-managed recording rule"
@@ -4684,6 +4685,9 @@
       "failed-to-load": "Failed to load dashboard"
     },
     "export": {
+      "button": {
+        "label": "Export dashboard"
+      },
       "menu": {
         "label": "Export dashboard menu"
       }

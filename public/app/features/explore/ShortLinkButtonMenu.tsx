@@ -140,6 +140,7 @@ export function ShortLinkButtonMenu() {
           const url = lastSelected.getUrl();
           onCopyLink(lastSelected.shorten, lastSelected.absTime, url);
         }}
+        aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
       >
         <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>
       </Button>
