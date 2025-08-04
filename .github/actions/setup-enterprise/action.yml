@@ -34,9 +34,9 @@ runs:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
         git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise;
-        
+
         cd ../grafana-enterprise
-        
+
         if git checkout ${GITHUB_HEAD_REF}; then
           echo "checked out ${GITHUB_HEAD_REF}"
         elif git checkout ${GITHUB_BASE_REF}; then
@@ -44,5 +44,5 @@ runs:
         else
           git checkout main
         fi
-        
-        ./build.sh
+
+        QUIET=1 ./build.sh

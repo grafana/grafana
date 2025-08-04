@@ -14,7 +14,6 @@
       "public/**/*",
       "packages/**/*",
       "e2e/**/*",
-      "plugins-bundled/**/*",
       "scripts/build/release-packages.sh",
       "scripts/circle-release-next-packages.sh",
       "scripts/ci-frontend-metrics.sh",
@@ -244,37 +243,15 @@
   {
     "type": "changedfiles",
     "matches": [
-      "/pkg/services/ngalert/**/*",
-      "/pkg/services/sqlstore/migrations/ualert/**/*",
-      "/pkg/services/alerting/**/*",
-      "/public/app/features/alerting/**/*",
-      "/pkg/tests/api/alerting/**/*"
+      "pkg/services/ngalert/**/*",
+      "pkg/services/sqlstore/migrations/ualert/**/*",
+      "pkg/services/alerting/**/*",
+      "public/app/features/alerting/**/*",
+      "pkg/tests/api/alerting/**/*",
+      "pkg/tests/alertmanager/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/alerting"
-  },
-  {
-    "type": "author",
-    "name": "pr/external",
-    "notMemberOf": {
-      "org": "grafana"
-    },
-    "ignoreList": [
-      "renovate[bot]",
-      "dependabot[bot]",
-      "grafana-delivery-bot[bot]",
-      "grafanabot"
-    ],
-    "action": "updateLabel",
-    "addLabel": "pr/external"
-  },
-  {
-    "type": "label",
-    "name": "type/docs",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/69"
-    }
   },
   {
     "type": "changedfiles",
