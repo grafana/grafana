@@ -323,24 +323,21 @@ const LogListComponent = ({
     listRef.current?.resetAfterIndex(0);
   }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (widthRef.current !== widthContainer.clientWidth) {
+      widthRef.current = widthContainer.clientWidth;
+      debouncedResetAfterIndex(0);
+    }
+  });
+
+  useLayoutEffect(() => {
     const handleResize = debounce(() => {
       setListHeight(getListHeight(containerElement, app, searchVisible));
     }, 50);
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    const observer = new ResizeObserver(() => handleResize());
+    observer.observe(containerElement);
+    return () => observer.disconnect();
   }, [app, containerElement, searchVisible]);
-
-  useLayoutEffect(() => {
-    if (widthRef.current === widthContainer.clientWidth) {
-      return;
-    }
-    widthRef.current = widthContainer.clientWidth;
-    debouncedResetAfterIndex(0);
-  });
 
   const overflowIndexRef = useRef(Infinity);
   const handleOverflow = useCallback(
