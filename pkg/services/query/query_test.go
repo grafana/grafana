@@ -372,7 +372,6 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 
 			assert.Equal(t, ts3, queries[1].query.TimeRange.From.UnixMilli())
 			assert.Equal(t, ts4, queries[1].query.TimeRange.To.UnixMilli())
-
 		}
 
 		// with flag enabled
