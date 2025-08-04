@@ -16,7 +16,7 @@ weight: 600
 
 # Plugin management
 
-You can enhance your Grafana experience with _plugins_, extensions beyond the wide range of visualizations and data sources that are built-in in Grafana.
+Plugins enhance your Grafana experience with new ways to connect to and visualize data.
 
 This guide gives you an overview so you can get started with plugins:
 
