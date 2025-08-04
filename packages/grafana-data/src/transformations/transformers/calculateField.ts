@@ -15,6 +15,7 @@ import { FieldMatcherID } from '../matchers/ids';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
+import { parseTemplateTokens, processTemplateTokens } from './utils';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -23,6 +24,7 @@ export enum CalculateFieldMode {
   BinaryOperation = 'binary',
   UnaryOperation = 'unary',
   Index = 'index',
+  TemplateExpression = 'templateExpression',
 }
 
 export enum WindowSizeMode {
@@ -72,6 +74,10 @@ interface IndexOptions {
   asPercentile: boolean;
 }
 
+interface TemplateExpressionOptions {
+  expression: string;
+}
+
 const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -106,6 +112,7 @@ export interface CalculateFieldTransformerOptions {
   binary?: BinaryOptions;
   unary?: UnaryOptions;
   index?: IndexOptions;
+  template?: TemplateExpressionOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -113,6 +120,7 @@ export interface CalculateFieldTransformerOptions {
   // Output field properties
   alias?: string; // The output field name
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
+  returnType?: FieldType;
 }
 
 type ValuesCreator = (data: DataFrame) => unknown[] | undefined;
@@ -249,6 +257,18 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 fields: options.replaceFields ? [f] : [...frame.fields, f],
               };
             });
+          case CalculateFieldMode.TemplateExpression:
+            const expression = options.template?.expression ?? '';
+            const parsedTemplateTokens = parseTemplateTokens(expression);
+            options.returnType = FieldType.string;
+            creator = (frame: DataFrame) => {
+              const outValues: string[] = [];
+              for (let i = 0; i < frame.length; i++) {
+                outValues.push(processTemplateTokens(expression, parsedTemplateTokens, frame.fields, i));
+              }
+              return outValues;
+            };
+            break;
         }
 
         // Nothing configured
@@ -269,7 +289,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
           const field: Field = {
             name: getNameFromOptions(options),
-            type: FieldType.number,
+            type: options.returnType ?? FieldType.number,
             config: {},
             values,
           };
