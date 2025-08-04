@@ -52,6 +52,7 @@
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
+    "i18n-extract": "make i18n-extract",
     "betterer": "betterer",
     "betterer:json": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/bettererResultsToJson.ts",
     "betterer:merge": "betterer merge",
