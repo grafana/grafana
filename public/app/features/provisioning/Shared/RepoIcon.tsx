@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { Icon, useStyles2 } from '@grafana/ui';
+import { getSvgSize } from '@grafana/ui/internal';
 
 import { RepoType } from '../Wizard/types';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
@@ -26,8 +27,8 @@ export function RepoIcon({ type }: { type: RepoType | undefined }) {
 function getStyles() {
   return {
     logo: css({
-      width: 34,
-      height: 34,
+      width: getSvgSize('xxl'),
+      height: getSvgSize('xxl'),
     }),
   };
 }
