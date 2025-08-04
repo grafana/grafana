@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { IconButton, Text, Stack } from '@grafana/ui';
 
@@ -57,11 +58,17 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
     <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsCountInfo}>
       <Stack direction="row" gap={1}>
         <Text color="secondary" element="p" italic={true}>
-          Autocomplete suggestions limited
+          <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-code-editor-autocomplete-info.autocomplete-suggestions-limited">
+            Autocomplete suggestions limited
+          </Trans>
         </Text>
         <IconButton
           name="info-circle"
-          tooltip={`The number of metric names exceeds the autocomplete limit. Only the ${autocompleteLimit}-most relevant metrics are displayed. You can adjust the threshold in the data source settings.`}
+          tooltip={t(
+            'grafana-prometheus.querybuilder.prom-query-code-editor-autocomplete-info.tooltip-autocomplete-suggestions-limited',
+            'The number of metric names exceeds the autocomplete limit. Only the {{autocompleteLimit}}-most relevant metrics are displayed. You can adjust the threshold in the data source settings.',
+            { autocompleteLimit }
+          )}
         />
       </Stack>
     </div>

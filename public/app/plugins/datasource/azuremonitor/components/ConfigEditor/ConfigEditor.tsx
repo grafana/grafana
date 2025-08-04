@@ -1,7 +1,7 @@
 import { ChangeEvent, PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
 import { Alert, Divider, Field, Input, SecureSocksProxySettings } from '@grafana/ui';
@@ -13,7 +13,7 @@ import {
   AzureMonitorDataSourceSecureJsonData,
   AzureMonitorDataSourceSettings,
   Subscription,
-} from '../../types';
+} from '../../types/types';
 import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';

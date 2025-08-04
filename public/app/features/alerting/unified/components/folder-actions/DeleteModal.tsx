@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
 
 import { trackFolderBulkActionsDeleteFail, trackFolderBulkActionsDeleteSuccess } from '../../Analytics';
@@ -14,7 +14,7 @@ export interface Props {
 
 export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, folderName }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const { t } = useTranslate();
+
   const onDeleteConfirm = async () => {
     setIsDeleting(true);
     try {

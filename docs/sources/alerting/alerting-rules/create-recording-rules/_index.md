@@ -50,5 +50,5 @@ The evaluation group of the recording rule determines how often the metric is pr
 
 Similar to alert rules, Grafana supports two types of recording rules:
 
-1. [Grafana-managed recording rules](ref:grafana-managed-recording-rules), which can query any Grafana data source supported by alerting.
+1. [Grafana-managed recording rules](ref:grafana-managed-recording-rules), which can query any Grafana data source supported by alerting. It's the recommended option.
 2. [Data source-managed recording rules](ref:data-source-managed-recording-rules), which can query Prometheus-based data sources like Mimir or Loki.

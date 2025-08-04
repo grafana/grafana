@@ -3,20 +3,20 @@ import { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-
-import { useDispatch } from '../../types';
+import { useDispatch } from 'app/types/store';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
 import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
 import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { setAllSelection, useHasSelection } from './state';
+import { useHasSelection } from './state/hooks';
+import { setAllSelection } from './state/slice';
 
 const RecentlyDeletedPage = memo(() => {
   const dispatch = useDispatch();
@@ -25,8 +25,8 @@ const RecentlyDeletedPage = memo(() => {
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const hasSelection = useHasSelection();
 
-  const { canEditFolders, canEditDashboards } = getFolderPermissions();
-  const canSelect = canEditFolders || canEditDashboards;
+  const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();
+  const permissions = { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards };
 
   useEffect(() => {
     stateManager.initStateFromUrl(undefined);
@@ -39,7 +39,6 @@ const RecentlyDeletedPage = memo(() => {
       })
     );
   }, [dispatch, stateManager]);
-  const { t } = useTranslate();
 
   return (
     <Page navId="dashboards/recently-deleted">
@@ -60,7 +59,7 @@ const RecentlyDeletedPage = memo(() => {
             <ActionRow
               state={searchState}
               getTagOptions={stateManager.getTagOptions}
-              getSortOptions={getGrafanaSearcher().getSortOptions}
+              getSortOptions={stateManager.getSortOptions}
               sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
               onLayoutChange={stateManager.onLayoutChange}
               onSortChange={stateManager.onSortChange}
@@ -76,7 +75,7 @@ const RecentlyDeletedPage = memo(() => {
           <AutoSizer>
             {({ width, height }) => (
               <SearchView
-                canSelect={canSelect}
+                permissions={permissions}
                 width={width}
                 height={height}
                 searchStateManager={stateManager}

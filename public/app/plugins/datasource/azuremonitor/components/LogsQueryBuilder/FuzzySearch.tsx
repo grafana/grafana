@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Select } from '@grafana/ui';
 
@@ -10,7 +10,8 @@ import {
   BuilderQueryEditorWhereExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { BuildAndUpdateOptions, removeExtraQuotes } from './utils';
 
@@ -27,7 +28,6 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
   allColumns,
   templateVariableOptions,
 }) => {
-  const { t } = useTranslate();
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
 

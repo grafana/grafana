@@ -1,6 +1,6 @@
-import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning';
+import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryFormData } from '../types';
+import { StatusInfo, RepositoryFormData } from '../types';
 
 export type WizardStep = 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
@@ -26,12 +26,18 @@ export interface ModeOption {
   subtitle: string;
 }
 
-export interface SystemState {
-  resourceCount: number;
-  resourceCountString: string;
-  fileCount: number;
-  actions: ModeOption[];
-}
-
 export type StepStatus = 'idle' | 'running' | 'error' | 'success';
-export type StepStatusInfo = { status: StepStatus } | { status: 'error'; error: string };
+
+export const RepoTypeDisplay: { [key in RepoType]: string } = {
+  github: 'GitHub',
+  gitlab: 'GitLab',
+  bitbucket: 'Bitbucket',
+  git: 'Git',
+  local: 'Local',
+};
+
+export type StepStatusInfo =
+  | { status: 'idle' | 'running' }
+  | { status: 'success'; success?: string | StatusInfo }
+  | { status: 'error'; error: string | StatusInfo }
+  | { status: 'warning'; warning: string | StatusInfo };

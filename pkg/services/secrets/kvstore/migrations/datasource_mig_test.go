@@ -44,7 +44,10 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	return migService
 }
 
-func TestMigrate(t *testing.T) {
+func TestIntegrationMigrate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)

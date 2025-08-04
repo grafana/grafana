@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 export interface Props {
   snapshot: Snapshot;
@@ -14,7 +14,6 @@ export interface Props {
 }
 
 const SnapshotListTableRowComponent = ({ snapshot, onRemove }: Props) => {
-  const { t } = useTranslate();
   const url = snapshot.externalUrl || snapshot.url;
   const hasDeletePermission = contextSrv.hasPermission(AccessControlAction.SnapshotsDelete);
   const deleteTooltip = hasDeletePermission

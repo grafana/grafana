@@ -11,14 +11,6 @@ load(
     "verify_release_pipeline",
 )
 load(
-    "scripts/drone/pipelines/test_backend.star",
-    "test_backend",
-)
-load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
-)
-load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
     "github_app_pipeline_volumes",
@@ -215,7 +207,6 @@ def rgm_main():
         name = "rgm-main-prerelease",
         trigger = main_trigger,
         steps = rgm_run("rgm-build", "drone_build_main.sh"),
-        depends_on = ["main-test-backend"],
     )
 
 def rgm_tag():
@@ -252,7 +243,6 @@ def rgm_nightly_build():
         name = "rgm-nightly-build",
         trigger = nightly_trigger,
         steps = rgm_run("rgm-build", "drone_build_nightly_grafana.sh") + copy_steps,
-        depends_on = ["nightly-test-backend", "nightly-test-frontend"],
     )
 
 def rgm_nightly_publish():
@@ -278,8 +268,6 @@ def rgm_nightly_publish():
 
 def rgm_nightly_pipeline():
     return [
-        test_frontend(nightly_trigger, "nightly"),
-        test_backend(nightly_trigger, "nightly"),
         rgm_nightly_build(),
         rgm_nightly_publish(),
     ]
@@ -390,6 +378,5 @@ def rgm():
         rgm_main_pipeline() +
         rgm_tag_pipeline() +
         rgm_version_branch_pipeline() +
-        rgm_nightly_pipeline() +
         rgm_promotion_pipeline()
     )

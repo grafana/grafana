@@ -78,7 +78,6 @@ The following video demonstrates how to use the visual Prometheus query builder:
 Builder mode contains the following components:
 
 - **Kick start your query** - Click to view a list of predefined operation patterns that help you quickly build queries with multiple operations. These include:
-
   - Rate query starters
   - Histogram query starters
   - Binary query starters
@@ -104,7 +103,6 @@ Click **+ Operations** to select from a list of operations including Aggregation
 **Options:**
 
 - **Legend**- Lets you customize the name for the time series. You can use a predefined or custom format.
-
   - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
   - **Verbose** - Displays all label names.
   - **Custom** - Lets you customize the legend using label templates. For example, `{{hostname}}` is replaced with the value of the `hostname` label. To switch to a different legend mode, clear the input and click outside the field.
@@ -112,7 +110,6 @@ Click **+ Operations** to select from a list of operations including Aggregation
 - **Min step** - Sets the minimum interval between data points returned by the query. For example, setting this to `1h` suggests that data is collected or displayed at hourly intervals. This setting supports the `$__interval` and `$__rate_interval` macros. Note that the time range of the query is aligned to this step size, which may adjust the actual start and end times of the returned data.
 
 - **Format** - Determines how the data from your Prometheus query is interpreted and visualized in a panel. Choose from the following format options:
-
   - **Time series** - The default format. Refer to [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
   - **Table** - Displays data in table format. This format works only in a [Table panel](ref:table).
   - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](ref:heatmap) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. Converts cumulative histogram data into regular histogram format and sorts the series by bucket boundaries for proper display.
@@ -123,15 +120,15 @@ Click **+ Operations** to select from a list of operations including Aggregation
     a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
   - **Instant** - Returns a single data point per series — the most recent value within the selected time range. The results can be displayed in a table or as raw data. To visualize instant query results in a time series panel, start by adding field override, then add a property to the override called `Transform`, and set the Transform value to `Constant` in the drop-down. For more information, refer to the [Time Series Transform option documentation](ref:time-series-transform).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana adjusts the query time range to align with the dynamically calculated step interval. This alignment ensures consistent metric visualization and supports Prometheus's result caching requirements. However, this alignment can cause minor visual differences, such as a slight gap at the graph's right edge or a shifted start time. For example, a `15s` step aligns timestamps to Unix times divisible by 15 seconds. A `1w` `minstep` aligns the range to the start of the week, which for Prometheus is Thursday at 00:00 UTC.
-{{% /admonition %}}
+{{< /admonition >}}
 
 - **Exemplars** - Toggle on to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](ref:exemplars).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 There is no option to add exemplars with an **Instant** query type.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Filter metrics
 
@@ -159,9 +156,9 @@ The following options are included under the **Additional Settings** drop-down:
 - **Disable text wrap**: Toggle on to disable text wrapping.
 - **Enable regex search**: Toggle on to filter metric names by regex search, which uses an additional call on the Prometheus API.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The Metrics explorer (Builder mode) and [Metrics browser (Code mode)](#metrics-browser-in-code-mode) are separate elements. The Metrics explorer does not have the ability to browse labels yet, but the Metrics browser can display all labels on a metric name.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Operations
 
@@ -220,9 +217,9 @@ You can then select one or more labels shown in **Step 2**.
 Select one or more values in **Step 3** for each label to tighten your query scope.
 In **Step 4**, you can select **Use query** to run the query, **Use as rate query** to add the rate operation to your query (`$__rate_interval`), **Validate selector** to verify the selector is valid and show the number of series found, or **Clear** to clear your selections and start over.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you don't remember the exact metric name, you can start by selecting a few labels to filter the list. This helps you find relevant label values and narrow down your options.
-{{% /admonition %}}
+{{< /admonition >}}
 
 All lists in the Metrics browser include a search field to quickly filter metrics or labels by keyword.
 In the **Values** section, there's a single search field that filters across all selected labels, making it easier to find matching values. For example, if you have labels like `app`, `job`, and `job_name`, only one of them might contain the value you're looking for.

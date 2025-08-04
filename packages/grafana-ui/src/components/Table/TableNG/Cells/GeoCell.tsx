@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import WKT from 'ol/format/WKT';
 import { Geometry } from 'ol/geom';
 
-import { useStyles2 } from '../../../../themes';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { GeoCellProps } from '../types';
 
 export function GeoCell({ value, justifyContent, height }: GeoCellProps) {

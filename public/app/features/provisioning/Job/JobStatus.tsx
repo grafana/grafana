@@ -1,6 +1,6 @@
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
-import { Job, useListJobQuery } from 'app/api/clients/provisioning';
+import { Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useStepStatus } from '../Wizard/StepStatusContext';
 
@@ -36,7 +36,12 @@ export function JobStatus({ watch }: JobStatusProps) {
   }
 
   if (activeQuery.isError) {
-    setStepStatusInfo({ status: 'error', error: 'Error fetching active job' });
+    setStepStatusInfo({
+      status: 'error',
+      error: {
+        title: t('provisioning.job-status.title.error-fetching-active-job', 'Error fetching active job'),
+      },
+    });
     return null;
   }
 

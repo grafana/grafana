@@ -2,7 +2,7 @@ import { memo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DataFrame, InterpolateFunction, TimeRange } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
@@ -17,7 +17,6 @@ interface LogTimelineViewerProps {
 const replaceVariables: InterpolateFunction = (v) => v;
 
 export const LogTimelineViewer = memo(({ frames, timeRange }: LogTimelineViewerProps) => {
-  const { t } = useTranslate();
   const theme = useTheme2();
 
   return (

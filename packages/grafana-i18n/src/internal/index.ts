@@ -17,5 +17,5 @@ export {
   getLanguage,
   getResolvedLanguage,
   initializeI18n,
-  t,
+  loadNamespacedResources,
 } from '../i18n';

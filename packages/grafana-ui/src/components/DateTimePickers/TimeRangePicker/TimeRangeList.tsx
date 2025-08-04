@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useRef, ReactNode } from 'react';
 
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../../themes';
-import { t } from '../../../utils/i18n';
+import { useStyles2 } from '../../../themes/ThemeContext';
 
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeOption } from './TimeRangeOption';

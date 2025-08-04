@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { LineStyle } from '../types';
@@ -25,7 +25,6 @@ export const defaultLineStyleConfig: LineStyleConfig = {
 };
 
 export const LineStyleEditor = ({ value, onChange }: Props) => {
-  const { t } = useTranslate();
   if (!value) {
     value = defaultLineStyleConfig;
   } else if (typeof value !== 'object') {

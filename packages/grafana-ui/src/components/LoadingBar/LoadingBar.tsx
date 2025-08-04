@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface LoadingBarProps {
   width: number;
@@ -27,7 +27,7 @@ export function LoadingBar({ width, delay = DEFAULT_ANIMATION_DELAY, ariaLabel =
 
   return (
     <div style={containerStyles}>
-      <div aria-label={ariaLabel} className={styles.bar} />
+      <div aria-label={ariaLabel} role="status" className={styles.bar} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 DEFAULT_RUNDIR=scripts/grafana-server/tmp
 RUNDIR=${RUNDIR:-$DEFAULT_RUNDIR}

@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   LinkButton,
@@ -41,10 +40,10 @@ import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsisten
 import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
-import { ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
+import { getRulesSourceUid, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
-import { createListFilterLink } from '../../utils/navigation';
+import { createListFilterLink, groups } from '../../utils/navigation';
 import {
   RulePluginOrigin,
   getRulePluginOrigin,
@@ -60,6 +59,7 @@ import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
+import { ContactPointLink } from './ContactPointLink';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
@@ -88,11 +88,12 @@ const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
-  const { t } = useTranslate();
+
   // this will be used to track if we are in the process of cloning a rule
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
+  const { returnTo } = useReturnTo('/alerting/list');
   const { annotations, promRule, rulerRule } = rule;
 
   const hasError = isErrorHealth(promRule?.health);
@@ -119,7 +120,7 @@ const RuleViewer = () => {
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
-          returnToHref="/alerting/list"
+          returnToHref={returnTo}
         />
       )}
       actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
@@ -181,7 +182,7 @@ const RuleViewer = () => {
 };
 
 const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
-  const { labels, annotations, group } = rule;
+  const { labels, annotations, group, rulerRule } = rule;
   const metadata: PageInfoItem[] = [];
 
   const runbookUrl = annotations[Annotation.runbookURL];
@@ -194,6 +195,18 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 
   const interval = group.interval;
   const styles = useStyles2(getStyles);
+
+  // if the alert rule uses simplified routing, we'll show a link to the contact point
+  if (rulerRuleType.grafana.alertingRule(rulerRule)) {
+    const contactPointName = rulerRule.grafana_alert.notification_settings?.receiver;
+
+    if (contactPointName) {
+      metadata.push({
+        label: t('alerting.create-metadata.label.contact-point', 'Notifications are delivered to'),
+        value: <ContactPointLink name={contactPointName} variant="bodySmall" />,
+      });
+    }
+  }
 
   if (runbookUrl) {
     /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
@@ -332,7 +345,6 @@ const PrometheusConsistencyCheck = withErrorBoundary(
         waitAction.execute(ruleLocation.groupIdentifier);
       }
     }, [ruleLocation, hasRuler, waitAction]);
-    const { t } = useTranslate();
 
     if (isError(waitState)) {
       return (
@@ -410,6 +422,11 @@ function usePageNav(rule: CombinedRule) {
   const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rulerRule);
   const isRecordingRuleType = prometheusRuleType.recordingRule(promRule);
 
+  const dataSourceUID = getRulesSourceUid(rule.namespace.rulesSource);
+  const namespaceString = getNamespaceString(rule);
+
+  const groupDetailsUrl = groups.detailsPageLink(dataSourceUID, namespaceString, groupName);
+
   const pageNav: NavModelItem = {
     ...defaultPageNav,
     text: rule.name,
@@ -458,10 +475,7 @@ function usePageNav(rule: CombinedRule) {
     ],
     parentItem: {
       text: groupName,
-      url: createListFilterLink([
-        ['namespace', namespaceName],
-        ['group', groupName],
-      ]),
+      url: groupDetailsUrl,
       // @TODO support nested folders here
       parentItem: {
         text: namespaceName,
@@ -492,12 +506,6 @@ export const calculateTotalInstances = (stats: AlertInstanceTotals) => {
 };
 
 const getStyles = () => ({
-  title: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 0,
-  }),
   url: css({
     wordBreak: 'break-all',
   }),
@@ -515,6 +523,35 @@ function isValidRunbookURL(url: string) {
   }
 
   return isRelative || isAbsolute;
+}
+
+function getNamespaceString(rule: CombinedRule): string {
+  // try rule.namespace.uid
+  if (rule.namespace.uid) {
+    return rule.namespace.uid;
+  }
+
+  // if datasource managed, use rule.namespace.name;
+  const isDataSourceManagedRulerRule = rulerRuleType.dataSource.rule(rule.rulerRule);
+  const isDataSourceManagedPromRule =
+    prometheusRuleType.rule(rule.promRule) && !prometheusRuleType.grafana.rule(rule.promRule);
+
+  if (isDataSourceManagedRulerRule || isDataSourceManagedPromRule) {
+    return rule.namespace.name;
+  }
+
+  // try rulerRule definition if grafana ruler rule;
+  if (rulerRuleType.grafana.rule(rule.rulerRule)) {
+    return rule.rulerRule?.grafana_alert.namespace_uid;
+  }
+
+  // try promRule definition if grafana prom rule;
+  if (prometheusRuleType.grafana.rule(rule.promRule)) {
+    return rule.promRule.folderUid;
+  }
+
+  // fell back to whatever the name is of the namespace assigned to the combined rule
+  return rule.namespace.name;
 }
 
 export default RuleViewer;

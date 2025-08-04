@@ -5,21 +5,13 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import {
-  HorizontalGroup,
-  Select,
-  ButtonSelect,
-  AsyncMultiSelect,
-  getSelectStyles,
-  useTheme2,
-  Checkbox,
-} from '@grafana/ui';
+import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, useTheme2, Checkbox, Stack } from '@grafana/ui';
 
 import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { VariableOptionGroup } from '../../types';
+import { VariableOptionGroup } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 
 export interface FilterProps {
@@ -209,7 +201,6 @@ const Filter = (
   const [selected, setSelected] = useState<SelectableValue[]>(
     item.filters ? item.filters.map((filter) => ({ value: filter, label: filter === '' ? '<Empty>' : filter })) : []
   );
-  const { t } = useTranslate();
 
   const loadOptions = async () => {
     setLoading(true);
@@ -239,7 +230,7 @@ const Filter = (
   };
 
   return (
-    <HorizontalGroup spacing="none">
+    <Stack gap={0}>
       <Select
         menuShouldPortal
         placeholder={t('components.filter.placeholder-property', 'Property')}
@@ -289,7 +280,7 @@ const Filter = (
         onClick={onDelete}
         type="button"
       />
-    </HorizontalGroup>
+    </Stack>
   );
 };
 

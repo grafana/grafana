@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,7 +29,7 @@ import (
 
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
+	ListAlertRulesStore
 }
 
 type RuleGroupAccessControlService interface {
@@ -41,21 +40,27 @@ type StatusReader interface {
 	Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
 }
 
-type PrometheusSrv struct {
-	log     log.Logger
-	manager state.AlertInstanceManager
-	status  StatusReader
-	store   RuleStoreReader
-	authz   RuleGroupAccessControlService
+type ProvenanceStore interface {
+	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]ngmodels.Provenance, error)
 }
 
-func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService) *PrometheusSrv {
+type PrometheusSrv struct {
+	log             log.Logger
+	manager         state.AlertInstanceManager
+	status          StatusReader
+	store           RuleStoreReader
+	authz           RuleGroupAccessControlService
+	provenanceStore ProvenanceStore
+}
+
+func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
 	return &PrometheusSrv{
-		log:     log,
-		manager: manager,
-		status:  status,
-		store:   store,
-		authz:   authz,
+		log,
+		manager,
+		status,
+		store,
+		authz,
+		provenanceStore,
 	}
 }
 
@@ -189,29 +194,42 @@ func getMatchersFromQuery(v url.Values) (labels.Matchers, error) {
 	return matchers, nil
 }
 
-func getStatesFromQuery(v url.Values) ([]eval.State, error) {
-	var states []eval.State
+func getStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
+	states := make(map[eval.State]struct{})
 	for _, s := range v["state"] {
 		s = strings.ToLower(s)
 		switch s {
 		case "normal", "inactive":
-			states = append(states, eval.Normal)
+			states[eval.Normal] = struct{}{}
 		case "alerting", "firing":
-			states = append(states, eval.Alerting)
+			states[eval.Alerting] = struct{}{}
 		case "pending":
-			states = append(states, eval.Pending)
+			states[eval.Pending] = struct{}{}
 		case "nodata":
-			states = append(states, eval.NoData)
-		// nolint:goconst
+			states[eval.NoData] = struct{}{}
 		case "error":
-			states = append(states, eval.Error)
+			states[eval.Error] = struct{}{}
 		case "recovering":
-			states = append(states, eval.Recovering)
+			states[eval.Recovering] = struct{}{}
 		default:
 			return states, fmt.Errorf("unknown state '%s'", s)
 		}
 	}
 	return states, nil
+}
+
+func getHealthFromQuery(v url.Values) (map[string]struct{}, error) {
+	health := make(map[string]struct{})
+	for _, s := range v["health"] {
+		s = strings.ToLower(s)
+		switch s {
+		case "ok", "error", "nodata", "unknown":
+			health[s] = struct{}{}
+		default:
+			return nil, fmt.Errorf("unknown health '%s'", s)
+		}
+	}
+	return health, nil
 }
 
 type RuleGroupStatusesOptions struct {
@@ -222,7 +240,7 @@ type RuleGroupStatusesOptions struct {
 }
 
 type ListAlertRulesStore interface {
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
+	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesByGroupQuery) (ngmodels.RulesGroup, string, error)
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
@@ -261,12 +279,27 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		}
 	}
 
-	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.store, RuleGroupStatusesOptions{
-		Ctx:               c.Req.Context(),
-		OrgID:             c.OrgID,
-		Query:             c.Req.Form,
-		AllowedNamespaces: allowedNamespaces,
-	}, RuleStatusMutatorGenerator(srv.status), RuleAlertStateMutatorGenerator(srv.manager))
+	provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("failed to get provenances visible to the user: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrServer
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	}
+
+	ruleResponse = PrepareRuleGroupStatuses(
+		srv.log,
+		srv.store,
+		RuleGroupStatusesOptions{
+			Ctx:               c.Req.Context(),
+			OrgID:             c.OrgID,
+			Query:             c.Req.Form,
+			AllowedNamespaces: allowedNamespaces,
+		},
+		RuleStatusMutatorGenerator(srv.status),
+		RuleAlertStateMutatorGenerator(srv.manager),
+		provenanceRecords,
+	)
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
@@ -366,7 +399,7 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 	}
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -400,16 +433,20 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilter, err := getStatesFromQuery(opts.Query)
+	stateFilterSet, err := getStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilterSet := make(map[eval.State]struct{})
-	for _, state := range stateFilter {
-		stateFilterSet[state] = struct{}{}
+
+	healthFilterSet, err := getHealthFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = err.Error()
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
 	}
 
 	var labelOptions []ngmodels.LabelOption
@@ -436,14 +473,26 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	ruleGroups := opts.Query["rule_group"]
 
-	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         opts.OrgID,
-		NamespaceUIDs: namespaceUIDs,
-		DashboardUID:  dashboardUID,
-		PanelID:       panelID,
-		RuleGroups:    ruleGroups,
+	receiverName := opts.Query.Get("receiver_name")
+
+	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
+	nextToken := opts.Query.Get("group_next_token")
+
+	if maxGroups == 0 {
+		return ruleResponse
 	}
-	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
+
+	byGroupQuery := ngmodels.ListAlertRulesByGroupQuery{
+		OrgID:              opts.OrgID,
+		GroupLimit:         maxGroups,
+		GroupContinueToken: nextToken,
+		NamespaceUIDs:      namespaceUIDs,
+		DashboardUID:       dashboardUID,
+		PanelID:            panelID,
+		RuleGroups:         ruleGroups,
+		ReceiverName:       receiverName,
+	}
+	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
@@ -457,49 +506,33 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ruleNamesSet[rn] = struct{}{}
 	}
 
-	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
-	nextToken := opts.Query.Get("group_next_token")
-	if nextToken != "" {
-		if _, err := base64.URLEncoding.DecodeString(nextToken); err != nil {
-			nextToken = ""
-		}
-	}
-
 	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
-	var newToken string
-	foundToken := false
 	for _, rg := range groupedRules {
-		if nextToken != "" && !foundToken {
-			if !tokenGreaterThanOrEqual(getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
-				continue
-			}
-			foundToken = true
-		}
-
-		if maxGroups > -1 && len(ruleResponse.Data.RuleGroups) == int(maxGroups) {
-			newToken = getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
-			break
-		}
-
-		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
+		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
 		}
 
-		if len(stateFilter) > 0 {
-			filterRules(ruleGroup, stateFilterSet)
+		if len(stateFilterSet) > 0 {
+			filterRulesByState(ruleGroup, stateFilterSet)
+		}
+
+		if len(healthFilterSet) > 0 {
+			filterRulesByHealth(ruleGroup, healthFilterSet)
 		}
 
 		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
 			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
 		}
 
-		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
+		if len(ruleGroup.Rules) > 0 {
+			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
+		}
 	}
 
-	ruleResponse.Data.NextToken = newToken
+	ruleResponse.Data.NextToken = continueToken
 
 	// Only return Totals if there is no pagination
 	if maxGroups == -1 {
@@ -507,18 +540,6 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	}
 
 	return ruleResponse
-}
-
-func getRuleGroupNextToken(namespace, group string) string {
-	return base64.URLEncoding.EncodeToString([]byte(namespace + "/" + group))
-}
-
-// Returns true if tokenA >= tokenB
-func tokenGreaterThanOrEqual(tokenA string, tokenB string) bool {
-	decodedTokenA, _ := base64.URLEncoding.DecodeString(tokenA)
-	decodedTokenB, _ := base64.URLEncoding.DecodeString(tokenB)
-
-	return string(decodedTokenA) >= string(decodedTokenB)
 }
 
 type ruleGroup struct {
@@ -578,7 +599,7 @@ func getGroupedRules(log log.Logger, ruleList ngmodels.RulesGroup, ruleNamesSet 
 	return ruleGroups
 }
 
-func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
+func filterRulesByState(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
 	// Filtering is weird but firing, pending, and normal filters also need to be
 	// applied to the rule. Others such as nodata and error should have no effect.
 	// This is to match the current behavior in the UI.
@@ -604,6 +625,19 @@ func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]s
 	ruleGroup.Rules = filteredRules
 }
 
+func filterRulesByHealth(ruleGroup *apimodels.RuleGroup, withHealthFast map[string]struct{}) {
+	// Filtering is weird but error and nodata filters also need to be
+	// applied to the rule. Others such as firing, pending, and normal should have no effect.
+	// This is to match the current behavior in the UI.
+	filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
+	for _, rule := range ruleGroup.Rules {
+		if _, ok := withHealthFast[rule.Health]; ok {
+			filteredRules = append(filteredRules, rule)
+		}
+	}
+	ruleGroup.Rules = filteredRules
+}
+
 // This is the same as matchers.Matches but avoids the need to create a LabelSet
 func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	for _, m := range matchers {
@@ -614,7 +648,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -626,6 +660,10 @@ func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFull
 
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
+		provenance := ngmodels.ProvenanceNone
+		if prov, exists := provenanceRecords[rule.ResourceID()]; exists {
+			provenance = prov
+		}
 		alertingRule := apimodels.AlertingRule{
 			State:                 "inactive",
 			Name:                  rule.Title,
@@ -635,12 +673,13 @@ func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFull
 			KeepFiringFor:         rule.KeepFiringFor.Seconds(),
 			Annotations:           apimodels.LabelsFromMap(rule.Annotations),
 			Rule: apimodels.Rule{
-				UID:       rule.UID,
-				Name:      rule.Title,
-				FolderUID: rule.NamespaceUID,
-				Labels:    apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
-				Type:      rule.Type().String(),
-				IsPaused:  rule.IsPaused,
+				UID:        rule.UID,
+				Name:       rule.Title,
+				FolderUID:  rule.NamespaceUID,
+				Labels:     apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
+				Type:       rule.Type().String(),
+				IsPaused:   rule.IsPaused,
+				Provenance: apimodels.Provenance(provenance),
 			},
 		}
 

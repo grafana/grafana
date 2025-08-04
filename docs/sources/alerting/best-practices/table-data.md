@@ -118,7 +118,7 @@ To test this quickly, you can simulate the table using the [**TestData** data so
 
    {{< figure src="/media/docs/alerting/example-table-data-preview.png" max-width="750px" alt="Alert preview with tabular data using the TestData data source" >}}
 
-   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/eemqylh1l8tfkf/view" >}}
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/eep7osljocvswa/view" >}}
 
 ## CSV data with Infinity
 

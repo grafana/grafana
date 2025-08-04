@@ -62,11 +62,14 @@ const (
 	// with intervals that are not exactly divided by this number not to be evaluated
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
-	DefaultRuleEvaluationInterval  = SchedulerBaseInterval * 6 // == 60 seconds
-	stateHistoryDefaultEnabled     = true
-	lokiDefaultMaxQueryLength      = 721 * time.Hour // 30d1h, matches the default value in Loki
-	defaultRecordingRequestTimeout = 10 * time.Second
-	lokiDefaultMaxQuerySize        = 65536 // 64kb
+	DefaultRuleEvaluationInterval          = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled             = true
+	notificationHistoryDefaultEnabled      = false
+	lokiDefaultMaxQueryLength              = 721 * time.Hour // 30d1h, matches the default value in Loki
+	defaultRecordingRequestTimeout         = 10 * time.Second
+	lokiDefaultMaxQuerySize                = 65536 // 64kb
+	defaultHistorianPrometheusWriteTimeout = 10 * time.Second
+	defaultHistorianPrometheusMetricName   = "GRAFANA_ALERTS"
 )
 
 var (
@@ -118,8 +121,8 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
-	SkipClustering                bool
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	NotificationHistory           UnifiedAlertingNotificationHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	RecordingRules                RecordingRuleSettings
 	PrometheusConversion          UnifiedAlertingPrometheusConversionSettings
@@ -179,9 +182,7 @@ type UnifiedAlertingPrometheusConversionSettings struct {
 	RuleQueryOffset time.Duration
 }
 
-type UnifiedAlertingStateHistorySettings struct {
-	Enabled       bool
-	Backend       string
+type UnifiedAlertingLokiSettings struct {
 	LokiRemoteURL string
 	LokiReadURL   string
 	LokiWriteURL  string
@@ -192,9 +193,24 @@ type UnifiedAlertingStateHistorySettings struct {
 	LokiBasicAuthUsername string
 	LokiMaxQueryLength    time.Duration
 	LokiMaxQuerySize      int
-	MultiPrimary          string
-	MultiSecondaries      []string
 	ExternalLabels        map[string]string
+}
+
+type UnifiedAlertingStateHistorySettings struct {
+	Enabled                       bool
+	Backend                       string
+	LokiSettings                  UnifiedAlertingLokiSettings
+	PrometheusMetricName          string
+	PrometheusTargetDatasourceUID string
+	PrometheusWriteTimeout        time.Duration
+	MultiPrimary                  string
+	MultiSecondaries              []string
+	ExternalLabels                map[string]string
+}
+
+type UnifiedAlertingNotificationHistorySettings struct {
+	Enabled      bool
+	LokiSettings UnifiedAlertingLokiSettings
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -448,21 +464,44 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	stateHistory := iniFile.Section("unified_alerting.state_history")
 	stateHistoryLabels := iniFile.Section("unified_alerting.state_history.external_labels")
 	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
-		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
-		Backend:               stateHistory.Key("backend").MustString("annotations"),
-		LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
-		LokiReadURL:           stateHistory.Key("loki_remote_read_url").MustString(""),
-		LokiWriteURL:          stateHistory.Key("loki_remote_write_url").MustString(""),
-		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
-		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
-		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
-		LokiMaxQueryLength:    stateHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
-		LokiMaxQuerySize:      stateHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
-		MultiPrimary:          stateHistory.Key("primary").MustString(""),
-		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
-		ExternalLabels:        stateHistoryLabels.KeysHash(),
+		Enabled: stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
+		Backend: stateHistory.Key("backend").MustString("annotations"),
+		LokiSettings: UnifiedAlertingLokiSettings{
+			LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
+			LokiReadURL:           stateHistory.Key("loki_remote_read_url").MustString(""),
+			LokiWriteURL:          stateHistory.Key("loki_remote_write_url").MustString(""),
+			LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
+			LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
+			LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+			LokiMaxQueryLength:    stateHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
+			LokiMaxQuerySize:      stateHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
+		},
+		MultiPrimary:                  stateHistory.Key("primary").MustString(""),
+		MultiSecondaries:              splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
+		PrometheusMetricName:          stateHistory.Key("prometheus_metric_name").MustString(defaultHistorianPrometheusMetricName),
+		PrometheusTargetDatasourceUID: stateHistory.Key("prometheus_target_datasource_uid").MustString(""),
+		PrometheusWriteTimeout:        stateHistory.Key("prometheus_write_timeout").MustDuration(defaultHistorianPrometheusWriteTimeout),
+		ExternalLabels:                stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
+
+	notificationHistory := iniFile.Section("unified_alerting.notification_history")
+	notificationHistoryLabels := iniFile.Section("unified_alerting.notification_history.external_labels")
+	uaCfgNotificationHistory := UnifiedAlertingNotificationHistorySettings{
+		Enabled: notificationHistory.Key("enabled").MustBool(notificationHistoryDefaultEnabled),
+		LokiSettings: UnifiedAlertingLokiSettings{
+			LokiRemoteURL:         notificationHistory.Key("loki_remote_url").MustString(""),
+			LokiReadURL:           notificationHistory.Key("loki_remote_read_url").MustString(""),
+			LokiWriteURL:          notificationHistory.Key("loki_remote_write_url").MustString(""),
+			LokiTenantID:          notificationHistory.Key("loki_tenant_id").MustString(""),
+			LokiBasicAuthUsername: notificationHistory.Key("loki_basic_auth_username").MustString(""),
+			LokiBasicAuthPassword: notificationHistory.Key("loki_basic_auth_password").MustString(""),
+			LokiMaxQueryLength:    notificationHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
+			LokiMaxQuerySize:      notificationHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
+			ExternalLabels:        notificationHistoryLabels.KeysHash(),
+		},
+	}
+	uaCfg.NotificationHistory = uaCfgNotificationHistory
 
 	prometheusConversion := iniFile.Section("unified_alerting.prometheus_conversion")
 	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{

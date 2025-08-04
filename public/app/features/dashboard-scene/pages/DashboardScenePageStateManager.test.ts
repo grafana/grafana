@@ -4,7 +4,7 @@ import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/run
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -14,7 +14,7 @@ import {
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
@@ -36,6 +36,39 @@ jest.mock('@grafana/runtime', () => {
       featureToggles: {
         ...original.config.featureToggles,
         dashboardNewLayouts: false, // Default value
+      },
+
+      bootData: {
+        ...original.config.bootData,
+        settings: {
+          ...original.config.bootData.settings,
+          datasources: {
+            'gdev-testdata': {
+              id: 7,
+              uid: 'abc',
+              type: 'grafana-testdata-datasource',
+              name: 'gdev-testdata',
+              meta: {
+                id: 'grafana-testdata-datasource',
+                type: 'datasource',
+                name: 'TestData',
+                aliasIDs: ['testdata'],
+              },
+            },
+            '-- Grafana --': {
+              id: -1,
+              uid: 'grafana',
+              type: 'datasource',
+              name: '-- Grafana --',
+              meta: {
+                id: 'grafana',
+                type: 'datasource',
+                name: '-- Grafana --',
+              },
+            },
+          },
+          defaultDatasource: 'gdev-testdata',
+        },
       },
     },
   };
@@ -64,7 +97,7 @@ const setupDashboardAPI = (
 const setupV1FailureV2Success = (
   v2Response: DashboardWithAccessInfo<DashboardV2Spec> = {
     access: {},
-    apiVersion: 'v2alpha1',
+    apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
     metadata: {
       name: 'fake-dash',
@@ -75,7 +108,7 @@ const setupV1FailureV2Success = (
   }
 ) => {
   const getDashSpy = jest.fn();
-  setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
+  setupLoadDashboardMockReject(new DashboardVersionError('v2beta1'));
   setupDashboardAPI(v2Response, getDashSpy);
   return getDashSpy;
 };
@@ -218,6 +251,39 @@ describe('DashboardScenePageStateManager v1', () => {
     });
 
     describe('caching', () => {
+      it('should return cached scene if updated_at matches', async () => {
+        const loader = new DashboardScenePageStateManager({});
+
+        // set cache
+        loader.setSceneCache(
+          'fake-dash',
+          new DashboardScene({ title: 'Dashboard 1', uid: 'fake-dash', meta: { created: '1' }, version: 0 }, 'v1')
+        );
+
+        // should return cached scene
+        expect(
+          loader.transformResponseToScene(
+            {
+              meta: { created: '1' },
+              dashboard: { title: 'Dashboard 1', uid: 'fake-dash', schemaVersion: 1, version: 0 },
+            },
+            { uid: 'fake-dash', route: DashboardRoutes.Normal }
+          )?.state.title
+        ).toBe('Dashboard 1');
+
+        // try loading new scene
+        loader.transformResponseToScene(
+          {
+            meta: { created: '2' },
+            dashboard: { title: 'Dashboard 2', uid: 'fake-dash', schemaVersion: 1, version: 0 },
+          },
+          { uid: 'fake-dash', route: DashboardRoutes.Normal }
+        );
+
+        // should update cache with new scene
+        expect(loader.getSceneFromCache('fake-dash').state.title).toBe('Dashboard 2');
+      });
+
       it('should take scene from cache if it exists', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 10 }, meta: {} });
 
@@ -298,7 +364,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2beta1',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -345,7 +411,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2beta1',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -365,7 +431,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2beta1',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash2',
@@ -388,7 +454,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2beta1',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -413,7 +479,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2beta1',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -510,7 +576,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -544,7 +610,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
         loader.setDashboardCache('fake-dash', {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2beta1',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -567,7 +633,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -593,7 +659,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -628,7 +694,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -651,7 +717,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -676,7 +742,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -707,7 +773,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -728,7 +794,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -758,7 +824,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -792,7 +858,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2beta1',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -809,7 +875,7 @@ describe('DashboardScenePageStateManager v2', () => {
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
         const mockLoader = {
-          loadDashboard: jest.fn().mockRejectedValue(new DashboardVersionError('v2alpha1')),
+          loadDashboard: jest.fn().mockRejectedValue(new DashboardVersionError('v2beta1')),
         };
 
         loader['dashboardLoader'] = mockLoader as unknown as DashboardLoaderSrvV2;
@@ -882,7 +948,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       const originalFetchDashboard = v2Manager.fetchDashboard;
       v2Manager.fetchDashboard = jest.fn().mockResolvedValue({
         access: {},
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2beta1',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           name: 'fake-dash',
@@ -918,7 +984,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       // V2 dashboard response
       const v2Response: DashboardWithAccessInfo<DashboardV2Spec> = {
         access: {},
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2beta1',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           name: 'v2-dash',
@@ -1182,7 +1248,7 @@ const customHomeDashboardV1Spec = {
         content: '# Welcome to the home dashboard!\n\n## Example of v2 schema home dashboard',
         mode: 'markdown',
       },
-      pluginVersion: '',
+      pluginVersion: '1.0.0',
       targets: [{ refId: 'A' }],
       title: 'Welcome',
       transformations: [],
@@ -1239,9 +1305,10 @@ const customHomeDashboardV2Spec = {
           },
         },
         vizConfig: {
-          kind: 'text',
+          kind: 'VizConfig',
+          version: '1.0.0',
+          group: 'text',
           spec: {
-            pluginVersion: '',
             options: {
               mode: 'markdown',
               content: '# Welcome to the home dashboard!\n\n## Example of v2 schema home dashboard',
@@ -1524,7 +1591,7 @@ const v2ProvisionedDashboardResource = {
   resource: {
     type: {
       group: 'dashboard.grafana.app',
-      version: 'v2alpha1',
+      version: 'v2beta1',
       kind: 'Dashboard',
       resource: 'dashboards',
     },
@@ -1532,7 +1599,7 @@ const v2ProvisionedDashboardResource = {
     existing: {},
     action: 'update',
     dryRun: {
-      apiVersion: 'dashboard.grafana.app/v2alpha1',
+      apiVersion: 'dashboard.grafana.app/v2beta1',
       kind: 'Dashboard',
       metadata: {
         annotations: {
@@ -1555,9 +1622,11 @@ const v2ProvisionedDashboardResource = {
             kind: 'AnnotationQuery',
             spec: {
               builtIn: true,
-              datasource: {
-                type: 'grafana',
-                uid: '-- Grafana --',
+              query: {
+                kind: 'DataQuery',
+                group: 'grafana',
+                spec: {},
+                version: 'v0',
               },
               enable: true,
               hide: true,
@@ -1580,13 +1649,14 @@ const v2ProvisionedDashboardResource = {
                     {
                       kind: 'PanelQuery',
                       spec: {
-                        datasource: {
-                          type: 'grafana-testdata-datasource',
-                          uid: 'PD8C576611E62080A',
-                        },
                         hidden: false,
                         query: {
-                          kind: 'grafana-testdata-datasource',
+                          kind: 'DataQuery',
+                          group: 'grafana-testdata-datasource',
+                          version: 'v0',
+                          datasource: {
+                            name: 'PD8C576611E62080A',
+                          },
                           spec: {
                             scenarioId: 'random_walk',
                             seriesCount: 2,

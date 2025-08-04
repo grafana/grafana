@@ -2,21 +2,33 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 interface ToolbarItemButtonProps {
   isOpen: boolean;
   title?: string;
   onClick?: () => void;
+  pluginId?: string;
+}
+
+function getPluginIcon(pluginId?: string): string {
+  switch (pluginId) {
+    case 'grafana-grafanadocsplugin-app':
+      return 'book';
+    case 'grafana-investigations-app':
+      return 'eye';
+    default:
+      return 'ai-sparkle';
+  }
 }
 
 function ExtensionToolbarItemButtonComponent(
-  { isOpen, title, onClick }: ToolbarItemButtonProps,
+  { isOpen, title, onClick, pluginId }: ToolbarItemButtonProps,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+  const icon = getPluginIcon(pluginId);
 
   if (isOpen) {
     // render button to close the sidebar
@@ -24,7 +36,7 @@ function ExtensionToolbarItemButtonComponent(
       <ToolbarButton
         ref={ref}
         className={cx(styles.button, styles.buttonActive)}
-        icon="ai-sparkle"
+        icon={icon}
         data-testid="extension-toolbar-button-close"
         variant="default"
         onClick={onClick}
@@ -41,7 +53,7 @@ function ExtensionToolbarItemButtonComponent(
     <ToolbarButton
       ref={ref}
       className={cx(styles.button)}
-      icon="ai-sparkle"
+      icon={icon}
       data-testid="extension-toolbar-button-open"
       variant="default"
       onClick={onClick}

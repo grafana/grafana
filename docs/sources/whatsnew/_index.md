@@ -68,14 +68,15 @@ weight: 1
 
 For release highlights, deprecations, and breaking changes in Grafana releases, refer to these "What's new" pages for each version.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For Grafana versions prior to v9.2, additional information might also be available in the archive of [release notes](../release-notes/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 For a complete list of every change, with links to pull requests and related issues when available, see the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Grafana 12
 
+- [What's new in 12.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-1)
 - [What's new in 12.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-0)
 
 ## Grafana 11

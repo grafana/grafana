@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useRef, MouseEvent } from 'react';
+import { MouseEvent, useCallback, useMemo, useRef } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
@@ -45,6 +45,8 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     logLineMenuCustomItems = [],
     logSupportsContext,
     toggleDetails,
+    isAssistantAvailable,
+    openAssistantByLog,
   } = useLogListContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
@@ -81,8 +83,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     }
   }, [log, onPinLine, onUnpinLine, pinned]);
 
-  const { t } = useTranslate();
-
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
@@ -110,6 +110,13 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
         )}
+        {isAssistantAvailable && (
+          <Menu.Item
+            onClick={() => openAssistantByLog?.(log)}
+            icon="ai-sparkle"
+            label={t('logs.log-line-menu.open-assistant', 'Explain this log line in Assistant')}
+          />
+        )}
         {logLineMenuCustomItems.map((item, i) => {
           if (isDivider(item)) {
             return <Menu.Divider key={i} />;
@@ -134,9 +141,10 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       pinned,
       shouldlogSupportsContext,
       showContext,
-      t,
       toggleLogDetails,
       togglePinning,
+      isAssistantAvailable,
+      openAssistantByLog,
     ]
   );
 

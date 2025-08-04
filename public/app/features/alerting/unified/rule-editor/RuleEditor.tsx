@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -28,7 +28,7 @@ const RuleEditor = () => {
   const isManualRestore = useManualRestore();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
-  const { t } = useTranslate();
+
   if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
     return (
       <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-create-rules', 'Cannot create rules')}>
@@ -79,7 +79,6 @@ function NewRuleEditor() {
   const prefill = useDefaultsFromQuery();
   const isManualRestore = useManualRestore();
   const { type = '', identifier = '' } = useRuleEditorPathParams();
-  const { t } = useTranslate();
 
   const isExisting = Boolean(identifier);
   const isRecordingRule = RECORDING_TYPE.includes(type);

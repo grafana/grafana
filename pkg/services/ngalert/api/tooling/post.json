@@ -514,6 +514,9 @@
     "notificationSettings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
     "queriedDatasourceUIDs": {
      "items": {
       "type": "string"
@@ -579,7 +582,14 @@
   "AlertmanagerUserConfig": {
    "properties": {
     "alertmanager_config": {
-     "$ref": "#/definitions/Config"
+     "description": "Configuration for Alertmanager in YAML format.\nin: body",
+     "type": "string"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
     }
    },
    "type": "object"
@@ -1113,6 +1123,26 @@
     },
     "wechat_configs": {
      "$ref": "#/definitions/WechatConfig"
+    }
+   },
+   "type": "object"
+  },
+  "ExtraConfiguration": {
+   "properties": {
+    "alertmanager_config": {
+     "type": "string"
+    },
+    "identifier": {
+     "type": "string"
+    },
+    "merge_matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
     }
    },
    "type": "object"
@@ -1834,6 +1864,12 @@
     "alertmanager_config": {
      "$ref": "#/definitions/GettableApiAlertingConfig"
     },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
+    },
     "template_file_provenances": {
      "additionalProperties": {
       "$ref": "#/definitions/Provenance"
@@ -2038,7 +2074,11 @@
    "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
    "properties": {
     "equal": {
-     "$ref": "#/definitions/LabelNames"
+     "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
     },
     "source_match": {
      "additionalProperties": {
@@ -2161,17 +2201,6 @@
    },
    "title": "Label is a key/value pair of strings.",
    "type": "object"
-  },
-  "LabelName": {
-   "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
-   "type": "string"
-  },
-  "LabelNames": {
-   "items": {
-    "$ref": "#/definitions/LabelName"
-   },
-   "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
-   "type": "array"
   },
   "LabelSet": {
    "additionalProperties": {
@@ -3044,6 +3073,12 @@
     "alertmanager_config": {
      "$ref": "#/definitions/PostableApiAlertingConfig"
     },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
+    },
     "template_files": {
      "additionalProperties": {
       "type": "string"
@@ -3674,6 +3709,7 @@
    "type": "object"
   },
   "Route": {
+   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "active_time_intervals": {
      "items": {
@@ -3715,6 +3751,12 @@
      },
      "type": "array"
     },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
     "receiver": {
      "type": "string"
     },
@@ -3728,7 +3770,6 @@
      "type": "array"
     }
    },
-   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object"
   },
   "RouteExport": {
@@ -3823,6 +3864,9 @@
     },
     "notificationSettings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "query": {
      "type": "string"
@@ -6823,10 +6867,91 @@
    }
   },
   "/convert/api/v1/alerts": {
+   "delete": {
+    "description": "The main Grafana Alertmanager configuration remains unaffected.",
+    "operationId": "RouteConvertPrometheusDeleteAlertmanagerConfig",
+    "parameters": [
+     {
+      "description": "Unique identifier for the Alertmanager configuration to delete.",
+      "in": "header",
+      "name": "x-grafana-alerting-config-identifier",
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Delete extra Alertmanager configuration from Grafana by its identifier.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "get": {
+    "description": "Returns a specific imported Alertmanager configuration by its identifier.",
+    "operationId": "RouteConvertPrometheusGetAlertmanagerConfig",
+    "parameters": [
+     {
+      "description": "Unique identifier for the Alertmanager configuration to retrieve.",
+      "in": "header",
+      "name": "x-grafana-alerting-config-identifier",
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertmanagerUserConfig",
+      "schema": {
+       "$ref": "#/definitions/AlertmanagerUserConfig"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Get extra Alertmanager configuration from Grafana.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
    "post": {
+    "description": "This endpoint allows importing Alertmanager configurations to Grafana. Each configuration is identified by\na unique identifier and can include merge matchers to select which alerts should be handled by\nthis specific configuration.",
     "operationId": "RouteConvertPrometheusPostAlertmanagerConfig",
     "parameters": [
      {
+      "description": "Unique identifier for this Alertmanager configuration.\nThis identifier is used to distinguish between different imported configurations.",
+      "in": "header",
+      "name": "x-grafana-alerting-config-identifier",
+      "type": "string"
+     },
+     {
+      "description": "Comma-separated list of label matchers in 'key=value' format.\nThese matchers determine which alerts this configuration should handle.",
+      "example": "'environment=production,team=backend' will only apply this",
+      "in": "header",
+      "name": "x-grafana-alerting-merge-matchers",
+      "type": "string"
+     },
+     {
+      "description": "Alertmanager configuration including routing rules, receivers, and template files",
       "in": "body",
       "name": "Body",
       "schema": {
@@ -6851,7 +6976,7 @@
       }
      }
     },
-    "summary": "Load Alertmanager configuration to Grafana and merge it with the existing configuration.",
+    "summary": "Load extra Alertmanager configuration to Grafana and merge it with the existing configuration.",
     "tags": [
      "convert_prometheus"
     ],

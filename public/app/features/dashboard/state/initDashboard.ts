@@ -1,5 +1,5 @@
 import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
@@ -27,10 +27,8 @@ import {
   DashboardRoutes,
   HomeDashboardRedirectDTO,
   isRedirectResponse,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
+} from 'app/types/dashboard';
+import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';

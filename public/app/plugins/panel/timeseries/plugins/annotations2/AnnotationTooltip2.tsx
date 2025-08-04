@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { HorizontalGroup, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
@@ -16,7 +16,6 @@ interface Props {
 const retFalse = () => false;
 
 export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Props) => {
-  const { t } = useTranslate();
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
@@ -102,7 +101,9 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
         {alertText}
         <div>
           <HorizontalGroup spacing="xs" wrap>
-            {annoVals.tags?.[annoIdx]?.map((t: string, i: number) => <Tag name={t} key={`${t}-${i}`} />)}
+            {annoVals.tags?.[annoIdx]?.map((t: string, i: number) => (
+              <Tag name={t} key={`${t}-${i}`} />
+            ))}
           </HorizontalGroup>
         </div>
       </div>

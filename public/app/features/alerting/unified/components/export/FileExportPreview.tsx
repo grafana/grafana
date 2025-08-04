@@ -5,7 +5,7 @@ import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
 
 import { ExportFormats, ExportProvider, ProvisioningType, allGrafanaExportProviders } from './providers';
@@ -92,7 +92,6 @@ const fileExportPreviewStyles = (theme: GrafanaTheme2) => ({
 });
 
 function FileExportInlineDocumentation({ exportProvider }: { exportProvider: ExportProvider<unknown> }) {
-  const { t } = useTranslate();
   const { name, type } = exportProvider;
 
   const exportInlineDoc: Record<ProvisioningType, { title: string; component: React.ReactNode }> = {

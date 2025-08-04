@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -9,7 +9,7 @@ import {
   SceneObject,
   VizPanel,
 } from '@grafana/scenes';
-import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
@@ -84,8 +84,11 @@ export class TabItem
       typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'layers',
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    return this.state.layout.getOutlineChildren();
   }
 
   public getLayout(): DashboardLayoutManager {

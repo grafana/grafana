@@ -2,7 +2,7 @@ import { toLonLat } from 'ol/proj';
 import { useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -17,7 +17,6 @@ export const MapViewEditor = ({
   onChange,
   context,
 }: StandardEditorProps<MapViewConfig, unknown, Options, GeomapInstanceState>) => {
-  const { t } = useTranslate();
   const labelWidth = 10;
 
   const views = useMemo(() => {

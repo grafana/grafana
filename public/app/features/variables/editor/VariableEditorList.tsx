@@ -4,7 +4,7 @@ import { ReactElement } from 'react';
 
 import { TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Stack, EmptyState, TextLink } from '@grafana/ui';
 
@@ -110,8 +110,6 @@ export function VariableEditorList({
 }
 
 function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
-  const { t } = useTranslate();
-
   return (
     <Stack direction="column">
       <EmptyState

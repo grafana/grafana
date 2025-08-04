@@ -32,7 +32,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestFilter_Datasources(t *testing.T) {
+func TestIntegrationFilter_Datasources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []filterDatasourcesTestCase{
 		{
 			desc:    "expect all data sources to be returned",

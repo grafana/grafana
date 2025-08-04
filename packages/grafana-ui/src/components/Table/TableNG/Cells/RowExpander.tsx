@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../../../themes';
-import { t } from '../../../../utils/i18n';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { RowExpanderNGProps } from '../types';
 
-export function RowExpander({ height, onCellExpand, isExpanded }: RowExpanderNGProps) {
-  const styles = useStyles2(getStyles, height);
+export function RowExpander({ onCellExpand, isExpanded }: RowExpanderNGProps) {
+  const styles = useStyles2(getStyles);
   function handleKeyDown(e: React.KeyboardEvent<HTMLSpanElement>) {
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
-      onCellExpand();
+      onCellExpand(e);
     }
   }
   return (
@@ -30,12 +30,11 @@ export function RowExpander({ height, onCellExpand, isExpanded }: RowExpanderNGP
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, rowHeight: number) => ({
+const getStyles = (_theme: GrafanaTheme2) => ({
   expanderCell: css({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    height: `${rowHeight}px`,
     cursor: 'pointer',
   }),
 });

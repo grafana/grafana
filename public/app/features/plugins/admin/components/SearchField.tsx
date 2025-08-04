@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import * as React from 'react';
 import { useDebounce } from 'react-use';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { FilterInput } from '@grafana/ui';
 
 interface Props {
@@ -33,7 +33,6 @@ export const SearchField = ({ value, onSearch }: Props) => {
   const [query, setQuery] = useState(value);
 
   useDebounceWithoutFirstRender(() => onSearch(query ?? ''), 500, [query]);
-  const { t } = useTranslate();
 
   return (
     <FilterInput

@@ -18,7 +18,6 @@ import (
 
 func TestRunner_Run(t *testing.T) {
 	t.Run("does not crash when error on list", func(t *testing.T) {
-		mockCheckService := &MockCheckService{}
 		mockClient := &MockClient{
 			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
 				return nil, errors.New("list error")
@@ -28,10 +27,16 @@ func TestRunner_Run(t *testing.T) {
 			},
 		}
 
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{Items: []advisorv0alpha1.CheckType{}}, nil
+			},
+		}
+
 		runner := &Runner{
-			checkRegistry:      mockCheckService,
 			client:             mockClient,
-			log:                logging.DefaultLogger,
+			typesClient:        mockTypesClient,
+			log:                &logging.NoOpLogger{},
 			evaluationInterval: 1 * time.Hour,
 		}
 
@@ -51,59 +56,173 @@ func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    logging.DefaultLogger,
+		log:    &logging.NoOpLogger{},
 	}
 
-	lastCreated, err := runner.checkLastCreated(context.Background())
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
 	assert.Error(t, err)
 	assert.True(t, lastCreated.IsZero())
 }
 
-func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
-	mockCheckService := &MockCheckService{
-		checks: []checks.Check{
-			&mockCheck{
-				id: "check-1",
-			},
+func TestRunner_checkLastCreated_UnprocessedCheck(t *testing.T) {
+	patchOperation := resource.PatchOperation{}
+	identifier := resource.Identifier{}
+
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			return &advisorv0alpha1.CheckList{
+				Items: []advisorv0alpha1.Check{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "check-1",
+						},
+					},
+				},
+			}, nil
+		},
+		patchFunc: func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
+			patchOperation = patch.Operations[0]
+			identifier = id
+			return nil
 		},
 	}
+
+	runner := &Runner{
+		client: mockClient,
+		log:    &logging.NoOpLogger{},
+	}
+
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
+	assert.NoError(t, err)
+	assert.True(t, lastCreated.IsZero())
+	assert.Equal(t, "check-1", identifier.Name)
+	assert.Equal(t, "/metadata/annotations", patchOperation.Path)
+	expectedAnnotations := map[string]string{
+		checks.StatusAnnotation: "error",
+	}
+	assert.Equal(t, expectedAnnotations, patchOperation.Value)
+}
+
+func TestRunner_checkLastCreated_PaginatedResponse(t *testing.T) {
+	// Create checks with different creation times
+	past := time.Now().Add(-1 * time.Hour)
+	now := time.Now()
+
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			if options.Continue == "" {
+				// First page - return oldest and middle checks with continue token
+				return &advisorv0alpha1.CheckList{
+					ListMeta: metav1.ListMeta{
+						Continue: "continue-token-123",
+					},
+					Items: []advisorv0alpha1.Check{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:              "check-1",
+								CreationTimestamp: metav1.NewTime(past),
+								Annotations: map[string]string{
+									checks.StatusAnnotation: "completed",
+								},
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:              "check-2",
+								CreationTimestamp: metav1.NewTime(past),
+								Annotations: map[string]string{
+									checks.StatusAnnotation: "completed",
+								},
+							},
+						},
+					},
+				}, nil
+			}
+			// Second page - verify continue token is passed and return newest check
+			assert.Equal(t, "continue-token-123", options.Continue)
+			return &advisorv0alpha1.CheckList{
+				Items: []advisorv0alpha1.Check{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:              "check-3",
+							CreationTimestamp: metav1.NewTime(now),
+							Annotations: map[string]string{
+								checks.StatusAnnotation: "completed",
+							},
+						},
+					},
+				},
+			}, nil
+		},
+	}
+
+	runner := &Runner{
+		client: mockClient,
+		log:    &logging.NoOpLogger{},
+	}
+
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
+	assert.NoError(t, err)
+	assert.Equal(t, now.Truncate(time.Second), lastCreated.Truncate(time.Second))
+}
+
+func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
+	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
+
 	mockClient := &MockClient{
 		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 			return nil, errors.New("create error")
 		},
 	}
 
+	mockTypesClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			checkType := &advisorv0alpha1.CheckType{}
+			checkType.Spec.Name = "check-1"
+			return &advisorv0alpha1.CheckTypeList{
+				Items: []advisorv0alpha1.CheckType{*checkType},
+			}, nil
+		},
+	}
+
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
-		log:           logging.DefaultLogger,
+		typesClient:   mockTypesClient,
+		log:           &logging.NoOpLogger{},
 	}
 
-	err := runner.createChecks(context.Background())
+	err := runner.createChecks(context.Background(), &logging.NoOpLogger{})
 	assert.Error(t, err)
 }
 
 func TestRunner_createChecks_Success(t *testing.T) {
-	mockCheckService := &MockCheckService{
-		checks: []checks.Check{
-			&mockCheck{
-				id: "check-1",
-			},
-		},
-	}
+	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
+
 	mockClient := &MockClient{
 		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 			return &advisorv0alpha1.Check{}, nil
 		},
 	}
 
+	mockTypesClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			checkType := &advisorv0alpha1.CheckType{}
+			checkType.Spec.Name = "check-1"
+			return &advisorv0alpha1.CheckTypeList{
+				Items: []advisorv0alpha1.CheckType{*checkType},
+			}, nil
+		},
+	}
+
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
-		log:           logging.DefaultLogger,
+		typesClient:   mockTypesClient,
+		log:           &logging.NoOpLogger{},
 	}
 
-	err := runner.createChecks(context.Background())
+	err := runner.createChecks(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
 }
 
@@ -116,10 +235,10 @@ func TestRunner_cleanupChecks_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    logging.DefaultLogger,
+		log:    &logging.NoOpLogger{},
 	}
 
-	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
 	assert.Error(t, err)
 }
 
@@ -137,10 +256,10 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    logging.DefaultLogger,
+		log:    &logging.NoOpLogger{},
 	}
 
-	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
 }
 
@@ -167,9 +286,9 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 	runner := &Runner{
 		client:     mockClient,
 		maxHistory: defaultMaxHistory,
-		log:        logging.DefaultLogger,
+		log:        &logging.NoOpLogger{},
 	}
-	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
 	assert.ErrorContains(t, err, "delete error")
 }
 
@@ -203,9 +322,9 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 	runner := &Runner{
 		client:     mockClient,
 		maxHistory: defaultMaxHistory,
-		log:        logging.DefaultLogger,
+		log:        &logging.NoOpLogger{},
 	}
-	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"check-0"}, itemsDeleted)
 }
@@ -250,41 +369,6 @@ func Test_getMaxHistory(t *testing.T) {
 	})
 }
 
-func Test_markUnprocessedChecksAsErrored(t *testing.T) {
-	checkList := &advisorv0alpha1.CheckList{
-		Items: []advisorv0alpha1.Check{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "check-1",
-				},
-			},
-		},
-	}
-	patchOperation := resource.PatchOperation{}
-	identifier := resource.Identifier{}
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			return checkList, nil
-		},
-		patchFunc: func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
-			patchOperation = patch.Operations[0]
-			identifier = id
-			return nil
-		},
-	}
-	runner := &Runner{
-		client: mockClient,
-		log:    logging.DefaultLogger,
-	}
-	runner.markUnprocessedChecksAsErrored(context.Background(), logging.DefaultLogger)
-	assert.Equal(t, "check-1", identifier.Name)
-	assert.Equal(t, "/metadata/annotations", patchOperation.Path)
-	expectedAnnotations := map[string]string{
-		checks.StatusAnnotation: "error",
-	}
-	assert.Equal(t, expectedAnnotations, patchOperation.Value)
-}
-
 func Test_getNextSendInterval(t *testing.T) {
 	lastCreated := time.Now().Add(-7 * 24 * time.Hour)
 	evaluationInterval := 7 * 24 * time.Hour
@@ -294,14 +378,6 @@ func Test_getNextSendInterval(t *testing.T) {
 	// Calculate the next send interval again and it should be different
 	nextSendInterval2 := getNextSendInterval(lastCreated, evaluationInterval)
 	assert.NotEqual(t, nextSendInterval, nextSendInterval2)
-}
-
-type MockCheckService struct {
-	checks []checks.Check
-}
-
-func (m *MockCheckService) Checks() []checks.Check {
-	return m.checks
 }
 
 type MockClient struct {
@@ -326,6 +402,14 @@ func (m *MockClient) Delete(ctx context.Context, identifier resource.Identifier,
 
 func (m *MockClient) PatchInto(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
 	return m.patchFunc(ctx, identifier, patch, options, into)
+}
+
+type MockCheckService struct {
+	checks []checks.Check
+}
+
+func (m *MockCheckService) Checks() []checks.Check {
+	return m.checks
 }
 
 type mockCheck struct {

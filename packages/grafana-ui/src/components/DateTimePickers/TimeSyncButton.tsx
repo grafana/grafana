@@ -1,6 +1,7 @@
-import { t } from '../../utils/i18n';
-import { ToolbarButton } from '../ToolbarButton';
-import { Tooltip } from '../Tooltip';
+import { t } from '@grafana/i18n';
+
+import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface TimeSyncButtonProps {
   isSynced: boolean;

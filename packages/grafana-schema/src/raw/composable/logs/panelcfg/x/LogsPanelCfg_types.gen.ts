@@ -10,11 +10,12 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.1.0-pre";
+export const pluginVersion = "12.2.0-pre";
 
 export interface Options {
   controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
+  detailsMode?: ('inline' | 'sidebar');
   displayedFields?: Array<string>;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
@@ -23,6 +24,7 @@ export interface Options {
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
+  noInteractions?: boolean;
   /**
    * TODO: figure out how to define callbacks
    */
@@ -35,12 +37,14 @@ export interface Options {
   onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
+  setDisplayedFields?: unknown;
   showCommonLabels: boolean;
   showControls?: boolean;
   showLabels: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
+  syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
 }
 

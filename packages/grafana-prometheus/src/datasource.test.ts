@@ -16,19 +16,16 @@ import {
 } from '@grafana/data';
 import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
-import {
-  extractRuleMappingFromGroups,
-  PrometheusDatasource,
-  prometheusRegularEscape,
-  prometheusSpecialRegexEscape,
-} from './datasource';
-import PromQlLanguageProvider from './language_provider';
+import { extractResourceMatcher, extractRuleMappingFromGroups, PrometheusDatasource } from './datasource';
+import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
+import { PrometheusLanguageProviderInterface } from './language_provider';
+import { CacheRequestInfo } from './querycache/QueryCache';
 import {
   createDataRequest,
   createDefaultPromResponse,
   fetchMockCalledWith,
   getMockTimeRange,
-} from './test/__mocks__/datasource';
+} from './test/mocks/datasource';
 import {
   PromApplication,
   PrometheusCacheLevel,
@@ -139,20 +136,6 @@ describe('PrometheusDatasource', () => {
           )
         )
       ).rejects.toMatchObject({ message: expect.stringMatching('Browser access') });
-
-      // Cannot test because some other tests need "./metric_find_query" to be mocked and that prevents this to be
-      // tested. Checked manually that this ends up with throwing
-      // await expect(directDs.metricFindQuery('label_names(foo)')).rejects.toBeDefined();
-
-      const errorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      await directDs.getTagKeys({ filters: [] });
-      // Language provider currently catches and just logs the error
-      expect(errorMock).toHaveBeenCalledTimes(1);
-
-      await expect(directDs.getTagValues({ filters: [], key: 'A' })).rejects.toMatchObject({
-        message: expect.stringMatching('Browser access'),
-      });
     });
   });
 
@@ -984,6 +967,99 @@ describe('PrometheusDatasource', () => {
       expect(rangeS).toEqual({ text: 21600, value: 21600 });
     });
   });
+
+  describe('extractResourceMatcher', () => {
+    it('should extract matcher from given query and filters', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: 'metric_name{job="testjob"}',
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [
+        {
+          key: 'instance',
+          operator: '=',
+          value: 'localhost',
+        },
+      ];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{__name__=~"metric_name",instance="localhost"}');
+    });
+
+    it('should extract matcher from given query and empty filters', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: 'metric_name{job="testjob"}',
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{__name__=~"metric_name"}');
+    });
+
+    it('should extract matcher from given empty query expr and filters', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: '',
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [
+        {
+          key: 'instance',
+          operator: '=',
+          value: 'localhost',
+        },
+      ];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{instance="localhost"}');
+    });
+
+    it('should extract matcher from given filters only', () => {
+      const queries: PromQuery[] = [];
+      const filters: AdHocVariableFilter[] = [
+        {
+          key: 'instance',
+          operator: '=',
+          value: 'localhost',
+        },
+        {
+          key: 'job',
+          operator: '!=',
+          value: 'testjob',
+        },
+      ];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{instance="localhost",job!="testjob"}');
+    });
+
+    it('should extract matcher as match-all from no query and filter', () => {
+      const queries: PromQuery[] = [];
+      const filters: AdHocVariableFilter[] = [];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBeUndefined();
+    });
+
+    it('should extract the correct matcher for queries with `... or vector(0)`', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: `sum(increase(go_cpu_classes_idle_cpu_seconds_total[$__rate_interval])) or vector(0)`,
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{__name__=~"go_cpu_classes_idle_cpu_seconds_total"}');
+    });
+  });
 });
 
 describe('PrometheusDatasource2', () => {
@@ -1014,8 +1090,8 @@ describe('PrometheusDatasource2', () => {
     };
 
     ds.languageProvider = {
-      histogramMetrics: ['tns_request_duration_seconds_bucket'],
-    } as PromQlLanguageProvider;
+      retrieveHistogramMetrics: jest.fn().mockReturnValue(['tns_request_duration_seconds_bucket']),
+    } as unknown as PrometheusLanguageProviderInterface;
 
     const request = {
       targets: [targetA, targetB],
@@ -1176,5 +1252,74 @@ describe('modifyQuery', () => {
         });
       });
     });
+  });
+});
+
+describe('PrometheusDatasource incremental query logic', () => {
+  let ds: PrometheusDatasource;
+  let mockCache: {
+    requestInfo: jest.MockedFunction<(request: DataQueryRequest<PromQuery>) => CacheRequestInfo<PromQuery>>;
+    procFrames: jest.MockedFunction<(...args: unknown[]) => unknown[]>;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockCache = {
+      requestInfo: jest.fn().mockReturnValue({
+        requests: [{ targets: [], range: getMockTimeRange() }],
+        targetSignatures: new Map(),
+        shouldCache: true,
+      }),
+      procFrames: jest.fn().mockReturnValue([]),
+    };
+
+    const incrementalInstanceSettings = {
+      url: 'proxied',
+      id: 1,
+      uid: 'ABCDEF',
+      access: 'proxy',
+      user: 'test',
+      password: 'mupp',
+      jsonData: {
+        customQueryParameters: '',
+        cacheLevel: PrometheusCacheLevel.Low,
+        incrementalQuerying: true,
+      } as Partial<PromOptions>,
+    } as unknown as DataSourceInstanceSettings<PromOptions>;
+
+    ds = new PrometheusDatasource(incrementalInstanceSettings, templateSrvStub);
+    ds.cache = mockCache as unknown as typeof ds.cache;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should use incremental query for normal queries when incrementalQuerying is true', async () => {
+    const request = createDataRequest([{ expr: 'up', refId: 'A' }]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).toHaveBeenCalled();
+  });
+
+  it('should disable incremental query when query contains $__range', async () => {
+    const request = createDataRequest([{ expr: 'rate(up[$__range])', refId: 'A' }]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).not.toHaveBeenCalled();
+  });
+
+  it('should disable incremental query when any target contains $__range', async () => {
+    const request = createDataRequest([
+      { expr: 'up', refId: 'A' },
+      { expr: 'rate(cpu[$__range])', refId: 'B' },
+    ]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).not.toHaveBeenCalled();
+  });
+
+  it('should disable incremental query for instant queries', async () => {
+    const request = createDataRequest([{ expr: 'up', refId: 'A', instant: true }]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).not.toHaveBeenCalled();
   });
 });

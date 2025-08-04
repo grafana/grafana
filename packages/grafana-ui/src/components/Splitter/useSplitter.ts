@@ -5,8 +5,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { ComponentSize } from '../../types';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { ComponentSize } from '../../types/size';
 import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface UseSplitterOptions {

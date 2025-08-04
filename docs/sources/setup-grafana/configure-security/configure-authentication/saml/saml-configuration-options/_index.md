@@ -79,10 +79,6 @@ allowed_organizations = Engineering, Sales
 
 ## Example SAML configuration in Terraform
 
-{{< admonition type="note" >}}
-Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
-{{< /admonition >}}
-
 ```terraform
 resource "grafana_sso_settings" "saml_sso_settings" {
   provider_name = "saml"

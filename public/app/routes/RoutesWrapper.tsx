@@ -6,6 +6,7 @@ import { locationService, LocationServiceProvider } from '@grafana/runtime';
 import { ModalRoot, Stack } from '@grafana/ui';
 
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
+import { AppChromeExtensionPoint } from '../core/components/AppChrome/AppChromeExtensionPoint';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
@@ -41,6 +42,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
                   {props.bodyRenderHooks.map((Hook, index) => (
                     <Hook key={index.toString()} />
                   ))}
+                  <AppChromeExtensionPoint />
                 </AppChrome>
                 <ModalRoot />
               </ModalsContextProvider>

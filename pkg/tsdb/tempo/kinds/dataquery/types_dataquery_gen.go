@@ -84,6 +84,8 @@ type TraceqlFilter struct {
 	ValueType *string `json:"valueType,omitempty"`
 	// The scope of the filter, can either be unscoped/all scopes, resource or span
 	Scope *TraceqlSearchScope `json:"scope,omitempty"`
+	// Whether the value is a custom value typed by the user
+	IsCustomValue *bool `json:"isCustomValue,omitempty"`
 }
 
 // NewTraceqlFilter creates a new TraceqlFilter object.

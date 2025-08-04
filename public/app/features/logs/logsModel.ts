@@ -40,7 +40,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/internal';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
@@ -102,16 +102,6 @@ export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy):
     }
     return result;
   }, []);
-}
-
-export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<string>): LogRowModel[] {
-  if (hiddenLogLevels.size === 0) {
-    return logRows;
-  }
-
-  return logRows.filter((row: LogRowModel) => {
-    return !hiddenLogLevels.has(row.logLevel);
-  });
 }
 
 interface Series {

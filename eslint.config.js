@@ -43,7 +43,7 @@ module.exports = [
       'data/',
       'deployment_tools_config.json',
       'devenv',
-      'e2e/test-plugins',
+      'e2e-playwright/test-plugins',
       'e2e/tmp',
       'packages/grafana-ui/src/components/Icon/iconBundle.ts',
       'pkg',
@@ -128,7 +128,7 @@ module.exports = [
             {
               group: ['react-i18next', 'i18next'],
               importNames: ['t'],
-              message: 'Please import useTranslate from @grafana/i18n and use the t function instead',
+              message: 'Please import from @grafana/i18n instead',
             },
             {
               group: ['react-i18next'],
@@ -174,6 +174,13 @@ module.exports = [
       '@emotion/jsx-import': 'off',
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
+    },
+  },
+  {
+    name: 'grafana/story-rules',
+    files: ['packages/grafana-ui/src/**/*.story.tsx'],
+    rules: {
+      '@grafana/consistent-story-titles': 'error',
     },
   },
   {
@@ -304,6 +311,9 @@ module.exports = [
     files: [
       'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-data/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-sql/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-prometheus/**/*.{ts,tsx,js,jsx}',
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
     ignores: [
@@ -394,6 +404,24 @@ module.exports = [
               from: './public',
               except: ['./app/plugins'],
               message: 'Core plugins are not allowed to depend on Grafana core packages',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    name: 'grafana/no-extensions-imports',
+    files: ['**/*.{ts,tsx,js}'],
+    ignores: ['public/app/extensions/**/*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['app/extensions', 'app/extensions/*'],
+              message: 'Importing from app/extensions is not allowed',
             },
           ],
         },

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Checkbox, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
 
 import { ScopesTree } from './ScopesTree';
@@ -33,7 +33,6 @@ export function ScopesTreeItem({
   deselectScope,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   if (anyChildExpanded && !treeNode.expanded) {
     return null;
@@ -64,7 +63,7 @@ export function ScopesTreeItem({
               id={treeNode.scopeNodeId}
               name={treeNode.scopeNodeId}
               checked={selected}
-              label=""
+              label={isExpandable ? '' : scopeNode.spec.title}
               data-testid={`scopes-tree-${treeNode.scopeNodeId}-radio`}
               onClick={() => {
                 selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
@@ -74,6 +73,7 @@ export function ScopesTreeItem({
             <Checkbox
               checked={selected}
               data-testid={`scopes-tree-${treeNode.scopeNodeId}-checkbox`}
+              label={isExpandable ? '' : scopeNode.spec.title}
               onChange={() => {
                 selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
               }}
@@ -81,7 +81,7 @@ export function ScopesTreeItem({
           )
         ) : null}
 
-        {isExpandable ? (
+        {isExpandable && (
           <button
             className={styles.expand}
             data-testid={`scopes-tree-${treeNode.scopeNodeId}-expand`}
@@ -94,8 +94,6 @@ export function ScopesTreeItem({
 
             {scopeNode.spec.title}
           </button>
-        ) : (
-          <span data-testid={`scopes-tree-${treeNode.scopeNodeId}-title`}>{scopeNode.spec.title}</span>
         )}
       </div>
 
@@ -131,8 +129,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       lineHeight: theme.typography.pxToRem(22),
       padding: theme.spacing(0.5, 0),
 
-      '& > label': css({
-        gap: 0,
+      '& > label :last-child': css({
+        fontSize: theme.typography.pxToRem(14),
+        lineHeight: theme.typography.pxToRem(22),
+        fontWeight: theme.typography.fontWeightRegular,
       }),
     }),
     titlePadding: css({

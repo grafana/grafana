@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "",
+        "cancel": "Annulla",
+        "clipboard": "",
+        "copy-code-and-switch": "",
+        "discard-code-and-switch": "",
+        "warning": "Attenzione"
+      },
+      "connection-limits": {
+        "auto-max-idle": "",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
+        "content-max-lifetime": "",
+        "content-max-open": "",
+        "max-idle": "",
+        "max-lifetime": "",
+        "max-open": "",
+        "title-connection-limits": ""
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": ""
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Errore"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": ""
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Raggruppa per",
+          "title-remove-group-by-column": ""
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "",
+        "label-limit": "Limite",
+        "label-offset": "",
+        "label-order-by": ""
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Anteprima",
+          "tooltip-copy-to-clipboard": "Copia negli appunti"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "",
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-dataset": "",
+        "label-filter": "Filtro",
+        "label-format": "Formato",
+        "label-group": "Gruppo",
+        "label-order": "",
+        "label-preview": "Anteprima",
+        "label-table": "Tabella",
+        "placeholder-select-format": "",
+        "run-query": "Esegui query"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "",
+        "tooltip-collapse": "",
+        "tooltip-expand": "",
+        "tooltip-format-query": ""
+      },
+      "query-validator": {
+        "query-will-process": "",
+        "validating-query": ""
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": ""
+        },
+        "title-query-num": ""
+      },
+      "select-column": {
+        "label-column": "Colonna"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": ""
+          }
+        },
+        "title-add-parameter": ""
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "",
+              "macros": ""
+            }
+          }
+        },
+        "label": {
+          "time": "",
+          "value": "valore"
+        },
+        "label-alias": "Nome alternativo",
+        "label-data-operations": "",
+        "title-add-column": "",
+        "title-remove-column": ""
+      },
+      "settings": {
+        "aria-label-conjunction": "",
+        "aria-label-field": "Campo",
+        "aria-label-operator": "Operatore",
+        "title-button-filter": ""
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Caricamento editor in corso..."
+      },
+      "table-selector": {
+        "aria-label-table-selector": "",
+        "placeholder-loading": "",
+        "placeholder-select-table": ""
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "",
+        "content-tlsssl-client-key": "",
+        "content-tlsssl-root-certificate": "",
+        "tlsssl-client-certificate": "",
+        "tlsssl-client-key": "",
+        "tlsssl-root-certificate": "Certificato radice TLS/SSL"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "",
+        "label-group-by-column": ""
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": ""
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": ""
+      }
+    }
+  }
+}

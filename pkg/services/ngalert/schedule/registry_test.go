@@ -152,13 +152,14 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewString()}.Fingerprint()
 		require.NotEqual(t, f, f2)
 	})
-	t.Run("Version, Updated, IntervalSeconds, GUID and Annotations should be excluded from fingerprint", func(t *testing.T) {
+	t.Run("Version, Updated, IntervalSeconds, GUID, Annotations and RuleGroupIndex should be excluded from fingerprint", func(t *testing.T) {
 		cp := models.CopyRule(rule)
 		cp.Version++
 		cp.Updated = cp.Updated.Add(1 * time.Second)
 		cp.IntervalSeconds++
 		cp.Annotations = make(map[string]string)
 		cp.Annotations["test"] = "test"
+		cp.RuleGroupIndex++
 		cp.GUID = uuid.NewString()
 
 		f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()

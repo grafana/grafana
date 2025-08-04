@@ -124,6 +124,10 @@ export interface TraceqlFilter {
    */
   id: string;
   /**
+   * Whether the value is a custom value typed by the user
+   */
+  isCustomValue?: boolean;
+  /**
    * The operator that connects the tag to the value, for example: =, >, !=, =~
    */
   operator?: string;

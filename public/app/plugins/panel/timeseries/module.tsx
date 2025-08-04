@@ -1,4 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -16,11 +18,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
 
+    if (config.featureToggles.timeComparison) {
+      commonOptionsBuilder.addTimeCompareOption(builder);
+    }
+
     builder.addCustomEditor({
       id: 'timezone',
-      name: 'Time zone',
+      name: t('timeseries.name-time-zone', 'Time zone'),
       path: 'timezone',
-      category: ['Axis'],
+      category: [t('timeseries.category-axis', 'Axis')],
       editor: TimezonesEditor,
       defaultValue: undefined,
     });

@@ -3,12 +3,15 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { SyncInfo } from 'app/types/ldap';
+import { StoreState } from 'app/types/store';
+import { UserDTO, UserOrg, UserSession, UserAdminError } from 'app/types/user';
 
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { UserOrgs } from './UserOrgs';
@@ -60,7 +63,6 @@ export const UserAdminPage = ({
   revokeAllSessions,
   syncLdapUser,
 }: Props) => {
-  const { t } = useTranslate();
   const { id = '' } = useParams();
   useEffect(() => {
     loadAdminUserPage(id);

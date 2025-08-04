@@ -20,9 +20,15 @@ describe('getLeftMostChild', () => {
 
 describe('replaceVariables', () => {
   it('should replace variables', () => {
-    expect(replaceVariables('sum_over_time([[metric_var]]{bar="${app}"}[$__interval])')).toBe(
-      'sum_over_time(__V_1__metric_var__V__{bar="__V_2__app__V__"}[__V_0____interval__V__])'
+    const { replacedExpr, replacedVariables } = replaceVariables(
+      'sum_over_time([[metric_var]]{bar="${app}"}[$__interval])'
     );
+    expect(replacedExpr).toBe('sum_over_time(__V_1__metric_var__V__{bar="__V_2__app__V__"}[__V_0____interval__V__])');
+    expect(replacedVariables).toEqual({
+      __V_1__metric_var__V__: '[[metric_var]]',
+      __V_2__app__V__: '${app}',
+      __V_0____interval__V__: '$__interval',
+    });
   });
 });
 
@@ -42,9 +48,14 @@ describe('getString', () => {
 
   it('is symmetrical with replaceVariables', () => {
     const expr = 'sum_over_time([[metric_var]]{bar="${app}"}[$__interval])';
-    const replaced = replaceVariables(expr);
-    const tree = parser.parse(replaced);
-    expect(getString(replaced, tree.topNode)).toBe(expr);
+    const { replacedExpr, replacedVariables } = replaceVariables(expr);
+    const tree = parser.parse(replacedExpr);
+    expect(getString(replacedExpr, tree.topNode)).toBe(expr);
+    expect(replacedVariables).toEqual({
+      __V_1__metric_var__V__: '[[metric_var]]',
+      __V_2__app__V__: '${app}',
+      __V_0____interval__V__: '$__interval',
+    });
   });
 });
 

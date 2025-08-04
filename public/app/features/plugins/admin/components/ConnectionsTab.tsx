@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ViewProps } from 'app/features/datasources/components/DataSourcesList';
 import { DataSourcesListCard } from 'app/features/datasources/components/DataSourcesListCard';
-import { getDataSources, useLoadDataSources } from 'app/features/datasources/state';
-import { AccessControlAction, useSelector } from 'app/types';
+import { useLoadDataSources } from 'app/features/datasources/state/hooks';
+import { getDataSources } from 'app/features/datasources/state/selectors';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector } from 'app/types/store';
 
 import { CatalogPlugin } from '../types';
 
@@ -50,7 +52,7 @@ export function ConnectionsList({
   plugin,
 }: ListProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   if (!isLoading && dataSourcesCount === 0) {
     return (
       <EmptyState

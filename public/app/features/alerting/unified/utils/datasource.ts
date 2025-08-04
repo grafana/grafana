@@ -8,7 +8,7 @@ import {
   AlertManagerImplementation,
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import {
   DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
   GrafanaRulesSourceIdentifier,
@@ -338,6 +338,10 @@ export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSo
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
 }
 
+export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
+  return ds.jsonData.allowAsRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
+}
+
 export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {
   if (isGrafanaRuleIdentifier(ruleIdentifier)) {
     return { uid: GrafanaRulesSourceSymbol, name: GRAFANA_RULES_SOURCE_NAME, ruleSourceType: 'grafana' };
@@ -389,3 +393,7 @@ export const SUPPORTED_RULE_SOURCE_TYPES = [
   GRAFANA_RULES_SOURCE_NAME,
   ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
 ] as const satisfies string[];
+
+export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean {
+  return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceAllowedAsRecordingRulesTarget(ds);
+}

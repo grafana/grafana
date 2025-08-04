@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="fs-loading">
   <head>
     [[ if and .CSPEnabled .IsDevelopmentEnv ]]
     <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
@@ -24,28 +24,133 @@
       performance.mark('frontend_boot_css_time_seconds');
     </script>
 
-    <style>
-      /*
-        Dev indicator that the page was loaded from the FEMT index.html.
-        TODO: Will remove before deploying to staging.
-      */
-      .femt-dev-frame {
-        position: fixed;
-        top: 0;
-        bottom: 1px;
-        left: 0;
-        right: 0;
-        z-index: 99999;
-        pointer-events: none;
-        border: 2px solid white;
-        border-image-source: linear-gradient(to left, #F55F3E, #FF8833);
-        border-image-slice: 1;
-      }
-    </style>
+
   </head>
 
   <body>
-    <div class="femt-dev-frame"></div>
+    <div class="preloader">
+      <style>
+        /**
+          * This style tag is purposefully inside the fs-loader div so
+          * when AppWrapper mounts and removes the div
+          * the styles are taken away with it as well.
+          */
+
+        /* Light theme */
+        :root {
+          --fs-loader-bg: #f4f5f5;
+          --fs-loader-text-color: rgb(36, 41, 46);
+          --fs-spinner-arc-color: #F55F3E;
+          --fs-spinner-track-color: rgba(36, 41, 46, 0.12);
+          --fs-color-error: #e0226e;
+        }
+
+        /* Dark theme */
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --fs-loader-bg: #111217;
+            --fs-loader-text-color: rgb(204, 204, 220);
+            --fs-spinner-arc-color: #F55F3E;
+            --fs-spinner-track-color: rgba(204, 204, 220, 0.12);
+            --fs-color-error: #d10e5c;
+          }
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        body {
+          background-color: var(--fs-loader-bg);
+          color: var(--fs-loader-text-color);
+          margin: 0;
+        }
+
+        .preloader {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          height: 100dvh;
+          justify-content: center;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+            "Segoe UI Symbol";
+        }
+
+        .fs-variant-loader, .fs-variant-error {
+          display: contents;
+        }
+
+        .fs-hidden {
+          display: none;
+        }
+
+        .fs-spinner {
+          animation: spin 1500ms linear infinite;
+          width: 32px;
+          height: 32px;
+        }
+
+        .fs-spinner-track {
+          stroke: rgba(255,255,255,.15);
+        }
+
+        .fs-spinner-arc {
+          stroke: #F55F3E;
+        }
+
+        .fs-loader-text {
+          opacity: 0;
+          font-size: 16px;
+          margin-bottom: 0;
+          transition: opacity 300ms ease-in-out;
+        }
+
+        .fs-loader-starting-up .fs-loader-text {
+          opacity: 1;
+        }
+
+        .fs-variant-error .fs-loader-text {
+          opacity: 1;
+        }
+
+        .fs-error-icon {
+          fill: var(--fs-color-error);
+        }
+      </style>
+
+      <div class="fs-variant-loader">
+        <svg
+          width="32"
+          height="32"
+          class="fs-spinner"
+          viewBox="0 0 100 100"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle class="fs-spinner-track" cx="50" cy="50" r="45" fill="none" stroke-width="10" />
+          <circle class="fs-spinner-arc" cx="50" cy="50" r="45" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="70.7 212.3" stroke-dashoffset="0" />
+        </svg>
+
+        <p class="fs-loader-text">Grafana is starting up...</p>
+      </div>
+
+      <div class="fs-variant-error fs-hidden">
+        <svg
+          width="32"
+          height="32"
+          class="fs-error-icon"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M12,14a1.25,1.25,0,1,0,1.25,1.25A1.25,1.25,0,0,0,12,14Zm0-1.5a1,1,0,0,0,1-1v-3a1,1,0,0,0-2,0v3A1,1,0,0,0,12,12.5ZM12,2A10,10,0,1,0,22,12,10.01114,10.01114,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8.00917,8.00917,0,0,1,12,20Z"/>
+        </svg>
+
+        <p class="fs-loader-text">Error loading Grafana</p>
+      </div>
+    </div>
+
     <div id="reactRoot"></div>
 
     <script nonce="[[.Nonce]]">
@@ -53,54 +158,136 @@
         window.nonce = '[[.Nonce]]';
       [[end]]
 
-      window.__grafana_load_failed = function(...args) {
-        console.error('Failed to load Grafana', ...args);
-      };
+      [[if .Assets.ContentDeliveryURL]]
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
+      [[end]]
+    </script>
 
-      window.__grafana_boot_data_promise = new Promise(async (resolve) => {
-        const bootData = await fetch("/bootdata");
+    <script nonce="[[.Nonce]]">
+      // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
+      // are explicitly assigned to the `window` object.
+      (() => {
+        window.__grafana_load_failed = function(...args) {
+          console.error('Failed to load Grafana', ...args);
+          document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
+          document.querySelector('.fs-variant-error').classList.remove('fs-hidden');
+        };
 
-        const rawBootData = await bootData.json();
+        window.onload = function() {
+          if (window.__grafana_app_bundle_loaded) {
+            return;
+          }
+          window.__grafana_load_failed();
+        };
 
-        window.grafanaBootData = {
-          _femt: true,
-          ...rawBootData,
+        let hasSetLoading = false;
+        function setLoading() {
+          if (hasSetLoading) {
+            return;
+          }
+
+          document.querySelector('.preloader').classList.add('fs-loader-starting-up');
+          hasSetLoading = true;
         }
 
-        // The per-theme CSS still contains some global styles needed
-        // to render the page correctly.
-        const cssLink = document.createElement("link");
-        cssLink.rel = 'stylesheet';
+        const CHECK_INTERVAL = 1 * 1000;
 
-        let theme = window.grafanaBootData.user.theme;
-        if (theme === "system") {
-          const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-          theme = darkQuery.matches ? 'dark' : 'light';
+        /**
+         * Fetches boot data from the server. If it returns undefined, it should be retried later.
+         * Will return a rejected promise on unrecoverable errors.
+         **/
+        async function fetchBootData() {
+          const resp = await fetch("/bootdata");
+          const textResponse = await resp.text();
+
+          let rawBootData;
+          try {
+            rawBootData = JSON.parse(textResponse);
+          } catch {
+            throw new Error("Unexpected response type: " + textResponse);
+          }
+
+          // If the response is 503, instruct the caller to retry again later.
+          if (resp.status === 503 && rawBootData.code === 'Loading') {
+            return;
+          }
+
+          if (!resp.ok) {
+            throw new Error("Unexpected response body: " + textResponse);
+          }
+
+          return rawBootData;
         }
 
-        if (theme === "light") {
-          document.body.classList.add("theme-light");
-          cssLink.href = window.grafanaBootData.assets.light;
-          window.grafanaBootData.user.lightTheme = true;
-        } else if (theme === "dark") {
-          document.body.classList.add("theme-dark");
-          cssLink.href = window.grafanaBootData.assets.dark;
-          window.grafanaBootData.user.lightTheme = false;
+        /**
+         * Loads the boot data from the server, retrying if it's unavailable.
+         **/
+        function loadBootData() {
+          return new Promise((resolve, reject) => {
+            const attemptFetch = async () => {
+              try {
+                const bootData = await fetchBootData();
+
+                // If the boot data is undefined, retry after a delay
+                if (!bootData) {
+                  setLoading();
+                  setTimeout(attemptFetch, CHECK_INTERVAL);
+                  return;
+                }
+
+                resolve(bootData);
+              } catch (error) {
+                reject(error);
+              }
+            };
+
+            // Start the first attempt immediately
+            attemptFetch();
+          });
         }
 
-        document.head.appendChild(cssLink);
+        async function initGrafana() {
+          const rawBootData = await loadBootData();
 
-        resolve();
-      });
+          window.grafanaBootData = {
+            _femt: true,
+            ...rawBootData,
+          }
+
+          // The per-theme CSS still contains some global styles needed
+          // to render the page correctly.
+          const cssLink = document.createElement("link");
+          cssLink.rel = 'stylesheet';
+
+          const theme = window.grafanaBootData.user.theme;
+          if (theme === "system") {
+            const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+            if (darkQuery.matches) {
+              document.body.classList.add("theme-dark");
+              window.grafanaBootData.user.lightTheme = false;
+            } else {
+              document.body.classList.add("theme-light");
+              window.grafanaBootData.user.lightTheme = true;
+            }
+          }
+          const isLightTheme = window.grafanaBootData.user.lightTheme;
+          cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
+
+          document.head.appendChild(cssLink);
+        }
+
+
+        window.__grafana_boot_data_promise = initGrafana()
+        window.__grafana_boot_data_promise.catch((err) => {
+          console.error("__grafana_boot_data_promise rejected", err);
+          window.__grafana_load_failed(err);
+        });
+      })();
     </script>
 
     [[range $asset := .Assets.JSFiles]]
-      <script
-      nonce="[[$.Nonce]]"
-      src="[[$asset.FilePath]]"
-      type="text/javascript"
-      defer
-      ></script>
+      <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
     [[end]]
   </body>
 </html>

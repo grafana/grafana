@@ -52,6 +52,7 @@
       "button-use-query": "Użyj tego zapytania",
       "label-categories": "Kategorie",
       "label-query-results": "Wyniki zapytania: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Wszystkie kategorie",
       "placeholder-search-logs": "Wyszukaj zapytania dotyczące dzienników",
       "text-loading": "Ładowanie…"
@@ -161,6 +162,8 @@
       "tooltip-limit": "Ogranicz liczbę zwracanych wierszy (domyślnie 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników wiążą się z kosztami w zależności od ilości przeskanowanych danych.",
       "label-logs": "Logi",
       "title-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Przycisk Uruchom zapytanie dotyczący dzienników Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Uruchom zapytanie",
       "button-run-query": "Uruchom zapytanie",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Usługa",
       "placeholder-service": "Usługa…",
       "title-switch-mode": "Przełączyć tryb edytora?"
@@ -221,6 +231,9 @@
       "text-loading": "Ładowanie…",
       "text-no-resources": "Nie znaleziono zasobów",
       "title-error-occurred": "Podczas wysyłania żądania zasobów do narzędzia Azure Monitor wystąpił błąd"
+    },
+    "scope-selector": {
+      "label": ""
     },
     "search": {
       "aria-label-resource-search": "Wyszukiwanie zasobów",

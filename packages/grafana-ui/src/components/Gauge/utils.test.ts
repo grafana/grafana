@@ -1,7 +1,7 @@
 import { FieldColorModeId, FieldConfig, ThresholdsMode } from '@grafana/data';
 import { VizOrientation } from '@grafana/schema';
 
-import { getTheme } from '../../themes';
+import { getTheme } from '../../themes/getTheme';
 
 import { calculateGaugeAutoProps, getFormattedThresholds } from './utils';
 

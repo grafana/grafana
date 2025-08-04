@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
@@ -16,7 +16,7 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
 });
 
 function createDatasource() {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
   const datasource = new PrometheusDatasource(
     {
       url: '',

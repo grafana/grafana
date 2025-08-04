@@ -16,4 +16,4 @@ Choose from the following override options:
 | Fields returned by query       | Select all fields returned by a specific query, such as A, B, or C.                                           |
 | Fields with values             | Select all fields returned by your defined reducer condition, such as **Min**, **Max**, **Count**, **Total**. |
 
-To learn more, refer to [Configure field overrides](../../configure-overrides/).
+To learn more, refer to [Configure field overrides](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/).

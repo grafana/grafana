@@ -1,6 +1,7 @@
-import { t } from '@grafana/i18n/internal';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -88,6 +89,11 @@ export class AutoGridLayoutManager
     });
   }
 
+  public getOutlineChildren(): SceneObject[] {
+    const outlineChildren = this.state.layout.state.children.map((gridItem) => gridItem.state.body);
+    return outlineChildren;
+  }
+
   public addPanel(vizPanel: VizPanel) {
     const panelId = dashboardSceneGraph.getNextPanelId(this);
 
@@ -112,8 +118,25 @@ export class AutoGridLayoutManager
 
   public pastePanel() {
     const panel = getAutoGridItemFromClipboard(getDashboardSceneFor(this));
-    this.state.layout.setState({ children: [...this.state.layout.state.children, panel] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    if (config.featureToggles.dashboardNewLayouts) {
+      dashboardEditActions.edit({
+        description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
+        addedObject: panel.state.body,
+        source: this,
+        perform: () => {
+          this.state.layout.setState({ children: [...this.state.layout.state.children, panel] });
+        },
+        undo: () => {
+          this.state.layout.setState({
+            children: this.state.layout.state.children.filter((child) => child !== panel),
+          });
+        },
+      });
+    } else {
+      this.state.layout.setState({ children: [...this.state.layout.state.children, panel] });
+      this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    }
+
     clearClipboard();
   }
 

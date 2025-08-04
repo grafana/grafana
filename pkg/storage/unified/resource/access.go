@@ -136,9 +136,9 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
-		span.SetStatus(codes.Error, "Namespace missmatch")
-		span.RecordError(claims.ErrNamespaceMissmatch)
-		return claims.CheckResponse{Allowed: false}, claims.ErrNamespaceMissmatch
+		span.SetStatus(codes.Error, "Namespace mismatch")
+		span.RecordError(claims.ErrNamespaceMismatch)
+		return claims.CheckResponse{Allowed: false}, claims.ErrNamespaceMismatch
 	}
 
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
@@ -185,9 +185,9 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	}
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
-		span.SetStatus(codes.Error, "Namespace missmatch")
-		span.RecordError(claims.ErrNamespaceMissmatch)
-		return nil, claims.ErrNamespaceMissmatch
+		span.SetStatus(codes.Error, "Namespace mismatch")
+		span.RecordError(claims.ErrNamespaceMismatch)
+		return nil, claims.ErrNamespaceMismatch
 	}
 
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {

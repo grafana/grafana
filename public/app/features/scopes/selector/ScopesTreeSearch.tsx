@@ -3,18 +3,19 @@ import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 
 import { TreeNode } from './types';
 
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
+  searchArea: string;
   treeNode: TreeNode;
   onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
 }
 
-export function ScopesTreeSearch({ anyChildExpanded, treeNode, onNodeUpdate }: ScopesTreeSearchProps) {
+export function ScopesTreeSearch({ anyChildExpanded, treeNode, onNodeUpdate, searchArea }: ScopesTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
   const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({
@@ -38,15 +39,20 @@ export function ScopesTreeSearch({ anyChildExpanded, treeNode, onNodeUpdate }: S
     [inputState.dirty, inputState.value]
   );
 
-  const { t } = useTranslate();
-
   if (anyChildExpanded) {
     return null;
   }
 
+  const searchLabel = t('scopes.tree.search', 'Search {{parentTitle}}', {
+    parentTitle: searchArea,
+  });
+
   return (
     <FilterInput
-      placeholder={t('scopes.tree.search', 'Search')}
+      placeholder={searchLabel}
+      // Don't do autofocus for root node
+      autoFocus={treeNode.scopeNodeId !== ''}
+      aria-label={searchLabel}
       value={inputState.value}
       className={styles.input}
       data-testid="scopes-tree-search"

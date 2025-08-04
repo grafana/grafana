@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -32,7 +32,7 @@ export const ExpressionEditor = ({
   const styles = useStyles2(getStyles);
 
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
-  const { t } = useTranslate();
+
   const dataQuery = mapToQuery({ refId: 'A', hide: false }, value);
 
   const {

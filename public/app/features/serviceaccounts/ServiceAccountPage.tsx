@@ -3,11 +3,14 @@ import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem, getTimeZone } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ApiKey } from 'app/types/apiKeys';
+import { ServiceAccountDTO } from 'app/types/serviceaccount';
+import { StoreState } from 'app/types/store';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -63,7 +66,6 @@ export const ServiceAccountPageUnconnected = ({
   loadServiceAccountTokens,
   updateServiceAccount,
 }: Props): JSX.Element => {
-  const { t } = useTranslate();
   const [newToken, setNewToken] = useState('');
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -229,8 +231,14 @@ export const ServiceAccountPageUnconnected = ({
             'serviceaccounts.service-account-page-unconnected.title-delete-service-account',
             'Delete service account'
           )}
-          body="Are you sure you want to delete this service account?"
-          confirmText="Delete service account"
+          body={t(
+            'serviceaccounts.service-account-page-unconnected.body-delete-service-account',
+            'Are you sure you want to delete this service account?'
+          )}
+          confirmText={t(
+            'serviceaccounts.service-account-page-unconnected.confirmText-delete-service-account',
+            'Delete service account'
+          )}
           onConfirm={handleServiceAccountDelete}
           onDismiss={showDeleteServiceAccountModal(false)}
         />
@@ -240,8 +248,14 @@ export const ServiceAccountPageUnconnected = ({
             'serviceaccounts.service-account-page-unconnected.title-disable-service-account',
             'Disable service account'
           )}
-          body="Are you sure you want to disable this service account?"
-          confirmText="Disable service account"
+          body={t(
+            'serviceaccounts.service-account-page-unconnected.body-disable-service-account',
+            'Are you sure you want to disable this service account?'
+          )}
+          confirmText={t(
+            'serviceaccounts.service-account-page-unconnected.confirmText-disable-service-account',
+            'Disable service account'
+          )}
           onConfirm={handleServiceAccountDisable}
           onDismiss={showDisableServiceAccountModal(false)}
         />

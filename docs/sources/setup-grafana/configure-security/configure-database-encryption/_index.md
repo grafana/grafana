@@ -18,21 +18,21 @@ Grafana’s database contains secrets, which are used to query data sources, sen
 
 Grafana encrypts these secrets before they are written to the database, by using a symmetric-key encryption algorithm called Advanced Encryption Standard (AES). These secrets are signed using a [secret key](../../configure-grafana/#secret_key) that you can change when you configure a new Grafana instance.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana v9.0 and newer use [envelope encryption](#envelope-encryption) by default, which adds a layer of indirection to the encryption process that introduces an [**implicit breaking change**](#implicit-breaking-change) for older versions of Grafana.
-{{% /admonition %}}
+{{< /admonition >}}
 
 For further details about how to operate a Grafana instance with envelope encryption, see the [Operational work](#operational-work) section.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 In Grafana Enterprise, you can also [encrypt secrets in AES-GCM (Galois/Counter Mode)](#changing-your-encryption-mode-to-aes-gcm) instead of the default AES-CFB (Cipher FeedBack mode).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Envelope encryption
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Since Grafana v9.0, you can turn envelope encryption off by adding the feature toggle `disableEnvelopeEncryption` to your [Grafana configuration](../../configure-grafana/#feature_toggles).
-{{% /admonition %}}
+{{< /admonition >}}
 
 Instead of encrypting all secrets with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK), configured through the `secret_key` attribute in your
 [Grafana configuration](../../configure-grafana/#secret_key) or by [Encrypting your database with a key from a key management service (KMS)](#encrypting-your-database-with-a-key-from-a-key-management-service-kms).
@@ -79,11 +79,11 @@ You can rotate data keys to disable the active data key and therefore stop using
 
 New data keys for encryption operations are generated on demand.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Data key rotation does **not** implicitly re-encrypt secrets. Grafana will continue to use rotated data keys to decrypt
 secrets still encrypted with them. To completely stop using
 rotated data keys for both encryption and decryption, see [secrets re-encryption](#re-encrypt-secrets).
-{{% /admonition %}}
+{{< /admonition >}}
 
 To rotate data keys, use the `/encryption/rotate-data-keys` endpoint of the Grafana [Admin API](../../../developers/http_api/admin/#rotate-data-encryption-keys). It's safe to call more than once, more recommended under maintenance mode.
 

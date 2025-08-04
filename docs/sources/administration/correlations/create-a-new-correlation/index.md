@@ -81,7 +81,7 @@ Description of provisioning properties:
 : Config object
 
 **config.type**
-: Correlation type. “query” is the only supported type at the moment
+: Correlation type. Valid values are "query" for linking to a data source query and "external" for linking to an external URL.
 
 **config.target**
 : [Target query model](#determine-target-query-model-structure)

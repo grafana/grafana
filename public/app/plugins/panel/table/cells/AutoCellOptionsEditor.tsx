@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { TableAutoCellOptions, TableColorTextCellOptions } from '@grafana/schema';
 import { Field, Switch } from '@grafana/ui';
 
@@ -8,8 +8,6 @@ export const AutoCellOptionsEditor = ({
   cellOptions,
   onChange,
 }: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions>) => {
-  // Handle row coloring changes
-  const { t } = useTranslate();
   const onWrapTextChange = () => {
     cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);

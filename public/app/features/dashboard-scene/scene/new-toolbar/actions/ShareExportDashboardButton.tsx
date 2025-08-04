@@ -1,6 +1,6 @@
 import { ReactElement, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -34,7 +34,7 @@ export const ShareExportDashboardButton = ({
   variant = 'secondary',
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { t } = useTranslate();
+
   return (
     <ButtonGroup
       data-testid={groupTestId}

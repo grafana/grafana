@@ -277,11 +277,12 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
 
-  const defaultFormValues = getDefaultFormValues();
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (rulerRuleType.grafana.recordingRule(rule)) {
+    if (isGrafanaRecordingRule) {
       // grafana recording rule
       const ga = rule.grafana_alert;
       return {
@@ -382,7 +383,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 }
 
 export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {
-  const defaultFormValues = getDefaultFormValues();
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
 
   const ga = rule.grafana_alert;
   const duration = rule.for;

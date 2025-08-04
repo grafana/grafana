@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
@@ -28,8 +28,6 @@ interface Props {
 }
 
 export const FolderActionsButton = ({ folderUID }: Props) => {
-  const { t } = useTranslate();
-
   // state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
@@ -118,7 +116,6 @@ function useRedirectToListView(view: string) {
 }
 
 function ExportFolderButton({ onClickExport }: { onClickExport: () => void }) {
-  const { t } = useTranslate();
   return (
     <Menu.Item
       aria-label={t('alerting.list-view.folder-actions.export.aria-label', 'Export rules folder')}
@@ -140,8 +137,6 @@ function BulkActions({
   onClickDelete: (showModal: boolean) => void;
   isLoading: boolean;
 }) {
-  const { t } = useTranslate();
-
   // feature toggles
   const listView2Enabled = shouldUseAlertingListViewV2();
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;

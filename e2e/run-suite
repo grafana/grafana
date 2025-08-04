@@ -26,11 +26,10 @@ declare -A env=(
 )
 
 testFilesForSingleSuite="*.spec.ts"
-rootForEnterpriseSuite="./e2e/extensions-suite"
+rootForEnterpriseSuite="./e2e/extensions"
 rootForOldArch="./e2e/old-arch"
 rootForKubernetesDashboards="./e2e/dashboards-suite"
 rootForSearchDashboards="./e2e/dashboards-search-suite"
-rootForDashboardNewLayouts="./e2e/dashboard-new-layouts"
 
 declare -A cypressConfig=(
   [screenshotsFolder]=./e2e/"${args[0]}"/screenshots
@@ -45,6 +44,7 @@ declare -A cypressConfig=(
   [trashAssetsBeforeRuns]=false
   [reporter]=./e2e/log-reporter.js
   [baseUrl]=${BASE_URL:-"http://$HOST:$PORT"}
+  [video]=${CYPRESS_VIDEO:-false}
 )
 
 case "$1" in
@@ -70,8 +70,6 @@ case "$1" in
     "enterprise")
         echo "Enterprise"
         env[SMTP_PLUGIN_ENABLED]=true
-        CLEANUP="rm -rf ./e2e/extensions-suite"
-        SETUP="cp -Lr ./e2e/extensions ./e2e/extensions-suite"
         enterpriseSuite=$(basename "${args[1]}")
         case "$2" in
             "debug")
@@ -87,7 +85,6 @@ case "$1" in
                 ;;
         esac
         cypressConfig[specPattern]=$rootForEnterpriseSuite/$enterpriseSuite/*-suite/*.spec.ts
-        $CLEANUP && $SETUP
         ;;
     "")
         ;;
@@ -145,28 +142,6 @@ case "$1" in
                 ;;
             "dev")
                 echo "Dev mode"
-                CMD="cypress open"
-                enterpriseSuite=$(basename "${args[2]}")
-                ;;
-          esac
-      ;;
-      "dashboard-new-layouts")
-      env[kubernetesDashboards]=true
-      env[dashboardNewLayouts]=true
-      env[groupByVariable]=true
-      cypressConfig[specPattern]=$rootForDashboardNewLayouts/$testFilesForSingleSuite
-      cypressConfig[video]=false
-          case "$2" in
-            "debug")
-                echo -e "Debug mode"
-                env[SLOWMO]=1
-                PARAMS="--no-exit"
-                enterpriseSuite=$(basename "${args[2]}")
-                ;;
-            "dev")
-                echo "Dev mode"
-                # remove comment to run in slomo ( demo mode )
-                # env[SLOWMO]=1
                 CMD="cypress open"
                 enterpriseSuite=$(basename "${args[2]}")
                 ;;

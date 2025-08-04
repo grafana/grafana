@@ -3058,6 +3058,20 @@
           "sort": {
             "type": "string",
             "default": ""
+          },
+          "staticOptions": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                }
+              ]
+            }
+          },
+          "staticOptionsOrder": {
+            "type": "string"
           }
         }
       },

@@ -1,13 +1,13 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { ConditionalRenderingChangedEvent } from '../edit-pane/shared';
 
 import { ConditionalRenderingBase } from './ConditionalRenderingBase';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 import { ItemsWithConditionalRendering } from './types';
-import { getItemType } from './utils';
+import { getItemType, translatedItemType } from './utils';
 
 export interface ConditionalRenderingState extends SceneObjectState {
   rootGroup: ConditionalRenderingGroup;
@@ -20,7 +20,7 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
     return t(
       'dashboard.conditional-rendering.root.info',
       'Set rules to control {{type}} visibility by matching any or all rules.',
-      { type: this.getItemType() }
+      { type: translatedItemType(this.getItemType()) }
     );
   }
 

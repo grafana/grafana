@@ -17,15 +17,14 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -60,7 +59,6 @@ type RepositoryController struct {
 	repoSynced     cache.InformerSynced
 	parsers        resources.ParserFactory
 	logger         logging.Logger
-	secrets        secrets.Service
 	dualwrite      dualwrite.Service
 
 	jobs      jobs.Queue
@@ -87,7 +85,6 @@ func NewRepositoryController(
 	clients resources.ClientFactory,
 	tester RepositoryTester,
 	jobs jobs.Queue,
-	secrets secrets.Service,
 	dualwrite dualwrite.Service,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
@@ -110,7 +107,6 @@ func NewRepositoryController(
 		tester:    tester,
 		jobs:      jobs,
 		logger:    logging.DefaultLogger.With("logger", loggerName),
-		secrets:   secrets,
 		dualwrite: dualwrite,
 	}
 
@@ -243,7 +239,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
 					{ "op": "remove", "path": "/metadata/finalizers" }
 				]`), v1.PatchOptions{
-				FieldManager: "repository-controller",
+				FieldManager: "provisioning-controller",
 			})
 		return err // delete will be called again
 	}

@@ -4,7 +4,7 @@ import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
 
@@ -22,8 +22,8 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
 
   const [_, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
-    return await buildShareUrl(dashboard, panel);
-  }, [dashboard]);
+    await buildShareUrl(dashboard, panel);
+  }, [dashboard, panel]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
     if (isOpen) {
@@ -32,7 +32,6 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
 
     setIsOpen(isOpen);
   }, []);
-  const { t } = useTranslate();
 
   const MenuActions = () => <ShareMenu dashboard={dashboard} />;
 

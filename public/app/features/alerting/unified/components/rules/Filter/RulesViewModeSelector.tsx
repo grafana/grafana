@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
 
@@ -15,24 +17,58 @@ const ViewOptions: Array<SelectableValue<SupportedView>> = [
   { icon: 'list-ul', label: 'List', value: 'list' },
 ];
 
-function RulesViewModeSelectorV2() {
+interface RulesViewModeSelectorV2Props {
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
+}
+
+/**
+ * Selecting a view mode is no longer a simple toggle relying on the URL query params.
+ * We now need to check if the current filters are compatible with the grouped view.
+ * If they are, we show the grouped view by default.
+ * If they are not, we show the list view.
+ * Use the complementary {@link useListViewMode} hook to get the current view mode and a handler for changing it.
+ */
+function RulesViewModeSelectorV2({ viewMode, onViewModeChange }: RulesViewModeSelectorV2Props) {
+  return <RadioButtonGroup options={ViewOptions} value={viewMode} onChange={onViewModeChange} />;
+}
+
+export function useListViewMode() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
-  const { hasActiveFilters } = useRulesFilter();
-  const wantsListView = queryParams.get('view') === 'list';
+  const { activeFilters } = useRulesFilter();
 
-  const selectedViewOption = hasActiveFilters || wantsListView ? 'list' : 'grouped';
+  const queryStringView: SupportedView = queryParams.get('view') === 'list' ? 'list' : 'grouped';
 
-  /* If we change to the grouped view, we just remove the "list" and "search" params */
-  const handleViewChange = (view: SupportedView) => {
-    if (view === 'list') {
-      updateQueryParams({ view });
+  const areFiltersGroupedViewCompatible = activeFilters.every(
+    (filter) => filter === 'groupName' || filter === 'namespace'
+  );
+  const showListView = areFiltersGroupedViewCompatible === false || queryStringView === 'list';
+
+  const handleViewChange = useCallback(
+    (view: SupportedView) => {
+      if (view === 'grouped') {
+        // When switching to grouped view, preserve filters only if they are grouped-view compatible
+        if (areFiltersGroupedViewCompatible) {
+          // Only remove view parameter, keep search (preserve group/namespace filters)
+          updateQueryParams({ view: undefined });
+        } else {
+          // Clear both view and search (clear all filters)
+          updateQueryParams({ view: undefined, search: undefined });
+        }
+      } else {
+        updateQueryParams({ view });
+      }
       trackRulesListViewChange({ view });
-    } else {
-      updateQueryParams({ view: undefined, search: undefined });
-    }
-  };
+    },
+    [updateQueryParams, areFiltersGroupedViewCompatible]
+  );
 
-  return <RadioButtonGroup options={ViewOptions} value={selectedViewOption} onChange={handleViewChange} />;
+  const viewMode: SupportedView = showListView ? 'list' : 'grouped';
+
+  return {
+    viewMode,
+    handleViewChange,
+  };
 }
 
 const LegacyViewOptions: Array<SelectableValue<LegacySupportedView>> = [
@@ -66,4 +102,15 @@ function viewParamToLegacyView(viewParam: string | null): LegacySupportedView {
   return 'grouped';
 }
 
-export const RulesViewModeSelector = shouldUseAlertingListViewV2() ? RulesViewModeSelectorV2 : RulesViewModeSelectorV1;
+interface RulesViewModeSelectorProps {
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
+}
+
+export function RulesViewModeSelector({ viewMode, onViewModeChange }: RulesViewModeSelectorProps) {
+  if (shouldUseAlertingListViewV2()) {
+    return <RulesViewModeSelectorV2 viewMode={viewMode} onViewModeChange={onViewModeChange} />;
+  }
+
+  return <RulesViewModeSelectorV1 />;
+}

@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { CloudNotifierType, NotificationChannelOption, NotifierDTO } from 'app/types';
+import { CloudNotifierType, NotificationChannelOption, NotifierDTO } from 'app/types/alerting';
 
 import { option } from './notifier-types';
 

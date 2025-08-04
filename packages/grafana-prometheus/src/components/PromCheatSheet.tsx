@@ -2,6 +2,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, QueryEditorHelpProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { PromQuery } from '../types';
@@ -35,7 +36,9 @@ export const PromCheatSheet = (props: QueryEditorHelpProps<PromQuery>) => {
 
   return (
     <div>
-      <h2>PromQL Cheat Sheet</h2>
+      <h2>
+        <Trans i18nKey="grafana-prometheus.components.prom-cheat-sheet.prom-ql-cheat-sheet">PromQL Cheat Sheet</Trans>
+      </h2>
       {CHEAT_SHEET_ITEMS.map((item, index) => (
         <div className={styles.cheatSheetItem} key={index}>
           <div className={styles.cheatSheetItemTitle}>{item.title}</div>

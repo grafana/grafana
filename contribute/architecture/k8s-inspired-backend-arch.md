@@ -14,22 +14,18 @@ The end goal is for the Resource APIs to become the only interface for managing 
 ## 1. Key Differences from Legacy API Endpoints
 
 - **URL structure & versioning:**
-
   - **Resource APIs:** Follow Kubernetes conventions (`/apis/<group>/<version>/namespaces/<namespace>/<resource>/<name>`). Includes explicit API versions (e.g., `v0alpha1`, `v1`, `v2beta1`) in the path, allowing for controlled evolution and multiple versions of a resource API to co-exist.
   - **Legacy APIs:** Variable path structures (e.g., `/api/dashboards/uid/:uid`, `/api/ruler/grafana/api/v1/rules/:uid/:uid`). Less explicit versioning.
 
 - **Resource schemas:**
-
   - **Resource APIs:** Each resource has a well-defined schema (`spec`) and is wrapped with an envelope with common metadata, all APIs come with an always-in-sync OpenAPI spec.
   - **Legacy APIs:** Structures vary
 
 - **Namespacing / org context:**
-
   - **Resource APIs:** Uses explicit namespaces in the path (`/namespaces/<namespace>/...`) mapping to Grafana Organization IDs in OSS/Enterprise and Grafana Cloud Stack IDs in Grafana Cloud for scoping.
   - **Legacy APIs:** Org context determined implicitly (session, API key), not usually part of the URL structure.
 
 - **Consistency of convenience features:**
-
   - **Resource APIs:** Convenience features such as resource history, restore and observability-as-code tooling come out of the box; a single implementation of convenience features works across all resources because of the standardization
   - **Legacy APIs:** Different APIs support different convenience features; implementations are feature-specific
 
@@ -43,9 +39,9 @@ The end goal is for the Resource APIs to become the only interface for managing 
 
 - **API implementation approaches:**
   - **Registry Approach (`pkg/registry/apis/...`):** Original method using Go code (`.../register.go` files). While newer resources are primarily defined using CUE in `apps/`, this path is still used for things such as legacy fallbacks for App-defined resources when data for that resource exists outside of unified storage.
-  - **Apps Approach (`apps/...`):** The newer, more modular implementation where APIs are defined using CUE in self-contained modules. Each app defines resources in `kinds/*.cue` files and resources are registered via the App SDK. This is the direction Grafana is moving toward for all resources.
+  - **Apps Approach (`apps/...`):** The newer, more modular implementation where APIs are defined using CUE in self-contained modules. Each app defines resources in `kinds/*.cue` files and resources are registered via the App SDK. This is the direction Grafana is moving towards for all resources.
 - **Unified Storage (`pkg/storage/unified/...`):** Internal abstraction handling resource persistence. It handles the conversion between the Resource API and the underlying storage backend.
-- **`K8sHandler` (`pkg/services/apiserver/client/client.go`):** Internal client facade used by Grafana services. Provides a Kubernetes-like client interface (`Get`, `Create`, etc.) for the Resource API. Acts as an adapter during migration, enabling legacy services to use the Resource API. Does not interact with external systems - it interact only with Grafana's own APIs.
+- **`K8sHandler` (`pkg/services/apiserver/client/client.go`):** Internal client facade used by Grafana services. Provides a Kubernetes-like client interface (`Get`, `Create`, etc.) for the Resource API. Acts as an adapter during migration, enabling legacy services to use the Resource API. Does not interact with external systems - it interacts only with Grafana's own APIs.
 - **Configured SQL database:** Grafana's primary persistence layer (PostgreSQL, MySQL, SQLite). The persistence target for actions initiated within Grafana's UI/Legacy API. It's the default backend for Unified Storage
 - **App SDK (`github.com/grafana/grafana-app-sdk`):** SDK for the Apps Approach. Provides tools for defining resources (CUE) and generating code.
 
@@ -75,11 +71,11 @@ The `apps` directory structure is Grafana's intended future for defining APIs an
 
 **Example: Playlist App (`apps/playlist/`)**
 
-- `kinds/playlist.cue`: CUE schema for the `Playlist` resource kind and its `spec`.
-- `kinds/manifest.cue`: App and resource kind metadata.
-- `pkg/apis/playlist/v0alpha1/`: Generated Go types from the CUE schema.
-- `pkg/app/reconciler_playlist.go`: Reconciler acting on `Playlist` resources.
-- `pkg/registry/apps/playlist/register.go`: Registers the `Playlist` kind and API endpoints using the App SDK.
+- `(plugin)/kinds/playlist.cue`: CUE schema for the `Playlist` resource kind and its `spec`.
+- `(plugin)/kinds/manifest.cue`: App and resource kind metadata.
+- `(plugin)/pkg/apis/playlist/v0alpha1/`: Generated Go types from the CUE schema.
+- `(plugin)/pkg/reconcilers/reconciler_playlist.go`: Reconciler acting on `Playlist` resources.
+- `(root)/pkg/registry/apps/playlist/register.go`: Registers the `Playlist` kind and API endpoints using the App SDK.
 
 The Apps Approach creates the same Resource API endpoints (`/apis/...`) as the Registry Approach, but with a cleaner implementation and improved developer experience. It's the standard pattern for all future Grafana resources.
 
@@ -89,7 +85,7 @@ Grafana's Resource APIs adopts many Kubernetes API conventions but is **not stri
 
 In other words, even when the URLs / resources look Kubernetes-like, some API Server guarantees might not hold. We are adopting Kubernetes API patterns, general structure, and declarative style. A strict, byte-for-byte conformance to the API spec is currently not a goal.
 
-The list of major architectural changes include:
+The list of major architectural changes includes:
 
 - **Persistence:** Uses Grafana's configured SQL database (PostgreSQL, MySQL, SQLite) via Unified Storage, not `etcd`.
 - **Auth:** Uses Grafana's standard auth (API keys, sessions, RBAC/Permissions), not Kubernetes ServiceAccounts or RBAC.

@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { DataQueryRequest, DataQueryResponse, TestDataSourceResponse } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';

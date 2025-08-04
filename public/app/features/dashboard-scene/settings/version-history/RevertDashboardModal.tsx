@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -13,7 +13,7 @@ export interface RevertDashboardModalProps {
 
 export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDashboardModalProps) => {
   const notifyApp = useAppNotification();
-  const { t } = useTranslate();
+
   const onRestoreDashboard = async () => {
     const success = await onRestore(version);
 
@@ -44,7 +44,11 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
           </Trans>
         </p>
       }
-      confirmText={`Yes, restore to version ${version.version}`}
+      confirmText={t(
+        'dashboard-scene.revert-dashboard-modal.confirmText-restore-version',
+        'Yes, restore to version {{version}}',
+        { version: version.version }
+      )}
     />
   );
 };

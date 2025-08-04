@@ -10,7 +10,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { contextSrv } from '../../core/services/context_srv';
@@ -25,12 +25,14 @@ import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
+import { ProvisionedFolderPreviewBanner } from './components/ProvisionedFolderPreviewBanner';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { setAllSelection, useHasSelection } from './state';
+import { useHasSelection } from './state/hooks';
+import { setAllSelection } from './state/slice';
 
 // New Browse/Manage/Search Dashboards views for nested folders
-const BrowseDashboardsPage = memo(() => {
+const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
   const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
@@ -91,11 +93,23 @@ const BrowseDashboardsPage = memo(() => {
   const { data: rootFolderDTO } = useGetFolderQuery(folderDTO ? skipToken : 'general');
   const folder = folderDTO ?? rootFolderDTO;
 
-  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
+  const {
+    canEditFolders,
+    canDeleteFolders,
+    canDeleteDashboards,
+    canEditDashboards,
+    canCreateDashboards,
+    canCreateFolders,
+  } = getFolderPermissions(folder);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
-  const canSelect = (canEditFolders || canEditDashboards) && !isProvisionedFolder;
+  const permissions = {
+    canEditFolders,
+    canEditDashboards,
+    canDeleteFolders,
+    canDeleteDashboards,
+  };
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -158,6 +172,7 @@ const BrowseDashboardsPage = memo(() => {
       }
     >
       <Page.Contents className={styles.pageContents}>
+        <ProvisionedFolderPreviewBanner queryParams={queryParams} />
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
@@ -168,7 +183,7 @@ const BrowseDashboardsPage = memo(() => {
         </div>
 
         {hasSelection ? (
-          <BrowseActions />
+          <BrowseActions folderDTO={folderDTO} />
         ) : (
           <div className={styles.filters}>
             <BrowseFilters />
@@ -180,14 +195,14 @@ const BrowseDashboardsPage = memo(() => {
             {({ width, height }) =>
               isSearching ? (
                 <SearchView
-                  canSelect={canSelect}
+                  permissions={permissions}
                   width={width}
                   height={height}
                   searchState={searchState}
                   searchStateManager={stateManager}
                 />
               ) : (
-                <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
+                <BrowseView permissions={permissions} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

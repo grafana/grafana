@@ -1,6 +1,6 @@
 import { PureComponent } from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { FetchError, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 

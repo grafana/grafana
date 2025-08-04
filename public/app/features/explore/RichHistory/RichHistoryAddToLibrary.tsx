@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 
@@ -13,7 +13,6 @@ type Props = {
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
   const { openAddQueryModal, queryLibraryEnabled } = useQueryLibraryContext();
-  const { t } = useTranslate();
 
   const buttonLabel = t('explore.rich-history-card.add-to-library', 'Add to library');
 
@@ -23,7 +22,7 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
         variant="secondary"
         aria-label={buttonLabel}
         onClick={() => {
-          openAddQueryModal(query, { onSave: () => setHasBeenSaved(true), context: 'richHistory' });
+          openAddQueryModal(query, { onSave: () => setHasBeenSaved(true), context: 'rich-history' });
         }}
       >
         {buttonLabel}

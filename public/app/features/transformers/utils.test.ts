@@ -27,19 +27,19 @@ describe('validator', () => {
     expect(numberOrVariableValidator('1')).toBe(true);
   });
 
-  it('validats a string that is a negative integer', () => {
+  it('validates a string that is a negative integer', () => {
     expect(numberOrVariableValidator('-1')).toBe(true);
   });
 
-  it('validats a string that is zero', () => {
+  it('validates a string that is zero', () => {
     expect(numberOrVariableValidator('0')).toBe(true);
   });
 
-  it('validats a string that is a float', () => {
+  it('validates a string that is a float', () => {
     expect(numberOrVariableValidator('1.2')).toBe(true);
   });
 
-  it('validats a string that is a negative float', () => {
+  it('validates a string that is a negative float', () => {
     expect(numberOrVariableValidator('-1.2')).toBe(true);
   });
 
@@ -51,8 +51,8 @@ describe('validator', () => {
     expect(numberOrVariableValidator('$foo')).toBe(true);
   });
 
-  it('fails a string that has multiple variables', () => {
-    expect(numberOrVariableValidator('$foo$asd')).toBe(false);
+  it('validates a string that has multiple variables', () => {
+    expect(numberOrVariableValidator('$foo$asd')).toBe(true);
   });
 });
 

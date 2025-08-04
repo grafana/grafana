@@ -233,7 +233,6 @@ This setup reproduces label flapping and shows how dynamic label values affect a
 1. Simulate a query (`$A`) that returns a noisy signal.
 
    Select **TestData** as the data source and configure the scenario.
-
    - Scenario: Random Walk
    - Series count: 1
    - Start value: 51
@@ -241,7 +240,6 @@ This setup reproduces label flapping and shows how dynamic label values affect a
    - Spread: 100 (ensures large changes between consecutive data points)
 
 1. Add an expression.
-
    - Type: Reduce
    - Input: A
    - Function: Last (to get the most recent value)
@@ -283,7 +281,7 @@ This setup reproduces label flapping and shows how dynamic label values affect a
 
    {{< figure src="/media/docs/alerting/example-dynamic-labels-alert-history-page.png" max-width="750px" caption="You can find multiple transitions over time as the label value fluctuates." >}}
 
-   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/femr0gkp9vsowe/view" >}}
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/eep7oslk5u680e/view" >}}
 
 ## Considerations
 
@@ -325,4 +323,4 @@ Here's a list of additional resources related to this example:
 - [Stale alert instances](ref:stale-alert-instances) – Understand how Grafana resolves and removes stale alert instances.
 - [Handle missing data](ref:missing-data-guide) – Learn how Grafana distinguishes between missing series and `NoData`.
 - [Notification policies and routing](ref:notification-policies) – Create multiple notification policies to route alerts based on label values like `severity` or `team`.
-- [Dynamic label example in Grafana Play](https://play.grafana.org/alerting/grafana/femr0gkp9vsowe/view) - View this example in Grafana Play to explore alert instances and state transitions with dynamic labels.
+- [Dynamic label example in Grafana Play](https://play.grafana.org/alerting/grafana/eep7oslk5u680e/view) - View this example in Grafana Play to explore alert instances and state transitions with dynamic labels.

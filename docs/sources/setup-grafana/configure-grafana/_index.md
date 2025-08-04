@@ -54,6 +54,10 @@ By default, the configuration file is located at `/opt/homebrew/etc/grafana/graf
 For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly.
 Otherwise, add a configuration file named `custom.ini` to the `conf` directory to override the settings defined in `conf/defaults.ini`.
 
+### Grafana Cloud
+
+There is no local configuration file for Grafana Cloud stacks, but many of these settings are still configurable. To edit configurable settings, open a support ticket.
+
 ## Remove comments in the .ini files
 
 Grafana uses semicolons (`;`) to comment out lines in the INI file.
@@ -386,8 +390,8 @@ The database user's password (not applicable for `sqlite3`). If the password con
 
 #### `url`
 
-Use either URL or the other fields below to configure the database
-Example: `mysql://user:secret@host:port/database`
+Use either URL or the previous fields to configure the database
+Example: `type://user:password@host:port/name`
 
 #### `max_idle_conn`
 
@@ -475,7 +479,11 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 ### `[remote_cache]`
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
+Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
+
+{{< admonition type="note" >}}
+This setting doesn't control user session storage. User sessions are _always_ stored in the main database configured in `[database]` regardless of your `[remote_cache]` settings.
+{{< /admonition >}}
 
 #### `type`
 
@@ -879,6 +887,10 @@ Increasing this value allows processing more dashboards in each cleanup cycle bu
 #### `default_manage_alerts_ui_toggle`
 
 Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source. It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
+
+#### `default_allow_recording_rules_target_alerts_ui_toggle`
+
+Default behavior for the "Allow as recording rules target" toggle when configuring a data source. It only works if the data source's `jsonData.allowAsRecordingRulesTarget` prop does not contain a previously configured value.
 
 ### `[sql_datasources]`
 
@@ -1535,7 +1547,7 @@ Use spaces to separate multiple modes, for example, `console file`.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is `info`.
+Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`. Default is `info`.
 
 #### `filters`
 
@@ -1564,7 +1576,7 @@ Only applicable when `console` is used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1578,7 +1590,7 @@ Only applicable when `file` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1613,7 +1625,7 @@ Only applicable when `syslog` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1981,6 +1993,16 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 <hr>
 
+### `[unified_alerting.prometheus_conversion]`
+
+This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
+
+#### `rule_query_offset`
+
+Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
+
+<hr>
+
 ### `[annotations]`
 
 #### `cleanupjob_batchsize`
@@ -2091,7 +2113,7 @@ Setting `0` means the short links are cleaned up approximately every 10 minutes.
 A negative value such as `-1` disables expiry.
 
 {{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted.
+Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends setting a duration based on your specific use case
 {{< /admonition >}}
 
 <hr>
@@ -2633,8 +2655,6 @@ If `true`, propagate the tracing context to the plugin backend and enable tracin
 
 Load an external version of a core plugin if it has been installed.
 
-Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
-
 <hr>
 
 ### `[plugin.grafana-image-renderer]`
@@ -2800,6 +2820,32 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 
 Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
+### `[time_picker]`
+
+This section controls system-wide defaults for the time picker, such as the default quick ranges.
+
+#### `quick_ranges`
+
+Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry must have a `from`, `to`, and `display` field. Any configuration for this field must be in valid JSON format made up of a list of quick range configurations.
+
+The `from` and `to` fields should be valid relative time ranges. For more information the relative time formats, refer to [Time units and relative ranges.](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges). The `from` field is required, but omitting `to` will result in the `from` value being used in both fields.
+
+If no configuration is provided, the default time ranges will be used.
+
+For example:
+
+```ini
+[time_picker]
+quick_ranges = """[
+{"from":"now-6s","to":"now","display":"Last 6 seconds"},
+{"from":"now-10m","to":"now","display":"Last 10 minutes"},
+{"from":"now-25h","to":"now","display":"Last 24 hours"},
+{"from":"now/w","to":"now/w","display":"This week"},
+{"from":"now-1w/w","to":"now-1w/w","display":"Last week"},
+{"from":"now-10d","to":"now","display":"Last 10 days"}
+]"""
+```
+
 ### `[expressions]`
 
 #### `enabled`
@@ -2810,7 +2856,7 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 
 Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
 
-#### `sql_expression_cell_output_limit`
+#### `sql_expression_output_cell_limit`
 
 Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
 

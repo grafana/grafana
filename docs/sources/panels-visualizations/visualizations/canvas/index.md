@@ -21,11 +21,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
-  add-field-from-calculation-transform:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
 ---
 
 # Canvas
@@ -63,9 +58,9 @@ Elements are the basic building blocks of a canvas and they help you visualize d
 
 Add elements in the [Layer](#layer-options) section of canvas options.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Element snapping and alignment only works when the canvas is not zoomed in.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Element types
 
@@ -136,9 +131,9 @@ The server element lets you easily represent a single server, a stack of servers
 
 The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 A button click will only trigger an API call when [inline editing](#inline-editing) is disabled.
-{{% /admonition %}}
+{{< /admonition >}}
 
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="650px" alt="Canvas button element demo" >}}
 
@@ -271,9 +266,17 @@ Use the following pointer and keyboard strokes:
 
 You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
-{{% /admonition %}}
+{{< /admonition >}}
+
+### Tooltip options
+
+The **Tooltip mode** setting controls the display of tooltips when hovering over canvas elements that are connected to data, data links, or actions.
+The options are:
+
+- **Enabled** - Show a tooltip when the cursor hovers over an element.
+- **Disabled** - Tooltips are not shown on hover.
 
 ### Layer options
 
@@ -475,7 +478,6 @@ You can style the selected connection using the following options:
 - **Size** - Control the size of the connection by entering a number in the **Value** field.
 - **Radius** - Add curve to the connection by entering a value to represent the degree.
 - **Arrow Direction** - Control the appearance of the arrow head. Choose from:
-
   - **Forward** - The arrow head points in the direction in which the connection was drawn.
   - **Reverse** - The arrow head points in the opposite direction of which the connection was drawn.
   - **Both** - Adds arrow heads to both ends of the connection.

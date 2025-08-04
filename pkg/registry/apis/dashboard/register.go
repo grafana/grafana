@@ -23,7 +23,9 @@ import (
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,8 +39,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -97,6 +101,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
 	provisioningDashboardService dashboards.DashboardProvisioningService,
+	datasourceService datasources.DataSourceService,
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	accessControl accesscontrol.AccessControl,
 	accessClient claims.AccessClient,
@@ -110,13 +115,14 @@ func RegisterAPIService(
 	sorter sort.Service,
 	quotaService quota.Service,
 	folderStore folder.FolderStore,
+	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter)
+	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
 
@@ -137,20 +143,24 @@ func RegisterAPIService(
 		folderClient:                 folderClient,
 
 		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, sorter),
+			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, accessControl, features),
 			DashboardService: dashboardService,
 		},
 		reg: reg,
 	}
+	migration.Initialize(&datasourceInfoProvider{
+		datasourceService: datasourceService,
+	})
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
-		// If dashboards v2 is enabled, we want to use v2alpha1 as the default API version.
+		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
 		return []schema.GroupVersion{
-			dashv2.DashboardResourceInfo.GroupVersion(),
+			dashv2beta1.DashboardResourceInfo.GroupVersion(),
+			dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			dashv0.DashboardResourceInfo.GroupVersion(),
 			dashv1.DashboardResourceInfo.GroupVersion(),
 		}
@@ -159,7 +169,8 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	return []schema.GroupVersion{
 		dashv1.DashboardResourceInfo.GroupVersion(),
 		dashv0.DashboardResourceInfo.GroupVersion(),
-		dashv2.DashboardResourceInfo.GroupVersion(),
+		dashv2beta1.DashboardResourceInfo.GroupVersion(),
+		dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 	}
 }
 
@@ -171,7 +182,11 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err := dashv1.AddToScheme(scheme); err != nil {
 		return err
 	}
-	if err := dashv2.AddToScheme(scheme); err != nil {
+	if err := dashv2alpha1.AddToScheme(scheme); err != nil {
+		return err
+	}
+
+	if err := dashv2beta1.AddToScheme(scheme); err != nil {
 		return err
 	}
 
@@ -181,6 +196,10 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	return scheme.SetVersionPriority(b.GetGroupVersions()...)
+}
+
+func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{dashv0.DashboardKind().Plural()}
 }
 
 // Validate validates dashboard operations for the apiserver
@@ -379,7 +398,10 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	case *dashv1.Dashboard:
 		title = d.Spec.GetNestedString(dashboardSpecTitle)
 		refresh = d.Spec.GetNestedString(dashboardSpecRefreshInterval)
-	case *dashv2.Dashboard:
+	case *dashv2alpha1.Dashboard:
+		title = d.Spec.Title
+		refresh = d.Spec.TimeSettings.AutoRefresh
+	case *dashv2beta1.Dashboard:
 		title = d.Spec.Title
 		refresh = d.Spec.TimeSettings.AutoRefresh
 	default:
@@ -444,11 +466,28 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// v2alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
-		dashv2.DashboardResourceInfo,
+		dashv2alpha1.DashboardResourceInfo,
 		nil, // do not register library panel
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
-			dto := &dashv2.DashboardWithAccessInfo{}
-			dash, ok := obj.(*dashv2.Dashboard)
+			dto := &dashv2alpha1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashv2alpha1.Dashboard)
+			if ok {
+				dto.Dashboard = *dash
+			}
+			if access != nil {
+				err = b.scheme.Convert(access, &dto.Access, nil)
+			}
+			return dto, err
+		}); err != nil {
+		return err
+	}
+
+	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+		dashv2beta1.DashboardResourceInfo,
+		nil, // do not register library panel
+		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &dashv2beta1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashv2beta1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
 			}
@@ -507,9 +546,21 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 	// Expose read only library panels
 	if libraryPanels != nil {
-		storage[libraryPanels.StoragePath()] = &LibraryPanelStore{
-			Access:       b.legacy.Access,
-			ResourceInfo: *libraryPanels,
+		legacyLibraryStore := &LibraryPanelStore{
+			Access:        b.legacy.Access,
+			ResourceInfo:  *libraryPanels,
+			AccessControl: b.accessControl,
+		}
+
+		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		libraryGr := libraryPanels.GroupResource()
+		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStore)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -520,7 +571,8 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := dashv0.GetOpenAPIDefinitions(ref)
 		maps.Copy(defs, dashv1.GetOpenAPIDefinitions(ref))
-		maps.Copy(defs, dashv2.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, dashv2alpha1.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, dashv2beta1.GetOpenAPIDefinitions(ref))
 		return defs
 	}
 }

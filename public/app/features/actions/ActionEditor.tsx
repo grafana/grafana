@@ -9,7 +9,7 @@ import {
   VariableSuggestion,
   ActionVariable,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   Switch,
   Field,
@@ -40,7 +40,7 @@ const LABEL_WIDTH = 13;
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
   };

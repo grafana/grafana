@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"slices"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,6 +21,7 @@ import (
 
 var (
 	ErrAlreadyInRepository = errors.New("already in repository")
+	ErrDuplicateName       = errors.New("duplicate name in repository")
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
 
@@ -90,19 +92,29 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	if title == "" {
 		title = name
 	}
-	folder := meta.GetFolder()
 
+	folder := meta.GetFolder()
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
-	fid, ok := r.folders.Tree().DirPath(folder, rootFolder)
-	if !ok {
-		return "", fmt.Errorf("folder not found in tree: %s", folder)
+
+	// If no folder is specified in the file, set it to the root to ensure everything is written under it
+	var fid Folder
+	if folder == "" {
+		fid = Folder{ID: rootFolder}
+		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
+	} else {
+		var ok bool
+		fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
+		if !ok {
+			return "", fmt.Errorf("folder %s NOT found in tree with root: %s", folder, rootFolder)
+		}
 	}
 
 	fileName := slugify.Slugify(title) + ".json"
 	if fid.Path != "" {
 		fileName = safepath.Join(fid.Path, fileName)
 	}
+
 	if options.Path != "" {
 		fileName = safepath.Join(options.Path, fileName)
 	}
@@ -121,7 +133,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
 	if err != nil {
-		return "", fmt.Errorf("failed to write file: %w", err)
+		return "", fmt.Errorf("failed to write file: %s, %w", fileName, err)
 	}
 
 	return fileName, nil
@@ -151,7 +163,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	existing, found := r.resourcesLookup[id]
 	if found {
-		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s", parsed.Obj.GetName(), path, existing)
+		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName)
 	}
 	r.resourcesLookup[id] = path
 
@@ -206,6 +218,10 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return objName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+		}
+
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
 	}
 

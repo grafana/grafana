@@ -17,31 +17,27 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/search/sort"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestAlertRuleService(t *testing.T) {
+// note: additional integration tests are in /pkg/tests/api/alerting/api_provisioning_test.go
+
+func TestIntegrationAlertRuleService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
@@ -754,7 +750,10 @@ func TestAlertRuleService(t *testing.T) {
 	})
 }
 
-func TestCreateAlertRule(t *testing.T) {
+func TestIntegrationCreateAlertRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)
@@ -1980,90 +1979,6 @@ func TestDeleteRuleGroups(t *testing.T) {
 
 		deletes := getDeletedRules(t, ruleStore)
 		require.Empty(t, deletes)
-	})
-}
-
-func TestProvisiongWithFullpath(t *testing.T) {
-	tracer := tracing.InitializeTracerForTest()
-	inProcBus := bus.ProvideBus(tracer)
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
-	ac := acmock.New()
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	fStore := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(
-		fStore, ac, inProcBus, dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
-	ruleService := createAlertRuleService(t, folderService)
-	var orgID int64 = 1
-
-	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
-		orgID: {
-			dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
-			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
-			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
-	}}
-	namespaceUID := "my-namespace"
-	namespaceTitle := namespaceUID
-	rootFolder, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          namespaceUID,
-		Title:        namespaceTitle,
-		OrgID:        orgID,
-		SignedInUser: &signedInUser,
-	})
-	require.NoError(t, err)
-
-	t.Run("for a rule under a root folder should set the right fullpath", func(t *testing.T) {
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(&signedInUser), []models.AlertRule{
-			createTestRule("my-cool-group", "my-cool-group", orgID, namespaceUID),
-		})
-		require.NoError(t, err)
-		require.Len(t, r, 1)
-
-		res, err := ruleService.GetAlertRuleWithFolderFullpath(context.Background(), &signedInUser, r[0].UID)
-		require.NoError(t, err)
-		assert.Equal(t, namespaceTitle, res.FolderFullpath)
-
-		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(context.Background(), &signedInUser, namespaceUID, "my-cool-group")
-		require.NoError(t, err)
-		assert.Equal(t, namespaceTitle, res2.FolderFullpath)
-
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, &FilterOptions{NamespaceUIDs: []string{namespaceUID}})
-		require.NoError(t, err)
-		assert.Equal(t, namespaceTitle, res3[0].FolderFullpath)
-	})
-
-	t.Run("for a rule under a subfolder should set the right fullpath", func(t *testing.T) {
-		otherNamespaceUID := "my-other-namespace"
-		otherNamespaceTitle := "my-other-namespace containing multiple //"
-		_, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          otherNamespaceUID,
-			Title:        otherNamespaceTitle,
-			OrgID:        orgID,
-			ParentUID:    rootFolder.UID,
-			SignedInUser: &signedInUser,
-		})
-		require.NoError(t, err)
-
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(&signedInUser), []models.AlertRule{
-			createTestRule("my-cool-group-2", "my-cool-group-2", orgID, otherNamespaceUID),
-		})
-		require.NoError(t, err)
-		require.Len(t, r, 1)
-
-		res, err := ruleService.GetAlertRuleWithFolderFullpath(context.Background(), &signedInUser, r[0].UID)
-		require.NoError(t, err)
-		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res.FolderFullpath)
-
-		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(context.Background(), &signedInUser, otherNamespaceUID, "my-cool-group-2")
-		require.NoError(t, err)
-		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res2.FolderFullpath)
-
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, &FilterOptions{NamespaceUIDs: []string{otherNamespaceUID}})
-		require.NoError(t, err)
-		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res3[0].FolderFullpath)
 	})
 }
 

@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Field, Stack } from '@grafana/ui';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
@@ -18,7 +18,6 @@ interface FormModel {
 const initialFormModel: FormModel = { folderName: '' };
 
 export function NewFolderForm({ onCancel, onConfirm }: Props) {
-  const { t } = useTranslate();
   const {
     handleSubmit,
     register,
@@ -29,18 +28,6 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
     'browse-dashboards.action.new-folder-name-required-phrase',
     'Folder name is required.'
   );
-  const validateFolderName = async (folderName: string) => {
-    try {
-      await validationSrv.validateNewFolderName(folderName);
-      return true;
-    } catch (e) {
-      if (e instanceof Error) {
-        return e.message;
-      } else {
-        throw e;
-      }
-    }
-  };
 
   const fieldNameLabel = t('browse-dashboards.new-folder-form.name-label', 'Folder name');
 
@@ -75,4 +62,17 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
       </Stack>
     </form>
   );
+}
+
+export async function validateFolderName(folderName: string) {
+  try {
+    await validationSrv.validateNewFolderName(folderName);
+    return true;
+  } catch (e) {
+    if (e instanceof Error) {
+      return e.message;
+    } else {
+      throw e;
+    }
+  }
 }

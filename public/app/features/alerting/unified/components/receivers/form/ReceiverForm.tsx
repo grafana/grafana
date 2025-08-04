@@ -3,7 +3,7 @@ import * as React from 'react';
 import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -82,7 +82,6 @@ export function ReceiverForm<R extends ChannelValues>({
   });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
-  const { t } = useTranslate();
 
   const {
     handleSubmit,

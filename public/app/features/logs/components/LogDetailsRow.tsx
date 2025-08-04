@@ -14,7 +14,7 @@ import {
   LogLabelStatsModel,
   LogRowModel,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   ClipboardButton,
@@ -83,6 +83,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
     }),
     copyButton: css({
       '& > button': {
+        gap: 0,
         color: theme.colors.text.secondary,
         padding: 0,
         justifyContent: 'center',
