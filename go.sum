@@ -1640,8 +1640,6 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956 h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956/go.mod h1:RRvSjHH12/PnQaXraMO65jUhVu8n59mzvhfIMBETnV4=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b h1:QyJLJn3xwFTIXu9KPZujsrIUN0X8DdiR9b2h75L0AfI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:6OKkPWDB8PetDXqMVMOWL35iTCEUdpATwwpuew0k8+o=
-github.com/grafana/grafana/pkg/build v0.0.0-20250723123809-7c872f0e8aa6 h1:gCHm/uFe5z8+md7pz4O2pQDfUOkiapUcL5WMfnB4XgI=
-github.com/grafana/grafana/pkg/build v0.0.0-20250723123809-7c872f0e8aa6/go.mod h1:ZZbu2nww0Z/e5Z0yE+5GnTr673zdFIdqguSgeg26OX8=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b h1:m78RNSvTseSpvwQYe5HcdsiADSw4vj6+QUppuCL63gw=
