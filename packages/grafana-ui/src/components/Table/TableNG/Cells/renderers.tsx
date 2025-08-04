@@ -66,6 +66,13 @@ function isCustomCellOptions(options: TableCellOptions): options is TableCustomC
   return options.type === TableCellDisplayMode.Custom;
 }
 
+function mixinAutoCellStyles(fn: TableCellStyles): TableCellStyles {
+  return (theme, options) => {
+    const styles = fn(theme, options);
+    return clsx(styles, getAutoCellStyles(theme, options));
+  };
+}
+
 const CUSTOM_RENDERER: TableCellRenderer = (props) => {
   if (!isCustomCellOptions(props.cellOptions) || !props.cellOptions.cellComponent) {
     return null; // nonsensical case, but better to typeguard it than throw.
@@ -85,11 +92,11 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], { renderer: TableCellRend
   },
   [TableCellDisplayMode.ColorBackground]: {
     renderer: AUTO_RENDERER,
-    getStyles: (theme, opts) => clsx(getAutoCellStyles(theme, opts), getColorCellStyles(theme, opts)),
+    getStyles: mixinAutoCellStyles(getColorCellStyles),
   },
   [TableCellDisplayMode.ColorText]: {
     renderer: AUTO_RENDERER,
-    getStyles: (theme, opts) => clsx(getAutoCellStyles(theme, opts), getColorCellStyles(theme, opts)),
+    getStyles: mixinAutoCellStyles(getColorCellStyles),
   },
   [TableCellDisplayMode.Custom]: {
     renderer: CUSTOM_RENDERER,
@@ -111,7 +118,7 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], { renderer: TableCellRend
   },
   [TableCellDisplayMode.JSONView]: {
     renderer: AUTO_RENDERER,
-    getStyles: (theme, opts) => clsx(getAutoCellStyles(theme, opts), getJsonCellStyles(theme, opts)),
+    getStyles: mixinAutoCellStyles(getJsonCellStyles),
   },
   [TableCellDisplayMode.Pill]: {
     renderer: PILL_RENDERER,
