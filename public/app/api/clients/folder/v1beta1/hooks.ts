@@ -1,7 +1,7 @@
 import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
-import { isEqual } from 'lodash';
 
 import { config } from '@grafana/runtime';
+import { useGetFolderQuery as useGetFolderQueryLegacy } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
 
 import kbn from '../../../../core/utils/kbn';
@@ -14,7 +14,6 @@ import {
   DeprecatedInternalId,
   ManagerKind,
 } from '../../../../features/apiserver/types';
-import { useGetFolderQuery as useGetFolderQueryLegacy } from '../../../../features/browse-dashboards/api/browseDashboardsAPI';
 import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
 import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
@@ -132,9 +131,6 @@ export function useGetFolderQueryFacade(uid?: string) {
         }));
     }
   }
-
-  // TODO: we should be able to log if there is a difference
-  console.log(newData, legacyFolderResult.data, isEqual(newData, legacyFolderResult.data));
 
   // Wrap the stitched data into single RTK query response type object so this looks like a single API call
   return {
