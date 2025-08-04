@@ -61,7 +61,7 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onRequestError = (error: unknown, info: ProvisionedOperationInfo) => {
+  const onRequestError = (error: unknown) => {
     appEvents.publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'), error],

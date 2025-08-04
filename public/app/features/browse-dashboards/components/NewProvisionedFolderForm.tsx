@@ -225,7 +225,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
       <RepoInvalidStateBanner
         noRepository={!initialValues}
         isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage="To delete this folder, please remove the folder from your repository."
+        readOnlyMessage="To create this folder, please add the resource in your repository directly."
       />
     );
   }
