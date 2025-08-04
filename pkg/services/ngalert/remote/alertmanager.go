@@ -6,12 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
@@ -21,7 +25,9 @@ import (
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
+	common_config "github.com/prometheus/common/config"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -33,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
+	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 type stateStore interface {
@@ -269,7 +276,7 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return fmt.Errorf("unable to build configuration: %w", err)
 	}
 	// Send the configuration only if we need to.
-	if !am.shouldSendConfig(ctx, payload.Hash) {
+	if !am.shouldSendConfig(ctx, payload) {
 		return nil
 	}
 
@@ -428,7 +435,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	if err != nil {
 		return fmt.Errorf("unable to build configuration: %w", err)
 	}
-
+	am.log.Debug("Sending configuration", "hash", payload.Hash, "default", payload.Default)
 	return am.sendConfiguration(ctx, payload)
 }
 
@@ -682,8 +689,8 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool {
-	if hash == "" { // empty hash means that something went wrong while calculating it. In this case, always send the config.
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, newCfg remoteClient.UserGrafanaConfig) bool {
+	if newCfg.Hash == "" { // empty hash means that something went wrong while calculating it. In this case, always send the config.
 		return true
 	}
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
@@ -692,8 +699,9 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool 
 		am.log.Warn("Unable to get the remote Alertmanager configuration for comparison, sending the configuration without comparing", "err", err)
 		return true
 	}
-	if rc.Hash != hash {
-		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration", "remote", rc.Hash, "local", hash)
+	if rc.Hash != newCfg.Hash {
+		diffPaths := am.logDiff(rc, &newCfg)
+		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration", "remoteHash", rc.Hash, "hash", newCfg.Hash, "diff", diffPaths)
 		return true
 	}
 	return false
@@ -708,4 +716,30 @@ func calculateUserGrafanaConfigHash(config remoteClient.UserGrafanaConfig) (stri
 	hasher := fnv.New64a()
 	hash.DeepHashObject(hasher, &config)
 	return fmt.Sprintf("%x", hasher.Sum64()), nil
+}
+
+func (am *Alertmanager) logDiff(curCfg, newCfg *remoteClient.UserGrafanaConfig) []string {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Warn("Panic while comparing configurations", "err", r)
+		}
+	}()
+	var reporter cmputil.DiffReporter
+	cOpt := []cmp.Option{
+		cmp.Reporter(&reporter),
+		cmpopts.EquateEmpty(),
+		cmpopts.SortMaps(func(a, b string) bool {
+			return a < b
+		}),
+		cmpopts.IgnoreFields(remoteClient.UserGrafanaConfig{}, "Hash", "CreatedAt", "Default"),
+		cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}, common_config.ProxyConfig{}, time.Location{}),
+	}
+	_ = cmp.Equal(curCfg, newCfg, cOpt...)
+	paths := reporter.Diffs.Paths()
+	// Deduplicate paths using map
+	uniquePaths := make(map[string]struct{}, len(paths))
+	for _, path := range paths {
+		uniquePaths[path] = struct{}{}
+	}
+	return slices.Collect(maps.Keys(uniquePaths))
 }
