@@ -19,7 +19,6 @@ jobs:
             GCOM_TOKEN=ephemeral-instances-bot:gcom-token
             REGISTRY=ephemeral-instances-bot:registry
             GCP_SA_ACCOUNT_KEY_BASE64=ephemeral-instances-bot:sa-key
-          # ... (konfigurasi yang sama)
       
       - name: 🔍 PROOF OF CONCEPT - Secret Access Evidence
         run: |

