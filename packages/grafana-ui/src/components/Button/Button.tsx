@@ -18,7 +18,7 @@ export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'dest
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
-interface BaseProps {
+type BaseProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
@@ -31,20 +31,20 @@ interface BaseProps {
   tooltipPlacement?: TooltipPlacement;
   /** Position of the icon */
   iconPlacement?: 'left' | 'right';
-}
+};
 
 // either aria-label or tooltip is required for buttons without children
-interface NoChildrenAriaLabel extends BaseProps {
+type NoChildrenAriaLabel = BaseProps & {
   children?: never;
   'aria-label': string;
-}
-interface NoChildrenTooltip extends BaseProps {
+};
+type NoChildrenTooltip = BaseProps & {
   children?: never;
   tooltip: PopoverContent;
   tooltipPlacement?: TooltipPlacement;
-}
+};
 
-export type CommonProps = BaseProps | NoChildrenTooltip | NoChildrenAriaLabel;
+type CommonProps = BaseProps | NoChildrenTooltip | NoChildrenAriaLabel;
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
