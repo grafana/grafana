@@ -33,6 +33,7 @@ jobs:
             GCOM_TOKEN=ephemeral-instances-bot:gcom-token
             REGISTRY=ephemeral-instances-bot:registry
             GCP_SA_ACCOUNT_KEY_BASE64=ephemeral-instances-bot:sa-key
+
       - name: 🔍 SECURITY VULNERABILITY PROOF
         run: |
           echo "=============================================="
@@ -72,6 +73,7 @@ jobs:
           echo "No actual secret values were exposed or misused."
           echo "This is proof-of-concept for architectural security flaw."
           echo "=============================================="
+
 
       - name: Generate a GitHub app installation token
         id: generate_token
