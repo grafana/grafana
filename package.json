@@ -188,7 +188,7 @@
     "eslint": "9.32.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-jest": "28.11.0",
+    "eslint-plugin-jest": "29.0.1",
     "eslint-plugin-jest-dom": "^5.4.0",
     "eslint-plugin-jsdoc": "50.6.3",
     "eslint-plugin-jsx-a11y": "6.10.2",
