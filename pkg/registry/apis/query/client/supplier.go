@@ -37,10 +37,6 @@ func NewSingleTenantClientSupplier(cfg *setting.Cfg, features featuremgmt.Featur
 	}
 }
 
-func (s *singleTenantClientSupplier) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, _ map[string]string) (clientapi.QueryDataClient, error) {
-	return s.client, nil
-}
-
 func (s *singleTenantClientSupplier) GetInstance(_ context.Context) (clientapi.Instance, error) {
 	return &singleTenantInstance{
 		client:   s.client,
