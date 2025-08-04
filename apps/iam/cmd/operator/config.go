@@ -19,12 +19,17 @@ type Config struct {
 	OTelConfig    simple.OpenTelemetryConfig
 	WebhookServer WebhookServerConfig
 	KubeConfig    *kubeconfig.NamespacedConfig
+	ZanzanaClient ZanzanaClientConfig
 }
 
 type WebhookServerConfig struct {
 	Port        int
 	TLSCertPath string
 	TLSKeyPath  string
+}
+
+type ZanzanaClientConfig struct {
+	Addr string
 }
 
 func LoadConfigFromEnv() (*Config, error) {
@@ -100,6 +105,8 @@ func LoadConfigFromEnv() (*Config, error) {
 		}
 		cfg.KubeConfig = kubeConfig
 	}
+
+	cfg.ZanzanaClient.Addr = os.Getenv("ZANZANA_ADDR")
 
 	return &cfg, nil
 }

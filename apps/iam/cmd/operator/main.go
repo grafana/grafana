@@ -51,6 +51,7 @@ func main() {
 			Enabled: true,
 		},
 	}
+
 	runner, err := operator.NewRunner(operatorConfig)
 	if err != nil {
 		logging.DefaultLogger.With("error", err).Error("Unable to create operator runner")
@@ -61,9 +62,16 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
+	// Create app config from operator config
+	appCfg := app.AppConfig{
+		ZanzanaClient: app.ZanzanaClientConfig{
+			Addr: cfg.ZanzanaClient.Addr,
+		},
+	}
+
 	// Run
 	logging.DefaultLogger.Info("Starting operator")
-	err = runner.Run(ctx, app.Provider(cfg))
+	err = runner.Run(ctx, app.Provider(appCfg))
 	if err != nil {
 		logging.DefaultLogger.With("error", err).Error("Operator exited with error")
 		panic(err)

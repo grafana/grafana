@@ -1,0 +1,258 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zanzana
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:corerole-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: corerole-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:globalrole-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: globalrole-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:globalrolebinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: globalrolebinding-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:resourcepermission-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: resourcepermission-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:role-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: role-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:rolebinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rolebinding-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:serviceaccount-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: serviceaccount-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:team-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: team-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:teambinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: teambinding-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zanzana:user-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: user-user
+subjects:
+  - kind: ServiceAccount
+    name: zanzana
+    namespace: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zanzana-config
+  namespace: default
+  labels:
+    name: zanzana
+data:
+  grafana.ini: |
+    app_mode = development
+    target = zanzana-server
+    [log]
+    level = info
+    [feature_toggles]
+    zanzana = true
+    authZGRPCServer = true
+    [zanzana.server]
+    allow_insecure = true
+    check_query_cache = true
+    signing_keys_url = http://localhost:6481/jwks
+    http_addr = 0.0.0.0:8080
+    [grpc_server]
+    enabled = true
+    address = 0.0.0.0:10000
+    [tracing.opentelemetry.otlp]
+    address = tempo.default.svc:4317
+    [server]
+    http_port = 3001
+    root_url =
+    router_logging = true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zanzana
+  namespace: default
+  labels:
+    name: zanzana
+spec:
+  ports:
+    - name: zanzana-zanzana-metrics
+      port: 3000
+      targetPort: 3000
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    name: zanzana
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zanzana
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: zanzana
+  template:
+    metadata:
+      labels:
+        name: zanzana
+    spec:
+      containers:
+        - command:
+            - grafana-server
+            - target
+            - --config=/etc/grafana-config/grafana.ini
+            - --homepath=/usr/share/grafana
+          env:
+            - name: GF_PATHS_CONFIG
+              value: /etc/grafana-config/grafana.ini
+          image: grafana/grafana-enterprise:latest
+          imagePullPolicy: IfNotPresent
+          name: zanzana
+          ports:
+            - containerPort: 3000
+              name: zanzana-metrics
+          resources:
+            requests:
+              cpu: 10m
+              memory: 40Mi
+          volumeMounts:
+            - mountPath: /etc/grafana-config
+              name: zanzana-config
+      serviceAccount: zanzana
+      volumes:
+        - configMap:
+            name: zanzana-config
+          name: zanzana-config
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zanzana-ingress
+  namespace: default
+spec:
+  rules:
+    - host: zanzana.k3d.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: zanzana
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+---
