@@ -190,7 +190,7 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "29.0.1",
     "eslint-plugin-jest-dom": "^5.4.0",
-    "eslint-plugin-jsdoc": "50.6.3",
+    "eslint-plugin-jsdoc": "52.0.2",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-lodash": "8.0.0",
     "eslint-plugin-no-barrel-files": "^1.1.1",
