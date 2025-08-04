@@ -6,11 +6,11 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, TagList, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
+import { Button, TagList, Text, TextLink, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
 
-import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { getAmMatcherFormatter } from '../../../utils/alertmanager';
+import { createContactPointSearchLink } from '../../../utils/misc';
 import { AlertInstanceMatch } from '../../../utils/notification-policies';
 import { CollapseToggle } from '../../CollapseToggle';
 import { MetaText } from '../../MetaText';
@@ -21,14 +21,8 @@ import { NotificationRouteDetailsModal } from './NotificationRouteDetailsModal';
 import UnknownContactPointDetails from './UnknownContactPointDetails';
 import { RouteWithPath } from './route';
 
-export interface ReceiverNameProps {
-  /** Receiver name taken from route definition. Used as a fallback when full receiver details cannot be found (in case of RBAC restrictions) */
-  receiverNameFromRoute?: string;
-}
-
-interface NotificationRouteHeaderProps extends ReceiverNameProps {
+interface NotificationRouteHeaderProps {
   route: RouteWithPath;
-  receiver?: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   instancesCount: number;
   alertManagerSourceName: string;
@@ -38,8 +32,6 @@ interface NotificationRouteHeaderProps extends ReceiverNameProps {
 
 function NotificationRouteHeader({
   route,
-  receiver,
-  receiverNameFromRoute,
   routesByIdMap,
   instancesCount,
   alertManagerSourceName,
@@ -82,10 +74,22 @@ function NotificationRouteHeader({
           </MetaText>
           <Stack gap={1} direction="row" alignItems="center">
             <div>
-              <span className={styles.textMuted}>
-                <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>
-              </span>{' '}
-              {receiver ? receiver.name : <UnknownContactPointDetails receiverName={receiverNameFromRoute} />}
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>{' '}
+                {route.receiver != null ? (
+                  <TextLink
+                    variant="bodySmall"
+                    href={createContactPointSearchLink(route.receiver, alertManagerSourceName)}
+                    color="primary"
+                    inline={false}
+                    external
+                  >
+                    {route.receiver}
+                  </TextLink>
+                ) : (
+                  <UnknownContactPointDetails receiverName={route.receiver ?? 'unknown'} />
+                )}
+              </Text>
             </div>
 
             <div className={styles.verticalBar} />
@@ -100,8 +104,6 @@ function NotificationRouteHeader({
         <NotificationRouteDetailsModal
           onClose={() => setShowDetails(false)}
           route={route}
-          receiver={receiver}
-          receiverNameFromRoute={receiverNameFromRoute}
           routesByIdMap={routesByIdMap}
           alertManagerSourceName={alertManagerSourceName}
         />
@@ -110,9 +112,8 @@ function NotificationRouteHeader({
   );
 }
 
-interface NotificationRouteProps extends ReceiverNameProps {
+interface NotificationRouteProps {
   route: RouteWithPath;
-  receiver?: Receiver;
   instanceMatches: AlertInstanceMatch[];
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
@@ -121,8 +122,6 @@ interface NotificationRouteProps extends ReceiverNameProps {
 export function NotificationRoute({
   route,
   instanceMatches,
-  receiver,
-  receiverNameFromRoute,
   routesByIdMap,
   alertManagerSourceName,
 }: NotificationRouteProps) {
@@ -136,8 +135,6 @@ export function NotificationRoute({
     <div data-testid="matching-policy-route">
       <NotificationRouteHeader
         route={route}
-        receiver={receiver}
-        receiverNameFromRoute={receiverNameFromRoute}
         routesByIdMap={routesByIdMap}
         instancesCount={instanceMatches.length}
         alertManagerSourceName={alertManagerSourceName}

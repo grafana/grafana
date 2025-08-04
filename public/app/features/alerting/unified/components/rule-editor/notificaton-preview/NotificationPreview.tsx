@@ -10,6 +10,7 @@ import { Folder, KBObjectArray } from '../../../types/rule-form';
 import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
+const NotificationPreviewForGrafanaManaged = lazy(() => import('./NotificationPreviewGrafanaManaged'));
 
 interface NotificationPreviewProps {
   customLabels: KBObjectArray;
@@ -99,14 +100,23 @@ export const NotificationPreview = ({
             <LoadingPlaceholder text={t('alerting.notification-preview.text-loading-preview', 'Loading preview...')} />
           }
         >
-          {alertManagerDataSources.map((alertManagerSource) => (
-            <NotificationPreviewByAlertManager
-              alertManagerSource={alertManagerSource}
-              potentialInstances={potentialInstances}
-              onlyOneAM={onlyOneAM}
-              key={alertManagerSource.name}
-            />
-          ))}
+          {alertManagerDataSources.map((alertManagerSource) =>
+            alertManagerSource.name === 'grafana' ? (
+              <NotificationPreviewForGrafanaManaged
+                alertManagerSource={alertManagerSource}
+                potentialInstances={potentialInstances}
+                onlyOneAM={onlyOneAM}
+                key={alertManagerSource.name}
+              />
+            ) : (
+              <NotificationPreviewByAlertManager
+                alertManagerSource={alertManagerSource}
+                potentialInstances={potentialInstances}
+                onlyOneAM={onlyOneAM}
+                key={alertManagerSource.name}
+              />
+            )
+          )}
         </Suspense>
       )}
     </Stack>

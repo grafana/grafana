@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 
+import { useMatchAlertInstancesToNotificationPolicies } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
@@ -8,9 +9,6 @@ import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { AlertManagerDataSource } from '../../../utils/datasource';
-
-import { NotificationRoute } from './NotificationRoute';
-import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
 
 function NotificationPreviewByAlertManager({
   alertManagerSource,
@@ -22,11 +20,7 @@ function NotificationPreviewByAlertManager({
   onlyOneAM: boolean;
 }) {
   const styles = useStyles2(getStyles);
-
-  const { routesByIdMap, matchingMap, loading, error } = useAlertmanagerNotificationRoutingPreview(
-    alertManagerSource.name,
-    potentialInstances
-  );
+  const { matchInstancesToPolicies, isLoading, error } = useMatchAlertInstancesToNotificationPolicies();
 
   if (error) {
     const title = t('alerting.notification-preview.error', 'Could not load routing preview for {{alertmanager}}', {
@@ -39,7 +33,7 @@ function NotificationPreviewByAlertManager({
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <LoadingPlaceholder
         text={t(
@@ -50,7 +44,10 @@ function NotificationPreviewByAlertManager({
     );
   }
 
-  const matchingPoliciesFound = matchingMap.size > 0;
+  const matchingResult = matchInstancesToPolicies(potentialInstances.map((instance) => Object.entries(instance)));
+  console.log(matchingResult);
+
+  const matchingPoliciesFound = Array.from(matchingResult.values()).some((result) => result.matchedPolicies.size > 0);
 
   return matchingPoliciesFound ? (
     <div className={styles.alertManagerRow}>
@@ -66,22 +63,7 @@ function NotificationPreviewByAlertManager({
         </Stack>
       )}
       <Stack gap={1} direction="column">
-        {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
-          const route = routesByIdMap.get(routeId);
-
-          if (!route) {
-            return null;
-          }
-          return (
-            <NotificationRoute
-              instanceMatches={instanceMatches}
-              route={route}
-              key={routeId}
-              routesByIdMap={routesByIdMap}
-              alertManagerSourceName={alertManagerSource.name}
-            />
-          );
-        })}
+        {/* @TODO build visuals for route matcher */}
       </Stack>
     </div>
   ) : null;
