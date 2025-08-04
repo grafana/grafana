@@ -72,24 +72,6 @@ async function getAllMetricNamesCompletions(
 ): Promise<Completion[]> {
   let metricNames = await dataProvider.queryMetricNames(timeRange, searchTerm);
 
-  if (
-    config.featureToggles.prometheusCodeModeMetricNamesSearch &&
-    metricNames.length > dataProvider.metricNamesSuggestionLimit
-  ) {
-    const { monacoSettings } = dataProvider;
-    monacoSettings.enableAutocompleteSuggestionsUpdate();
-
-    if (monacoSettings.inputInRange) {
-      metricNames = filterMetricNames({
-        metricNames,
-        inputText: monacoSettings.inputInRange,
-        limit: dataProvider.metricNamesSuggestionLimit,
-      });
-    } else {
-      metricNames = metricNames.slice(0, dataProvider.metricNamesSuggestionLimit);
-    }
-  }
-
   return dataProvider.metricNamesToMetrics(metricNames).map((metric) => ({
     type: 'METRIC_NAME',
     label: metric.name,
