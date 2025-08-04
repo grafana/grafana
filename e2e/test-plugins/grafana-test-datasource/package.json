@@ -1,5 +1,5 @@
 {
-  "name": "@test-plugins/extensions-test-app",
+  "name": "@test-plugins/grafana-e2etest-datasource",
   "version": "11.5.8",
   "private": true,
   "scripts": {
@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --ignore-path ./.gitignore --ext .js,.jsx,.ts,.tsx ."
   },
-  "author": "Grafana Labs",
+  "author": "Grafana",
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
