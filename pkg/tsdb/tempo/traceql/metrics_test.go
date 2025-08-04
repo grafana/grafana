@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 	"github.com/stretchr/testify/assert"
@@ -113,7 +112,6 @@ func TestTransformMetricsResponse_MultipleSeries(t *testing.T) {
 }
 
 func TestTransformInstantMetricsResponse(t *testing.T) {
-	query := &dataquery.TempoQuery{}
 	resp := tempopb.QueryInstantResponse{
 		Series: []*tempopb.InstantSeries{
 			{
@@ -123,7 +121,7 @@ func TestTransformInstantMetricsResponse(t *testing.T) {
 		},
 	}
 
-	frames := TransformInstantMetricsResponse(query, resp)
+	frames := TransformInstantMetricsResponse(resp)
 
 	assert.Len(t, frames, 1)
 	frame := frames[0]
