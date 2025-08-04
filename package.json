@@ -243,6 +243,7 @@
     "webpack-dev-server": "5.1.0",
     "webpack-manifest-plugin": "5.0.0",
     "webpack-merge": "5.10.0",
+    "webpack-subresource-integrity": "^5.2.0-rc.1",
     "webpackbar": "^6.0.0",
     "yaml": "^2.0.0",
     "yargs": "^17.5.1"
