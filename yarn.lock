@@ -2545,8 +2545,8 @@ __metadata:
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
     "@kusto/monaco-kusto": "npm:^10.0.0"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
@@ -2590,7 +2590,7 @@ __metadata:
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/sql": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
@@ -2620,8 +2620,8 @@ __metadata:
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
@@ -2661,8 +2661,8 @@ __metadata:
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/d3-random": "npm:^3.0.2"
@@ -2703,8 +2703,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
@@ -2748,8 +2748,8 @@ __metadata:
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/d3-random": "npm:^3.0.2"
@@ -2791,7 +2791,7 @@ __metadata:
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/sql": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
@@ -2823,7 +2823,7 @@ __metadata:
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/sql": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
@@ -2853,7 +2853,7 @@ __metadata:
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/lodash": "npm:4.17.20"
@@ -2889,8 +2889,8 @@ __metadata:
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/debounce-promise": "npm:3.1.9"
@@ -2943,8 +2943,8 @@ __metadata:
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.36.0"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/jest": "npm:29.5.14"
@@ -2995,8 +2995,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.20"
@@ -3258,7 +3258,7 @@ __metadata:
     "@grafana/ui": "npm:12.2.0-pre"
     "@leeoniya/ufuzzy": "npm:1.0.18"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
-    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -3382,7 +3382,7 @@ __metadata:
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.2.0-pre"
-    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -3501,7 +3501,7 @@ __metadata:
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-json": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/debounce-promise": "npm:3.1.9"
@@ -3560,7 +3560,7 @@ __metadata:
     "@grafana/ui": "npm:12.2.0-pre"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@rollup/plugin-terser": "npm:0.4.4"
-    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/history": "npm:4.7.11"
@@ -3666,7 +3666,7 @@ __metadata:
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.2.0-pre"
     "@react-awesome-query-builder/ui": "npm:6.6.15"
-    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -3763,8 +3763,8 @@ __metadata:
     "@storybook/test-runner": "npm:^0.23.0"
     "@storybook/theming": "npm:^8.6.2"
     "@tanstack/react-virtual": "npm:^3.5.1"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/chance": "npm:^1.1.7"
@@ -8725,7 +8725,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@testing-library/dom@npm:10.4.0, @testing-library/dom@npm:>=7":
+"@testing-library/dom@npm:10.4.0":
   version: 10.4.0
   resolution: "@testing-library/dom@npm:10.4.0"
   dependencies:
@@ -8738,6 +8738,22 @@ __metadata:
     lz-string: "npm:^1.5.0"
     pretty-format: "npm:^27.0.2"
   checksum: 10/05825ee9a15b88cbdae12c137db7111c34069ed3c7a1bd03b6696cb1b37b29f6f2d2de581ebf03033e7df1ab7ebf08399310293f440a4845d95c02c0a9ecc899
+  languageName: node
+  linkType: hard
+
+"@testing-library/dom@npm:10.4.1, @testing-library/dom@npm:>=7":
+  version: 10.4.1
+  resolution: "@testing-library/dom@npm:10.4.1"
+  dependencies:
+    "@babel/code-frame": "npm:^7.10.4"
+    "@babel/runtime": "npm:^7.12.5"
+    "@types/aria-query": "npm:^5.0.1"
+    aria-query: "npm:5.3.0"
+    dom-accessibility-api: "npm:^0.5.9"
+    lz-string: "npm:^1.5.0"
+    picocolors: "npm:1.1.1"
+    pretty-format: "npm:^27.0.2"
+  checksum: 10/7f93e09ea015f151f8b8f42cbab0b2b858999b5445f15239a72a612ef7716e672b14c40c421218194cf191cbecbde0afa6f3dc2cc83dda93ff6a4fb0237df6e6
   languageName: node
   linkType: hard
 
@@ -8756,18 +8772,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:6.6.3, @testing-library/jest-dom@npm:^6.1.2, @testing-library/jest-dom@npm:^6.6.3":
-  version: 6.6.3
-  resolution: "@testing-library/jest-dom@npm:6.6.3"
+"@testing-library/jest-dom@npm:6.6.4, @testing-library/jest-dom@npm:^6.1.2, @testing-library/jest-dom@npm:^6.6.3":
+  version: 6.6.4
+  resolution: "@testing-library/jest-dom@npm:6.6.4"
   dependencies:
     "@adobe/css-tools": "npm:^4.4.0"
     aria-query: "npm:^5.0.0"
-    chalk: "npm:^3.0.0"
     css.escape: "npm:^1.5.1"
     dom-accessibility-api: "npm:^0.6.3"
     lodash: "npm:^4.17.21"
+    picocolors: "npm:^1.1.1"
     redent: "npm:^3.0.0"
-  checksum: 10/1f3427e45870eab9dcc59d6504b780d4a595062fe1687762ae6e67d06a70bf439b40ab64cf58cbace6293a99e3764d4647fdc8300a633b721764f5ce39dade18
+  checksum: 10/5e67112c789f884fb75b279c2cddfdd0995a012a7847a03c474e4134f0d213934ee70c97433bca26b45e3a5ffa56faafe6499c8e57841179c4f2bd80eef429cd
   languageName: node
   linkType: hard
 
@@ -18254,8 +18270,8 @@ __metadata:
     "@stylistic/eslint-plugin-ts": "npm:^4.0.0"
     "@swc/core": "npm:1.13.3"
     "@swc/helpers": "npm:0.5.17"
-    "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/babel__core": "npm:^7"
@@ -25295,7 +25311,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picocolors@npm:^1.0.0, picocolors@npm:^1.1.1":
+"picocolors@npm:1.1.1, picocolors@npm:^1.0.0, picocolors@npm:^1.1.1":
   version: 1.1.1
   resolution: "picocolors@npm:1.1.1"
   checksum: 10/e1cf46bf84886c79055fdfa9dcb3e4711ad259949e3565154b004b260cd356c5d54b31a1437ce9782624bf766272fe6b0154f5f0c744fb7af5d454d2b60db045
