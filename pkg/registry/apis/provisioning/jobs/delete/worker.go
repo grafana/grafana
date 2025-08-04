@@ -8,7 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -167,12 +167,12 @@ func deduplicatePaths(paths []string) []string {
 		return paths
 	}
 
-	seen := make(map[string]bool, len(paths))
+	seen := make(map[string]struct{}, len(paths))
 	result := make([]string, 0, len(paths))
 
 	for _, path := range paths {
-		if !seen[path] {
-			seen[path] = true
+		if _, exists := seen[path]; !exists {
+			seen[path] = struct{}{}
 			result = append(result, path)
 		}
 	}

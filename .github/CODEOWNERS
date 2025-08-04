@@ -72,9 +72,12 @@
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 
-/pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
+# Git Sync / App Platform Provisioning
+/apps/provisioning/ @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
+/pkg/tests/apis/provisioning @grafana/grafana-git-ui-sync-team
+# Git Sync frontend owned by frontent team as a whole.
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
@@ -408,6 +411,18 @@
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/ @grafana/grafana-frontend-platform
 /e2e-playwright/dashboard-new-layouts @grafana/dashboards-squad
+/e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-search-navigate-organise
+/e2e-playwright/panels-suite/datagrid-data-change.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/datagrid-editing-features.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/frontend-sandbox-panel.spec.ts @grafana/plugins-platform-frontend
+/e2e-playwright/panels-suite/geomap-layer-types.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/geomap-map-controls.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/geomap-spatial-operations-transform.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/panelEdit_base.spec.ts @grafana/dashboards-squad
+/e2e-playwright/panels-suite/panelEdit_queries.spec.ts @grafana/dashboards-squad
+/e2e-playwright/panels-suite/panelEdit_transforms.spec.ts @grafana/datapro
+/e2e-playwright/panels-suite/table-kitchenSink.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/table-sparkline.spec.ts @grafana/dataviz-squad
 /e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /e2e-playwright/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
@@ -586,7 +601,7 @@
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /packages/grafana-schema/src/**/parca @grafana/oss-big-tent
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
-/packages/grafana-schema/src/**/publicdashboard @grafana/sharing-squad
+/packages/grafana-schema/src/**/publicdashboard @grafana/grafana-operator-experience-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad

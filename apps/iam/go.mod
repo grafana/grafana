@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/iam
 go 1.24.5
 
 require (
-	github.com/grafana/grafana-app-sdk v0.40.1
+	github.com/grafana/grafana-app-sdk v0.40.2
 	github.com/grafana/grafana-app-sdk/logging v0.40.0
 	github.com/grafana/grafana-app-sdk/plugin v0.40.0
 	github.com/grafana/grafana/apps/folder v0.0.0-20250724194522-d3b6d7c45e1e
@@ -53,6 +53,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.40.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

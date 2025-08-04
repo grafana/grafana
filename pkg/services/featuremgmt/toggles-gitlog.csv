@@ -360,7 +360,6 @@ appPlatformAccessTokens,2024-09-05T16:18:44Z,2024-10-14T10:47:18Z,d5ebaa0ef92ede
 appSidecar,2024-09-09T12:45:05Z,2025-04-10T20:04:12Z,5e2ac24890906e5070323d87730dd78a4f885963,Andrej Ocenas
 vizActions,2024-09-09T14:11:55Z,2025-02-26T23:15:01Z,af48d3db1eb2d8681843f5997e50fea5e5ea3096,Adela Almasan
 groupAttributeSync,2024-09-09T15:29:43Z,,6ded6a8872204a818b3795dc733cc5fe5db066a0,Aaron Godin
-kubernetesFolders,2024-09-10T09:22:08Z,2025-01-23T14:25:03Z,b12a29a1dac8b9aec4a99be08e1665939cb27dc5,Arati R.
 alertingFilterV2,2024-09-11T11:29:26Z,,90ee52e8d9c14237f8a57b622c0def7512e657cd,Gilles De Mey
 improvedExternalSessionHandling,2024-09-17T10:54:39Z,,41cd0f51800d4849345fc0980ca4173967fc8e9e,Misi
 datasourceAPIServers,2024-09-19T08:28:27Z,,f21a5987a22bcdb596d6a258d2960e4151348b63,Ryan McKinley
@@ -374,7 +373,6 @@ grafanaAPIServerTestingWithExperimentalAPIs,2024-10-03T10:11:40Z,2025-01-23T14:2
 pluginsSriChecks,2024-10-04T12:55:09Z,,0db65d229e36b78802c1e8bd0713ac44e7a7cdc7,Giuseppe Guerra
 onPremToCloudMigrationsAlerts,2024-10-07T10:53:24Z,2024-12-17T11:56:18Z,712314e8324fd86ec33ecb840f868eb1f1cac154,Matheus Macabu
 appPlatformGrpcClientAuth,2024-10-14T10:47:18Z,,a69ee676babc7644da41781efc5ae2c301f06de6,Claudiu Dragalina-Paraipan
-kubernetesDashboardsAPI,2024-10-15T19:30:05Z,2024-12-10T18:35:36Z,644a16048f034f6bc79883678f1f1a4b48233483,Stephanie Hingtgen
 unifiedStorageBigObjectsSupport,2024-10-17T10:18:29Z,,3457f219be1c8bce99f713d7a907ee339ef38229,Ryan McKinley
 timeRangeProvider,2024-10-22T10:52:33Z,,3bf3290340a7842bb1d83647343234b2e9e83b18,Andrej Ocenas
 dashboardNewLayouts,2024-10-23T08:55:45Z,,b700de81224caacd327fafb6ce0dfda8b38d39c6,Torkel Ödegaard
@@ -407,7 +405,6 @@ feedbackButton,2024-12-02T17:08:15Z,,8a1b89a5ebb847f6b29e92dcea796f00c30431d6,Mi
 elasticsearchCrossClusterSearch,2024-12-12T22:20:04Z,,b3a12f486eba69e20dd7ff3a3d4dd065ede7a99f,Isabella Siu
 unifiedHistory,2024-12-13T10:41:18Z,,aac62c89dae1092836a91d1b6ae6bd7127fe676a,Laura Fernández
 lokiLabelNamesQueryApi,2024-12-13T14:31:41Z,,5ac7443fcec0db412d3333044a82c2c26b5aece7,Sven Grossmann
-kubernetesCliDashboards,2024-12-13T22:55:43Z,2025-02-18T23:11:26Z,8f6e9f8ed0a5024a510cc337c9f1e6972bfb23d4,Stephanie Hingtgen
 useV2DashboardsAPI,2024-12-17T21:17:09Z,2025-03-12T17:43:32Z,070f0e4457c5967102ef157197073dc2662f6fb8,Dominik Prokop
 investigationsBackend,2024-12-18T08:31:03Z,,f46c07aba7b6faccd2ecafc83051d1410cacc867,Jackson Coelho
 unifiedStorageSearchSprinkles,2024-12-18T17:00:54Z,,4837585cab0fd84184a8c6f5d6891f442a2b95f1,owensmallwood
@@ -421,7 +418,6 @@ improvedExternalSessionHandlingSAML,2025-01-09T17:02:49Z,,c52ec21c75ab72c2f7d282
 teamHttpHeadersMimir,2025-01-13T10:42:47Z,,04acbcdef23f673bd6bbfdbbece29c9769ce155a,Eric Leijonmarck
 ABTestFeatureToggleA,2025-01-13T21:13:13Z,2025-05-27T19:18:23Z,009d7f42b3d09b3a6be1f00f07314e2b25af7ebc,Nathan Marrs
 ABTestFeatureToggleB,2025-01-13T21:13:13Z,2025-05-27T19:18:23Z,009d7f42b3d09b3a6be1f00f07314e2b25af7ebc,Nathan Marrs
-kubernetesFoldersServiceV2,2025-01-13T21:15:35Z,2025-02-18T23:11:26Z,766d645d827f5e6e0872ae30e5fe23226ae85785,maicon
 queryLibraryDashboards,2025-01-14T11:01:15Z,2025-02-14T16:39:22Z,740cd22fe51a3543c182857f31fc97fd42263306,Ashley Harrison
 elasticsearchImprovedParsing,2025-01-15T17:05:54Z,,bab55a4cb84f2ba57838f96a492ab9aa7f307957,Adam Yeats
 grafanaAdvisor,2025-01-20T10:08:00Z,,c1364d6be6f552203ba786f17a89664304b89247,Andres Martinez Gotor
@@ -440,7 +436,6 @@ alertingConversionAPI,2025-02-12T07:13:21Z,2025-04-05T08:27:02Z,9593e51da7c05ed5
 alertingJiraIntegration,2025-02-14T12:22:04Z,,af8cab92109ecfbb54625ff25a3b90a4f92dc46a,Sonia Aguilar
 alertingRuleVersionHistoryRestore,2025-02-17T12:25:32Z,,2014d27defe5668ba07913cec6f2186c90eaaab2,Sonia Aguilar
 newShareReportDrawer,2025-02-17T19:05:46Z,,9df6412e92559f2329c2baac0025f56fc57c5bf9,Ezequiel Victorero
-kubernetesClientDashboardsFolders,2025-02-18T23:11:26Z,,3e6f40c87386984be60e391b26a7559e3469dac3,Stephanie Hingtgen
 managedDualWriter,2025-02-19T14:50:39Z,,5a40c84568485da55ccb42998c6d291d310abd56,Ryan McKinley
 rendererDisableAppPluginsPreload,2025-02-24T14:43:06Z,,608d974585c696253ac629f3c7bfc3a0043cbd49,Agnès Toulet
 assetSriChecks,2025-03-04T10:56:35Z,,bbfeb8d220cc67c329aa2b5d6ed693ae1cb54325,Jack Westbrook

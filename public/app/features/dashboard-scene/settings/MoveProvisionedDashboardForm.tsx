@@ -13,11 +13,12 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { getTargetFolderPathInRepo } from 'app/features/browse-dashboards/components/BulkActions/utils';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler, ProvisionedOperationInfo } from '../utils/useProvisionedRequestHandler';
 
 import { buildResourceBranchRedirectUrl } from './utils';
 
@@ -74,8 +75,7 @@ export function MoveProvisionedDashboardForm({
       return;
     }
 
-    const folderAnnotations = targetFolder.metadata.annotations || {};
-    const targetFolderPath = folderAnnotations[AnnoKeySourcePath] || targetFolderTitle;
+    const targetFolderPath = getTargetFolderPathInRepo({ targetFolder });
 
     const filename = currentSourcePath.split('/').pop();
     const newPath = `${targetFolderPath}/${filename}`;
@@ -118,6 +118,7 @@ export function MoveProvisionedDashboardForm({
   };
 
   const onWriteSuccess = () => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     if (targetFolderUID && targetFolderTitle) {
       onSuccess(targetFolderUID, targetFolderTitle);
@@ -125,23 +126,40 @@ export function MoveProvisionedDashboardForm({
     navigate('/dashboards');
   };
 
-  const onBranchSuccess = () => {
+  const onBranchSuccess = (info: ProvisionedOperationInfo) => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
       paramName: 'new_pull_request_url',
       paramValue: moveRequest?.data?.urls?.newPullRequestURL,
-      repoType: moveRequest?.data?.repository?.type,
+      repoType: info.repoType,
     });
     navigate(url);
   };
 
+  const onError = (error: unknown) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [
+        t('dashboard-scene.move-provisioned-dashboard-form.alert-error-moving-dashboard', 'Error moving dashboard'),
+        error,
+      ],
+    });
+  };
+
   useProvisionedRequestHandler({
-    dashboard,
     request: moveRequest,
     workflow,
+    successMessage: t(
+      'dashboard-scene.move-provisioned-dashboard-form.success-message',
+      'Dashboard moved successfully'
+    ),
+    resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess,
+      onBranchSuccess: (_, info) => onBranchSuccess(info),
       onWriteSuccess,
+      onDismiss,
+      onError,
     },
   });
 
