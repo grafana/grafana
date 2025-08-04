@@ -5,8 +5,8 @@ go 1.24.5
 
 use (
 	. // skip:golangci-lint
-	./apps/playlist
 	./.citools/swagger
+	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apiserver
