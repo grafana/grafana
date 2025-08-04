@@ -3563,12 +3563,12 @@
       "tags-column": "Balises"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Dossier supprimé avec succès",
       "api-error": "Échec de la suppression du dossier",
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
-      "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :"
+      "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Impossible de récupérer les informations descendantes"
@@ -3611,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Erreur de création du dossier",
-      "alert-folder-created-successfully": "Le dossier a bien été créé",
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
@@ -3759,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Activer la sélection de types d’éléments expérimentaux",
-    "description-infinite-panning": "Activez le panoramique infini, utile pour les canvas étendus. Avertissement : il s’agit d’une fonctionnalité expérimentale qui ne fonctionne actuellement bien qu’avec des éléments contraints en haut/à gauche",
     "description-inline-editing": "Activer la modification directe du panneau",
     "description-pan-zoom": "Activer le zoom et le déplacement",
     "direction-options": {
@@ -3860,7 +3858,6 @@
     "name-align-text": "Alignement du texte",
     "name-color": "Couleur du texte",
     "name-experimental-types": "Types d’éléments expérimentaux",
-    "name-infinite-panning": "Panoramique infini",
     "name-inline-editing": "Édition en ligne",
     "name-pan-zoom": "Zoom et déplacement",
     "name-text": "Texte",
@@ -5645,6 +5642,7 @@
       "delete-read-only-file-message": "Ce tableau de bord ne peut pas être supprimé directement depuis Grafana, car le dépôt est en lecture seule. Pour le supprimer, veuillez retirer le fichier de votre dépôt Git.",
       "deleting": "Suppression…",
       "drawer-title": "Supprimer le tableau de bord provisionné",
+      "success-message": "",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
     "description-label": {
@@ -5656,9 +5654,6 @@
           "edit-link": "Modifier le lien"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Modifications du tableau de bord enregistrées avec succès"
     },
     "email-list": {
       "aria-label-emailmenu": "Basculer vers le menu des e-mails"
@@ -5818,6 +5813,7 @@
       "usage-count_other": "Utilisé sur {{count}} tableaux de bord"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5827,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -9365,6 +9362,15 @@
       "show-more": "afficher plus",
       "tooltip-error": "Erreur : {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Effacer",
       "close": "Fermer les détails du log",
@@ -11015,6 +11021,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Cette fonctionnalité est actuellement en cours de développement. Pour une expérience optimale et les dernières améliorations, nous vous recommandons d’utiliser la <2>compilation nocturne</2> de Grafana."
@@ -11874,7 +11883,7 @@
         "recommended": "Recommandé",
         "results": "Résultats"
       },
-      "search": "Rechercher"
+      "search": ""
     }
   },
   "search": {
@@ -12511,6 +12520,19 @@
       "label-medium": "Moyen",
       "label-small": "Petit"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Si cette option est sélectionnée, toute la ligne sera colorée comme cette cellule.",
       "description-wrap-text": "Si le texte sélectionné sera ajusté à la largeur du texte dans la colonne configurée",
@@ -12545,6 +12567,13 @@
       "label-alt-text": "Texte alternatif",
       "label-title-text": "Texte du titre"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Calcul",
     "name-cell-height": "Hauteur de cellule",
     "name-cell-type": "Type de cellule",
@@ -12561,7 +12590,10 @@
     "name-show-table-header": "Afficher l’en-tête du tableau",
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Tous les champs numériques"
+    "placeholder-fields": "Tous les champs numériques",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Options de cellule",

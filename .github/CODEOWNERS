@@ -73,7 +73,7 @@
 /.air.toml @macabu
 
 # Git Sync / App Platform Provisioning
-/pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
+/apps/provisioning/ @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/tests/apis/provisioning @grafana/grafana-git-ui-sync-team
@@ -84,6 +84,7 @@
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/plugins/ @grafana/plugins-platform-backend
+/apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend

@@ -13,7 +13,9 @@ use (
 	./apps/investigations
 	./apps/playlist
 	./apps/plugins
+	./apps/provisioning
 	./apps/secret
+	./apps/shorturl
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apiserver

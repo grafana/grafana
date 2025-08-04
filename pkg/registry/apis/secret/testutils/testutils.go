@@ -244,12 +244,43 @@ func CreateUserAuthContext(ctx context.Context, namespace string, permissions ma
 	return types.WithAuthInfo(ctx, requester)
 }
 
-func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, permissions []string) context.Context {
+func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, namespace string, permissions []string) context.Context {
 	requester := &identity.StaticRequester{
+		Namespace: namespace,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
 				Permissions:     permissions,
 				ServiceIdentity: serviceIdentity,
+			},
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
+}
+
+// CreateOBOAuthContext emulates a context where the request is made on-behalf-of (OBO) a user, with an access token.
+func CreateOBOAuthContext(
+	ctx context.Context,
+	serviceIdentity string,
+	namespace string,
+	userPermissions map[string][]string,
+	delegatedPermissions []string,
+) context.Context {
+	requester := &identity.StaticRequester{
+		Namespace: namespace,
+		Type:      types.TypeUser,
+		OrgID:     1,
+		UserID:    1,
+		Permissions: map[int64]map[string][]string{
+			1: userPermissions,
+		},
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				ServiceIdentity:      serviceIdentity,
+				DelegatedPermissions: delegatedPermissions,
+				Actor: &authn.ActorClaims{
+					Subject: "user:1",
+				},
 			},
 		},
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
@@ -28,9 +29,11 @@ func ProvideAppInstallers(
 	features featuremgmt.FeatureToggles,
 	playlistAppInstaller *playlist.PlaylistAppInstaller,
 	pluginsApplInstaller *plugins.PluginsAppInstaller,
+	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 ) []appsdkapiserver.AppInstaller {
-	installers := []appsdkapiserver.AppInstaller{
-		playlistAppInstaller,
+	installers := []appsdkapiserver.AppInstaller{playlistAppInstaller}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
+		installers = append(installers, shorturlAppInstaller)
 	}
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		installers = append(installers, pluginsApplInstaller)

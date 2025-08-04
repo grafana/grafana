@@ -5,7 +5,6 @@ build
 compiled
 data
 deployment_tools_config.json
-devenv
 dist
 e2e/tmp
 node_modules
@@ -40,3 +39,7 @@ public/mockServiceWorker.js
 
 /.nx/cache
 /.nx/workspace-data
+
+# Playwright results
+test-results
+playwright-report
