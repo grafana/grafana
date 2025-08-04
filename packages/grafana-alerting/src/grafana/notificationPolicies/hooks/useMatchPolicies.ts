@@ -43,7 +43,7 @@ export function useMatchAlertInstancesToNotificationPolicies() {
       const trees = data.items;
 
       // prepare the intial results, by default there won't be any matches for each tree
-      const result = trees.reduce<MatchResult>((acc, tree) => {
+      const matchResult = trees.reduce<MatchResult>((acc, tree) => {
         const treeName = tree.metadata.name ?? 'unknown';
 
         // compute the entire expanded tree for matching routes and diagnostics
@@ -68,7 +68,7 @@ export function useMatchAlertInstancesToNotificationPolicies() {
       }, new Map());
 
       // for each tree, find matching routes for the provided instances
-      result.forEach(({ expandedTree, matchedPolicies }) => {
+      matchResult.forEach(({ expandedTree, matchedPolicies }) => {
         // let's first find all matching routes for the provided instances
         const matchesArray = instances.flatMap((labels) => findMatchingRoutes(expandedTree, labels));
 
@@ -82,7 +82,7 @@ export function useMatchAlertInstancesToNotificationPolicies() {
         });
       });
 
-      return result;
+      return matchResult;
     },
     [data]
   );
