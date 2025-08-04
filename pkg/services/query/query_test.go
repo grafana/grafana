@@ -413,7 +413,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 		}`)
 		mr.From = ""
 		mr.To = ""
-		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, false)
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
 		require.NoError(t, err)
 		require.NotNil(t, parsedReq)
 		assert.Len(t, parsedReq.parsedQueries, 1)
