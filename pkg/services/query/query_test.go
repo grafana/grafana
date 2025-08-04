@@ -638,17 +638,13 @@ func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
 				"type": "postgres"
 			}
 		}`)
-		mr.From = "2022-01-01"
-		mr.To = "2022-01-02"
+		mr.From = "1754309340000"
+		mr.To = "1754309370000"
 		ctx := context.Background()
 		_, err := tc.queryService.QueryData(ctx, tc.signedInUser, true, mr)
 		require.NoError(t, err)
 
 		assert.Equal(t, data.QueryDataRequest{
-			TimeRange: data.TimeRange{
-				From: "2022-01-01T00:00:00Z",
-				To:   "2022-01-02T00:00:00Z",
-			},
 			Queries: []data.DataQuery{
 				{
 					CommonQueryProperties: data.CommonQueryProperties{
@@ -657,6 +653,12 @@ func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
 							Type: "postgres",
 							UID:  "gIEkMvIVz",
 						},
+						TimeRange: &data.TimeRange{
+							From: "1754309340000",
+							To:   "1754309370000",
+						},
+						MaxDataPoints: 100,
+						IntervalMS:    1000,
 					},
 				},
 				{
@@ -666,6 +668,12 @@ func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
 							Type: "postgres",
 							UID:  "gIEkMvIVz",
 						},
+						TimeRange: &data.TimeRange{
+							From: "1754309340000",
+							To:   "1754309370000",
+						},
+						MaxDataPoints: 100,
+						IntervalMS:    1000,
 					},
 				},
 			},
