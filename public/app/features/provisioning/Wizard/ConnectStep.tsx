@@ -4,10 +4,11 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
+import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields, getLocalProviderFields } from './fields';
-import { InstructionAvailability, RepoType, WizardFormData } from './types';
+import { WizardFormData } from './types';
 
 export function ConnectStep() {
   const {
@@ -143,8 +144,4 @@ export function ConnectStep() {
       )}
     </Stack>
   );
-}
-
-function getHasTokenInstructions(type: RepoType): type is InstructionAvailability {
-  return type === 'github' || type === 'gitlab' || type === 'bitbucket';
 }
