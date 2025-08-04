@@ -35,12 +35,11 @@ To access the Alert rules page, click **Alerts & IRM** -> **Alerting** -> **Aler
 
 {{< figure src="/media/docs/alerting/alert-rules-page-2.png" max-width="750px" alt="Alert rule view page in Grafana Alerting" >}}
 
-By default, alert rules are grouped in separate sections—one for Grafana-managed alerts, and another for data source-managed alerts. 
+By default, alert rules are grouped in separate sections—one for Grafana-managed alerts, and another for data source-managed alerts.
 Inside the Grafana-managed alert rules section, the rules are organized in a hierarchial structure, from folder -> rule group -> rules.
 Inside the data source-managed alert rules section, the rules are organized from namespace ->rule group -> rules.
 
 Select a group to expand it and view the list of alert rules within that group.
-
 
 The view includes filters to simplify managing large volumes of alerts.
 
@@ -50,7 +49,7 @@ You can filter by data sources, dashboards, and alert rule properties such as st
 
 You can also change how the rule list is displayed using the **View as** option.
 
-- **Grouped**:  Displays Grafana rules grouped in a hierarchial structure, from folder/namespace, to evaluation group, to the individual rules. This is the default view.
+- **Grouped**: Displays Grafana rules grouped in a hierarchial structure, from folder/namespace, to evaluation group, to the individual rules. This is the default view.
 
 - **List**: Displays all rules from all data sources in a flat, unpaginated list.
 
