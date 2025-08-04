@@ -25,6 +25,12 @@ require (
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
+	github.com/go-sql-driver/mysql v1.9.3 // indirect
+	github.com/go-stack/stack v1.8.1 // indirect
+	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/gofrs/uuid v4.4.0+incompatible // indirect
+	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
@@ -35,6 +41,16 @@ require (
 	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.38.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
+	github.com/grafana/grafana-aws-sdk v1.1.0 // indirect
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // indirect
+	github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250804150913-990f1c69ecc2 // indirect
+	github.com/grafana/otel-profiling-go v0.5.1 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
+	github.com/grafana/sqlds/v4 v4.2.4 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/invopop/yaml v0.3.1 // indirect
