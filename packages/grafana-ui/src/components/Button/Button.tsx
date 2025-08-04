@@ -18,7 +18,7 @@ export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'dest
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
-type CommonProps = {
+type BaseProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
@@ -27,15 +27,38 @@ type CommonProps = {
   children?: React.ReactNode;
   fullWidth?: boolean;
   type?: string;
-  /** Tooltip content to display on hover */
-  tooltip?: PopoverContent;
-  /** Position of the tooltip */
-  tooltipPlacement?: TooltipPlacement;
   /** Position of the icon */
   iconPlacement?: 'left' | 'right';
 };
 
-export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
+// either aria-label or tooltip is required for buttons without children
+type NoChildrenAriaLabel = BaseProps & {
+  children?: never;
+  'aria-label': string;
+};
+type NoChildrenTooltip = BaseProps & {
+  children?: never;
+  tooltip: PopoverContent;
+  tooltipPlacement?: TooltipPlacement;
+};
+
+// otherwise, we only want one or the other
+type ChildrenAriaLabel = BaseProps & {
+  children: React.ReactNode;
+  'aria-label'?: string;
+  tooltip?: never;
+  tooltipPlacement?: never;
+};
+type ChildrenTooltip = BaseProps & {
+  children: React.ReactNode;
+  tooltip?: PopoverContent;
+  tooltipPlacement?: TooltipPlacement;
+  'aria-label'?: never;
+};
+
+export type CommonProps = ChildrenTooltip | ChildrenAriaLabel | NoChildrenTooltip | NoChildrenAriaLabel;
+
+export type ButtonProps = CommonProps & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -48,9 +71,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       className,
       type = 'button',
-      tooltip,
       disabled,
-      tooltipPlacement,
       iconPlacement = 'left',
       onClick,
       ...otherProps
@@ -75,7 +96,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className
     );
 
-    const hasTooltip = Boolean(tooltip);
+    const hasTooltip = 'tooltip' in otherProps;
 
     const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
 
@@ -91,7 +112,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         // we need to set aria-disabled instead of the native disabled attribute
         aria-disabled={hasTooltip && disabled}
         disabled={!hasTooltip && disabled}
-        ref={tooltip ? undefined : ref}
+        ref={hasTooltip && otherProps.tooltip ? undefined : ref}
       >
         {iconPlacement === 'left' && iconComponent}
         {children && <span className={styles.content}>{children}</span>}
@@ -99,9 +120,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       </button>
     );
 
-    if (tooltip) {
+    if (hasTooltip && otherProps.tooltip) {
       return (
-        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
+        <Tooltip ref={ref} content={otherProps.tooltip} placement={otherProps.tooltipPlacement}>
           {button}
         </Tooltip>
       );
@@ -113,9 +134,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-export type ButtonLinkProps = CommonProps &
-  ButtonHTMLAttributes<HTMLButtonElement> &
-  AnchorHTMLAttributes<HTMLAnchorElement>;
+export type ButtonLinkProps = ButtonProps & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'aria-label'>;
 
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   (
@@ -130,8 +149,6 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       onBlur,
       onFocus,
       disabled,
-      tooltip,
-      tooltipPlacement,
       ...otherProps
     },
     ref
@@ -156,6 +173,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       className
     );
 
+    const hasTooltip = 'tooltip' in otherProps;
+
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <a
@@ -163,16 +182,16 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         {...otherProps}
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
-        ref={tooltip ? undefined : ref}
+        ref={hasTooltip && otherProps.tooltip ? undefined : ref}
       >
         <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
       </a>
     );
 
-    if (tooltip) {
+    if (hasTooltip && otherProps.tooltip) {
       return (
-        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
+        <Tooltip ref={ref} content={otherProps.tooltip} placement={otherProps.tooltipPlacement}>
           {button}
         </Tooltip>
       );
