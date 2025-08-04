@@ -466,7 +466,7 @@ require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-ac
 
 require github.com/urfave/cli/v3 v3.3.8 // @grafana/grafana-backend-group
 
-require github.com/grafana/grafana/pkg/build v0.0.0-20250804190500-279adadb1572
+require github.com/grafana/grafana/pkg/build v0.0.0-20250804190500-279adadb1572 // @grafana/grafana-backend-group
 
 require (
 	cel.dev/expr v0.24.0 // indirect
