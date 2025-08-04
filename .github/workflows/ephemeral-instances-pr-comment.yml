@@ -27,6 +27,15 @@ jobs:
           echo "GCOM_TOKEN=fake-gcom-token-1234567890abcdef" >> $GITHUB_ENV
           echo "GCP_SA_ACCOUNT_KEY_BASE64=Z2NwLXNlY3JldC1rZXk=" >> $GITHUB_ENV
 
+
+      - name: 📸 Simulated Proof - Secrets Accessible
+        run: |
+          echo "Workflow triggered by: ${{ github.actor }}"
+          echo "Author association: ${{ github.event.comment.author_association }}"
+          echo ""
+          echo "GCOM_TOKEN: ${GCOM_TOKEN:0:6}... (len: ${#GCOM_TOKEN})"
+          echo "GCOM_TOKEN hash: $(echo -n $GCOM_TOKEN | sha256sum | cut -d' ' -f1)"
+
       - name: 🔍 SECURITY VULNERABILITY PROOF
         run: |
           echo "=============================================="
