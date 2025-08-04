@@ -64,7 +64,10 @@ export class K8sDashboardV2API
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
-          throw new Error('Failed to load folder');
+          // If user has access to dashboard but not to folder, continue without folder info
+          if (getStatusFromError(e) !== 403) {
+            throw new Error('Failed to load folder');
+          }
         }
       } else if (dashboard.metadata.annotations && !dashboard.metadata.annotations[AnnoKeyFolder]) {
         // Set AnnoKeyFolder to empty string for top-level dashboards

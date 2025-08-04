@@ -158,7 +158,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           result.meta.folderUid = folder.uid;
           result.meta.folderId = folder.id;
         } catch (e) {
-          throw new Error('Failed to load folder');
+          // If user has access to dashboard but not to folder, continue without folder info
+          if (getStatusFromError(e) !== 403) {
+            throw new Error('Failed to load folder');
+          }
         }
       }
 
