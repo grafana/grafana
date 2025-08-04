@@ -117,7 +117,10 @@ func (s *inlineSecureValueService) isSecureValueOwnedByResource(ctx context.Cont
 			return true, nil // The secure value is owned by the same owner reference, pass!
 		}
 
-		return false, fmt.Errorf("secure value %s is not owned by %v but by %v", name, owner, actualOwner)
+		return false, fmt.Errorf(
+			"secure value %s is not owned by %s/%s/%s/%s but by %s/%s/%s",
+			name, owner.APIGroup, owner.APIVersion, owner.Kind, owner.Name, actualOwner.APIVersion, actualOwner.Kind, actualOwner.Name,
+		)
 	}
 
 	// not owned
