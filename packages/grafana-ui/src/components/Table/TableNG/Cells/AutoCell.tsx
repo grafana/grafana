@@ -15,6 +15,16 @@ export function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   );
 }
 
+export const getStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow }) =>
+  css({
+    ...(textWrap && { whiteSpace: 'pre-line' }),
+    ...(shouldOverflow && {
+      '&:hover, &[aria-selected=true]': {
+        whiteSpace: 'pre-line',
+      },
+    }),
+  });
+
 export const getColorCellStyles: TableCellStyles = () =>
   css({
     // helps when cells have a bg color

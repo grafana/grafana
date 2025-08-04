@@ -20,9 +20,12 @@ export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCel
 
 export const getStyles: TableCellStyles = (theme) =>
   css({
-    // TODO: I want to figure out how to avoid the !important
     '&, &:hover, &[aria-selected=true]': {
-      whiteSpace: 'normal !important',
+      whiteSpace: 'normal',
+    },
+
+    '.markdown-container': {
+      width: '100%',
     },
 
     '& ol, & ul': {

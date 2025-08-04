@@ -121,12 +121,10 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, textWr
     textAlign,
     justifyContent: getJustifyContent(textAlign),
     ...(shouldOverflow && { minHeight: '100%' }),
-    ...(textWrap && { whiteSpace: 'pre-line' }),
     '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': { display: 'flex' },
       ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
-        whiteSpace: 'pre-line',
         height: 'fit-content',
         minWidth: 'fit-content',
       }),

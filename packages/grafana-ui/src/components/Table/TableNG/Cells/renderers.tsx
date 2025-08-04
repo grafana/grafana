@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { ReactNode } from 'react';
 
 import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
@@ -6,7 +7,7 @@ import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '
 import { TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
 
 import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';
-import { AutoCell, getColorCellStyles, getJsonCellStyles } from './AutoCell';
+import { AutoCell, getStyles as getAutoCellStyles, getColorCellStyles, getJsonCellStyles } from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell, getStyles as getDataLinksStyles } from './DataLinksCell';
 import { GeoCell, getStyles as getGeoCellStyles } from './GeoCell';
@@ -80,14 +81,15 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], { renderer: TableCellRend
   },
   [TableCellDisplayMode.Auto]: {
     renderer: AUTO_RENDERER,
+    getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.ColorBackground]: {
     renderer: AUTO_RENDERER,
-    getStyles: getColorCellStyles,
+    getStyles: (theme, opts) => clsx(getAutoCellStyles(theme, opts), getColorCellStyles(theme, opts)),
   },
   [TableCellDisplayMode.ColorText]: {
     renderer: AUTO_RENDERER,
-    getStyles: getColorCellStyles,
+    getStyles: (theme, opts) => clsx(getAutoCellStyles(theme, opts), getColorCellStyles(theme, opts)),
   },
   [TableCellDisplayMode.Custom]: {
     renderer: CUSTOM_RENDERER,
@@ -109,7 +111,7 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], { renderer: TableCellRend
   },
   [TableCellDisplayMode.JSONView]: {
     renderer: AUTO_RENDERER,
-    getStyles: getJsonCellStyles,
+    getStyles: (theme, opts) => clsx(getAutoCellStyles(theme, opts), getJsonCellStyles(theme, opts)),
   },
   [TableCellDisplayMode.Pill]: {
     renderer: PILL_RENDERER,
@@ -169,7 +171,7 @@ export function getAutoRendererStyles(
   if (impliedDisplayMode !== TableCellDisplayMode.Auto) {
     return CELL_RENDERERS[impliedDisplayMode]?.getStyles?.(theme, options);
   }
-  return;
+  return getAutoCellStyles(theme, options);
 }
 
 /** @internal */
