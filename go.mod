@@ -251,7 +251,7 @@ require (
 
 require github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3 // @grafana/grafana-app-platform-squad
 
-require github.com/grafana/grafana/apps/shorturl v0.0.0-20250804125326-0dfcaf56d356
+require github.com/grafana/grafana/apps/shorturl v0.0.0-20250804125326-0dfcaf56d356 // @grafana/sharing-squad
 
 require (
 	cel.dev/expr v0.24.0 // indirect
