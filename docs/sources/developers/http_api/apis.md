@@ -61,7 +61,7 @@ While beta versions are no longer considered experimental like alpha versions, t
 
 #### GA
 
-GA versions are enabled by default, and can be treated as completely stable. The only changes that can be made to these APIs are bugfixes, 
+GA versions are enabled by default, and can be treated as completely stable. The only changes that can be made to these APIs are bug fixes, 
 and any other changes should instead result in a new published version of the API. 
 
 ### Namespace (`<namespace>`)
