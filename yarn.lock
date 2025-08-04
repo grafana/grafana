@@ -19214,6 +19214,7 @@ __metadata:
     webpack-dev-server: "npm:5.1.0"
     webpack-manifest-plugin: "npm:5.0.0"
     webpack-merge: "npm:5.10.0"
+    webpack-subresource-integrity: "npm:^5.2.0-rc.1"
     webpackbar: "npm:^6.0.0"
     whatwg-fetch: "npm:3.6.20"
     xlsx: "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
@@ -32892,6 +32893,19 @@ __metadata:
   version: 3.2.3
   resolution: "webpack-sources@npm:3.2.3"
   checksum: 10/a661f41795d678b7526ae8a88cd1b3d8ce71a7d19b6503da8149b2e667fc7a12f9b899041c1665d39e38245ed3a59ab68de648ea31040c3829aa695a5a45211d
+  languageName: node
+  linkType: hard
+
+"webpack-subresource-integrity@npm:^5.2.0-rc.1":
+  version: 5.2.0-rc.1
+  resolution: "webpack-subresource-integrity@npm:5.2.0-rc.1"
+  peerDependencies:
+    html-webpack-plugin: ">= 5.0.0-beta.1 < 6"
+    webpack: ^5.12.0
+  peerDependenciesMeta:
+    html-webpack-plugin:
+      optional: true
+  checksum: 10/a63e4e999812a753c70070457e6a2fb7e7ef1a05d8525a89796024fc56f26a0e56bd3e8f2b25e61f0ae969d627770a1fe326bebb58c296577d40c6a12aa4be37
   languageName: node
   linkType: hard
 
