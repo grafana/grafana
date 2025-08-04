@@ -18,7 +18,7 @@ export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'dest
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
-type BaseProps = {
+interface BaseProps {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
@@ -27,38 +27,26 @@ type BaseProps = {
   children?: React.ReactNode;
   fullWidth?: boolean;
   type?: string;
+  tooltip?: PopoverContent;
+  tooltipPlacement?: TooltipPlacement;
   /** Position of the icon */
   iconPlacement?: 'left' | 'right';
-};
+}
 
 // either aria-label or tooltip is required for buttons without children
-type NoChildrenAriaLabel = BaseProps & {
+interface NoChildrenAriaLabel extends BaseProps {
   children?: never;
   'aria-label': string;
-};
-type NoChildrenTooltip = BaseProps & {
+}
+interface NoChildrenTooltip extends BaseProps {
   children?: never;
   tooltip: PopoverContent;
   tooltipPlacement?: TooltipPlacement;
-};
+}
 
-// otherwise, we only want one or the other
-type ChildrenAriaLabel = BaseProps & {
-  children: React.ReactNode;
-  'aria-label'?: string;
-  tooltip?: never;
-  tooltipPlacement?: never;
-};
-type ChildrenTooltip = BaseProps & {
-  children: React.ReactNode;
-  tooltip?: PopoverContent;
-  tooltipPlacement?: TooltipPlacement;
-  'aria-label'?: never;
-};
+export type CommonProps = BaseProps | NoChildrenTooltip | NoChildrenAriaLabel;
 
-export type CommonProps = ChildrenTooltip | ChildrenAriaLabel | NoChildrenTooltip | NoChildrenAriaLabel;
-
-export type ButtonProps = CommonProps & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'>;
+export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -71,7 +59,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       className,
       type = 'button',
+      tooltip,
       disabled,
+      tooltipPlacement,
       iconPlacement = 'left',
       onClick,
       ...otherProps
@@ -96,7 +86,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className
     );
 
-    const hasTooltip = 'tooltip' in otherProps;
+    const hasTooltip = Boolean(tooltip);
 
     const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
 
@@ -112,7 +102,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         // we need to set aria-disabled instead of the native disabled attribute
         aria-disabled={hasTooltip && disabled}
         disabled={!hasTooltip && disabled}
-        ref={hasTooltip && otherProps.tooltip ? undefined : ref}
+        ref={tooltip ? undefined : ref}
       >
         {iconPlacement === 'left' && iconComponent}
         {children && <span className={styles.content}>{children}</span>}
@@ -120,9 +110,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       </button>
     );
 
-    if (hasTooltip && otherProps.tooltip) {
+    if (tooltip) {
       return (
-        <Tooltip ref={ref} content={otherProps.tooltip} placement={otherProps.tooltipPlacement}>
+        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
           {button}
         </Tooltip>
       );
@@ -149,6 +139,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       onBlur,
       onFocus,
       disabled,
+      tooltip,
+      tooltipPlacement,
       ...otherProps
     },
     ref
@@ -173,8 +165,6 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       className
     );
 
-    const hasTooltip = 'tooltip' in otherProps;
-
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <a
@@ -182,16 +172,16 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         {...otherProps}
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
-        ref={hasTooltip && otherProps.tooltip ? undefined : ref}
+        ref={tooltip ? undefined : ref}
       >
         <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
       </a>
     );
 
-    if (hasTooltip && otherProps.tooltip) {
+    if (tooltip) {
       return (
-        <Tooltip ref={ref} content={otherProps.tooltip} placement={otherProps.tooltipPlacement}>
+        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
           {button}
         </Tooltip>
       );

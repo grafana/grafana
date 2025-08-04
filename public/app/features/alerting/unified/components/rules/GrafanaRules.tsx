@@ -78,10 +78,6 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {hasGrafanaAlerts && canExportRules && (
               <Button
-                aria-label={t(
-                  'alerting.grafana-rules.export-all-grafana-rules-aria-label-export-all-grafana-rules',
-                  'export all grafana rules'
-                )}
                 data-testid="export-all-grafana-rules"
                 icon="download-alt"
                 tooltip={t(

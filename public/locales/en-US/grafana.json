@@ -1494,7 +1494,6 @@
       "title-drawer": "Export {{groupName}} rules"
     },
     "grafana-rules": {
-      "export-all-grafana-rules-aria-label-export-all-grafana-rules": "export all grafana rules",
       "export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules": "Export all Grafana-managed rules",
       "no-rules-found": "No rules found.",
       "tooltip-create-new-grafanamanaged-recording-rule": "Create new Grafana-managed recording rule"
@@ -1523,7 +1522,10 @@
       "group-loading-error": "Error loading the group",
       "interval": "Interval",
       "namespace": "Namespace",
-      "new": "New"
+      "new": "New",
+      "title": {
+        "back": "Back to alerting"
+      }
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -2566,6 +2568,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "Return to previous view",
       "error-loading": "Something went wrong loading the rule",
       "evaluation-interval": "Every {{interval}}",
       "prometheus-consistency-check": {
@@ -4681,9 +4684,6 @@
       "failed-to-load": "Failed to load dashboard"
     },
     "export": {
-      "button": {
-        "label": "Export dashboard"
-      },
       "menu": {
         "label": "Export dashboard menu"
       }
@@ -4943,6 +4943,10 @@
     "options": {
       "description": "Description",
       "title-option": "Title"
+    },
+    "options-pane-category": {
+      "aria-label-collapse": "Collapse {{title}} category",
+      "aria-label-expand": "Expand {{title}} category"
     },
     "options-pane-options": {
       "placeholder-search-options": "Search options",
@@ -6598,6 +6602,7 @@
       "label-source": "Source"
     },
     "resource-picker": {
+      "aria-label-clear-value": "Clear value",
       "render-small-resource-picker": {
         "set-icon": "Set icon"
       }
@@ -6634,6 +6639,7 @@
       "noOptionsMessage-no-fields-found": "No fields found"
     },
     "text-dimension-editor": {
+      "aria-label-clear-value": "Clear value",
       "description-field": "Display field value",
       "description-fixed": "Fixed value",
       "label-field": "Field",
@@ -6771,7 +6777,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button"
+        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button",
+        "aria-label-content-outline-item-delete-button": "Delete item"
       }
     },
     "correlation-editor-mode-bar": {
@@ -6981,6 +6988,7 @@
       "content-streaming": "Streaming"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "Reload log volume",
       "label-reload-log-volume": "Reload log volume",
       "loading": "Loading...",
       "title-failed-volume-query": "Failed to load log volume for this query",
@@ -7279,6 +7287,7 @@
       "split-widen": "Widen pane"
     },
     "trace-page-header": {
+      "aria-label-share-dropdown": "Open share trace options menu",
       "duration": "Duration",
       "export-started": "Export started",
       "give-feedback": "Feedback",
@@ -7303,6 +7312,7 @@
       "label-show-paths": "Show critical path only switch"
     },
     "trace-view": {
+      "aria-label-copy": "Copy to clipboard",
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },
@@ -7607,6 +7617,7 @@
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
+      "aria-label-close": "Close measure tools",
       "tooltip-show-measure-tools": "Show measure tools"
     },
     "name-initial-view": "Initial view",
@@ -8639,6 +8650,7 @@
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "Match case",
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
@@ -13121,6 +13133,7 @@
       }
     },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "Remove filter",
       "label-field": "Field",
       "label-match": "Match",
       "label-value": "Value",
