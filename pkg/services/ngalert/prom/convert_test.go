@@ -659,6 +659,73 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 	})
 }
 
+func TestPrometheusRulesToGrafana_ExtraLabels(t *testing.T) {
+	cfg := Config{
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
+		ExtraLabels: map[string]string{
+			"extra_label":  "extra_value",
+			"common_label": "extra_value",
+			"rule_label":   "value_from_extra_labels",
+		},
+	}
+	converter, err := NewConverter(cfg)
+	require.NoError(t, err)
+
+	t.Run("extra labels are merged with group and rule labels", func(t *testing.T) {
+		promGroup := PrometheusRuleGroup{
+			Name:     "test-group-1",
+			Interval: prommodel.Duration(10 * time.Second),
+			Labels: map[string]string{
+				"group_label":  "group_value",
+				"common_label": "group_value",
+			},
+			Rules: []PrometheusRule{
+				{
+					Alert: "alert-1",
+					Expr:  "cpu_usage > 80",
+					Labels: map[string]string{
+						"rule_label": "rule_value",
+					},
+				},
+			},
+		}
+
+		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
+		require.NoError(t, err)
+		require.Len(t, grafanaGroup.Rules, 1)
+
+		expectedLabels := withInternalLabel(map[string]string{
+			"extra_label":  "extra_value",
+			"common_label": "group_value",
+			"group_label":  "group_value",
+			"rule_label":   "rule_value",
+		})
+		require.Equal(t, expectedLabels, grafanaGroup.Rules[0].Labels)
+	})
+
+	t.Run("extra labels are applied to recording rules", func(t *testing.T) {
+		promGroup := PrometheusRuleGroup{
+			Name:     "test-group-2",
+			Interval: prommodel.Duration(10 * time.Second),
+			Rules: []PrometheusRule{
+				{
+					Record: "http_requests_total:rate5m",
+					Expr:   "rate(http_requests_total[5m])",
+				},
+			},
+		}
+
+		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
+		require.NoError(t, err)
+		require.Len(t, grafanaGroup.Rules, 1)
+
+		expectedLabels := withInternalLabel(cfg.ExtraLabels)
+		require.Equal(t, expectedLabels, grafanaGroup.Rules[0].Labels)
+	})
+}
+
 func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 	orgID := int64(1)
 	namespace := "some-namespace"
