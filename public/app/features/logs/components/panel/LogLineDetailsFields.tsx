@@ -432,7 +432,7 @@ const ClipboardButtonWrapper = ({ value }: { value: string }) => {
     <div className={styles.button}>
       <ClipboardButton
         getText={() => value}
-        title={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
+        aria-label={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
         fill="text"
         variant="secondary"
         icon="copy"

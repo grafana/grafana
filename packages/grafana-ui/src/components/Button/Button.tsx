@@ -24,7 +24,6 @@ type BaseProps = {
   fill?: ButtonFill;
   icon?: IconName | React.ReactElement;
   className?: string;
-  children?: React.ReactNode;
   fullWidth?: boolean;
   type?: string;
   tooltip?: PopoverContent;
@@ -44,7 +43,11 @@ type NoChildrenTooltip = BaseProps & {
   tooltipPlacement?: TooltipPlacement;
 };
 
-type CommonProps = BaseProps | NoChildrenTooltip | NoChildrenAriaLabel;
+type BasePropsWithChildren = BaseProps & {
+  children: React.ReactNode;
+};
+
+type CommonProps = BasePropsWithChildren | NoChildrenTooltip | NoChildrenAriaLabel;
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
