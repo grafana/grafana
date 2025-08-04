@@ -21,7 +21,7 @@ interface ChildrenProps {
   Renderer: (props: ListChildComponentProps) => ReactNode;
 }
 
-interface Props {
+export interface Props {
   children: (props: ChildrenProps) => ReactNode;
   displayedFields: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
@@ -145,6 +145,7 @@ export const InfiniteScroll = ({
         return;
       }
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);
+      console.log(scrollDirection);
       lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
       if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top') {
@@ -178,6 +179,8 @@ export const InfiniteScroll = ({
       }
     };
   }, []);
+
+  console.log(infiniteLoaderState);
 
   const loadMoreTop = useCallback(() => {
     if (resetStateTimeout.current) {
