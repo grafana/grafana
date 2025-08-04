@@ -13308,22 +13308,6 @@
       "label-row": "Row",
       "name": {
         "grouping-to-matrix": "Grouping to matrix"
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Boolean false value",
-          "boolean-true-value": "Boolean true value",
-          "empty-string": "Empty string",
-          "null-value": "Null value",
-          "number-value": "Number 0 value"
-        },
-        "label": {
-          "empty": "Empty",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13676,6 +13660,22 @@
         "perform-spatial-operations": "Perform spatial operations",
         "reformat": "Reformat",
         "reorder-and-rename": "Reorder and rename"
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "Boolean false value",
+          "boolean-true": "Boolean true value",
+          "empty-string": "Empty String",
+          "null-value": "Null value",
+          "number-value": "Number 0 value"
+        },
+        "label": {
+          "boolean-false": "False",
+          "boolean-true": "True",
+          "empty-string": "Empty",
+          "null-value": "Null",
+          "number-value": "Zero"
+        }
       }
     },
     "wide-info": {
