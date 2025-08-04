@@ -400,7 +400,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
           <Label>
             <Trans i18nKey="alerting.search.property.rule-name">Rule name</Trans>
           </Label>
-          <Input {...register('ruleName')} />
+          <Input {...register('ruleName')} data-testid="rule-name-input" />
           <Label>
             <Trans i18nKey="alerting.search.property.labels">Labels</Trans>
           </Label>
@@ -594,10 +594,10 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
           )}
         </div>
         <Stack direction="row" alignItems="center">
-          <Button type="reset" variant="secondary">
+          <Button type="reset" variant="secondary" data-testid="filter-clear-button">
             <Trans i18nKey="common.clear">Clear</Trans>
           </Button>
-          <Button type="submit">
+          <Button type="submit" data-testid="filter-apply-button">
             <Trans i18nKey="common.apply">Apply</Trans>
           </Button>
         </Stack>
