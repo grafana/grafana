@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - baldm0mma/migrate_11.4.8
+      - baldm0mma/bp_infra_11.4.8
 
 jobs:
   test-dagger-build:
