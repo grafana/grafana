@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, Stack } from '@grafana/ui';
+import { Box, Button, Stack, Text } from '@grafana/ui';
 import {
   DeleteRepositoryFilesWithPathApiArg,
   DeleteRepositoryFilesWithPathApiResponse,
+  Job,
   RepositoryView,
   useDeleteRepositoryFilesWithPathMutation,
+  useListJobQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -32,6 +34,9 @@ import {
   BulkSuccessResponse,
   MoveResultSuccessState,
 } from './utils';
+import { DeleteJobSpec, ResourceRef, useBulkActionJob } from './useBulkActionJob';
+import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
+import ProgressBar from 'app/features/provisioning/Shared/ProgressBar';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
@@ -43,6 +48,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
 function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
   // States
   const [progress, setProgress] = useState<ProgressState | null>(null);
+  const [job, setJob] = useState<Job>();
   const [failureResults, setFailureResults] = useState<MoveResultFailed[] | undefined>();
   const [successState, setSuccessState] = useState<MoveResultSuccessState>({
     allSuccess: false,
@@ -51,6 +57,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Hooks
+  const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const childrenByParentUID = useChildrenByParentUIDState();
@@ -59,94 +66,80 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const workflow = watch('workflow');
   const { handleSuccess } = useBulkActionRequest({ workflow, repository, successState, onDismiss });
 
-  const getResourcePath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
-    const item = findItem(rootItems?.items || [], childrenByParentUID, uid);
-    if (!item) {
-      return undefined;
-    }
-    return isFolder ? `${folderPath}/${item.title}/` : fetchProvisionedDashboardPath(uid);
-  };
-
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setFailureResults(undefined);
     setHasSubmitted(true);
 
     const targets = collectSelectedItems(selectedItems, childrenByParentUID, rootItems?.items || []);
+    const resources: ResourceRef[] = targets.map(({ uid, isFolder }) => ({
+      name: uid,
+      group: isFolder ? 'folder.grafana.app' : 'dashboard.grafana.app',
+      kind: isFolder ? 'Folder' : 'Dashboard',
+    }));
+    // Create the delete job spec
+    const jobSpec: DeleteJobSpec = {
+      action: 'delete',
+      delete: {
+        // ref: data.workflow === 'write' ? undefined : data.ref,
+        resources,
+      },
+    };
 
-    if (targets.length > 0) {
-      setProgress({
-        current: 0,
-        total: targets.length,
-        item: targets[0].displayName || 'Unknown',
+    console.log('🔧 Repository type:', repository.type);
+    console.log('🔧 Workflow:', data.workflow);
+
+    // Use the hook to create the job
+    console.log('🚀 Creating bulk delete job with spec:', jobSpec);
+    const result = await createBulkJob(repository, jobSpec);
+    console.log('📦 Job creation result:', result);
+
+    if (result.success && result.job) {
+      console.log('✅ Job created successfully:', {
+        jobId: result.jobId,
+        jobName: result.job.metadata?.name,
+        jobStatus: result.job.status,
+        initialState: result.job.status?.state,
       });
-    }
-
-    const successes: BulkSuccessResponse<
-      DeleteRepositoryFilesWithPathApiArg,
-      DeleteRepositoryFilesWithPathApiResponse
-    > = [];
-    const failures: MoveResultFailed[] = [];
-
-    // Iterate through each selected item and delete it
-    // We want sequential processing to avoid overwhelming the API
-    for (let i = 0; i < targets.length; i++) {
-      const { uid, isFolder, displayName } = targets[i];
-      setProgress({
-        current: i,
-        total: targets.length,
-        item: displayName,
-      });
-
-      try {
-        // get path in repository
-        const path = await getResourcePath(uid, isFolder);
-        if (!path) {
-          failures.push({
-            status: 'failed',
-            title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
-            errorMessage: t('browse-dashboards.bulk-delete-resources-form.error-path-not-found', 'Path not found'),
-          });
-          continue;
-        }
-
-        // build params
-        const deleteParams: DeleteRepositoryFilesWithPathApiArg = {
-          name: repository.name,
-          path,
-          ref: workflow === 'write' ? undefined : data.ref,
-          message: data.comment || `Delete resource ${path}`,
-        };
-
-        // perform delete operation
-        const response = await deleteRepoFile(deleteParams).unwrap();
-        successes.push({ index: i, item: deleteParams, data: response });
-      } catch (error: unknown) {
-        failures.push({
+      setJob(result.job); // Store the job for tracking
+    } else {
+      console.error('❌ Job creation failed:', result.error);
+      setFailureResults([
+        {
           status: 'failed',
-          title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
-          errorMessage: extractErrorMessage(error),
-        });
-      }
-
-      setProgress({
-        current: i + 1,
-        total: targets.length,
-        item: targets[i + 1]?.displayName,
-      });
-    }
-
-    setProgress(null);
-
-    if (successes.length > 0 && failures.length === 0) {
-      // handleSuccess(successes);
-      setSuccessState({
-        allSuccess: true,
-        repoUrl: successes[0].data.urls?.newPullRequestURL,
-      });
-    } else if (failures.length > 0) {
-      setFailureResults(failures);
+          title: 'Bulk Delete Job Failed',
+          errorMessage: result.error || 'Unknown error',
+        },
+      ]);
     }
   };
+
+  // Monitor job status for completion
+  const jobQuery = useListJobQuery(
+    {
+      fieldSelector: `metadata.name=${job?.metadata?.name}`,
+      watch: true,
+    },
+    { skip: !job } // Only run query when we have a job
+  );
+
+  // Get the current job status
+  const currentJob = jobQuery?.data?.items?.[0];
+  const jobStatus = currentJob?.status;
+  const jobState = jobStatus?.state;
+
+  // If job is created, display the job status with live updates
+  if (job && hasSubmitted) {
+    console.log('🔄 Current job progress:', job?.status?.progress);
+    console.log('🔄 Current job state:', jobState);
+    console.log('📊 Job status:', jobStatus);
+    console.log('🔍 Full current job:', currentJob);
+
+    return (
+      <Stack direction="column" gap={2}>
+        <ProgressBar progress={jobStatus?.progress ?? 0} />
+      </Stack>
+    );
+  }
 
   return (
     <FormProvider {...methods}>
