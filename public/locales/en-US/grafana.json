@@ -1523,7 +1523,10 @@
       "group-loading-error": "Error loading the group",
       "interval": "Interval",
       "namespace": "Namespace",
-      "new": "New"
+      "new": "New",
+      "title": {
+        "back": "Back to alerting"
+      }
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -2240,6 +2243,9 @@
       "title-attention": "Attention",
       "title-manage-contact-point-permissions": "Manage contact point permissions"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": "Open external link"
+    },
     "receivers-section": {
       "button-more": "More",
       "new-menu": {
@@ -2566,6 +2572,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "Return to previous view",
       "error-loading": "Something went wrong loading the rule",
       "evaluation-interval": "Every {{interval}}",
       "prometheus-consistency-check": {
@@ -4944,6 +4951,10 @@
       "description": "Description",
       "title-option": "Title"
     },
+    "options-pane-category": {
+      "aria-label-collapse": "Collapse {{title}} category",
+      "aria-label-expand": "Expand {{title}} category"
+    },
     "options-pane-options": {
       "placeholder-search-options": "Search options",
       "Recent options-title-recent-options": "Recent options",
@@ -6598,6 +6609,7 @@
       "label-source": "Source"
     },
     "resource-picker": {
+      "aria-label-clear-value": "Clear value",
       "render-small-resource-picker": {
         "set-icon": "Set icon"
       }
@@ -6634,6 +6646,7 @@
       "noOptionsMessage-no-fields-found": "No fields found"
     },
     "text-dimension-editor": {
+      "aria-label-clear-value": "Clear value",
       "description-field": "Display field value",
       "description-fixed": "Fixed value",
       "label-field": "Field",
@@ -6771,7 +6784,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button"
+        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button",
+        "aria-label-content-outline-item-delete-button": "Delete item"
       }
     },
     "correlation-editor-mode-bar": {
@@ -6981,6 +6995,7 @@
       "content-streaming": "Streaming"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "Reload log volume",
       "label-reload-log-volume": "Reload log volume",
       "loading": "Loading...",
       "title-failed-volume-query": "Failed to load log volume for this query",
@@ -7279,6 +7294,7 @@
       "split-widen": "Widen pane"
     },
     "trace-page-header": {
+      "aria-label-share-dropdown": "Open share trace options menu",
       "duration": "Duration",
       "export-started": "Export started",
       "give-feedback": "Feedback",
@@ -7303,6 +7319,7 @@
       "label-show-paths": "Show critical path only switch"
     },
     "trace-view": {
+      "aria-label-copy": "Copy to clipboard",
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },
@@ -7607,6 +7624,7 @@
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
+      "aria-label-close": "Close measure tools",
       "tooltip-show-measure-tools": "Show measure tools"
     },
     "name-initial-view": "Initial view",
@@ -8639,6 +8657,7 @@
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "Match case",
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
@@ -11066,6 +11085,9 @@
     "check-repository": {
       "check": "Check"
     },
+    "code-block": {
+      "aria-label-copy": "Copy code to clipboard"
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
@@ -13121,6 +13143,7 @@
       }
     },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "Remove filter",
       "label-field": "Field",
       "label-match": "Match",
       "label-value": "Value",
