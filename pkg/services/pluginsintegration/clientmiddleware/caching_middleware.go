@@ -9,7 +9,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -56,6 +59,16 @@ type CachingMiddleware struct {
 // If data is found, it will return it immediately. Otherwise, it will perform the queries as usual, then write the response to the cache.
 // If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.
 func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	ctx, span := tracing.Start(ctx, "PluginClient.CachingMiddleware.QueryData")
+	defer span.End()
+
+	if req != nil {
+		span.SetAttributes(attribute.String("plugin_id", req.PluginContext.PluginID))
+		if ds := req.PluginContext.DataSourceInstanceSettings; ds != nil {
+			span.SetAttributes(attribute.String("datasource_type", ds.Type))
+		}
+	}
+
 	if req == nil {
 		return m.BaseHandler.QueryData(ctx, req)
 	}
@@ -74,6 +87,7 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// record request duration if caching was used
 	ch := reqCtx.Resp.Header().Get(caching.XCacheHeader)
 	if ch != "" {
+		span.SetAttributes(attribute.String("cache", ch))
 		defer func() {
 			QueryCachingRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
@@ -121,6 +135,13 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 // If data is found, it will return it immediately. Otherwise, it will perform the request as usual. The caller of CallResource is expected to explicitly update the cache with any responses.
 // If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.
 func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctx, span := tracing.Start(ctx, "PluginClient.CachingMiddleware.CallResource")
+	defer span.End()
+
+	if req != nil {
+		span.SetAttributes(attribute.String("plugin_id", req.PluginContext.PluginID))
+	}
+
 	if req == nil {
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
@@ -138,6 +159,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 
 	// record request duration if caching was used
 	if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+		span.SetAttributes(attribute.String("cache", ch))
 		defer func() {
 			ResourceCachingRequestHistogram.With(prometheus.Labels{
 				"plugin_id": req.PluginContext.PluginID,
