@@ -106,7 +106,7 @@ jobs:
           # Disable modern suites - incompatible with 11.4.8 UI/selectors
           # - suite: various-suite
           #   path: e2e/various-suite
-          - suite: dashboards-suite  # ENABLED: 100% success rate confirmed
+          - suite: dashboards-suite  # ENABLED: Skip failing tests individually (83% success rate)
             path: e2e/dashboards-suite
           # - suite: smoke-tests-suite  # 100% failure rate confirmed
           #   path: e2e/smoke-tests-suite
