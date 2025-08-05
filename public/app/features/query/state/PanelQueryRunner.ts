@@ -239,9 +239,22 @@ export class PanelQueryRunner {
 
     return merge(seriesStream, annotationsStream).pipe(
       map((frames) => {
-        let isAnnotations = frames.some((f) => f.meta?.dataTopic === DataTopic.Annotations);
-        let transformed = isAnnotations ? { annotations: frames } : { series: frames };
-        return { ...data, ...transformed };
+        let annotations: DataFrame[] = [];
+        let series: DataFrame[] = [];
+
+        frames.forEach((frame) => {
+          if (frame.meta?.dataTopic === DataTopic.Annotations) {
+            annotations.push(frame);
+          } else {
+            series.push(frame);
+          }
+        });
+
+        return {
+          ...data,
+          series,
+          annotations,
+        };
       }),
       catchError((err) => {
         console.warn('Error running transformation:', err);
