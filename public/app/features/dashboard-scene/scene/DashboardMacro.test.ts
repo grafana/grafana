@@ -45,6 +45,7 @@ describe('DashboardMacro', () => {
       $timeRange: new SceneTimeRange({
         from: '2023-05-23T06:09:57.073Z',
         to: '2023-05-23T07:09:57.073Z',
+        timeZone: 'UTC',
       }),
       body: new AutoGridLayoutManager({
         maxColumnCount: 12,
@@ -84,6 +85,13 @@ describe('DashboardMacro', () => {
 
       const result = sceneGraph.interpolate(panel, '${__dashboard.timeRange.to}');
       expect(result).toBe('1684825797073'); // 2023-05-23T07:09:57.073Z as timestamp
+    });
+
+    it('should interpolate ${__dashboard.timeRange.to:text} to formatted text', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
+      const result = sceneGraph.interpolate(panel, '${__dashboard.timeRange.to:text}');
+      expect(result).toBe('2023-05-23 07:09:57');
     });
   });
 });
