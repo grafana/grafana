@@ -1784,6 +1784,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesShortURLs",
+        "resourceVersion": "1753722806283",
+        "creationTimestamp": "2025-07-28T17:13:26Z"
+      },
+      "spec": {
+        "description": "Routes short url requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesSnapshots",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-12-05T22:31:49Z"
@@ -2098,6 +2111,19 @@
     },
     {
       "metadata": {
+        "name": "newClickhouseConfigPageDesign",
+        "resourceVersion": "1754075145003",
+        "creationTimestamp": "2025-08-01T19:05:45Z"
+      },
+      "spec": {
+        "description": "Enables new design for the Clickhouse data source configuration page",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newDashboardSharingComponent",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-05-03T15:02:18Z"
@@ -2148,6 +2174,19 @@
         "stage": "privatePreview",
         "codeowner": "@grafana/partner-datasources",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "newLogContext",
+        "resourceVersion": "1754044501326",
+        "creationTimestamp": "2025-08-01T10:35:01Z"
+      },
+      "spec": {
+        "description": "New Log Context component",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
       }
     },
     {

@@ -3544,12 +3544,12 @@
       "tags-column": "标签"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "文件夹已成功删除",
       "api-error": "删除文件夹失败",
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除...",
-      "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响："
+      "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "无法检索后代信息"
@@ -3592,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "创建文件夹时出错",
-      "alert-folder-created-successfully": "文件夹创建成功",
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
@@ -3740,7 +3739,6 @@
       }
     },
     "description-experimental-types": "启用实验元素类型的选择",
-    "description-infinite-panning": "启用无限平移 - 适用于内容宽广的画布。警告：这是一项实验性功能，目前仅适用于受顶部/左侧约束的元素",
     "description-inline-editing": "启用直接编辑面板",
     "description-pan-zoom": "启用平移和缩放",
     "direction-options": {
@@ -3841,7 +3839,6 @@
     "name-align-text": "对齐文字",
     "name-color": "文字颜色",
     "name-experimental-types": "实验性元素类型",
-    "name-infinite-panning": "无限平移",
     "name-inline-editing": "嵌入式编辑",
     "name-pan-zoom": "平移和缩放",
     "name-text": "文字",
@@ -5625,6 +5622,7 @@
       "delete-read-only-file-message": "此数据面板无法直接从 Grafana 删除，因为存储库是只读的。要删除此数据面板，请从 Git 存储库中移除相应文件。",
       "deleting": "正在删除...",
       "drawer-title": "删除已预置的数据面板",
+      "success-message": "",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
     "description-label": {
@@ -5636,9 +5634,6 @@
           "edit-link": "编辑链接"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "数据面板更改已成功保存"
     },
     "email-list": {
       "aria-label-emailmenu": "切换电子邮件菜单"
@@ -5797,6 +5792,7 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5806,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -9335,6 +9332,15 @@
       "show-more": "展开",
       "tooltip-error": "错误：{{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "清除",
       "close": "关闭日志详情",
@@ -10982,6 +10988,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
@@ -11834,7 +11843,7 @@
         "recommended": "推荐",
         "results": "结果"
       },
-      "search": "搜索"
+      "search": ""
     }
   },
   "search": {
@@ -12469,6 +12478,19 @@
       "label-medium": "中",
       "label-small": "小"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "如果选中，整行将按此单元格的颜色显示。",
       "description-wrap-text": "如果选中，文本将根据配置列的文本宽度自动换行",
@@ -12503,6 +12525,13 @@
       "label-alt-text": "替代文本",
       "label-title-text": "标题文本"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "计算",
     "name-cell-height": "单元格高度",
     "name-cell-type": "单元格类型",
@@ -12519,7 +12548,10 @@
     "name-show-table-header": "显示表格表头",
     "name-wrap-header-text": "表头文字换行",
     "placeholder-column-width": "自动",
-    "placeholder-fields": "所有数字字段"
+    "placeholder-fields": "所有数字字段",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "单元格选项",
@@ -13234,22 +13266,6 @@
       "label-row": "行",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "布尔值假值",
-          "boolean-true-value": "布尔值真值",
-          "empty-string": "空字符串",
-          "null-value": "Null 值",
-          "number-value": "数字 0 值"
-        },
-        "label": {
-          "empty": "空",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "零"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13602,6 +13618,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {
