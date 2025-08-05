@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -286,4 +287,41 @@ func CreateOBOAuthContext(
 	}
 
 	return types.WithAuthInfo(ctx, requester)
+}
+
+type TestCertPaths struct {
+	ClientCert string
+	ClientKey  string
+	ServerCert string
+	ServerKey  string
+	CA         string
+}
+
+func CreateX509TestDir(t *testing.T) TestCertPaths {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	ca := testcerts.NewCA()
+	caCertFile, _, err := ca.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	serverKp, err := ca.NewKeyPair("localhost")
+	require.NoError(t, err)
+
+	serverCertFile, serverKeyFile, err := serverKp.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	clientKp, err := ca.NewKeyPair()
+	require.NoError(t, err)
+	clientCertFile, clientKeyFile, err := clientKp.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	return TestCertPaths{
+		ClientCert: clientCertFile.Name(),
+		ClientKey:  clientKeyFile.Name(),
+		ServerCert: serverCertFile.Name(),
+		ServerKey:  serverKeyFile.Name(),
+		CA:         caCertFile.Name(),
+	}
 }
