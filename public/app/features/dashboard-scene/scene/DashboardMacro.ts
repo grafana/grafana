@@ -17,10 +17,9 @@ class DashboardMacro implements FormatVariable {
     this.state = { name: name, type: 'dashboard_macro' };
   }
 
-  public getValue(fieldPath?: string): string | number | undefined {
+  public getValue(fieldPath?: string): string | number {
     const dashboard = getDashboardSceneFor(this._sceneObject);
-    const thisPath = currentPath(fieldPath);
-    switch (thisPath) {
+    switch (firstPathFragment(fieldPath)) {
       case 'uid':
         return dashboard.state.uid || '';
       case 'timeRange':
@@ -35,8 +34,7 @@ class DashboardMacro implements FormatVariable {
 
   public getValueText?(fieldPath?: string): string {
     const dashboard = getDashboardSceneFor(this._sceneObject);
-    const thisPath = currentPath(fieldPath);
-    switch (thisPath) {
+    switch (firstPathFragment(fieldPath)) {
       case 'timeRange':
         return getTimeValueText(dashboard, fieldPath) || '';
       default:
@@ -56,7 +54,7 @@ export function registerDashboardMacro() {
   }
 }
 
-function currentPath(fieldPath?: string): string | undefined {
+function firstPathFragment(fieldPath?: string): string | undefined {
   const fragments = fieldPath?.split('.');
   return fragments?.[0];
 }
