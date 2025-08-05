@@ -3,6 +3,9 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -22,9 +25,9 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardsV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -48,7 +51,7 @@ type provisioningTestHelper struct {
 	DashboardsV0       *apis.K8sResourceClient
 	DashboardsV1       *apis.K8sResourceClient
 	DashboardsV2alpha1 *apis.K8sResourceClient
-	DashboardsV2alpha2 *apis.K8sResourceClient
+	DashboardsV2beta1  *apis.K8sResourceClient
 	AdminREST          *rest.RESTClient
 	EditorREST         *rest.RESTClient
 	ViewerREST         *rest.RESTClient
@@ -109,6 +112,8 @@ func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
+		errors := mustNestedStringSlice(result.Object, "status", "errors")
+		require.Empty(t, errors, "historic job '%s' has errors: %v", job.GetName(), errors)
 		state := mustNestedString(result.Object, "status", "state")
 		require.Equal(t, string(provisioning.JobStateSuccess), state,
 			"historic job '%s' was not successful", job.GetName())
@@ -155,6 +160,50 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 
 		state := mustNestedString(elem.Object, "status", "state")
 		require.Equal(t, string(provisioning.JobStateSuccess), state, "job %s failed: %+v", elem.GetName(), elem.Object)
+	}
+}
+
+// AwaitJobsWithStates waits for all jobs for a repository to complete and accepts multiple valid end states
+func (h *provisioningTestHelper) AwaitJobsWithStates(t *testing.T, repoName string, acceptedStates []string) {
+	t.Helper()
+
+	// First, we wait for all jobs for the repository to disappear (i.e. complete/fail).
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+		if assert.NoError(collect, err, "failed to list active jobs") {
+			for _, elem := range list.Items {
+				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
+				require.NoError(t, err)
+				if repo == repoName {
+					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
+					return
+				}
+			}
+		}
+	}, time.Second*10, time.Millisecond*25, "job queue must be empty")
+
+	// Then, as all jobs are now historic jobs, we make sure they are in an accepted state.
+	result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
+	require.NoError(t, err, "failed to list historic jobs")
+
+	list, err := result.ToList()
+	require.NoError(t, err, "results should be a list")
+	require.NotEmpty(t, list.Items, "expect at least one job")
+
+	for _, elem := range list.Items {
+		require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
+
+		state := mustNestedString(elem.Object, "status", "state")
+
+		// Check if state is in accepted states
+		found := false
+		for _, acceptedState := range acceptedStates {
+			if state == acceptedState {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "job %s completed with unexpected state %s (expected one of %v): %+v", elem.GetName(), state, acceptedStates, elem.Object)
 	}
 }
 
@@ -216,7 +265,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagKubernetesClientDashboardsFolders,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
@@ -266,10 +314,10 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
 	})
-	dashboardsV2alpha2 := helper.GetResourceClient(apis.ResourceClientArgs{
+	dashboardsV2beta1 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR:       dashboardsV2alpha2.DashboardResourceInfo.GroupVersionResource(),
+		GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
 	})
 
 	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
@@ -309,12 +357,20 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		DashboardsV0:       dashboardsV0,
 		DashboardsV1:       dashboardsV1,
 		DashboardsV2alpha1: dashboardsV2alpha1,
-		DashboardsV2alpha2: dashboardsV2alpha2,
+		DashboardsV2beta1:  dashboardsV2beta1,
 	}
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	v, _, err := unstructured.NestedString(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []string {
+	v, _, err := unstructured.NestedStringSlice(obj, fields...)
 	if err != nil {
 		panic(err)
 	}
@@ -335,4 +391,45 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return repo
+}
+
+// postFilesRequest performs a direct HTTP POST request to the files API.
+// This bypasses Kubernetes REST client limitations with '/' characters in subresource names.
+type filesPostOptions struct {
+	targetPath   string // The target file/directory path
+	originalPath string // Source path for move operations (optional)
+	message      string // Commit message (optional)
+	body         string // Request body content (optional)
+	ref          string // Git ref/branch (optional)
+}
+
+func (h *provisioningTestHelper) postFilesRequest(t *testing.T, repo string, opts filesPostOptions) *http.Response {
+	addr := h.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
+		addr, repo, opts.targetPath)
+
+	// Build the URL with proper query parameter encoding
+	parsedUrl, err := url.Parse(baseUrl)
+	require.NoError(t, err)
+	params := parsedUrl.Query()
+
+	if opts.originalPath != "" {
+		params.Set("originalPath", opts.originalPath)
+	}
+	if opts.message != "" {
+		params.Set("message", opts.message)
+	}
+	if opts.ref != "" {
+		params.Set("ref", opts.ref)
+	}
+	parsedUrl.RawQuery = params.Encode()
+
+	req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(opts.body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	return resp
 }

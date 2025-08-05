@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1547,11 +1548,11 @@
       "group-not-editable": "Le groupe sélectionné ne peut pas être modifié",
       "group-not-editable-description": "Ce groupe appartient à une source de données qui ne prend pas en charge la modification.",
       "page-title": "Modifier le groupe de règles",
-      "rule-group-error": "Erreur lors du chargement du groupe de règles",
-      "title": "Modifier le groupe d’évaluation"
+      "rule-group-error": "Erreur lors du chargement du groupe de règles"
     },
     "group-loader": {
-      "group-load-failed": "Échec du chargement des règles du groupe {{ groupName }} dans {{ namespaceName }}"
+      "group-load-failed": "Échec du chargement des règles du groupe {{ groupName }} dans {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Le groupe est en cours de suppression"
@@ -1581,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Effectuez des vérifications ping, DNS, HTTP/S et TCP à tous les niveaux du réseau.",
       "synthetic-monitoring-card-item-3": "Utilisez plus de 20 sondes mondiales ou déployez vos propres sondes privées derrière votre pare-feu.",
       "synthetic-monitoring-card-item-4": "Suivez vos SLO grâce à des alertes natives au format Prometheus, directement depuis l’interface utilisateur.",
-      "synthetic-monitoring-card-title": "Monitoring synthétique",
-      "title-alerting": "Alerte"
+      "synthetic-monitoring-card-title": "Monitoring synthétique"
     },
     "import-to-gma": {
       "action-button": "Importer",
@@ -2466,7 +2466,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configurer",
-      "draft-new-rule": "Rédiger une nouvelle règle",
       "ds-error": {
         "title": "Impossible de charger les règles pour cette source de données"
       },
@@ -2492,6 +2491,7 @@
       "new-alert-rule": "Nouvelle règle d'alerte",
       "new-datasource-recording-rule": "Nouvelle règle d’enregistrement de source de données",
       "new-grafana-recording-rule": "Nouvelle règle d’enregistrement Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Afficher plus..."
       },
@@ -2802,6 +2802,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Actualiser l’aperçu",
+      "empty-state": "",
       "label-preview": "Aperçu",
       "refresh": "Actualiser"
     },
@@ -3479,6 +3480,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Annuler",
       "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
       "confirmation-text": "Supprimer",
@@ -3512,6 +3514,10 @@
       "this-folder-is-empty": "Ce dossier est vide"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3519,15 +3525,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
@@ -3550,12 +3563,12 @@
       "tags-column": "Balises"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Dossier supprimé avec succès",
       "api-error": "Échec de la suppression du dossier",
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
-      "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :"
+      "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Impossible de récupérer les informations descendantes"
@@ -3598,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Erreur de création du dossier",
-      "alert-folder-created-successfully": "Le dossier a bien été créé",
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
@@ -3725,6 +3737,7 @@
     "category-selected-connection": "Connexion sélectionnée",
     "category-selected-element": "Élément sélectionné ({{element}})",
     "category-size": "Taille",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3745,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Activer la sélection de types d’éléments expérimentaux",
-    "description-infinite-panning": "Activez le panoramique infini, utile pour les canvas étendus. Avertissement : il s’agit d’une fonctionnalité expérimentale qui ne fonctionne actuellement bien qu’avec des éléments contraints en haut/à gauche",
     "description-inline-editing": "Activer la modification directe du panneau",
     "description-pan-zoom": "Activer le zoom et le déplacement",
     "direction-options": {
@@ -3846,7 +3858,6 @@
     "name-align-text": "Alignement du texte",
     "name-color": "Couleur du texte",
     "name-experimental-types": "Types d’éléments expérimentaux",
-    "name-infinite-panning": "Panoramique infini",
     "name-inline-editing": "Édition en ligne",
     "name-pan-zoom": "Zoom et déplacement",
     "name-text": "Texte",
@@ -3967,6 +3978,13 @@
       "name-vertical-align": "Alignement vertical",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4563,6 +4581,11 @@
     },
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Déplacer {{typeName}}",
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
@@ -4577,6 +4600,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Tableau de bord",
+        "element": "",
         "local-variable": "Variable locale",
         "multiple-elements": "Éléments multiples",
         "multiple-elements-delete-text": "Voulez-vous vraiment supprimer ces éléments ?",
@@ -5347,6 +5371,20 @@
       "tags-expected-array": "balises attendues tableau",
       "tags-expected-strings": "balises attendues tableau de chaînes"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Restaurer la version {{version}}",
       "label-view-json-diff": "Afficher les différences du JSON",
@@ -5604,6 +5642,7 @@
       "delete-read-only-file-message": "Ce tableau de bord ne peut pas être supprimé directement depuis Grafana, car le dépôt est en lecture seule. Pour le supprimer, veuillez retirer le fichier de votre dépôt Git.",
       "deleting": "Suppression…",
       "drawer-title": "Supprimer le tableau de bord provisionné",
+      "success-message": "",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
     "description-label": {
@@ -5615,9 +5654,6 @@
           "edit-link": "Modifier le lien"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Modifications du tableau de bord enregistrées avec succès"
     },
     "email-list": {
       "aria-label-emailmenu": "Basculer vers le menu des e-mails"
@@ -5777,6 +5813,7 @@
       "usage-count_other": "Utilisé sur {{count}} tableaux de bord"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5786,7 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6972,6 +7009,9 @@
         "pro-tip-define-sources-through-configuration-files": " Conseil de pro : vous pouvez également définir des sources de données via des fichiers de configuration. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Précédent",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Passer en mode sans requête"
@@ -7157,6 +7197,7 @@
           "start-time": "Heure de début :"
         }
       },
+      "share-span": "",
       "warnings": "Avertissements"
     },
     "span-filters": {
@@ -7237,18 +7278,24 @@
       "split-tooltip": "Scinder le panneau",
       "split-widen": "Élargir le panneau"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Publiez votre commentaire",
-      "label-copied": "Copié !",
-      "label-export": "Exporter",
-      "label-trace-id": "ID de trace",
-      "title-share-thoughts-about-tracing-grafana": "Veuillez partager vos réflexions sur les traces dans Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Trace partielle",
-      "tooltip-url": "{{url}} ou {{target}} ou {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Bouton Supprimer les filtres",
@@ -7504,6 +7551,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7563,6 +7611,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8262,6 +8311,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Effacer la sélection"
     },
@@ -8274,6 +8326,7 @@
       "aria-label-selected-color": "Couleur {{colorLabel}}"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Annuler",
       "confirmText-delete": ""
     },
@@ -8597,7 +8650,10 @@
         "no-data": ""
       },
       "no-values-label": "Aucune valeur",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Balises"
@@ -8697,6 +8753,7 @@
       "footer-add-annotation": "Ajouter une annotation",
       "footer-click-to-action": "Cliquez pour {{actionTitle}}",
       "footer-click-to-navigate": "Cliquez pour ouvrir {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Horodatage"
     },
     "week-start-picker": {
@@ -9305,6 +9362,15 @@
       "show-more": "afficher plus",
       "tooltip-error": "Erreur : {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Effacer",
       "close": "Fermer les détails du log",
@@ -9330,6 +9396,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Aucun champ à afficher.",
+      "open-assistant": "",
       "pin-line": "Épingler ce log",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9415,9 @@
       "copy-log": "Copier la ligne de journal",
       "hide-details": "Afficher les détails du journal",
       "icon-label": "Menu du journal",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Épingler le journal",
       "show-context": "Afficher le contexte",
       "show-details": "Masquer les détails du journal",
@@ -10941,16 +11011,19 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Cette fonctionnalité est actuellement en cours de développement. Pour une expérience optimale et les dernières améliorations, nous vous recommandons d’utiliser la <2>compilation nocturne</2> de Grafana."
@@ -11059,10 +11132,10 @@
       "title-instant-updates-requests-webhooks": "Mises à jour instantanées et demandes de fusion avec les webhooks.",
       "title-visual-previews-in-pull-requests": "Aperçus visuels dans les demandes de fusion avec rendu d’image"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Description de la mission",
-      "summary": "Synthèse",
-      "title-error": "Erreur"
+      "summary": "Synthèse"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11280,13 @@
       "starting": "Démarrage...",
       "status": {
         "title-error-running-job": "Erreur lors de l’exécution de la mission",
-        "title-job-completed-successfully": "Mission accomplie"
+        "title-success-running-job": "",
+        "title-warning-running-job": ""
       },
-      "summary": "Synthèse"
+      "summary": "Synthèse",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11352,6 +11429,7 @@
       "label-current-step": "Étape actuelle",
       "label-pending-step": "Étape en attente"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11375,6 +11453,7 @@
       "go-to": "Accéder à",
       "make-sure": "Assurez-vous d’inclure ces autorisations"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Les ressources ne pourront pas être créées, modifiées ou supprimées pendant ce processus. Lors de la dernière étape, elles disparaîtront.",
       "alert-point-2": "Une fois la mise en service terminée, les ressources réapparaîtront et seront gérées via un stockage externe.",
@@ -11383,6 +11462,12 @@
       "alert-title": "Important : aucune donnée ou configuration ne sera perdue, mais les tableaux de bord seront temporairement indisponibles pendant quelques minutes.",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Choisir ce qui doit être synchronisé",
       "step-connect": "Connecter",
       "step-finish": "Choisir des paramètres supplémentaires",
@@ -11397,6 +11482,7 @@
     "wizard-content": {
       "button-cancel": "Annuler",
       "button-cancelling": "Annulation...",
+      "button-previous": "",
       "button-submitting": "Envoi…",
       "error-instance-repository-exists": "Le référentiel d’instances existe déjà"
     }
@@ -11797,7 +11883,7 @@
         "recommended": "Recommandé",
         "results": "Résultats"
       },
-      "search": "Rechercher"
+      "search": ""
     }
   },
   "search": {
@@ -12434,6 +12520,19 @@
       "label-medium": "Moyen",
       "label-small": "Petit"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Si cette option est sélectionnée, toute la ligne sera colorée comme cette cellule.",
       "description-wrap-text": "Si le texte sélectionné sera ajusté à la largeur du texte dans la colonne configurée",
@@ -12468,6 +12567,13 @@
       "label-alt-text": "Texte alternatif",
       "label-title-text": "Texte du titre"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Calcul",
     "name-cell-height": "Hauteur de cellule",
     "name-cell-type": "Type de cellule",
@@ -12484,7 +12590,10 @@
     "name-show-table-header": "Afficher l’en-tête du tableau",
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Tous les champs numériques"
+    "placeholder-fields": "Tous les champs numériques",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Options de cellule",
@@ -13199,22 +13308,6 @@
       "label-row": "Ligne",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Valeur booléenne fausse",
-          "boolean-true-value": "Valeur booléenne vraie",
-          "empty-string": "Chaîne vide",
-          "null-value": "Valeur nulle",
-          "number-value": "Valeur du nombre 0"
-        },
-        "label": {
-          "empty": "Vide",
-          "false": "Faux",
-          "null": "Nul",
-          "true": "Vrai",
-          "zero": "Zéro"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13424,7 +13517,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13446,6 +13539,9 @@
         }
       },
       "regression": "régression",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Nombre de points X, Y à prédire"
     },
     "rename-by-regex-transformer": {
@@ -13564,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

@@ -320,7 +320,7 @@ org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
 ## Configure team synchronization
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
@@ -450,7 +450,6 @@ Support for the Auth0 "audience" feature is not currently available in Grafana. 
 To set up Generic OAuth authentication with Auth0, follow these steps:
 
 1. Create an Auth0 application using the following parameters:
-
    - Name: Grafana
    - Type: Regular Web Application
 
@@ -485,7 +484,6 @@ To set up Generic OAuth authentication with Bitbucket, follow these steps:
 1. Navigate to **Settings > Workspace setting > OAuth consumers** in BitBucket.
 
 1. Create an application by selecting **Add consumer** and using the following parameters:
-
    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
 
 1. Click **Save**.
@@ -518,7 +516,6 @@ By default, a refresh token is included in the response for the **Authorization 
 To set up Generic OAuth authentication with OneLogin, follow these steps:
 
 1. Create a new Custom Connector in OneLogin with the following settings:
-
    - Name: Grafana
    - Sign On Method: OpenID Connect
    - Redirect URI: `https://<grafana domain>/login/generic_oauth`
@@ -526,7 +523,6 @@ To set up Generic OAuth authentication with OneLogin, follow these steps:
    - Login URL: `https://<grafana domain>/login/generic_oauth`
 
 1. Add an app to the Grafana Connector:
-
    - Display Name: Grafana
 
 1. Update the `[auth.generic_oauth]` section of the Grafana configuration file using the client ID and client secret from the **SSO** tab of the app details page:

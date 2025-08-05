@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Als je deze optie aanvinkt, wordt het serie-eindpunt met parameter {{exampleParameter}} de voorkeur gegeven boven het labelwaarden-eindpunt met parameter {{exampleParameter}}. Hoewel het eindpunt van de labelwaarden als beter presterend wordt beschouwd, geven sommige gebruikers de voorkeur aan de serie omdat deze een POST-methode heeft, terwijl het eindpunt van de labelwaarden alleen een GET-methode heeft."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
@@ -307,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filter metrische namen op regex-zoekopdracht, met behulp van een extra oproep op de Prometheus-API.",
-        "disable-text-wrap": "Tekstterugloop uitschakelen"
-      },
       "feedback-link": {
         "give-feedback": "Feedback geven",
         "title-give-feedback": "De metriekverkenner is nieuw, laat ons weten hoe we deze kunnen verbeteren"
@@ -324,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -374,16 +371,10 @@
         "tooltip-metric": "Optioneel: retourneert een lijst met labelwaarden voor de labelnaam in de opgegeven metriek."
       },
       "metrics-modal": {
-        "additional-settings": "Extra instellingen",
-        "aria-label-additional-settings": "Aanvullende instellingen",
         "aria-label-browse-metrics": "Metriek bekijken",
         "currently-selected": "Momenteel geselecteerd: {{selected}}",
         "metrics-pre-filtered": "Deze metriek is vooraf gefilterd op labels die zijn gekozen in de labelfilters.",
-        "placeholder-results-per-page": "resultaten per pagina",
-        "results-per-page": "Resultaten per pagina",
-        "title-metrics-explorer": "Metriekverkenner",
-        "results-amount_one": "{{num}} resultaten van {{count}} weergeven",
-        "results-amount_other": "{{num}} resultaten van {{count}} weergeven"
+        "title-metrics-explorer": "Metriekverkenner"
       },
       "nested-query": {
         "label": {
@@ -496,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "Naam",
-        "select": "Selecteren",
         "type": "Type"
       },
       "update-function-args": {
