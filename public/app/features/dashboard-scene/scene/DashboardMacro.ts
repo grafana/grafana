@@ -25,8 +25,6 @@ class DashboardMacro implements FormatVariable {
         return dashboard.state.uid || '';
       case 'timeRange':
         return getTimeValue(dashboard, fieldPath)?.valueOf() || '';
-      case 'url':
-        return dashboard.getSnapshotUrl();
       case 'title':
       case 'name':
       case 'id':
