@@ -7,16 +7,17 @@ on:
       - main
       - release-*.*.*
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+# Temporarily disabled concurrency to bypass stuck workflow
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions: {}
 
 jobs:
   detect-changes:
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: github-hosted-ubuntu-x64-large
     permissions:
       contents: read
     outputs:
@@ -36,7 +37,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
     name: Build & Package Grafana
-    runs-on: ubuntu-latest-16-cores
+    runs-on: github-hosted-ubuntu-x64-large
     permissions:
       contents: read
     outputs:
@@ -64,7 +65,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
     name: Build E2E test runner
-    runs-on: ubuntu-latest
+    runs-on: github-hosted-ubuntu-x64-large
     permissions:
       contents: read
     outputs:
@@ -121,7 +122,7 @@ jobs:
             path: e2e/old-arch/panels-suite
             flags: --flags="--env DISABLE_SCENES=true"
     name: ${{ matrix.suite }}
-    runs-on: ubuntu-latest-8-cores
+    runs-on: github-hosted-ubuntu-x64-large
     permissions:
       contents: read
 
@@ -163,7 +164,7 @@ jobs:
     needs:
       - build-grafana
     name: A11y test
-    runs-on: ubuntu-latest-8-cores
+    runs-on: github-hosted-ubuntu-x64-large
     permissions:
       contents: read
 
@@ -201,7 +202,7 @@ jobs:
     if: always()
 
     name: All E2E tests complete
-    runs-on: ubuntu-latest
+    runs-on: github-hosted-ubuntu-x64-large
     steps:
       - name: Check test suites
         env:
