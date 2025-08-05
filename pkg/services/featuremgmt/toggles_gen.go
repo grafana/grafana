@@ -994,4 +994,8 @@ const (
 	// FlagNewLogContext
 	// New Log Context component
 	FlagNewLogContext = "newLogContext"
+
+	// FlagNewClickhouseConfigPageDesign
+	// Enables new design for the Clickhouse data source configuration page
+	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
 )

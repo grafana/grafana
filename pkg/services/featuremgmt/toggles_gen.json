@@ -2111,6 +2111,19 @@
     },
     {
       "metadata": {
+        "name": "newClickhouseConfigPageDesign",
+        "resourceVersion": "1754075145003",
+        "creationTimestamp": "2025-08-01T19:05:45Z"
+      },
+      "spec": {
+        "description": "Enables new design for the Clickhouse data source configuration page",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newDashboardSharingComponent",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-05-03T15:02:18Z"
