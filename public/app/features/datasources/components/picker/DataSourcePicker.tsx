@@ -470,6 +470,7 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
                   onChange(ds, defaultQueries);
                   hideModal();
                 },
+                dataSources: props.dataSources,
               });
               reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
             }}

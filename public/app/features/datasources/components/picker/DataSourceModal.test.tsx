@@ -54,6 +54,7 @@ const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
     onChange: partialProps.onChange || jest.fn(),
     onDismiss: partialProps.onDismiss || jest.fn(),
     current: partialProps.current || mockDS1,
+    dataSources: partialProps.dataSources || mockDSList,
   };
 
   return render(<DataSourceModal {...props} />);
@@ -163,6 +164,7 @@ describe('DataSourceDropdown', () => {
         onDismiss: () => {},
         current: mockDS1.name,
         ...filters,
+        dataSources: mockDSList,
       };
 
       getListMock.mockClear();
