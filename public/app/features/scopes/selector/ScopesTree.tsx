@@ -23,7 +23,7 @@ export interface ScopesTreeProps {
 
   // Recent scopes are only shown at the root node
   recentScopes?: Scope[][];
-  onRecentScopesSelect?: (scopeIds: string[]) => void;
+  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string) => void;
 }
 
 export function ScopesTree({
