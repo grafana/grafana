@@ -45,7 +45,7 @@ type QueryAPIBuilder struct {
 
 	tracer                 tracing.Tracer
 	metrics                *metrics.ExprMetrics
-	clientSupplier         clientapi.DataSourceClientSupplier
+	instanceProvider       clientapi.InstanceProvider
 	registry               query.DataSourceApiServerRegistry
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
@@ -55,7 +55,7 @@ type QueryAPIBuilder struct {
 
 func NewQueryAPIBuilder(
 	features featuremgmt.FeatureToggles,
-	clientSupplier clientapi.DataSourceClientSupplier,
+	instanceProvider clientapi.InstanceProvider,
 	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
 	registerer prometheus.Registerer,
@@ -81,7 +81,7 @@ func NewQueryAPIBuilder(
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
-		clientSupplier:       clientSupplier,
+		instanceProvider:     instanceProvider,
 		authorizer:           ar,
 		registry:             registry,
 		metrics:              metrics.NewQueryServiceExpressionsMetrics(registerer),
@@ -134,7 +134,7 @@ func RegisterAPIService(
 
 	builder, err := NewQueryAPIBuilder(
 		features,
-		client.NewSingleTenantClientSupplier(cfg, features, pluginClient, pCtxProvider, accessControl),
+		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
 		ar,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
 		registerer,

@@ -83,7 +83,7 @@
     "@rollup/plugin-image": "3.0.3",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
-    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/jest-dom": "6.6.4",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
@@ -102,7 +102,7 @@
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "testing-library-selector": "0.3.1",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "peerDependencies": {
     "react": "^18.0.0",

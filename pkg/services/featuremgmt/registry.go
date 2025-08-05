@@ -477,6 +477,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "kubernetesShortURLs",
+			Description:     "Routes short url requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -1888,6 +1895,13 @@ var (
 			Description:  "Enable adhoc filter buttons in visualization tooltips",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newLogContext",
+			Description:  "New Log Context component",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
 			FrontendOnly: true,
 		},
 	}
