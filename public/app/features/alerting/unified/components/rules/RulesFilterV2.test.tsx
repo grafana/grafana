@@ -178,7 +178,7 @@ describe('RulesFilterV2', () => {
 
       const { user } = render(<RulesFilterV2 />);
       await user.click(ui.filterButton.get());
-      expect(screen.queryByText('Plugin rules')).toBeInTheDocument();
+      expect(screen.getByText('Plugin rules')).toBeInTheDocument();
     });
 
     it('Should hide plugin filter when no plugins are available', async () => {

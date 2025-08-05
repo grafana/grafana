@@ -178,7 +178,8 @@ export default function RulesFilter() {
                     e.stopPropagation();
                   }
                 }}
-                role="region"
+                role="dialog"
+                aria-label="Filter options"
                 tabIndex={-1}
               >
                 <FilterOptions
