@@ -10,7 +10,9 @@ describe('Tooltip', () => {
   it('renders correctly', () => {
     render(
       <Tooltip placement="auto" content="Tooltip text">
-        <TextLink href="http://www.grafana.com">Link with tooltip</TextLink>
+        <TextLink external href="http://www.grafana.com">
+          Link with tooltip
+        </TextLink>
       </Tooltip>
     );
     expect(screen.getByText('Link with tooltip')).toBeInTheDocument();

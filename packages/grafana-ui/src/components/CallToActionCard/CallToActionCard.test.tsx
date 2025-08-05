@@ -7,7 +7,15 @@ import { CallToActionCard } from './CallToActionCard';
 describe('CallToActionCard', () => {
   describe('rendering', () => {
     it('should render callToActionElement', () => {
-      render(<CallToActionCard callToActionElement={<TextLink href="http://dummy.link">Click me</TextLink>} />);
+      render(
+        <CallToActionCard
+          callToActionElement={
+            <TextLink external href="http://dummy.link">
+              Click me
+            </TextLink>
+          }
+        />
+      );
       expect(screen.getByRole('link', { name: 'Click me' })).toBeInTheDocument();
     });
 
@@ -15,7 +23,11 @@ describe('CallToActionCard', () => {
       render(
         <CallToActionCard
           message="Click button below"
-          callToActionElement={<TextLink href="http://dummy.link">Click me</TextLink>}
+          callToActionElement={
+            <TextLink external href="http://dummy.link">
+              Click me
+            </TextLink>
+          }
         />
       );
       expect(screen.getByText('Click button below')).toBeInTheDocument();
@@ -25,7 +37,11 @@ describe('CallToActionCard', () => {
       render(
         <CallToActionCard
           footer="footer content"
-          callToActionElement={<TextLink href="http://dummy.link">Click me</TextLink>}
+          callToActionElement={
+            <TextLink external href="http://dummy.link">
+              Click me
+            </TextLink>
+          }
         />
       );
       expect(screen.getByText('footer content')).toBeInTheDocument();
@@ -36,7 +52,11 @@ describe('CallToActionCard', () => {
         <CallToActionCard
           message="Click button below"
           footer="footer content"
-          callToActionElement={<TextLink href="http://dummy.link">Click me</TextLink>}
+          callToActionElement={
+            <TextLink external href="http://dummy.link">
+              Click me
+            </TextLink>
+          }
         />
       );
       expect(screen.getByText('Click button below')).toBeInTheDocument();
