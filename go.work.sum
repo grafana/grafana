@@ -506,8 +506,6 @@ contrib.go.opencensus.io/exporter/zipkin v0.1.2 h1:YqE293IZrKtqPnpwDPH/lOqTWD/s3
 contrib.go.opencensus.io/exporter/zipkin v0.1.2/go.mod h1:mP5xM3rrgOjpn79MM8fZbj3gsxcuytSqtH0dxSWW1RE=
 contrib.go.opencensus.io/integrations/ocsql v0.1.7 h1:G3k7C0/W44zcqkpRSFyjU9f6HZkbwIrL//qqnlqWZ60=
 contrib.go.opencensus.io/integrations/ocsql v0.1.7/go.mod h1:8DsSdjz3F+APR+0z0WkU1aRorQCFfRxvqjUUPMbF3fE=
-dario.cat/mergo v1.0.2 h1:85+piFYR1tMbRrLcDwR18y4UKJ3aH1Tbzi24VRW1TK8=
-dario.cat/mergo v1.0.2/go.mod h1:E/hbnu0NxMFBjpMIE34DRGLWqDy0g5FuKDhCb31ngxA=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9 h1:VpgP7xuJadIUuKccphEpTJnWhS2jkQyMt6Y7pJCD7fY=
 gioui.org v0.0.0-20210308172011-57750fc8a0a6 h1:K72hopUosKG3ntOPNG4OzzbuhxGuVf06fa2la1/H/Ho=
 git.sr.ht/~sbinet/gg v0.6.0 h1:RIzgkizAk+9r7uPzf/VfbJHBMKUr0F5hRFxTUGMnt38=
@@ -997,8 +995,8 @@ github.com/grafana/grafana/apps/dashboard v0.0.0-20250616145019-8d27f12428cb/go.
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:eR8wca74ADgxBrvX0uNpdB1qnPaGx/KhCm4Xj8oqHfQ=
 github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d/go.mod h1:HQprw3MmiYj5OUV9CZnkwA1FKDZBmYACuAB3oDvUOmI=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
-github.com/grafana/grafana/apps/preferences v0.0.0-20250804141919-269afe9296e3 h1:TadU7uA/gx8IGdL0ULs6eYme1z1faY52A72tR7+RHSk=
-github.com/grafana/grafana/apps/preferences v0.0.0-20250804141919-269afe9296e3/go.mod h1:26eeN5yE3CGFc0eygeVPPNU3EnwRX/yY0ohmzab0OIE=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250805072727-ea7de610913e h1:TCIIVmX1z6tLWUbdJnsFL2RgjUvLYeTR7YH+qTKMXkQ=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250805072727-ea7de610913e/go.mod h1:26eeN5yE3CGFc0eygeVPPNU3EnwRX/yY0ohmzab0OIE=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod h1:tfLnBpPYgwrBMRz4EXqPCZJyCjEG4Ev37FSlXnocJ2c=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d/go.mod h1:CXpwZ3Mkw6xVlGKc0SqUxqXCP3Uv182q6qAQnLaLxRg=
