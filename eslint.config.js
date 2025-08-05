@@ -157,6 +157,13 @@ module.exports = [
       '@typescript-eslint/no-redeclare': ['error'],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
+          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
+        },
+      ],
     },
   },
   {
