@@ -52,6 +52,7 @@ export function EditDataSourceActions({ uid }: Props) {
         label={t('datasources.edit-data-source-actions.open-in-explore', 'Open in Explore View')}
         url={constructDataSourceExploreUrl(dataSource)}
         onClick={handleExploreClick}
+        icon="compass"
       />
       {links.map((link) => (
         <Menu.Item key={link.id} label={link.title} url={link.path} onClick={link.onClick} icon={link.icon} />
