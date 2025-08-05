@@ -1,7 +1,14 @@
 import { advanceTo, clear } from 'jest-date-mock';
 
 import { dateTime } from '@grafana/data';
-import { SceneCanvasText, SceneFlexItem, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
+import {
+  SceneCanvasText,
+  SceneFlexItem,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneVariableSet,
+  TestVariable,
+} from '@grafana/scenes';
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -59,6 +66,36 @@ describe('PanelTimeRange', () => {
 
     expect(panelTime.state.from).toBe('now-12h');
     expect(panelTime.state.to).toBe('now-2h');
+  });
+
+  it('should update timeInfo when timeShift and timeFrom are variable expressions', async () => {
+    const customTimeFrom = new TestVariable({
+      name: 'testFrom',
+      value: '10s',
+    });
+    const customTimeShift = new TestVariable({
+      name: 'testShift',
+      value: '20s',
+    });
+    const panelTime = new PanelTimeRange({ timeFrom: '$testFrom', timeShift: '$testShift' });
+    const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+    const scene = new SceneFlexLayout({
+      $variables: new SceneVariableSet({
+        variables: [customTimeFrom, customTimeShift],
+      }),
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      children: [new SceneFlexItem({ body: panel })],
+    });
+    activateFullSceneTree(scene);
+
+    expect(panelTime.state.timeInfo).toBe('Last 10 seconds timeshift -20s');
+
+    customTimeFrom.setState({ value: '15s' });
+    customTimeShift.setState({ value: '25s' });
+
+    panelTime.forceRender();
+
+    expect(panelTime.state.timeInfo).toBe('Last 15 seconds timeshift -25s');
   });
 });
 
