@@ -79,6 +79,17 @@ The configuration file in Grafana Enterprise contains the following options. For
 ;hide_edition =
 ```
 
+{{< admonition type="note" >}}
+For the `login_logo` option, Grafana recommends using SVG files that are 48 pixels by 48 pixels or smaller. You also don't need to use the `url()` function for `login_logo`.
+
+Additionally, you can copy images to the local Grafana image directory, `/usr/share/grafana/public/img/`, and set `login_logo` to the stored image. For example:
+
+```ini
+login_logo = /public/img/<YOUR_LOGO.svg>
+```
+
+{{< /admonition >}}
+
 You have the option of adding custom links in place of the default footer links (Documentation, Support, Community). Below is an example of how to replace the default footer and help links with custom links.
 
 ```ini
