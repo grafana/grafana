@@ -5,5 +5,6 @@ export function getIsReadOnlyRepo(repository: RepositoryView | undefined): boole
     return false;
   }
 
+  // Repository is consider read-only if it has no workflows defined (workflows are required for write operations)
   return repository.workflows.length === 0;
 }

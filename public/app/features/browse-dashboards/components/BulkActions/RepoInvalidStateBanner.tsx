@@ -29,7 +29,7 @@ export function RepoInvalidStateBanner({ noRepository, isReadOnlyRepo, readOnlyM
         {readOnlyMessage
           ? t(
               'browse-dashboards.bulk-move-resources-form.error.read-only-saving-message',
-              'Repository is read-only. {{readOnlyMessage}}',
+              'Repository is read-only and provisioned in git. {{readOnlyMessage}}',
               { readOnlyMessage }
             )
           : t(
