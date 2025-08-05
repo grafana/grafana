@@ -161,14 +161,21 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	// Viewer can see settings listing
 	t.Run("viewer has access to list", func(t *testing.T) {
 		settings := &provisioning.RepositoryViewList{}
-		rsp := helper.ViewerREST.Get().
-			Namespace("default").
-			Suffix("settings").
-			Do(context.Background())
-		require.NoError(t, rsp.Error())
-		err := rsp.Into(settings)
-		require.NoError(t, err)
-		require.Len(t, settings.Items, len(inputFiles))
+		// Wait for unified storage to make the data available
+		require.Eventually(t, func() bool {
+			rsp := helper.ViewerREST.Get().
+				Namespace("default").
+				Suffix("settings").
+				Do(context.Background())
+			if rsp.Error() != nil {
+				return false
+			}
+			err := rsp.Into(settings)
+			if err != nil {
+				return false
+			}
+			return len(settings.Items) == len(inputFiles)
+		}, time.Second*10, time.Millisecond*100, "Expected settings to have len(inputFiles) items")
 
 		// FIXME: this should be an enterprise integration test
 		if extensions.IsEnterprise {
@@ -1827,8 +1834,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 
 		// Verify dashboard still exists in Grafana with same content but may have updated path references
 		helper.SyncAndWait(t, repo, nil)
-		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		require.NoError(t, err, "dashboard should still exist in Grafana after move")
+		require.Eventually(t, func() bool {
+			_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+			return err == nil
+		}, 10*time.Second, 100*time.Millisecond, "dashboard should still exist in Grafana after move") // Using Eventually to account for potential delays in dashboards APIs.
 	})
 
 	t.Run("move file to nested path without ref", func(t *testing.T) {
