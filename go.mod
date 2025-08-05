@@ -68,7 +68,7 @@ require (
 	github.com/go-openapi/strfmt v0.23.0 // @grafana/alerting-backend
 	github.com/go-redis/redis/v8 v8.11.5 // @grafana/grafana-backend-group
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
-	github.com/go-sql-driver/mysql v1.9.2 // @grafana/grafana-search-and-storage
+	github.com/go-sql-driver/mysql v1.9.3 // @grafana/grafana-search-and-storage
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
 	github.com/gobwas/glob v0.2.3 // @grafana/grafana-backend-group
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-backend
@@ -97,7 +97,7 @@ require (
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.40.2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.40.1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-aws-sdk v1.0.4 // @grafana/aws-datasources
+	github.com/grafana/grafana-aws-sdk v1.1.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.9.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.1 // @grafana/partner-datasources
@@ -237,6 +237,7 @@ require (
 	github.com/grafana/grafana/apps/iam v0.0.0-20250804150913-990f1c69ecc2 // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250804150913-990f1c69ecc2 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/preferences v0.0.0-20250805120407-0bba6e7b822b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/secret v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/apps/shorturl v0.0.0-20250804150913-990f1c69ecc2 // @grafana/sharing-squad
@@ -408,7 +409,7 @@ require (
 	github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
-	github.com/grafana/sqlds/v4 v4.2.3 // indirect
+	github.com/grafana/sqlds/v4 v4.2.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/consul/api v1.31.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
