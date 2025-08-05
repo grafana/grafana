@@ -47,7 +47,7 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) Add(ctx context.Context, username, IPAddress string) error {
-	if s.cfg.DisableBruteForceLoginProtection {
+	if s.cfg.DisableBruteForceLoginProtection || (s.cfg.DisableUsernameLoginProtection && s.cfg.DisableIPAddressLoginProtection) {
 		return nil
 	}
 
@@ -63,7 +63,7 @@ func (s *Service) Reset(ctx context.Context, username string) error {
 }
 
 func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
-	if s.cfg.DisableUsernameLoginProtection {
+	if s.cfg.DisableBruteForceLoginProtection || s.cfg.DisableUsernameLoginProtection {
 		return true, nil
 	}
 
@@ -85,7 +85,7 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 }
 
 func (s *Service) ValidateIPAddress(ctx context.Context, IPAddress string) (bool, error) {
-	if s.cfg.DisableIPAddressLoginProtection {
+	if s.cfg.DisableBruteForceLoginProtection || s.cfg.DisableIPAddressLoginProtection {
 		return true, nil
 	}
 
