@@ -159,7 +159,7 @@ func TestQueryAPI(t *testing.T) {
 					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
 					Tracer:   tracing.InitializeTracerForTest(),
 				},
-				clientSupplier: mockClient{
+				instanceProvider: mockClient{
 					stubbedFrame: tc.stubbedFrame,
 				},
 				tracer:                 tracing.InitializeTracerForTest(),

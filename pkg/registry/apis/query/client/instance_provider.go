@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type singleTenantClientSupplier struct {
+type singleTenantInstanceProvider struct {
 	client   clientapi.QueryDataClient
 	features featuremgmt.FeatureToggles
 	cfg      *setting.Cfg
@@ -29,15 +29,15 @@ func (t *singleTenantInstance) GetDataSourceClient(_ context.Context, _ data.Dat
 	return t.client, nil
 }
 
-func NewSingleTenantClientSupplier(cfg *setting.Cfg, features featuremgmt.FeatureToggles, p plugins.Client, ctxProv *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.InstanceProvider {
-	return &singleTenantClientSupplier{
+func NewSingleTenantInstanceProvider(cfg *setting.Cfg, features featuremgmt.FeatureToggles, p plugins.Client, ctxProv *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.InstanceProvider {
+	return &singleTenantInstanceProvider{
 		cfg:      cfg,
 		features: features,
 		client:   newQueryClientForPluginClient(p, ctxProv, accessControl),
 	}
 }
 
-func (s *singleTenantClientSupplier) GetInstance(_ context.Context) (clientapi.Instance, error) {
+func (s *singleTenantInstanceProvider) GetInstance(_ context.Context) (clientapi.Instance, error) {
 	return &singleTenantInstance{
 		client:   s.client,
 		features: s.features,
