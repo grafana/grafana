@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Enable Basic Logs"
     },
     "config-editor": {
-      "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy.",
+      "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.",
       "description-request-timeout": "Set the request timeout in seconds. Default is 30 seconds.",
       "title-additional-settings": "Additional settings",
       "title-request-timeout": "Request Timeout"
