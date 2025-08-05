@@ -633,17 +633,24 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				workers = append(workers, extra.GetJobWorkers()...)
 			}
 
-			driver, err := jobs.NewJobDriver(
-				time.Minute*20, // Max time for each job
-				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
-				time.Second*30, // Periodically look for new jobs
+			// This is basically our own JobQueue system
+			driver, err := jobs.NewConcurrentJobDriver(
+				3,              // 3 drivers for now
+				20*time.Minute, // Max time for each job
+				22*time.Minute, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				30*time.Second, // Periodically look for new jobs
 				b.jobs, b, b.jobHistory,
 				workers...,
 			)
 			if err != nil {
 				return err
 			}
-			go driver.Run(postStartHookCtx.Context)
+
+			go func() {
+				if err := driver.Run(postStartHookCtx.Context); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("job driver failed", "error", err)
+				}
+			}()
 
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
