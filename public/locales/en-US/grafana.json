@@ -6473,7 +6473,7 @@
     "edit-data-source-actions": {
       "build-a-dashboard": "Build a dashboard",
       "explore-data": "Explore data",
-      "extensions": "Extensions"
+      "open-in-explore": "Open in Explore View"
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
