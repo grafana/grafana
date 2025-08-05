@@ -17,7 +17,7 @@ export function InviteUserButton() {
     }
   };
 
-  return shouldRenderInviteUserButton ? (
+  return shouldRenderInviteUserButton() ? (
     <>
       <ToolbarButton
         icon="add-user"

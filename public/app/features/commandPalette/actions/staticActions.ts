@@ -142,7 +142,7 @@ export function useStaticActions(): CommandPaletteAction[] {
   return useMemo(() => {
     const navBarActions = navTreeToActions(navBarTree);
 
-    if (shouldRenderInviteUserButton) {
+    if (shouldRenderInviteUserButton()) {
       navBarActions.push({
         id: 'invite-user',
         name: t('navigation.invite-user.invite-new-user-button', 'Invite new user'),
