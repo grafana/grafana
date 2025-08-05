@@ -771,7 +771,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/rangeutil.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/store.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/TableModel.test.ts @grafana/partner-datasources
-/public/app/core/specs/ticks.test.ts @grafana/grafana-plugins-platform-frontend
+/public/app/core/specs/ticks.test.ts @grafana/plugins-platform-frontend
 /public/app/core/specs/time_series.test.ts @grafana/dataviz-squad
 /public/app/core/store.ts @grafana/grafana-frontend-platform
 /public/app/core/TableModel.ts @grafana/partner-datasources
@@ -803,7 +803,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/richHistory* @grafana/observability-traces-and-profiling
 /public/app/core/utils/set.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/shortLinks* @grafana/sharing-squad
-/public/app/core/utils/ticks.ts @grafana/grafana-plugins-platform-frontend
+/public/app/core/utils/ticks.ts @grafana/plugins-platform-frontend
 /public/app/core/utils/timePicker* @grafana/grafana-frontend-platform
 /public/app/core/utils/timeRegions* @grafana/dataviz-squad
 /public/app/core/utils/urlToken.ts @grafana/identity-access-team
