@@ -805,7 +805,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async loadSnapshot(slug: string) {
-    return this.withVersionHandling((manager) => manager.loadSnapshot(slug));
+    return this.withVersionHandling((manager) => manager.loadSnapshot.call(this, slug));
   }
 
   public clearDashboardCache() {
