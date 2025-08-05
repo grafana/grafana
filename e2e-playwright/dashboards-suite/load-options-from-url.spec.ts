@@ -2,6 +2,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
+
 test.describe(
   'Variables - Load options from Url',
   {

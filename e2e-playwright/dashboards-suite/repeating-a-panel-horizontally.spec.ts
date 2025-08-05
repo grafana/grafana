@@ -2,6 +2,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const PAGE_UNDER_TEST = 'WVpf2jp7z/repeating-a-panel-horizontally';
 
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
+
 test.describe(
   'Repeating a panel horizontally',
   {

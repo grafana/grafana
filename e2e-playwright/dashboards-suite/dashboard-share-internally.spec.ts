@@ -4,6 +4,7 @@ test.use({
   featureToggles: {
     scenes: true,
     newDashboardSharingComponent: true,
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
   },
 });
 

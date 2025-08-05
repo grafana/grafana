@@ -2,6 +2,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/TestDashboard.json';
 
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
+
 test.describe(
   'Dashboard browse',
   {
