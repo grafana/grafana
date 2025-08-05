@@ -635,7 +635,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
-				3,              // 3 drivers for now
+				5,              // 5 drivers for now
 				20*time.Minute, // Max time for each job
 				22*time.Minute, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
 				30*time.Second, // Periodically look for new jobs
