@@ -50,7 +50,7 @@ jobs:
         env:
           CACHE_BUSTER: ${{ github.run_number }}-${{ github.sha }}
         with:
-          version: "0.9.3"
+          version: "0.11.8"
           verb: run
           args: go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
       - run: mv "$(cat out.txt)" grafana.tar.gz
@@ -147,7 +147,7 @@ jobs:
       - name: Run E2E tests
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
-          version: "0.9.3"
+          version: "0.11.8"
           verb: run
           args: go run ./pkg/build/e2e --package=grafana.tar.gz
             --suite=${{ matrix.path }}
@@ -186,14 +186,14 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
-          version: "0.9.3"
+          version: "0.11.8"
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
-          version: "0.9.3"
+          version: "0.11.8"
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail
 
