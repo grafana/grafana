@@ -216,10 +216,6 @@ func (ng *AlertNG) init() error {
 			ExternalURL:       ng.Cfg.AppURL,
 			SmtpConfig:        smtpCfg,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
-
-			// TODO: Remove once everything can be sent in the 'smtp_config' field.
-			SmtpFrom:      ng.Cfg.Smtp.FromAddress,
-			StaticHeaders: ng.Cfg.Smtp.StaticHeaders,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
@@ -231,7 +227,6 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			ng.Cfg.UnifiedAlerting.SkipClustering = true
 
 			override = remote.NewRemotePrimaryFactory(cfg, notifier.NewFileStore(cfg.OrgID, ng.KVStore), crypto, autogenFn, m, ng.tracer)
 		} else {

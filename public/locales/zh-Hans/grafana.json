@@ -1542,8 +1542,7 @@
       "group-not-editable": "无法编辑所选组",
       "group-not-editable-description": "此组所属的数据源不支持编辑。",
       "page-title": "编辑规则组",
-      "rule-group-error": "加载规则组时出错",
-      "title": "编辑评估组"
+      "rule-group-error": "加载规则组时出错"
     },
     "group-loader": {
       "group-load-failed": "从 {{ namespaceName }} 的组 {{ groupName }} 中加载规则失败",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "在每个网络层运行 ping、DNS、HTTP/S 和 TCP 检查。",
       "synthetic-monitoring-card-item-3": "使用 20 多个全球探测点，或部署在防火墙后的私有探测点。",
       "synthetic-monitoring-card-item-4": "使用内置的 Prometheus 风格的警报功能，直接从用户界面跟踪 SLO。",
-      "synthetic-monitoring-card-title": "综合监测",
-      "title-alerting": "警报"
+      "synthetic-monitoring-card-title": "综合监测"
     },
     "import-to-gma": {
       "action-button": "导入",
@@ -3469,6 +3467,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "取消",
       "cannot-move-folders": "文件夹无法移动",
       "confirmation-text": "删除",
@@ -3502,21 +3501,32 @@
       "this-folder-is-empty": "此文件夹为空"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_other": ""
     },
     "bulk-delete-resources-form": {
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_other": "{{count}} 条警告规则",
@@ -3534,12 +3544,12 @@
       "tags-column": "标签"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "文件夹已成功删除",
       "api-error": "删除文件夹失败",
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除...",
-      "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响："
+      "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "无法检索后代信息"
@@ -3582,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "创建文件夹时出错",
-      "alert-folder-created-successfully": "文件夹创建成功",
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
@@ -3709,6 +3718,7 @@
     "category-selected-connection": "所选连接",
     "category-selected-element": "所选元素 ({{element}})",
     "category-size": "大小",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3729,7 +3739,6 @@
       }
     },
     "description-experimental-types": "启用实验元素类型的选择",
-    "description-infinite-panning": "启用无限平移 - 适用于内容宽广的画布。警告：这是一项实验性功能，目前仅适用于受顶部/左侧约束的元素",
     "description-inline-editing": "启用直接编辑面板",
     "description-pan-zoom": "启用平移和缩放",
     "direction-options": {
@@ -3830,7 +3839,6 @@
     "name-align-text": "对齐文字",
     "name-color": "文字颜色",
     "name-experimental-types": "实验性元素类型",
-    "name-infinite-panning": "无限平移",
     "name-inline-editing": "嵌入式编辑",
     "name-pan-zoom": "平移和缩放",
     "name-text": "文字",
@@ -3951,6 +3959,13 @@
       "name-vertical-align": "垂直对齐",
       "placeholder": {
         "auto": "自动"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -4548,6 +4563,7 @@
     "edit-actions": {
       "add": "添加{{typeName}}",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5335,6 +5351,20 @@
       "tags-expected-array": "标签预期数组",
       "tags-expected-strings": "标签预期字符串数组"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "恢复到版本 {{version}}",
       "label-view-json-diff": "查看 JSON 差异",
@@ -5592,6 +5622,7 @@
       "delete-read-only-file-message": "此数据面板无法直接从 Grafana 删除，因为存储库是只读的。要删除此数据面板，请从 Git 存储库中移除相应文件。",
       "deleting": "正在删除...",
       "drawer-title": "删除已预置的数据面板",
+      "success-message": "",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
     "description-label": {
@@ -5603,9 +5634,6 @@
           "edit-link": "编辑链接"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "数据面板更改已成功保存"
     },
     "email-list": {
       "aria-label-emailmenu": "切换电子邮件菜单"
@@ -5764,6 +5792,7 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5773,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6957,6 +6987,9 @@
         "pro-tip-define-sources-through-configuration-files": "专业提示：您还可以通过配置文件定义数据源。"
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "上一步",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "转为无查询"
@@ -7223,18 +7256,24 @@
       "split-tooltip": "拆分窗格",
       "split-widen": "宽窗格"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "提供反馈",
-      "label-copied": "已复制！",
-      "label-export": "导出",
-      "label-trace-id": "跟踪 ID",
-      "title-share-thoughts-about-tracing-grafana": "分享您对 Grafana 跟踪功能的看法。"
-    },
     "trace-page-header": {
-      "text-partial-trace": "部分跟踪",
-      "tooltip-url": "{{url}} 或 {{target}} 或 {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "清除筛选按钮",
@@ -7490,6 +7529,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7549,6 +7589,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8248,6 +8289,9 @@
     "card": {
       "option": "选项"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "清除选择"
     },
@@ -8260,6 +8304,7 @@
       "aria-label-selected-color": "{{colorLabel}} 颜色"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "取消",
       "confirmText-delete": ""
     },
@@ -8686,6 +8731,7 @@
       "footer-add-annotation": "添加注释",
       "footer-click-to-action": "点击以 {{actionTitle}}",
       "footer-click-to-navigate": "点击打开 {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "时间戳"
     },
     "week-start-picker": {
@@ -9285,6 +9331,15 @@
       "show-less": "收起",
       "show-more": "展开",
       "tooltip-error": "错误：{{errorMessage}}"
+    },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
     },
     "log-line-details": {
       "clear-search": "清除",
@@ -10933,6 +10988,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
@@ -11186,6 +11244,7 @@
       "starting": "正在启动...",
       "status": {
         "title-error-running-job": "运行作业时出错",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "摘要",
@@ -11334,6 +11393,7 @@
       "label-current-step": "当前步骤",
       "label-pending-step": "待处理步骤"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11366,6 +11426,12 @@
       "alert-title": "重要提示：数据或配置不会丢失，但数据面板将在几分钟内暂时不可用。",
       "button-next": "完成",
       "button-start": "开始同步",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "选择要同步的内容",
       "step-connect": "连接",
       "step-finish": "选择附加设置",
@@ -11380,6 +11446,7 @@
     "wizard-content": {
       "button-cancel": "取消",
       "button-cancelling": "正在取消...",
+      "button-previous": "",
       "button-submitting": "正在提交...",
       "error-instance-repository-exists": "实例存储库已存在"
     }
@@ -11776,7 +11843,7 @@
         "recommended": "推荐",
         "results": "结果"
       },
-      "search": "搜索"
+      "search": ""
     }
   },
   "search": {
@@ -12411,6 +12478,19 @@
       "label-medium": "中",
       "label-small": "小"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "如果选中，整行将按此单元格的颜色显示。",
       "description-wrap-text": "如果选中，文本将根据配置列的文本宽度自动换行",
@@ -12445,6 +12525,13 @@
       "label-alt-text": "替代文本",
       "label-title-text": "标题文本"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "计算",
     "name-cell-height": "单元格高度",
     "name-cell-type": "单元格类型",
@@ -12461,7 +12548,10 @@
     "name-show-table-header": "显示表格表头",
     "name-wrap-header-text": "表头文字换行",
     "placeholder-column-width": "自动",
-    "placeholder-fields": "所有数字字段"
+    "placeholder-fields": "所有数字字段",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "单元格选项",
@@ -13176,22 +13266,6 @@
       "label-row": "行",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "布尔值假值",
-          "boolean-true-value": "布尔值真值",
-          "empty-string": "空字符串",
-          "null-value": "Null 值",
-          "number-value": "数字 0 值"
-        },
-        "label": {
-          "empty": "空",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "零"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13401,7 +13475,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13423,6 +13497,9 @@
         }
       },
       "regression": "回归",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "要预测的 X,Y 点的数量"
     },
     "rename-by-regex-transformer": {
@@ -13541,6 +13618,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {
