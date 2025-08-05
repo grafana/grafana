@@ -1,32 +1,23 @@
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
 import { ToolbarButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
+
+import { performInviteUserClick, shouldRenderInviteUserButton } from './InviteUserButtonUtils';
 
 export function InviteUserButton() {
   const isLargeScreen = useMediaQueryMinWidth('lg');
 
   const handleClick = () => {
     try {
-      reportInteraction('invite_user_button_clicked', {
-        placement: 'top_bar_right',
-      });
-
-      const url = getExternalUserMngLinkUrl('invite-user-top-bar');
-      window.open(url.toString(), '_blank');
+      performInviteUserClick('top_bar_right', 'invite-user-top-bar');
     } catch (error) {
       console.error('Failed to handle invite user click:', error);
     }
   };
 
-  const shouldRender = config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
-
-  return shouldRender ? (
+  return shouldRenderInviteUserButton ? (
     <>
       <ToolbarButton
         icon="add-user"
