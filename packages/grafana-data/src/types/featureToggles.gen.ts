@@ -1099,4 +1099,9 @@ export interface FeatureToggles {
   * New Log Context component
   */
   newLogContext?: boolean;
+  /**
+  * Enables new design for the Clickhouse data source configuration page
+  * @default false
+  */
+  newClickhouseConfigPageDesign?: boolean;
 }
