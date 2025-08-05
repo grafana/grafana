@@ -49,7 +49,16 @@ for hookName in "${oldHuskyHookNames[@]}"; do
         echo "Renaming old husky hook $hookPath to $newHookPath"
       fi
 
-      mv "$hookPath" "$newHookPath" --suffix=old --backup=numbered
+      # Handle backup logic for both macOS (BSD mv) and Linux (GNU mv)
+      if [[ -f "$newHookPath" ]]; then
+        # If .old file already exists, create numbered backup
+        counter=1
+        while [[ -f "$newHookPath.$counter" ]]; do
+          counter=$((counter + 1))
+        done
+        mv "$newHookPath" "$newHookPath.$counter"
+      fi
+      mv "$hookPath" "$newHookPath"
     fi
   fi
 done
