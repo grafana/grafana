@@ -3,7 +3,6 @@ export const rootFolder = {
   apiVersion: 'folder.grafana.app/v1beta1',
   metadata: {
     name: 'general',
-    namespace: 'org-0',
     uid: 'DvhY6m059FraHn96xsOKsb8GRtHy2ftVDUPkqZTzP4kX',
     resourceVersion: '-62135596800000',
     creationTimestamp: undefined,
@@ -23,7 +22,6 @@ export const sharedWithMeFolder = {
   apiVersion: 'folder.grafana.app/v1beta1',
   metadata: {
     name: 'sharedwithme',
-    namespace: 'org-0',
     uid: 'DlDSzXw31VwXu6LHMw0JMoFvfVtYzyf3NEPzsOXHtxQX',
     resourceVersion: '-62135596800000',
     creationTimestamp: undefined,
