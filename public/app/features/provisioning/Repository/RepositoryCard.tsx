@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { IconName, Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
+import { Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
+import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
 
@@ -53,14 +54,10 @@ export function RepositoryCard({ repository }: Props) {
     return meta;
   };
 
-  const getRepositoryIcon = (): IconName => {
-    return spec?.type === 'github' ? 'github' : 'database';
-  };
-
   return (
     <Card noMargin key={name}>
       <Card.Figure>
-        <Icon name={getRepositoryIcon()} size="xxl" />
+        <RepoIcon type={spec?.type} />
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
