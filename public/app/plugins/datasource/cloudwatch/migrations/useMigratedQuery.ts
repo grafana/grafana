@@ -1,3 +1,4 @@
+import deepEqual from 'fast-deep-equal';
 import { useEffect, useMemo } from 'react';
 
 import { CloudWatchQuery } from '../types';
@@ -26,7 +27,7 @@ export function migrateQuery(query: CloudWatchQuery): CloudWatchQuery {
   if (!newQuery.region) {
     newQuery.region = 'default';
   }
-  return newQuery;
+  return deepEqual(newQuery, query) ? query : newQuery;
 }
 
 export default useMigratedQuery;
