@@ -26,6 +26,6 @@ export const fieldNamePickerSettings = {
 export const LABEL_WIDTH = 20;
 
 export const FIELD_MATCHERS = {
-  timeMatcher: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+  firstTimeMatcher: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
   numericMatcher: fieldMatchers.get(FieldMatcherID.numeric).get({}),
 };

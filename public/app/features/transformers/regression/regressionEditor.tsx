@@ -18,7 +18,7 @@ import lightImage from '../images/light/regression.svg';
 
 import { FIELD_MATCHERS, LABEL_WIDTH, fieldNamePickerSettings, getModelTypeOptions } from './constants';
 import { DEFAULTS, DEGREES, ModelType, getRegressionTransformer, RegressionTransformerOptions } from './regression';
-import { findFieldByMatcher } from './utils';
+import { findFirstFieldByMatcher } from './utils';
 
 export const RegressionTransformerEditor = ({
   input,
@@ -52,11 +52,11 @@ export const RegressionTransformerEditor = ({
 
     if (!options.xFieldName) {
       x =
-        findFieldByMatcher(input, FIELD_MATCHERS.timeMatcher) ||
-        findFieldByMatcher(input, FIELD_MATCHERS.numericMatcher);
+        findFirstFieldByMatcher(input, FIELD_MATCHERS.firstTimeMatcher) ||
+        findFirstFieldByMatcher(input, FIELD_MATCHERS.numericMatcher);
     }
     if (!options.yFieldName) {
-      y = findFieldByMatcher(input, FIELD_MATCHERS.numericMatcher, x);
+      y = findFirstFieldByMatcher(input, FIELD_MATCHERS.numericMatcher, x);
     }
 
     if (x && y) {

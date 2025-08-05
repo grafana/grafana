@@ -1,6 +1,6 @@
 import { DataFrame, Field } from '@grafana/data';
 
-export const findFieldByMatcher = (
+export const findFirstFieldByMatcher = (
   input: DataFrame[],
   matcher: (field: Field, frame: DataFrame, input: DataFrame[]) => boolean,
   excludeField?: Field
