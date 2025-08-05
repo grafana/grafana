@@ -2,6 +2,8 @@ import { FormatVariable, SceneObject, sceneUtils } from '@grafana/scenes';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { getTimeValue, getTimeValueText } from './TimeRangeMacroHelpers';
+
 /**
  * Handles expressions like ${__dashboard.uid}
  */
@@ -15,11 +17,16 @@ class DashboardMacro implements FormatVariable {
     this.state = { name: name, type: 'dashboard_macro' };
   }
 
-  public getValue(fieldPath?: string): string {
+  public getValue(fieldPath?: string): string | number | undefined {
     const dashboard = getDashboardSceneFor(this._sceneObject);
-    switch (fieldPath) {
+    const thisPath = currentPath(fieldPath);
+    switch (thisPath) {
       case 'uid':
         return dashboard.state.uid || '';
+      case 'timeRange':
+        return getTimeValue(dashboard, fieldPath)?.valueOf() || '';
+      case 'url':
+        return dashboard.getSnapshotUrl();
       case 'title':
       case 'name':
       case 'id':
@@ -28,8 +35,15 @@ class DashboardMacro implements FormatVariable {
     }
   }
 
-  public getValueText?(): string {
-    return '';
+  public getValueText?(fieldPath?: string): string {
+    const dashboard = getDashboardSceneFor(this._sceneObject);
+    const thisPath = currentPath(fieldPath);
+    switch (thisPath) {
+      case 'timeRange':
+        return getTimeValueText(dashboard, fieldPath) || '';
+      default:
+        return '';
+    }
   }
 }
 
@@ -42,4 +56,9 @@ export function registerDashboardMacro() {
     console.error('Error registering dashboard macro', e);
     return () => {};
   }
+}
+
+function currentPath(fieldPath?: string): string | undefined {
+  const fragments = fieldPath?.split('.');
+  return fragments?.[0];
 }
