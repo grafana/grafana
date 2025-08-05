@@ -286,6 +286,10 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
+  * Routes short url requests from /api to the /apis endpoint
+  */
+  kubernetesShortURLs?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -1095,4 +1099,9 @@ export interface FeatureToggles {
   * New Log Context component
   */
   newLogContext?: boolean;
+  /**
+  * Enables new design for the Clickhouse data source configuration page
+  * @default false
+  */
+  newClickhouseConfigPageDesign?: boolean;
 }

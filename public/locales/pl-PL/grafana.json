@@ -9422,6 +9422,15 @@
       "show-more": "pokaż więcej",
       "tooltip-error": "Błąd: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "",
       "close": "",
@@ -12604,6 +12613,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12641,6 +12651,13 @@
       "label-alt-text": "Tekst alternatywny",
       "label-title-text": "Tekst tytułu"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "",
     "name-cell-height": "",
     "name-cell-type": "",
@@ -12657,7 +12674,10 @@
     "name-show-table-header": "",
     "name-wrap-header-text": "",
     "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "placeholder-fields": "",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "",
@@ -13372,22 +13392,6 @@
       "label-row": "Wiersz",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Wartość logiczna Fałsz",
-          "boolean-true-value": "Wartość logiczna Prawda",
-          "empty-string": "Pusty ciąg",
-          "null-value": "Wartość null",
-          "number-value": "Wartość: liczba 0"
-        },
-        "label": {
-          "empty": "Pusty",
-          "false": "Fałsz",
-          "null": "Null",
-          "true": "Prawda",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13740,6 +13744,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

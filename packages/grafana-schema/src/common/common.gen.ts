@@ -728,6 +728,7 @@ export enum TableCellDisplayMode {
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  Markdown = 'markdown',
   Pill = 'pill',
   Sparkline = 'sparkline',
 }
@@ -856,6 +857,11 @@ export interface TablePillCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.Pill;
 }
 
+export interface TableMarkdownCellOptions {
+  dynamicHeight?: boolean;
+  type: TableCellDisplayMode.Markdown;
+}
+
 /**
  * Height of a table cell
  */
@@ -870,7 +876,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
 
 /**
  * Use UTC/GMT timezone

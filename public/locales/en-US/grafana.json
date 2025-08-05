@@ -1523,7 +1523,10 @@
       "group-loading-error": "Error loading the group",
       "interval": "Interval",
       "namespace": "Namespace",
-      "new": "New"
+      "new": "New",
+      "title": {
+        "back": "Back to alerting"
+      }
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -2240,6 +2243,9 @@
       "title-attention": "Attention",
       "title-manage-contact-point-permissions": "Manage contact point permissions"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": "Open external link"
+    },
     "receivers-section": {
       "button-more": "More",
       "new-menu": {
@@ -2566,6 +2572,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "Return to previous view",
       "error-loading": "Something went wrong loading the rule",
       "evaluation-interval": "Every {{interval}}",
       "prometheus-consistency-check": {
@@ -4129,11 +4136,39 @@
       "body": "Try the new Advisor to uncover potential issues with your data sources and plugins.",
       "go-to-advisor": "Go to Advisor"
     },
+    "cloud": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "Connect data to Grafana through data sources, integrations and apps",
+          "title": "Add new connection"
+        },
+        "collector": {
+          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
+          "title": "Collector:"
+        },
+        "data-sources": {
+          "subtitle": "Manage your existing data source connections",
+          "title": "Data sources"
+        },
+        "integrations": {
+          "subtitle": "Manage your active integrations",
+          "title": "Integrations"
+        },
+        "private-data-source-connections": {
+          "subtitle": "Manage your private network connections for data sources",
+          "title": "Private data source connect"
+        },
+        "subtitle": "Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines."
+      }
+    },
     "connect-data": {
       "category-header-label": "Data sources",
       "empty-message": "No results matching your query were found",
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
+    },
+    "connections-home-page": {
+      "welcome-to-connections": "Welcome to Connections"
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link to Connections",
@@ -4164,6 +4199,19 @@
     },
     "not-found-datasource": {
       "body": "Maybe you mistyped the URL or the plugin with the id <1></1> is unavailable.<3></3>To see a list of available datasources please <5>click here</5>."
+    },
+    "oss": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "Connect to a new data source",
+          "title": "Add new connection"
+        },
+        "data-sources": {
+          "subtitle": "Manage your existing data source connections",
+          "title": "View configured data sources"
+        },
+        "subtitle": "Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections."
+      }
     },
     "search": {
       "aria-label-search-all": "Search all",
@@ -4945,6 +4993,10 @@
     "options": {
       "description": "Description",
       "title-option": "Title"
+    },
+    "options-pane-category": {
+      "aria-label-collapse": "Collapse {{title}} category",
+      "aria-label-expand": "Expand {{title}} category"
     },
     "options-pane-options": {
       "placeholder-search-options": "Search options",
@@ -6608,6 +6660,7 @@
       "label-source": "Source"
     },
     "resource-picker": {
+      "aria-label-clear-value": "Clear value",
       "render-small-resource-picker": {
         "set-icon": "Set icon"
       }
@@ -6644,6 +6697,7 @@
       "noOptionsMessage-no-fields-found": "No fields found"
     },
     "text-dimension-editor": {
+      "aria-label-clear-value": "Clear value",
       "description-field": "Display field value",
       "description-fixed": "Fixed value",
       "label-field": "Field",
@@ -6781,7 +6835,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button"
+        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button",
+        "aria-label-content-outline-item-delete-button": "Delete item"
       }
     },
     "correlation-editor-mode-bar": {
@@ -6991,6 +7046,7 @@
       "content-streaming": "Streaming"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "Reload log volume",
       "label-reload-log-volume": "Reload log volume",
       "loading": "Loading...",
       "title-failed-volume-query": "Failed to load log volume for this query",
@@ -7289,6 +7345,7 @@
       "split-widen": "Widen pane"
     },
     "trace-page-header": {
+      "aria-label-share-dropdown": "Open share trace options menu",
       "duration": "Duration",
       "export-started": "Export started",
       "give-feedback": "Feedback",
@@ -7313,6 +7370,7 @@
       "label-show-paths": "Show critical path only switch"
     },
     "trace-view": {
+      "aria-label-copy": "Copy to clipboard",
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },
@@ -7445,7 +7503,7 @@
     "loading": "Loading folders..."
   },
   "folder-repo": {
-    "badge-text": "Provisioned"
+    "badge-tooltip": "Provisioned"
   },
   "folders": {
     "get-loading-nav": {
@@ -7617,6 +7675,7 @@
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
+      "aria-label-close": "Close measure tools",
       "tooltip-show-measure-tools": "Show measure tools"
     },
     "name-initial-view": "Initial view",
@@ -8649,6 +8708,7 @@
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "Match case",
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
@@ -11076,6 +11136,9 @@
     "check-repository": {
       "check": "Check"
     },
+    "code-block": {
+      "aria-label-copy": "Copy code to clipboard"
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
@@ -12539,6 +12602,7 @@
       "gauge": "Gauge",
       "image": "Image",
       "json": "JSON View",
+      "markdown": "Markdown + HTML",
       "pill": "Pill",
       "sparkline": "Sparkline"
     },
@@ -12575,6 +12639,13 @@
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
+    },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
+      "label": {
+        "text-alpha": "Alpha"
+      },
+      "label-dynamic-height": "Dynamic height"
     },
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
@@ -13123,6 +13194,7 @@
       }
     },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "Remove filter",
       "label-field": "Field",
       "label-match": "Match",
       "label-value": "Value",
@@ -13310,22 +13382,6 @@
       "label-row": "Row",
       "name": {
         "grouping-to-matrix": "Grouping to matrix"
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Boolean false value",
-          "boolean-true-value": "Boolean true value",
-          "empty-string": "Empty string",
-          "null-value": "Null value",
-          "number-value": "Number 0 value"
-        },
-        "label": {
-          "empty": "Empty",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13678,6 +13734,22 @@
         "perform-spatial-operations": "Perform spatial operations",
         "reformat": "Reformat",
         "reorder-and-rename": "Reorder and rename"
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "Boolean false value",
+          "boolean-true": "Boolean true value",
+          "empty-string": "Empty String",
+          "null-value": "Null value",
+          "number-value": "Number 0 value"
+        },
+        "label": {
+          "boolean-false": "False",
+          "boolean-true": "True",
+          "empty-string": "Empty",
+          "null-value": "Null",
+          "number-value": "Zero"
+        }
       }
     },
     "wide-info": {
