@@ -423,12 +423,12 @@ func TestExtractUIDs(t *testing.T) {
 	tests := []struct {
 		name     string
 		response *resourcepb.ResourceSearchResponse
-		expected map[string]bool
+		expected map[string]struct{}
 	}{
 		{
 			name:     "nil response",
 			response: nil,
-			expected: map[string]bool{},
+			expected: map[string]struct{}{},
 		},
 		{
 			name: "empty results",
@@ -437,7 +437,7 @@ func TestExtractUIDs(t *testing.T) {
 					Rows: []*resourcepb.ResourceTableRow{},
 				},
 			},
-			expected: map[string]bool{},
+			expected: map[string]struct{}{},
 		},
 		{
 			name: "single result",
@@ -452,7 +452,7 @@ func TestExtractUIDs(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]bool{"test-uid-1": true},
+			expected: map[string]struct{}{"test-uid-1": struct{}{}},
 		},
 		{
 			name: "multiple results",
@@ -472,7 +472,7 @@ func TestExtractUIDs(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]bool{"test-uid-1": true, "test-uid-2": true},
+			expected: map[string]struct{}{"test-uid-1": struct{}{}, "test-uid-2": struct{}{}},
 		},
 	}
 
@@ -487,50 +487,50 @@ func TestExtractUIDs(t *testing.T) {
 func TestCalculateMatchPercentage(t *testing.T) {
 	tests := []struct {
 		name        string
-		legacyUIDs  map[string]bool
-		unifiedUIDs map[string]bool
+		legacyUIDs  map[string]struct{}
+		unifiedUIDs map[string]struct{}
 		expected    float64
 	}{
 		{
 			name:        "both empty",
-			legacyUIDs:  map[string]bool{},
-			unifiedUIDs: map[string]bool{},
+			legacyUIDs:  map[string]struct{}{},
+			unifiedUIDs: map[string]struct{}{},
 			expected:    100.0,
 		},
 		{
 			name:        "legacy empty, unified has results",
-			legacyUIDs:  map[string]bool{},
-			unifiedUIDs: map[string]bool{"uid1": true},
+			legacyUIDs:  map[string]struct{}{},
+			unifiedUIDs: map[string]struct{}{"uid1": struct{}{}},
 			expected:    0.0,
 		},
 		{
 			name:        "legacy has results, unified empty",
-			legacyUIDs:  map[string]bool{"uid1": true},
-			unifiedUIDs: map[string]bool{},
+			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}},
+			unifiedUIDs: map[string]struct{}{},
 			expected:    0.0,
 		},
 		{
 			name:        "perfect match",
-			legacyUIDs:  map[string]bool{"uid1": true, "uid2": true},
-			unifiedUIDs: map[string]bool{"uid1": true, "uid2": true},
+			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
+			unifiedUIDs: map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
 			expected:    100.0,
 		},
 		{
 			name:        "partial match",
-			legacyUIDs:  map[string]bool{"uid1": true, "uid2": true},
-			unifiedUIDs: map[string]bool{"uid1": true, "uid3": true},
+			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
+			unifiedUIDs: map[string]struct{}{"uid1": struct{}{}, "uid3": struct{}{}},
 			expected:    33.33333333333333, // 1 match out of 3 unique UIDs
 		},
 		{
 			name:        "no match",
-			legacyUIDs:  map[string]bool{"uid1": true, "uid2": true},
-			unifiedUIDs: map[string]bool{"uid3": true, "uid4": true},
+			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
+			unifiedUIDs: map[string]struct{}{"uid3": struct{}{}, "uid4": struct{}{}},
 			expected:    0.0,
 		},
 		{
 			name:        "legacy subset of unified",
-			legacyUIDs:  map[string]bool{"uid1": true},
-			unifiedUIDs: map[string]bool{"uid1": true, "uid2": true},
+			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}},
+			unifiedUIDs: map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
 			expected:    50.0, // 1 match out of 2 unique UIDs
 		},
 	}

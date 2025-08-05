@@ -62,22 +62,22 @@ type searchWrapper struct {
 }
 
 // extractUIDs extracts unique UIDs from search response results
-func extractUIDs(response *resourcepb.ResourceSearchResponse) map[string]bool {
-	uids := make(map[string]bool)
+func extractUIDs(response *resourcepb.ResourceSearchResponse) map[string]struct{} {
+	uids := make(map[string]struct{})
 	if response == nil || response.Results == nil || response.Results.Rows == nil {
 		return uids
 	}
 
 	for _, row := range response.Results.Rows {
 		if row.Key != nil && row.Key.Name != "" {
-			uids[row.Key.Name] = true
+			uids[row.Key.Name] = struct{}{}
 		}
 	}
 	return uids
 }
 
 // calculateMatchPercentage calculates the percentage of matching UIDs between two result sets
-func calculateMatchPercentage(legacyUIDs, unifiedUIDs map[string]bool) float64 {
+func calculateMatchPercentage(legacyUIDs, unifiedUIDs map[string]struct{}) float64 {
 	if len(legacyUIDs) == 0 && len(unifiedUIDs) == 0 {
 		return 100.0 // Both empty, consider as 100% match
 	}
@@ -88,7 +88,7 @@ func calculateMatchPercentage(legacyUIDs, unifiedUIDs map[string]bool) float64 {
 	// Count matches
 	matches := 0
 	for uid := range legacyUIDs {
-		if unifiedUIDs[uid] {
+		if _, exists := unifiedUIDs[uid]; exists {
 			matches++
 		}
 	}
@@ -96,7 +96,7 @@ func calculateMatchPercentage(legacyUIDs, unifiedUIDs map[string]bool) float64 {
 	// Calculate percentage based on the union of both sets
 	totalUnique := len(legacyUIDs)
 	for uid := range unifiedUIDs {
-		if !legacyUIDs[uid] {
+		if _, exists := legacyUIDs[uid]; !exists {
 			totalUnique++
 		}
 	}
