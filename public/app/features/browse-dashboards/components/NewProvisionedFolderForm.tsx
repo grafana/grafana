@@ -225,7 +225,10 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
       <RepoInvalidStateBanner
         noRepository={!initialValues}
         isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage="To create this folder, please add the resource in your repository directly."
+        readOnlyMessage={t(
+          'browse-dashboards.new-folder.read-only-message',
+          'To create this folder, please add the resource in your repository directly.'
+        )}
       />
     );
   }

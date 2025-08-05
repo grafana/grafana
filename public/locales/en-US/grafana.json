@@ -3535,7 +3535,7 @@
       "deleting": "Deleting",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
-        "read-only-saving-message": "Repository is read-only. {{readOnlyMessage}}",
+        "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
         "read-only-title": "This repository is read only",
         "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
         "repository-not-found-title": "Repository not found"

@@ -162,7 +162,10 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
       <RepoInvalidStateBanner
         noRepository={!initialValues}
         isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage="To delete this folder, please remove the folder from your repository."
+        readOnlyMessage={t(
+          'browse-dashboards.delete-folder.read-only-message',
+          'To delete this folder, please remove the folder from your repository.'
+        )}
       />
     );
   }
