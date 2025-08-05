@@ -47,14 +47,23 @@ import (
 //	  ]
 //	}
 type v28Migrator struct {
-	panelProvider PanelPluginInfoProvider
-	panelPlugins  []PanelPluginInfo
+	panelProvider    PanelPluginInfoProvider
+	panelPlugins     []PanelPluginInfo
+	statPanelVersion string // Cached stat panel version
 }
 
 func V28(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
+	// Get stat panel version once during initialization
+	statPanelPlugin := panelProvider.GetPanelPlugin("stat")
+	statPanelVersion := ""
+	if statPanelPlugin.ID != "" {
+		statPanelVersion = statPanelPlugin.Version
+	}
+
 	migrator := &v28Migrator{
-		panelProvider: panelProvider,
-		panelPlugins:  panelProvider.GetPanels(),
+		panelProvider:    panelProvider,
+		panelPlugins:     panelProvider.GetPanels(),
+		statPanelVersion: statPanelVersion,
 	}
 
 	return func(dashboard map[string]interface{}) error {
@@ -137,15 +146,12 @@ func (m *v28Migrator) migrateSinglestatPanel(panel map[string]interface{}) error
 	panel["autoMigrateFrom"] = panel["type"]
 	panel["type"] = targetType
 
-	// get stat panel plugin from panelPlugins array
-	statPanelPlugin := m.panelProvider.GetPanelPlugin("stat")
-
-	if statPanelPlugin.ID == "" {
-		//need to throw an error here
+	// Use cached stat panel version
+	if m.statPanelVersion == "" {
 		return NewMigrationError("stat panel plugin not found when migrating dashboard to schema version 28", 28, LATEST_VERSION)
 	}
 
-	panel["pluginVersion"] = statPanelPlugin.Version
+	panel["pluginVersion"] = m.statPanelVersion
 
 	// Migrate panel options and field config
 	m.migrateSinglestatOptions(panel, originalType)

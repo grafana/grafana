@@ -76,8 +76,8 @@ func TestPluginStorePanelProvider_GetPanels(t *testing.T) {
 
 			// Create provider
 			provider := &PluginStorePanelProvider{
-				pluginStore: mockStore,
-				setting:     mockSetting,
+				pluginStore:  mockStore,
+				buildVersion: mockSetting.BuildVersion,
 			}
 
 			// Call the function
@@ -163,8 +163,8 @@ func TestPluginStorePanelProvider_GetPanelPlugin(t *testing.T) {
 			}
 
 			provider := &PluginStorePanelProvider{
-				pluginStore: mockStore,
-				setting:     mockSetting,
+				pluginStore:  mockStore,
+				buildVersion: mockSetting.BuildVersion,
 			}
 
 			result := provider.GetPanelPlugin(tt.searchID)
