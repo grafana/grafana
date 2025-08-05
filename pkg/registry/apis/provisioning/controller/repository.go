@@ -331,7 +331,7 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 	return patchOperations, nil
 }
 
-func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *provisioning.Repository, shouldResync bool, healthStatus provisioning.HealthStatus) *provisioning.SyncJobOptions {
+func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *provisioning.Repository, repo repository.Repository, shouldResync bool, healthStatus provisioning.HealthStatus) *provisioning.SyncJobOptions {
 	logger := logging.FromContext(ctx)
 
 	switch {
@@ -354,7 +354,27 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 		logger.Info("full sync for spec change")
 		return &provisioning.SyncJobOptions{}
 	case shouldResync:
-		logger.Info("incremental sync for sync interval")
+		// Continue to see if we could skip for other reasons
+		versioned, ok := repo.(repository.Versioned)
+		// If the repository is not versioned, we don't have a way to check for incremental updates
+		if !ok {
+			logger.Info("full sync on interval for non-versioned repository")
+			return &provisioning.SyncJobOptions{}
+		}
+
+		latestRef, err := versioned.LatestRef(ctx)
+		if err != nil {
+			logger.Warn("incremental sync on interval without knowing if ref has actually changed", "error", err)
+			return &provisioning.SyncJobOptions{Incremental: true}
+		}
+
+		// Only resync if the latest ref is different from the last synced ref
+		if latestRef == obj.Status.Sync.LastRef {
+			logger.Info("skip incremental sync as reference is the same")
+			return nil
+		}
+
+		logger.Info("incremental sync on interval")
 		return &provisioning.SyncJobOptions{Incremental: true}
 	default:
 		return nil
@@ -503,7 +523,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// determine the sync strategy and sync status to apply
-	syncOptions := rc.determineSyncStrategy(ctx, obj, shouldResync, healthStatus)
+	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
 	if syncStatus := rc.determineSyncStatus(obj, syncOptions); syncStatus != nil {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
