@@ -218,4 +218,3 @@ func (d *jobDriver) onProgress(job *provisioning.Job) ProgressFn {
 		return nil
 	}
 }
-
