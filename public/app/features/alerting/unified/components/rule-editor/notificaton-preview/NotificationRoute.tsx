@@ -1,49 +1,44 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, TagList, Text, TextLink, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
+import { LinkButton, TagList, Text, TextLink, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
+import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { getAmMatcherFormatter } from '../../../utils/alertmanager';
-import { createContactPointSearchLink } from '../../../utils/misc';
+import { createContactPointSearchLink, createViewPolicyLink } from '../../../utils/misc';
 import { AlertInstanceMatch } from '../../../utils/notification-policies';
 import { CollapseToggle } from '../../CollapseToggle';
 import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
 
 import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
-import { NotificationRouteDetailsModal } from './NotificationRouteDetailsModal';
 import UnknownContactPointDetails from './UnknownContactPointDetails';
-import { RouteWithPath } from './route';
 
 interface NotificationRouteHeaderProps {
-  route: RouteWithPath;
-  routesByIdMap: Map<string, RouteWithPath>;
-  instancesCount: number;
+  isRootRoute: boolean;
+  matchers?: ObjectMatcher[];
+  instancesCount?: number;
+  receiver: string;
   alertManagerSourceName: string;
-  expandRoute: boolean;
-  onExpandRouteClick: (expand: boolean) => void;
+  expandRoute?: boolean;
+  onExpandRouteClick?: (isCollapsed: boolean) => void;
 }
 
-function NotificationRouteHeader({
-  route,
-  routesByIdMap,
-  instancesCount,
+export function NotificationRouteHeader({
+  isRootRoute = false,
+  matchers = [],
+  instancesCount = 0,
+  receiver,
   alertManagerSourceName,
-  expandRoute,
+  expandRoute = false,
   onExpandRouteClick,
 }: NotificationRouteHeaderProps) {
   const styles = useStyles2(getStyles);
-  const [showDetails, setShowDetails] = useState(false);
-
-  const onClickDetails = () => {
-    setShowDetails(true);
-  };
 
   // @TODO: re-use component ContactPointsHoverDetails from Policy once we have it for cloud AMs.
 
@@ -51,20 +46,26 @@ function NotificationRouteHeader({
     <div className={styles.routeHeader}>
       <CollapseToggle
         isCollapsed={!expandRoute}
-        onToggle={(isCollapsed) => onExpandRouteClick(!isCollapsed)}
+        onToggle={(isCollapsed) => onExpandRouteClick?.(!isCollapsed)}
         aria-label={t('alerting.notification-route-header.aria-label-expand-policy-route', 'Expand policy route')}
       />
 
       <Stack flexGrow={1} gap={1}>
         {/* TODO: fix keyboard a11y */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <div onClick={() => onExpandRouteClick(!expandRoute)} className={styles.expandable}>
+        <div onClick={() => onExpandRouteClick?.(!expandRoute)} className={styles.expandable}>
           <Stack gap={1} direction="row" alignItems="center">
             <Trans i18nKey="alerting.notification-route-header.notification-policy">Notification policy</Trans>
-            <NotificationPolicyMatchers
-              route={route}
-              matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
-            />
+            {isRootRoute ? (
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="alerting.notification-policy-matchers.default-policy">Default policy</Trans>
+              </Text>
+            ) : (
+              <NotificationPolicyMatchers
+                matchers={matchers}
+                matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
+              />
+            )}
           </Stack>
         </div>
         <Spacer />
@@ -76,54 +77,54 @@ function NotificationRouteHeader({
             <div>
               <Text variant="bodySmall" color="secondary">
                 <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>{' '}
-                {route.receiver != null ? (
+                {receiver != null ? (
                   <TextLink
                     variant="bodySmall"
-                    href={createContactPointSearchLink(route.receiver, alertManagerSourceName)}
+                    href={createContactPointSearchLink(receiver, alertManagerSourceName)}
                     color="primary"
                     inline={false}
                     external
                   >
-                    {route.receiver}
+                    {receiver}
                   </TextLink>
                 ) : (
-                  <UnknownContactPointDetails receiverName={route.receiver ?? 'unknown'} />
+                  <UnknownContactPointDetails receiverName={receiver ?? 'unknown'} />
                 )}
               </Text>
             </div>
 
             <div className={styles.verticalBar} />
 
-            <Button type="button" onClick={onClickDetails} variant="secondary" fill="outline" size="sm">
-              <Trans i18nKey="alerting.notification-route-header.see-details">See details</Trans>
-            </Button>
+            <LinkButton
+              href={createViewPolicyLink(matchers)}
+              variant="secondary"
+              fill="outline"
+              size="sm"
+              target="_blank"
+            >
+              <Trans i18nKey="alerting.notification-route-header.see-details">View policy</Trans>
+            </LinkButton>
           </Stack>
         </Stack>
       </Stack>
-      {showDetails && (
-        <NotificationRouteDetailsModal
-          onClose={() => setShowDetails(false)}
-          route={route}
-          routesByIdMap={routesByIdMap}
-          alertManagerSourceName={alertManagerSourceName}
-        />
-      )}
     </div>
   );
 }
 
 interface NotificationRouteProps {
-  route: RouteWithPath;
-  instanceMatches: AlertInstanceMatch[];
-  routesByIdMap: Map<string, RouteWithPath>;
+  isRootRoute: boolean;
+  matchers?: ObjectMatcher[];
+  receiver: string;
   alertManagerSourceName: string;
+  matchedInstances: AlertInstanceMatch[];
 }
 
 export function NotificationRoute({
-  route,
-  instanceMatches,
-  routesByIdMap,
   alertManagerSourceName,
+  matchedInstances,
+  isRootRoute,
+  receiver,
+  matchers,
 }: NotificationRouteProps) {
   const styles = useStyles2(getStyles);
   const [expandRoute, setExpandRoute] = useToggle(false);
@@ -134,9 +135,11 @@ export function NotificationRoute({
   return (
     <div data-testid="matching-policy-route">
       <NotificationRouteHeader
-        route={route}
-        routesByIdMap={routesByIdMap}
-        instancesCount={instanceMatches.length}
+        // every instance has the same route that matched so it's fine to grab the first one
+        isRootRoute={isRootRoute}
+        matchers={matchers}
+        receiver={receiver}
+        instancesCount={matchedInstances.length}
         alertManagerSourceName={alertManagerSourceName}
         expandRoute={expandRoute}
         onExpandRouteClick={setExpandRoute}
@@ -144,8 +147,8 @@ export function NotificationRoute({
       {expandRoute && (
         <Stack gap={1} direction="column">
           <div className={styles.routeInstances} data-testid="route-matching-instance">
-            {instanceMatches.map((instanceMatch) => {
-              const matchArray = Array.from(instanceMatch.labelsMatch);
+            {matchedInstances.map((matchedInstance) => {
+              const matchArray = Array.from(matchedInstance.labelsMatch);
               const matchResult = matchArray.map(([label, matchResult]) => ({
                 label: `${label[0]}=${label[1]}`,
                 match: matchResult.match,

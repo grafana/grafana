@@ -5,11 +5,8 @@ import { useNotificationPolicyRoute } from 'app/features/alerting/unified/compon
 
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
-import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { AlertInstanceMatch, computeInheritedTree, normalizeRoute } from '../../../utils/notification-policies';
-
-import { RouteWithPath, getRoutesByIdMap } from './route';
+import { normalizeRoute } from '../../../utils/notification-policies';
 
 export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, potentialInstances: Labels[]) => {
   const {
@@ -25,18 +22,12 @@ export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, 
     if (!defaultPolicy) {
       return;
     }
-    return normalizeRoute(addUniqueIdentifierToRoute(defaultPolicy));
+    return normalizeRoute(defaultPolicy);
   }, [defaultPolicy]);
-
-  // create maps for routes to be get by id, this map also contains the path to the route
-  // ⚠️ don't forget to compute the inherited tree before using this map
-  const routesByIdMap = rootRoute
-    ? getRoutesByIdMap(computeInheritedTree(rootRoute))
-    : new Map<string, RouteWithPath>();
 
   // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
   const {
-    value: matchingMap = new Map<string, AlertInstanceMatch[]>(),
+    value: matchingMap,
     loading: matchingLoading,
     error: matchingError,
   } = useAsync(async () => {
@@ -50,7 +41,6 @@ export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, 
   }, [rootRoute, potentialInstances]);
 
   return {
-    routesByIdMap,
     matchingMap,
     loading: isPoliciesLoading || matchingLoading,
     error: policiesError ?? matchingError,

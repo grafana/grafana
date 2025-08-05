@@ -93,8 +93,8 @@ function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): Array<R
 }
 
 // This is a performance improvement to normalize matchers only once and use the normalized version later on
-export function normalizeRoute(rootRoute: RouteWithID): RouteWithID {
-  function normalizeRoute(route: RouteWithID) {
+export function normalizeRoute<T extends Route>(rootRoute: T): T {
+  function normalizeRoute<T extends Route>(route: T) {
     route.object_matchers = normalizeMatchers(route);
     delete route.matchers;
     delete route.match;

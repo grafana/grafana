@@ -5,10 +5,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { AlertManagerDataSource } from '../../../utils/datasource';
+
+import { NotificationRoute } from './NotificationRoute';
 
 function NotificationPreviewByAlertManager({
   alertManagerSource,
@@ -44,10 +47,10 @@ function NotificationPreviewByAlertManager({
     );
   }
 
-  const matchingResult = matchInstancesToPolicies(potentialInstances.map((instance) => Object.entries(instance)));
-  console.log(matchingResult);
+  const treeMatchingResults = matchInstancesToPolicies(potentialInstances.map((instance) => Object.entries(instance)));
+  console.log(treeMatchingResults);
 
-  const matchingPoliciesFound = Array.from(matchingResult.values()).some((result) => result.matchedPolicies.size > 0);
+  const matchingPoliciesFound = treeMatchingResults.some((result) => result.matchedPolicies.size > 0);
 
   return matchingPoliciesFound ? (
     <div className={styles.alertManagerRow}>
@@ -63,7 +66,29 @@ function NotificationPreviewByAlertManager({
         </Stack>
       )}
       <Stack gap={1} direction="column">
-        {/* @TODO build visuals for route matcher */}
+        {treeMatchingResults.map(({ treeMetadata, expandedTree, matchedPolicies }) => (
+          <Stack direction="column">
+            <div>{treeMetadata.name}</div>
+            {Array.from(matchedPolicies.entries()).map(([matchedPolicy, matchedInstances]) => {
+              const matchers =
+                matchedPolicy.matchers?.map<ObjectMatcher>(
+                  (matcher) => [matcher.label, matcher.type, matcher.value] as ObjectMatcher
+                ) ?? [];
+
+              return (
+                <NotificationRoute
+                  key={matchedPolicy.id}
+                  // every instance has the same route that matched so it's fine to grab the first one
+                  isRootRoute={matchedPolicy.id === expandedTree.id}
+                  matchers={matchers}
+                  receiver={matchedPolicy.receiver ?? 'unknown'}
+                  matchedInstances={matchedInstances}
+                  alertManagerSourceName={alertManagerSource.name}
+                />
+              );
+            })}
+          </Stack>
+        ))}
       </Stack>
     </div>
   ) : null;

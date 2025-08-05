@@ -14,6 +14,7 @@ import {
   isGrafanaRuleIdentifier,
   isPrometheusRuleIdentifier,
 } from 'app/features/alerting/unified/utils/rules';
+import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
   Alert,
@@ -119,6 +120,12 @@ export function createShareLink(ruleIdentifier: RuleIdentifier): string | undefi
   }
 
   return;
+}
+
+export function createViewPolicyLink(matchers: ObjectMatcher[]) {
+  return createRelativeUrl('/alerting/routes', {
+    queryString: matchers.map((matcher) => matcher.join('')).join(','),
+  });
 }
 
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {

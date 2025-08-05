@@ -1,4 +1,4 @@
-import { isArray, pick, reduce, uniqueId } from 'lodash';
+import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 
 import { Label } from '../matchers/types';
 import { LabelMatchDetails, matchLabels } from '../matchers/utils';
@@ -113,5 +113,44 @@ export function addUniqueIdentifier(route: Route): RouteWithID {
     id: uniqueId('route-'),
     ...route,
     routes: route.routes?.map(addUniqueIdentifier) ?? [],
+  };
+}
+
+export type TreeMatch = {
+  /* we'll include the entire expanded policy tree for diagnostics */
+  expandedTree: RouteWithID;
+  /* the routes that matched the labels where the key is a route and the value is an array of instances that match that route */
+  matchedPolicies: Map<RouteWithID, Array<RouteMatchResult<RouteWithID>>>;
+};
+
+export function matchAlertInstancesToPolicyTree(instances: Label[][], routingTree: Route): TreeMatch {
+  // initially empty map of matches policies
+  const matchedPolicies = new Map();
+
+  // compute the entire expanded tree for matching routes and diagnostics
+  // this will include inherited properties from parent nodes
+  // @TODO I don't like the type cast here :(
+  const expandedTree = addUniqueIdentifier(
+    computeInheritedTree({
+      ...(routingTree as Route),
+      routes: routingTree.routes as Route[],
+    })
+  );
+
+  // let's first find all matching routes for the provided instances
+  const matchesArray = instances.flatMap((labels) => findMatchingRoutes(expandedTree, labels));
+
+  // now group the matches by route ID
+  // this will give us a map of route IDs to their matching instances
+  // we use the route ID as the key to ensure uniqueness
+  // and to allow for easy lookup later
+  const groupedByRoute = groupBy(matchesArray, (match) => match.route.id);
+  Object.entries(groupedByRoute).forEach(([_key, match]) => {
+    matchedPolicies.set(match[0].route, match);
+  });
+
+  return {
+    expandedTree,
+    matchedPolicies,
   };
 }
