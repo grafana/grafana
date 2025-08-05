@@ -41,9 +41,8 @@ func NewRemotePrimaryFactory(
 
 			// Create the remote Alertmanager.
 			cfg.OrgID = orgID
-			cfg.PromoteConfig = true
 			l := log.New("ngalert.forked-alertmanager.remote-primary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, store, crypto, autogenFn, m, t)
+			remoteAM, err := NewAlertmanager(ctx, cfg, store, crypto, autogenFn, m, t, WithPromotedConfig)
 			if err != nil {
 				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 				return internalAM, nil

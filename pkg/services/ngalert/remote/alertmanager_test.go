@@ -322,7 +322,6 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		TenantID:      tenantID,
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
-		PromoteConfig: true,
 		SyncInterval:  1 * time.Hour,
 		ExternalURL:   "https://test.grafana.com",
 		SmtpConfig: client.SmtpConfig{
@@ -788,7 +787,6 @@ receivers:
 		TenantID:      tenantID,
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
-		PromoteConfig: true,
 	}
 
 	store := ngfakes.NewFakeKVStore(t)
@@ -797,7 +795,7 @@ receivers:
 	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.NotificationLogFilename, ""))
 
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, c, fstore, tc, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, c, fstore, tc, NoopAutogenFn, m, tracing.InitializeTracerForTest(), WithPromotedConfig)
 	require.NoError(t, err)
 
 	err = am.SaveAndApplyConfig(ctx, &cfg)
@@ -906,7 +904,6 @@ receivers:
 		TenantID:      tenantID,
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
-		PromoteConfig: true,
 	}
 
 	store := ngfakes.NewFakeKVStore(t)
@@ -915,7 +912,7 @@ receivers:
 	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.NotificationLogFilename, ""))
 
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, c, fstore, tc, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, c, fstore, tc, NoopAutogenFn, m, tracing.InitializeTracerForTest(), WithPromotedConfig)
 	require.NoError(t, err)
 
 	configJSON, err := json.Marshal(cfg)

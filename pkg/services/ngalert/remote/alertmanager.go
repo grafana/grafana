@@ -61,6 +61,7 @@ type Alertmanager struct {
 	log               log.Logger
 	metrics           *metrics.RemoteAlertmanager
 	orgID             int64
+	promoteConfig     bool
 	ready             bool
 	sender            *sender.ExternalAlertmanager
 	smtp              remoteClient.SmtpConfig
@@ -85,10 +86,6 @@ type AlertmanagerConfig struct {
 
 	// ExternalURL is used in notifications sent by the remote Alertmanager.
 	ExternalURL string
-
-	// PromoteConfig is a flag that determines whether the configuration should be used in the remote Alertmanager.
-	// The same flag is used for promoting state.
-	PromoteConfig bool
 
 	// SmtpConfig has all the necessary settings for the remote Alertmanager to create an email sender.
 	SmtpConfig remoteClient.SmtpConfig
@@ -115,7 +112,14 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+type Option func(*Alertmanager) *Alertmanager
+
+var WithPromotedConfig Option = func(am *Alertmanager) *Alertmanager {
+	am.promoteConfig = true
+	return am
+}
+
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer, opts ...Option) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -127,13 +131,12 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{
-		Logger:        logger,
-		Password:      cfg.BasicAuthPassword,
-		TenantID:      cfg.TenantID,
-		URL:           u,
-		PromoteConfig: cfg.PromoteConfig,
-		ExternalURL:   cfg.ExternalURL,
-		Smtp:          cfg.SmtpConfig,
+		Logger:      logger,
+		Password:    cfg.BasicAuthPassword,
+		TenantID:    cfg.TenantID,
+		URL:         u,
+		ExternalURL: cfg.ExternalURL,
+		Smtp:        cfg.SmtpConfig,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
 	if err != nil {
@@ -189,6 +192,10 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		tenantID:          cfg.TenantID,
 		url:               cfg.URL,
 		smtp:              cfg.SmtpConfig,
+	}
+
+	for _, opt := range opts {
+		am = opt(am)
 	}
 
 	// Parse the default configuration once and remember its hash so we can compare it later.
@@ -703,7 +710,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool 
 		return true
 	}
 
-	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
+	if rc.Promoted != am.promoteConfig {
 		return true
 	}
 
