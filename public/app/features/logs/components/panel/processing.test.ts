@@ -347,6 +347,42 @@ describe('preProcessLogs', () => {
       expect(longLog.body).toBe(entry);
     });
   });
+
+  describe('Nanoseconds', () => {
+    test('Does not process nanoseconds if all zeroes', () => {
+      const noNsLog = createLogRow({
+        timeEpochMs: 1754411801274,
+        timeEpochNs: '1754411801274000000',
+      });
+      const processed = preProcessLogs([noNsLog, noNsLog], {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      });
+      expect(processed[0].timestamp).not.toContain('000000');
+      expect(processed[1].timestamp).not.toContain('000000');
+    });
+
+    test('Processes nanoseconds if present and not zero', () => {
+      const noNsLog = createLogRow({
+        timeEpochMs: 1754411801274,
+        timeEpochNs: '1754411801274000000',
+      });
+      const nsLog = createLogRow({
+        timeEpochMs: 1754411801274,
+        timeEpochNs: '1754411801274133766',
+      });
+      const processed = preProcessLogs([nsLog, noNsLog], {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      });
+      expect(processed[0].timestamp).toContain('133766');
+      expect(processed[1].timestamp).toContain('000000');
+    });
+  });
 });
 
 describe('OTel logs', () => {

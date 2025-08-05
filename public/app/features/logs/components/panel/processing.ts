@@ -2,7 +2,16 @@ import ansicolor from 'ansicolor';
 import { parse, stringify } from 'lossless-json';
 import Prism, { Grammar } from 'prismjs';
 
-import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
+import {
+  DataFrame,
+  dateTimeFormat,
+  Labels,
+  LogLevel,
+  LogRowModel,
+  LogsSortOrder,
+  systemDateFormats,
+  textUtil,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
@@ -57,7 +66,15 @@ export class LogListModel implements LogRowModel {
 
   constructor(
     log: LogRowModel,
-    { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+    {
+      escape,
+      nanoseconds = false,
+      getFieldLinks,
+      grammar,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }: PreProcessLogOptions
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -84,14 +101,21 @@ export class LogListModel implements LogRowModel {
     this.uid = log.uid;
     this.uniqueLabels = log.uniqueLabels;
 
+    let timestampSuffix = '';
+    if (nanoseconds) {
+      timestampSuffix = log.timeEpochNs.substring(log.timeEpochMs.toString().length);
+    }
+
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
     this._getFieldLinks = getFieldLinks;
     this._grammar = grammar;
-    this.timestamp = dateTimeFormat(log.timeEpochMs, {
-      timeZone,
-      defaultWithMS: true,
-    });
+    this.timestamp =
+      dateTimeFormat(log.timeEpochMs, {
+        timeZone,
+        // YYYY-MM-DD HH:mm:ss.SSS
+        format: systemDateFormats.fullDateMS,
+      }) + timestampSuffix;
     this._virtualization = virtualization;
     this._wrapLogMessage = wrapLogMessage;
 
@@ -233,8 +257,17 @@ export const preProcessLogs = (
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
+  const displayNanoseconds = logs.some((log) => log.timeEpochNs.endsWith('000000') === false);
   return orderedLogs.map((log) =>
-    preProcessLog(log, { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage })
+    preProcessLog(log, {
+      escape,
+      nanoseconds: displayNanoseconds,
+      getFieldLinks,
+      grammar,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    })
   );
 };
 
@@ -242,6 +275,7 @@ interface PreProcessLogOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
+  nanoseconds?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
