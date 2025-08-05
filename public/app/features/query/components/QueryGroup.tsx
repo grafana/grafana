@@ -431,7 +431,7 @@ export function QueryGroupTopSection({
                 <Button
                   variant="secondary"
                   icon="question-circle"
-                  title={t(
+                  tooltip={t(
                     'query.query-group-top-section.query-tab-help-button-title-open-data-source-help',
                     'Open data source help'
                   )}

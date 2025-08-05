@@ -115,7 +115,16 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
               onChange={onFixedChange}
               item={dummyStringSettings}
               suffix={
-                value?.fixed && <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixed} />
+                value?.fixed && (
+                  <Button
+                    aria-label={t('dimensions.text-dimension-editor.aria-label-clear-value', 'Clear value')}
+                    icon="times"
+                    variant="secondary"
+                    fill="text"
+                    size="sm"
+                    onClick={onClearFixed}
+                  />
+                )
               }
             />
           </InlineField>

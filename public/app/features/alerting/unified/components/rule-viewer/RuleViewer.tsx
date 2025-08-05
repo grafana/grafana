@@ -301,7 +301,14 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
-      {returnToHref && <LinkButton variant="secondary" icon="angle-left" href={returnTo} />}
+      {returnToHref && (
+        <LinkButton
+          aria-label={t('alerting.rule-viewer.aria-label-return-to', 'Return to previous view')}
+          variant="secondary"
+          icon="angle-left"
+          href={returnTo}
+        />
+      )}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}

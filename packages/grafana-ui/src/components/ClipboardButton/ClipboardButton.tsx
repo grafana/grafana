@@ -10,14 +10,14 @@ import { Button, ButtonProps } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { InlineToast } from '../InlineToast/InlineToast';
 
-export interface Props extends ButtonProps {
+export type Props = ButtonProps & {
   /** A function that returns text to be copied */
   getText(): string;
   /** Callback when the text has been successfully copied */
   onClipboardCopy?(copiedText: string): void;
   /** Callback when there was an error copying the text */
   onClipboardError?(copiedText: string, error: unknown): void;
-}
+};
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
@@ -73,7 +73,6 @@ export function ClipboardButton({
         onClick={copyTextCallback}
         icon={icon}
         variant={showCopySuccess ? 'success' : variant}
-        aria-label={showCopySuccess ? copiedText : undefined}
         {...buttonProps}
         className={cx(styles.button, showCopySuccess && styles.successButton, buttonProps.className)}
         ref={buttonRef}

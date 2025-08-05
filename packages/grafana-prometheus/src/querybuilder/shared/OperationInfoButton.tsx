@@ -56,7 +56,7 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
   return (
     <>
       <Button
-        title={t(
+        tooltip={t(
           'grafana-prometheus.querybuilder.operation-info-button.title-click-to-show-description',
           'Click to show description'
         )}
@@ -78,7 +78,7 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
                 onClick={() => setShow(false)}
                 fill="text"
                 variant="secondary"
-                title={t(
+                aria-label={t(
                   'grafana-prometheus.querybuilder.operation-info-button.title-remove-operation',
                   'Remove operation'
                 )}

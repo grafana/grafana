@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import {
   Button,
   InlineField,
@@ -86,7 +86,16 @@ export const ResourcePicker = (props: Props) => {
           placeholder={placeholder}
           readOnly={true}
           prefix={sanitizedSrc && <SanitizedSVG src={sanitizedSrc} className={styles.icon} style={{ ...colorStyle }} />}
-          suffix={<Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClear} />}
+          suffix={
+            <Button
+              aria-label={t('dimensions.resource-picker.aria-label-clear-value', 'Clear value')}
+              icon="times"
+              variant="secondary"
+              fill="text"
+              size="sm"
+              onClick={onClear}
+            />
+          }
         />
       </InlineField>
     </InlineFieldRow>

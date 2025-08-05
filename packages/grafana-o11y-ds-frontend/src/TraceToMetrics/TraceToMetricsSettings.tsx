@@ -162,7 +162,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 
           <Button
             variant="destructive"
-            title="Remove query"
+            aria-label="Remove query"
             icon="times"
             type="button"
             onClick={() => {

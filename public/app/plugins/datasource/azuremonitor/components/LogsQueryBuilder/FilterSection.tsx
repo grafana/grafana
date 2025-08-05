@@ -219,7 +219,12 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
           <div className={styles.filters}>
             {filters.length === 0 || filters.every((g) => g.expressions.length === 0) ? (
               <InputGroup>
-                <Button variant="secondary" onClick={onAddAndFilters} icon="plus" />
+                <Button
+                  aria-label={t('components.filter-section.aria-label-add-filter', 'Add filter')}
+                  variant="secondary"
+                  onClick={onAddAndFilters}
+                  icon="plus"
+                />
               </InputGroup>
             ) : (
               <>
@@ -248,6 +253,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                         ))}
                       </>
                       <Button
+                        tooltip={t('components.filter-section.aria-label-add-or-filter', 'Add OR filter')}
                         variant="secondary"
                         style={{ marginLeft: '15px' }}
                         onClick={() => onAddOrFilters(groupIndex, 'property', '')}

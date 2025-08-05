@@ -53,7 +53,7 @@ function makeRenderColumn({ options }: { options?: Array<SelectableValue<string>
           onChange={({ value }) => value && onChangeItem(setGroupByField(value))}
         />
         <AccessoryButton
-          title={t(
+          aria-label={t(
             'grafana-sql.components.make-render-column.render-column.title-remove-group-by-column',
             'Remove group by column'
           )}
