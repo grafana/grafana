@@ -1028,7 +1028,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Preferences"
+              "$ref": "#/components/schemas/PreferencesSpec"
             }
           }
         },
@@ -4005,14 +4005,6 @@
           "status": {
             "type": "string"
           }
-        },
-        "type": "object"
-      },
-      "CookiePreferences": {
-        "properties": {
-          "analytics": {},
-          "functional": {},
-          "performance": {}
         },
         "type": "object"
       },
@@ -8741,11 +8733,42 @@
         },
         "type": "object"
       },
-      "Preferences": {
-        "description": "Spec defines user, team or org Grafana preferences",
+      "PreferencesCookiePreferences": {
+        "description": "+k8s:openapi-gen=true",
+        "properties": {
+          "analytics": {},
+          "functional": {},
+          "performance": {}
+        },
+        "type": "object"
+      },
+      "PreferencesNavbarPreference": {
+        "description": "+k8s:openapi-gen=true",
+        "properties": {
+          "bookmarkUrls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PreferencesQueryHistoryPreference": {
+        "description": "+k8s:openapi-gen=true",
+        "properties": {
+          "homeTab": {
+            "description": "one of: '' | 'query' | 'starred';",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PreferencesSpec": {
+        "description": "+k8s:openapi-gen=true",
         "properties": {
           "cookiePreferences": {
-            "$ref": "#/components/schemas/CookiePreferences"
+            "$ref": "#/components/schemas/PreferencesCookiePreferences"
           },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
@@ -8756,10 +8779,10 @@
             "type": "string"
           },
           "navbar": {
-            "$ref": "#/components/schemas/NavbarPreference"
+            "$ref": "#/components/schemas/PreferencesNavbarPreference"
           },
           "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
+            "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
           },
           "regionalFormat": {
             "description": "Selected locale (beta)",
@@ -9325,7 +9348,6 @@
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
-            "description": "one of: '' | 'query' | 'starred';",
             "type": "string"
           }
         },

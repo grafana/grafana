@@ -237,6 +237,7 @@ require (
 	github.com/grafana/grafana/apps/iam v0.0.0-20250804150913-990f1c69ecc2 // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250804150913-990f1c69ecc2 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/preferences v0.0.0-20250805120407-0bba6e7b822b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/secret v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/apps/shorturl v0.0.0-20250804150913-990f1c69ecc2 // @grafana/sharing-squad

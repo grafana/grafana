@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/kinds/preferences"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -252,7 +252,7 @@ type UpdateOrgPreferencesParams struct {
 // swagger:response getPreferencesResponse
 type GetPreferencesResponse struct {
 	// in:body
-	Body preferences.Spec `json:"body"`
+	Body preferences.PreferencesSpec `json:"body"`
 }
 
 // swagger:parameters patchUserPreferences

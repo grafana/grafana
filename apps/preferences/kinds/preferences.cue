@@ -1,15 +1,11 @@
-package kind
+package preferences
 
-name:        "Preferences"
-pluralName:  "Preferences"
-maturity:    "merged"
-description: "The user or team frontend preferences"
+preferencesv1alpha1: {
+	kind:       "Preferences"
+	pluralName: "Preferences"
+	scope:      "Namespaced"
 
-lineage: schemas: [{
-	version: [0, 0]
 	schema: {
-		// Spec defines user, team or org Grafana preferences
-		// swagger:model Preferences
 		spec: {
 			// UID for the home dashboard
 			homeDashboardUID?: string
@@ -55,4 +51,4 @@ lineage: schemas: [{
 			bookmarkUrls: [...string]
 		} @cuetsy(kind="interface")
 	}
-}]
+}
