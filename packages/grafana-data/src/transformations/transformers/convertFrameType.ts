@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 import { DataTopic } from '@grafana/schema';
 
 import { DataFrame } from '../../types/dataFrame';
-import { SynchronousDataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
@@ -11,7 +11,7 @@ export interface ConvertFrameTypeTransformerOptions {
   targetDataTopic: DataTopic;
 }
 
-export const convertFrameTypeTransformer: SynchronousDataTransformerInfo<ConvertFrameTypeTransformerOptions> = {
+export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTransformerOptions> = {
   id: DataTransformerID.convertFrameType,
   name: 'Convert frame type',
   description: 'Convert frame data topic.',
@@ -19,12 +19,10 @@ export const convertFrameTypeTransformer: SynchronousDataTransformerInfo<Convert
     targetDataTopic: DataTopic.Annotations,
   },
 
-  operator: (options, ctx) => (source) =>
-    source.pipe(map((data) => convertFrameTypeTransformer.transformer(options, ctx)(data))),
-
-  transformer: (options: ConvertFrameTypeTransformerOptions) => (data: DataFrame[]) => {
+  operator: (options, ctx) => (source) => source.pipe(map((data) => {
+    console.log(data);
     return convertFrameTypes(options, data);
-  },
+  })),
 };
 
 /**
