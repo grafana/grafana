@@ -13308,22 +13308,6 @@
       "label-row": "Rad",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Booleskt falskt värde",
-          "boolean-true-value": "Booleskt sant värde",
-          "empty-string": "Tom sträng",
-          "null-value": "Null-värde",
-          "number-value": "Nummer 0-värde"
-        },
-        "label": {
-          "empty": "Tom",
-          "false": "Falskt",
-          "null": "Noll",
-          "true": "Sant",
-          "zero": "Noll"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13676,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

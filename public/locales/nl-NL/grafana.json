@@ -13308,22 +13308,6 @@
       "label-row": "Rij",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Booleaanse valse waarde",
-          "boolean-true-value": "Booleaanse ware waarde",
-          "empty-string": "Lege string",
-          "null-value": "Nulwaarde",
-          "number-value": "Nummer 0 waarde"
-        },
-        "label": {
-          "empty": "Leeg",
-          "false": "Onjuist",
-          "null": "Nul",
-          "true": "Juist",
-          "zero": "Nul"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13676,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {
