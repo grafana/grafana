@@ -21,12 +21,11 @@ export const emptyAdvancedFilters: AdvancedFilters = {
   groupName: null,
   ruleName: undefined,
   ruleType: '*',
-  ruleState: '*', // "*" means any state
+  ruleState: '*',
   dataSourceNames: [],
   labels: [],
   ruleHealth: '*',
   dashboardUid: undefined,
-  // @TODO add support to hide / show only certain plugins
   plugins: 'show',
   contactPoint: null,
 };
@@ -37,12 +36,11 @@ export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFi
     groupName: filterState.groupName ?? null,
     ruleName: filterState.ruleName,
     ruleType: filterState.ruleType ?? '*',
-    ruleState: filterState.ruleState ?? '*', // "*" means any state
+    ruleState: filterState.ruleState ?? '*',
     dataSourceNames: filterState.dataSourceNames,
     labels: filterState.labels,
     ruleHealth: filterState.ruleHealth ?? '*',
     dashboardUid: filterState.dashboardUid,
-    // @TODO add support to hide / show only certain plugins
     plugins: filterState.plugins ?? 'show',
     contactPoint: filterState.contactPoint ?? null,
   };
