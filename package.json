@@ -13,7 +13,7 @@
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:old-arch": "./e2e/start-and-run-suite old-arch",
-    "e2e:schema-v2": "./e2e/start-and-run-suite dashboards-schema-v2",
+    "e2e:schema-v2": "KUBERNETES_DASHBOARDS=true yarn playwright test --project dashboards",
     "e2e:dashboards-search": "./e2e/start-and-run-suite dashboards-search",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
