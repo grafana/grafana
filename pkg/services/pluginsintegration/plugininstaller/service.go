@@ -101,7 +101,10 @@ func (s *Service) installPluginsWithTimeout(pluginsToInstall []setting.InstallPl
 	}
 }
 
-func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion string) bool {
+func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion string, pluginURL string) bool {
+	if pluginURL != "" {
+		return true
+	}
 	info, err := s.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, "", repo.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH))
 	if err != nil {
 		s.log.Error("Failed to get plugin info", "pluginId", pluginID, "error", err)
@@ -128,7 +131,7 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 				}
 				// The plugin is installed but it's not pinned to a specific version
 				// Check if there is a newer version available
-				if !s.shouldUpdate(ctx, installPlugin.ID, p.Info.Version) {
+				if !s.shouldUpdate(ctx, installPlugin.ID, p.Info.Version, installPlugin.URL) {
 					continue
 				}
 			}
