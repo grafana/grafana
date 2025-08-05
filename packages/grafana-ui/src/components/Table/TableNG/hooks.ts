@@ -550,12 +550,10 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number
 
     updateScrollbarDimensions();
 
-    // observe changes to the DOM structure, and re-calc scrollbar width on them
-    const mutationObserver = new MutationObserver(updateScrollbarDimensions);
-    mutationObserver.observe(el, { childList: true, subtree: true });
-
+    const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+    resizeObserver.observe(el);
     return () => {
-      mutationObserver.disconnect();
+      resizeObserver.disconnect();
     };
   }, [ref, height]);
 
