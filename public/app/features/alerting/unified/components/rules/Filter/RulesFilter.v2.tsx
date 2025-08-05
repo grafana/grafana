@@ -8,7 +8,6 @@ import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   Button,
-  ClickOutsideWrapper,
   Combobox,
   ComboboxOption,
   FilterInput,
@@ -161,40 +160,38 @@ export default function RulesFilter() {
           value={watch('query')}
         />
         {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
-        <ClickOutsideWrapper onClick={() => setIsPopupOpen(false)}>
-          <PopupCard
-            showOn="click"
-            placement="auto"
-            disableBlur={true}
-            isOpen={isPopupOpen}
-            onClose={() => setIsPopupOpen(false)}
-            onToggle={handleOnToggle}
-            content={
-              <div
-                className={styles.content}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.stopPropagation();
-                  }
-                }}
-                role="dialog"
-                aria-label="Filter options"
-                tabIndex={-1}
-              >
-                <FilterOptions
-                  onSubmit={handleAdvancedFilters}
-                  onClear={handleClearFilters}
-                  pluginsFilterEnabled={pluginsFilterEnabled}
-                />
-              </div>
-            }
-          >
-            <Button name="filter" icon="filter" variant="secondary" aria-label={filterButtonLabel}>
-              {filterButtonLabel}
-            </Button>
-          </PopupCard>
-        </ClickOutsideWrapper>
+        <PopupCard
+          showOn="click"
+          placement="auto"
+          disableBlur={true}
+          isOpen={isPopupOpen}
+          onClose={() => setIsPopupOpen(false)}
+          onToggle={handleOnToggle}
+          content={
+            <div
+              className={styles.content}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                }
+              }}
+              role="dialog"
+              aria-label="Filter options"
+              tabIndex={-1}
+            >
+              <FilterOptions
+                onSubmit={handleAdvancedFilters}
+                onClear={handleClearFilters}
+                pluginsFilterEnabled={pluginsFilterEnabled}
+              />
+            </div>
+          }
+        >
+          <Button name="filter" icon="filter" variant="secondary" aria-label={filterButtonLabel}>
+            {filterButtonLabel}
+          </Button>
+        </PopupCard>
         {/* show list view / group view */}
         <RulesViewModeSelector />
       </Stack>
