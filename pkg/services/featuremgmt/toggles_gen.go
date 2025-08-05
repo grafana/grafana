@@ -255,6 +255,10 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
+	// FlagKubernetesShortURLs
+	// Routes short url requests from /api to the /apis endpoint
+	FlagKubernetesShortURLs = "kubernetesShortURLs"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -414,6 +418,10 @@ const (
 	// FlagScopeApi
 	// In-development feature flag for the scope api using the app platform.
 	FlagScopeApi = "scopeApi"
+
+	// FlagUseScopeSingleNodeEndpoint
+	// Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+	FlagUseScopeSingleNodeEndpoint = "useScopeSingleNodeEndpoint"
 
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
@@ -986,4 +994,8 @@ const (
 	// FlagAdhocFiltersInTooltips
 	// Enable adhoc filter buttons in visualization tooltips
 	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
+
+	// FlagNewLogContext
+	// New Log Context component
+	FlagNewLogContext = "newLogContext"
 )
