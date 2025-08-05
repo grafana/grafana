@@ -4134,11 +4134,39 @@
       "body": "Try the new Advisor to uncover potential issues with your data sources and plugins.",
       "go-to-advisor": "Go to Advisor"
     },
+    "cloud": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "Connect data to Grafana through data sources, integrations and apps",
+          "title": "Add new connection"
+        },
+        "collector": {
+          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
+          "title": "Collector:"
+        },
+        "data-sources": {
+          "subtitle": "Manage your existing data source connections",
+          "title": "Data sources"
+        },
+        "integrations": {
+          "subtitle": "Manage your active integrations",
+          "title": "Integrations"
+        },
+        "private-data-source-connections": {
+          "subtitle": "Manage your private network connections for data sources",
+          "title": "Private data source connect"
+        },
+        "subtitle": "Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines."
+      }
+    },
     "connect-data": {
       "category-header-label": "Data sources",
       "empty-message": "No results matching your query were found",
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
+    },
+    "connections-home-page": {
+      "welcome-to-connections": "Welcome to Connections"
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link to Connections",
@@ -4169,6 +4197,19 @@
     },
     "not-found-datasource": {
       "body": "Maybe you mistyped the URL or the plugin with the id <1></1> is unavailable.<3></3>To see a list of available datasources please <5>click here</5>."
+    },
+    "oss": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "Connect to a new data source",
+          "title": "Add new connection"
+        },
+        "data-sources": {
+          "subtitle": "Manage your existing data source connections",
+          "title": "View configured data sources"
+        },
+        "subtitle": "Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections."
+      }
     },
     "search": {
       "aria-label-search-all": "Search all",
