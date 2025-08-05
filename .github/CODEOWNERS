@@ -505,7 +505,7 @@
 /packages/grafana-data/src/utils/binaryOperators.ts @grafana/datapro
 /packages/grafana-data/src/utils/csv* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/dataLinks* @grafana/dashboards-squad
-/packages/grafana-data/src/utils/datasource.ts @grafana/grafana-datasources-core-services
+/packages/grafana-data/src/utils/datasource* @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/utils/docs.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/deprecationWarning* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/featureToggles.ts @grafana/grafana-frontend-platform
