@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -195,7 +194,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 				t.Run("and a dashboard is moved from folder with acl to the folder without an acl", func(t *testing.T) {
 					setup2()
-					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID, folder2.UID)
+					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID, childDash2.UID)
 					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID), dashboards.ScopeDashboardsProvider.GetResourceScopeUID(folder2.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}}}
 					actest.AddUserPermissionToDB(t, sqlStore, currentUser)
 
@@ -207,9 +206,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						}
 						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						for _, hit := range hits {
-							fmt.Println(hit)
-						}
 						assert.Equal(t, 4, len(hits))
 						assert.Equal(t, hits[0].ID, folder2.ID)
 						assert.Equal(t, hits[1].ID, childDash1.ID)

@@ -107,49 +107,49 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		features    featuremgmt.FeatureToggles
 	}{
 		{
-			desc:        "impl=default nested_folders=on get root folders",
+			desc:        "impl=default get root folders",
 			url:         "/api/folders",
 			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=default nested_folders=on get subfolders",
+			desc:        "impl=default get subfolders",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=default nested_folders=on list all inherited dashboards",
+			desc:        "impl=defaultlist all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on list all inherited dashboards",
+			desc:        "impl=permissionsFilterRemoveSubquery list all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "impl=default nested_folders=on search for pattern",
+			desc:        "impl=default search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for pattern",
+			desc:        "impl=permissionsFilterRemoveSubquery search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "impl=default nested_folders=on search for specific dashboard",
+			desc:        "impl=default search for specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for specific dashboard",
+			desc:        "impl=permissionsFilterRemoveSubquery search for specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
