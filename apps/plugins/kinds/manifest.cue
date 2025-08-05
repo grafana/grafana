@@ -5,6 +5,7 @@ manifest: {
 	groupOverride: "plugins.grafana.app"
 	versions: {
 		"v0alpha1": {
+			served: false
 			codegen: {
 				ts: {enabled: false}
 				go: {enabled: true}

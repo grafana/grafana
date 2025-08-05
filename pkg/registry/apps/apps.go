@@ -31,12 +31,12 @@ func ProvideAppInstallers(
 	pluginsApplInstaller *plugins.PluginsAppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 ) []appsdkapiserver.AppInstaller {
-	installers := []appsdkapiserver.AppInstaller{playlistAppInstaller}
+	installers := []appsdkapiserver.AppInstaller{
+		playlistAppInstaller,
+		pluginsApplInstaller,
+	}
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		installers = append(installers, shorturlAppInstaller)
-	}
-	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		installers = append(installers, pluginsApplInstaller)
 	}
 	return installers
 }
