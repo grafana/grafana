@@ -3563,12 +3563,12 @@
       "tags-column": "Tags"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Map is verwijderd",
       "api-error": "Kan map niet verwijderen",
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
-      "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd. In totaal heeft dit invloed op:"
+      "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd. In totaal heeft dit invloed op:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Kan afgeleide informatie niet ophalen"
@@ -3611,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Er is een fout opgetreden bij het aanmaken van de map",
-      "alert-folder-created-successfully": "Map is gemaakt",
       "button-create": "Aanmaken",
       "button-creating": "Aanmaken...",
       "cancel": "Annuleren",
@@ -3759,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Selectie van experimentele elementtypes inschakelen",
-    "description-infinite-panning": "Oneindig pannen inschakelen - handig voor grote canvassen. Waarschuwing: dit is een experimentele functie en werkt momenteel alleen goed met elementen die linksboven zijn beperkt",
     "description-inline-editing": "Rechtstreekse bewerking van het paneel inschakelen",
     "description-pan-zoom": "Pan en zoom inschakelen",
     "direction-options": {
@@ -3860,7 +3858,6 @@
     "name-align-text": "Tekst uitlijnen",
     "name-color": "Tekstkleur",
     "name-experimental-types": "Experimentele elementtypes",
-    "name-infinite-panning": "Oneindig pannen",
     "name-inline-editing": "Inline bewerken",
     "name-pan-zoom": "Pennen en zoomen",
     "name-text": "Tekst",
@@ -5645,6 +5642,7 @@
       "delete-read-only-file-message": "Dit dashboard kan niet rechtstreeks uit Grafana worden verwijderd omdat de repository alleen-lezen is. Verwijder het bestand uit je Git-repository om dit dashboard te verwijderen.",
       "deleting": "Bezig met verwijderen ...",
       "drawer-title": "Kan provisioned dashboard niet verwijderen",
+      "success-message": "",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
     },
     "description-label": {
@@ -5656,9 +5654,6 @@
           "edit-link": "Link bewerken"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Dashboardwijzigingen opgeslagen"
     },
     "email-list": {
       "aria-label-emailmenu": "E-mailmenu in-/uitschakelen"
@@ -5818,6 +5813,7 @@
       "usage-count_other": "Gebruikt op {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5827,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -9365,6 +9362,15 @@
       "show-more": "meer",
       "tooltip-error": "Fout: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Wissen",
       "close": "Logboekdetails sluiten",
@@ -11015,6 +11021,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Er wordt momenteel actief gewerkt aan de ontwikkeling van deze functie. Voor de beste ervaring en de nieuwste verbeteringen raden we je aan om de <2>nachtelijke versie</2> van Grafana te gebruiken."
@@ -11874,7 +11883,7 @@
         "recommended": "Aanbevolen",
         "results": "Resultaten"
       },
-      "search": "Zoeken"
+      "search": ""
     }
   },
   "search": {
@@ -12511,6 +12520,19 @@
       "label-medium": "Medium",
       "label-small": "Klein"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Indien geselecteerd, wordt de hele rij gekleurd zoals deze cel zou zijn.",
       "description-wrap-text": "Als geselecteerde tekst wordt teruggelopen naar de breedte van de tekst in de geconfigureerde kolom",
@@ -12545,6 +12567,13 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Titeltekst"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Berekening",
     "name-cell-height": "Celhoogte",
     "name-cell-type": "Type cel",
@@ -12561,7 +12590,10 @@
     "name-show-table-header": "Header tabel tonen",
     "name-wrap-header-text": "Koptekst laten teruglopen",
     "placeholder-column-width": "automatisch",
-    "placeholder-fields": "Alle numerieke velden"
+    "placeholder-fields": "Alle numerieke velden",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Celopties",
@@ -13276,22 +13308,6 @@
       "label-row": "Rij",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Booleaanse valse waarde",
-          "boolean-true-value": "Booleaanse ware waarde",
-          "empty-string": "Lege string",
-          "null-value": "Nulwaarde",
-          "number-value": "Nummer 0 waarde"
-        },
-        "label": {
-          "empty": "Leeg",
-          "false": "Onjuist",
-          "null": "Nul",
-          "true": "Juist",
-          "zero": "Nul"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13644,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

@@ -3563,12 +3563,12 @@
       "tags-column": "Címkék"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "A mappa törlése sikeres",
       "api-error": "A mappa törlése nem sikerült",
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
       "button-deleting": "Törlés...",
-      "delete-warning": "Ez törli ezt a mappát és minden almappáját. Összességében ez a következőket érinti:"
+      "delete-warning": "Ez törli ezt a mappát és minden almappáját. Összességében ez a következőket érinti:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nem lehet lekérni a leszármazott adatokat"
@@ -3611,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Hiba történt a mappa létrehozása közben",
-      "alert-folder-created-successfully": "A mappa létrehozása sikerült",
       "button-create": "Létrehozás",
       "button-creating": "Létrehozás…",
       "cancel": "Mégse",
@@ -3759,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Kísérleti elemtípusok kiválasztásának engedélyezése",
-    "description-infinite-panning": "Végtelen pásztázás engedélyezése – hasznos a tágas vásznakhoz. Figyelem: ez egy kísérleti funkció, és jelenleg csak a felül/bal oldalon korlátozott elemekkel működik jól",
     "description-inline-editing": "A panel közvetlen szerkesztésének engedélyezése",
     "description-pan-zoom": "Pásztázás és nagyítás engedélyezése",
     "direction-options": {
@@ -3860,7 +3858,6 @@
     "name-align-text": "Szöveg igazítása",
     "name-color": "Szöveg színe",
     "name-experimental-types": "Kísérleti elemtípusok",
-    "name-infinite-panning": "Végtelen pásztázás",
     "name-inline-editing": "Beágyazott szerkesztés",
     "name-pan-zoom": "Pásztázás és nagyítás",
     "name-text": "Szöveg",
@@ -5645,6 +5642,7 @@
       "delete-read-only-file-message": "Ez az irányítópult nem törölhető közvetlenül a Grafanából, mert az adattár csak olvasható. Az irányítópult törléséhez távolítsa el a fájlt a Git-tárból.",
       "deleting": "Törlés...",
       "drawer-title": "Kiépített irányítópult törlése",
+      "success-message": "",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
     },
     "description-label": {
@@ -5656,9 +5654,6 @@
           "edit-link": "Hivatkozás szerkesztése"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Irányítópult-módosítások mentése sikeres"
     },
     "email-list": {
       "aria-label-emailmenu": "E-mail-menü ki- és bekapcsolása"
@@ -5818,6 +5813,7 @@
       "usage-count_other": "{{count}} irányítópulton használatos"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5827,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -9365,6 +9362,15 @@
       "show-more": "több megjelenítése",
       "tooltip-error": "Hiba: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Törlés",
       "close": "Napló részleteinek bezárása",
@@ -11015,6 +11021,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Ez a funkció jelenleg aktív fejlesztés alatt áll. A legjobb élmény és a legújabb fejlesztések érdekében javasoljuk a Grafana <2>éjszakai buildjének</2> használatát."
@@ -11874,7 +11883,7 @@
         "recommended": "Ajánlott",
         "results": "Eredmények"
       },
-      "search": "Keresés"
+      "search": ""
     }
   },
   "search": {
@@ -12511,6 +12520,19 @@
       "label-medium": "Közepes",
       "label-small": "Kicsi"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Ha ki van választva, a teljes sor olyan színű lesz, mint ez a cella.",
       "description-wrap-text": "Ha ki van választva, a szöveg a konfigurált oszlop szövegének szélességéhez lesz tördelve",
@@ -12545,6 +12567,13 @@
       "label-alt-text": "Helyettesítő szöveg",
       "label-title-text": "Cím szövege"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Számítás",
     "name-cell-height": "Cellamagasság",
     "name-cell-type": "Cellatípus",
@@ -12561,7 +12590,10 @@
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-wrap-header-text": "Fejléc szövegének tördelése",
     "placeholder-column-width": "automatikus",
-    "placeholder-fields": "Numerikus mezők"
+    "placeholder-fields": "Numerikus mezők",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Cellabeállítások",
@@ -13276,22 +13308,6 @@
       "label-row": "Sor",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Logikai hamis érték",
-          "boolean-true-value": "Logikai igaz érték",
-          "empty-string": "Üres karakterlánc",
-          "null-value": "Nullérték",
-          "number-value": "0 számérték"
-        },
-        "label": {
-          "empty": "Üres",
-          "false": "Hamis",
-          "null": "Null",
-          "true": "Igaz",
-          "zero": "Nulla"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13644,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

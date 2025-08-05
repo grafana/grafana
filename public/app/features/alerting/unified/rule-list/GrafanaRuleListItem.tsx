@@ -53,6 +53,7 @@ export function GrafanaRuleListItem({
     isPaused: rule?.isPaused,
     application: 'grafana' as const,
     actions: <RuleActionsButtons promRule={rule} groupIdentifier={groupIdentifier} compact />,
+    querySourceUIDs: rule?.queriedDatasourceUIDs,
   };
 
   if (prometheusRuleType.grafana.alertingRule(rule)) {

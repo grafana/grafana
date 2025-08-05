@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
@@ -790,6 +790,10 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
 	author, committer := r.createSignature(ctx)
 	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
+		if errors.Is(err, nanogit.ErrNothingToCommit) {
+			return repository.ErrNothingToCommit
+		}
+
 		return fmt.Errorf("commit changes: %w", err)
 	}
 	return nil

@@ -3601,12 +3601,12 @@
       "tags-column": "Tagy"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Složka byla úspěšně odstraněna",
       "api-error": "Složku se nepodařilo odstranit",
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
       "button-deleting": "Probíhá odstraňování…",
-      "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:"
+      "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nelze načíst informace o následovníkovi"
@@ -3649,7 +3649,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Chyba při vytváření složky",
-      "alert-folder-created-successfully": "Složka úspěšně vytvořena",
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
@@ -3797,7 +3796,6 @@
       }
     },
     "description-experimental-types": "Povolit výběr experimentálních typů prvků",
-    "description-infinite-panning": "Povolit nekonečné posouvání – užitečné pro rozsáhlá plátna. Upozornění: Jedná se o experimentální funkci, která v současné době funguje pouze s prvky, které jsou omezeny nahoře/vlevo",
     "description-inline-editing": "Povolit přímé úpravy panelu",
     "description-pan-zoom": "Povolit posouvání a přiblížení",
     "direction-options": {
@@ -3898,7 +3896,6 @@
     "name-align-text": "Zarovnat text",
     "name-color": "Barva textu",
     "name-experimental-types": "Experimentální typy prvků",
-    "name-infinite-panning": "Nekonečné posouvání",
     "name-inline-editing": "Přímé upravování",
     "name-pan-zoom": "Posouvání a přiblížení",
     "name-text": "Text",
@@ -5685,6 +5682,7 @@
       "delete-read-only-file-message": "Tuto nástěnku nelze odstranit přímo z Grafany, protože úložiště je pouze pro čtení. Chcete-li tuto nástěnku odstranit, odeberte soubor z úložiště Git.",
       "deleting": "Probíhá odstranění…",
       "drawer-title": "Odstranit zajištěnou nástěnku",
+      "success-message": "",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
     "description-label": {
@@ -5696,9 +5694,6 @@
           "edit-link": "Upravit odkaz"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Změny na nástěnce úspěšně uloženy"
     },
     "email-list": {
       "aria-label-emailmenu": "Přepnout e-mailovou nabídku"
@@ -5860,6 +5855,7 @@
       "usage-count_other": "Použito na {{count}} nástěnkách"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5869,6 +5865,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -9425,6 +9422,15 @@
       "show-more": "zobrazit více",
       "tooltip-error": "Chyba: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Vymazat",
       "close": "Zavřít podrobnosti protokolu",
@@ -11081,6 +11087,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Tato funkce je v současné době v aktivním vývoji. Pro nejlepší zážitek a nejnovější vylepšení doporučujeme použít <2>noční sestavení</2> Grafany."
@@ -11954,7 +11963,7 @@
         "recommended": "Doporučeno",
         "results": "Výsledky"
       },
-      "search": "Hledat"
+      "search": ""
     }
   },
   "search": {
@@ -12595,6 +12604,19 @@
       "label-medium": "Střední",
       "label-small": "Malé"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Pokud je vybrán, celý řádek bude barevný jako tato buňka.",
       "description-wrap-text": "Pokud bude vybraný text zabalen na šířku textu v nakonfigurovaném sloupci",
@@ -12629,6 +12651,13 @@
       "label-alt-text": "Alternativní text",
       "label-title-text": "Text názvu"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Výpočet",
     "name-cell-height": "Výška buňky",
     "name-cell-type": "Typ buňky",
@@ -12645,7 +12674,10 @@
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-wrap-header-text": "Zalomit text záhlaví",
     "placeholder-column-width": "auto.",
-    "placeholder-fields": "Všechna číselná pole"
+    "placeholder-fields": "Všechna číselná pole",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Možnosti buněk",
@@ -13360,22 +13392,6 @@
       "label-row": "Řádek",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Booleovská nepravdivá hodnota",
-          "boolean-true-value": "Booleovská pravdivá hodnota",
-          "empty-string": "Prázdný řetězec",
-          "null-value": "Nulová hodnota",
-          "number-value": "Hodnota číslo 0"
-        },
-        "label": {
-          "empty": "Prázdný",
-          "false": "Nepravda",
-          "null": "Prázdný",
-          "true": "Pravda",
-          "zero": "Nula"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13728,6 +13744,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

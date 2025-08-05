@@ -367,8 +367,6 @@ signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
 
 [feature_toggles]
-kubernetesDashboardsAPI = true
-kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageSearch = true
 
@@ -415,8 +413,6 @@ http_port = 3011
 http_addr = "127.0.0.2"
 
 [feature_toggles]
-kubernetesDashboardsAPI = true
-kubernetesFolders = true
 unifiedStorageSearchUI = true
 
 [unified_storage.dashboards.dashboard.grafana.app]
