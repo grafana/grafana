@@ -193,7 +193,7 @@ The migration assistant can migrate the majority of Grafana Alerting resources t
 - Notification templates
 
 {{< admonition type="note">}}
-The `grafana-default-email` contact point that's provisioned with every new Grafana instance doesn't have a UID by default and won't be migrated unless you edit or update and save it. You do not need to change the contact point for a UID to be generated when saved.
+The `grafana-default-email` contact point that's provisioned with every new Grafana instance doesn't have a UID by default and won't be migrated unless you edit or update and save it. You don't need to change the contact point for a UID to be generated when saved.
 {{< /admonition >}}
 
 This is sufficient to have your Alerting configuration up and running in Grafana Cloud with minimal effort.
