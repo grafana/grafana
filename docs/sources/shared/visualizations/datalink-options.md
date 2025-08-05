@@ -12,4 +12,4 @@ For each data link, set the following options:
 - **URL**
 - **Open in new tab**
 
-To learn more, refer to [Configure data links](../../configure-data-links/).
+To learn more, refer to [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/).

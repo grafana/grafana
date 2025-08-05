@@ -1,9 +1,9 @@
 ---
 title: Tooltip options
 comments: |
-  There are two tooltip shared files, tooltip-options-1.md and tooltip-options-2.md, to cover the most common combinations of options. 
-  Using two shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content. 
-  This file is used in the following visualizations: candlestick, time series, trend
+  There are three tooltip shared files, tooltip-options-1.md, tooltip-options-2.md, and tooltip-options-3.md, to cover the most common combinations of options. 
+  Using shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content. 
+  This file is used in the following visualizations: time series, trend
 ---
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
@@ -37,5 +37,6 @@ When you set the **Tooltip mode** to **All**, the **Values sort order** option i
 ### Hover proximity
 
 Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.
+The following screen recording shows this option in a time series visualization:
 
 ![Adding a hover proximity limit for tooltips](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)

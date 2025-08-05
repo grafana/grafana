@@ -89,13 +89,13 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Prometheus data source, you can [configure it](ref:configure-prometheus-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](ref:annotate-visualizations).
+Once you've added the Prometheus data source, you can [configure it](ref:configure-prometheus-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](ref:annotate-visualizations).
 
 The following guides will help you get started with the Prometheus data source:
 
 - [Configure the Prometheus data source](ref:configure-prometheus-data-source)
-- [Prometheus query editor]({{< relref "./query-editor" >}})
-- [Template variables]({{< relref "./template-variables" >}})
+- [Prometheus query editor](query-editor/)
+- [Template variables](template-variables/)
 
 ## Prometheus API
 

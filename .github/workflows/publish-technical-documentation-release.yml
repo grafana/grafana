@@ -3,7 +3,7 @@ name: publish-technical-documentation-release
 on:
   push:
     branches:
-      - v[0-9]+.[0-9]+.x
+      - release-[0-9]+.[0-9]+.[0-9]+
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
     paths:
@@ -20,10 +20,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: grafana/writers-toolkit/publish-technical-documentation-release@publish-technical-documentation-release/v2
+          persist-credentials: false
+      - uses: grafana/writers-toolkit/publish-technical-documentation-release@publish-technical-documentation-release/v2 # zizmor: ignore[unpinned-uses]
         with:
           release_tag_regexp: "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
-          release_branch_regexp: "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.x$"
-          release_branch_with_patch_regexp: "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+          release_branch_regexp: "^release-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+          release_branch_with_patch_regexp: "^release-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
           website_directory: content/docs/grafana
           version_suffix: ""

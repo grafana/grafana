@@ -193,15 +193,11 @@ For additional functions to display or format data, refer to:
 Here’s an example of creating a `severity` label based on a query value:
 
 ```go
-{{ if (gt $values.A.Value 90.0) -}}
-critical
-{{ else if (gt $values.A.Value 80.0) -}}
-high
-{{ else if (gt $values.A.Value 60.0) -}}
-medium
-{{ else -}}
-low
-{{- end }}
+{{- if (gt $values.A.Value 90.0) -}}critical
+{{- else if (gt $values.A.Value 80.0) -}}high
+{{- else if (gt $values.A.Value 60.0) -}}medium
+{{- else -}}low
+{{- end -}}
 ```
 
 In this example, the `severity` label is determined by the query value:
@@ -222,10 +218,13 @@ You should avoid displaying query values in labels, as this may create many aler
 You can use labels to differentiate alerts coming from various environments (e.g., production, staging, dev). For example, you may want to add a label that sets the environment based on the instance’s label. Here’s how you can template it:
 
 ```go
-{{ if eq $labels.instance "prod-server-1" }}production
-{{ else if eq $labels.instance "staging-server-1" }}staging
-{{ else }}development
-{{ end }}
+{{- if eq $labels.instance "prod-server-1" -}}
+production
+{{- else if eq $labels.instance "staging-server-1" -}}
+staging
+{{- else -}}
+development
+{{- end -}}
 ```
 
 This would print:
@@ -237,10 +236,13 @@ This would print:
 To make this template more flexible, you can use a regular expression that matches the instance name with the instance name prefix using the [`match()`](ref:reference-match) function:
 
 ```go
-{{ if match "^prod-server-.*" $labels.instance }}production
-{{ else if match "^staging-server-.*" $labels.instance}}staging
-{{ else }}development
-{{ end }}
+{{- if match "^prod-server-.*" $labels.instance -}}
+production
+{{- else if match "^staging-server-.*" $labels.instance -}}
+staging
+{{- else -}}
+development
+{{- end -}}
 ```
 
 {{< collapse title="Legacy Alerting templates" >}}

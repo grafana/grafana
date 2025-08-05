@@ -1,0 +1,53 @@
+name: Create next release branch
+on:
+  workflow_call:
+    inputs:
+      ownerRepo:
+        type: string
+        description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
+        required: true
+      source:
+        description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
+        type: string
+        required: true
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID:
+        required: true
+      GRAFANA_DELIVERY_BOT_APP_PEM:
+        required: true
+    outputs:
+      branch:
+        description: The new branch that was created
+        value: ${{ jobs.main.outputs.branch }}
+  workflow_dispatch:
+    inputs:
+      ownerRepo:
+        description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
+      source:
+        description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
+        type: string
+        required: true
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID:
+        required: true
+      GRAFANA_DELIVERY_BOT_APP_PEM:
+        required: true
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.branch.outputs.branch }}
+    steps:
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Create release branch
+        id: branch
+        uses: grafana/grafana-github-actions-go/bump-release@main # zizmor: ignore[unpinned-uses]
+        with:
+          ownerRepo: ${{ inputs.ownerRepo }}
+          source: ${{ inputs.source }}
+          token: ${{ steps.generate_token.outputs.token }}

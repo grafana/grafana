@@ -50,7 +50,7 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 | Feb. 18, 2025                | Supported versions                | Patching         |
 | March 25, 2025               | 11.6 & Supported versions         | Minor & patching |
 | April 15, 2025               | Supported versions                | Patching         |
-| May 2025                     | Grafana 12.0 & Supported versions | Major & patching |
+| May 5, 2025                  | Grafana 12.0 & Supported versions | Major & patching |
 
 ### A few important notes
 
@@ -94,6 +94,7 @@ Here is an overview of projected version support through 2024:
 | 11.1                      | June 2024        | March 2025                             |
 | 11.2                      | August 2024      | May 2025                               |
 | 11.3                      | October 2024     | July 2025                              |
+| 11.4                      | December 2024    | September 2025                         |
 
 {{< admonition type="note" >}}
 Grafana 9.5.x was the last supported minor for the 9.0 major release and is no longer supported as of July 2024.

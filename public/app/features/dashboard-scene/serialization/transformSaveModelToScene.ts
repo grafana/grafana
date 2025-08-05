@@ -291,9 +291,11 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   titleItems.push(new PanelNotices());
 
+  const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
+
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
-    title: panel.title,
+    title: panel.title?.substring(0, 5000),
     description: panel.description,
     pluginId: panel.type ?? 'timeseries',
     options: panel.options ?? {},
@@ -301,7 +303,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     pluginVersion: panel.pluginVersion,
     displayMode: panel.transparent ? 'transparent' : undefined,
     // To be replaced with it's own option persited option instead derived
-    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+    hoverHeader: !panel.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,

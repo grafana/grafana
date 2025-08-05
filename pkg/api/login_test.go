@@ -659,7 +659,11 @@ func TestLogoutSaml(t *testing.T) {
 	license.On("FeatureEnabled", "saml").Return(true)
 
 	hs := &HTTPServer{
-		authnService:     &authntest.FakeService{},
+		authnService: &authntest.FakeService{
+			ExpectedClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSingleLogoutEnabled: true,
+			},
+		},
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          license,
@@ -682,6 +686,172 @@ func TestLogoutSaml(t *testing.T) {
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 	require.Equal(t, 302, sc.resp.Code)
+}
+
+func TestIsExternallySynced(t *testing.T) {
+	testcases := []struct {
+		name                string
+		cfg                 *setting.Cfg
+		provider            string
+		enabledAuthnClients []string
+		authnClientConfig   authn.SSOClientConfig
+		expected            bool
+	}{
+		// Same for all of the OAuth providers
+		{
+			name:                "AzureAD external user should return that it is externally synced",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.AzureADAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix("azuread")},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			expected: true,
+		},
+		{
+			name:                "AzureAD external user should return that it is not externally synced when org role sync is set",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.AzureADAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix(strings.TrimPrefix(loginservice.AzureADAuthModule, "oauth_"))},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: true,
+			},
+			expected: false,
+		},
+		{
+			name:                "AzureAD external user should return that it is not externally synced when the provider is not enabled",
+			cfg:                 &setting.Cfg{},
+			enabledAuthnClients: []string{},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			provider: loginservice.AzureADAuthModule,
+			expected: false,
+		},
+		// saml
+		{
+			name:                "SAML synced user should return that it is not externally synced when the provider is disabled",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			expected: false,
+		},
+		{
+			name:                "SAML synced user should return that it is externally synced",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			expected: true,
+		},
+		{
+			name:                "SAML synced user should return that it is not externally synced when org role sync is set",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: true,
+			},
+			expected: false,
+		},
+		// ldap
+		{
+			name:     "LDAP synced user should return that it is externally synced",
+			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: false},
+			provider: loginservice.LDAPAuthModule,
+			expected: true,
+		},
+		{
+			name:     "LDAP synced user should return that it is not externally synced when org role sync is set",
+			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: true},
+			provider: loginservice.LDAPAuthModule,
+			expected: false,
+		},
+		// jwt
+		{
+			name:     "JWT synced user should return that it is externally synced",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: false}},
+			provider: loginservice.JWTModule,
+			expected: true,
+		},
+		{
+			name:     "JWT synced user should return that it is not externally synced when org role sync is set",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: true}},
+			provider: loginservice.JWTModule,
+			expected: false,
+		},
+		// IsProvider test
+		{
+			name:     "If no provider enabled should return false",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: false, SkipOrgRoleSync: true}},
+			provider: loginservice.JWTModule,
+			expected: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		hs := &HTTPServer{
+			authnService: &authntest.FakeService{
+				ExpectedClientConfig: tc.authnClientConfig,
+				EnabledClients:       tc.enabledAuthnClients,
+			},
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider))
+		})
+	}
+}
+
+func TestIsProviderEnabled(t *testing.T) {
+	testcases := []struct {
+		name                string
+		provider            string
+		enabledAuthnClients []string
+		expected            bool
+	}{
+		{
+			name:                "Github should return true if enabled",
+			provider:            loginservice.GithubAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix(strings.TrimPrefix(loginservice.GithubAuthModule, "oauth_"))},
+			expected:            true,
+		},
+		{
+			name:                "Github should return false if not enabled",
+			provider:            loginservice.GithubAuthModule,
+			enabledAuthnClients: []string{},
+			expected:            false,
+		},
+		// saml
+		{
+			name:                "SAML should return true if enabled",
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			expected:            true,
+		},
+		{
+			name:                "SAML should return false if not enabled",
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{},
+			expected:            false,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			hs := &HTTPServer{
+				authnService: &authntest.FakeService{
+					EnabledClients: tc.enabledAuthnClients,
+				},
+			}
+			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider))
+		})
+	}
 }
 
 type mockSocialService struct {

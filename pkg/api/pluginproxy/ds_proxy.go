@@ -299,7 +299,15 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 
 		// route match
-		if !strings.HasPrefix(proxy.proxyPath, route.Path) {
+		r1, err := util.CleanRelativePath(proxy.proxyPath)
+		if err != nil {
+			return err
+		}
+		r2, err := util.CleanRelativePath(route.Path)
+		if err != nil {
+			return err
+		}
+		if !strings.HasPrefix(r1, r2) {
 			continue
 		}
 

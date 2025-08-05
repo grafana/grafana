@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/extensions-test-app",
-  "version": "1.0.0",
+  "version": "11.4.7",
   "private": true,
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",

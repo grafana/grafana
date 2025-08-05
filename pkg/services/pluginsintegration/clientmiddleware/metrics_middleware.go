@@ -76,10 +76,13 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 
 // NewMetricsMiddleware returns a new MetricsMiddleware.
 func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) backend.HandlerMiddleware {
-	imw := newMetricsMiddleware(promRegisterer, pluginRegistry)
+	metrics := newMetricsMiddleware(promRegisterer, pluginRegistry)
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
-		imw.BaseHandler = backend.NewBaseHandler(next)
-		return imw
+		return &MetricsMiddleware{
+			BaseHandler:    backend.NewBaseHandler(next),
+			pluginMetrics:  metrics.pluginMetrics,
+			pluginRegistry: metrics.pluginRegistry,
+		}
 	})
 }
 

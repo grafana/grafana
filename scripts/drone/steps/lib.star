@@ -753,16 +753,6 @@ def frontend_metrics_step(trigger = None):
         step = dict(step, when = trigger)
     return step
 
-def codespell_step():
-    return {
-        "name": "codespell",
-        "image": images["python"],
-        "commands": [
-            "pip3 install codespell",
-            "codespell -I docs/.codespellignore docs/",
-        ],
-    }
-
 def grafana_server_step():
     """Runs the grafana-server binary as a service.
 
@@ -964,8 +954,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         "GCP_KEY": from_secret(gcp_grafanauploads),
         "DOCKER_USER": from_secret("docker_username"),
         "DOCKER_PASSWORD": from_secret("docker_password"),
-        "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
-        "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+        "GITHUB_APP_ID": "329617",
+        "GITHUB_APP_INSTALLATION_ID": "37346161",
         "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
     }
 
@@ -982,8 +972,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         environment = {
             "DOCKER_USER": from_secret("docker_username"),
             "DOCKER_PASSWORD": from_secret("docker_password"),
-            "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
-            "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+            "GITHUB_APP_ID": "329617",
+            "GITHUB_APP_INSTALLATION_ID": "37346161",
             "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
         }
 
@@ -1075,8 +1065,8 @@ def postgres_integration_tests_steps():
 
 def mysql_integration_tests_steps(hostname, version):
     cmds = [
-        "apk add --update mysql-client",
-        "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h {} -P 3306 -u root -prootpass".format(hostname),
+        "apk add --update mariadb-client",  # alpine doesn't package mysql anymore; more info: https://wiki.alpinelinux.org/wiki/MySQL
+        "cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h {} -P 3306 -u root -prootpass --disable-ssl-verify-server-cert".format(hostname),
         "go clean -testcache",
         "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]

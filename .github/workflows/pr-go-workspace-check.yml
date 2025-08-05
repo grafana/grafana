@@ -4,6 +4,15 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
+    paths:
+      - .github/workflows/pr-go-workspace-check.yml
+      - go.mod
+      - go.sum
+      - go.work
+      - go.work.sum
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**.go'
 
 jobs:
   check:
@@ -13,10 +22,13 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
       with:
+        cache: false
         go-version-file: go.mod
 
     - name: Update workspace

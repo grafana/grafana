@@ -585,6 +585,18 @@ describe('transformSaveModelToScene', () => {
       expect(vizPanel.state.hoverHeader).toEqual(true);
     });
 
+    it('should set hoverHeader to true if timeFrom and hideTimeOverride is true', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeFrom: '2h',
+        hideTimeOverride: true,
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+
+      expect(vizPanel.state.hoverHeader).toBe(true);
+    });
+
     it('should initalize the VizPanel with min interval set', () => {
       const panel = {
         title: '',

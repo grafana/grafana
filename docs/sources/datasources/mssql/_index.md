@@ -62,7 +62,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Microsoft SQL Server data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+Once you've added the Microsoft SQL Server data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 ## Configure the data source
 
@@ -185,7 +185,7 @@ datasources:
 
 You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
+For details, refer to the [query editor documentation](query-editor/).
 
 ## Use template variables
 
@@ -193,4 +193,4 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+For details, see the [template variables documentation](template-variables/).

@@ -81,29 +81,38 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	}
 
 	// Does user exist in the database?
-	usr, userAuth, errUserInDB := s.getUser(ctx, id)
-	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
-		s.log.FromContext(ctx).Error("Failed to fetch user", "error", errUserInDB, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+	usr, userAuth, err := s.getUser(ctx, id)
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		s.log.FromContext(ctx).Error("Failed to fetch user", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 		return errSyncUserInternal.Errorf("unable to retrieve user")
 	}
 
-	if errors.Is(errUserInDB, user.ErrUserNotFound) {
+	if errors.Is(err, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
 			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errUserSignupDisabled.Errorf("%w", errSignupNotAllowed)
 		}
 
 		// create user
-		var errCreate error
-		usr, errCreate = s.createUser(ctx, id)
-		if errCreate != nil {
-			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
-			return errSyncUserInternal.Errorf("unable to create user: %w", errCreate)
+		usr, err = s.createUser(ctx, id)
+
+		// There is a possibility for a race condition when creating a user. Most clients will probably not hit this
+		// case but others will. The one we have seen this issue for is auth proxy. First time a new user loads grafana
+		// several requests can get "user.ErrUserNotFound" at the same time but only one of the request will be allowed
+		// to actually create the user, resulting in all other requests getting "user.ErrUserAlreadyExists". So we can
+		// just try to fetch the user one more to make the other request work.
+		if errors.Is(err, user.ErrUserAlreadyExists) {
+			usr, _, err = s.getUser(ctx, id)
+		}
+
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to create user", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+			return errSyncUserInternal.Errorf("unable to create user: %w", err)
 		}
 	} else {
 		// update user
-		if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
-			s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+		if err := s.updateUserAttributes(ctx, usr, id, userAuth); err != nil {
+			s.log.FromContext(ctx).Error("Failed to update user", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to update user")
 		}
 	}
@@ -297,6 +306,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.sync.createUser")
 	defer span.End()
+
 	// FIXME(jguer): this should be done in the user service
 	// quota check: we can have quotas on both global and org level
 	// therefore we need to query check quota for both user and org services
@@ -316,19 +326,18 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
-	usr, errCreateUser := s.userService.Create(ctx, &user.CreateUserCommand{
+	usr, err := s.userService.Create(ctx, &user.CreateUserCommand{
 		Login:        id.Login,
 		Email:        id.Email,
 		Name:         id.Name,
 		IsAdmin:      isAdmin,
 		SkipOrgSetup: len(id.OrgRoles) > 0,
 	})
-	if errCreateUser != nil {
-		return nil, errCreateUser
+	if err != nil {
+		return nil, err
 	}
 
-	err := s.upsertAuthConnection(ctx, usr.ID, id, true)
-	if err != nil {
+	if err := s.upsertAuthConnection(ctx, usr.ID, id, true); err != nil {
 		return nil, err
 	}
 

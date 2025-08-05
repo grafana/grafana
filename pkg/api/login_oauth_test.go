@@ -14,20 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func setClientWithoutRedirectFollow(t *testing.T) {
+func setClientWithoutRedirectFollow(t *testing.T, s *webtest.Server) {
 	t.Helper()
-	old := http.DefaultClient
-	http.DefaultClient = &http.Client{
+	s.HttpClient = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
-
-	t.Cleanup(func() {
-		http.DefaultClient = old
-	})
 }
 
 func TestOAuthLogin_Redirect(t *testing.T) {
@@ -79,7 +75,7 @@ func TestOAuthLogin_Redirect(t *testing.T) {
 			})
 
 			// we need to prevent the http.Client from following redirects
-			setClientWithoutRedirectFollow(t)
+			setClientWithoutRedirectFollow(t, server)
 
 			res, err := server.Send(server.NewGetRequest("/login/generic_oauth"))
 			require.NoError(t, err)
@@ -155,7 +151,7 @@ func TestOAuthLogin_AuthorizationCode(t *testing.T) {
 			})
 
 			// we need to prevent the http.Client from following redirects
-			setClientWithoutRedirectFollow(t)
+			setClientWithoutRedirectFollow(t, server)
 
 			res, err := server.Send(server.NewGetRequest("/login/generic_oauth?code=code"))
 			require.NoError(t, err)
@@ -199,7 +195,7 @@ func TestOAuthLogin_Error(t *testing.T) {
 		hs.SecretsService = fakes.NewFakeSecretsService()
 	})
 
-	setClientWithoutRedirectFollow(t)
+	setClientWithoutRedirectFollow(t, server)
 
 	res, err := server.Send(server.NewGetRequest("/login/azuread?error=someerror"))
 	require.NoError(t, err)

@@ -52,13 +52,13 @@ The task is to create a new organization and then add a Token that can be used b
    curl -X POST http://admin:admin@localhost:3000/api/user/using/<id of new org>
    ```
 
-1. [Create a Service Account]({{< relref "./serviceaccount/#create-service-account" >}}):
+1. [Create a Service Account](./serviceaccount/#create-service-account):
 
    ```bash
    curl -X POST -H "Content-Type: application/json" -d '{"name":"test", "role": "Admin"}' http://admin:admin@localhost:3000/api/serviceaccounts
    ```
 
-1. [Create a Service Account token]({{< relref "./serviceaccount/#create-service-account-tokens" >}}) for the service account created in the previous step:
+1. [Create a Service Account token](./serviceaccount/#create-service-account-tokens) for the service account created in the previous step:
 
    ```bash
    curl -X POST -H "Content-Type: application/json" -d '{"name":"test-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/<service account id>/tokens

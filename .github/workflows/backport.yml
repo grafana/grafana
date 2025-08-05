@@ -5,29 +5,28 @@ on:
       - closed
       - labeled
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   main:
     if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4 # 4.2.2
         with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          persist-credentials: false
+      - run: git config --local user.name "github-actions[bot]"
+      - run: git config --local user.email "github-actions[bot]@users.noreply.github.com"
+      - run: git config --local --add --bool push.autoSetupRemote true
+      - name: Set remote URL
+        env:
+          GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin "https://grafana-delivery-bot:$GIT_TOKEN@github.com/grafana/grafana.git"
       - name: Run backport
-        uses: ./actions/backport
+        uses: grafana/grafana-github-actions-go/backport@main # zizmor: ignore[unpinned-uses]
         with:
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
-          token: ${{ steps.generate_token.outputs.token }}
-          labelsToAdd: "backport"
-          title: "[{{base}}] {{originalTitle}}"
+          token: ${{ secrets.GITHUB_TOKEN }}

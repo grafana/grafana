@@ -96,7 +96,7 @@ describe('AddLibraryPanelWidget', () => {
       title: 'Panel Title',
       pluginId: 'table',
       key: 'panel-1',
-      $behaviors: [new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: 'uid' })],
+      $behaviors: [new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: 'uid' })],
     });
 
     addLibPanelDrawer = new AddLibraryPanelDrawer({ panelToReplaceRef: libPanel.getRef() });

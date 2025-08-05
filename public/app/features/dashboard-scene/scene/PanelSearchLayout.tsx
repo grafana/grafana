@@ -1,17 +1,18 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneGridRow, VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { activateInActiveParents } from '../utils/utils';
+import { forceActivateFullSceneObjectTree } from '../utils/utils';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DashboardRepeatsProcessedEvent } from './types';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -25,6 +26,7 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
   const { body } = dashboard.state;
   const filteredPanels: VizPanel[] = [];
   const styles = useStyles2(getStyles);
+  const [_, setRepeatsUpdated] = useState('');
 
   const bodyGrid = body instanceof DefaultGridLayoutManager ? body.state.grid : null;
 
@@ -34,11 +36,11 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
 
   for (const gridItem of bodyGrid.state.children) {
     if (gridItem instanceof DashboardGridItem) {
-      filterPanels(gridItem, dashboard, panelSearch, filteredPanels);
+      filterPanels(gridItem, dashboard, panelSearch, filteredPanels, setRepeatsUpdated);
     } else if (gridItem instanceof SceneGridRow) {
       for (const rowItem of gridItem.state.children) {
         if (rowItem instanceof DashboardGridItem) {
-          filterPanels(rowItem, dashboard, panelSearch, filteredPanels);
+          filterPanels(rowItem, dashboard, panelSearch, filteredPanels, setRepeatsUpdated);
         }
       }
     }
@@ -65,7 +67,13 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
 }
 
 function PanelSearchHit({ panel }: { panel: VizPanel }) {
-  useEffect(() => activateInActiveParents(panel), [panel]);
+  useEffect(() => {
+    const deactivate = forceActivateFullSceneObjectTree(panel);
+
+    return () => {
+      deactivate?.();
+    };
+  }, [panel]);
 
   return <panel.Component model={panel} />;
 }
@@ -92,7 +100,8 @@ function filterPanels(
   gridItem: DashboardGridItem,
   dashboard: DashboardScene,
   searchString: string,
-  filteredPanels: VizPanel[]
+  filteredPanels: VizPanel[],
+  setRepeatsUpdated: (updated: string) => void
 ) {
   const interpolatedSearchString = sceneGraph.interpolate(dashboard, searchString).toLowerCase();
 
@@ -101,6 +110,12 @@ function filterPanels(
     const panel = gridItem.state.body;
     const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
     if (interpolatedTitle.includes(interpolatedSearchString)) {
+      gridItem.subscribeToEvent(DashboardRepeatsProcessedEvent, (event) => {
+        const source = event.payload.source;
+        if (source instanceof DashboardGridItem) {
+          setRepeatsUpdated(event.payload.source.state.key ?? '');
+        }
+      });
       gridItem.activate();
     }
   }

@@ -31,6 +31,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
+  alerting-alert-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/
 ---
 
 # Configure Prometheus
@@ -115,7 +120,7 @@ Following are additional configuration options.
 
 ### Alerting
 
-- **Manage alerts via Alerting UI** - Toggle to enable `Alertmanager` integration for this data source.
+- **Manage alerts via Alerting UI** - Toggle to enable [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed.
 
 ### Interval behavior
 
@@ -125,7 +130,7 @@ Following are additional configuration options.
 
 ### Query editor
 
-- **Default editor** - Sets a default editor. Options are `Builder` or `Code`. For information on query editor types see [Prometheus query editor]({{< relref "./query-editor" >}}).
+- **Default editor** - Sets a default editor. Options are `Builder` or `Code`. For information on query editor types see [Prometheus query editor](../query-editor/).
 
 - **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with large Prometheus instances.
 

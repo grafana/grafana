@@ -1,14 +1,19 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.19.1
+# to maintain formatting of multiline commands in vscode, add the following to settings.json:
+# "docker.languageserver.formatter.ignoreMultilineInstructions": true
+
+ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.23.1-alpine
+ARG GO_IMAGE=golang:1.24.4-alpine
 
+# Default to building locally
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
-FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
+# Javascript build stage
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -33,7 +38,8 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM ${GO_IMAGE} as go-builder
+# Golang build stage
+FROM ${GO_IMAGE} AS go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
@@ -91,7 +97,8 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
-FROM ${BASE_IMAGE} as tgz-builder
+# From-tarball build stage
+FROM ${BASE_IMAGE} AS tgz-builder
 
 WORKDIR /tmp/grafana
 
@@ -103,8 +110,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 
 # helpers for COPY --from
-FROM ${GO_SRC} as go-src
-FROM ${JS_SRC} as js-src
+FROM ${GO_SRC} AS go-src
+FROM ${JS_SRC} AS js-src
 
 # Final stage
 FROM ${BASE_IMAGE}
@@ -139,19 +146,20 @@ RUN if grep -i -q alpine /etc/issue; then \
     fi
 
 # glibc support for alpine x86_64 only
+# docker run --rm --env STDOUT=1 sgerrand/glibc-builder 2.40 /usr/glibc-compat > glibc-bin-2.40.tar.gz
+ARG GLIBC_VERSION=2.40
+
 RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
-      wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
-      wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-2.35-r0.apk \
-        -O /tmp/glibc-2.35-r0.apk && \
-      wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-bin-2.35-r0.apk \
-        -O /tmp/glibc-bin-2.35-r0.apk && \
-      apk add --force-overwrite --no-cache /tmp/glibc-2.35-r0.apk /tmp/glibc-bin-2.35-r0.apk && \
-      rm -f /lib64/ld-linux-x86-64.so.2 && \
-      ln -s /usr/glibc-compat/lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 && \
-      rm -f /tmp/glibc-2.35-r0.apk && \
-      rm -f /tmp/glibc-bin-2.35-r0.apk && \
-      rm -f /lib/ld-linux-x86-64.so.2 && \
-      rm -f /etc/ld.so.cache; \
+      wget -qO- "https://dl.grafana.com/glibc/glibc-bin-$GLIBC_VERSION.tar.gz" | tar zxf - -C / \
+        usr/glibc-compat/lib/ld-linux-x86-64.so.2 \
+        usr/glibc-compat/lib/libc.so.6 \
+        usr/glibc-compat/lib/libdl.so.2 \
+        usr/glibc-compat/lib/libm.so.6 \
+        usr/glibc-compat/lib/libpthread.so.0 \
+        usr/glibc-compat/lib/librt.so.1 \
+        usr/glibc-compat/lib/libresolv.so.2 && \
+      mkdir /lib64 && \
+      ln -s /usr/glibc-compat/lib/ld-linux-x86-64.so.2 /lib64; \
     fi
 
 COPY --from=go-src /tmp/grafana/conf ./conf

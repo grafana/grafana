@@ -48,8 +48,8 @@ The following will help you get started working with Elasticsearch and Grafana:
 
 - [What is Elasticsearch?](https://www.elastic.co/guide/en/elasticsearch/reference/current/elasticsearch-intro.html)
 - [Configure the Elasticsearch data source](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/)
-- [Elasticsearch query editor]({{< relref "./query-editor" >}})
-- [Elasticsearch template variables]({{< relref "./template-variables" >}})
+- [Elasticsearch query editor](query-editor/)
+- [Elasticsearch template variables](template-variables/)
 
 ## Supported Elasticsearch versions
 
@@ -128,7 +128,7 @@ Available in Grafana v7.3 and higher.
 To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration](ref:configuration).
 
 Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
-For more information about AWS authentication options, refer to [AWS authentication]({{< relref "../aws-cloudwatch/aws-authentication" >}}).
+For more information about AWS authentication options, refer to [AWS authentication](../aws-cloudwatch/aws-authentication/).
 
 {{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
 
@@ -136,7 +136,7 @@ For more information about AWS authentication options, refer to [AWS authenticat
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
-For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
+For details, see the [query editor documentation](query-editor/).
 
 ## Use template variables
 
@@ -144,4 +144,4 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+For details, see the [template variables documentation](template-variables/).

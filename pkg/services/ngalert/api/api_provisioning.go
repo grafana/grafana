@@ -513,6 +513,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	if errors.Is(err, store.ErrOptimisticLock) {
 		return ErrResp(http.StatusConflict, err, "")
 	}
+	if errors.Is(err, alerting_models.ErrQuotaReached) {
+		return ErrResp(http.StatusForbidden, err, "")
+	}
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
@@ -566,6 +569,7 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 		return exportHcl(params.Download, body)
 	}
 
+	body = escapeAlertingFileExport(body)
 	if params.Download {
 		r := response.JSONDownload
 		if params.Format == "yaml" {
@@ -579,6 +583,65 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 		r = response.YAML
 	}
 	return r(http.StatusOK, body)
+}
+
+// escape all strings except:
+// Alert rule annotations: groups[].rules[].annotations
+// Alert rule time range: groups[].rules[].relativeTimeRange
+// Alert rule query model: groups[].rules[].data.model
+// Mute timings name: muteTimes[].name
+// Mute timings time intervals: muteTimes[].time_intervals[]
+// Notification template name: templates[].name
+// Notification template content: templates[].template
+func escapeAlertingFileExport(body definitions.AlertingFileExport) definitions.AlertingFileExport {
+	for i, group := range body.Groups {
+		body.Groups[i] = escapeRuleGroup(group)
+	}
+	// TODO: implement escaping for the other export fields
+	return body
+}
+
+// escape all strings except:
+// Alert rule annotations: groups[].rules[].annotations
+// Alert rule time range: groups[].rules[].relativeTimeRange
+// Alert rule query model: groups[].rules[].data.model
+func escapeRuleGroup(group definitions.AlertRuleGroupExport) definitions.AlertRuleGroupExport {
+	group.Name = addEscapeCharactersToString(group.Name)
+	group.Folder = addEscapeCharactersToString(group.Folder)
+	for i, rule := range group.Rules {
+		group.Rules[i].Title = addEscapeCharactersToString(rule.Title)
+		if rule.Labels != nil {
+			group.Rules[i].Labels = escapeMapValues(*rule.Labels)
+		}
+		if rule.NotificationSettings != nil {
+			notificationSettings := escapeRuleNotificationSettings(*rule.NotificationSettings)
+			group.Rules[i].NotificationSettings = &notificationSettings
+		}
+	}
+	return group
+}
+
+func escapeRuleNotificationSettings(ns definitions.AlertRuleNotificationSettingsExport) definitions.AlertRuleNotificationSettingsExport {
+	ns.Receiver = addEscapeCharactersToString(ns.Receiver)
+	for j := range ns.GroupBy {
+		ns.GroupBy[j] = addEscapeCharactersToString(ns.GroupBy[j])
+	}
+	for k := range ns.MuteTimeIntervals {
+		ns.MuteTimeIntervals[k] = addEscapeCharactersToString(ns.MuteTimeIntervals[k])
+	}
+	return ns
+}
+
+func escapeMapValues(m map[string]string) *map[string]string {
+	escapedMap := make(map[string]string, len(m))
+	for k, v := range m {
+		escapedMap[k] = addEscapeCharactersToString(v)
+	}
+	return &escapedMap
+}
+
+func addEscapeCharactersToString(s string) string {
+	return strings.ReplaceAll(s, "$", "$$")
 }
 
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {

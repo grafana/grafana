@@ -21,12 +21,6 @@ if (Cypress.env('SLOWMO')) {
   });
 }
 
-// @todo remove when possible: https://github.com/cypress-io/cypress/issues/95
-Cypress.on('window:before:load', (win) => {
-  // @ts-ignore
-  delete win.fetch;
-});
-
 // See https://github.com/quasarframework/quasar/issues/2233 for details
 const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/;
 Cypress.on('uncaught:exception', (err) => {

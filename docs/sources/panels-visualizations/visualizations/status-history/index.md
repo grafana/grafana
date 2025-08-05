@@ -15,26 +15,15 @@ labels:
     - oss
 title: Status history
 weight: 100
-refs:
-  color-scheme:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
-  value-mappings:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings/
 ---
 
 # Status history
 
 A status history visualization displays data in a way that shows periodic states over time. In a status history, each field or series is rendered as a horizontal row, with multiple boxes showing the different statuses. This provides you with a centralized view for the status of a component or service.
 
-For example, if you're monitoring the health status of different services, you can use a status history to visualize the different statuses, such as “OK,” “WARN,” or “BAD,” over time. Each status is represented by a different color:
+For example, if you're monitoring the health status of different services, you can use a status history to visualize the different statuses, such as “True” or "False," over time. Each status is represented by a different color:
 
-{{< figure src="/static/img/docs/status-history-panel/status-history-example-v8-0.png" max-width="1025px" alt="A status history panel showing the health status of different services" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-status-history-v11.6.png" max-width="800px" alt="A status history panel showing the health status of different sensors" >}}
 
 {{% admonition type="note" %}}
 A status history is similar to a [state timeline](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/), but has different [configuration options](#status-history-options). Unlike state timelines, status histories don't merge consecutive values.
@@ -95,60 +84,55 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/status-history-panel/status_history.png" max-width="1025px" alt="A status history panel with two time columns showing the status of two servers" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Status history options
+### Status history options
 
 Use these options to refine the visualization.
 
-### Show values
+<!-- prettier-ignore-start -->
 
-Controls whether values are rendered inside the value boxes. Auto will render values if there is sufficient space.
+| Option | Description                                                                                     |
+| ------ | ----------------------------------------------------------------------------------------------- |
+| Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
+| Row height  | Controls the height of boxes. 1 = maximum space and 0 = minimum space. |
+| Column width | Controls the width of boxes. 1 = maximum space and 0 = minimum space. |
+| Page size (enable pagination) | The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series. |
+| Line width | Controls line width of state regions. |
+| Fill opacity | Controls value alignment inside state regions. |
 
-### Row height
+<!-- prettier-ignore-end -->
 
-Controls the height of boxes. 1 = maximum space and 0 = minimum space.
+### Legend options
 
-### Column width
+{{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-Controls the width of boxes. 1 = maximum space and 0 = minimum space.
+### Tooltip options
 
-### Line width
+{{< docs/shared lookup="visualizations/tooltip-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-Controls line width of state regions.
-
-### Fill opacity
-
-Controls the opacity of state regions.
-
-## Legend options
-
-{{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Tooltip options
-
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links
+### Data links
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
-
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

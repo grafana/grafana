@@ -51,15 +51,21 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   main:
+    env:
+      RUN_ID: ${{ github.run_id }}
+      VERSION: ${{ inputs.version }}
+      PREVIOUS_VERISON: ${{ inputs.previous_version }}
+      TARGET: ${{ inputs.target }}
+      DRY_RUN: ${{ inputs.dry_run }}
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: write
+      pull-requests: write
     steps:
       - name: "Generate token"
         id: generate_token
@@ -79,6 +85,7 @@ jobs:
             .prettierrc.js
           fetch-depth: 0
           fetch-tags: true
+          persist-credentials: false
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -89,10 +96,10 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
-        run: git checkout -b "changelog/${{ github.run_id }}/${{ inputs.version }}"
+        run: git checkout -b "changelog/${RUN_ID}/${VERSION}"
       - name: "Generate changelog"
         id: changelog
-        uses: ./.github/workflows/actions/changelog
+        uses: ./.github/actions/changelog
         with:
           previous: ${{ inputs.previous_version }}
           github_token: ${{ steps.generate_token.outputs.token }}
@@ -103,24 +110,24 @@ jobs:
           # Prepare CHANGELOG.md content with version delimiters
           (
             echo
-            echo "# ${{ inputs.version}} ($(date '+%F'))"
+            echo "# ${VERSION} ($(date '+%F'))"
             echo
             cat changelog_items.md
           ) > CHANGELOG.part
 
           # Check if a version exists in the changelog
-          if grep -q "<!-- ${{ inputs.version}} START" CHANGELOG.md ; then
+          if grep -q "<!-- ${VERSION} START" CHANGELOG.md ; then
             # Replace the content between START and END delimiters
-            echo "Version ${{ inputs.version }} is found in the CHANGELOG.md, patching contents..."
-            sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
-                   -e '/${{ inputs.version }} START/r CHANGELOG.part' CHANGELOG.md
+            echo "Version ${VERSION} is found in the CHANGELOG.md, patching contents..."
+            sed -i -e "/${VERSION} START/,/${VERSION} END/{//!d;}" \
+                   -e "/${VERSION} START/r CHANGELOG.part" CHANGELOG.md
           else
             # Prepend changelog part to the main changelog file
-            echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
+            echo "Version $VERSION not found in the CHANGELOG.md"
             (
-              echo "<!-- ${{ inputs.version }} START -->"
+              echo "<!-- ${VERSION} START -->"
               cat CHANGELOG.part
-              echo "<!-- ${{ inputs.version }} END -->"
+              echo "<!-- ${VERSION} END -->"
               cat CHANGELOG.md
             ) > CHANGELOG.tmp
             mv CHANGELOG.tmp CHANGELOG.md
@@ -138,11 +145,11 @@ jobs:
       - name: "Create changelog PR"
         run: >
           gh pr create \
-            --dry-run=${{ inputs.dry_run }} \
+            --dry-run=${DRY_RUN} \
             --label "no-backport" \
             --label "no-changelog" \
-            -B "${{ inputs.target }}" \
-            --title "Release: update changelog for ${{ inputs.version }}" \
-            --body "Changelog changes for release ${{ inputs.version }}"
+            -B "${TARGET}" \
+            --title "Release: update changelog for ${VERSION}" \
+            --body "Changelog changes for release ${VERSION}"
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

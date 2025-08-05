@@ -4,7 +4,7 @@
 # Please refrain from including any processes that do not result in code changes in this workflow. Instead, they should
 # either be triggered in the release promotion process or in the release comms process (that is triggered by merging
 # this PR).
-name: Complete a Grafana release
+name: Grafana Release PR
 on:
   workflow_dispatch:
     inputs:
@@ -19,7 +19,7 @@ on:
       target:
         required: true
         type: string
-        description: The base branch that these changes are being merged into
+        description: The release branch pattern (eg v9.5.x) that these changes are being merged into
       backport:
         required: false
         type: string
@@ -33,12 +33,13 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   push-changelog-to-main:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
     with:
@@ -50,23 +51,33 @@ jobs:
     secrets:
       GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
       GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
   create-prs:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Create Release PR
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
+    env:
+      VERSION: ${{ inputs.version }}
+      LATEST: ${{ inputs.latest }}
+      DRY_RUN: ${{ inputs.dry_run }}
     steps:
-      - name: Generate bot token
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+      - name: Get release branch
+        id: branch
+        uses: grafana/grafana-github-actions-go/latest-release-branch@main # zizmor: ignore[unpinned-uses]
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ownerRepo: 'grafana/grafana'
+          pattern: ${{ inputs.target }}
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.target }}
-          fetch-depth: 0
+          ref: ${{ steps.branch.outputs.branch }}
           fetch-tags: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
@@ -74,6 +85,8 @@ jobs:
           fetch-depth: '0'
           fetch-tags: 'false'
           path: .grafana-main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -85,37 +98,43 @@ jobs:
           git config --local --add --bool push.autoSetupRemote true
 
       - name: Create branch
-        run: git checkout -b "release/${{ github.run_id }}/${{ inputs.version }}"
+        run: git checkout -b "release/${{ github.run_id }}/$VERSION"
+      - name: Generate changelog token
+        id: generate_changelog_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Generate changelog
         id: changelog
-        uses: ./.grafana-main/.github/workflows/actions/changelog
+        uses: ./.grafana-main/.github/actions/changelog
         with:
-          github_token: ${{ steps.generate_token.outputs.token }}
-          target: v${{ inputs.version }}
+          github_token: ${{ steps.generate_changelog_token.outputs.token }}
+          target: v${{ env.VERSION }}
           output_file: changelog_items.md
       - name: Patch CHANGELOG.md
         run: |
           # Prepare CHANGELOG.md content with version delimiters
           (
             echo
-            echo "# ${{ inputs.version}} ($(date '+%F'))"
+            echo "# $VERSION ($(date '+%F'))"
             echo
             cat changelog_items.md
           ) > CHANGELOG.part
 
           # Check if a version exists in the changelog
-          if grep -q "<!-- ${{ inputs.version}} START" CHANGELOG.md ; then
+          if grep -q "<!-- $VERSION START" CHANGELOG.md ; then
             # Replace the content between START and END delimiters
-            echo "Version ${{ inputs.version }} is found in the CHANGELOG.md, patching contents..."
-            sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
-                   -e '/${{ inputs.version }} START/r CHANGELOG.part' CHANGELOG.md
+            echo "Version $VERSION is found in the CHANGELOG.md, patching contents..."
+            sed -i -e "/$VERSION START/,/$VERSION END/{//!d;}" \
+                   -e "/$VERSION START/r CHANGELOG.part" CHANGELOG.md
           else
             # Prepend changelog part to the main changelog file
-            echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
+            echo "Version $VERSION not found in the CHANGELOG.md"
             (
-              echo "<!-- ${{ inputs.version }} START -->"
+              echo "<!-- $VERSION START -->"
               cat CHANGELOG.part
-              echo "<!-- ${{ inputs.version }} END -->"
+              echo "<!-- $VERSION END -->"
               cat CHANGELOG.md
             ) > CHANGELOG.tmp
             mv CHANGELOG.tmp CHANGELOG.md
@@ -124,7 +143,6 @@ jobs:
           rm -f CHANGELOG.part changelog_items.md
 
           git diff CHANGELOG.md
-          
       - name: "Prettify CHANGELOG.md"
         run: npx prettier --write CHANGELOG.md
       - name: Commit CHANGELOG.md changes
@@ -138,35 +156,46 @@ jobs:
       - name: Add package.json changes
         run: |
           git add package.json lerna.json yarn.lock packages public
-          git commit -m "Update version to ${{ inputs.version }}"
+          test -e e2e/test-plugins && git add e2e/test-plugins
+          git commit -m "Update version to $VERSION"
 
       - name: Git push
         if: ${{ inputs.dry_run }} != true
-        run: git push --set-upstream origin release/${{ github.run_id }}/${{ inputs.version }}
+        run: git push --set-upstream origin "release/${{ github.run_id }}/$VERSION"
 
       - name: Create PR without backports
         if: "${{ inputs.backport == '' }}"
-        run: >
-          gh pr create \
-            $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
-            -l "no-changelog" \
-            --dry-run=${{ inputs.dry_run }} \
-            -B "${{ inputs.target }}" \
-            --title "Release: ${{ inputs.version }}" \
-            --body "These code changes must be merged after a release is complete"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ steps.branch.outputs.branch }}
+        run: |
+          LATEST_FLAG=""
+          if [ "$LATEST" = "true" ]; then
+            LATEST_FLAG='-l "release/latest"'
+          fi
+          gh pr create \
+            $LATEST_FLAG \
+            -l "no-changelog" \
+            --dry-run="$DRY_RUN" \
+            -B "$BRANCH" \
+            --title "Release: $VERSION" \
+            --body "These code changes must be merged after a release is complete"
 
       - name: Create PR with backports
         if: "${{ inputs.backport != '' }}"
-        run: >
-          gh pr create \
-            $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
-            -l "product-approved" \
-            -l "no-changelog" \
-            --dry-run=${{ inputs.dry_run }} \
-            -B "${{ inputs.target }}" \
-            --title "Release: ${{ inputs.version }}" \
-            --body "These code changes must be merged after a release is complete"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ steps.branch.outputs.branch }}
+        run: |
+          LATEST_FLAG=""
+          if [ "$LATEST" = "true" ]; then
+            LATEST_FLAG='-l "release/latest"'
+          fi
+          gh pr create \
+            $LATEST_FLAG \
+            -l "product-approved" \
+            -l "no-changelog" \
+            --dry-run="$DRY_RUN" \
+            -B "$BRANCH" \
+            --title "Release: $VERSION" \
+            --body "These code changes must be merged after a release is complete"

@@ -267,7 +267,7 @@ type ThreemaIntegration struct {
 type VictoropsIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL string `json:"url" yaml:"url" hcl:"url"`
+	URL Secret `json:"url" yaml:"url" hcl:"url"`
 
 	MessageType *string `json:"messageType,omitempty" yaml:"messageType,omitempty" hcl:"message_type"`
 	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`

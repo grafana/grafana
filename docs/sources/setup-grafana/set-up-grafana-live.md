@@ -31,9 +31,9 @@ By `real-time`, we indicate a soft real-time. Due to network latencies, garbage 
 
 ## Concepts
 
-Grafana Live sends data to clients over persistent WebSocket connection. Grafana frontend subscribes on channels to receive data which was published into that channel – in other words PUB/SUB mechanics is used. All subscriptions on a page multiplexed inside a single WebSocket connection. There are some rules regarding Live channel names – see [Grafana Live channel]({{< relref "#grafana-live-channel" >}}).
+Grafana Live sends data to clients over persistent WebSocket connections, based on a Pub/Sub model. The Grafana frontend subscribes on each channel to receive data that has been published in that channel. All subscriptions on a page are multiplexed inside a single WebSocket connection. There are some rules regarding Live channel names – see [Grafana Live channel](#grafana-live-channel).
 
-Handling persistent connections like WebSocket in scale may require operating system and infrastructure tuning. That's why by default Grafana Live supports 100 simultaneous connections max. For more details on how to tune this limit, refer to [Live configuration section]({{< relref "#configure-grafana-live" >}}).
+Handling persistent connections like WebSocket in scale may require operating system and infrastructure tuning. That's why by default Grafana Live supports 100 simultaneous connections max. For more details on how to tune this limit, refer to [Live configuration section](#configure-grafana-live).
 
 ## Features
 
@@ -101,7 +101,7 @@ Grafana Live uses persistent connections (WebSocket at the moment) to deliver re
 
 WebSocket is a persistent connection that starts with an HTTP Upgrade request (using the same HTTP port as the rest of Grafana) and then switches to a TCP mode where WebSocket frames can travel in both directions between a client and a server. Each logged-in user opens a WebSocket connection – one per browser tab.
 
-The number of maximum WebSocket connections users can establish with Grafana is limited to 100 by default. See [max_connections]({{< relref "./configure-grafana#max_connections" >}}) option.
+The number of maximum WebSocket connections users can establish with Grafana is limited to 100 by default. See [max_connections](../configure-grafana/#max_connections) option.
 
 In case you want to increase this limit, ensure that your server and infrastructure allow handling more connections. The following sections discuss several common problems which could happen when managing persistent connections, in particular WebSocket connections.
 
@@ -109,9 +109,9 @@ In case you want to increase this limit, ensure that your server and infrastruct
 
 To avoid hijacking of WebSocket connection Grafana Live checks the Origin request header sent by a client in an HTTP Upgrade request. Requests without Origin header pass through without any origin check.
 
-By default, Live accepts connections with Origin header that matches configured [root_url]({{< relref "./configure-grafana#root_url" >}}) (which is a public Grafana URL).
+By default, Live accepts connections with Origin header that matches configured [root_url](../configure-grafana/#root_url) (which is a public Grafana URL).
 
-It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins]({{< relref "./configure-grafana#allowed_origins" >}}) option of Grafana Live configuration.
+It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins](../configure-grafana/#allowed_origins) option of Grafana Live configuration.
 
 #### Resource usage
 
@@ -217,7 +217,7 @@ ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
 
-For additional information, refer to the [ha_engine]({{< relref "./configure-grafana#ha_engine" >}}) and [ha_engine_address]({{< relref "./configure-grafana#ha_engine_address" >}}) options.
+For additional information, refer to the [ha_engine](../configure-grafana/#ha_engine) and [ha_engine_address](../configure-grafana/#ha_engine_address) options.
 
 After running:
 

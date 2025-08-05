@@ -56,6 +56,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     theme,
     orientation: VizOrientation.Horizontal,
     namePlacement: BarGaugeNamePlacement.Auto,
+    isOverflow: false,
   };
 
   Object.assign(props, propOverrides);

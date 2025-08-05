@@ -81,6 +81,6 @@ This video explains how to add data sources, including Loki, Tempo, and Mimir, t
 
 {{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
-Once you've added the data source, you can [configure it]({{< relref "./configure-tempo-data-source/" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+Once you've added the data source, you can [configure it](configure-tempo-data-source/) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 {{< section withDescriptions="true">}}

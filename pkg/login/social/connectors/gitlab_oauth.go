@@ -87,7 +87,7 @@ func (s *SocialGitlab) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 }
 
 func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.GitlabProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -303,6 +303,8 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 			"original_groups", data.Groups, "groups", userInfo.Groups)
 		data.Groups = userInfo.Groups
 	}
+
+	data.raw = rawJSON
 
 	s.log.Debug("Resolved user data", "data", fmt.Sprintf("%+v", data))
 	return &data, nil
