@@ -90,7 +90,7 @@ describe('EditDataSourceActions', () => {
     it('should have correct href for explore action when no extensions', () => {
       // No extensions, so explore should be a direct link
       setPluginLinksHook(() => ({ links: [], isLoading: false }));
-      
+
       render(<EditDataSourceActions uid="test-uid" />);
 
       const exploreLink = screen.getByText('Explore data').closest('a');
@@ -112,7 +112,7 @@ describe('EditDataSourceActions', () => {
       ];
 
       setPluginLinksHook(() => ({ links: mockLinks, isLoading: false }));
-      
+
       render(<EditDataSourceActions uid="test-uid" />);
 
       // Click to open dropdown
@@ -273,7 +273,7 @@ describe('EditDataSourceActions', () => {
       const exploreElement = screen.getByText('Explore data');
       const exploreLink = exploreElement.closest('a');
       expect(exploreLink).toBeInTheDocument();
-      
+
       expect(screen.queryByText('Should Not Appear')).not.toBeInTheDocument();
       // Core actions should still be there
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
@@ -289,7 +289,7 @@ describe('EditDataSourceActions', () => {
       const exploreElement = screen.getByText('Explore data');
       const exploreLink = exploreElement.closest('a');
       expect(exploreLink).toBeInTheDocument();
-      
+
       // Should render core actions without errors
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
       expect(screen.getByText('Explore data')).toBeInTheDocument();
@@ -312,7 +312,7 @@ describe('EditDataSourceActions', () => {
       const exploreElement = screen.getByText('Explore data');
       const exploreButton = exploreElement.closest('button');
       expect(exploreButton).toBeInTheDocument();
-      
+
       // Core actions should still be there
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
       expect(screen.getByText('Explore data')).toBeInTheDocument();
