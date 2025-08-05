@@ -7493,7 +7493,7 @@
     "loading": "Loading folders..."
   },
   "folder-repo": {
-    "badge-text": "Provisioned"
+    "badge-tooltip": "Provisioned"
   },
   "folders": {
     "get-loading-nav": {
