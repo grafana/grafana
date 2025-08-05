@@ -1,0 +1,227 @@
+{
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "dataLinks": [
+          {
+            "targetBlank": true,
+            "title": "Link with series name",
+            "url": "http://example.com?series=${__series.name}\u0026timestamp=__value.time"
+          },
+          {
+            "targetBlank": false,
+            "title": "Link with field name",
+            "url": "http://grafana.com/dashboard?field=__field.name\u0026series=${__series.name}"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with data links using legacy variable syntax",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "fieldOptions": {
+          "defaults": {
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "Field link",
+                "url": "http://monitoring.com?field=${__field.name}\u0026series=__series.name"
+              },
+              {
+                "targetBlank": false,
+                "title": "Time-based link",
+                "url": "http://logs.com?time=__value.time\u0026field=__field.name"
+              }
+            ],
+            "title": "Series: __series.name, Field: ${__field.name}, Time: __value.time"
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with field options using legacy variable syntax",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "dataLinks": [
+          {
+            "targetBlank": true,
+            "title": "Combined link",
+            "url": "http://combined.com?series=${__series.name}\u0026field=${__field.name}\u0026time=__value.time"
+          }
+        ],
+        "fieldOptions": {
+          "defaults": {
+            "links": [
+              {
+                "targetBlank": false,
+                "title": "Comprehensive link",
+                "url": "http://comprehensive.com?s=${__series.name}\u0026f=__field.name\u0026t=__value.time"
+              }
+            ],
+            "title": "Complete: __series.name / __field.name / __value.time"
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with both data links and field options",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "options": {
+        "dataLinks": [
+          {
+            "targetBlank": true,
+            "title": "Modern link",
+            "url": "http://modern.com?series=${__series.name}\u0026field=${__field.name}\u0026time=${__value.time}"
+          }
+        ],
+        "fieldOptions": {
+          "defaults": {
+            "links": [
+              {
+                "targetBlank": false,
+                "title": "Modern field link",
+                "url": "http://modern-field.com?s=${__series.name}\u0026f=${__field.name}"
+              }
+            ],
+            "title": "Modern: ${__series.name} / ${__field.name} / ${__value.time}"
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with no legacy variables (should remain unchanged)",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "content": "This panel has no data links or field options to migrate."
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel with no data links or field options",
+      "type": "text"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "migration-test"
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V20 Variable Syntax Migration Test Dashboard",
+  "uid": "v20-migration-test",
+  "version": 0
+}
