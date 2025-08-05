@@ -27,7 +27,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           # Explicitly set Go version to 1.24.1 to ensure consistent OpenAPI spec generation
           # The crypto/x509 package has additional fields in Go 1.24.1 that affect the generated specs

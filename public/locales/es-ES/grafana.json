@@ -1548,8 +1548,7 @@
       "group-not-editable": "El grupo seleccionado no se puede editar",
       "group-not-editable-description": "Este grupo pertenece a una fuente de datos que no admite la edición.",
       "page-title": "Editar grupo de reglas",
-      "rule-group-error": "Error al cargar el grupo de reglas",
-      "title": "Editar grupo de evaluación"
+      "rule-group-error": "Error al cargar el grupo de reglas"
     },
     "group-loader": {
       "group-load-failed": "Error al cargar las reglas del grupo {{ groupName }} en {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Alertas"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Importar",
@@ -3565,12 +3563,12 @@
       "tags-column": "Etiquetas"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "No se puede recuperar la información descendiente"
@@ -3613,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Error al crear la carpeta",
-      "alert-folder-created-successfully": "Carpeta creada correctamente",
       "button-create": "Crear",
       "button-creating": "Creando...",
       "cancel": "Cancelar",
@@ -3740,6 +3737,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3760,7 +3758,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3861,7 +3858,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -3982,6 +3978,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -5639,6 +5642,7 @@
       "delete-read-only-file-message": "",
       "deleting": "Eliminando...",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
     },
     "description-label": {
@@ -5650,9 +5654,6 @@
           "edit-link": "Editar enlace"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Alternar menú de correo electrónico"
@@ -5812,6 +5813,7 @@
       "usage-count_other": "Utilizado en {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5821,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7006,6 +7009,9 @@
         "pro-tip-define-sources-through-configuration-files": " Un consejo: también puedes definir fuentes de datos a través de archivos de configuración. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Ant.",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Seguir sin consulta"
@@ -7272,18 +7278,24 @@
       "split-tooltip": "Dividir el panel",
       "split-widen": "Agrandar panel"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Enviar comentarios",
-      "label-copied": "¡Copiado!",
-      "label-export": "Exportar",
-      "label-trace-id": "ID de traza",
-      "title-share-thoughts-about-tracing-grafana": "Comparte tu opinión sobre el seguimiento en Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Traza parcial",
-      "tooltip-url": "{{url}} o {{target}} o {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Botón para borrar filtros",
@@ -9350,6 +9362,15 @@
       "show-more": "mostrar más",
       "tooltip-error": "Error: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "",
       "close": "",
@@ -11000,6 +11021,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Esta función se encuentra actualmente en desarrollo activo. Para obtener la mejor experiencia y las últimas mejoras, recomendamos utilizar la <2>compilación nocturna</2> de Grafana."
@@ -11859,7 +11883,7 @@
         "recommended": "Recomendado",
         "results": "Resultados"
       },
-      "search": "Buscar"
+      "search": ""
     }
   },
   "search": {
@@ -12496,6 +12520,19 @@
       "label-medium": "",
       "label-small": ""
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Si se selecciona, toda la fila se coloreará como esta celda.",
       "description-wrap-text": "Si se selecciona, el texto se ajustará al ancho del texto en la columna configurada",
@@ -12530,6 +12567,13 @@
       "label-alt-text": "Texto alternativo",
       "label-title-text": "Texto del título"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "",
     "name-cell-height": "",
     "name-cell-type": "",
@@ -12546,7 +12590,10 @@
     "name-show-table-header": "",
     "name-wrap-header-text": "",
     "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "placeholder-fields": "",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "",
@@ -13261,22 +13308,6 @@
       "label-row": "Fila",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Valor booleano falso",
-          "boolean-true-value": "Valor booleano verdadero",
-          "empty-string": "Cadena vacía",
-          "null-value": "Valor nulo",
-          "number-value": "Valor del número 0"
-        },
-        "label": {
-          "empty": "Vacío",
-          "false": "Falso",
-          "null": "Nulo",
-          "true": "Verdadero",
-          "zero": "Cero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13629,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

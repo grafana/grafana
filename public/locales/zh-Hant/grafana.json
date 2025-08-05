@@ -1542,8 +1542,7 @@
       "group-not-editable": "無法編輯所選群組",
       "group-not-editable-description": "此群組屬於不支援編輯的資料來源。",
       "page-title": "編輯規則群組",
-      "rule-group-error": "載入規則群組時發生錯誤",
-      "title": "編輯評估群組"
+      "rule-group-error": "載入規則群組時發生錯誤"
     },
     "group-loader": {
       "group-load-failed": "無法從「{{ namespaceName }}」中的群組「{{ groupName }}」載入規則",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "在每個網路層執行 ping、DNS、HTTP/S 和 TCP 檢查。",
       "synthetic-monitoring-card-item-3": "在防火牆後使用 20 多個全球探測器或私人探測器。",
       "synthetic-monitoring-card-item-4": "使用內建的 Prometheus 風格警報追蹤 SLO - 直接從使用者介面操作。",
-      "synthetic-monitoring-card-title": "綜合監控",
-      "title-alerting": "警報"
+      "synthetic-monitoring-card-title": "綜合監控"
     },
     "import-to-gma": {
       "action-button": "匯入",
@@ -3546,12 +3544,12 @@
       "tags-column": "標籤"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "已成功刪除資料夾",
       "api-error": "無法刪除資料夾",
       "button-cancel": "取消",
       "button-delete": "刪除",
       "button-deleting": "正在刪除…",
-      "delete-warning": "這將刪除此資料夾及其所有子資料夾。總體而言，這會影響："
+      "delete-warning": "這將刪除此資料夾及其所有子資料夾。總體而言，這會影響：",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "無法擷取子系資訊"
@@ -3594,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "建立資料夾時發生錯誤",
-      "alert-folder-created-successfully": "已成功建立資料夾",
       "button-create": "建立",
       "button-creating": "正在建立…",
       "cancel": "取消",
@@ -3721,6 +3718,7 @@
     "category-selected-connection": "所選連線",
     "category-selected-element": "所選元素 ({{element}})",
     "category-size": "大小",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "雲端",
       "label": {
@@ -3741,7 +3739,6 @@
       }
     },
     "description-experimental-types": "啟用實驗元素類型的選擇",
-    "description-infinite-panning": "啟用無限平移 - 適用於寬敞的畫布。警告：這是一項實驗功能，目前僅適用於頂端/左側受限的元素",
     "description-inline-editing": "啟用直接編輯面板",
     "description-pan-zoom": "啟用平移和縮放",
     "direction-options": {
@@ -3842,7 +3839,6 @@
     "name-align-text": "對齊文字",
     "name-color": "文字色彩",
     "name-experimental-types": "實驗性元素類型",
-    "name-infinite-panning": "無限平移",
     "name-inline-editing": "直接編輯",
     "name-pan-zoom": "平移和縮放",
     "name-text": "文字",
@@ -3963,6 +3959,13 @@
       "name-vertical-align": "垂直對齊",
       "placeholder": {
         "auto": "自動"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -5619,6 +5622,7 @@
       "delete-read-only-file-message": "由於儲存庫為唯讀，因此無法直接從 Grafana 刪除此儀表板。若要刪除此儀表板，請從您的 Git 儲存庫中移除該檔案。",
       "deleting": "正在刪除…",
       "drawer-title": "刪除已佈建的儀表板",
+      "success-message": "",
       "title-this-repository-is-read-only": "此存放庫為唯讀"
     },
     "description-label": {
@@ -5630,9 +5634,6 @@
           "edit-link": "編輯連結"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "儀表板變更已成功儲存"
     },
     "email-list": {
       "aria-label-emailmenu": "切換電子郵件選單"
@@ -5791,6 +5792,7 @@
       "usage-count_other": "用於 {{count}} 個儀表板"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5800,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6984,6 +6987,9 @@
         "pro-tip-define-sources-through-configuration-files": "專家提示：您也可以透過設定檔案來定義資料來源。"
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "上一頁",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "停用查詢"
@@ -7250,18 +7256,24 @@
       "split-tooltip": "分割窗格",
       "split-widen": "擴大窗格"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "提供意見回饋",
-      "label-copied": "已複製！",
-      "label-export": "匯出",
-      "label-trace-id": "追蹤 ID",
-      "title-share-thoughts-about-tracing-grafana": "分享對於在 Grafana 中進行追蹤的想法。"
-    },
     "trace-page-header": {
-      "text-partial-trace": "部分追蹤",
-      "tooltip-url": "{{url}} 或 {{target}} 或 {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "清除篩選條件按鈕",
@@ -9320,6 +9332,15 @@
       "show-more": "顯示更多",
       "tooltip-error": "錯誤：{{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "清除",
       "close": "關閉紀錄詳細資訊",
@@ -10967,6 +10988,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "此功能目前正在積極開發中。為了獲得最佳體驗和最新改進版本，建議使用 Grafana 的<2>夜間版本</2>。"
@@ -11819,7 +11843,7 @@
         "recommended": "建議",
         "results": "結果"
       },
-      "search": "搜尋"
+      "search": ""
     }
   },
   "search": {
@@ -12454,6 +12478,19 @@
       "label-medium": "中",
       "label-small": "小"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "若選取，整列將以此儲存格的顏色顯示。",
       "description-wrap-text": "若選取，文字將依配置欄位的寬度換行",
@@ -12488,6 +12525,13 @@
       "label-alt-text": "替代文字",
       "label-title-text": "標題文字"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "計算",
     "name-cell-height": "儲存格高度",
     "name-cell-type": "儲存格類型",
@@ -12504,7 +12548,10 @@
     "name-show-table-header": "顯示表格頁首",
     "name-wrap-header-text": "換行標題文字",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "所有數值欄位"
+    "placeholder-fields": "所有數值欄位",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "儲存格選項",
@@ -13219,22 +13266,6 @@
       "label-row": "列",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "布林假值",
-          "boolean-true-value": "布林真值",
-          "empty-string": "空字串",
-          "null-value": "空值",
-          "number-value": "數字 0 值"
-        },
-        "label": {
-          "empty": "空",
-          "false": "錯誤",
-          "null": "空值",
-          "true": "正確",
-          "zero": "零"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13587,6 +13618,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

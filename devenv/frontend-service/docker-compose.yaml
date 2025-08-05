@@ -14,24 +14,29 @@ services:
       - '3010:81' # CDN
 
   backend:
-    image: grafana-backend
+    image: grafana-fs-dev
     build:
-      context: .
-      dockerfile: backend.dockerfile
+      context: ../..
+      dockerfile: devenv/frontend-service/grafana-fs-dev.dockerfile
     entrypoint: ['bin/grafana', 'server']
     volumes:
       - backend-data:/grafana/data
-      - ../../public/app/plugins:/grafana/public/app/plugins
     environment:
-      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
       GF_SERVER_CDN_URL: http://localhost:3010
+      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: postgres
+      GF_DATABASE_NAME: grafana
+      GF_DATABASE_USER: grafana
+      GF_DATABASE_PASSWORD: grafana
     ports:
       - '3011:3000'
 
   frontend-service:
-    image: grafana-backend
+    image: grafana-fs-dev
     build:
-      dockerfile: backend.dockerfile
+      context: ../..
+      dockerfile: devenv/frontend-service/grafana-fs-dev.dockerfile
     entrypoint: ['bin/grafana', 'server', 'target']
     ports:
       - '3012:3000'
@@ -41,5 +46,15 @@ services:
       GF_SECURITY_CONTENT_SECURITY_POLICY: false
       GF_SERVER_CDN_URL: http://localhost:3010
 
+  postgres:
+    image: postgres:16.1-alpine3.19
+    environment:
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD: grafana
+      POSTGRES_DB: grafana
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
 volumes:
   backend-data:
+  postgres-data:

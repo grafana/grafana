@@ -380,7 +380,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        <MaybeQueryLibrarySaveButton query={query} />
+        <MaybeQueryLibrarySaveButton query={query} app={this.props.app} />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
@@ -392,6 +392,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             onQueryReplacedFromLibrary?.();
             onReplace?.(query);
           }}
+          app={this.props.app}
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
@@ -528,24 +529,26 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 }
 
 // Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
+function MaybeQueryLibrarySaveButton(props: { query: DataQuery; app?: CoreApp }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query);
+  return renderSaveQueryButton(props.query, props.app);
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
   datasourceFilters: string[];
   onSelectQuery: (query: DataQuery) => void;
+  app?: CoreApp;
 }
 
 function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
   datasourceFilters,
   onSelectQuery,
+  app,
 }: ReplaceQueryFromLibraryProps<TQuery>) {
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onReplaceQueryFromLibrary = () => {
-    openDrawer(datasourceFilters, onSelectQuery, { isReplacingQuery: true });
+    openDrawer(datasourceFilters, onSelectQuery, { isReplacingQuery: true, context: app });
   };
 
   return queryLibraryEnabled ? (

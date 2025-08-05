@@ -87,6 +87,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
+	globalDataKeyStore, err := encryptionstorage.ProvideGlobalDataKeyStorage(database, tracer, nil)
+	require.NoError(t, err)
+
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
 	enc, err := cipher.ProvideAESGCMCipherService(tracer, usageStats)
@@ -120,7 +123,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		keeperService = setupCfg.KeeperService
 	}
 
-	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
+	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService, nil)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
@@ -135,6 +138,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
 	require.NoError(t, err)
 
+	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
+
 	return Sut{
 		SecureValueService:          secureValueService,
 		SecureValueMetadataStorage:  secureValueMetadataStorage,
@@ -145,6 +150,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		SQLKeeper:                   sqlKeeper,
 		Database:                    database,
 		AccessClient:                accessClient,
+		ConsolidationService:        consolidationService,
+		EncryptionManager:           encryptionManager,
+		GlobalDataKeyStore:          globalDataKeyStore,
 	}
 }
 
@@ -158,6 +166,9 @@ type Sut struct {
 	SQLKeeper                   *sqlkeeper.SQLKeeper
 	Database                    *database.Database
 	AccessClient                types.AccessClient
+	ConsolidationService        contracts.ConsolidationService
+	EncryptionManager           contracts.EncryptionManager
+	GlobalDataKeyStore          contracts.GlobalDataKeyStorage
 }
 
 type CreateSvConfig struct {
@@ -233,12 +244,43 @@ func CreateUserAuthContext(ctx context.Context, namespace string, permissions ma
 	return types.WithAuthInfo(ctx, requester)
 }
 
-func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, permissions []string) context.Context {
+func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, namespace string, permissions []string) context.Context {
 	requester := &identity.StaticRequester{
+		Namespace: namespace,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
 				Permissions:     permissions,
 				ServiceIdentity: serviceIdentity,
+			},
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
+}
+
+// CreateOBOAuthContext emulates a context where the request is made on-behalf-of (OBO) a user, with an access token.
+func CreateOBOAuthContext(
+	ctx context.Context,
+	serviceIdentity string,
+	namespace string,
+	userPermissions map[string][]string,
+	delegatedPermissions []string,
+) context.Context {
+	requester := &identity.StaticRequester{
+		Namespace: namespace,
+		Type:      types.TypeUser,
+		OrgID:     1,
+		UserID:    1,
+		Permissions: map[int64]map[string][]string{
+			1: userPermissions,
+		},
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				ServiceIdentity:      serviceIdentity,
+				DelegatedPermissions: delegatedPermissions,
+				Actor: &authn.ActorClaims{
+					Subject: "user:1",
+				},
 			},
 		},
 	}

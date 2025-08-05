@@ -1548,8 +1548,7 @@
       "group-not-editable": "Selected group cannot be edited",
       "group-not-editable-description": "This group belongs to a data source that does not support editing.",
       "page-title": "Edit rule group",
-      "rule-group-error": "Error loading rule group",
-      "title": "Edit evaluation group"
+      "rule-group-error": "Error loading rule group"
     },
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
       "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
       "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
-      "synthetic-monitoring-card-title": "Synthetic Monitoring",
-      "title-alerting": "Alerting"
+      "synthetic-monitoring-card-title": "Synthetic Monitoring"
     },
     "import-to-gma": {
       "action-button": "Import",
@@ -3565,12 +3563,12 @@
       "tags-column": "Tags"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Folder deleted successfully",
       "api-error": "Failed to delete folder",
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:"
+      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "success-message": "Folder deleted successfully"
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
@@ -3613,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Error creating folder",
-      "alert-folder-created-successfully": "Folder created successfully",
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
@@ -3740,6 +3737,7 @@
     "category-selected-connection": "Selected connection",
     "category-selected-element": "Selected element ({{element}})",
     "category-size": "Size",
+    "category-tooltip": "Tooltip",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3760,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Enable selection of experimental element types",
-    "description-infinite-panning": "Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained",
     "description-inline-editing": "Enable editing the panel directly",
     "description-pan-zoom": "Enable pan and zoom",
     "direction-options": {
@@ -3861,7 +3858,6 @@
     "name-align-text": "Align text",
     "name-color": "Text color",
     "name-experimental-types": "Experimental element types",
-    "name-infinite-panning": "Infinite panning",
     "name-inline-editing": "Inline editing",
     "name-pan-zoom": "Pan and zoom",
     "name-text": "Text",
@@ -3982,6 +3978,13 @@
       "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "Tooltip mode",
+      "tooltip-mode-options": {
+        "label-disabled": "Disabled",
+        "label-enabled": "Enabled"
       }
     },
     "tree-navigation-editor": {
@@ -5639,6 +5642,7 @@
       "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
+      "success-message": "Dashboard deleted successfully",
       "title-this-repository-is-read-only": "This repository is read only"
     },
     "description-label": {
@@ -5650,9 +5654,6 @@
           "edit-link": "Edit link"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Dashboard changes saved successfully"
     },
     "email-list": {
       "aria-label-emailmenu": "Toggle email menu"
@@ -5812,6 +5813,7 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "Error moving dashboard",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
       "current-file-not-found": "Current dashboard file could not be found",
@@ -5821,6 +5823,7 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
+      "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -9359,6 +9362,15 @@
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "Center matched line",
+      "newer-logs": "newer",
+      "no-more-logs-available": "No more logs available.",
+      "older-logs": "older",
+      "open-in-split-view": "Open in split view",
+      "title-log-context": "Log context",
+      "title-log-line": "Referenced log line"
+    },
     "log-line-details": {
       "clear-search": "Clear",
       "close": "Close log details",
@@ -11009,6 +11021,9 @@
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
+  "provisioned-resource-request-handler": "Resource saved successfully",
+  "provisioned-resource-request-handler-dashboard": "Dashboard saved successfully",
+  "provisioned-resource-request-handler-folder": "Folder created successfully",
   "provisioning": {
     "banner": {
       "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
@@ -11868,7 +11883,7 @@
         "recommended": "Recommended",
         "results": "Results"
       },
-      "search": "Search"
+      "search": "Search {{parentTitle}}"
     }
   },
   "search": {
@@ -12505,6 +12520,19 @@
       "label-medium": "Medium",
       "label-small": "Small"
     },
+    "cell-types": {
+      "actions": "Actions",
+      "auto": "Auto",
+      "color-background": "Colored background",
+      "color-text": "Colored text",
+      "data-links": "Data links",
+      "gauge": "Gauge",
+      "image": "Image",
+      "json": "JSON View",
+      "markdown": "Markdown + HTML",
+      "pill": "Pill",
+      "sparkline": "Sparkline"
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
       "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
@@ -12539,6 +12567,13 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
+      "label": {
+        "text-alpha": "Alpha"
+      },
+      "label-dynamic-height": "Dynamic height"
+    },
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12555,7 +12590,10 @@
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "text-wrap-options": {
+      "label-wrap-text": "Wrap text"
+    }
   },
   "table-new": {
     "category-cell-options": "Cell options",
@@ -13270,22 +13308,6 @@
       "label-row": "Row",
       "name": {
         "grouping-to-matrix": "Grouping to matrix"
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Boolean false value",
-          "boolean-true-value": "Boolean true value",
-          "empty-string": "Empty string",
-          "null-value": "Null value",
-          "number-value": "Number 0 value"
-        },
-        "label": {
-          "empty": "Empty",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13638,6 +13660,22 @@
         "perform-spatial-operations": "Perform spatial operations",
         "reformat": "Reformat",
         "reorder-and-rename": "Reorder and rename"
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "Boolean false value",
+          "boolean-true": "Boolean true value",
+          "empty-string": "Empty String",
+          "null-value": "Null value",
+          "number-value": "Number 0 value"
+        },
+        "label": {
+          "boolean-false": "False",
+          "boolean-true": "True",
+          "empty-string": "Empty",
+          "null-value": "Null",
+          "number-value": "Zero"
+        }
       }
     },
     "wide-info": {
