@@ -142,7 +142,7 @@ export function useStaticActions(): CommandPaletteAction[] {
     if (shouldRenderInviteUserButton) {
       navBarActions.push({
         id: 'invite-user',
-        name: t('navigation.invite-user.invite-new-member-button', 'Invite new member'),
+        name: t('navigation.invite-user.invite-new-user-button', 'Invite new user'),
         section: t('command-palette.section.actions', 'Actions'),
         priority: ACTIONS_PRIORITY,
         perform: () => {

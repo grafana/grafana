@@ -129,7 +129,7 @@ export const MegaMenu = memo(
             </ul>
           </ScrollContainer>
           {shouldRenderInviteUserButton && (
-            <div className={styles.inviteNewMemberButton}>
+            <div className={styles.inviteNewUserButton}>
               <InviteUserButton />
             </div>
           )}
@@ -170,7 +170,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: MENU_WIDTH,
       },
     }),
-    inviteNewMemberButton: css({
+    inviteNewUserButton: css({
       display: 'flex',
       padding: theme.spacing(1.5, 1, 1.5, 1),
       borderTop: `1px solid ${theme.colors.border.weak}`,

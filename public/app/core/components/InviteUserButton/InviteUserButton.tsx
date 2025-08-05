@@ -15,7 +15,7 @@ export function InviteUserButton() {
         performInviteUserClick('bottom_mega_menu', 'invite-user-bottom-mega-menu');
       }}
     >
-      {t('navigation.invite-user.invite-new-member-button', 'Invite new member')}
+      {t('navigation.invite-user.invite-new-user-button', 'Invite new user')}
     </Button>
   );
 }
