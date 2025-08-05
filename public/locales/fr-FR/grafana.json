@@ -13308,22 +13308,6 @@
       "label-row": "Ligne",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Valeur booléenne fausse",
-          "boolean-true-value": "Valeur booléenne vraie",
-          "empty-string": "Chaîne vide",
-          "null-value": "Valeur nulle",
-          "number-value": "Valeur du nombre 0"
-        },
-        "label": {
-          "empty": "Vide",
-          "false": "Faux",
-          "null": "Nul",
-          "true": "Vrai",
-          "zero": "Zéro"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13676,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

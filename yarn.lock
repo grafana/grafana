@@ -2542,7 +2542,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/i18n": "npm:12.2.0-pre"
     "@grafana/plugin-configs": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
@@ -2588,7 +2588,7 @@ __metadata:
     "@grafana/data": "npm:12.2.0-pre"
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/plugin-configs": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/sql": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
@@ -2702,7 +2702,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.1"
@@ -2789,7 +2789,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/i18n": "npm:12.2.0-pre"
     "@grafana/plugin-configs": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/sql": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
@@ -2821,7 +2821,7 @@ __metadata:
     "@grafana/data": "npm:12.2.0-pre"
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/plugin-configs": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/sql": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
@@ -2887,7 +2887,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/google-sdk": "npm:0.3.4"
     "@grafana/plugin-configs": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/ui": "npm:12.2.0-pre"
@@ -2936,7 +2936,7 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
@@ -2994,7 +2994,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.1"
@@ -3379,7 +3379,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.2.0-pre"
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -3450,9 +3450,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.10.7, @grafana/plugin-ui@npm:^0.10.1":
-  version: 0.10.7
-  resolution: "@grafana/plugin-ui@npm:0.10.7"
+"@grafana/plugin-ui@npm:0.10.8, @grafana/plugin-ui@npm:^0.10.1":
+  version: 0.10.8
+  resolution: "@grafana/plugin-ui@npm:0.10.8"
   dependencies:
     "@emotion/css": "npm:^11.11.2"
     "@hello-pangea/dnd": "npm:^17.0.0"
@@ -3474,7 +3474,7 @@ __metadata:
     react: ^18.2.0
     react-dom: ^18.2.0
     rxjs: ^7.8.1
-  checksum: 10/4fa878d042ef138cfb9fdcee7de883dca8e1e222f23f2ae852e98b18e0b095f8e741547d1c89c38c48f3274149a4d61515b4fc9ccfcaa77fa62221cb5b6ee0cf
+  checksum: 10/3ef5eddd9a517fe2c7a0796f3d96dcd802153b625c46d7b2733f91f0378c6a8423022cae238b3bb6f554845f7e1bf63447ed8f9d3a6a5ada7d3df1e53c9cbf09
   languageName: node
   linkType: hard
 
@@ -3487,7 +3487,7 @@ __metadata:
     "@grafana/data": "npm:12.2.0-pre"
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/i18n": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -3592,11 +3592,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.29.2--canary.1204.16747434211.0":
-  version: 6.29.2--canary.1204.16747434211.0
-  resolution: "@grafana/scenes-react@npm:6.29.2--canary.1204.16747434211.0"
+"@grafana/scenes-react@npm:6.29.2":
+  version: 6.29.2
+  resolution: "@grafana/scenes-react@npm:6.29.2"
   dependencies:
-    "@grafana/scenes": "npm:6.29.2--canary.1204.16747434211.0"
+    "@grafana/scenes": "npm:6.29.2"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3608,13 +3608,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/88e42af0e985aee892bbaa1775bfe4dc75be43c7b250e7aa07ae71ecbef89429926f124bc1033aa3448e53cb594fa7a2fcabb5200b5f5cb4e3784ad402b2713c
+  checksum: 10/41a232eb4b003f7cc6056e6d9eb88882b385b84f84ef71aa4cf8e222e3451af68d72367508e00f33dc7de156a602dae8b6129a7ec6fd2ab29b3d43b22e3bc023
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.29.2--canary.1204.16747434211.0":
-  version: 6.29.2--canary.1204.16747434211.0
-  resolution: "@grafana/scenes@npm:6.29.2--canary.1204.16747434211.0"
+"@grafana/scenes@npm:6.29.2":
+  version: 6.29.2
+  resolution: "@grafana/scenes@npm:6.29.2"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3634,7 +3634,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/f8e0bddb18e8bd492b0e06d76ce61c9f462728b86241f2c115c3cdc7d4ad4dfef7c1f6f6ef6afdccbacee42f66377052fa4706b73af3cee35023677bbf590d65
+  checksum: 10/f8c578b4542f3e393acf4493624067c0bc0dd40e48a41aaaaec57d768ae1ef443feb71114781e38bb3aac3e66f5702427a03c0bd19525bab379bf6e0471dd484
   languageName: node
   linkType: hard
 
@@ -3663,7 +3663,7 @@ __metadata:
     "@grafana/data": "npm:12.2.0-pre"
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/i18n": "npm:12.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.2.0-pre"
@@ -18219,11 +18219,11 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:2.1.7"
-    "@grafana/plugin-ui": "npm:0.10.7"
+    "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.29.2--canary.1204.16747434211.0"
-    "@grafana/scenes-react": "npm:6.29.2--canary.1204.16747434211.0"
+    "@grafana/scenes": "npm:6.29.2"
+    "@grafana/scenes-react": "npm:6.29.2"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

@@ -163,7 +163,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
               isDisabled={!builderQuery?.from?.property.name}
               width={30}
             />
-            <Button variant="secondary" icon="times" onClick={onDeleteAllColumns} />
+            <Button
+              tooltip={t('components.table-section.tooltip-remove-all-columns', 'Remove all columns')}
+              variant="secondary"
+              icon="times"
+              onClick={onDeleteAllColumns}
+            />
           </InputGroup>
         </EditorField>
       </EditorFieldGroup>
