@@ -275,6 +275,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.onToggleHelp();
   };
 
+  onSelectQueryFromLibrary = (query: DataQuery) => {
+    this.props.onQueryReplacedFromLibrary?.();
+    this.props.onReplace?.(query);
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -358,12 +363,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const {
-      query,
-      hideHideQueryButton: hideHideQueryButton = false,
-      onReplace,
-      onQueryReplacedFromLibrary,
-    } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -380,7 +380,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        <MaybeQueryLibrarySaveButton query={query} app={this.props.app} />
+        <MaybeQueryLibrarySaveButton query={query} app={this.props.app} onSelectQuery={this.onSelectQueryFromLibrary} />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
@@ -388,10 +388,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         />
         <ReplaceQueryFromLibrary
           datasourceFilters={datasource?.name ? [datasource.name] : []}
-          onSelectQuery={(query) => {
-            onQueryReplacedFromLibrary?.();
-            onReplace?.(query);
-          }}
+          onSelectQuery={this.onSelectQueryFromLibrary}
           app={this.props.app}
         />
         {!hideHideQueryButton ? (
@@ -529,9 +526,13 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 }
 
 // Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: { query: DataQuery; app?: CoreApp }) {
+function MaybeQueryLibrarySaveButton(props: {
+  query: DataQuery;
+  app?: CoreApp;
+  onSelectQuery: (query: DataQuery) => void;
+}) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app);
+  return renderSaveQueryButton(props.query, props.app, props.onSelectQuery);
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {

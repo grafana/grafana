@@ -25,10 +25,10 @@ export type QueryLibraryContextType = {
   /**
    * Opens a drawer with query library.
    * @param datasourceFilters Data source names that will be used for initial filter in the library.
-   * @param queryActionButton Action button will be shown in the library next to the query and can implement context
-   *   specific actions with the library, like running the query or updating some query in the current app.
+   * @param onSelectQuery Callback to be called when a query is selected from the library.
    * @param options.context Used for QueryEditor. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
+   * @param query New query to be added to the library.
    */
   openDrawer: (options: QueryLibraryDrawerOptions) => void;
   closeDrawer: () => void;
@@ -39,7 +39,7 @@ export type QueryLibraryContextType = {
    * Returns a predefined small button that can be used to save a query to the library.
    * @param query
    */
-  renderSaveQueryButton: (query: DataQuery, app?: CoreApp) => ReactNode;
+  renderSaveQueryButton: (query: DataQuery, app?: CoreApp, onSelectQuery?: (query: DataQuery) => void) => ReactNode;
   queryLibraryEnabled: boolean;
   context: string;
   setActiveQuery: (query?: QueryTemplateRow) => void;
