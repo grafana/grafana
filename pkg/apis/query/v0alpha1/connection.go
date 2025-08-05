@@ -32,7 +32,7 @@ type DataSourceConnectionRef struct {
 
 // The valid connection name for a group + identifier
 func DataSourceConnectionName(group, name string) string {
-	return "ds:" + group + ":" + name
+	return group + ":" + name
 }
 
 // List of all datasource instances across all datasource apiservers
