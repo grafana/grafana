@@ -29,55 +29,33 @@ func TestProvideInlineSecureValueService(t *testing.T) {
 
 	tracer := noop.NewTracerProvider().Tracer("test")
 
-	t.Run("when storage type is local, it returns local inline service", func(t *testing.T) {
+	t.Run("when the grpc server is disabled, it returns local inline service", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.InlineServerType = "local"
+		cfg.SecretsManagement.GrpcClientEnable = false
 
 		service, err := inline.ProvideInlineSecureValueService(cfg, nil, nil, nil)
 		require.NoError(t, err)
 		require.IsType(t, &inline.LocalInlineSecureValueService{}, service)
 	})
 
-	t.Run("when storage type is empty, it defaults to local inline service", func(t *testing.T) {
+	t.Run("when grpc server is enabled but server address is missing, it returns an error", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.InlineServerType = ""
-
-		service, err := inline.ProvideInlineSecureValueService(cfg, nil, nil, nil)
-		require.NoError(t, err)
-		require.IsType(t, &inline.LocalInlineSecureValueService{}, service)
-	})
-
-	t.Run("when storage type is unsupported, it returns an error", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := setting.NewCfg()
-		cfg.SecretsManagement.InlineServerType = "unsupported"
+		cfg.SecretsManagement.GrpcClientEnable = true
 
 		service, err := inline.ProvideInlineSecureValueService(cfg, nil, nil, nil)
 		require.Error(t, err)
 		require.Nil(t, service)
 	})
 
-	t.Run("when storage type is grpc but server address is missing, it returns an error", func(t *testing.T) {
+	t.Run("when grpc server is enabled but token exchange config is missing, it returns an error", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.InlineServerType = "grpc"
-
-		service, err := inline.ProvideInlineSecureValueService(cfg, nil, nil, nil)
-		require.Error(t, err)
-		require.Nil(t, service)
-	})
-
-	t.Run("when storage type is grpc but token exchange config is missing, it returns an error", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := setting.NewCfg()
-		cfg.SecretsManagement.InlineServerType = "grpc"
+		cfg.SecretsManagement.GrpcClientEnable = true
 		cfg.SecretsManagement.GrpcServerAddress = "127.0.0.1:10000"
 
 		service, err := inline.ProvideInlineSecureValueService(cfg, nil, nil, nil)
@@ -135,7 +113,7 @@ func TestProvideInlineSecureValueService(t *testing.T) {
 		namespace := "stacks-1234"
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.InlineServerType = "grpc"
+		cfg.SecretsManagement.GrpcClientEnable = true
 		cfg.SecretsManagement.GrpcServerAddress = listener.Addr().String()
 		cfg.SecretsManagement.GrpcServerUseTLS = true
 		cfg.SecretsManagement.GrpcServerTLSServerName = "localhost"

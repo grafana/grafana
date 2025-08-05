@@ -44,7 +44,6 @@ func TestDecryptService(t *testing.T) {
 		}
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.DecryptServerType = "local"
 
 		decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
@@ -73,7 +72,6 @@ func TestDecryptService(t *testing.T) {
 		}
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.DecryptServerType = "local"
 
 		decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
@@ -101,7 +99,7 @@ func TestDecryptService(t *testing.T) {
 		}
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.DecryptServerType = "local"
+		cfg.SecretsManagement.GrpcClientEnable = false
 
 		decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
@@ -112,23 +110,11 @@ func TestDecryptService(t *testing.T) {
 		require.EqualValues(t, decryptedValuesResp, resp)
 	})
 
-	t.Run("when storage type is unsupported, it returns an error", func(t *testing.T) {
+	t.Run("when grpc server is enabled but token exchange config is missing, it returns an error", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.DecryptServerType = "unsupported"
-
-		decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, nil)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unsupported storage type")
-		require.Nil(t, decryptService)
-	})
-
-	t.Run("when storage type is grpc but token exchange config is missing, it returns an error", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := setting.NewCfg()
-		cfg.SecretsManagement.DecryptServerType = "grpc"
+		cfg.SecretsManagement.GrpcClientEnable = true
 		cfg.SecretsManagement.GrpcServerAddress = "127.0.0.1:10000"
 
 		_, err := decrypt.ProvideDecryptService(cfg, tracer, nil)
@@ -136,11 +122,11 @@ func TestDecryptService(t *testing.T) {
 		require.Contains(t, err.Error(), "grpc_client_authentication.token and grpc_client_authentication.token_exchange_url are required")
 	})
 
-	t.Run("when storage type is grpc but storage address is missing, it returns an error", func(t *testing.T) {
+	t.Run("when grpc server is enabled but storage address is missing, it returns an error", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.DecryptServerType = "grpc"
+		cfg.SecretsManagement.GrpcClientEnable = true
 
 		_, err := decrypt.ProvideDecryptService(cfg, tracer, nil)
 		require.Error(t, err)
@@ -205,7 +191,7 @@ func TestDecryptService(t *testing.T) {
 		namespace := "stacks-1234"
 
 		cfg := setting.NewCfg()
-		cfg.SecretsManagement.DecryptServerType = "grpc"
+		cfg.SecretsManagement.GrpcClientEnable = true
 		cfg.SecretsManagement.GrpcServerAddress = listener.Addr().String()
 		cfg.SecretsManagement.GrpcGrafanaServiceName = grafanaSvcIdentity
 		cfg.SecretsManagement.GrpcServerUseTLS = true

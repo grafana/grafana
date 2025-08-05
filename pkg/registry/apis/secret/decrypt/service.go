@@ -12,16 +12,15 @@ import (
 )
 
 func ProvideDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage contracts.DecryptStorage) (contracts.DecryptService, error) {
-	switch cfg.SecretsManagement.DecryptServerType {
-	case "grpc":
+	if cfg.SecretsManagement.GrpcClientEnable {
 		grpcClientConfig := grpcutils.ReadGrpcClientConfig(cfg)
 
 		if cfg.SecretsManagement.GrpcServerAddress == "" {
-			return nil, fmt.Errorf("grpc_server_address is required when decrypt_server_type is grpc")
+			return nil, fmt.Errorf("grpc_server_address is required when grpc client is enabled")
 		}
 
 		if grpcClientConfig.Token == "" || grpcClientConfig.TokenExchangeURL == "" {
-			return nil, fmt.Errorf("grpc_client_authentication.token and grpc_client_authentication.token_exchange_url are required when secrets_manager.decrypt_server_type is grpc")
+			return nil, fmt.Errorf("grpc_client_authentication.token and grpc_client_authentication.token_exchange_url are required when grpc client is enabled")
 		}
 
 		tokenExchangeClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
@@ -40,12 +39,9 @@ func ProvideDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage
 		}
 
 		return client, nil
-
-	case "local", "":
-		return NewLocalDecryptClient(decryptStorage)
 	}
 
-	return nil, fmt.Errorf("unsupported storage type: %s", cfg.SecretsManagement.DecryptServerType)
+	return NewLocalDecryptClient(decryptStorage)
 }
 
 func readTLSFromConfig(cfg *setting.Cfg) TLSConfig {

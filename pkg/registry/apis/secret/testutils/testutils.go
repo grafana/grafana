@@ -81,7 +81,6 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := setting.NewCfg()
 	cfg.SecretsManagement = setting.SecretsManagerSettings{
-		DecryptServerType:         "local",
 		CurrentEncryptionProvider: "secret_key.v1",
 		ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 	}
@@ -132,9 +131,6 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	testCfg := setting.NewCfg()
-	testCfg.SecretsManagement = setting.SecretsManagerSettings{
-		DecryptServerType: "local",
-	}
 
 	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
 	require.NoError(t, err)

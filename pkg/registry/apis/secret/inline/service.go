@@ -18,16 +18,15 @@ func ProvideInlineSecureValueService(
 	secureValueService contracts.SecureValueService,
 	accessClient authlib.AccessClient,
 ) (contracts.InlineSecureValueSupport, error) {
-	switch cfg.SecretsManagement.InlineServerType {
-	case "grpc":
+	if cfg.SecretsManagement.GrpcClientEnable {
 		grpcClientConfig := grpcutils.ReadGrpcClientConfig(cfg)
 
 		if cfg.SecretsManagement.GrpcServerAddress == "" {
-			return nil, fmt.Errorf("grpc_server_address is required when inline_server_type is grpc")
+			return nil, fmt.Errorf("grpc_server_address is required when grpc client is enabled")
 		}
 
 		if grpcClientConfig.Token == "" || grpcClientConfig.TokenExchangeURL == "" {
-			return nil, fmt.Errorf("grpc_client_authentication.token and grpc_client_authentication.token_exchange_url are required when secrets_manager.inline_server_type is grpc")
+			return nil, fmt.Errorf("grpc_client_authentication.token and grpc_client_authentication.token_exchange_url are required when grpc client is enabled")
 		}
 
 		tokenExchangeClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
@@ -46,12 +45,9 @@ func ProvideInlineSecureValueService(
 		}
 
 		return client, nil
-
-	case "local", "":
-		return NewLocalInlineSecureValueService(tracer, secureValueService, accessClient), nil
 	}
 
-	return nil, fmt.Errorf("unsupported storage type: %s", cfg.SecretsManagement.InlineServerType)
+	return NewLocalInlineSecureValueService(tracer, secureValueService, accessClient), nil
 }
 
 func readTLSFromConfig(cfg *setting.Cfg) TLSConfig {
