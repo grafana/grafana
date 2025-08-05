@@ -95,7 +95,7 @@ jobs:
           name: ${{ steps.artifact.outputs.artifact }}
           path: e2e-runner
 
-  # E2E tests disabled for 11.4.8 compatibility issues
+  # E2E tests DISABLED for 11.4.8 compatibility issues
   # run-e2e-tests:
   #   needs:
   #     - build-grafana
@@ -163,7 +163,7 @@ jobs:
   # E2E tests disabled - only a11y test runs
   required-e2e-tests:
     needs:
-      # - run-e2e-tests  # Temporarily disabled
+      # - run-e2e-tests  # DISABLED for 11.4.8 compatibility issues
       - run-a11y-test
     if: always()
 
@@ -172,5 +172,5 @@ jobs:
     steps:
       - name: Check test suites
         run: |
-          echo "E2E tests temporarily disabled for 11.4.8 compatibility - only a11y test running"
+          echo "E2E tests DISABLED for 11.4.8 compatibility - only a11y test running"
           echo "All OK!"
