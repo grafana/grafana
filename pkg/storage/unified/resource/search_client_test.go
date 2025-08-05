@@ -452,7 +452,7 @@ func TestExtractUIDs(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]struct{}{"test-uid-1": struct{}{}},
+			expected: map[string]struct{}{"test-uid-1": {}},
 		},
 		{
 			name: "multiple results",
@@ -472,7 +472,7 @@ func TestExtractUIDs(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]struct{}{"test-uid-1": struct{}{}, "test-uid-2": struct{}{}},
+			expected: map[string]struct{}{"test-uid-1": {}, "test-uid-2": {}},
 		},
 	}
 
@@ -500,38 +500,38 @@ func TestCalculateMatchPercentage(t *testing.T) {
 		{
 			name:        "legacy empty, unified has results",
 			legacyUIDs:  map[string]struct{}{},
-			unifiedUIDs: map[string]struct{}{"uid1": struct{}{}},
+			unifiedUIDs: map[string]struct{}{"uid1": {}},
 			expected:    0.0,
 		},
 		{
 			name:        "legacy has results, unified empty",
-			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}},
+			legacyUIDs:  map[string]struct{}{"uid1": {}},
 			unifiedUIDs: map[string]struct{}{},
 			expected:    0.0,
 		},
 		{
 			name:        "perfect match",
-			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
-			unifiedUIDs: map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
+			legacyUIDs:  map[string]struct{}{"uid1": {}, "uid2": {}},
+			unifiedUIDs: map[string]struct{}{"uid1": {}, "uid2": {}},
 			expected:    100.0,
 		},
 		{
 			name:        "partial match",
-			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
-			unifiedUIDs: map[string]struct{}{"uid1": struct{}{}, "uid3": struct{}{}},
-			expected:    33.33333333333333, // 1 match out of 3 unique UIDs
+			legacyUIDs:  map[string]struct{}{"uid1": {}, "uid2": {}},
+			unifiedUIDs: map[string]struct{}{"uid1": {}, "uid3": {}},
+			expected:    50.0, // 1 match out of 2 legacy UIDs (recall)
 		},
 		{
 			name:        "no match",
-			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
-			unifiedUIDs: map[string]struct{}{"uid3": struct{}{}, "uid4": struct{}{}},
+			legacyUIDs:  map[string]struct{}{"uid1": {}, "uid2": {}},
+			unifiedUIDs: map[string]struct{}{"uid3": {}, "uid4": {}},
 			expected:    0.0,
 		},
 		{
 			name:        "legacy subset of unified",
-			legacyUIDs:  map[string]struct{}{"uid1": struct{}{}},
-			unifiedUIDs: map[string]struct{}{"uid1": struct{}{}, "uid2": struct{}{}},
-			expected:    50.0, // 1 match out of 2 unique UIDs
+			legacyUIDs:  map[string]struct{}{"uid1": {}},
+			unifiedUIDs: map[string]struct{}{"uid1": {}, "uid2": {}},
+			expected:    100.0, // 1 match out of 1 legacy UID (perfect recall)
 		},
 	}
 

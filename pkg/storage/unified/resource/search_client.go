@@ -76,7 +76,7 @@ func extractUIDs(response *resourcepb.ResourceSearchResponse) map[string]struct{
 	return uids
 }
 
-// calculateMatchPercentage calculates the percentage of matching UIDs between two result sets
+// calculateMatchPercentage calculates recall: what percentage of legacy results were also found by unified search
 func calculateMatchPercentage(legacyUIDs, unifiedUIDs map[string]struct{}) float64 {
 	if len(legacyUIDs) == 0 && len(unifiedUIDs) == 0 {
 		return 100.0 // Both empty, consider as 100% match
@@ -85,7 +85,7 @@ func calculateMatchPercentage(legacyUIDs, unifiedUIDs map[string]struct{}) float
 		return 0.0 // One empty, other not
 	}
 
-	// Count matches
+	// Count matches: how many legacy results did unified also return?
 	matches := 0
 	for uid := range legacyUIDs {
 		if _, exists := unifiedUIDs[uid]; exists {
@@ -93,19 +93,9 @@ func calculateMatchPercentage(legacyUIDs, unifiedUIDs map[string]struct{}) float
 		}
 	}
 
-	// Calculate percentage based on the union of both sets
-	totalUnique := len(legacyUIDs)
-	for uid := range unifiedUIDs {
-		if _, exists := legacyUIDs[uid]; !exists {
-			totalUnique++
-		}
-	}
-
-	if totalUnique == 0 {
-		return 100.0
-	}
-
-	return float64(matches) / float64(totalUnique) * 100.0
+	// Calculate recall: percentage of legacy results that unified also returned
+	// Legacy is the source of truth, so we use it as the denominator
+	return float64(matches) / float64(len(legacyUIDs)) * 100.0
 }
 
 func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest,
