@@ -872,7 +872,7 @@ const (
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
 	// FlagGrafanaAssistantInProfilesDrilldown
-	// Enables integration with Grafana Assitant in Profiles Drilldown
+	// Enables integration with Grafana Assistant in Profiles Drilldown
 	FlagGrafanaAssistantInProfilesDrilldown = "grafanaAssistantInProfilesDrilldown"
 
 	// FlagPostgresDSUsePGX

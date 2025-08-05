@@ -1656,7 +1656,7 @@ var (
 		},
 		{
 			Name:         "grafanaAssistantInProfilesDrilldown",
-			Description:  "Enables integration with Grafana Assitant in Profiles Drilldown",
+			Description:  "Enables integration with Grafana Assistant in Profiles Drilldown",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
