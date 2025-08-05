@@ -999,8 +999,8 @@ github.com/grafana/grafana/apps/preferences v0.0.0-20250805113453-4b17c24d67ff h
 github.com/grafana/grafana/apps/preferences v0.0.0-20250805113453-4b17c24d67ff/go.mod h1:NQlHMO5fHhjexw71wVjv522532NRvFg5F4tcjUEktjs=
 github.com/grafana/grafana/apps/preferences v0.0.0-20250805120145-0c5a00302924 h1:uGXX6gCF1q2ytIL0w1X3UAKgF/UZ7eDDAgOaSqLOeW8=
 github.com/grafana/grafana/apps/preferences v0.0.0-20250805120145-0c5a00302924/go.mod h1:NQlHMO5fHhjexw71wVjv522532NRvFg5F4tcjUEktjs=
-github.com/grafana/grafana/apps/preferences v0.0.0-20250805130303-94874823ce89 h1:uj6N1hL3asxO44Fj0HjO4GPspllQIqc6LNO+4pFDRMw=
-github.com/grafana/grafana/apps/preferences v0.0.0-20250805130303-94874823ce89/go.mod h1:NQlHMO5fHhjexw71wVjv522532NRvFg5F4tcjUEktjs=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250805151731-da3da1b919ae h1:MF7gkYq/C0qe7CfiDfCxxQa2GpJYAxmYUO1Qv99pOd8=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250805151731-da3da1b919ae/go.mod h1:MzqDwNBZ+5jHd0o3fCGRZYy2qoEaR94KE8KqICcsuQY=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod h1:tfLnBpPYgwrBMRz4EXqPCZJyCjEG4Ev37FSlXnocJ2c=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d/go.mod h1:CXpwZ3Mkw6xVlGKc0SqUxqXCP3Uv182q6qAQnLaLxRg=

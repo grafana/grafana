@@ -1630,8 +1630,8 @@ github.com/grafana/grafana/apps/investigations v0.0.0-20250804150913-990f1c69ecc
 github.com/grafana/grafana/apps/investigations v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:IOpGVuSwFWE7EMrooI8I6OIU+rOmJinOaxK3pVMl7No=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250804150913-990f1c69ecc2 h1:Bt9EQkYdYq+xumbEnNxbbz0in7JRJkK9lVFs49WEetE=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:M1ily25xZS7sZlQ5yK1HV0UjRme6lpOl6I3dcfyqqRo=
-github.com/grafana/grafana/apps/preferences v0.0.0-20250805130303-94874823ce89 h1:uj6N1hL3asxO44Fj0HjO4GPspllQIqc6LNO+4pFDRMw=
-github.com/grafana/grafana/apps/preferences v0.0.0-20250805130303-94874823ce89/go.mod h1:NQlHMO5fHhjexw71wVjv522532NRvFg5F4tcjUEktjs=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250805151731-da3da1b919ae h1:MF7gkYq/C0qe7CfiDfCxxQa2GpJYAxmYUO1Qv99pOd8=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250805151731-da3da1b919ae/go.mod h1:MzqDwNBZ+5jHd0o3fCGRZYy2qoEaR94KE8KqICcsuQY=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 h1:83OGBndFNYijNjgQpSf4y1bSNlscVDq8ru97Q6PyU6o=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:qzFUVwLI1b5UIbVFxFydUYAsnOK27AgtA5so3EW8jM0=
 github.com/grafana/grafana/apps/secret v0.0.0-20250804150913-990f1c69ecc2 h1:r5oGyvRVxljzKHTQYHtpmK2Et+BVhWQVw7aXo+FUygk=
