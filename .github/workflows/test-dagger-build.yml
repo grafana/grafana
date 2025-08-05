@@ -1,0 +1,28 @@
+name: Test Dagger Build Only
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - baldm0mma/migrate_11.4.8
+
+jobs:
+  test-dagger-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: ./grafana
+          persist-credentials: false
+
+      - name: Test release build command (single architecture)
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          version: "0.9.3"
+          verb: run
+          args: --silent go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-ref=${{ github.sha }} --build-id=${{ github.run_number }} --version=11.4.8-test
+
+      - name: Check if artifacts were created
+        run: |
+          ls -la dist/
+          echo "Release build completed successfully!"
