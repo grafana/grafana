@@ -21,6 +21,9 @@ services:
     entrypoint: ['bin/grafana', 'server']
     volumes:
       - backend-data:/grafana/data
+      - ./provisioning/datasources:/grafana/conf/provisioning/datasources
+      - ./provisioning/dashboards:/grafana/conf/provisioning/dashboards
+      - ../dev-dashboards:/grafana/conf/dev-dashboards
     environment:
       GF_SERVER_CDN_URL: http://localhost:3010
       GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
