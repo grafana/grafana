@@ -54,7 +54,6 @@ const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
     onChange: partialProps.onChange || jest.fn(),
     onDismiss: partialProps.onDismiss || jest.fn(),
     current: partialProps.current || mockDS1,
-    dataSources: partialProps.dataSources || mockDSList,
   };
 
   return render(<DataSourceModal {...props} />);

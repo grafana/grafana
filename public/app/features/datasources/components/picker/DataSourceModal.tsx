@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import {
   Modal,
   FileDropzone,
@@ -56,7 +56,6 @@ export interface DataSourceModalProps {
   pluginId?: string;
   logs?: boolean;
   uploadFile?: boolean;
-  dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
 }
 
 export function DataSourceModal({
@@ -76,7 +75,6 @@ export function DataSourceModal({
   current,
   onDismiss,
   reportedInteractionFrom,
-  dataSources,
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
@@ -189,7 +187,6 @@ export function DataSourceModal({
             logs={logs}
             dashboard={dashboard}
             mixed={mixed}
-            dataSources={dataSources}
           />
           <BuiltInList className={styles.appendBuiltInDataSourcesList} />
         </ScrollContainer>

@@ -9,7 +9,7 @@ import { Trans } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
+import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
@@ -43,7 +43,7 @@ export interface DataSourceListProps {
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
-  dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  dataSources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -58,7 +58,20 @@ export function DataSourceList(props: DataSourceListProps) {
   const styles = getStyles(theme, selectedItemCssSelector);
 
   const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
-  const dataSources = props.dataSources;
+  const dataSources =
+    props.dataSources ||
+    useDatasources({
+      alerting: props.alerting,
+      annotations: props.annotations,
+      dashboard: props.dashboard,
+      logs: props.logs,
+      metrics: props.metrics,
+      mixed: props.mixed,
+      pluginId: props.pluginId,
+      tracing: props.tracing,
+      type: props.type,
+      variables: props.variables,
+    });
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
