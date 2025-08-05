@@ -193,9 +193,10 @@ describe('v1 dashboard API', () => {
       uid: 'dash-uid',
       version: 1,
     });
+    // we still want to save the folder uid so that we can properly handle disabling the folder picker in Settings -> General
+    expect(dashboardDTO.meta.folderUid).toBe('new-folder');
     expect(dashboardDTO.meta.folderTitle).toBeUndefined();
     expect(dashboardDTO.meta.folderUrl).toBeUndefined();
-    expect(dashboardDTO.meta.folderUid).toBeUndefined();
     expect(dashboardDTO.meta.folderId).toBeUndefined();
   });
 
