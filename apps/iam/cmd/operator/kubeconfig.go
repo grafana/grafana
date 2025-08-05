@@ -38,7 +38,8 @@ func LoadKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken string)
 
 	return &kubeconfig.NamespacedConfig{
 		RestConfig: rest.Config{
-			Host: folderAppURL,
+			APIPath: "/apis",
+			Host:    folderAppURL,
 			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
 				return &authRoundTripper{
 					tokenExchangeClient: tokenExchangeClient,
