@@ -18,7 +18,7 @@ jobs:
       - name: Test core build (same as E2E workflow)
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
-          version: "0.11.8"
+          version: "0.18.8"
           verb: run
           args: go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
 
