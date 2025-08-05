@@ -54,6 +54,7 @@ export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
+      'aria-label': ariaLabel,
       variant = 'primary',
       size = 'md',
       fill = 'solid',
@@ -106,6 +107,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-disabled={hasTooltip && disabled}
         disabled={!hasTooltip && disabled}
         ref={tooltip ? undefined : ref}
+        aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
       >
         {iconPlacement === 'left' && iconComponent}
         {children && <span className={styles.content}>{children}</span>}
@@ -132,6 +134,7 @@ export type ButtonLinkProps = ButtonProps & Omit<AnchorHTMLAttributes<HTMLAnchor
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   (
     {
+      'aria-label': ariaLabel,
       variant = 'primary',
       size = 'md',
       fill = 'solid',
@@ -176,6 +179,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
         ref={tooltip ? undefined : ref}
+        aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
       >
         <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
