@@ -17,6 +17,8 @@ import {
   MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
+  FiltersApplicability,
+  DataSourceGetTagKeysOptions,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
@@ -157,30 +159,18 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return frame;
     }
 
-    // Pre-compute field indices and value matchers for better performance
-    const filterFieldIndices = filters
-      .map((filter) => {
-        const fieldIndex = frame.fields.findIndex((f) => f.name === filter.key);
-        return { filter, fieldIndex, matcher: this.createValueMatcher(filter, fieldIndex, frame) };
-      })
-      .filter(({ filter, fieldIndex, matcher }) => {
-        // If field is not present:
-        // - Keep filters with '=' operator (will always be false - reject rows)
-        // - Remove filters with '!=' operator (will always be true - no effect)
-        if (fieldIndex === -1) {
-          return filter.operator === '=';
-        }
-        // Only keep filters with valid matchers
-        return matcher !== null;
-      });
+    // Filter out non-applicable filters for this specific DataFrame
+    const applicableFilters = this.getApplicableFiltersForFrame(frame, filters);
 
-    // If no filters remain after optimization, return original frame
-    if (filterFieldIndices.length === 0) {
+    // If no filters remain after filtering, return original frame
+    if (applicableFilters.length === 0) {
       return frame;
     }
 
-    // Short-circuit: if any filter has '=' operator with missing field, reject all rows
-    const hasImpossibleFilter = filterFieldIndices.some(({ fieldIndex }) => fieldIndex === -1);
+    // Check for impossible filters (missing field with '=' operator)
+    const hasImpossibleFilter = applicableFilters.some(
+      ({ fieldIndex, filter }) => fieldIndex === -1 && filter.operator === '='
+    );
     if (hasImpossibleFilter) {
       return this.reconstructDataFrame(frame);
     }
@@ -189,7 +179,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     // Check each row to see if it matches all filters (AND logic)
     for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-      const rowMatches = filterFieldIndices.every(({ matcher, fieldIndex }) => {
+      const rowMatches = applicableFilters.every(({ matcher, fieldIndex }) => {
         const field = frame.fields[fieldIndex];
 
         // Use Grafana's value matcher system
@@ -210,7 +200,31 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   /**
-   * Create a value matcher from an AdHoc filter
+   * Get applicable filters for a specific DataFrame, considering field existence and type compatibility.
+   */
+  private getApplicableFiltersForFrame(
+    frame: DataFrame,
+    filters: AdHocVariableFilter[]
+  ): Array<{ filter: AdHocVariableFilter; fieldIndex: number; matcher: ReturnType<typeof getValueMatcher> | null }> {
+    return filters
+      .map((filter) => {
+        const fieldIndex = frame.fields.findIndex((f) => f.name === filter.key);
+        return { filter, fieldIndex, matcher: this.createValueMatcher(filter, fieldIndex, frame) };
+      })
+      .filter(({ filter, fieldIndex, matcher }) => {
+        // If field is not present:
+        // - Keep filters with '=' operator (will always be false - reject rows)
+        // - Remove filters with '!=' operator (will always be true - no effect)
+        if (fieldIndex === -1) {
+          return filter.operator === '=';
+        }
+        // Only keep filters with valid matchers
+        return matcher !== null;
+      });
+  }
+
+  /**
+   * Create a value matcher from an AdHoc filter.
    */
   private createValueMatcher(filter: AdHocVariableFilter, fieldIndex: number, frame: DataFrame) {
     // Return null for missing fields - they are handled separately
@@ -327,6 +341,38 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({ message: '', status: '' });
+  }
+
+  /**
+   * Check which AdHoc filters are applicable based on operator and field type support
+   */
+  async getFiltersApplicability(
+    options?: DataSourceGetTagKeysOptions<DashboardQuery>
+  ): Promise<FiltersApplicability[]> {
+    if (!config.featureToggles.dashboardDsAdHocFiltering) {
+      return [];
+    }
+
+    const filters = options?.filters || [];
+
+    return filters.map((filter): FiltersApplicability => {
+      // Check operator support
+      if (filter.operator !== '=' && filter.operator !== '!=') {
+        return {
+          key: filter.key,
+          applicable: false,
+          reason: `Operator '${filter.operator}' is not supported. Only '=' and '!=' operators are supported.`,
+        };
+      }
+
+      // For dashboard datasource, we can't determine field existence/type
+      // without the actual DataFrame context, so we assume applicable here
+      // and let the actual filtering logic handle field-specific checks
+      return {
+        key: filter.key,
+        applicable: true,
+      };
+    });
   }
 
   getTagKeys(): Promise<MetricFindValue[]> {
