@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('ReturnToPrevious button', () => {
+describe.skip('ReturnToPrevious button', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 

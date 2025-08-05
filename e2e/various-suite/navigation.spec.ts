@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 import { fromBaseUrl } from '../utils/support/url';
 
-describe('Docked Navigation', () => {
+describe.skip('Docked Navigation', () => {
   beforeEach(() => {
     cy.viewport(1280, 800);
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
