@@ -1,2 +1,0 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1,PreferencesNavbarPreference,BookmarkUrls
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1,PreferencesList,ListMeta

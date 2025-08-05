@@ -10,7 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,7 +41,7 @@ func newCalculator(service pref.Service, cfg *setting.Cfg, features featuremgmt.
 }
 
 func (s *calculator) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	schema := defs["github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1.Preference"].Schema
+	schema := defs["github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preference"].Schema
 
 	//	om.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v0alpha1.Preference
 	return &builder.APIRoutes{

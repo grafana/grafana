@@ -1,4 +1,4 @@
-package v0alpha1
+package v1alpha1
 
 import (
 	"fmt"
@@ -20,14 +20,12 @@ var PreferencesResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			dash, ok := obj.(*Preferences)
-			if ok {
-				if dash != nil {
-					return []interface{}{
-						dash.Name,
-						dash.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				}
+			p, ok := obj.(*Preferences)
+			if ok && p != nil {
+				return []interface{}{
+					p.Name,
+					p.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
 			}
 			return nil, fmt.Errorf("expected preferences")
 		},
