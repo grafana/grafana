@@ -9362,6 +9362,15 @@
       "show-more": "több megjelenítése",
       "tooltip-error": "Hiba: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "Törlés",
       "close": "Napló részleteinek bezárása",
@@ -12520,6 +12529,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12557,6 +12567,13 @@
       "label-alt-text": "Helyettesítő szöveg",
       "label-title-text": "Cím szövege"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Számítás",
     "name-cell-height": "Cellamagasság",
     "name-cell-type": "Cellatípus",
@@ -12573,7 +12590,10 @@
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-wrap-header-text": "Fejléc szövegének tördelése",
     "placeholder-column-width": "automatikus",
-    "placeholder-fields": "Numerikus mezők"
+    "placeholder-fields": "Numerikus mezők",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Cellabeállítások",
@@ -13288,22 +13308,6 @@
       "label-row": "Sor",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Logikai hamis érték",
-          "boolean-true-value": "Logikai igaz érték",
-          "empty-string": "Üres karakterlánc",
-          "null-value": "Nullérték",
-          "number-value": "0 számérték"
-        },
-        "label": {
-          "empty": "Üres",
-          "false": "Hamis",
-          "null": "Null",
-          "true": "Igaz",
-          "zero": "Nulla"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13656,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

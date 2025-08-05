@@ -9332,6 +9332,15 @@
       "show-more": "さらに表示する",
       "tooltip-error": "エラー：{{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "クリア",
       "close": "ログの詳細を閉じる",
@@ -12478,6 +12487,7 @@
       "gauge": "",
       "image": "",
       "json": "",
+      "markdown": "",
       "pill": "",
       "sparkline": ""
     },
@@ -12515,6 +12525,13 @@
       "label-alt-text": "代替テキスト",
       "label-title-text": "タイトルテキスト"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "計算",
     "name-cell-height": "セルの高さ",
     "name-cell-type": "セルの種類",
@@ -12531,7 +12548,10 @@
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-wrap-header-text": "ヘッダーテキストの折り返し",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "すべての数値フィールド"
+    "placeholder-fields": "すべての数値フィールド",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "セルオプション",
@@ -13246,22 +13266,6 @@
       "label-row": "行",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "ブール値のfalse値",
-          "boolean-true-value": "ブール値のtrue値",
-          "empty-string": "空の文字列",
-          "null-value": "Null値",
-          "number-value": "数値0の値"
-        },
-        "label": {
-          "empty": "空",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13614,6 +13618,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

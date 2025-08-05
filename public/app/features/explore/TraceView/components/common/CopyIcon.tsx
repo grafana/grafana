@@ -51,7 +51,13 @@ export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: Prop
 
   return (
     <Tooltip content={hasCopied ? t('explore.trace-view.tooltip-copy-icon', 'Copied') : tooltipTitle}>
-      <Button className={cx(styles.CopyIcon)} type="button" icon={icon} onClick={handleClick} />
+      <Button
+        aria-label={t('explore.trace-view.aria-label-copy', 'Copy to clipboard')}
+        className={cx(styles.CopyIcon)}
+        type="button"
+        icon={icon}
+        onClick={handleClick}
+      />
     </Tooltip>
   );
 }
