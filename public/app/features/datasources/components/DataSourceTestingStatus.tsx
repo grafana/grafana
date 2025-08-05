@@ -1,7 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { HTMLAttributes } from 'react';
 
-import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2, PluginExtensionPoints, PluginExtensionLink } from '@grafana/data';
+import {
+  DataSourceSettings as DataSourceSettingsType,
+  GrafanaTheme2,
+  PluginExtensionPoints,
+  PluginExtensionLink,
+} from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -47,7 +52,13 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
   };
 };
 
-const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked, extensionLinks = [] }: AlertMessageProps) => {
+const AlertSuccessMessage = ({
+  title,
+  exploreUrl,
+  dataSourceId,
+  onDashboardLinkClicked,
+  extensionLinks = [],
+}: AlertMessageProps) => {
   const theme = useTheme2();
 
   const hasTitle = Boolean(title);
@@ -91,7 +102,7 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
               key={link.id}
               href={link.path || '#'}
               title={link.description}
-              className='external-link'
+              className="external-link"
               onClick={'onClick' in link ? link.onClick : undefined}
             >
               {link.title}
@@ -209,7 +220,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   const statusLinks = allStatusLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
   const errorLinks = allErrorLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
 
-    // Combine links: show error-specific only for errors, status-general for all
+  // Combine links: show error-specific only for errors, status-general for all
   const extensionLinks = severity === 'error' ? [...statusLinks, ...errorLinks] : statusLinks;
 
   if (message) {
