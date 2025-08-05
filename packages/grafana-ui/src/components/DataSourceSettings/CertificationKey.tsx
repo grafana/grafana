@@ -21,7 +21,7 @@ interface Props {
 export const CertificationKey = ({ hasCert, label, onChange, onClick, placeholder, useGrow }: Props) => {
   return (
     <InlineFieldRow>
-      <InlineField label={label} labelWidth={14} disabled={hasCert} {...(useGrow ? { grow: true } : {})}>
+      <InlineField label={label} labelWidth={14} disabled={hasCert} grow={useGrow}>
         {hasCert ? (
           <Input type="text" value="configured" width={24} />
         ) : (
