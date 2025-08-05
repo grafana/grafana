@@ -2,15 +2,15 @@
 import userEvent from '@testing-library/user-event';
 import { MutableRefObject } from 'react';
 
+import { TextLink } from '../Link/TextLink';
+
 import { Tooltip } from './Tooltip';
 
 describe('Tooltip', () => {
   it('renders correctly', () => {
     render(
       <Tooltip placement="auto" content="Tooltip text">
-        <a className="test-class" href="http://www.grafana.com">
-          Link with tooltip
-        </a>
+        <TextLink href="http://www.grafana.com">Link with tooltip</TextLink>
       </Tooltip>
     );
     expect(screen.getByText('Link with tooltip')).toBeInTheDocument();
