@@ -178,7 +178,7 @@ describe('v2 dashboard API', () => {
         id: 123,
         uid: 'test-dash',
         url: '/d/test-dash/testdashboard',
-        slug: '',
+        slug: 'testdashboard',
         status: 'success',
         version: 2,
       });
@@ -198,6 +198,7 @@ describe('v2 dashboard API', () => {
           name: 'existing-dash',
         },
       });
+      expect(result.slug).toBe('chaingtitledashboard');
       expect(result.version).toBe(2);
     });
 
