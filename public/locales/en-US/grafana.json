@@ -7434,6 +7434,9 @@
     "badge-text": "Provisioned"
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": "Folder deleted"
+    },
     "get-loading-nav": {
       "main": {
         "title": {

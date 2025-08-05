@@ -4,14 +4,14 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
-import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
+import { useDeleteFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { ManagerKind } from '../../apiserver/types';
-import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
+import { useMoveFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
@@ -28,8 +28,7 @@ export function FolderActionsButton({ folder }: Props) {
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
 
-  const [deleteFolderAppPlatform] = folderAPIv1beta1.useDeleteFolderMutation();
-  const [deleteFolderLegacy] = useDeleteFolderMutation();
+  const deleteFolder = useDeleteFolderMutationFacade();
 
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
@@ -48,9 +47,7 @@ export function FolderActionsButton({ folder }: Props) {
   };
 
   const onDelete = async () => {
-    const result = await (config.featureToggles.foldersAppPlatformAPI
-      ? deleteFolderAppPlatform({ name: folder.uid })
-      : deleteFolderLegacy(folder));
+    const result = await deleteFolder(folder);
 
     if (result.error) {
       appEvents.publish({

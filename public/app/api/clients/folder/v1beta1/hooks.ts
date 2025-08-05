@@ -1,7 +1,12 @@
 import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
 
-import { config } from '@grafana/runtime';
-import { useGetFolderQuery as useGetFolderQueryLegacy } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { AppEvents } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config, getAppEvents } from '@grafana/runtime';
+import {
+  useDeleteFolderMutation as useDeleteFolderMutationLegacy,
+  useGetFolderQuery as useGetFolderQueryLegacy,
+} from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
 
 import kbn from '../../../../core/utils/kbn';
@@ -14,12 +19,15 @@ import {
   DeprecatedInternalId,
   ManagerKind,
 } from '../../../../features/apiserver/types';
+import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
+import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
+import { useDispatch } from '../../../../types/store';
 import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
 import { rootFolder, sharedWithMeFolder } from './virtualFolders';
 
-import { useGetFolderQuery, useGetFolderParentsQuery } from './index';
+import { useGetFolderQuery, useGetFolderParentsQuery, useDeleteFolderMutation } from './index';
 
 function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
@@ -147,6 +155,38 @@ export function useGetFolderQueryFacade(uid?: string) {
       ]);
     },
     data: newData,
+  };
+}
+
+export function useDeleteFolderMutationFacade() {
+  const [deleteFolder] = useDeleteFolderMutation();
+  const [deleteFolderLegacy] = useDeleteFolderMutationLegacy();
+  const dispatch = useDispatch();
+
+  return async (folder: FolderDTO) => {
+    if (config.featureToggles.foldersAppPlatformAPI) {
+      const result = await deleteFolder({ name: folder.uid });
+      if (!result.error) {
+        // We need to update a legacy version of the folder storage for now until all is in the new API.
+        // we could do it in the enhanceEndpoint method but we would also need to change the args as we need parentUID
+        // here and so it seemed easier to do it here.
+        dispatch(
+          refetchChildren({
+            parentUID: folder.parentUid || GENERAL_FOLDER_UID,
+            pageSize: PAGE_SIZE,
+          })
+        );
+        // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
+        // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+        getAppEvents().publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [t('folders.api.folder-deleted-success', 'Folder deleted')],
+        });
+      }
+      return result;
+    } else {
+      return deleteFolderLegacy(folder);
+    }
   };
 }
 
