@@ -161,21 +161,14 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	// Viewer can see settings listing
 	t.Run("viewer has access to list", func(t *testing.T) {
 		settings := &provisioning.RepositoryViewList{}
-		// Wait for unified storage to make the data available
-		require.Eventually(t, func() bool {
-			rsp := helper.ViewerREST.Get().
-				Namespace("default").
-				Suffix("settings").
-				Do(context.Background())
-			if rsp.Error() != nil {
-				return false
-			}
-			err := rsp.Into(settings)
-			if err != nil {
-				return false
-			}
-			return len(settings.Items) == len(inputFiles)
-		}, time.Second*10, time.Millisecond*100, "Expected settings to have len(inputFiles) items")
+		rsp := helper.ViewerREST.Get().
+			Namespace("default").
+			Suffix("settings").
+			Do(context.Background())
+		require.NoError(t, rsp.Error())
+		err := rsp.Into(settings)
+		require.NoError(t, err)
+		require.Len(t, settings.Items, len(inputFiles))
 
 		// FIXME: this should be an enterprise integration test
 		if extensions.IsEnterprise {
@@ -1385,27 +1378,29 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.Error(t, err, "original file should be gone from repository")
 		require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
-		// Verify dashboard still exists in Grafana after sync
-		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
-
-		// Verify that dashboards have the correct source paths
-		foundPaths := make(map[string]bool)
-		for _, dashboard := range dashboards.Items {
-			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
-			foundPaths[sourcePath] = true
-		}
-
-		require.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
-		require.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
-		require.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
-
 		// Verify other files still exist at original locations
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
 		require.NoError(t, err, "other files should still exist")
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
 		require.NoError(t, err, "nested files should still exist")
+
+		// Verify dashboard still exists in Grafana after sync
+		// Use eventually to let unified storage reflect the changes in dashboards.
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+			assert.NoError(collect, err)
+			assert.Len(collect, dashboards.Items, 3, "should still have 3 dashboards after move")
+			// Verify that dashboards have the correct source paths
+			foundPaths := make(map[string]bool)
+			for _, dashboard := range dashboards.Items {
+				sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
+				foundPaths[sourcePath] = true
+			}
+
+			assert.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
+			assert.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
+			assert.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
+		}, time.Second*10, time.Millisecond*100, "Expected to eventually have 3 dashboards after move")
 	})
 
 	t.Run("move multiple files and folder", func(t *testing.T) {
@@ -1832,10 +1827,8 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 
 		// Verify dashboard still exists in Grafana with same content but may have updated path references
 		helper.SyncAndWait(t, repo, nil)
-		require.Eventually(t, func() bool {
-			_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-			return err == nil
-		}, 10*time.Second, 100*time.Millisecond, "dashboard should still exist in Grafana after move") // Using Eventually to account for potential delays in dashboards APIs.
+		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.NoError(t, err, "dashboard should still exist in Grafana after move")
 	})
 
 	t.Run("move file to nested path without ref", func(t *testing.T) {

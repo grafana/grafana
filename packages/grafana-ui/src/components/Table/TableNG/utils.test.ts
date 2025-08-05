@@ -27,7 +27,6 @@ import {
   getCellLinks,
   getCellOptions,
   getComparator,
-  getDefaultRowHeight,
   getIsNestedTable,
   getAlignment,
   getJustifyContent,
@@ -44,6 +43,7 @@ import {
   wrapUwrapCount,
   getDataLinksCounter,
   getPillLineCounter,
+  getDefaultRowHeight,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -787,23 +787,46 @@ describe('TableNG utils', () => {
   describe('getDefaultRowHeight', () => {
     const theme = createTheme();
 
-    it('returns correct height for TableCellHeight.Sm', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Sm);
-      expect(result).toBe(36);
+    it.each([
+      { input: TableCellHeight.Sm, expected: 36 },
+      { input: TableCellHeight.Md, expected: 42 },
+      { input: TableCellHeight.Lg, expected: TABLE.MAX_CELL_HEIGHT },
+    ])('returns "$expected" for "$input"', ({ input, expected }) => {
+      const result = getDefaultRowHeight(theme, [], input);
+      expect(result).toBe(expected);
     });
 
-    it('returns correct height for TableCellHeight.Md', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Md);
-      expect(result).toBe(42);
-    });
-
-    it('returns correct height for TableCellHeight.Lg', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Lg);
-      expect(result).toBe(TABLE.MAX_CELL_HEIGHT);
+    it('returns "auto" if a field is present with the dynamicHeight cellOption  is false', () => {
+      expect(
+        getDefaultRowHeight(
+          theme,
+          [
+            {
+              name: 'test1',
+              type: FieldType.string,
+              config: {},
+              values: ['value1'],
+            },
+            {
+              name: 'test2',
+              type: FieldType.string,
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.Markdown, dynamicHeight: true } } },
+              values: ['value1'],
+            },
+            {
+              name: 'test3',
+              type: FieldType.number,
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+              values: [3],
+            },
+          ],
+          TableCellHeight.Sm
+        )
+      ).toBe('auto');
     });
 
     it('calculates height based on theme when cellHeight is undefined', () => {
-      const result = getDefaultRowHeight(theme, undefined as unknown as TableCellHeight);
+      const result = getDefaultRowHeight(theme, []);
 
       // Calculate the expected result based on the theme values
       const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;

@@ -20,6 +20,10 @@ import (
 
 const MetricsPathPrefix = "metrics/"
 
+type PartialTempoQuery struct {
+	MetricsQueryType *dataquery.MetricsQueryType
+}
+
 func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runMetricsStream")
 	defer span.End()
@@ -30,6 +34,15 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 	err := json.Unmarshal(req.Data, &backendQuery)
 	if err != nil {
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
+		span.RecordError(response.Error)
+		span.SetStatus(codes.Error, response.Error.Error())
+		return err
+	}
+
+	tempoQuery := &PartialTempoQuery{}
+	err = json.Unmarshal(req.Data, tempoQuery)
+	if err != nil {
+		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
 		return err
@@ -55,6 +68,24 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 	// changes or updates, so we have to get it from context.
 	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
 	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
+
+	if isInstantQuery(tempoQuery.MetricsQueryType) {
+		instantQuery := &tempopb.QueryInstantRequest{
+			Query: qrr.Query,
+			Start: qrr.Start,
+			End:   qrr.End,
+		}
+
+		stream, err := datasource.StreamingClient.MetricsQueryInstant(ctx, instantQuery)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			s.logger.Error("Error Search()", "err", err)
+			return err
+		}
+
+		return s.processInstantMetricsStream(ctx, stream, sender)
+	}
 
 	stream, err := datasource.StreamingClient.MetricsQueryRange(ctx, qrr)
 	if err != nil {
@@ -91,6 +122,41 @@ func (s *Service) processMetricsStream(ctx context.Context, query string, stream
 		}
 
 		transformed := traceql.TransformMetricsResponse(query, *msg)
+
+		if err := s.sendResponse(ctx, transformed, msg.Metrics, dataquery.SearchStreamingStateStreaming, sender); err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) processInstantMetricsStream(ctx context.Context, stream tempopb.StreamingQuerier_MetricsQueryInstantClient, sender StreamSender) error {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.processStream")
+	defer span.End()
+	messageCount := 0
+	for {
+		msg, err := stream.Recv()
+		messageCount++
+		span.SetAttributes(attribute.Int("message_count", messageCount))
+		if errors.Is(err, io.EOF) {
+			if err := s.sendResponse(ctx, nil, nil, dataquery.SearchStreamingStateDone, sender); err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				return err
+			}
+			break
+		}
+		if err != nil {
+			s.logger.Error("Error receiving message", "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
+
+		transformed := traceql.TransformInstantMetricsResponse(*msg)
 
 		if err := s.sendResponse(ctx, transformed, msg.Metrics, dataquery.SearchStreamingStateStreaming, sender); err != nil {
 			span.RecordError(err)
