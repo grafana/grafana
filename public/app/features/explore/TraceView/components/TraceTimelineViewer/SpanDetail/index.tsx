@@ -29,11 +29,11 @@ import {
   PluginExtensionPoints,
   IconName,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { TextArea, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
@@ -46,13 +46,17 @@ import { formatDuration } from '../utils';
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
-import AccordianText from './AccordianText';
 import DetailState from './DetailState';
 import { ShareSpanButton } from './ShareSpanButton';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
-const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceType: string, datasourceUid: string) => {
+const useResourceAttributesExtensionLinks = (
+  process: TraceProcess,
+  spanTags: TraceKeyValuePair[],
+  datasourceType: string,
+  datasourceUid: string
+) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
     const attributes = (process.tags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
@@ -64,14 +68,24 @@ const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceTy
       return acc;
     }, {});
 
+    const spanAttributes = (spanTags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
+      if (acc[tag.key]) {
+        acc[tag.key].push(tag.value);
+      } else {
+        acc[tag.key] = [tag.value];
+      }
+      return acc;
+    }, {});
+
     return {
       attributes,
+      spanAttributes,
       datasource: {
         type: datasourceType,
         uid: datasourceUid,
       },
     };
-  }, [process.tags, datasourceType, datasourceUid]);
+  }, [process.tags, spanTags, datasourceType, datasourceUid]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
@@ -98,6 +112,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'space-between',
       gap: '0 1rem',
       marginBottom: '0.25rem',
+    }),
+    content: css({
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
     listWrapper: css({
       overflow: 'hidden',
@@ -326,7 +343,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
-  const resourceLinksGetter = useResourceAttributesExtensionLinks(process, datasourceType, datasourceUid);
+  const resourceLinksGetter = useResourceAttributesExtensionLinks(process, tags, datasourceType, datasourceUid);
 
   return (
     <div data-testid="span-detail-component">
@@ -340,12 +357,13 @@ export default function SpanDetail(props: SpanDetailProps) {
         <ShareSpanButton focusSpanLink={focusSpanLink} />
       </div>
       <div className={styles.linkList}>{linksComponent}</div>
-      <div>
+      <div className={styles.content}>
         <div>
           <AccordianKeyValues
             data={tags}
             label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
             isOpen={isTagsOpen}
+            linksGetter={resourceLinksGetter}
             onToggle={() => tagsToggle(spanID)}
           />
           {process.tags && (
@@ -368,48 +386,39 @@ export default function SpanDetail(props: SpanDetailProps) {
             timestamp={traceStartTime}
           />
         )}
+
         {warnings && warnings.length > 0 && (
-          <AccordianText
-            className={styles.AccordianWarnings}
-            headerClassName={styles.AccordianWarningsHeader}
-            label={
-              <span className={styles.AccordianWarningsLabel}>
-                <Trans i18nKey="explore.span-detail.warnings">Warnings</Trans>
-              </span>
-            }
-            data={warnings}
+          <AccordianKeyValues
+            data={warnings.map((warning) => ({
+              key: '',
+              value: warning,
+              type: 'text',
+            }))}
+            showSummary={false}
+            showCountBadge={true}
             isOpen={isWarningsOpen}
+            onlyValues={true}
             onToggle={() => warningsToggle(spanID)}
+            label={t('explore.span-detail.warnings', 'Warnings')}
           />
         )}
+
         {stackTraces?.length ? (
-          <AccordianText
-            label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
-            data={stackTraces}
+          <AccordianKeyValues
+            data={stackTraces.map((stackTrace) => ({
+              key: '',
+              value: stackTrace,
+              type: 'code',
+            }))}
+            onlyValues={true}
+            showSummary={false}
+            showCountBadge={true}
             isOpen={isStackTracesOpen}
-            TextComponent={(textComponentProps) => {
-              let text;
-              if (textComponentProps.data?.length > 1) {
-                text = textComponentProps.data
-                  .map((stackTrace, index) => `StackTrace ${index + 1}:\n${stackTrace}`)
-                  .join('\n');
-              } else {
-                text = textComponentProps.data?.[0];
-              }
-              return (
-                <TextArea
-                  className={styles.Textarea}
-                  style={{ cursor: 'unset' }}
-                  readOnly
-                  cols={10}
-                  rows={10}
-                  value={text}
-                />
-              );
-            }}
             onToggle={() => stackTracesToggle(spanID)}
+            label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
           />
         ) : null}
+
         {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
           <AccordianReferences
             data={references}

@@ -1542,8 +1542,7 @@
       "group-not-editable": "선택한 그룹은 편집할 수 없습니다.",
       "group-not-editable-description": "이 그룹은 편집을 지원하지 않는 데이터 소스에 속해 있습니다.",
       "page-title": "규칙 그룹 편집",
-      "rule-group-error": "규칙 그룹 로딩 중 오류 발생",
-      "title": "평가 그룹 편집"
+      "rule-group-error": "규칙 그룹 로딩 중 오류 발생"
     },
     "group-loader": {
       "group-load-failed": "{{ namespaceName }}의 {{ groupName }} 그룹에서 규칙 로딩 실패",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "경고"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "가져오기",
@@ -3546,12 +3544,12 @@
       "tags-column": "태그"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "하위 정보를 검색할 수 없습니다"
@@ -3594,7 +3592,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "폴더 생성 중 오류 발생",
-      "alert-folder-created-successfully": "폴더가 성공적으로 생성되었습니다",
       "button-create": "생성",
       "button-creating": "생성 중...",
       "cancel": "취소",
@@ -3721,6 +3718,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3741,7 +3739,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3842,7 +3839,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -3963,6 +3959,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "자동"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -5619,6 +5622,7 @@
       "delete-read-only-file-message": "",
       "deleting": "삭제 중…",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다."
     },
     "description-label": {
@@ -5630,9 +5634,6 @@
           "edit-link": "링크 편집"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "이메일 메뉴 토글"
@@ -5791,6 +5792,7 @@
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5800,6 +5802,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6984,6 +6987,9 @@
         "pro-tip-define-sources-through-configuration-files": " 전문가 팁: 구성 파일을 통해 데이터 소스를 정의할 수도 있습니다. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "이전",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "쿼리 없이 진행"
@@ -7250,18 +7256,24 @@
       "split-tooltip": "창 분할",
       "split-widen": "창 확대"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "피드백 제출하기",
-      "label-copied": "복사됨!",
-      "label-export": "내보내기",
-      "label-trace-id": "트레이스 ID",
-      "title-share-thoughts-about-tracing-grafana": "Grafana에서 트레이싱에 대한 의견을 공유하세요."
-    },
     "trace-page-header": {
-      "text-partial-trace": "부분 트레이스",
-      "tooltip-url": "{{url}} 또는 {{target}} 또는 {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "필터 지우기 버튼",
@@ -9320,6 +9332,15 @@
       "show-more": "더 보기",
       "tooltip-error": "오류: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "",
       "close": "",
@@ -10967,6 +10988,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "이 기능은 현재 적극적으로 개발 중입니다. 최상의 경험과 최신 개선 사항 적용을 위해 Grafana의 <2>야간 빌드</2>를 사용하는 것이 좋습니다."
@@ -11819,7 +11843,7 @@
         "recommended": "권장",
         "results": "결과"
       },
-      "search": "검색"
+      "search": ""
     }
   },
   "search": {
@@ -12454,6 +12478,19 @@
       "label-medium": "",
       "label-small": ""
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "선택하면 전체 행이 이 셀과 같은 색으로 표시됩니다.",
       "description-wrap-text": "선택한 텍스트가 구성된 열의 텍스트 너비에 맞게 줄 바꿈되는 경우",
@@ -12488,6 +12525,13 @@
       "label-alt-text": "대체 텍스트",
       "label-title-text": "제목 텍스트"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "",
     "name-cell-height": "",
     "name-cell-type": "",
@@ -12504,7 +12548,10 @@
     "name-show-table-header": "",
     "name-wrap-header-text": "",
     "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "placeholder-fields": "",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "",
@@ -13219,22 +13266,6 @@
       "label-row": "행",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "부울 거짓값",
-          "boolean-true-value": "부울 참값",
-          "empty-string": "빈 문자열",
-          "null-value": "Null 값",
-          "number-value": "숫자 0 값"
-        },
-        "label": {
-          "empty": "비어 있음",
-          "false": "거짓",
-          "null": "Null",
-          "true": "참",
-          "zero": "0"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13587,6 +13618,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

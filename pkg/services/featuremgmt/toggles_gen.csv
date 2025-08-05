@@ -60,8 +60,8 @@ disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad
 formatString,GA,@grafana/dataviz-squad,false,false,true
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
-kubernetesLibraryPanelConnections,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
+kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -102,6 +102,7 @@ secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-s
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
+useScopeSingleNodeEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 promQLScope,GA,@grafana/oss-big-tent,false,false,false
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
 sqlExpressions,privatePreview,@grafana/grafana-datasources-core-services,false,false,false
@@ -241,5 +242,7 @@ alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,fal
 pluginAssetProvider,experimental,@grafana/plugins-platform-backend,false,true,false
 unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
 dashboardDsAdHocFiltering,experimental,@grafana/datapro,false,false,true
+dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 adhocFiltersInTooltips,experimental,@grafana/datapro,false,false,true
+newLogContext,experimental,@grafana/observability-logs,false,false,true

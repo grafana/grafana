@@ -251,13 +251,13 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
-	// FlagKubernetesLibraryPanelConnections
-	// Routes library panel connections requests from /api to using search
-	FlagKubernetesLibraryPanelConnections = "kubernetesLibraryPanelConnections"
-
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
+
+	// FlagKubernetesShortURLs
+	// Routes short url requests from /api to the /apis endpoint
+	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
@@ -418,6 +418,10 @@ const (
 	// FlagScopeApi
 	// In-development feature flag for the scope api using the app platform.
 	FlagScopeApi = "scopeApi"
+
+	// FlagUseScopeSingleNodeEndpoint
+	// Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+	FlagUseScopeSingleNodeEndpoint = "useScopeSingleNodeEndpoint"
 
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
@@ -975,6 +979,10 @@ const (
 	// Enables adhoc filtering support for the dashboard datasource
 	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
 
+	// FlagDashboardLevelTimeMacros
+	// Supports __from and __to macros that always use the dashboard level time range
+	FlagDashboardLevelTimeMacros = "dashboardLevelTimeMacros"
+
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
@@ -982,4 +990,8 @@ const (
 	// FlagAdhocFiltersInTooltips
 	// Enable adhoc filter buttons in visualization tooltips
 	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
+
+	// FlagNewLogContext
+	// New Log Context component
+	FlagNewLogContext = "newLogContext"
 )

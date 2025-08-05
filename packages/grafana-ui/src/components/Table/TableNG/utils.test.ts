@@ -5,6 +5,7 @@ import {
   createTheme,
   DataFrame,
   DataFrameWithValue,
+  DataLink,
   DisplayValue,
   Field,
   FieldType,
@@ -26,7 +27,6 @@ import {
   getCellLinks,
   getCellOptions,
   getComparator,
-  getDefaultRowHeight,
   getIsNestedTable,
   getAlignment,
   getJustifyContent,
@@ -40,23 +40,18 @@ import {
   createTypographyContext,
   applySort,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
+  wrapUwrapCount,
+  getDataLinksCounter,
+  getPillLineCounter,
+  getDefaultRowHeight,
 } from './utils';
 
 describe('TableNG utils', () => {
   describe('alignment', () => {
     it.each(['left', 'center', 'right'] as const)('should return "%s" when configured', (align) => {
-      expect(
-        getAlignment({
-          name: 'Value',
-          type: FieldType.string,
-          values: [],
-          config: {
-            custom: {
-              align,
-            },
-          },
-        })
-      ).toBe(align);
+      expect(getAlignment({ name: 'Value', type: FieldType.string, values: [], config: { custom: { align } } })).toBe(
+        align
+      );
     });
 
     it.each([
@@ -65,16 +60,7 @@ describe('TableNG utils', () => {
       { type: FieldType.boolean, align: 'left' },
       { type: FieldType.time, align: 'left' },
     ])('should return "$align" for field type $type by default', ({ type, align }) => {
-      expect(
-        getAlignment({
-          name: 'Test',
-          type,
-          values: [],
-          config: {
-            custom: {},
-          },
-        })
-      ).toBe(align);
+      expect(getAlignment({ name: 'Test', type, values: [], config: { custom: {} } })).toBe(align);
     });
 
     it.each([
@@ -91,17 +77,7 @@ describe('TableNG utils', () => {
           name: 'Test',
           type: FieldType.number,
           values: [],
-          config: {
-            custom: {
-              ...(cellType !== undefined
-                ? {
-                    cellOptions: {
-                      type: cellType,
-                    },
-                  }
-                : {}),
-            },
-          },
+          config: { custom: { ...(cellType !== undefined ? { cellOptions: { type: cellType } } : {}) } },
         })
       ).toBe(align);
     });
@@ -122,34 +98,17 @@ describe('TableNG utils', () => {
       colors: {
         isDark: true,
         mode: 'dark',
-        primary: {
-          text: '#FFFFFF',
-          main: '#FF0000',
-        },
-        background: {
-          canvas: '#000000',
-          primary: '#111111',
-        },
-        text: {
-          primary: '#FFFFFF',
-        },
-        action: {
-          hover: '#FF0000',
-        },
+        primary: { text: '#FFFFFF', main: '#FF0000' },
+        background: { canvas: '#000000', primary: '#111111' },
+        text: { primary: '#FFFFFF' },
+        action: { hover: '#FF0000' },
       },
     } as unknown as GrafanaTheme2;
 
     it('should handle color background mode', () => {
-      const field = {
-        type: TableCellDisplayMode.ColorBackground as const,
-        mode: TableCellBackgroundDisplayMode.Basic,
-      };
+      const field = { type: TableCellDisplayMode.ColorBackground as const, mode: TableCellBackgroundDisplayMode.Basic };
 
-      const displayValue = {
-        text: '100',
-        numeric: 100,
-        color: '#ff0000',
-      };
+      const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
       const colors = getCellColors(theme, field, displayValue);
       expect(colors.bgColor).toBe('rgb(255, 0, 0)');
@@ -162,11 +121,7 @@ describe('TableNG utils', () => {
         mode: TableCellBackgroundDisplayMode.Gradient,
       };
 
-      const displayValue = {
-        text: '100',
-        numeric: 100,
-        color: '#ff0000',
-      };
+      const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
       const colors = getCellColors(theme, field, displayValue);
       expect(colors.bgColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
@@ -185,12 +140,7 @@ describe('TableNG utils', () => {
 
       const records = frameToRecords(frame);
       expect(records).toHaveLength(2);
-      expect(records[0]).toEqual({
-        __depth: 0,
-        __index: 0,
-        time: 1,
-        value: 10,
-      });
+      expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
     });
   });
 
@@ -203,36 +153,22 @@ describe('TableNG utils', () => {
         config: {},
         values: [1, 22, 333, 4444],
         // No state property initially
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-        }),
+        display: (value: unknown) => ({ text: String(value), numeric: Number(value) }),
       };
 
       // Create a display value
-      const displayValue: DisplayValue = {
-        text: '1',
-        numeric: 1,
-      };
+      const displayValue: DisplayValue = { text: '1', numeric: 1 };
 
       // Call getAlignmentFactor with the first row
       const result = getAlignmentFactor(field, displayValue, 0);
 
       // Verify the result has the text property
-      expect(result).toEqual(
-        expect.objectContaining({
-          text: '1',
-        })
-      );
+      expect(result).toEqual(expect.objectContaining({ text: '1' }));
 
       // Verify that field.state was created and contains the alignment factor
       expect(field.state).toBeDefined();
       expect(field.state?.alignmentFactors).toBeDefined();
-      expect(field.state?.alignmentFactors).toEqual(
-        expect.objectContaining({
-          text: '1',
-        })
-      );
+      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '1' }));
     });
 
     it('should update alignment factor when a longer value is found', () => {
@@ -242,39 +178,21 @@ describe('TableNG utils', () => {
         type: FieldType.number,
         config: {},
         values: [1, 22, 333, 4444],
-        state: {
-          alignmentFactors: {
-            text: '1',
-          },
-        },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-        }),
+        state: { alignmentFactors: { text: '1' } },
+        display: (value: unknown) => ({ text: String(value), numeric: Number(value) }),
       };
 
       // Create a display value that is longer than the existing alignment factor
-      const displayValue: DisplayValue = {
-        text: '4444',
-        numeric: 4444,
-      };
+      const displayValue: DisplayValue = { text: '4444', numeric: 4444 };
 
       // Call getAlignmentFactor
       const result = getAlignmentFactor(field, displayValue, 3);
 
       // Verify the result is updated to the longer value
-      expect(result).toEqual(
-        expect.objectContaining({
-          text: '4444',
-        })
-      );
+      expect(result).toEqual(expect.objectContaining({ text: '4444' }));
 
       // Verify that field.state.alignmentFactors was updated
-      expect(field.state?.alignmentFactors).toEqual(
-        expect.objectContaining({
-          text: '4444',
-        })
-      );
+      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '4444' }));
     });
 
     it('should not update alignment factor when a shorter value is found', () => {
@@ -284,39 +202,21 @@ describe('TableNG utils', () => {
         type: FieldType.number,
         config: {},
         values: [1, 22, 333, 4444],
-        state: {
-          alignmentFactors: {
-            text: '4444',
-          },
-        },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-        }),
+        state: { alignmentFactors: { text: '4444' } },
+        display: (value: unknown) => ({ text: String(value), numeric: Number(value) }),
       };
 
       // Create a display value that is shorter than the existing alignment factor
-      const displayValue: DisplayValue = {
-        text: '1',
-        numeric: 1,
-      };
+      const displayValue: DisplayValue = { text: '1', numeric: 1 };
 
       // Call getAlignmentFactor
       const result = getAlignmentFactor(field, displayValue, 0);
 
       // Verify the result is still the longer value
-      expect(result).toEqual(
-        expect.objectContaining({
-          text: '4444',
-        })
-      );
+      expect(result).toEqual(expect.objectContaining({ text: '4444' }));
 
       // Verify that field.state.alignmentFactors was not changed
-      expect(field.state?.alignmentFactors).toEqual(
-        expect.objectContaining({
-          text: '4444',
-        })
-      );
+      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '4444' }));
     });
 
     it('should add alignment factor to existing field state', () => {
@@ -334,38 +234,24 @@ describe('TableNG utils', () => {
           // Or if noValue is a valid property:
           // noValue: true
         },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-        }),
+        display: (value: unknown) => ({ text: String(value), numeric: Number(value) }),
       };
 
       // Create a display value
-      const displayValue: DisplayValue = {
-        text: '1',
-        numeric: 1,
-      };
+      const displayValue: DisplayValue = { text: '1', numeric: 1 };
 
       // Call getAlignmentFactor with the first row
       const result = getAlignmentFactor(field, displayValue, 0);
 
       // Verify the result has the text property
-      expect(result).toEqual(
-        expect.objectContaining({
-          text: '1',
-        })
-      );
+      expect(result).toEqual(expect.objectContaining({ text: '1' }));
 
       // Verify that field.state was preserved and alignment factor was added
       expect(field.state).toBeDefined();
       // Check for the valid property we used
       expect(field.state?.calcs).toBeDefined();
       expect(field.state?.alignmentFactors).toBeDefined();
-      expect(field.state?.alignmentFactors).toEqual(
-        expect.objectContaining({
-          text: '1',
-        })
-      );
+      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '1' }));
     });
 
     it.todo('alignmentFactor.text = displayValue.text;');
@@ -398,11 +284,7 @@ describe('TableNG utils', () => {
       ];
       const result = getColumnTypes(fields);
 
-      expect(result).toEqual({
-        name: FieldType.string,
-        age: FieldType.number,
-        active: FieldType.boolean,
-      });
+      expect(result).toEqual({ name: FieldType.string, age: FieldType.number, active: FieldType.boolean });
     });
 
     it('should recursively build column types when nested fields are present', () => {
@@ -448,20 +330,13 @@ describe('TableNG utils', () => {
       const frame: DataFrame = {
         fields: [
           { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          {
-            type: FieldType.nestedFrames,
-            name: 'nestedCol',
-            config: {},
-            values: [],
-          },
+          { type: FieldType.nestedFrames, name: 'nestedCol', config: {}, values: [] },
         ],
         length: 0,
         name: 'test',
       };
 
-      expect(getColumnTypes(frame.fields)).toEqual({
-        stringCol: FieldType.string,
-      });
+      expect(getColumnTypes(frame.fields)).toEqual({ stringCol: FieldType.string });
     });
   });
 
@@ -557,18 +432,12 @@ describe('TableNG utils', () => {
   describe('migrateTableDisplayModeToCellOptions', () => {
     it('should migrate basic to gauge mode', () => {
       const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.BasicGauge);
-      expect(result).toEqual({
-        type: TableCellDisplayMode.Gauge,
-        mode: BarGaugeDisplayMode.Basic,
-      });
+      expect(result).toEqual({ type: TableCellDisplayMode.Gauge, mode: BarGaugeDisplayMode.Basic });
     });
 
     it('should migrate gradient-gauge to gauge mode with gradient', () => {
       const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.GradientGauge);
-      expect(result).toEqual({
-        type: TableCellDisplayMode.Gauge,
-        mode: BarGaugeDisplayMode.Gradient,
-      });
+      expect(result).toEqual({ type: TableCellDisplayMode.Gauge, mode: BarGaugeDisplayMode.Gradient });
     });
 
     it('should migrate color-background to color background with gradient', () => {
@@ -581,20 +450,13 @@ describe('TableNG utils', () => {
 
     it('should handle other display modes', () => {
       const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.ColorText);
-      expect(result).toEqual({
-        type: TableCellDisplayMode.ColorText,
-      });
+      expect(result).toEqual({ type: TableCellDisplayMode.ColorText });
     });
   });
 
   describe('getCellOptions', () => {
     it('should return default options when no custom config is provided', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {},
-        values: [],
-      };
+      const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
 
       const options = getCellOptions(field);
 
@@ -607,35 +469,21 @@ describe('TableNG utils', () => {
         name: 'test',
         type: FieldType.string,
         config: {
-          custom: {
-            cellOptions: {
-              type: TableCellDisplayMode.ColorText,
-              inspectEnabled: false,
-              wrapText: true,
-            },
-          },
+          custom: { cellOptions: { type: TableCellDisplayMode.ColorText, inspectEnabled: false, wrapText: true } },
         },
         values: [],
       };
 
       const options = getCellOptions(field);
 
-      expect(options).toEqual({
-        type: TableCellDisplayMode.ColorText,
-        inspectEnabled: false,
-        wrapText: true,
-      });
+      expect(options).toEqual({ type: TableCellDisplayMode.ColorText, inspectEnabled: false, wrapText: true });
     });
 
     it('should handle legacy displayMode property', () => {
       const field: Field = {
         name: 'test',
         type: FieldType.string,
-        config: {
-          custom: {
-            displayMode: 'color-background',
-          },
-        },
+        config: { custom: { displayMode: 'color-background' } },
         values: [],
       };
 
@@ -649,14 +497,7 @@ describe('TableNG utils', () => {
       const field: Field = {
         name: 'test',
         type: FieldType.string,
-        config: {
-          custom: {
-            displayMode: 'color-background',
-            cellOptions: {
-              type: TableCellDisplayMode.ColorText,
-            },
-          },
-        },
+        config: { custom: { displayMode: 'color-background', cellOptions: { type: TableCellDisplayMode.ColorText } } },
         values: [],
       };
 
@@ -689,13 +530,7 @@ describe('TableNG utils', () => {
       const field: Field = {
         name: 'test',
         type: FieldType.string,
-        config: {
-          custom: {
-            cellOptions: {
-              type: TableCellDisplayMode.JSONView,
-            },
-          },
-        },
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
         values: [],
       };
 
@@ -707,12 +542,7 @@ describe('TableNG utils', () => {
 
   describe('getCellLinks', () => {
     it('should return undefined when field has no getLinks function', () => {
-      const field: Field = {
-        name: 'test',
-        type: FieldType.string,
-        config: {},
-        values: ['value'],
-      };
+      const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['value'] };
 
       const links = getCellLinks(field, 0);
       expect(links).toEqual(undefined);
@@ -957,23 +787,46 @@ describe('TableNG utils', () => {
   describe('getDefaultRowHeight', () => {
     const theme = createTheme();
 
-    it('returns correct height for TableCellHeight.Sm', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Sm);
-      expect(result).toBe(36);
+    it.each([
+      { input: TableCellHeight.Sm, expected: 36 },
+      { input: TableCellHeight.Md, expected: 42 },
+      { input: TableCellHeight.Lg, expected: TABLE.MAX_CELL_HEIGHT },
+    ])('returns "$expected" for "$input"', ({ input, expected }) => {
+      const result = getDefaultRowHeight(theme, [], input);
+      expect(result).toBe(expected);
     });
 
-    it('returns correct height for TableCellHeight.Md', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Md);
-      expect(result).toBe(42);
-    });
-
-    it('returns correct height for TableCellHeight.Lg', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Lg);
-      expect(result).toBe(TABLE.MAX_CELL_HEIGHT);
+    it('returns "auto" if a field is present with the dynamicHeight cellOption  is false', () => {
+      expect(
+        getDefaultRowHeight(
+          theme,
+          [
+            {
+              name: 'test1',
+              type: FieldType.string,
+              config: {},
+              values: ['value1'],
+            },
+            {
+              name: 'test2',
+              type: FieldType.string,
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.Markdown, dynamicHeight: true } } },
+              values: ['value1'],
+            },
+            {
+              name: 'test3',
+              type: FieldType.number,
+              config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+              values: [3],
+            },
+          ],
+          TableCellHeight.Sm
+        )
+      ).toBe('auto');
     });
 
     it('calculates height based on theme when cellHeight is undefined', () => {
-      const result = getDefaultRowHeight(theme, undefined as unknown as TableCellHeight);
+      const result = getDefaultRowHeight(theme, []);
 
       // Calculate the expected result based on the theme values
       const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
@@ -987,36 +840,112 @@ describe('TableNG utils', () => {
     // actually executed the JS correctly. If you called `count` with a sensible value and width,
     // it wouldn't give you a very reasonable answer in Jest's DOM environment for some reason.
     it('creates the context using uwrap', () => {
+      const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
       const ctx = createTypographyContext(14, 'sans-serif', 0.15);
+
       expect(ctx).toEqual(
         expect.objectContaining({
-          font: '14px sans-serif',
           ctx: expect.any(CanvasRenderingContext2D),
+          fontFamily: 'sans-serif',
+          letterSpacing: 0.15,
           wrappedCount: expect.any(Function),
           estimateLines: expect.any(Function),
           avgCharWidth: expect.any(Number),
         })
       );
-      expect(ctx.wrappedCount('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
-      expect(ctx.estimateLines('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
+      expect(ctx.wrappedCount('the quick brown fox jumps over the lazy dog', 100, field, 0)).toEqual(
+        expect.any(Number)
+      );
+      expect(ctx.estimateLines('the quick brown fox jumps over the lazy dog', 100, field, 0)).toEqual(
+        expect.any(Number)
+      );
+    });
+  });
+
+  describe('wrapUwrapCount', () => {
+    const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
+
+    it('wraps the uwrap count function', () => {
+      const wrappedCount = wrapUwrapCount(jest.fn(() => 2));
+      expect(wrappedCount('test string', 100, field, 0)).toBe(2);
+    });
+
+    it('returns 1 for null or undefined values', () => {
+      const wrappedCount = wrapUwrapCount(jest.fn(() => 2));
+      expect(wrappedCount(null, 100, field, 0)).toBe(1);
+      expect(wrappedCount(undefined, 100, field, 0)).toBe(1);
     });
   });
 
   describe('getTextLineEstimator', () => {
     const counter = getTextLineEstimator(10);
+    const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
 
     it('returns -1 if there are no strings or dashes within the string', () => {
-      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5)).toBe(-1);
+      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5, field, 0)).toBe(-1);
     });
 
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
-      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200)).toBe(2.5);
+      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field, 0)).toBe(2.5);
+    });
+  });
+
+  describe('getDataLinksCounter', () => {
+    it('counts number of valid links using getCellLinks', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {
+          links: [
+            { title: 'Link 1', url: 'http://example.com/1' },
+            { title: 'Invalid Link' } as DataLink, // No href or onClick
+            {
+              title: 'Link w',
+              url: 'asdf',
+              onClick: jest.fn(() => {}),
+            },
+          ],
+        },
+        values: ['value1'],
+      };
+
+      const counter = getDataLinksCounter();
+      expect(counter('my value', 100, field, 0)).toBe(2);
+    });
+  });
+
+  describe('getPillLineCounter', () => {
+    it('counts up the number of lines using the pill measuring method', () => {
+      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
+      expect(counter('tag1,tag2', 100, {} as Field, 0)).toBe(1);
+      expect(counter('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0)).toBe(3);
+    });
+
+    it('returns 0 if value is null', () => {
+      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
+      expect(counter(null, 100, {} as Field, 0)).toBe(0);
+    });
+
+    it('returns 0 if no pills are inferred', () => {
+      const counter = getPillLineCounter(jest.fn((str) => str.length * 5));
+      expect(counter('', 100, {} as Field, 0)).toBe(0);
+    });
+
+    it('caches the width measurement for the same value', () => {
+      const widthMeasurement = jest.fn((str) => str.length * 5);
+      const counter = getPillLineCounter(widthMeasurement);
+      counter('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0);
+      counter('tag1,tag2', 100, {} as Field, 0);
+      counter('tag2', 200, {} as Field, 0);
+      counter('tag2,tag3,tag2,tag4,tag4,tag2,tag5', 300, {} as Field, 0);
+      expect(widthMeasurement).toHaveBeenCalledTimes(6); // Should only call for unique values
     });
   });
 
   describe('buildHeaderLineCounters', () => {
     const ctx = {
-      font: '14px sans-serif',
+      fontFamily: 'sans-serif',
+      letterSpacing: 0.15,
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
       avgCharWidth: 7,
@@ -1057,15 +986,15 @@ describe('TableNG utils', () => {
 
   describe('buildRowLineCounters', () => {
     const ctx = {
-      font: '14px sans-serif',
+      fontFamily: 'sans-serif',
+      letterSpacing: 0.15,
       ctx: {} as CanvasRenderingContext2D,
-      count: jest.fn(() => 2),
       wrappedCount: jest.fn(() => 2),
       estimateLines: jest.fn(() => 2),
       avgCharWidth: 7,
     };
 
-    it('returns an array of line counters for each column', () => {
+    it('sets up text line counters for each text column if wrapping is on', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
         {
@@ -1093,6 +1022,42 @@ describe('TableNG utils', () => {
 
       const counters = buildRowLineCounters(fields, ctx);
       expect(counters![0].fieldIdxs).toEqual([1]);
+    });
+
+    it('sets up line counting for pills if present and wrapping is on', () => {
+      const fields: Field[] = [
+        {
+          name: 'Tags',
+          type: FieldType.string,
+          values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill, wrapText: true } } },
+        },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters![0].estimate).toEqual(expect.any(Function));
+      expect(counters![0].estimate!('tag1,tag2', 100, fields[0], 0)).toEqual(expect.any(Number));
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].counter('tag1,tag2', 100, fields[0], 0)).toEqual(expect.any(Number));
+      expect(counters![0].fieldIdxs).toEqual([0]);
+    });
+
+    it('sets up line counting for datalinks if present and wrapping is on', () => {
+      const fields: Field[] = [
+        {
+          name: 'Links',
+          type: FieldType.string,
+          values: ['http://example.com/1', 'http://example.com/2'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.DataLinks, wrapText: true } } },
+          getLinks: jest.fn((): LinkModel[] => [
+            { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
+            { title: 'Link 2', href: 'http://example.com/2', target: '_self', origin: { datasourceUid: 'test' } },
+          ]),
+        },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].counter('http://example.com/1', 100, fields[0], 0)).toEqual(expect.any(Number));
+      expect(counters![0].fieldIdxs).toEqual([0]);
     });
 
     it('does not enable text counting for non-string fields', () => {
@@ -1162,15 +1127,15 @@ describe('TableNG utils', () => {
 
     it('should take colWidths into account when calculating max wrap cell', () => {
       getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50);
-      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60);
+      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50, fields[0], 3);
+      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60, fields[1], 3);
     });
 
     // this is used to calc wrapped header height
     it('should use the display name if the rowIdx is -1', () => {
       getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50);
-      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60);
+      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50, fields[0], -1);
+      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60, fields[1], -1);
     });
 
     it('should ignore columns which do not have line counters', () => {
@@ -1230,18 +1195,8 @@ describe('TableNG utils', () => {
       expect(
         computeColWidths(
           [
-            {
-              name: 'A',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { width: 100 } },
-            },
-            {
-              name: 'B',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { width: 200 } },
-            },
+            { name: 'A', type: FieldType.string, values: [], config: { custom: { width: 100 } } },
+            { name: 'B', type: FieldType.string, values: [], config: { custom: { width: 200 } } },
           ],
           500
         )
@@ -1252,18 +1207,8 @@ describe('TableNG utils', () => {
       expect(
         computeColWidths(
           [
-            {
-              name: 'A',
-              type: FieldType.string,
-              values: [],
-              config: {},
-            },
-            {
-              name: 'B',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { width: 200 } },
-            },
+            { name: 'A', type: FieldType.string, values: [], config: {} },
+            { name: 'B', type: FieldType.string, values: [], config: { custom: { width: 200 } } },
           ],
           500
         )
@@ -1274,18 +1219,8 @@ describe('TableNG utils', () => {
       expect(
         computeColWidths(
           [
-            {
-              name: 'A',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { minWidth: 100 } },
-            },
-            {
-              name: 'B',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { minWidth: 100 } },
-            },
+            { name: 'A', type: FieldType.string, values: [], config: { custom: { minWidth: 100 } } },
+            { name: 'B', type: FieldType.string, values: [], config: { custom: { minWidth: 100 } } },
           ],
           100
         )
@@ -1296,18 +1231,8 @@ describe('TableNG utils', () => {
       expect(
         computeColWidths(
           [
-            {
-              name: 'A',
-              type: FieldType.string,
-              values: [],
-              config: {},
-            },
-            {
-              name: 'B',
-              type: FieldType.string,
-              values: [],
-              config: {},
-            },
+            { name: 'A', type: FieldType.string, values: [], config: {} },
+            { name: 'B', type: FieldType.string, values: [], config: {} },
           ],
           // we have two columns but have set the table to the width of one default column.
           COLUMN.DEFAULT_WIDTH
@@ -1332,28 +1257,14 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const sortColumns: SortColumn[] = [
-        {
-          columnKey: 'time',
-          direction: 'ASC',
-        },
-      ];
+      const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
 
       const records = applySort(frameToRecords(frame), frame.fields, sortColumns);
 
       expect(records).toMatchObject([
-        {
-          time: 1,
-          value: 20,
-        },
-        {
-          time: 1,
-          value: 10,
-        },
-        {
-          time: 2,
-          value: 30,
-        },
+        { time: 1, value: 20 },
+        { time: 1, value: 10 },
+        { time: 2, value: 30 },
       ]);
     });
   });

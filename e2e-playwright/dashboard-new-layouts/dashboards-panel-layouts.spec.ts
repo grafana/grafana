@@ -12,6 +12,10 @@ test.use({
   },
 });
 
+test.use({
+  viewport: { width: 1920, height: 1080 },
+});
+
 test.describe(
   'Dashboard Panel Layouts',
   {
@@ -170,6 +174,10 @@ test.describe(
 
     test('can change max columns in auto grid layout', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Set max columns');
+
+      await await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first()
+      ).toBeVisible();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
@@ -384,6 +392,11 @@ async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, tit
   await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
   await page.locator('div[data-testid="data-source-card"]').first().click();
   await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
+  const undockMenuButton = page.locator('[aria-label="Undock menu"]');
+  const undockMenuVisible = await undockMenuButton.isVisible();
+  if (undockMenuVisible) {
+    undockMenuButton.click();
+  }
 }
 
 async function saveDashboard(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {

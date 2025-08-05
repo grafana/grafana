@@ -1548,8 +1548,7 @@
       "group-not-editable": "Vald grupp kan inte redigeras",
       "group-not-editable-description": "Den här gruppen tillhör en datakälla som inte stöder redigering.",
       "page-title": "Redigera regelgrupp",
-      "rule-group-error": "Fel vid laddning av regelgrupp",
-      "title": "Redigera utvärderingsgrupp"
+      "rule-group-error": "Fel vid laddning av regelgrupp"
     },
     "group-loader": {
       "group-load-failed": "Det gick inte att ladda reglerna från gruppen {{ groupName }} i {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Varnar"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Importera",
@@ -3565,12 +3563,12 @@
       "tags-column": "Taggar"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Det gick inte att hämta underordnad information"
@@ -3613,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Fel när mapp skulle skapas",
-      "alert-folder-created-successfully": "Mappen skapades",
       "button-create": "Skapa",
       "button-creating": "Skapar …",
       "cancel": "Avbryt",
@@ -3740,6 +3737,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3760,7 +3758,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3861,7 +3858,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -3982,6 +3978,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -5639,6 +5642,7 @@
       "delete-read-only-file-message": "",
       "deleting": "Tar bort ...",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "Den här databasen är skrivskyddad"
     },
     "description-label": {
@@ -5650,9 +5654,6 @@
           "edit-link": "Redigera länk"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Växla e-postmeny"
@@ -5812,6 +5813,7 @@
       "usage-count_other": "Används på {{count}} instrumentpaneler"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5821,6 +5823,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7006,6 +7009,9 @@
         "pro-tip-define-sources-through-configuration-files": " Tips: Du kan även definiera datakällor via konfigurationsfiler. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Tidigare",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Kör utan frågor"
@@ -7272,18 +7278,24 @@
       "split-tooltip": "Dela rutan",
       "split-widen": "Bredda rutan"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Ge feedback",
-      "label-copied": "Kopierad! ",
-      "label-export": "Exportera",
-      "label-trace-id": "Spårnings-ID",
-      "title-share-thoughts-about-tracing-grafana": "Dela dina tankar om att spåra i Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Partiell spårning",
-      "tooltip-url": "{{url}} eller {{target}} eller {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Knappen Rensa filter",
@@ -9350,6 +9362,15 @@
       "show-more": "visa mer",
       "tooltip-error": "Fel: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
       "clear-search": "",
       "close": "",
@@ -11000,6 +11021,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Den här funktionen är för närvarande under aktiv utveckling. För den bästa upplevelsen och de senaste förbättringarna rekommenderar vi att du använder <2> nightly-versionen</2> av Grafana."
@@ -11859,7 +11883,7 @@
         "recommended": "Rekommenderas",
         "results": "Resultat"
       },
-      "search": "Sök"
+      "search": ""
     }
   },
   "search": {
@@ -12496,6 +12520,19 @@
       "label-medium": "",
       "label-small": ""
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Om valt kommer hela raden att färgas som denna cell skulle vara.",
       "description-wrap-text": "Om vald text kommer att radbrytas till textbredden i den konfigurerade kolumnen",
@@ -12530,6 +12567,13 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Rubriktext"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "",
     "name-cell-height": "",
     "name-cell-type": "",
@@ -12546,7 +12590,10 @@
     "name-show-table-header": "",
     "name-wrap-header-text": "",
     "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "placeholder-fields": "",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "",
@@ -13261,22 +13308,6 @@
       "label-row": "Rad",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Booleskt falskt värde",
-          "boolean-true-value": "Booleskt sant värde",
-          "empty-string": "Tom sträng",
-          "null-value": "Null-värde",
-          "number-value": "Nummer 0-värde"
-        },
-        "label": {
-          "empty": "Tom",
-          "false": "Falskt",
-          "null": "Noll",
-          "true": "Sant",
-          "zero": "Noll"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13629,6 +13660,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

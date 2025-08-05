@@ -27,9 +27,9 @@ type DecryptAuthorizer interface {
 	Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (identity string, allowed bool)
 }
 
-// DecryptService is the inferface for the decrypt service.
+// DecryptService is the interface for the decrypt service.
 type DecryptService interface {
-	Decrypt(ctx context.Context, namespace string, names ...string) (map[string]DecryptResult, error)
+	Decrypt(ctx context.Context, serviceName string, namespace string, names []string) (map[string]DecryptResult, error)
 	Close() error
 }
 

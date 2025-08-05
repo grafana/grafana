@@ -838,6 +838,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardLevelTimeMacros",
+        "resourceVersion": "1753435849295",
+        "creationTimestamp": "2025-07-25T09:30:49Z"
+      },
+      "spec": {
+        "description": "Supports __from and __to macros that always use the dashboard level time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-10-23T08:55:45Z"
@@ -1758,12 +1771,12 @@
     },
     {
       "metadata": {
-        "name": "kubernetesLibraryPanelConnections",
+        "name": "kubernetesLibraryPanels",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
+        "creationTimestamp": "2025-06-25T22:21:56Z"
       },
       "spec": {
-        "description": "Routes library panel connections requests from /api to using search",
+        "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -1771,12 +1784,12 @@
     },
     {
       "metadata": {
-        "name": "kubernetesLibraryPanels",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-06-25T22:21:56Z"
+        "name": "kubernetesShortURLs",
+        "resourceVersion": "1753722806283",
+        "creationTimestamp": "2025-07-28T17:13:26Z"
       },
       "spec": {
-        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "description": "Routes short url requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -2148,6 +2161,19 @@
         "stage": "privatePreview",
         "codeowner": "@grafana/partner-datasources",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "newLogContext",
+        "resourceVersion": "1754044501326",
+        "creationTimestamp": "2025-08-01T10:35:01Z"
+      },
+      "spec": {
+        "description": "New Log Context component",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
       }
     },
     {
@@ -3240,6 +3266,22 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "useScopeSingleNodeEndpoint",
+        "resourceVersion": "1753960766702",
+        "creationTimestamp": "2025-07-31T11:19:26Z"
+      },
+      "spec": {
+        "description": "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

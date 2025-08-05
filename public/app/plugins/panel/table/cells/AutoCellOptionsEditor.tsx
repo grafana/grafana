@@ -8,8 +8,6 @@ export const AutoCellOptionsEditor = ({
   cellOptions,
   onChange,
 }: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions>) => {
-  // Handle row coloring changes
-
   const onWrapTextChange = () => {
     cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);
