@@ -4,13 +4,13 @@ manifest: {
 	appName:       "preferences"
 	groupOverride: "preferences.grafana.app"
 	versions: {
-		"v0alpha1": {
+		"v1alpha1": {
 			codegen: {
 				ts: {enabled: false}
 				go: {enabled: true}
 			}
 			kinds: [
-				preferencesv0alpha1,
+				preferencesv1alpha1,
 			]
 		}
 	}

@@ -635,7 +635,6 @@ cuelabs.dev/go/oci/ociregistry v0.0.0-20240906074133-82eb438dd565/go.mod h1:5A4x
 cuelang.org/go v0.11.1 h1:pV+49MX1mmvDm8Qh3Za3M786cty8VKPWzQ1Ho4gZRP0=
 cuelang.org/go v0.11.1/go.mod h1:PBY6XvPUswPPJ2inpvUozP9mebDVTXaeehQikhZPBz0=
 dario.cat/mergo v1.0.2 h1:85+piFYR1tMbRrLcDwR18y4UKJ3aH1Tbzi24VRW1TK8=
-dario.cat/mergo v1.0.2/go.mod h1:E/hbnu0NxMFBjpMIE34DRGLWqDy0g5FuKDhCb31ngxA=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 filippo.io/age v1.2.1 h1:X0TZjehAZylOIj4DubWYU1vWQxv9bJpo+Uu2/LGhi1o=
 filippo.io/age v1.2.1/go.mod h1:JL9ew2lTN+Pyft4RiNGguFfOpewKwSHm5ayKD/A4004=
@@ -1630,8 +1629,8 @@ github.com/grafana/grafana/apps/investigations v0.0.0-20250804150913-990f1c69ecc
 github.com/grafana/grafana/apps/investigations v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:IOpGVuSwFWE7EMrooI8I6OIU+rOmJinOaxK3pVMl7No=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250804150913-990f1c69ecc2 h1:Bt9EQkYdYq+xumbEnNxbbz0in7JRJkK9lVFs49WEetE=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:M1ily25xZS7sZlQ5yK1HV0UjRme6lpOl6I3dcfyqqRo=
-github.com/grafana/grafana/apps/preferences v0.0.0-20250805072727-ea7de610913e h1:TCIIVmX1z6tLWUbdJnsFL2RgjUvLYeTR7YH+qTKMXkQ=
-github.com/grafana/grafana/apps/preferences v0.0.0-20250805072727-ea7de610913e/go.mod h1:26eeN5yE3CGFc0eygeVPPNU3EnwRX/yY0ohmzab0OIE=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250805120407-0bba6e7b822b h1:kEefkQCfeuVBRZ1FYT5mqXTVIWST6BwaQ+//vjOnnHc=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250805120407-0bba6e7b822b/go.mod h1:NQlHMO5fHhjexw71wVjv522532NRvFg5F4tcjUEktjs=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 h1:83OGBndFNYijNjgQpSf4y1bSNlscVDq8ru97Q6PyU6o=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:qzFUVwLI1b5UIbVFxFydUYAsnOK27AgtA5so3EW8jM0=
 github.com/grafana/grafana/apps/secret v0.0.0-20250804150913-990f1c69ecc2 h1:r5oGyvRVxljzKHTQYHtpmK2Et+BVhWQVw7aXo+FUygk=

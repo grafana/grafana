@@ -1,5 +1,11 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
+
 test.describe(
   'Embedded dashboard',
   {

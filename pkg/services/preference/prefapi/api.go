@@ -5,7 +5,7 @@ import (
 	"context"
 	"net/http"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"

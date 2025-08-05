@@ -1,6 +1,6 @@
 package preferences
 
-preferencesv0alpha1: {
+preferencesv1alpha1: {
 	kind:       "Preferences"
 	pluralName: "Preferences"
 	scope:      "Namespaced"

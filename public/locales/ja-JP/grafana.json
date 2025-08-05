@@ -13266,22 +13266,6 @@
       "label-row": "行",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "ブール値のfalse値",
-          "boolean-true-value": "ブール値のtrue値",
-          "empty-string": "空の文字列",
-          "null-value": "Null値",
-          "number-value": "数値0の値"
-        },
-        "label": {
-          "empty": "空",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13634,6 +13618,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

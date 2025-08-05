@@ -13,13 +13,13 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 
-	v0alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1"
+	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 )
 
 var (
-	rawSchemaPreferencesv0alpha1     = []byte(`{"spec":{"properties":{"cookiePreferences":{"description":"Cookie preferences","properties":{"analytics":{"type":"object"},"functional":{"type":"object"},"performance":{"type":"object"}},"type":"object"},"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"language":{"description":"Selected language (beta)","type":"string"},"navbar":{"description":"Navigation preferences","properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"queryHistory":{"description":"Explore query history preferences","properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"regionalFormat":{"description":"Selected locale (beta)","type":"string"},"theme":{"description":"light, dark, empty is default","type":"string"},"timezone":{"description":"The timezone selection\nTODO: this should use the timezone defined in common","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaPreferencesv0alpha1 app.VersionSchema
-	_                                = json.Unmarshal(rawSchemaPreferencesv0alpha1, &versionSchemaPreferencesv0alpha1)
+	rawSchemaPreferencesv1alpha1     = []byte(`{"spec":{"properties":{"cookiePreferences":{"description":"Cookie preferences","properties":{"analytics":{"type":"object"},"functional":{"type":"object"},"performance":{"type":"object"}},"type":"object"},"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"language":{"description":"Selected language (beta)","type":"string"},"navbar":{"description":"Navigation preferences","properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"queryHistory":{"description":"Explore query history preferences","properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"regionalFormat":{"description":"Selected locale (beta)","type":"string"},"theme":{"description":"light, dark, empty is default","type":"string"},"timezone":{"description":"The timezone selection\nTODO: this should use the timezone defined in common","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaPreferencesv1alpha1 app.VersionSchema
+	_                                = json.Unmarshal(rawSchemaPreferencesv1alpha1, &versionSchemaPreferencesv1alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -27,7 +27,7 @@ var appManifestData = app.ManifestData{
 	Group:   "preferences.grafana.app",
 	Versions: []app.ManifestVersion{
 		{
-			Name:   "v0alpha1",
+			Name:   "v1alpha1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
@@ -35,7 +35,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaPreferencesv0alpha1,
+					Schema:     &versionSchemaPreferencesv1alpha1,
 				},
 			},
 		},
@@ -51,7 +51,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Preferences/v0alpha1": v0alpha1.PreferencesKind(),
+	"Preferences/v1alpha1": v1alpha1.PreferencesKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
