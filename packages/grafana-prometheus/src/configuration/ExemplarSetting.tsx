@@ -188,7 +188,7 @@ export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) 
         >
           <Button
             variant="destructive"
-            title={t(
+            aria-label={t(
               'grafana-prometheus.configuration.exemplar-setting.title-remove-exemplar-link',
               'Remove exemplar link'
             )}

@@ -15,5 +15,5 @@ export function FolderRepo({ folder }: Props) {
     return null;
   }
 
-  return <Badge text={t('folder-repo.badge-text', 'Provisioned')} color={'darkgrey'} />;
+  return <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.badge-tooltip', 'Provisioned')} />;
 }

@@ -384,14 +384,12 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		permission     dashboardaccess.PermissionType
 		permissions    []accesscontrol.Permission
 		expectedResult []string
-		features       []any
 	}{
 		{
 			desc:           "Should not be able to view dashboards under inherited folders with no permissions if nested folders are enabled",
 			queryType:      searchstore.TypeDashboard,
 			permission:     dashboardaccess.PERMISSION_VIEW,
 			permissions:    nil,
-			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: nil,
 		},
 		{
@@ -399,14 +397,12 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			queryType:      searchstore.TypeFolder,
 			permission:     dashboardaccess.PERMISSION_VIEW,
 			permissions:    nil,
-			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: nil,
 		},
 		{
 			desc:           "Should not be able to view inherited dashboards and folders with no permissions if nested folders are enabled",
 			permission:     dashboardaccess.PERMISSION_VIEW,
 			permissions:    nil,
-			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: nil,
 		},
 		{
@@ -416,7 +412,6 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"dashboard under the root", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -426,18 +421,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"parent", "subfolder"},
-		},
-		{
-			desc:       "Should not be able to view inherited folders if nested folders are not enabled",
-			queryType:  searchstore.TypeFolder,
-			permission: dashboardaccess.PERMISSION_VIEW,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
-			},
-			features:       []any{},
-			expectedResult: []string{"parent"},
 		},
 	}
 
@@ -452,7 +436,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		})
 		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.permissions)}}
 
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
@@ -494,14 +478,12 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 		permission              dashboardaccess.PermissionType
 		signedInUserPermissions []accesscontrol.Permission
 		expectedResult          []string
-		features                []any
 	}{
 		{
 			desc:                    "Should not be able to view dashboards under inherited folders with no permissions if nested folders are enabled",
 			queryType:               searchstore.TypeDashboard,
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
-			features:                []any{featuremgmt.FlagNestedFolders},
 			expectedResult:          nil,
 		},
 		{
@@ -509,14 +491,12 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			queryType:               searchstore.TypeFolder,
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
-			features:                []any{featuremgmt.FlagNestedFolders},
 			expectedResult:          nil,
 		},
 		{
 			desc:                    "Should not be able to view inherited dashboards and folders with no permissions if nested folders are enabled",
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
-			features:                []any{featuremgmt.FlagNestedFolders},
 			expectedResult:          nil,
 		},
 		{
@@ -526,7 +506,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"dashboard under the root", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -536,18 +515,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 			},
-			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"parent", "subfolder"},
-		},
-		{
-			desc:       "Should not be able to view inherited folders if nested folders are not enabled",
-			queryType:  searchstore.TypeFolder,
-			permission: dashboardaccess.PERMISSION_VIEW,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
-			},
-			features:       []any{},
-			expectedResult: []string{"parent"},
 		},
 	}
 
@@ -566,7 +534,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			}),
 			},
 		}
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
@@ -676,7 +644,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			Scope:  "folders:uid:unrelated"})
 		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.signedInUserPermissions)}}
 
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
@@ -711,56 +679,65 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) db.DB {
 	t.Helper()
 
-	store := db.InitTestDB(t)
-	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashes := make([]dashboards.Dashboard, 0, numFolders+numDashboards)
-		for i := 1; i <= numFolders; i++ {
-			str := strconv.Itoa(i)
-			dashes = append(dashes, dashboards.Dashboard{
-				OrgID:    1,
-				Slug:     str,
-				UID:      str,
-				Title:    str,
-				IsFolder: true,
-				Data:     simplejson.New(),
-				Created:  time.Now(),
-				Updated:  time.Now(),
-			})
-		}
-		// Seed dashboards
-		for i := numFolders + 1; i <= numFolders+numDashboards; i++ {
-			str := strconv.Itoa(i)
-			folderID := 0
-			if i%(numFolders+1) != 0 {
-				folderID = i % (numFolders + 1)
-			}
-			dashes = append(dashes, dashboards.Dashboard{
-				OrgID:     1,
-				IsFolder:  false,
-				FolderUID: strconv.Itoa(folderID),
-				UID:       str,
-				Slug:      str,
-				Title:     str,
-				Data:      simplejson.New(),
-				Created:   time.Now(),
-				Updated:   time.Now(),
-			})
-		}
+	db, cfg := db.InitTestDBWithCfg(t)
+	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+	require.NoError(t, err)
+	fStore := folderimpl.ProvideStore(db)
 
-		// Insert dashboards in batches
-		batchSize := 500
-		for i := 0; i < len(dashes); i += batchSize {
-			end := i + batchSize
-			if end > len(dashes) {
-				end = len(dashes)
-			}
+	// Create a signed-in user for folder creation
+	usr := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  1,
+		Login:  "test",
+	}
 
-			_, err := sess.InsertMulti(dashes[i:end])
-			if err != nil {
-				return err
-			}
+	// folders need to be created in both the folder and dashboard table
+	for i := 1; i <= numFolders; i++ {
+		str := strconv.Itoa(i)
+		folder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
+			Title:        str,
+			OrgID:        1,
+			UID:          str,
+			SignedInUser: usr,
+		})
+		require.NoError(t, err)
+		_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+			OrgID: 1,
+			Dashboard: simplejson.NewFromAny(map[string]any{
+				"title": str,
+				"uid":   folder.UID,
+			}),
+			IsFolder: true,
+		})
+		require.NoError(t, err)
+	}
+
+	// now create dashboards
+	for i := numFolders + 1; i <= numFolders+numDashboards; i++ {
+		str := strconv.Itoa(i)
+		folderID := 0
+		if i%(numFolders+1) != 0 {
+			folderID = i % (numFolders + 1)
 		}
 
+		cmd := dashboards.SaveDashboardCommand{
+			OrgID: 1,
+			Dashboard: simplejson.NewFromAny(map[string]any{
+				"title": str,
+				"uid":   str,
+			}),
+			IsFolder: false,
+		}
+		if folderID != 0 {
+			cmd.FolderUID = strconv.Itoa(folderID)
+		}
+
+		_, err := dashStore.SaveDashboard(context.Background(), cmd)
+		require.NoError(t, err)
+	}
+
+	// insert permissions
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		role := &accesscontrol.Role{
 			OrgID:   0,
 			UID:     "basic_viewer",
@@ -792,6 +769,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 		}
 
 		if len(permissions) > 0 {
+			batchSize := 500
 			for i := 0; i < len(permissions); i += batchSize {
 				end := i + batchSize
 				if end > len(permissions) {
@@ -808,7 +786,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 		return nil
 	})
 	require.NoError(t, err)
-	return store
+	return db
 }
 
 func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol.Permission, orgID int64, features featuremgmt.FeatureToggles) db.DB {
