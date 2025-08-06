@@ -1,3 +1,8 @@
+config.define_bool("use-zig")
+cfg = config.parse()
+
+use_zig = cfg.get('docker-builder', False)
+
 # --- Frontend processes
 local_resource(
   'yarn install',
@@ -5,7 +10,7 @@ local_resource(
   deps=[
     'yarn.lock',
   ],
-  labels=["frontend"]
+  labels=["local"]
 )
 
 local_resource(
@@ -13,63 +18,96 @@ local_resource(
   cmd='rm -rf public/build/assets-manifest.json',
   serve_cmd='yarn start:noLint',
   resource_deps=['yarn install'],
+
+  # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
+  # the webpack build is complete?
   readiness_probe=probe(
-    initial_delay_secs=5, # wait for the assets-manifest.json to first be deleted
+    initial_delay_secs=10,
     period_secs=1,
-    exec=exec_action(["bash", "-c", "cat public/build/assets-manifest.json | grep entrypoints"])
+    exec=exec_action(["bash", "-c", "stat public/build/assets-manifest.json"]),
   ),
   allow_parallel=True,
-  labels=["frontend"]
+  labels=["local"]
+)
+
+build_backend_env = {}
+if use_zig:
+  build_backend_env['USE_ZIG'] = "true"
+
+local_resource(
+  'backend-build',
+  "bash ./build-grafana.sh",
+  deps=[
+    '../../pkg',
+    '../../apps',
+    '../../kinds',
+    '../../kindsv2',
+    '../../local',
+    '../../scripts',
+    '../../conf',
+    '../../go.sum',
+    '../../go.mod',
+  ],
+  env=build_backend_env,
+  allow_parallel=True,
+  labels=["local"]
 )
 
 # --- Docker Compose
 docker_compose("./docker-compose.yaml")
+dc_resource("proxy",
+  resource_deps=["backend", "frontend-service"],
+  labels=["services"]
+)
+dc_resource("backend",
+  resource_deps=["yarn start", "backend-build"],
+  labels=["services"]
+)
+dc_resource("frontend-service",
+  resource_deps=["yarn start", "backend-build"],
+  labels=["services"],
+)
 
-# First argument is the name of the service from the docker-compose file.
-dc_resource("backend", resource_deps=["yarn start"], labels=["backend"])
-dc_resource("frontend-service", resource_deps=["yarn start"], labels=["backend"])
-dc_resource("proxy", resource_deps=["backend", "frontend-service"], labels=["ingress"])
+# paths in tilt files are confusing....
+# - if tilt is dealing the the path, it is relative to the Tiltfile
+# - if docker is dealing with the path, it is relative to the context
+docker_build('grafana-fs-dev',
+  # Set the docker context to the root of the repo
+  context='../..',
+  dockerfile='grafana-fs-dev.dockerfile',
 
-docker_build('grafana-backend', '../..',
-  dockerfile='backend.dockerfile',
-
-  # Only these paths will be in the docker context, and will trigger a rebuild.
-  # This must include all the files that are COPY'd in backend.dockerfile
+  # Paths relative to the docker context (root of the repo)
   only=[
-    "./Makefile",
-    "./devenv/frontend-service/build-grafana.sh",
-
-    "./apps",
-    "./pkg",
-    "./scripts",
-
-    "./go.sum",
-    "./go.mod",
-    "./go.work",
-    "./go.work.sum",
-
-    "./kinds",
-    "./kindsv2",
-    "./public/api-merged.json",
-    "./package.json",
-
-    "./conf/defaults.ini",
-    "./conf/ldap.toml",
-    "./conf/ldap_multiple.toml",
-    "./public/emails",
-    "./public/views",
-    "./public/dashboards",
-    "./public/build/assets-manifest.json",
+    'devenv/frontend-service/build/grafana',
+    'devenv/frontend-service/provisioning',
+    'conf/defaults.ini',
+    'public/emails',
+    'public/views',
+    'public/dashboards',
+    'public/app/plugins',
+    'public/build/assets-manifest.json',
   ],
+
+  # Sync paths are relative to the Tiltfile
   live_update = [
+    sync('./build/grafana', '/grafana/bin/grafana'),
+    sync('../../conf/defaults.ini', '/grafana/conf/defaults.ini'),
+    sync('../../public/emails', '/grafana/public/emails'),
+    sync('../../public/views', '/grafana/public/views'),
+    sync('../../public/dashboards', '/grafana/public/dashboards'),
+    sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     restart_container()
   ]
 )
 
-
-docker_build('grafana-proxy', '.',
+docker_build('grafana-proxy',
+  # Set the docker context to this frontend-service folder
+  context='.',
   dockerfile='proxy.dockerfile',
+
+  # Path relative to the docker context (this folder)
   only=[
     "./nginx.conf",
   ],

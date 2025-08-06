@@ -7,8 +7,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { getStatusFromError } from 'app/core/utils/errors';
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -72,8 +72,10 @@ export function NestedFolderPicker({
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQuery(value || skipToken);
-
-  const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
+  // user might not have access to the folder, but they have access to the dashboard
+  // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
+  // but doesn't have access to the folder
+  const isForbidden = getStatusFromError(selectedFolder.error) === 403;
 
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
@@ -296,6 +298,7 @@ export function NestedFolderPicker({
             : undefined
         }
         {...getReferenceProps()}
+        disabled={isForbidden}
       />
     );
   }
@@ -355,7 +358,7 @@ export function NestedFolderPicker({
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}
               idPrefix={overlayId}
-              foldersAreOpenable={nestedFoldersEnabled && !(search && searchResults)}
+              foldersAreOpenable={!(search && searchResults)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
             />

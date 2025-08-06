@@ -61,7 +61,7 @@
     "@babel/preset-react": "7.27.1",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "16.0.1",
-    "@testing-library/dom": "10.4.0",
+    "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "^6.1.2",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
@@ -79,9 +79,9 @@
     "rollup": "^4.22.4",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "ts-jest": "29.2.5",
+    "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "peerDependencies": {
     "react": "^18.0.0",

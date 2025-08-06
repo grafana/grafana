@@ -311,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "",
-        "disable-text-wrap": ""
-      },
       "feedback-link": {
         "give-feedback": "피드백 제출하기",
         "title-give-feedback": ""
@@ -328,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -378,15 +371,10 @@
         "tooltip-metric": ""
       },
       "metrics-modal": {
-        "additional-settings": "",
-        "aria-label-additional-settings": "추가 설정",
         "aria-label-browse-metrics": "",
         "currently-selected": "",
         "metrics-pre-filtered": "",
-        "placeholder-results-per-page": "",
-        "results-per-page": "",
-        "title-metrics-explorer": "",
-        "results-amount_other": ""
+        "title-metrics-explorer": ""
       },
       "nested-query": {
         "label": {
@@ -499,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "이름",
-        "select": "선택",
         "type": "유형"
       },
       "update-function-args": {
