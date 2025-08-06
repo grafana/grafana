@@ -17,6 +17,8 @@ import (
 	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -25,8 +27,14 @@ type objectForStorage struct {
 	// The value to save in unistore
 	raw bytes.Buffer
 
-	// apply permissions (defined in the resource body)
+	// Reference to the owner object
+	ref common.ObjectReference
+
+	// apply permissions after create (defined in the resource body)
 	grantPermissions string
+
+	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
+	permissionCreator permissionCreatorFunc
 
 	// These secrets where created, should be cleaned up if storage fails
 	createdSecureValues []string
@@ -37,6 +45,32 @@ type objectForStorage struct {
 	// We know something changed
 	// This will ensure that the generation increments
 	hasChanged bool
+}
+
+func (v *objectForStorage) finish(ctx context.Context, err error, store *Storage) error {
+	if err != nil {
+		// Remove the secure values that were created
+		for _, s := range v.createdSecureValues {
+			e := store.opts.SecureValues.DeleteWhenOwnedByResource(ctx, v.ref, s)
+			logging.FromContext(ctx).Warn("unable to clean up new secure value", "name", s, "err", e)
+		}
+		return err
+	}
+
+	// Delete secure values after successfully saving the object
+	if len(v.deleteSecureValues) > 0 {
+		for _, s := range v.deleteSecureValues {
+			e := store.opts.SecureValues.DeleteWhenOwnedByResource(ctx, v.ref, s)
+			logging.FromContext(ctx).Warn("unable to clean up new secure value", "name", s, "err", e)
+		}
+	}
+
+	// Create permissions
+	if v.permissionCreator != nil {
+		return v.permissionCreator(ctx)
+	}
+
+	return nil
 }
 
 // Called on create

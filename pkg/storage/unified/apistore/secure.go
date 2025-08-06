@@ -16,6 +16,9 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueSuppo
 		return err
 	}
 
+	// Owner reference for inline values
+	v.ref = utils.ToObjectReference(obj)
+
 	existing := make(map[string]bool)
 	if previousObject == nil {
 		if len(secure) == 0 {
@@ -58,8 +61,7 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueSuppo
 				continue
 			}
 			if !val.Create.IsZero() {
-				owner := utils.ToObjectReference(obj)
-				n, err := store.CreateInline(ctx, owner, val.Create)
+				n, err := store.CreateInline(ctx, v.ref, val.Create)
 				if err != nil {
 					return err
 				}
@@ -98,14 +100,3 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 	}
 	return obj.SetSecureValues(nil) // remove them from the object
 }
-
-// func (s *Storage) post(ctx context.Context, v *objectForStorage, err error, rsp *resourcepb.CreateResponse) {
-// 	if len(v.createdSecureValues) == 0 {
-// 		return // no need to create values
-// 	}
-// 	if err != nil || (rsp != nil && rsp.Error != nil) {
-// 		// for _, k := range v.createdSecureValues {
-// 		// 	s.opts.SecureValues.DeleteInline()
-// 		// }
-// 	}
-// }

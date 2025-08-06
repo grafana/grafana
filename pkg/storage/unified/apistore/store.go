@@ -32,6 +32,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -198,23 +199,21 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	grantPermissions, err := afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
+	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {
 		return err
 	}
 
 	rsp, err := s.store.Create(ctx, req)
-	if len(v.createdSecureValues) > 0 && (err != nil || rsp.Error != nil) {
-		fmt.Printf("TODO, cleanup orphan secrets: %v\n", v.createdSecureValues)
-	}
 	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
+		return v.finish(ctx, resource.GetError(resource.AsErrorResult(err)), s)
 	}
 	if rsp.Error != nil {
+		err = resource.GetError(rsp.Error)
 		if rsp.Error.Code == http.StatusConflict {
-			return storage.NewKeyExistsError(key, 0)
+			err = storage.NewKeyExistsError(key, 0)
 		}
-		return resource.GetError(rsp.Error)
+		return v.finish(ctx, err, s)
 	}
 
 	if _, err := s.convertToObject(req.Value, out); err != nil {
@@ -236,12 +235,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		})
 	}
 
-	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
-	if grantPermissions != nil {
-		return grantPermissions(ctx)
-	}
-
-	return nil
+	return v.finish(ctx, nil, s)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -312,7 +306,7 @@ func (s *Storage) Delete(
 	}
 
 	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
-		fmt.Printf("failed to delete inline secure values (now orphans)")
+		logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
 	}
 
 	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
@@ -608,15 +602,14 @@ func (s *Storage) GuaranteedUpdate(
 	if !bytes.Equal(req.Value, existingBytes) {
 		updateResponse, err := s.store.Update(ctx, req)
 		if err != nil {
-			fmt.Printf("TODO... remove the newly created secrets")
-			return resource.GetError(resource.AsErrorResult(err))
+			err = resource.GetError(resource.AsErrorResult(err))
+		} else if updateResponse.Error != nil {
+			err = resource.GetError(updateResponse.Error)
 		}
-		if updateResponse.Error != nil {
-			fmt.Printf("TODO... remove the newly created secrets")
-			return resource.GetError(updateResponse.Error)
-		}
-		if len(v.deleteSecureValues) > 0 {
-			fmt.Printf("TODO... remove the deleted secrets")
+
+		// Cleanup secure values
+		if err = v.finish(ctx, err, s); err != nil {
+			return err
 		}
 
 		rv = uint64(updateResponse.ResourceVersion)
