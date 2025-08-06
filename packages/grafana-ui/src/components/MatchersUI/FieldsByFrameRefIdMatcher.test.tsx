@@ -110,9 +110,9 @@ describe('RefIDMultiPicker', () => {
     /* eslint-enable testing-library/prefer-user-event */
   });
 
+  // in the scenario where a refID filter was saved, but is no longer valid, it should still show.
   it('Should display a refID that does not exist in the selection', async () => {
     multiSetup({ value: '/^(?:merge-A-B-C)$/' });
-    const removeButton = await screen.findByLabelText('Remove');
-    expect(removeButton.previousSibling).toHaveTextContent('merge-A-B-C');
+    expect(screen.getByText('merge-A-B-C')).toBeInTheDocument();
   });
 });
