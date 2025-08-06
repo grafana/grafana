@@ -488,7 +488,7 @@ const TimestampResolutionButton = () => {
           <span className={styles.resolutionText}>
             {timestampResolution === 'ms'
               ? t('logs.logs-controls.resolution-ms', 'ms')
-              : t('logs.logs-controls.resolution-ms', 'ns')}
+              : t('logs.logs-controls.resolution-ns', 'ns')}
           </span>
         )}
       </button>
