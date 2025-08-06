@@ -458,8 +458,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     if (plugin.onPanelMigration) {
-      const shouldRunMigration = plugin.shouldMigrate?.(this) || version !== this.pluginVersion;
-      if (shouldRunMigration) {
+      if (plugin.shouldMigrate?.(this) || version !== this.pluginVersion) {
         const newPanelOptions = plugin.onPanelMigration(this);
         this.options = await newPanelOptions;
         this.pluginVersion = version;
