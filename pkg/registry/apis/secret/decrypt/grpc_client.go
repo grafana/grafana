@@ -108,14 +108,6 @@ func createTLSCredentials(config TLSConfig) (credentials.TransportCredentials, e
 	return credentials.NewTLS(tlsConfig), nil
 }
 
-// Close will close the underlying gRPC connection. After it is closed, the client cannot be used anymore.
-func (g *GRPCDecryptClient) Close() error {
-	if g.conn != nil {
-		return g.conn.Close()
-	}
-	return nil
-}
-
 // Decrypt a set of secure value names in a given namespace for a specific service name.
 func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names []string) (map[string]contracts.DecryptResult, error) {
 	_, err := types.ParseNamespace(namespace)
