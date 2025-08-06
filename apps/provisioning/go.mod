@@ -4,7 +4,7 @@ go 1.24.5
 
 require (
 	github.com/grafana/grafana-app-sdk v0.40.2
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250806082506-f3896624f5f1
 	k8s.io/apimachinery v0.33.3
 	k8s.io/client-go v0.33.3
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
