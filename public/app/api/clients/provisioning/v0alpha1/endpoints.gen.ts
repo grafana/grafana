@@ -676,39 +676,407 @@ export type GetFrontendSettingsApiResponse = /** status 200 undefined */ Reposit
 export type GetFrontendSettingsApiArg = void;
 export type GetResourceStatsApiResponse = /** status 200 undefined */ ResourceStats;
 export type GetResourceStatsApiArg = void;
-export type JobList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+export type Time = string;
+export type FieldsV1 = object;
+export type ManagedFieldsEntry = {
+  /** APIVersion defines the version of this resource that this field set applies to. The format is "group/version" just like the top-level APIVersion field. It is necessary to track the version of a field set because it cannot be automatically converted. */
   apiVersion?: string;
-  items: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  /** FieldsType is the discriminator for the different fields format and version. There is currently only one possible value: "FieldsV1" */
+  fieldsType?: string;
+  /** FieldsV1 holds the first JSON version format as described in the "FieldsV1" type. */
+  fieldsV1?: FieldsV1;
+  /** Manager is an identifier of the workflow managing these fields. */
+  manager?: string;
+  /** Operation is the type of operation which lead to this ManagedFieldsEntry being created. The only valid values for this field are 'Apply' and 'Update'. */
+  operation?: string;
+  /** Subresource is the name of the subresource used to update that object, or empty string if the object was updated through the main resource. The value of this field is used to distinguish between managers, even if they share the same name. For example, a status update will be distinct from a regular update using the same manager name. Note that the APIVersion field is not related to the Subresource field and it always corresponds to the version of the main resource. */
+  subresource?: string;
+  /** Time is the timestamp of when the ManagedFields entry was added. The timestamp will also be updated if a field is added, the manager changes any of the owned fields value or removes a field. The timestamp does not update when a field is removed from the entry because another manager took it over. */
+  time?: Time;
+};
+export type OwnerReference = {
+  /** API version of the referent. */
+  apiVersion: string;
+  /** If true, AND if the owner has the "foregroundDeletion" finalizer, then the owner cannot be deleted from the key-value store until this reference is removed. See https://kubernetes.io/docs/concepts/architecture/garbage-collection/#foreground-deletion for how the garbage collector interacts with this field and enforces the foreground deletion. Defaults to false. To set this field, a user needs "delete" permission of the owner, otherwise 422 (Unprocessable Entity) will be returned. */
+  blockOwnerDeletion?: boolean;
+  /** If true, this reference points to the managing controller. */
+  controller?: boolean;
+  /** Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  /** Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names */
+  name: string;
+  /** UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
+  uid: string;
+};
+export type ObjectMeta = {
+  /** Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations */
+  annotations?: {
+    [key: string]: string;
+  };
+  /** CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+    
+    Populated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata */
+  creationTimestamp?: Time;
+  /** Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only. */
+  deletionGracePeriodSeconds?: number;
+  /** DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This field is set by the server when a graceful deletion is requested by the user, and is not directly settable by a client. The resource is expected to be deleted (no longer visible from resource lists, and not reachable by name) after the time in this field, once the finalizers list is empty. As long as the finalizers list contains items, deletion is blocked. Once the deletionTimestamp is set, this value may not be unset or be set further into the future, although it may be shortened or the resource may be deleted prior to this time. For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react by sending a graceful termination signal to the containers in the pod. After that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup, remove the pod from the API. In the presence of network partitions, this object may still exist after this timestamp, until an administrator or automated process can determine the resource is fully terminated. If not set, graceful deletion of the object has not been requested.
+    
+    Populated by the system when a graceful deletion is requested. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata */
+  deletionTimestamp?: Time;
+  /** Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list. */
+  finalizers?: string[];
+  /** GenerateName is an optional prefix, used by the server, to generate a unique name ONLY IF the Name field has not been provided. If this field is used, the name returned to the client will be different than the name passed. This value will also be combined with a unique suffix. The provided value has the same validation rules as the Name field, and may be truncated by the length of the suffix required to make the value unique on the server.
+    
+    If this field is specified and the generated name exists, the server will return a 409.
+    
+    Applied only if Name is not specified. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency */
+  generateName?: string;
+  /** A sequence number representing a specific generation of the desired state. Populated by the system. Read-only. */
+  generation?: number;
+  /** Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels */
+  labels?: {
+    [key: string]: string;
+  };
+  /** ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow. This is mostly for internal housekeeping, and users typically shouldn't need to set or understand this field. A workflow can be the user's name, a controller's name, or the name of a specific apply path like "ci-cd". The set of fields is always in the version that the workflow used when modifying the object. */
+  managedFields?: ManagedFieldsEntry[];
+  /** Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names */
+  name?: string;
+  /** Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the "default" namespace, but "default" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.
+    
+    Must be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces */
+  namespace?: string;
+  /** List of objects depended by this object. If ALL objects in the list have been deleted, this object will be garbage collected. If this object is managed by a controller, then an entry in this list will point to this controller, with the controller field set to true. There cannot be more than one managing controller. */
+  ownerReferences?: OwnerReference[];
+  /** An opaque value that represents the internal version of this object that can be used by clients to determine when objects have changed. May be used for optimistic concurrency, change detection, and the watch operation on a resource or set of resources. Clients must treat these values as opaque and passed unmodified back to the server. They may only be valid for a particular resource or set of resources.
+    
+    Populated by the system. Read-only. Value must be treated as opaque by clients and . More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
+  resourceVersion?: string;
+  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
+  selfLink?: string;
+  /** UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.
+    
+    Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
+  uid?: string;
+};
+export type ResourceRef = {
+  /** Group is the group of the resource, such as "dashboard.grafana.app". */
+  group?: string;
+  /** Kind is the type of resource, for example, "Dashboard". */
   kind?: string;
-  metadata?: any;
+  /** Name is the name of the resource, such as a dashboard UID. */
+  name?: string;
+};
+export type DeleteJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash to delete from */
+  ref?: string;
+  /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+};
+export type MigrateJobOptions = {
+  /** Preserve history (if possible) */
+  history?: boolean;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
+};
+export type MoveJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash that should move */
+  ref?: string;
+  /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+  /** Destination path for the move (e.g. "new-location/") */
+  targetPath?: string;
+};
+export type PullRequestJobOptions = {
+  /** The specific commit hash that triggered this notice */
+  hash?: string;
+  /** Pull request number (when appropriate) */
+  pr?: number;
+  /** The branch of commit hash */
+  ref?: string;
+  /** URL to the originator (eg, PR URL) */
+  url?: string;
+};
+export type SyncJobOptions = {
+  /** Incremental synchronization for versioned repositories */
+  incremental: boolean;
+};
+export type ExportJobOptions = {
+  /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
+  branch?: string;
+  /** The source folder (or empty) to export */
+  folder?: string;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
+  /** FIXME: we should validate this in admission hooks Prefix in target file system */
+  path?: string;
+};
+export type JobSpec = {
+  /** Possible enum values:
+     - `"delete"` deletes files in the remote repository
+     - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"move"` moves files in the remote repository
+     - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
+     - `"pull"` replicates the remote branch in the local copy of the repository.
+     - `"push"` replicates the local copy of the repository in the remote branch. */
+  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+  /** Delete when the action is `delete` */
+  delete?: DeleteJobOptions;
+  /** Required when the action is `migrate` */
+  migrate?: MigrateJobOptions;
+  /** Move when the action is `move` */
+  move?: MoveJobOptions;
+  /** Pull request options */
+  pr?: PullRequestJobOptions;
+  /** Required when the action is `pull` */
+  pull?: SyncJobOptions;
+  /** Required when the action is `push` */
+  push?: ExportJobOptions;
+  /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
+  repository?: string;
+};
+export type JobResourceSummary = {
+  create?: number;
+  delete?: number;
+  /** Create or update (export) */
+  error?: number;
+  /** Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info */
+  errors?: string[];
+  group?: string;
+  /** No action required (useful for sync) */
+  noop?: number;
+  resource?: string;
+  total?: number;
+  update?: number;
+  write?: number;
+};
+export type JobStatus = {
+  errors?: string[];
+  finished?: number;
+  message?: string;
+  /** Optional value 0-100 that can be set while running */
+  progress?: number;
+  started?: number;
+  /** Possible enum values:
+     - `"error"` Finished with errors
+     - `"pending"` Job has been submitted, but not processed yet
+     - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
+     - `"working"` The job is running */
+  state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
+  /** Summary of processed actions */
+  summary?: JobResourceSummary[];
 };
 export type Job = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  metadata?: any;
-  spec?: any;
-  status?: any;
+  metadata?: ObjectMeta;
+  spec?: JobSpec;
+  status?: JobStatus;
 };
-export type RepositoryList = {
+export type ListMeta = {
+  /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
+  continue?: string;
+  /** remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact. */
+  remainingItemCount?: number;
+  /** String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
+  resourceVersion?: string;
+  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
+  selfLink?: string;
+};
+export type JobList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: any[];
+  items: Job[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  metadata?: any;
+  metadata?: ListMeta;
+};
+export type BitbucketRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
+  token?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
+  /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
+  url?: string;
+};
+export type GitRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
+  token?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
+  /** The repository URL (e.g. `https://github.com/example/test.git`). */
+  url?: string;
+};
+export type GitHubRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
+  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
+  generateDashboardPreviews?: boolean;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
+  token?: string;
+  /** The repository URL (e.g. `https://github.com/example/test`). */
+  url?: string;
+};
+export type GitLabRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
+  token?: string;
+  /** The repository URL (e.g. `https://gitlab.com/example/test`). */
+  url?: string;
+};
+export type LocalRepositoryConfig = {
+  path?: string;
+};
+export type SyncOptions = {
+  /** Enabled must be saved as true before any sync job will run */
+  enabled: boolean;
+  /** When non-zero, the sync will run periodically */
+  intervalSeconds?: number;
+  /** Where values should be saved
+    
+    Possible enum values:
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
+     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
+  target: 'folder' | 'instance';
+};
+export type RepositorySpec = {
+  /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
+  bitbucket?: BitbucketRepositoryConfig;
+  /** Repository description */
+  description?: string;
+  /** The repository on Git. Mutually exclusive with local | github | git. */
+  git?: GitRepositoryConfig;
+  /** The repository on GitHub. Mutually exclusive with local | github | git. */
+  github?: GitHubRepositoryConfig;
+  /** The repository on GitLab. Mutually exclusive with local | github | git. */
+  gitlab?: GitLabRepositoryConfig;
+  /** The repository on the local file system. Mutually exclusive with local | github. */
+  local?: LocalRepositoryConfig;
+  /** Sync settings -- how values are pulled from the repository into grafana */
+  sync: SyncOptions;
+  /** The repository display name (shown in the UI) */
+  title: string;
+  /** The repository type.  When selected oneOf the values below should be non-nil
+    
+    Possible enum values:
+     - `"bitbucket"`
+     - `"git"`
+     - `"github"`
+     - `"gitlab"`
+     - `"local"` */
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
+  workflows: ('branch' | 'write')[];
+};
+export type HealthStatus = {
+  /** When the health was checked last time */
+  checked?: number;
+  /** When not healthy, requests will not be executed */
+  healthy: boolean;
+  /** Summary messages (can be shown to users) Will only be populated when not healthy */
+  message?: string[];
+};
+export type ResourceCount = {
+  count: number;
+  group: string;
+  resource: string;
+};
+export type SyncStatus = {
+  /** When the sync job finished */
+  finished?: number;
+  /** Incremental synchronization for versioned repositories */
+  incremental?: boolean;
+  /** The ID for the job that ran this sync */
+  job?: string;
+  /** The repository ref when the last successful sync ran */
+  lastRef?: string;
+  /** Summary messages (will be shown to users) */
+  message: string[];
+  /** When the next sync check is scheduled */
+  scheduled?: number;
+  /** When the sync job started */
+  started?: number;
+  /** pending, running, success, error
+    
+    Possible enum values:
+     - `"error"` Finished with errors
+     - `"pending"` Job has been submitted, but not processed yet
+     - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
+     - `"working"` The job is running */
+  state: 'error' | 'pending' | 'success' | 'warning' | 'working';
+};
+export type WebhookStatus = {
+  encryptedSecret?: string;
+  id?: number;
+  lastEvent?: number;
+  secret?: string;
+  subscribedEvents?: string[];
+  url?: string;
+};
+export type RepositoryStatus = {
+  /** This will get updated with the current health status (and updated periodically) */
+  health: HealthStatus;
+  /** The generation of the spec last time reconciliation ran */
+  observedGeneration: number;
+  /** The object count when sync last ran */
+  stats?: ResourceCount[];
+  /** Sync information with the last sync information */
+  sync: SyncStatus;
+  /** Webhook Information (if applicable) */
+  webhook: WebhookStatus;
 };
 export type Repository = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  metadata?: any;
-  spec?: any;
-  status?: any;
+  metadata?: ObjectMeta;
+  spec?: RepositorySpec;
+  status?: RepositoryStatus;
+};
+export type RepositoryList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: Repository[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
 };
 export type StatusCause = {
   /** The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
@@ -736,16 +1104,6 @@ export type StatusDetails = {
   /** UID of the resource. (when there is a single resource which can be described). More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ListMeta = {
-  /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
-  continue?: string;
-  /** remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact. */
-  remainingItemCount?: number;
-  /** String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
-  resourceVersion?: string;
-  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
-  selfLink?: string;
-};
 export type Status = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -764,6 +1122,70 @@ export type Status = {
   /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
   status?: string;
 };
+export type ResourceRepositoryInfo = {
+  /** The name (identifier) */
+  name: string;
+  /** The namespace this belongs to */
+  namespace: string;
+  /** The display name for this repository */
+  title: string;
+  /** The repository type
+    
+    Possible enum values:
+     - `"bitbucket"`
+     - `"git"`
+     - `"github"`
+     - `"gitlab"`
+     - `"local"` */
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+};
+export type Unstructured = {
+  [key: string]: any;
+};
+export type ResourceType = {
+  /** For non-k8s native formats, what did this start as
+    
+    Possible enum values:
+     - `"access-control"` Access control https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/access-control/sample.yaml
+     - `"alerting"` Alert configuration https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/alerting/sample.yaml
+     - `"dashboard"` Dashboard JSON
+     - `"datasources"` Datasource definitions eg: https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/datasources/sample.yaml */
+  classic?: 'access-control' | 'alerting' | 'dashboard' | 'datasources';
+  group?: string;
+  kind?: string;
+  resource?: string;
+  version?: string;
+};
+export type ResourceObjects = {
+  /** The action required/used for dryRun
+    
+    Possible enum values:
+     - `"create"`
+     - `"delete"`
+     - `"move"`
+     - `"update"` */
+  action?: 'create' | 'delete' | 'move' | 'update';
+  /** The value returned from a dryRun request */
+  dryRun?: Unstructured;
+  /** The same value, currently saved in the grafana database */
+  existing?: Unstructured;
+  /** The resource from the repository with all modifications applied eg, the name, folder etc will all be applied to this object */
+  file?: Unstructured;
+  /** The identified type for this object */
+  type: ResourceType;
+  /** For write events, this will return the value that was added or updated */
+  upsert?: Unstructured;
+};
+export type ResourceUrLs = {
+  /** Compare this version to the target branch */
+  compareURL?: string;
+  /** A URL that will create a new pull requeset for this branch */
+  newPullRequestURL?: string;
+  /** A URL pointing to the repository this lives in */
+  repositoryURL?: string;
+  /** A URL pointing to the this file in the repository */
+  sourceURL?: string;
+};
 export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -778,45 +1200,37 @@ export type ResourceWrapper = {
   /** The request ref (or branch if exists) */
   ref?: string;
   /** Basic repository info */
-  repository: any;
+  repository: ResourceRepositoryInfo;
   /** Different flavors of the same object */
-  resource: any;
+  resource: ResourceObjects;
   /** The modified time in the remote file system */
-  timestamp?: any;
+  timestamp?: Time;
   /** Typed links for this file (only supported by external systems, github etc) */
-  urls?: any;
+  urls?: ResourceUrLs;
 };
-export type JobSpec = {
-  /** Possible enum values:
-     - `"delete"` deletes files in the remote repository
-     - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
-     - `"move"` moves files in the remote repository
-     - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
-     - `"pull"` replicates the remote branch in the local copy of the repository.
-     - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
-  /** Delete when the action is `delete` */
-  delete?: any;
-  /** Required when the action is `migrate` */
-  migrate?: any;
-  /** Move when the action is `move` */
-  move?: any;
-  /** Pull request options */
-  pr?: any;
-  /** Required when the action is `pull` */
-  pull?: any;
-  /** Required when the action is `push` */
-  push?: any;
-  /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
-  repository?: string;
+export type ResourceListItem = {
+  folder?: string;
+  group: string;
+  /** the k8s identifier */
+  hash: string;
+  name: string;
+  path: string;
+  resource: string;
+  time?: number;
+  title?: string;
 };
 export type ResourceList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: any[];
+  items: ResourceListItem[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  metadata?: any;
+  metadata?: ListMeta;
+};
+export type ErrorDetails = {
+  detail?: string;
+  field?: string;
+  type: string;
 };
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -824,7 +1238,7 @@ export type TestResults = {
   /** HTTP status code */
   code: number;
   /** Field related errors */
-  errors?: any[];
+  errors?: ErrorDetails[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   /** Is the connection healthy */
@@ -838,7 +1252,7 @@ export type WebhookResponse = {
   /** HTTP Status code 200 implies that the payload was understood but nothing is required 202 implies that an async job has been scheduled to handle the request */
   code?: number;
   /** Jobs to be processed When the response is 202 (Accepted) the queued jobs will be returned */
-  job?: any;
+  job?: JobSpec;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
@@ -877,11 +1291,6 @@ export type RepositoryViewList = {
   kind?: string;
   /** The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true */
   legacyStorage?: boolean;
-};
-export type ResourceCount = {
-  count: number;
-  group: string;
-  resource: string;
 };
 export type ManagerStats = {
   /** Manager identity */
