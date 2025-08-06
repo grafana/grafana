@@ -5,7 +5,7 @@ go 1.24.5
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.40.2
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250806082506-f3896624f5f1
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250806100000-7e09f751003d
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3
@@ -87,7 +87,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v1.1.0 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0 // indirect
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250806082506-f3896624f5f1 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250806100000-7e09f751003d // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.2.4 // indirect

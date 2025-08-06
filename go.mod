@@ -230,26 +230,26 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0-20250806082506-f3896624f5f1 // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250806082506-f3896624f5f1 // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-	github.com/grafana/grafana/apps/folder v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/apps/iam v0.0.0-20250806082506-f3896624f5f1 // @grafana/identity-access-team
-	github.com/grafana/grafana/apps/investigations v0.0.0-20250806082506-f3896624f5f1 // @fcjack @matryer
-	github.com/grafana/grafana/apps/playlist v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/preferences v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/provisioning v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/secret v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana/apps/shorturl v0.0.0-20250806082506-f3896624f5f1 // @grafana/sharing-squad
-	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/advisor v0.0.0-20250806100000-7e09f751003d // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250806100000-7e09f751003d // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/folder v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/apps/iam v0.0.0-20250806100000-7e09f751003d // @grafana/identity-access-team
+	github.com/grafana/grafana/apps/investigations v0.0.0-20250806100000-7e09f751003d // @fcjack @matryer
+	github.com/grafana/grafana/apps/playlist v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/preferences v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/provisioning v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/secret v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana/apps/shorturl v0.0.0-20250806100000-7e09f751003d // @grafana/sharing-squad
+	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-app-platform-squad
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250806082506-f3896624f5f1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20250806100000-7e09f751003d // @grafana/grafana-app-platform-squad
 )
 
 require (
