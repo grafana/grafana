@@ -146,7 +146,7 @@ func NewAPIBuilder(
 	// Create job history based on configuration
 	// Default to in-memory cache if no config provided
 	jobHistory := jobs.NewJobHistoryCache()
-	if jobHistoryConfig != nil || jobHistoryConfig.Loki == nil {
+	if jobHistoryConfig != nil || jobHistoryConfig.Loki != nil {
 		jobHistory = jobs.NewLokiJobHistory(*jobHistoryConfig.Loki)
 	}
 
