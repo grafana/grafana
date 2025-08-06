@@ -734,7 +734,7 @@ export function TableNG(props: TableNGProps) {
         </div>
       )}
 
-      <div className={styles.tooltipContainer} ref={tooltipContainerRef} />
+      <div ref={tooltipContainerRef} />
 
       {tooltipState && (
         <DataLinksActionsTooltip
@@ -935,9 +935,6 @@ const getGridStyles = (
   }),
   menuItem: css({
     maxWidth: '200px',
-  }),
-  tooltipContainer: css({
-    zIndex: theme.zIndex.tooltip,
   }),
 });
 
