@@ -28,8 +28,14 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
   const [maxSeriesValue, setMaxSeriesValue] = useState(options.jsonData.maxSeries?.toString() || '');
 
   const [advancedDbConnectionSettingsIsOpen, setAdvancedDbConnectionSettingsIsOpen] = useState(
-    () => !!options.jsonData.timeInterval || !!options.jsonData.insecureGrpc
+    () => !!options.jsonData.timeInterval || !!options.jsonData.insecureGrpc || !!options.jsonData.maxSeries
   );
+
+  const onMaxSeriesChange = (e: any) => {
+    setMaxSeriesValue(e.currentTarget.value);
+    const val = parseInt(e.currentTarget.value, 10);
+    updateDatasourcePluginJsonDataOption(props, 'maxSeries', Number.isFinite(val) ? val : undefined);
+  };
 
   return (
     <>
@@ -127,11 +133,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                 className="width-15"
                 data-testid="influxdb-v2-config-max-series"
                 onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMaxSeriesClicked}
-                onChange={(e) => {
-                  setMaxSeriesValue(e.currentTarget.value);
-                  const val = parseInt(e.currentTarget.value, 10);
-                  updateDatasourcePluginJsonDataOption(props, 'maxSeries', Number.isFinite(val) ? val : undefined);
-                }}
+                onChange={(e) => onMaxSeriesChange(e)}
                 placeholder="1000"
                 value={maxSeriesValue}
                 type="number"
