@@ -198,6 +198,11 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	// TODO(2025-07-31): when we migrate to using the common type, we don't need this conversion.
 	secret := secretv1beta1.ExposedSecureValue(value)
 
+	decrypters := []string{serviceIdentity}
+	if owner.APIGroup != serviceIdentity {
+		decrypters = append(decrypters, owner.APIGroup)
+	}
+
 	spec := &secretv1beta1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "sv-" + util.GenerateShortUID(),
@@ -207,10 +212,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 		Spec: secretv1beta1.SecureValueSpec{
 			Description: fmt.Sprintf("Inline secure value for %s/%s in %s/%s", owner.Kind, owner.Name, owner.APIGroup, owner.APIVersion),
 			Value:       &secret,
-			Decrypters: []string{
-				serviceIdentity,
-				owner.APIGroup,
-			},
+			Decrypters:  decrypters,
 		},
 	}
 
