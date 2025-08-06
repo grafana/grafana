@@ -56,7 +56,7 @@ jobs:
       - detect-changes
       - yarn-install
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64
+    runs-on: ubuntu-x64-large
     name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
       fail-fast: false
@@ -88,7 +88,7 @@ jobs:
       - detect-changes
       - yarn-install
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64
+    runs-on: ubuntu-x64-large
     name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
       fail-fast: false
@@ -120,7 +120,7 @@ jobs:
       - detect-changes
       - yarn-install
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64
+    runs-on: ubuntu-x64-large
     name: "Decoupled plugin tests"
     steps:
     - uses: actions/checkout@v4
@@ -135,7 +135,7 @@ jobs:
       - detect-changes
       - yarn-install
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64
+    runs-on: ubuntu-x64-large
     name: "Packages unit tests"
     steps:
     - uses: actions/checkout@v4
