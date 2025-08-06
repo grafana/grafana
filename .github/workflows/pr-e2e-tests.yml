@@ -69,7 +69,7 @@ jobs:
       
       - name: Start Dagger engine
         run: |
-          docker run --rm \
+          docker run -d --rm \
             -v /var/lib/dagger \
             -v /etc/buildkitd.toml:/etc/dagger/engine.toml \
             --name dagger-engine-custom \
@@ -406,7 +406,7 @@ jobs:
           name: grafana-tar-gz
       - name: Start Dagger engine
         run: |
-          docker run --rm \
+          docker run -d --rm \
             -v /var/lib/dagger \
             -v /etc/buildkitd.toml:/etc/dagger/engine.toml \
             --name dagger-engine-custom \
