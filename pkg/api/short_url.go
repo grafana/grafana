@@ -62,27 +62,6 @@ func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, shortURLDTO)
 }
 
-// getShortURL handles requests to create short URLs.
-func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response {
-	shortURLUID := web.Params(c.Req)[":uid"]
-
-	if !util.IsValidShortUID(shortURLUID) {
-		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("invalid uid"))
-	}
-
-	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
-	if err != nil {
-		// If we didn't get the URL for whatever reason, we redirect to the
-		// main page, otherwise we get into an endless loops of redirects, as
-		// we would try to redirect again.
-		if shorturls.ErrShortURLNotFound.Is(err) {
-			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
-		}
-	}
-
-	return response.JSON(http.StatusOK, shortURL)
-}
-
 func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 	shortURLUID := web.Params(c.Req)[":uid"]
 
@@ -97,11 +76,11 @@ func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 		// we would try to redirect again.
 		if shorturls.ErrShortURLNotFound.Is(err) {
 			hs.log.Debug("Not redirecting short URL since not found", "uid", shortURLUID)
-			c.Redirect(hs.Cfg.AppURL, 308)
+			c.Redirect(hs.Cfg.AppURL, http.StatusFound)
 			return
 		}
 		hs.log.Error("Short URL redirection error", "err", err)
-		c.Redirect(hs.Cfg.AppURL, 307)
+		c.Redirect(hs.Cfg.AppURL, http.StatusFound)
 		return
 	}
 
@@ -111,7 +90,25 @@ func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 	}
 
 	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
-	c.Redirect(setting.ToAbsUrl(shortURL.Path), 302)
+	c.Redirect(setting.ToAbsUrl(shortURL.Path), http.StatusFound)
+}
+
+// getShortURL handles requests to get short URLs.
+func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response {
+	shortURLUID := web.Params(c.Req)[":uid"]
+
+	if !util.IsValidShortUID(shortURLUID) {
+		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("invalid uid"))
+	}
+
+	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
+	if err != nil {
+		if shorturls.ErrShortURLNotFound.Is(err) {
+			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
+		}
+	}
+
+	return response.JSON(http.StatusOK, shortURL)
 }
 
 type shortURLK8sHandler struct {
@@ -176,7 +173,7 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	// we would try to redirect again.
 	if err != nil {
 		c.Logger.Error("Failed to get short URL", "uid", shortURLUID, "error", err)
-		c.Redirect(sk8s.cfg.AppURL, 307)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
@@ -208,7 +205,7 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	path := spec["path"].(string)
 
 	c.Logger.Debug("Redirecting short URL", "uid", shortURLUID, "path", path)
-	c.Redirect(setting.ToAbsUrl(path), 302)
+	c.Redirect(setting.ToAbsUrl(path), http.StatusFound)
 }
 
 func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel.ReqContext) {
@@ -249,16 +246,16 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 // Utility functions
 //-----------------------------------------------------------------------------------------
 
-func (pk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
-	dyn, err := dynamic.NewForConfig(pk8s.clientConfigProvider.GetDirectRestConfig(c))
+func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	dyn, err := dynamic.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)
 		return nil, false
 	}
-	return dyn.Resource(pk8s.gvr).Namespace(pk8s.namespacer(c.OrgID)), true
+	return dyn.Resource(sk8s.gvr).Namespace(sk8s.namespacer(c.OrgID)), true
 }
 
-func (pk8s *shortURLK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
+func (sk8s *shortURLK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
 	//nolint:errorlint
 	statusError, ok := err.(*errors.StatusError)
 	if ok {

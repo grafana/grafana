@@ -236,7 +236,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		assert.Equal(t, uid, found.GetName())
 
 		// Verify cross-API consistency
-		getFromBothAPIs(t, helper, client, uid, nil)
+		getFromBothAPIs(t, helper, client, uid)
 
 		// Clean up
 		err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
@@ -271,7 +271,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		assert.Equal(t, uid, legacyShortURL.Uid)
 
 		// Verify cross-API consistency
-		getFromBothAPIs(t, helper, client, uid, nil)
+		getFromBothAPIs(t, helper, client, uid)
 
 		// Clean up
 		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
@@ -428,8 +428,6 @@ func getFromBothAPIs(t *testing.T,
 	helper *apis.K8sTestHelper,
 	client *apis.K8sResourceClient,
 	uid string,
-	// Optionally match some expect some values
-	expect *dtos.ShortURL,
 ) {
 	t.Helper()
 
@@ -447,17 +445,11 @@ func getFromBothAPIs(t *testing.T,
 	if legacyShortURL != nil {
 		// If legacy API returns data, verify consistency
 		spec, ok := k8sResource.Object["spec"].(map[string]interface{})
+		require.True(t, ok)
 		status, ok := k8sResource.Object["status"].(map[string]interface{})
 		require.True(t, ok)
 		assert.Equal(t, legacyShortURL.Uid, k8sResource.GetName())
 		assert.Equal(t, legacyShortURL.Path, spec["path"].(string))
 		assert.Equal(t, legacyShortURL.LastSeenAt, status["lastSeenAt"].(int64))
-	}
-
-	if expect != nil {
-		if expect.UID != "" {
-			assert.Equal(t, expect.UID, k8sResource.GetName())
-		}
-		// Add more expectations as needed
 	}
 }

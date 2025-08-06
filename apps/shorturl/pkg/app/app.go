@@ -45,8 +45,6 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: shorturlv1alpha1.ShortURLKind(),
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-						klog.Info("SHORTURL APP VALIDATOR: Received admission request", "action", req.Action, "object", fmt.Sprintf("%T", req.Object))
-
 						// Skip validation for non-CREATE operations as specified in the manifest
 						// TODO: Remove this after the SDK fixes this bug where validation is called for all mutating operations
 						// ignoring what the manifest says
