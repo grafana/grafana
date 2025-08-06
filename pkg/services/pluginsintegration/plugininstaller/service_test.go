@@ -144,6 +144,12 @@ func TestService_Run(t *testing.T) {
 			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
 			pluginsToInstall:     []setting.InstallPlugin{{ID: "myplugin2"}},
 		},
+		{
+			name:                 "should install a plugin with a URL regardless of versioning",
+			shouldInstall:        true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "our-plugin-datasource", URL: "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.1+linux.zip"}},
+			existingPlugins:      []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "our-plugin-datasource", Info: plugins.Info{Version: "1.2.2"}}}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
