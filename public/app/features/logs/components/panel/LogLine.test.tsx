@@ -79,7 +79,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
-  test('Renders a log line millisecond timestamps', () => {
+  test('Renders a log line with millisecond timestamps', () => {
     log.timestamp = '2025-08-06 11:35:19.504';
     render(
       <LogListContext.Provider
@@ -94,7 +94,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     expect(screen.getByText('2025-08-06 11:35:19.504')).toBeInTheDocument();
   });
 
-  test('Renders a log line nanosecond timestamps', () => {
+  test('Renders a log line with nanosecond timestamps', () => {
     log.timestamp = '2025-08-06 11:35:19.504';
     log.timeEpochMs = 1754472919504;
     log.timeEpochNs = '1754472919504133766';
