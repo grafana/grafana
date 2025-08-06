@@ -3,9 +3,7 @@ import { createContext, ReactNode, useContext } from 'react';
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { QueryTemplateRow } from '../../../extensions/query-library/types';
-
-import { OnSelectQueryType } from './types';
+import { OnSelectQueryType, QueryTemplate } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
@@ -28,7 +26,7 @@ export type QueryLibraryContextType = {
    * @param onSelectQuery Callback to be called when a query is selected from the library.
    * @param options.context Used for QueryEditor. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
-   * @param query New query to be added to the library.
+   * @param newQuery New query to be added to the library.
    */
   openDrawer: (options: QueryLibraryDrawerOptions) => void;
   closeDrawer: () => void;
@@ -42,7 +40,7 @@ export type QueryLibraryContextType = {
   renderSaveQueryButton: (query: DataQuery, app?: CoreApp, onSelectQuery?: (query: DataQuery) => void) => ReactNode;
   queryLibraryEnabled: boolean;
   context: string;
-  setActiveQuery: (query?: QueryTemplateRow) => void;
+  setNewQuery: (query?: QueryTemplate) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -50,7 +48,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   closeDrawer: () => {},
   isDrawerOpen: false,
 
-  setActiveQuery: () => {},
+  setNewQuery: () => {},
   onSave: () => {},
 
   renderSaveQueryButton: () => {
