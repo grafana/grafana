@@ -71,7 +71,7 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 	// Create a new bleve backend
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		Root: tempDir,
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
 

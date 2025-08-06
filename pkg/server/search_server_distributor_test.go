@@ -195,7 +195,7 @@ func TestIntegrationDistributor(t *testing.T) {
 }
 
 func getBaselineResponse[Req any, Resp any](t *testing.T, req *Req, fn func(ctx context.Context, req *Req) (*Resp, error)) *Resp {
-	ctx := context.Background()
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 	baselineRes, err := fn(ctx, req)
 	require.NoError(t, err)
 	return baselineRes

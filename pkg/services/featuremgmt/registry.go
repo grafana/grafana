@@ -1170,15 +1170,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "unifiedStorageSearchPermissionFiltering",
-			Description:       "Enable permission filtering on unified storage search",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaSearchAndStorageSquad,
-			Expression:        "true",
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "managedDualWriter",
 			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
