@@ -1,9 +1,0 @@
-<service>
-  <id>Grafana</id>
-  <name>Grafana Server</name>
-  <description>This service runs Grafana</description>
-  <executable>%BASE%\bin\grafana.exe</executable>
-  <arguments>server --homepath="%BASE%"</arguments>
-  <log mode="roll"></log>
-  <onfailure action="restart" />
-</service>
