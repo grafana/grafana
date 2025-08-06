@@ -37,9 +37,9 @@ func NewConcurrentJobDriver(
 	// Default lease renewal interval to 1/3 of job timeout, minimum 5 seconds
 	if leaseRenewalInterval <= 0 {
 		leaseRenewalInterval = jobTimeout / 3
-		if leaseRenewalInterval < 5*time.Second {
-			leaseRenewalInterval = 5 * time.Second
-		}
+	}
+	if leaseRenewalInterval < 5*time.Second {
+		leaseRenewalInterval = 5 * time.Second
 	}
 	// For lease-based cleanup, run at most every 3-4 lease renewal intervals
 	// to detect expired leases promptly but not too aggressively
