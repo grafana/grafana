@@ -35,7 +35,7 @@ import { PopoverContent } from '@grafana/ui';
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
-import { LogLineTimestampFormat } from './LogLine';
+import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
@@ -68,10 +68,10 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
-  setTimestampFormat: (format: LogLineTimestampFormat) => void;
+  setTimestampFormat: (format: LogLineTimestampResolution) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
-  timestampFormat: LogLineTimestampFormat;
+  timestampResolution: LogLineTimestampResolution;
   toggleDetails: (log: LogListModel) => void;
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
@@ -111,7 +111,7 @@ export const LogListContext = createContext<LogListContextData>({
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
-  timestampFormat: 'ns',
+  timestampResolution: 'ns',
   toggleDetails: () => {},
   wrapLogMessage: false,
   isAssistantAvailable: false,
@@ -149,7 +149,7 @@ export type LogListState = Pick<
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
-  | 'timestampFormat'
+  | 'timestampResolution'
   | 'wrapLogMessage'
 >;
 
@@ -194,6 +194,7 @@ export interface Props {
   showTime: boolean;
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
+  timestampResolution?: LogLineTimestampResolution;
   wrapLogMessage: boolean;
 }
 
@@ -237,6 +238,7 @@ export const LogListContextProvider = ({
   showUniqueLabels,
   sortOrder,
   syntaxHighlighting,
+  timestampResolution = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ns') : 'ns',
   wrapLogMessage,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -251,7 +253,7 @@ export const LogListContextProvider = ({
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
-    timestampFormat: logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.timestampFormat`) ?? 'ns') : 'ns',
+    timestampResolution,
     wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
@@ -273,7 +275,7 @@ export const LogListContextProvider = ({
       detailsWidth,
       detailsMode,
       withDisplayedFields: displayedFields.length > 0,
-      timestampFormat: logListState.timestampFormat,
+      timestampResolution: logListState.timestampResolution,
     });
     // Just once
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -372,10 +374,10 @@ export const LogListContextProvider = ({
   // Sync timestamp format
   useEffect(() => {
     const nsPresent = logs.some((log) => log.timeEpochNs.endsWith('000000') === false);
-    if (nsPresent === false && logListState.timestampFormat === 'ns') {
+    if (nsPresent === false && logListState.timestampResolution === 'ns') {
       setLogListState({
         ...logListState,
-        timestampFormat: 'ms',
+        timestampResolution: 'ms',
       });
     }
   }, [logListState, logs]);
@@ -428,16 +430,16 @@ export const LogListContextProvider = ({
 
   const setShowTime = useCallback(
     (showTime: boolean) => {
-      const newTimestampFormat = showTime === false ? 'ms' : logListState.timestampFormat;
+      const newTimestampFormat = showTime === false ? 'ms' : logListState.timestampResolution;
       setLogListState({
         ...logListState,
         showTime,
-        timestampFormat: newTimestampFormat,
+        timestampResolution: newTimestampFormat,
       });
       onLogOptionsChange?.('showTime', showTime);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.showTime`, showTime);
-        store.set(`${logOptionsStorageKey}.timestampFormat`, newTimestampFormat);
+        store.set(`${logOptionsStorageKey}.timestampResolution`, newTimestampFormat);
       }
     },
     [logListState, logOptionsStorageKey, onLogOptionsChange]
@@ -549,13 +551,13 @@ export const LogListContextProvider = ({
   );
 
   const setTimestampFormat = useCallback(
-    (timestampFormat: LogLineTimestampFormat) => {
+    (timestampResolution: LogLineTimestampResolution) => {
       if (logOptionsStorageKey) {
-        store.set(`${logOptionsStorageKey}.timestampFormat`, timestampFormat);
+        store.set(`${logOptionsStorageKey}.timestampResolution`, timestampResolution);
       }
       setLogListState((state) => ({
         ...state,
-        timestampFormat,
+        timestampResolution,
       }));
     },
     [logOptionsStorageKey]
@@ -635,7 +637,7 @@ export const LogListContextProvider = ({
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
-        timestampFormat: logListState.timestampFormat,
+        timestampResolution: logListState.timestampResolution,
         toggleDetails,
         wrapLogMessage: logListState.wrapLogMessage,
         isAssistantAvailable,

@@ -99,7 +99,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
-      timestampFormat,
+      timestampResolution,
       onLogLineHover,
     } = useLogListContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
@@ -212,7 +212,7 @@ const LogLineComponent = memo(
               log={log}
               showTime={showTime}
               styles={styles}
-              timestampFormat={timestampFormat}
+              timestampResolution={timestampResolution}
               wrapLogMessage={wrapLogMessage}
             />
           </div>
@@ -250,23 +250,23 @@ const LogLineComponent = memo(
 );
 LogLineComponent.displayName = 'LogLineComponent';
 
-export type LogLineTimestampFormat = 'ms' | 'ns';
+export type LogLineTimestampResolution = 'ms' | 'ns';
 
 interface LogProps {
   displayedFields: string[];
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
-  timestampFormat: LogLineTimestampFormat;
+  timestampResolution: LogLineTimestampResolution;
   wrapLogMessage: boolean;
 }
 
-const Log = memo(({ displayedFields, log, showTime, styles, timestampFormat, wrapLogMessage }: LogProps) => {
+const Log = memo(({ displayedFields, log, showTime, styles, timestampResolution, wrapLogMessage }: LogProps) => {
   return (
     <>
       {showTime && (
         <span className={`${styles.timestamp} level-${log.logLevel} field`}>
-          {timestampFormat === 'ms' ? log.timestamp : log.timestampNs}
+          {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
         </span>
       )}
       {

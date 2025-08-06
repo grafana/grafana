@@ -24,7 +24,7 @@ import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
-import { getGridTemplateColumns } from './LogLine';
+import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
@@ -80,6 +80,7 @@ export interface Props {
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
+  timestampResolution?: LogLineTimestampResolution;
   timeZone: string;
   syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
@@ -148,6 +149,7 @@ export const LogList = ({
   sortOrder,
   syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
+  timestampResolution,
   timeZone,
   wrapLogMessage,
 }: Props) => {
@@ -189,6 +191,7 @@ export const LogList = ({
       showTime={showTime}
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
+      timestampResolution={timestampResolution}
       wrapLogMessage={wrapLogMessage}
     >
       <LogListSearchContextProvider>
@@ -241,7 +244,7 @@ const LogListComponent = ({
     showDetails,
     showTime,
     sortOrder,
-    timestampFormat,
+    timestampResolution,
     toggleDetails,
     wrapLogMessage,
   } = useLogListContext();
@@ -255,8 +258,8 @@ const LogListComponent = ({
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
     () =>
-      wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields, timestampFormat),
-    [displayedFields, processedLogs, timestampFormat, virtualization, wrapLogMessage]
+      wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields, timestampResolution),
+    [displayedFields, processedLogs, timestampResolution, virtualization, wrapLogMessage]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;

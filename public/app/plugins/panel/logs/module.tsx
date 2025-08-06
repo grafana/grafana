@@ -11,7 +11,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
     const category = [t('logs.category-logs', 'Logs')];
     builder.addBooleanSwitch({
       path: 'showTime',
-      name: t('logs.name-time', 'Time'),
+      name: t('logs.name-time', 'Show timestamps'),
       category,
       description: '',
       defaultValue: false,
@@ -33,6 +33,22 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
           description: '',
           defaultValue: false,
         });
+    } else {
+      builder.addRadio({
+          path: 'timestampResolution',
+          name: t('logs.timestamp-format', 'Timestamp resolution'),
+          category,
+          description: '',
+          settings: {
+            options: [
+              { value: 'default', label: t('logs.logs.timestamp-resolution.label-milliseconds', 'Milliseconds') },
+              {
+                value: 'small',
+                label: t('logs.logs.timestamp-resolution.label-nanoseconds', 'Nanoseconds'),
+              },
+            ],
+          },
+        })
     }
 
     builder.addBooleanSwitch({

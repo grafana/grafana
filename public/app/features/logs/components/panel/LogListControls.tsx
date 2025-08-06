@@ -11,7 +11,7 @@ import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
-import { LogLineTimestampFormat } from './LogLine';
+import { LogLineTimestampResolution } from './LogLine';
 import { useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { ScrollToLogsEvent } from './virtualization';
@@ -64,7 +64,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
-    timestampFormat,
+    timestampResolution,
     wrapLogMessage,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
@@ -122,12 +122,12 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
       setShowTime(!showTime);
       return;
     }
-    if (!showTime || timestampFormat === 'ns') {
+    if (!showTime || timestampResolution === 'ns') {
       setShowTime(!showTime);
-    } else if (timestampFormat === 'ms') {
+    } else if (timestampResolution === 'ms') {
       setTimestampFormat('ns');
     }
-  }, [setShowTime, setTimestampFormat, showTime, timestampFormat]);
+  }, [setShowTime, setTimestampFormat, showTime, timestampResolution]);
 
   const onShowUniqueLabelsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_unique_labels_clicked', {
@@ -292,11 +292,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
               </Dropdown>
               <div className={styles.divider} />
               <IconButton
-                name={timestampFormat === 'ns' && showTime ? 'stopwatch' : 'clock-nine'}
+                name={timestampResolution === 'ns' && showTime ? 'stopwatch' : 'clock-nine'}
                 aria-pressed={showTime}
                 className={showTime ? styles.controlButtonActive : styles.controlButton}
                 onClick={onShowTimestampsClick}
-                tooltip={getTimestampTooltip(showTime, timestampFormat)}
+                tooltip={getTimestampTooltip(showTime, timestampResolution)}
                 size="lg"
               />
               {/* When this is used in a Plugin context, app is unknown */}
@@ -520,7 +520,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-function getTimestampTooltip(showTime: boolean, timestampFormat: LogLineTimestampFormat) {
+function getTimestampTooltip(showTime: boolean, timestampResolution: LogLineTimestampResolution) {
   if (!config.featureToggles.newLogsPanel) {
     return showTime
       ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
@@ -529,7 +529,7 @@ function getTimestampTooltip(showTime: boolean, timestampFormat: LogLineTimestam
   if (!showTime) {
     return t('logs.logs-controls.show-ms-timestamps', 'Show millisecond timestamps');
   }
-  if (timestampFormat === 'ms') {
+  if (timestampResolution === 'ms') {
     return t('logs.logs-controls.show-ns-timestamps', 'Show nanosecond timestamps');
   }
   return t('logs.logs-controls.hide-timestamps', 'Hide timestamps');

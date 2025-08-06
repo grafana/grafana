@@ -45,7 +45,7 @@ export const LogListContext = createContext<LogListContextData>({
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
-  timestampFormat: 'ns',
+  timestampResolution: 'ns',
   toggleDetails: () => {},
   wrapLogMessage: false,
   detailsMode: 'sidebar',
@@ -111,7 +111,7 @@ export const defaultValue: LogListContextData = {
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
-  timestampFormat: 'ns',
+  timestampResolution: 'ns',
 };
 
 export const defaultProps: Props = {
