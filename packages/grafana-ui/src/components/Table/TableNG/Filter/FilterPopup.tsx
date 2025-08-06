@@ -135,6 +135,7 @@ export const FilterPopup = ({
               value={searchFilter}
             />
             <Button
+              tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
               variant="secondary"
               style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
               onClick={() => {
