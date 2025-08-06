@@ -788,7 +788,7 @@
       },
       "filterBy": "Filter by:",
       "too-many-events": {
-        "text": "The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.",
+        "text": "The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.",
         "title": "Unable to display all events"
       }
     },
