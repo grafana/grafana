@@ -45,12 +45,12 @@ func NewConcurrentJobDriver(
 	// to detect expired leases promptly but not too aggressively
 	if cleanupInterval <= 0 {
 		cleanupInterval = leaseRenewalInterval * 3
-		if cleanupInterval < 30*time.Second {
-			cleanupInterval = 30 * time.Second // Minimum cleanup interval
-		}
-		if cleanupInterval > 5*time.Minute {
-			cleanupInterval = 5 * time.Minute // Maximum cleanup interval
-		}
+	}
+	if cleanupInterval < 30*time.Second {
+		cleanupInterval = 30 * time.Second // Minimum cleanup interval
+	}
+	if cleanupInterval > 5*time.Minute {
+		cleanupInterval = 5 * time.Minute // Maximum cleanup interval
 	}
 
 	return &ConcurrentJobDriver{
