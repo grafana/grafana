@@ -148,7 +148,7 @@
             {
               "options": {
                 "20": {
-                  "color": null,
+                  "color": "orange",
                   "text": "test"
                 }
               },
@@ -157,7 +157,7 @@
             {
               "options": {
                 "30": {
-                  "color": null,
+                  "color": "orange",
                   "text": "test1"
                 }
               },
