@@ -130,9 +130,7 @@ export function BrowseActions({ folderDTO }: Props) {
   return (
     <>
       <Stack gap={1} data-testid="manage-actions">
-        {
-          moveButton
-        }
+        {moveButton}
 
         <Button onClick={showDeleteModal} variant="destructive">
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
