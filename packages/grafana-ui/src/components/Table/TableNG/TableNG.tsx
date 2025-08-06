@@ -89,6 +89,7 @@ export function TableNG(props: TableNGProps) {
     enableSharedCrosshair = false,
     enableVirtualization,
     footerOptions,
+    frozenColumns = 0,
     getActions = () => [],
     height,
     initialSortBy,
@@ -490,6 +491,7 @@ export function TableNG(props: TableNGProps) {
           name: displayName,
           width,
           headerCellClass,
+          frozen: frozenColumns > i,
           renderCell: renderCellContent,
           renderHeaderCell: ({ column, sortDirection }) => (
             <HeaderCell
@@ -631,6 +633,8 @@ export function TableNG(props: TableNGProps) {
     expandedRows,
     filter,
     footerCalcs,
+    frozenColumns,
+    getCellActions,
     hasNestedFrames,
     isCountRowsSet,
     onCellFilterAdded,
@@ -645,7 +649,6 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
-    getCellActions,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
@@ -854,16 +857,24 @@ const getGridStyles = (
       },
       // selected cells should appear below hovered cells.
       '&:hover': {
-        zIndex: theme.zIndex.tooltip - 2,
+        zIndex: theme.zIndex.tooltip - 4,
       },
       '&[aria-selected=true]': {
-        zIndex: theme.zIndex.tooltip - 3,
+        zIndex: theme.zIndex.tooltip - 5,
       },
+    },
+
+    '.rdg-cell.rdg-cell-frozen': {
+      zIndex: theme.zIndex.tooltip - 2,
     },
 
     '.rdg-header-row, .rdg-summary-row': {
       '.rdg-cell': {
-        zIndex: theme.zIndex.tooltip - 1,
+        zIndex: theme.zIndex.tooltip - 3,
+
+        '&.rdg-cell-frozen': {
+          zIndex: theme.zIndex.tooltip - 1,
+        },
       },
     },
   }),

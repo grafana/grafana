@@ -44,6 +44,8 @@ composableKinds: PanelCfg: {
 					}
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
+          // Defines the number of columns to freeze on the left side of the table
+          frozenColumns?: number | *0
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.TableFieldOptions
