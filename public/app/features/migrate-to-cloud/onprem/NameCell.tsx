@@ -7,7 +7,7 @@ import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
-import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { LocalPlugin } from '../../plugins/admin/types';
 import { useGetDashboardByUidQuery, useGetLibraryElementByUidQuery } from '../api';
@@ -121,7 +121,7 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   const folderUID = data.refId;
   const skipApiCall = !!data.name && !!data.parentName;
 
-  const { data: folderData, isLoading, isError } = useGetFolderQuery(folderUID, { skip: skipApiCall });
+  const { data: folderData, isLoading, isError } = useGetFolderQueryFacade(skipApiCall ? undefined : folderUID);
 
   const folderName = data.name || folderData?.title;
   const folderParentName = data.parentName || folderData?.parents?.[folderData.parents.length - 1]?.title;

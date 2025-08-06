@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
@@ -8,8 +9,9 @@ import { appEvents } from 'app/core/core';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
+import { useDeleteFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { ManagerKind } from '../../apiserver/types';
-import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
+import { useMoveFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
@@ -25,7 +27,8 @@ export function FolderActionsButton({ folder }: Props) {
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
-  const [deleteFolder] = useDeleteFolderMutation();
+
+  const deleteFolder = useDeleteFolderMutationFacade();
 
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
@@ -44,7 +47,21 @@ export function FolderActionsButton({ folder }: Props) {
   };
 
   const onDelete = async () => {
-    await deleteFolder(folder);
+    const result = await deleteFolder(folder);
+
+    if (result.error) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t(
+            'browse-dashboards.folder-actions-button.delete-folder-error',
+            'Error deleting folder. Please try again later.'
+          ),
+        ],
+      });
+      return;
+    }
+
     reportInteraction('grafana_manage_dashboards_item_deleted', {
       item_counts: {
         folder: 1,
