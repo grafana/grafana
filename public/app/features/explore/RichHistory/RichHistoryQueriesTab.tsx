@@ -221,7 +221,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
             <MultiSelect
               className={styles.multiselect}
               options={listOfDatasources.map((ds) => {
-                return { value: ds.name, label: ds.name };
+                return { value: ds.name, label: ds.name, key: ds.uid };
               })}
               value={richHistorySearchFilters.datasourceFilters}
               placeholder={t(
