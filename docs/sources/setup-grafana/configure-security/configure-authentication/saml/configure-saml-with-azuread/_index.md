@@ -124,7 +124,7 @@ This app registration will be used as a Service Account to retrieve more informa
 1. In the **Request API permissions** pane, select **Microsoft Graph**, and click **Delegated permissions**.
 1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
 1. Click the **Add permissions** button at the bottom of the page.
-1. In the **API permissions** section, select **Grant admin consent for <your-organization>**.
+1. In the **API permissions** section, select **Grant admin consent for `<directory-name>`**.
 
 The following table shows what the permissions look like from the Entra ID portal:
 
