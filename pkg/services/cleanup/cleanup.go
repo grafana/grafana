@@ -113,7 +113,7 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 		{"expire old email verifications", srv.expireOldVerifications},
 	}
 
-	if srv.Cfg.ShortLinkExpiration > 0 {
+	if srv.Cfg.ShortLinkExpiration >= 0 {
 		cleanupJobs = append(cleanupJobs, cleanUpJob{"delete stale short URLs", srv.deleteStaleShortURLs})
 	}
 
