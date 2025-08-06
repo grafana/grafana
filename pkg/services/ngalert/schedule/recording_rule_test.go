@@ -750,6 +750,53 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			require.Equal(t, "error", status.Health)
 		})
 	})
+
+	t.Run("rule with private labels filtered", func(t *testing.T) {
+		writeTarget.Reset()
+		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
+		rule.Record.TargetDatasourceUID = dsUID
+		rule.Labels = map[string]string{
+			"normal_label":     "value1",
+			"another_label":    "value2",
+			"__private__":      "filtered",
+			"__also_private__": "filtered",
+			"__only_start":     "not_filtered",
+			"only_end__":       "not_filtered",
+		}
+
+		ruleStore.PutRule(context.Background(), rule)
+		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+		evalDoneChan := make(chan time.Time)
+		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+		now := time.Now()
+
+		go func() {
+			_ = process.Run()
+		}()
+
+		process.Eval(&Evaluation{
+			scheduledAt: now,
+			rule:        rule,
+			folderTitle: folderTitle,
+		})
+		_ = waitForTimeChannel(t, evalDoneChan)
+
+		t.Run("write was performed with filtered labels", func(t *testing.T) {
+			require.Equal(t, 1, writeTarget.RequestsCount)
+			require.NotEmpty(t, writeTarget.LastRequestBody)
+
+			// Check that the body doesn't contain the private labels
+			require.NotContains(t, writeTarget.LastRequestBody, "__private__")
+			require.NotContains(t, writeTarget.LastRequestBody, "__also_private__")
+
+			require.Contains(t, writeTarget.LastRequestBody, rule.Record.Metric)
+		})
+	})
 }
 
 func withQueryForHealth(health string) models.AlertRuleMutator {

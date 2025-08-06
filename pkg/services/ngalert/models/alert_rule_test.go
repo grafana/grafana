@@ -1348,3 +1348,50 @@ func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
 		})
 	}
 }
+
+func TestWithoutPrivateLabels(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]string
+		expected map[string]string
+	}{
+		{
+			name:     "nil map",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			name:     "empty map",
+			input:    map[string]string{},
+			expected: map[string]string{},
+		},
+		{
+			name: "removes private labels",
+			input: map[string]string{
+				"__private__":      "should_be_removed",
+				"__also_private__": "also_removed",
+				"__starts_only":    "kept",
+				"ends_only__":      "kept",
+				"normal_label":     "kept",
+				"another_label":    "also_kept",
+			},
+			expected: map[string]string{
+				"__starts_only": "kept",
+				"ends_only__":   "kept",
+				"normal_label":  "kept",
+				"another_label": "also_kept",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inputCopy := maps.Clone(tt.input)
+
+			result := WithoutPrivateLabels(tt.input)
+
+			require.Equal(t, tt.expected, result)
+			require.Equal(t, inputCopy, tt.input)
+		})
+	}
+}

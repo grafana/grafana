@@ -407,6 +407,22 @@ func WithoutInternalLabels() LabelOption {
 	}
 }
 
+// WithoutPrivateLabels returns a new map without private labels,
+// which are labels that start and end with __.
+func WithoutPrivateLabels(labels map[string]string) map[string]string {
+	if labels == nil {
+		return nil
+	}
+
+	result := make(map[string]string, len(labels))
+	for k, v := range labels {
+		if !strings.HasPrefix(k, "__") || !strings.HasSuffix(k, "__") {
+			result[k] = v
+		}
+	}
+	return result
+}
+
 func (alertRule *AlertRule) ImportedPrometheusRule() bool {
 	_, hasConvertedPrometheusRuleLabel := alertRule.GetLabels()[ConvertedPrometheusRuleLabel]
 	return hasConvertedPrometheusRuleLabel || alertRule.HasPrometheusRuleDefinition()
