@@ -9496,6 +9496,8 @@
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
       "show-details": "Hide log details",
+      "timestamp-ms": "Show milliseconds",
+      "timestamp-ns": "Show nanoseconds",
       "unpin-from-outline": "Unpin log"
     },
     "log-list-search": {
