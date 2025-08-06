@@ -115,9 +115,12 @@
       "aria-label-column": "Column",
       "aria-label-column-value": "Column value",
       "aria-label-operator": "Operator",
+      "aria-label-remove-filter": "Remove filter",
       "label-or": "OR"
     },
     "filter-section": {
+      "aria-label-add-filter": "Add filter",
+      "aria-label-add-or-filter": "Add OR filter",
       "label-add-group": "Add group",
       "label-and": "AND",
       "label-filters": "Filters",
@@ -130,6 +133,8 @@
       "label-format-as": "Format as"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "Add fuzzy search",
+      "aria-label-remove-fuzzy-search": "Remove fuzzy search",
       "aria-label-select-column": "Select Column",
       "label-fuzzy-search": "Fuzzy Search",
       "placeholder-search-team": "Enter search term",
@@ -144,6 +149,7 @@
       "aria-label-remove": "Remove"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "Add group by",
       "label-group-by": "Group by",
       "tooltip-group-by": "Organize results into categories based on specified columns. Group by can be used independently to list unique values in selected columns, or combined with aggregate functions to produce summary statistics for each group. When used alone, it returns distinct combinations of the specified columns."
     },
@@ -186,8 +192,10 @@
       "text-loading": "Loading..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "Add order by",
       "aria-label-order-by-column": "Order by column",
       "aria-label-order-direction": "Order Direction",
+      "aria-label-remove-order-by": "Remove order by",
       "label-by": "BY",
       "label-order-by": "Order By",
       "tooltip-order-by": "Sort results based on one or more columns in ascending or descending order."
@@ -249,7 +257,8 @@
       "label-columns": "Columns",
       "label-table": "Table",
       "placeholder-select-columns": "Select columns",
-      "placeholder-select-table": "Select a table"
+      "placeholder-select-table": "Select a table",
+      "tooltip-remove-all-columns": "Remove all columns"
     },
     "time-grain-field": {
       "label-time-grain": "Time grain"

@@ -23,7 +23,7 @@ export interface ScopesTreeProps {
 
   // Recent scopes are only shown at the root node
   recentScopes?: Scope[][];
-  onRecentScopesSelect?: (scopeIds: string[]) => void;
+  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string) => void;
 }
 
 export function ScopesTree({
@@ -63,11 +63,20 @@ export function ScopesTree({
     }
   }
 
+  // Used as a label and placeholder for search field
+  const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
+  const searchArea = tree.scopeNodeId === '' ? '' : nodeTitle;
+
   const lastExpandedNode = !anyChildExpanded && tree.expanded;
 
   return (
     <>
-      <ScopesTreeSearch anyChildExpanded={anyChildExpanded} onNodeUpdate={onNodeUpdate} treeNode={tree} />
+      <ScopesTreeSearch
+        anyChildExpanded={anyChildExpanded}
+        searchArea={searchArea}
+        onNodeUpdate={onNodeUpdate}
+        treeNode={tree}
+      />
       {tree.scopeNodeId === '' &&
         !anyChildExpanded &&
         recentScopes &&

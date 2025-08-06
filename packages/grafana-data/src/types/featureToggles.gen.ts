@@ -80,11 +80,6 @@ export interface FeatureToggles {
   */
   mysqlAnsiQuotes?: boolean;
   /**
-  * Enable folder nesting
-  * @default true
-  */
-  nestedFolders?: boolean;
-  /**
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
@@ -286,6 +281,10 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
+  * Routes short url requests from /api to the /apis endpoint
+  */
+  kubernetesShortURLs?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -456,6 +455,11 @@ export interface FeatureToggles {
   * @default false
   */
   scopeApi?: boolean;
+  /**
+  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+  * @default false
+  */
+  useScopeSingleNodeEndpoint?: boolean;
   /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
@@ -674,11 +678,6 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
-  /**
-  * Enable permission filtering on unified storage search
-  * @default true
-  */
-  unifiedStorageSearchPermissionFiltering?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -1074,6 +1073,10 @@ export interface FeatureToggles {
   */
   dashboardDsAdHocFiltering?: boolean;
   /**
+  * Supports __from and __to macros that always use the dashboard level time range
+  */
+  dashboardLevelTimeMacros?: boolean;
+  /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
   * @default false
   */
@@ -1082,4 +1085,13 @@ export interface FeatureToggles {
   * Enable adhoc filter buttons in visualization tooltips
   */
   adhocFiltersInTooltips?: boolean;
+  /**
+  * New Log Context component
+  */
+  newLogContext?: boolean;
+  /**
+  * Enables new design for the Clickhouse data source configuration page
+  * @default false
+  */
+  newClickhouseConfigPageDesign?: boolean;
 }

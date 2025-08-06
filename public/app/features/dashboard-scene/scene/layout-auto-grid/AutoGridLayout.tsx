@@ -22,9 +22,6 @@ export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOpt
    */
   md?: AutoGridLayoutOptions;
 
-  /** True when the items should be lazy loaded */
-  isLazy?: boolean;
-
   /** True when the items should be draggable */
   isDraggable?: boolean;
 
