@@ -49,10 +49,10 @@ In the following JSON, id is shown as null which is the default value assigned t
   "uid": "cLV5GDCkz",
   "title": "New dashboard",
   "tags": [],
+  "style": "dark",
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,
-  "panels": [],
   "time": {
     "from": "now-6h",
     "to": "now"
@@ -69,7 +69,9 @@ In the following JSON, id is shown as null which is the default value assigned t
   "refresh": "5s",
   "schemaVersion": 17,
   "version": 0,
-  "links": []
+  "links": [],
+  "liveNow": fasle,
+  "panels": []
 }
 ```
 
@@ -92,6 +94,8 @@ Each field in the dashboard JSON is explained below with its usage:
 | **refresh**       | auto-refresh interval                                                                                             |
 | **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to said schema        |
 | **version**       | version of the dashboard (integer), incremented each time the dashboard is updated                                |
+| **links**         | links to other dashboards and web sites directly below the dashboard header                                       |
+| **liveNow**       | whether a dashboard continuously re-draws panels where the time range references 'now'                            |
 | **panels**        | panels array, see below for detail.                                                                               |
 
 ## Panels
