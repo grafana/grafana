@@ -166,7 +166,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Set up lease renewal goroutine
 	leaseRenewalCtx, cancelLeaseRenewal := context.WithCancel(jobctx)
 	leaseExpired := make(chan struct{})
-	
+
 	go d.leaseRenewalLoop(leaseRenewalCtx, job, logger, leaseExpired)
 	defer cancelLeaseRenewal()
 
@@ -224,17 +224,17 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, job *provisioning.Job,
 			err := d.store.RenewLease(ctx, job)
 			if err != nil {
 				consecutiveFailures++
-				if apierrors.IsNotFound(err) || 
-				   strings.Contains(err.Error(), "job no longer exists") {
+				if apierrors.IsNotFound(err) ||
+					strings.Contains(err.Error(), "job no longer exists") {
 					logger.Error("job no longer exists - lease expired", "error", err)
 					close(leaseExpired)
 					return
 				}
-				
+
 				logger.Warn("failed to renew lease", "error", err, "consecutive_failures", consecutiveFailures)
-				
+
 				if consecutiveFailures >= maxFailures {
-					logger.Error("too many consecutive lease renewal failures - job will be aborted", 
+					logger.Error("too many consecutive lease renewal failures - job will be aborted",
 						"consecutive_failures", consecutiveFailures, "max_failures", maxFailures)
 					close(leaseExpired)
 					return
