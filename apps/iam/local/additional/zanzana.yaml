@@ -1,3 +1,78 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15.7
+          env:
+            - name: POSTGRES_USER
+              value: grafana
+            - name: POSTGRES_PASSWORD
+              value: password
+            - name: POSTGRES_DB
+              value: grafana
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: postgres-storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  type: ClusterIP
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -155,21 +230,34 @@ data:
   grafana.ini: |
     app_mode = development
     target = zanzana-server
+
     [log]
     level = info
+
+    [database]
+    type = postgres
+    host = postgres.default.svc:5432
+    name = grafana
+    user = grafana
+    password = password
+
     [feature_toggles]
     zanzana = true
     authZGRPCServer = true
+
     [zanzana.server]
     allow_insecure = true
     check_query_cache = true
     signing_keys_url = http://localhost:6481/jwks
     http_addr = 0.0.0.0:8080
+
     [grpc_server]
     enabled = true
     address = 0.0.0.0:10000
+
     [tracing.opentelemetry.otlp]
     address = tempo.default.svc:4317
+
     [server]
     http_port = 3001
     root_url =
@@ -190,6 +278,9 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
+    - name: grpc
+      port: 10000
+      targetPort: 10000
   selector:
     name: zanzana
 ---
@@ -232,11 +323,15 @@ spec:
           volumeMounts:
             - mountPath: /etc/grafana-config
               name: zanzana-config
+            - mountPath: /var/lib/grafana
+              name: zanzana-storage
       serviceAccount: zanzana
       volumes:
         - configMap:
             name: zanzana-config
           name: zanzana-config
+        - emptyDir: {}
+          name: zanzana-storage
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
