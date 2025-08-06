@@ -72,7 +72,7 @@ jobs:
           docker run -d --rm \
             -v /var/lib/dagger \
             -v /etc/buildkitd.toml:/etc/dagger/engine.toml \
-            --name dagger-engine-custom \
+            --name dagger-engine-v0.18.14 \
             --privileged \
             registry.dagger.io/engine:v0.18.14
 
@@ -409,7 +409,7 @@ jobs:
           docker run -d --rm \
             -v /var/lib/dagger \
             -v /etc/buildkitd.toml:/etc/dagger/engine.toml \
-            --name dagger-engine-custom \
+            --name dagger-engine-v0.18.14 \
             --privileged \
             registry.dagger.io/engine:v0.18.14
       - name: Run E2E tests
