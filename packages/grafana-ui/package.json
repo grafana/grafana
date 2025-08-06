@@ -136,7 +136,6 @@
   "devDependencies": {
     "@babel/core": "7.28.0",
     "@faker-js/faker": "^9.0.0",
-    "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@storybook/addon-a11y": "^8.6.2",
     "@storybook/addon-actions": "^8.6.2",

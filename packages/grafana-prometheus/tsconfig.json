@@ -1,5 +1,7 @@
 {
+  "extends": "../../scripts/tsconfig.base.json",
   "compilerOptions": {
+    "declaration": true,
     "jsx": "react-jsx",
     "alwaysStrict": true,
     "declarationDir": "./dist/types",
@@ -11,7 +13,6 @@
     "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
-  "extends": "@grafana/tsconfig",
   "include": [
     "../../public/test/setupTests.ts",
     "../../public/app/types/*.d.ts",

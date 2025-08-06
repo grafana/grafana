@@ -63,7 +63,6 @@
     "react-i18next": "^15.0.0"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^2.0.0",
     "@types/react": "18.3.18",
     "rollup": "^4.22.4",
     "rollup-plugin-copy": "3.5.0",
