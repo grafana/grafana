@@ -1,4 +1,4 @@
-package service_test
+package inline_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/stretchr/testify/require"
@@ -54,7 +54,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 			"securevalues:read": {"securevalues:uid:" + sv2},
 		})
 
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, tu.AccessClient)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, tu.AccessClient)
 
 		err = svc.CanReference(ctx, owner, sv1, sv2)
 		require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 	t.Run("when the auth info is missing it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 		err := svc.CanReference(t.Context(), common.ObjectReference{})
 		require.Error(t, err)
 	})
@@ -71,7 +71,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 	t.Run("when the owner namespace does not match auth info namespace it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		reqNs := "org-2345"
 		ctx := testutils.CreateUserAuthContext(t.Context(), reqNs, map[string][]string{})
@@ -83,7 +83,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 	t.Run("when the owner namespace is empty it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
@@ -94,7 +94,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 	t.Run("when the owner reference has empty fields it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		owner := common.ObjectReference{
 			Namespace: defaultNs,
@@ -125,7 +125,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 	t.Run("when no secure values are provided it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
@@ -137,7 +137,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		t.Parallel()
 
 		tu := testutils.Setup(t)
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
@@ -169,7 +169,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
 		err = svc.CanReference(ctx, owner, sv1)
 		require.Error(t, err)
@@ -189,7 +189,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 
 		ctx := identity.WithServiceIdentityContext(t.Context(), 1234)
 
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
 		err = svc.CanReference(ctx, owner, sv1)
 		require.Error(t, err)
@@ -207,7 +207,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, tu.AccessClient)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, tu.AccessClient)
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{
 			"securevalues:read": {"securevalues:uid:another-sv"}, // can read, but another resource!
@@ -242,13 +242,14 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		tu := testutils.Setup(t)
 
-		secret := common.NewSecretValue("test-value")
+		rawSecret := "test-value"
+		secret := common.NewSecretValue(rawSecret)
 
 		serviceIdentity := "service-identity"
 
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), serviceIdentity, owner.Namespace, nil, nil)
 
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
 		createdName, err := svc.CreateInline(createAuthCtx, owner, secret)
 		require.NoError(t, err)
@@ -259,13 +260,21 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		decryptedResult, ok := decryptedValues[createdName]
 		require.True(t, ok)
-		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), secret.DangerouslyExposeAndConsumeValue())
+		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), rawSecret)
+
+		// can also decrypt with the owner.APIGroup as a decrypter
+		decryptedValues, err = tu.DecryptService.Decrypt(t.Context(), owner.APIGroup, owner.Namespace, []string{createdName})
+		require.NoError(t, err)
+
+		decryptedResult, ok = decryptedValues[createdName]
+		require.True(t, ok)
+		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), rawSecret)
 	})
 
 	t.Run("when the auth info is missing it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 		_, err := svc.CreateInline(t.Context(), common.ObjectReference{}, "")
 		require.Error(t, err)
 	})
@@ -273,7 +282,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 	t.Run("when the request identity is not a user nor a service account, it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		createAuthCtx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", defaultNs, nil)
 
@@ -284,7 +293,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 	t.Run("when the owner namespace does not match auth info namespace it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		reqNs := "org-2345"
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", reqNs, nil, nil)
@@ -296,7 +305,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 	t.Run("when the owner namespace is empty it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", defaultNs, nil, nil)
 
@@ -307,7 +316,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 	t.Run("when the owner reference has empty fields it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		owner := common.ObjectReference{
 			Namespace: defaultNs,
@@ -339,7 +348,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 	t.Run("when an empty secret is provided it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", defaultNs, nil, nil)
 
@@ -376,7 +385,7 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSv1)
 
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
 		ctx := testutils.CreateServiceAuthContext(t.Context(), "", defaultNs, nil)
 
@@ -392,7 +401,7 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 	t.Run("when the auth info is missing it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 		err := svc.DeleteWhenOwnedByResource(t.Context(), common.ObjectReference{}, "")
 		require.Error(t, err)
 	})
@@ -400,7 +409,7 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 	t.Run("when the owner namespace does not match auth info namespace it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		reqNs := "org-2345"
 		ctx := testutils.CreateUserAuthContext(t.Context(), reqNs, map[string][]string{})
@@ -412,7 +421,7 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 	t.Run("when the owner namespace is empty it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
@@ -423,7 +432,7 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 	t.Run("when the owner reference has empty fields it returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		svc := service.ProvideInlineSecureValueService(tracer, nil, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
 
 		owner := common.ObjectReference{
 			Namespace: defaultNs,
@@ -467,7 +476,7 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSv1)
 
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
 		ctx := testutils.CreateServiceAuthContext(t.Context(), "", defaultNs, nil)
 
@@ -494,7 +503,7 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSv1)
 
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, nil)
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
 		ctx := testutils.CreateServiceAuthContext(t.Context(), "", defaultNs, nil)
 
@@ -506,5 +515,32 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, sv)
 		require.Equal(t, sv1, sv.GetName())
+	})
+
+	t.Run("when a secure value is owned and exists but another one doesnt, it deletes the first one but returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		tu := testutils.Setup(t)
+
+		sv1 := "test-secure-value-1"
+		createdSv1, err := tu.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = sv1
+			cfg.Sv.Namespace = defaultNs
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdSv1)
+
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
+
+		ctx := testutils.CreateServiceAuthContext(t.Context(), "", defaultNs, nil)
+
+		err = svc.DeleteWhenOwnedByResource(ctx, owner, sv1, "does-not-exist")
+		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+
+		// got deleted
+		sv, err := tu.SecureValueService.Read(ctx, xkube.Namespace(owner.Namespace), sv1)
+		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+		require.Nil(t, sv)
 	})
 }
