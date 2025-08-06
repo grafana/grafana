@@ -172,28 +172,5 @@ describe('LogLineMenu', () => {
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.queryByText('Show log details')).not.toBeInTheDocument();
     });
-
-    test('Does not show the timestamp toggle if there are no nanoseconds', async () => {
-      log.timeEpochNs = '17544729195000000';
-      render(
-        <LogListContextProvider {...contextProps}>
-          <LogLineMenu log={log} styles={styles} />
-        </LogListContextProvider>
-      );
-      await userEvent.click(screen.getByLabelText('Log menu'));
-      expect(screen.queryByText('Show nanoseconds')).not.toBeInTheDocument();
-      expect(screen.queryByText('Show milliseconds')).not.toBeInTheDocument();
-    });
-
-    test('Allows to toggle the timestamp format', async () => {
-      log.timeEpochNs = '17544729195133766';
-      render(
-        <LogListContextProvider {...contextProps}>
-          <LogLineMenu log={log} styles={styles} />
-        </LogListContextProvider>
-      );
-      await userEvent.click(screen.getByLabelText('Log menu'));
-      expect(screen.getByText('Show milliseconds')).toBeInTheDocument();
-    });
   });
 });

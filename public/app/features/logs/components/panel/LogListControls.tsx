@@ -11,6 +11,7 @@ import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
+import { LogLineTimestampFormat } from './LogLine';
 import { useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { ScrollToLogsEvent } from './virtualization';
@@ -57,11 +58,13 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
+    setTimestampFormat,
     setWrapLogMessage,
     showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
+    timestampFormat,
     wrapLogMessage,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
@@ -112,11 +115,19 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
   }, [fontSize, setFontSize]);
 
   const onShowTimestampsClick = useCallback(() => {
-    reportInteraction('logs_log_list_controls_show_time_clicked', {
-      show_time: !showTime,
-    });
-    setShowTime(!showTime);
-  }, [setShowTime, showTime]);
+    if (!config.featureToggles.newLogsPanel) {
+      reportInteraction('logs_log_list_controls_show_time_clicked', {
+        show_time: !showTime,
+      });
+      setShowTime(!showTime);
+      return;
+    }
+    if (!showTime || timestampFormat === 'ns') {
+      setShowTime(!showTime);
+    } else if (timestampFormat === 'ms') {
+      setTimestampFormat('ns');
+    }
+  }, [setShowTime, setTimestampFormat, showTime, timestampFormat]);
 
   const onShowUniqueLabelsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_unique_labels_clicked', {
@@ -281,15 +292,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
               </Dropdown>
               <div className={styles.divider} />
               <IconButton
-                name="clock-nine"
+                name={timestampFormat === 'ns' && showTime ? 'stopwatch' : 'clock-nine'}
                 aria-pressed={showTime}
                 className={showTime ? styles.controlButtonActive : styles.controlButton}
                 onClick={onShowTimestampsClick}
-                tooltip={
-                  showTime
-                    ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-                    : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-                }
+                tooltip={getTimestampTooltip(showTime, timestampFormat)}
                 size="lg"
               />
               {/* When this is used in a Plugin context, app is unknown */}
@@ -512,3 +519,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function getTimestampTooltip(showTime: boolean, timestampFormat: LogLineTimestampFormat) {
+  if (!config.featureToggles.newLogsPanel) {
+    return showTime
+      ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+      : t('logs.logs-controls.show-timestamps', 'Show timestamps');
+  }
+  if (!showTime) {
+    return t('logs.logs-controls.show-ms-timestamps', 'Show millisecond timestamps');
+  }
+  if (timestampFormat === 'ms') {
+    return t('logs.logs-controls.show-ns-timestamps', 'Show nanosecond timestamps');
+  }
+  return t('logs.logs-controls.hide-timestamps', 'Hide timestamps');
+}

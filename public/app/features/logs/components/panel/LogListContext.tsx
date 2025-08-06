@@ -35,6 +35,7 @@ import { PopoverContent } from '@grafana/ui';
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
+import { LogLineTimestampFormat } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
@@ -67,10 +68,10 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
-  setTimestampFormat: (format: 'ms' | 'ns') => void;
+  setTimestampFormat: (format: LogLineTimestampFormat) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
-  timestampFormat: 'ms' | 'ns';
+  timestampFormat: LogLineTimestampFormat;
   toggleDetails: (log: LogListModel) => void;
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
@@ -427,10 +428,16 @@ export const LogListContextProvider = ({
 
   const setShowTime = useCallback(
     (showTime: boolean) => {
-      setLogListState({ ...logListState, showTime });
+      const newTimestampFormat = showTime === false ? 'ms' : logListState.timestampFormat;
+      setLogListState({
+        ...logListState,
+        showTime,
+        timestampFormat: newTimestampFormat,
+      });
       onLogOptionsChange?.('showTime', showTime);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.showTime`, showTime);
+        store.set(`${logOptionsStorageKey}.timestampFormat`, newTimestampFormat);
       }
     },
     [logListState, logOptionsStorageKey, onLogOptionsChange]
@@ -542,7 +549,7 @@ export const LogListContextProvider = ({
   );
 
   const setTimestampFormat = useCallback(
-    (timestampFormat: 'ms' | 'ns') => {
+    (timestampFormat: LogLineTimestampFormat) => {
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.timestampFormat`, timestampFormat);
       }

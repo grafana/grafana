@@ -2,6 +2,7 @@ import ansicolor from 'ansicolor';
 
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
+import { LogLineTimestampFormat } from './LogLine';
 import { LOG_LINE_DETAILS_HEIGHT, LogLineDetailsMode } from './LogLineDetails';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
@@ -176,7 +177,11 @@ export class LogLineVirtualization {
     };
   };
 
-  calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = [], timestampFormat: 'ms' | 'ns') => {
+  calculateFieldDimensions = (
+    logs: LogListModel[],
+    displayedFields: string[] = [],
+    timestampFormat: LogLineTimestampFormat
+  ) => {
     if (!logs.length) {
       return [];
     }

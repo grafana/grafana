@@ -250,12 +250,14 @@ const LogLineComponent = memo(
 );
 LogLineComponent.displayName = 'LogLineComponent';
 
+export type LogLineTimestampFormat = 'ms' | 'ns';
+
 interface LogProps {
   displayedFields: string[];
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
-  timestampFormat: 'ms' | 'ns';
+  timestampFormat: LogLineTimestampFormat;
   wrapLogMessage: boolean;
 }
 

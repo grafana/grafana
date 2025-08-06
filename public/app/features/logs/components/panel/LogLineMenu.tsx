@@ -2,7 +2,6 @@ import { MouseEvent, useCallback, useMemo, useRef } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
@@ -45,8 +44,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     onUnpinLine,
     logLineMenuCustomItems = [],
     logSupportsContext,
-    setTimestampFormat,
-    timestampFormat,
     toggleDetails,
     isAssistantAvailable,
     openAssistantByLog,
@@ -78,13 +75,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     toggleDetails(log);
   }, [log, toggleDetails]);
 
-  const toggleTimestampFormat = useCallback(() => {
-    setTimestampFormat(timestampFormat === 'ms' ? 'ns' : 'ms');
-    reportInteraction(`logs_log_line_menu_toggle_timestamp_format`, {
-      format: timestampFormat === 'ms' ? 'ns' : 'ms',
-    });
-  }, [setTimestampFormat, timestampFormat]);
-
   const togglePinning = useCallback(() => {
     if (pinned) {
       onUnpinLine?.(log);
@@ -94,7 +84,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
   }, [log, onPinLine, onUnpinLine, pinned]);
 
   const showFirstDivider = enableLogDetails || shouldlogSupportsContext || onPinLine || onUnpinLine;
-  const nsPresent = useMemo(() => log.timeEpochNs.endsWith('000000') === false, [log.timeEpochNs]);
 
   const menu = useCallback(
     () => (
@@ -117,19 +106,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         )}
         {pinned && onUnpinLine && (
           <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.unpin-from-outline', 'Unpin log')} />
-        )}
-        {nsPresent && (
-          <>
-            <Menu.Divider />
-            <Menu.Item
-              onClick={toggleTimestampFormat}
-              label={
-                timestampFormat === 'ms'
-                  ? t('logs.log-line-menu.timestamp-ns', 'Show nanoseconds')
-                  : t('logs.log-line-menu.timestamp-ms', 'Show milliseconds')
-              }
-            />
-          </>
         )}
         {showFirstDivider && <Menu.Divider />}
         <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log', 'Copy log line')} />
@@ -165,7 +141,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       isAssistantAvailable,
       log,
       logLineMenuCustomItems,
-      nsPresent,
       onPermalinkClick,
       onPinLine,
       onUnpinLine,
@@ -174,10 +149,8 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       shouldlogSupportsContext,
       showContext,
       showFirstDivider,
-      timestampFormat,
       toggleLogDetails,
       togglePinning,
-      toggleTimestampFormat,
     ]
   );
 
