@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,7 +68,7 @@ func TestClient_Ping(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		err := client.Ping(context.Background())
 		assert.NoError(t, err)
 	})
@@ -84,7 +83,7 @@ func TestClient_Ping(t *testing.T) {
 
 			// Check tenant header
 			assert.Equal(t, "test-tenant", r.Header.Get("X-Scope-OrgID"))
-			
+
 			w.WriteHeader(http.StatusOK)
 		}))
 		defer server.Close()
@@ -94,8 +93,8 @@ func TestClient_Ping(t *testing.T) {
 		cfg.BasicAuthPassword = "testpass"
 		cfg.TenantID = "test-tenant"
 
-		client := NewClient(cfg, log.NewNopLogger())
-		
+		client := NewClient(cfg)
+
 		err := client.Ping(context.Background())
 		assert.NoError(t, err)
 	})
@@ -107,7 +106,7 @@ func TestClient_Ping(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		err := client.Ping(context.Background())
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "non-200 status code")
@@ -130,7 +129,7 @@ func TestClient_Push(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		streams := []Stream{
 			{
 				Stream: map[string]string{"job": "test"},
@@ -158,10 +157,10 @@ func TestClient_Push(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		streams := []Stream{{Stream: map[string]string{"job": "test"}}}
 		err := client.Push(context.Background(), streams)
-		
+
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "non-200 response")
 	})
@@ -200,7 +199,7 @@ func TestClient_RangeQuery(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		result, err := client.RangeQuery(
 			context.Background(),
 			`{job="test"}`,
@@ -219,14 +218,14 @@ func TestClient_RangeQuery(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			params := r.URL.Query()
 			assert.Equal(t, "", params.Get("limit")) // Should not be set
-			
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(QueryRes{})
 		}))
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		_, err := client.RangeQuery(context.Background(), `{job="test"}`, 1000000000, 2000000000, 0)
 		assert.NoError(t, err)
 	})
@@ -239,9 +238,9 @@ func TestClient_RangeQuery(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		_, err := client.RangeQuery(context.Background(), `{job="test"}`, 1000000000, 2000000000, 100)
-		
+
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "non-200 response")
 	})
@@ -254,9 +253,9 @@ func TestClient_RangeQuery(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		_, err := client.RangeQuery(context.Background(), `{job="test"}`, 1000000000, 2000000000, 100)
-		
+
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error unmarshaling loki response")
 	})
@@ -265,9 +264,9 @@ func TestClient_RangeQuery(t *testing.T) {
 func TestClient_MaxQuerySize(t *testing.T) {
 	cfg := createTestConfig(t, "http://localhost", "http://localhost")
 	cfg.MaxQuerySize = 5000
-	
-	client := NewClient(cfg, log.NewNopLogger())
-	
+
+	client := NewClient(cfg)
+
 	assert.Equal(t, 5000, client.MaxQuerySize())
 }
 
@@ -278,8 +277,8 @@ func TestClient_setAuthAndTenantHeaders(t *testing.T) {
 		cfg.BasicAuthPassword = "testpass"
 		cfg.TenantID = "test-tenant"
 
-		client := NewClient(cfg, log.NewNopLogger())
-		
+		client := NewClient(cfg)
+
 		req, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
 		client.setAuthAndTenantHeaders(req)
 
@@ -292,8 +291,8 @@ func TestClient_setAuthAndTenantHeaders(t *testing.T) {
 
 	t.Run("without auth", func(t *testing.T) {
 		cfg := createTestConfig(t, "http://localhost", "http://localhost")
-		client := NewClient(cfg, log.NewNopLogger())
-		
+		client := NewClient(cfg)
+
 		req, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
 		client.setAuthAndTenantHeaders(req)
 
@@ -331,7 +330,7 @@ func TestStream_JSONRoundtrip(t *testing.T) {
 	assert.Len(t, restored.Values, len(original.Values))
 
 	for i, sample := range original.Values {
-		assert.True(t, sample.T.Equal(restored.Values[i].T), 
+		assert.True(t, sample.T.Equal(restored.Values[i].T),
 			fmt.Sprintf("Timestamp mismatch at index %d: expected %v, got %v", i, sample.T, restored.Values[i].T))
 		assert.Equal(t, sample.V, restored.Values[i].V)
 	}
@@ -341,13 +340,13 @@ func TestStream_JSONRoundtrip(t *testing.T) {
 
 func createTestClient(t *testing.T, readURL, writeURL string) *Client {
 	cfg := createTestConfig(t, readURL, writeURL)
-	return NewClient(cfg, log.NewNopLogger())
+	return NewClient(cfg)
 }
 
 func createTestConfig(t *testing.T, readURL, writeURL string) Config {
 	readParsed, err := url.Parse(readURL)
 	require.NoError(t, err)
-	
+
 	writeParsed, err := url.Parse(writeURL)
 	require.NoError(t, err)
 
@@ -368,10 +367,10 @@ func TestClient_ContextCancellation(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // Cancel immediately
-		
+
 		err := client.Ping(ctx)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "context canceled")
@@ -384,10 +383,10 @@ func TestClient_ContextCancellation(t *testing.T) {
 		defer server.Close()
 
 		client := createTestClient(t, server.URL, server.URL)
-		
+
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		
+
 		streams := []Stream{{Stream: map[string]string{"job": "test"}}}
 		err := client.Push(ctx, streams)
 		assert.Error(t, err)

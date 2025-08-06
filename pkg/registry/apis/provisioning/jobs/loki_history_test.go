@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -127,8 +126,6 @@ func TestLokiJobHistory_Integration(t *testing.T) {
 
 // createTestLokiJobHistory creates a LokiJobHistory for testing
 func createTestLokiJobHistory(t *testing.T) *LokiJobHistory {
-	logger := log.NewNopLogger()
-
 	// Create test URLs
 	readURL, _ := url.Parse("http://localhost:3100")
 	writeURL, _ := url.Parse("http://localhost:3100")
@@ -142,6 +139,5 @@ func createTestLokiJobHistory(t *testing.T) *LokiJobHistory {
 		MaxQuerySize: 1000,
 	}
 
-	return NewLokiJobHistory(logger, config)
+	return NewLokiJobHistory(config)
 }
-

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 type Config struct {
@@ -69,19 +69,17 @@ type PushRequest struct {
 type Client struct {
 	cfg    Config
 	client *http.Client
-	log    log.Logger
 }
 
-func NewClient(cfg Config, logger log.Logger) *Client {
+func NewClient(cfg Config) *Client {
 	return &Client{
 		cfg:    cfg,
 		client: &http.Client{Timeout: 30 * time.Second},
-		log:    logger.New("protocol", "http"),
 	}
 }
 
 func (c *Client) Ping(ctx context.Context) error {
-	log := c.log.FromContext(ctx)
+	log := logging.FromContext(ctx)
 	uri := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/labels")
 	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
 	if err != nil {
@@ -110,8 +108,8 @@ func (c *Client) Ping(ctx context.Context) error {
 }
 
 func (c *Client) Push(ctx context.Context, streams []Stream) error {
-	log := c.log.FromContext(ctx)
-	
+	log := logging.FromContext(ctx)
+
 	pushReq := PushRequest{Streams: streams}
 	body, err := json.Marshal(pushReq)
 	if err != nil {
@@ -151,8 +149,8 @@ func (c *Client) Push(ctx context.Context, streams []Stream) error {
 }
 
 func (c *Client) RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (QueryRes, error) {
-	log := c.log.FromContext(ctx)
-	
+	log := logging.FromContext(ctx)
+
 	uri := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/query_range")
 	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
 	if err != nil {
@@ -170,7 +168,7 @@ func (c *Client) RangeQuery(ctx context.Context, logQL string, start, end, limit
 
 	c.setAuthAndTenantHeaders(req)
 	req = req.WithContext(ctx)
-	
+
 	res, err := c.client.Do(req)
 	if res != nil {
 		defer func() {
@@ -218,3 +216,4 @@ func (c *Client) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Set("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
+

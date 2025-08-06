@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -44,9 +43,9 @@ type LokiJobHistory struct {
 }
 
 // NewLokiJobHistory creates a new Loki-based job history implementation
-func NewLokiJobHistory(logger log.Logger, cfg loki.Config) *LokiJobHistory {
+func NewLokiJobHistory(cfg loki.Config) *LokiJobHistory {
 	return &LokiJobHistory{
-		client:         loki.NewClient(cfg, logger),
+		client:         loki.NewClient(cfg),
 		externalLabels: cfg.ExternalLabels,
 	}
 }

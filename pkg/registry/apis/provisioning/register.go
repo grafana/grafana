@@ -39,7 +39,6 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -50,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -62,7 +62,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -81,8 +80,7 @@ var (
 
 // JobHistoryConfig holds configuration for job history backends
 type JobHistoryConfig struct {
-	Backend string       `json:"backend"`
-	Loki    *loki.Config `json:"loki,omitempty"`
+	Loki *loki.Config `json:"loki,omitempty"`
 }
 
 type APIBuilder struct {
@@ -102,7 +100,6 @@ type APIBuilder struct {
 		jobs.Store
 	}
 	jobHistory        jobs.History
-	jobHistoryConfig  *JobHistoryConfig
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
@@ -146,6 +143,12 @@ func NewAPIBuilder(
 		git.Mutator(repositorySecrets),
 		github.Mutator(repositorySecrets),
 	}
+	// Create job history based on configuration
+	// Default to in-memory cache if no config provided
+	jobHistory := jobs.NewJobHistoryCache()
+	if jobHistoryConfig != nil || jobHistoryConfig.Loki == nil {
+		jobHistory = jobs.NewLokiJobHistory(*jobHistoryConfig.Loki)
+	}
 
 	b := &APIBuilder{
 		mutators:            mutators,
@@ -164,15 +167,12 @@ func NewAPIBuilder(
 		unified:             unified,
 		repositorySecrets:   repositorySecrets,
 		access:              access,
-		jobHistoryConfig:    jobHistoryConfig,
+		jobHistory:          jobHistory,
 		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
 			provisioning.LocalRepositoryType:  true,
 			provisioning.GitHubRepositoryType: true,
 		},
 	}
-
-	// Create job history based on configuration
-	b.jobHistory = b.createJobHistory(jobHistoryConfig, configProvider, tracer)
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
@@ -197,7 +197,7 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 		parsedURL, err := url.Parse(cfg.ProvisioningLokiURL)
 		if err != nil {
 			logging.DefaultLogger.Error("Invalid Loki URL in provisioning config", "url", cfg.ProvisioningLokiURL, "error", err)
-			return &JobHistoryConfig{Backend: "memory"}
+			return &JobHistoryConfig{}
 		}
 
 		lokiCfg := &loki.Config{
@@ -218,30 +218,12 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 		}
 
 		return &JobHistoryConfig{
-			Backend: "loki",
-			Loki:    lokiCfg,
+			Loki: lokiCfg,
 		}
 	}
 
 	// Default to memory backend
-	return &JobHistoryConfig{Backend: "memory"}
-}
-
-// createJobHistory creates the appropriate job history backend based on configuration
-func (b *APIBuilder) createJobHistory(config *JobHistoryConfig, configProvider apiserver.RestConfigProvider, tracer tracing.Tracer) jobs.History {
-	// Default to in-memory cache if no config provided
-	if config == nil || config.Backend == "" || config.Backend == "memory" {
-		return jobs.NewJobHistoryCache()
-	}
-
-	// If Loki backend is specified and config is provided
-	if config.Backend == "loki" && config.Loki != nil {
-		logger := log.NewNopLogger()
-		return jobs.NewLokiJobHistory(logger, *config.Loki)
-	}
-
-	// Fallback to in-memory cache for any other cases
-	return jobs.NewJobHistoryCache()
+	return &JobHistoryConfig{}
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
