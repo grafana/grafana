@@ -67,30 +67,32 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
-COPY .citools .citools
+COPY .citools/bra .citools/bra
+COPY .citools/cue .citools/cue
+COPY .citools/cog .citools/cog
+COPY .citools/lefthook .citools/lefthook
+COPY .citools/jb .citools/jb
+COPY .citools/golangci-lint .citools/golangci-lint
+COPY .citools/swagger .citools/swagger
 
-# Copy go dependencies first
-# If updating this, please also update devenv/frontend-service/backend.dockerfile
+# Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
+COPY pkg/apis/folder pkg/apis/folder
+COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
 COPY pkg/promlib pkg/promlib
 COPY pkg/storage/unified/resource pkg/storage/unified/resource
-COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
 COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
-COPY apps/shorturl apps/shorturl
-COPY apps/provisioning apps/provisioning
-COPY apps/secret apps/secret
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
 COPY apps/folder apps/folder
-COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications apps/alerting/notifications
