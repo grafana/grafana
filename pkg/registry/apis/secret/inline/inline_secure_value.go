@@ -26,6 +26,8 @@ type LocalInlineSecureValueService struct {
 	accessChecker      authlib.AccessChecker
 }
 
+var _ contracts.InlineSecureValueSupport = &LocalInlineSecureValueService{}
+
 func NewLocalInlineSecureValueService(
 	tracer trace.Tracer,
 	secureValueService contracts.SecureValueService,
@@ -207,6 +209,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 			Value:       &secret,
 			Decrypters: []string{
 				serviceIdentity,
+				owner.APIGroup,
 			},
 		},
 	}
@@ -219,14 +222,14 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	return createdSv.GetName(), nil
 }
 
-func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Context, owner common.ObjectReference, name string) error {
+func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Context, owner common.ObjectReference, names ...string) error {
 	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.DeleteWhenOwnedByResource", trace.WithAttributes(
 		attribute.String("owner.namespace", owner.Namespace),
 		attribute.String("owner.apiGroup", owner.APIGroup),
 		attribute.String("owner.apiVersion", owner.APIVersion),
 		attribute.String("owner.kind", owner.Kind),
 		attribute.String("owner.name", owner.Name),
-		attribute.String("secureValue.name", name),
+		attribute.StringSlice("secureValueNames", names),
 	))
 	defer span.End()
 
@@ -243,17 +246,18 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 		return fmt.Errorf("owner reference must have a valid API group, API version, kind and name")
 	}
 
-	owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
-	if err != nil {
-		return fmt.Errorf("error checking if secure value %s is owned by %v: %w", name, owner, err)
-	}
+	for _, name := range names {
+		owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
+		if err != nil {
+			return fmt.Errorf("error checking if secure value %s is owned by %v: %w", name, owner, err)
+		}
 
-	if owned {
-		if _, err := s.secureValueService.Delete(ctx, xkube.Namespace(owner.Namespace), name); err != nil {
-			return fmt.Errorf("error deleting secure value %s for owner %v: %w", name, owner, err)
+		if owned {
+			if _, err := s.secureValueService.Delete(ctx, xkube.Namespace(owner.Namespace), name); err != nil {
+				return fmt.Errorf("error deleting secure value %s for owner %v: %w", name, owner, err)
+			}
 		}
 	}
 
-	// if it is not owned, this is a no-op
 	return nil
 }
