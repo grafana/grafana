@@ -20,6 +20,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 	// Group=provisioning.grafana.app, Version=v0alpha1
 	case v0alpha1.SchemeGroupVersion.WithKind("BitbucketRepositoryConfig"):
 		return &provisioningv0alpha1.BitbucketRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("DeleteJobOptions"):
+		return &provisioningv0alpha1.DeleteJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ExportJobOptions"):
+		return &provisioningv0alpha1.ExportJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitLabRepositoryConfig"):
@@ -28,8 +32,22 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.GitRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HealthStatus"):
 		return &provisioningv0alpha1.HealthStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("Job"):
+		return &provisioningv0alpha1.JobApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobResourceSummary"):
+		return &provisioningv0alpha1.JobResourceSummaryApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobSpec"):
+		return &provisioningv0alpha1.JobSpecApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobStatus"):
+		return &provisioningv0alpha1.JobStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("LocalRepositoryConfig"):
 		return &provisioningv0alpha1.LocalRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("MigrateJobOptions"):
+		return &provisioningv0alpha1.MigrateJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("MoveJobOptions"):
+		return &provisioningv0alpha1.MoveJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("PullRequestJobOptions"):
+		return &provisioningv0alpha1.PullRequestJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Repository"):
 		return &provisioningv0alpha1.RepositoryApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositorySpec"):
@@ -38,6 +56,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.RepositoryStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ResourceCount"):
 		return &provisioningv0alpha1.ResourceCountApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ResourceRef"):
+		return &provisioningv0alpha1.ResourceRefApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SyncJobOptions"):
+		return &provisioningv0alpha1.SyncJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncOptions"):
 		return &provisioningv0alpha1.SyncOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncStatus"):
