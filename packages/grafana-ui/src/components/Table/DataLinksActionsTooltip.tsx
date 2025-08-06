@@ -17,6 +17,7 @@ interface Props {
   actions?: ActionModel[];
   value?: ReactNode;
   coords: DataLinksActionsTooltipCoords;
+  root?: HTMLElement;
   onTooltipClose?: () => void;
 }
 
@@ -24,7 +25,7 @@ interface Props {
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
+export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose, root }: Props) => {
   const styles = useStyles2(getStyles);
 
   // the order of middleware is important!
@@ -83,7 +84,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
     <>
       {/* TODO: we can remove `value` from this component when tableNextGen is fully rolled out */}
       {value}
-      <Portal>
+      <Portal root={root}>
         <div
           ref={refCallback}
           {...getReferenceProps()}
