@@ -714,7 +714,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Job(ref common.ReferenceCallback) com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors. The repository name and type are stored as labels",
+				Description: "The repository name and type are stored as labels",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
