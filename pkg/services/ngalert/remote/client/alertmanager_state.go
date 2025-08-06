@@ -23,7 +23,7 @@ func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaS
 	}
 	// nolint:bodyclose
 	// closed within `do`
-	_, err := mc.do(ctx, grafanaAlertmanagerStatePath, http.MethodGet, nil, &response)
+	_, err := mc.do(ctx, path, http.MethodGet, nil, &response)
 	if err != nil {
 		return nil, err
 	}

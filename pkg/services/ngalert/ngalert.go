@@ -272,10 +272,11 @@ func (ng *AlertNG) init() error {
 
 					// Use both Alertmanager implementations in the forked Alertmanager.
 					rsCfg := remote.RemoteSecondaryConfig{
-						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
-						OrgID:        orgID,
-						Store:        ng.store,
-						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+						Logger:          log.New("ngalert.forked-alertmanager.remote-secondary"),
+						OrgID:           orgID,
+						Store:           ng.store,
+						SyncInterval:    ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+						WithRemoteState: remoteSecondaryWithRemoteState,
 					}
 					return remote.NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
 				}
