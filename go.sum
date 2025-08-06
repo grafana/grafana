@@ -1616,8 +1616,6 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.278.0 h1:5/rIYparLi02pofdaag8wnjspMMVNCi8cZhC4cdC3Ho=
 github.com/grafana/grafana-plugin-sdk-go v0.278.0/go.mod h1:+8NXT/XUJ/89GV6FxGQ366NZ3nU+cAXDMd0OUESF9H4=
-github.com/grafana/grafana/pkg/build v0.0.0-20250806181750-295ace108dd7 h1:WTvOo17BdUVJ23iDvckiJ1rMsdRGI9RDWNATwBm2SKI=
-github.com/grafana/grafana/pkg/build v0.0.0-20250806181750-295ace108dd7/go.mod h1:ogzzNsIjP2sWPNixRL7VQiH0Y/TFlOTo8zQt/25EHK8=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2 h1:A65jWgLk4Re28gIuZcpC0aTh71JZ0ey89hKGE9h543s=
