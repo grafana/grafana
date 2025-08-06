@@ -619,10 +619,6 @@ const (
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
 
-	// FlagUnifiedStorageSearchPermissionFiltering
-	// Enable permission filtering on unified storage search
-	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
-
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"

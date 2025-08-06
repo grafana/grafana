@@ -3228,21 +3228,6 @@
     },
     {
       "metadata": {
-        "name": "unifiedStorageSearchPermissionFiltering",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-22T11:38:37Z"
-      },
-      "spec": {
-        "description": "Enable permission filtering on unified storage search",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "unifiedStorageSearchSprinkles",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-12-18T17:00:54Z"
