@@ -4,4 +4,6 @@
 
 package v0alpha1
 
+type JobExpansion interface{}
+
 type RepositoryExpansion interface{}
