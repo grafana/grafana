@@ -253,6 +253,24 @@ func (s *persistentStore) Update(ctx context.Context, job *provisioning.Job) (*p
 	return updatedJob, nil
 }
 
+// Get retrieves a job by name for conflict resolution.
+func (s *persistentStore) Get(ctx context.Context, name string) (*provisioning.Job, error) {
+	obj, err := s.jobStore.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, apifmt.Errorf("job '%s' not found", name)
+		}
+		return nil, apifmt.Errorf("failed to get job '%s': %w", name, err)
+	}
+
+	job, ok := obj.(*provisioning.Job)
+	if !ok {
+		return nil, apifmt.Errorf("unexpected object type %T", obj)
+	}
+
+	return job, nil
+}
+
 // Complete marks a job as completed and moves it to the historic job store.
 // When in the historic store, there is no more claim on the job.
 func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) error {
@@ -286,12 +304,31 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 		return apifmt.Errorf("job '%s' in '%s' is not claimed", job.GetName(), job.GetNamespace())
 	}
 
+	// Fetch the latest version to avoid conflicts
+	latestObj, err := s.jobStore.Get(ctx, job.GetName(), &metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
+		}
+		return apifmt.Errorf("failed to fetch job for lease renewal '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	}
+
+	latestJob, ok := latestObj.(*provisioning.Job)
+	if !ok {
+		return apifmt.Errorf("unexpected object type %T", latestObj)
+	}
+
+	// Verify we still own the lease
+	if latestJob.Labels == nil || latestJob.Labels[LabelJobClaim] == "" {
+		return apifmt.Errorf("lease lost for job '%s' in '%s': no longer claimed", job.GetName(), job.GetNamespace())
+	}
+
 	// Update the claim timestamp to current time
-	updatedJob := job.DeepCopy()
+	updatedJob := latestJob.DeepCopy()
 	updatedJob.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
 
-	// Update the job in storage
-	_, _, err := s.jobStore.Update(ctx,
+	// Update the job in storage with the latest resource version
+	_, _, err = s.jobStore.Update(ctx,
 		updatedJob.GetName(),                      // name
 		rest.DefaultUpdatedObjectInfo(updatedJob), // objInfo
 		failCreation,                              // createValidation
@@ -309,8 +346,9 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
-	// Update the job's claim timestamp in memory
+	// Update the job's claim timestamp and resource version in memory
 	job.Labels[LabelJobClaim] = updatedJob.Labels[LabelJobClaim]
+	job.ResourceVersion = updatedJob.ResourceVersion
 	return nil
 }
 
