@@ -159,11 +159,13 @@ func (h *LokiJobHistory) jobToStream(ctx context.Context, job *provisioning.Job)
 	}
 
 	// Create timestamp (use finished time if available, otherwise creation time)
-	timestamp := time.Unix(0, job.CreationTimestamp.UnixNano())
+	timestamp := job.CreationTimestamp.Time
 	if job.Status.Finished > 0 {
-		timestamp = time.Unix(job.Status.Finished, 0)
+		// Status timestamps are in milliseconds
+		timestamp = time.Unix(0, job.Status.Finished*int64(time.Millisecond))
 	} else if job.Status.Started > 0 {
-		timestamp = time.Unix(job.Status.Started, 0)
+		// Status timestamps are in milliseconds
+		timestamp = time.Unix(0, job.Status.Started*int64(time.Millisecond))
 	}
 
 	// Create sample

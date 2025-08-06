@@ -204,7 +204,10 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 			ReadPathURL:    parsedURL,
 			WritePathURL:   parsedURL,
 			TenantID:       cfg.ProvisioningLokiTenantID,
-			ExternalLabels: map[string]string{"source": "grafana-provisioning"},
+			ExternalLabels: map[string]string{
+				"source":       "grafana-provisioning",
+				"service_name": "grafana-provisioning",
+			},
 			MaxQuerySize:   5000, // Default query size
 		}
 

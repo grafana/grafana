@@ -34,8 +34,8 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		},
 		Status: provisioning.JobStatus{
 			State:    provisioning.JobStateSuccess,
-			Started:  time.Now().Unix() - 100,
-			Finished: time.Now().Unix(),
+			Started:  time.Now().UnixMilli() - 100000, // 100 seconds ago in milliseconds
+			Finished: time.Now().UnixMilli(),          // Now in milliseconds
 			Message:  "Job completed successfully",
 		},
 	}
@@ -57,8 +57,8 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		// Verify we have a sample
 		require.Len(t, stream.Values, 1)
 
-		// Verify timestamp (should use finished time)
-		expectedTime := time.Unix(job.Status.Finished, 0)
+		// Verify timestamp (should use finished time converted from milliseconds)
+		expectedTime := time.Unix(0, job.Status.Finished*int64(time.Millisecond))
 		assert.Equal(t, expectedTime, stream.Values[0].T)
 
 		// Verify job data is JSON
