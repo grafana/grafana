@@ -3405,6 +3405,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
+    "@grafana/tsconfig": "npm:^2.0.0"
     "@swc/core": "npm:1.13.3"
     "@swc/helpers": "npm:^0.5.0"
     "@swc/jest": "npm:^0.2.26"
@@ -3703,6 +3704,13 @@ __metadata:
     typescript: "npm:5.9.2"
   languageName: unknown
   linkType: soft
+
+"@grafana/tsconfig@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@grafana/tsconfig@npm:2.0.0"
+  checksum: 10/81e3c07e2f3f01e70b3e73a5f7e71871dc3a14c683b1d760828e0c4d609f55adf5111ff72b9148b7a7af3cdeb6199af1fdd295140b003ef2ff74f01a8b77bd09
+  languageName: node
+  linkType: hard
 
 "@grafana/ui@npm:12.2.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local

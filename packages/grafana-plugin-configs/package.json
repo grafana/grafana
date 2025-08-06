@@ -8,6 +8,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "@grafana/tsconfig": "^2.0.0",
     "@swc/core": "1.13.3",
     "@swc/helpers": "^0.5.0",
     "@swc/jest": "^0.2.26",

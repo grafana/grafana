@@ -1,14 +1,14 @@
 {
-  "extends": "../../scripts/tsconfig.base.json",
   "compilerOptions": {
-    "declaration": true,
     "jsx": "react-jsx",
     "alwaysStrict": true,
+    "declaration": false,
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "noEmit": true,
     "allowImportingTsExtensions": true
   },
+  "extends": "@grafana/tsconfig",
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
   "include": ["./types", "."]
 }
