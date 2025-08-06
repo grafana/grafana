@@ -133,14 +133,13 @@ type Cfg struct {
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
 	// Job History Configuration
-	ProvisioningJobHistoryBackend string
-	ProvisioningLokiURL           string
-	ProvisioningLokiBasicAuth     string
-	ProvisioningLokiTenantID      string
-	DataPath                   string
-	LogsPath                   string
-	PluginsPath                string
-	EnterpriseLicensePath      string
+	ProvisioningLokiURL       string
+	ProvisioningLokiBasicAuth string
+	ProvisioningLokiTenantID  string
+	DataPath                  string
+	LogsPath                  string
+	PluginsPath               string
+	EnterpriseLicensePath     string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -557,7 +556,7 @@ type Cfg struct {
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
-	//Short Links
+	// Short Links
 	ShortLinkExpiration int
 
 	// Unified Storage
@@ -791,7 +790,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 
-	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
+	newAnnotationCleanupSettings := func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
 		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
 		if err != nil {
 			maxAge = 0
@@ -1774,7 +1773,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			string(identity.RoleNone),
 			string(identity.RoleViewer),
 			string(identity.RoleEditor),
-			string(identity.RoleAdmin)})
+			string(identity.RoleAdmin),
+		})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	// Deprecated
@@ -2083,7 +2083,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 
 	// Read job history configuration
-	cfg.ProvisioningJobHistoryBackend = valueAsString(iniFile.Section("provisioning"), "job_history_backend", "memory")
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
 	cfg.ProvisioningLokiBasicAuth = valueAsString(iniFile.Section("provisioning"), "loki_basic_auth", "")
 	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
