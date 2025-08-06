@@ -137,10 +137,10 @@ type Cfg struct {
 	ProvisioningLokiUser     string
 	ProvisioningLokiPassword string
 	ProvisioningLokiTenantID string
-	DataPath                  string
-	LogsPath                  string
-	PluginsPath               string
-	EnterpriseLicensePath     string
+	DataPath                 string
+	LogsPath                 string
+	PluginsPath              string
+	EnterpriseLicensePath    string
 
 	// SMTP email settings
 	Smtp SmtpSettings
