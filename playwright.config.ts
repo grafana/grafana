@@ -196,6 +196,15 @@ export default defineConfig<PluginOptions>({
       dependencies: ['authenticate'],
     },
     {
+      name: 'canvas',
+      testDir: path.join(testDirRoot, '/canvas'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'zipkin',
       testDir: path.join(pluginDirRoot, '/zipkin'),
       use: {

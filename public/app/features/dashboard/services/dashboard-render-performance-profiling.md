@@ -189,6 +189,38 @@ The system reports the following data for each interaction:
 
 The profiler is integrated into dashboard creation paths and uses a singleton pattern to share profiler instances across dashboard reloads. The performance tracking is implemented using the `SceneRenderProfiler` from the `@grafana/scenes` library.
 
+### Tab Inactivity Handling
+
+To prevent meaningless profiling data when users switch browser tabs, the `SceneRenderProfiler` implements dual protection mechanisms:
+
+#### Primary Protection: Page Visibility API
+
+The profiler automatically cancels active profiling sessions when the browser tab becomes inactive:
+
+```javascript
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && this.#profileInProgress) {
+    this.cancelProfile();
+  }
+});
+```
+
+This provides immediate response to tab switches using the browser's native visibility change events.
+
+#### Fallback Protection: Frame Length Detection
+
+As a backup mechanism, the profiler detects tab inactivity by monitoring frame duration:
+
+```javascript
+if (frameLength > TAB_INACTIVE_THRESHOLD) {
+  // 1000ms
+  this.cancelProfile();
+  return;
+}
+```
+
+This fallback catches cases where visibility events might be missed and prevents recording of artificially long frame times (hours instead of milliseconds) that occur when `requestAnimationFrame` callbacks resume after tab reactivation.
+
 ## Related Documentation
 
 - [PR #858 - Add SceneRenderProfiler to scenes](https://github.com/grafana/scenes/pull/858)
@@ -197,3 +229,4 @@ The profiler is integrated into dashboard creation paths and uses a singleton pa
 - [PR #1195 - Enhance SceneRenderProfiler with additional interaction tracking](https://github.com/grafana/scenes/pull/1195)
 - [PR #1198 - Make SceneRenderProfiler optional and injectable](https://github.com/grafana/scenes/pull/1198)
 - [PR #1199 - SceneRenderProfiler: add start and end timestamps to profile events](https://github.com/grafana/scenes/pull/1199)
+- [PR #1205 - SceneRenderProfiler: Handle tab inactivity](https://github.com/grafana/scenes/pull/1205)

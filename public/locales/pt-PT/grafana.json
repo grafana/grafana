@@ -1523,7 +1523,10 @@
       "group-loading-error": "Erro ao carregar o grupo",
       "interval": "Intervalo",
       "namespace": "Espaço de nome",
-      "new": ""
+      "new": "",
+      "title": {
+        "back": ""
+      }
     },
     "group-edit": {
       "ds-error": "Erro ao carregar a detalhes da origem dos dados",
@@ -2240,6 +2243,9 @@
       "title-attention": "Atenção",
       "title-manage-contact-point-permissions": "Gerir permissões de ponto de contacto"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": ""
+    },
     "receivers-section": {
       "button-more": "Mais",
       "new-menu": {
@@ -2566,6 +2572,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "",
       "error-loading": "Ocorreu um erro ao carregar a regra",
       "evaluation-interval": "A cada {{interval}}",
       "prometheus-consistency-check": {
@@ -3563,12 +3570,12 @@
       "tags-column": "Etiquetas"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
       "api-error": "",
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "delete-warning": ""
+      "delete-warning": "",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Não foi possível obter informações sobre os descendentes"
@@ -3611,7 +3618,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Erro ao criar a pasta",
-      "alert-folder-created-successfully": "Pasta criada com sucesso",
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
@@ -3759,7 +3765,6 @@
       }
     },
     "description-experimental-types": "",
-    "description-infinite-panning": "",
     "description-inline-editing": "",
     "description-pan-zoom": "",
     "direction-options": {
@@ -3860,7 +3865,6 @@
     "name-align-text": "",
     "name-color": "",
     "name-experimental-types": "",
-    "name-infinite-panning": "",
     "name-inline-editing": "",
     "name-pan-zoom": "",
     "name-text": "",
@@ -4130,11 +4134,39 @@
       "body": "Experimente o novo Consultor para descobrir possíveis problemas com as suas origens de dados e plugins.",
       "go-to-advisor": "Ir para o Consultor"
     },
+    "cloud": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "collector": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "integrations": {
+          "subtitle": "",
+          "title": ""
+        },
+        "private-data-source-connections": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
+    },
     "connect-data": {
       "category-header-label": "Origens de dados",
       "empty-message": "Não foram encontrados resultados que correspondam à sua consulta",
       "request-data-source": "Solicitar uma nova origem de dados",
       "roadmap": "Ver roteiro"
+    },
+    "connections-home-page": {
+      "welcome-to-connections": ""
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link para as ligações",
@@ -4165,6 +4197,19 @@
     },
     "not-found-datasource": {
       "body": "Talvez tenha escrito mal o URL ou o plugin com a ID <1></1> não esteja disponível.<3></3>Para ver uma lista de origens de dados disponíveis, <5>clique aqui</5>."
+    },
+    "oss": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
     },
     "search": {
       "aria-label-search-all": "Pesquisar tudo",
@@ -4947,6 +4992,10 @@
       "description": "Descrição",
       "title-option": "Título"
     },
+    "options-pane-category": {
+      "aria-label-collapse": "",
+      "aria-label-expand": ""
+    },
     "options-pane-options": {
       "placeholder-search-options": "Opções de pesquisa",
       "Recent options-title-recent-options": "Opções recentes",
@@ -5645,6 +5694,7 @@
       "delete-read-only-file-message": "",
       "deleting": "A eliminar...",
       "drawer-title": "",
+      "success-message": "",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
     },
     "description-label": {
@@ -5656,9 +5706,6 @@
           "edit-link": "Editar link"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Alternar menu de e-mail"
@@ -5818,6 +5865,7 @@
       "usage-count_other": "Utilizado em {{count}} painéis de controlo"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5827,6 +5875,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6601,6 +6650,7 @@
       "label-source": "Origem"
     },
     "resource-picker": {
+      "aria-label-clear-value": "",
       "render-small-resource-picker": {
         "set-icon": "Definir o ícone"
       }
@@ -6637,6 +6687,7 @@
       "noOptionsMessage-no-fields-found": ""
     },
     "text-dimension-editor": {
+      "aria-label-clear-value": "",
       "description-field": "",
       "description-fixed": "",
       "label-field": "Campo",
@@ -6774,7 +6825,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Botão de recolha do elemento do esboço do conteúdo"
+        "aria-label-content-outline-item-collapse-button": "Botão de recolha do elemento do esboço do conteúdo",
+        "aria-label-content-outline-item-delete-button": ""
       }
     },
     "correlation-editor-mode-bar": {
@@ -6984,6 +7036,7 @@
       "content-streaming": "Transmissão"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "",
       "label-reload-log-volume": "Recarregar volume de registo",
       "loading": "A carregar...",
       "title-failed-volume-query": "Falha ao carregar o volume de registos para esta consulta",
@@ -7282,6 +7335,7 @@
       "split-widen": "Alargar painel"
     },
     "trace-page-header": {
+      "aria-label-share-dropdown": "",
       "duration": "",
       "export-started": "",
       "give-feedback": "",
@@ -7306,6 +7360,7 @@
       "label-show-paths": "Interruptor para mostrar apenas o caminho crítico"
     },
     "trace-view": {
+      "aria-label-copy": "",
       "no-data": "Sem dados",
       "tooltip-copy-icon": "Copiado"
     },
@@ -7438,7 +7493,7 @@
     "loading": "A carregar pastas..."
   },
   "folder-repo": {
-    "badge-text": "Aprovisionado"
+    "badge-tooltip": ""
   },
   "folders": {
     "get-loading-nav": {
@@ -7610,6 +7665,7 @@
       "title-symbol": "Símbolo"
     },
     "measure-overlay": {
+      "aria-label-close": "",
       "tooltip-show-measure-tools": "Mostrar ferramentas de medição"
     },
     "name-initial-view": "",
@@ -8642,6 +8698,7 @@
       "csv-placeholder": "Introduza o CSV aqui...",
       "filter-placeholder": "Filtrar valores",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "",
       "filter-popup-cancel": "Cancelar",
       "filter-popup-clear": "Limpar o filtro",
       "filter-popup-heading": "Filtrar por valores:",
@@ -9364,6 +9421,15 @@
       "show-less": "mostrar menos",
       "show-more": "mostrar mais",
       "tooltip-error": "Erro: {{errorMessage}}"
+    },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
     },
     "log-line-details": {
       "clear-search": "",
@@ -11015,6 +11081,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Esta funcionalidade está atualmente em desenvolvimento ativo. Para a melhor experiência e as melhorias mais recentes, recomendamos a utilização da <2>compilação noturna</2> da Grafana."
@@ -11056,6 +11125,9 @@
     },
     "check-repository": {
       "check": "Verificar"
+    },
+    "code-block": {
+      "aria-label-copy": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Definições do repositório guardadas",
@@ -11874,7 +11946,7 @@
         "recommended": "Recomendado",
         "results": "Resultados"
       },
-      "search": "Pesquisar"
+      "search": ""
     }
   },
   "search": {
@@ -12511,6 +12583,19 @@
       "label-medium": "",
       "label-small": ""
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Se selecionado, toda a linha será colorida como esta célula seria.",
       "description-wrap-text": "Se o texto selecionado for ajustado à largura do texto na coluna configurada",
@@ -12545,6 +12630,13 @@
       "label-alt-text": "Texto alternativo",
       "label-title-text": "Texto do título"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "",
     "name-cell-height": "",
     "name-cell-type": "",
@@ -12561,7 +12653,10 @@
     "name-show-table-header": "",
     "name-wrap-header-text": "",
     "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "placeholder-fields": "",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "",
@@ -13089,6 +13184,7 @@
       }
     },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "",
       "label-field": "Campo",
       "label-match": "Correspondência",
       "label-value": "Valor",
@@ -13276,22 +13372,6 @@
       "label-row": "Linha",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Valor booleano falso",
-          "boolean-true-value": "Valor booleano verdadeiro",
-          "empty-string": "String vazia",
-          "null-value": "Valor nulo",
-          "number-value": "Valor do número 0"
-        },
-        "label": {
-          "empty": "Esvaziar",
-          "false": "Falso",
-          "null": "Nulo",
-          "true": "Verdadeiro",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13644,6 +13724,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

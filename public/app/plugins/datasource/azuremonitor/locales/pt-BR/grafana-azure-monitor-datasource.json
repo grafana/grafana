@@ -115,9 +115,12 @@
       "aria-label-column": "Coluna",
       "aria-label-column-value": "Valor da coluna",
       "aria-label-operator": "Operador",
+      "aria-label-remove-filter": "",
       "label-or": "OU"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Adicionar grupo",
       "label-and": "E",
       "label-filters": "Filtros",
@@ -130,6 +133,8 @@
       "label-format-as": "Formatar como"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Selecionar a coluna",
       "label-fuzzy-search": "Pesquisa difusa",
       "placeholder-search-team": "Digite o termo de pesquisa",
@@ -144,6 +149,7 @@
       "aria-label-remove": "Remover"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Agrupar por",
       "tooltip-group-by": "Organize os resultados em categorias com base nas colunas especificadas. O recurso \"Agrupar por\" pode ser usado de forma independente para listar valores exclusivos em colunas selecionadas ou em conjunto com funções de agregação para produzir estatísticas resumidas para cada grupo. Ao usá-lo sozinho, ele retorna combinações distintas das colunas especificadas."
     },
@@ -186,8 +192,10 @@
       "text-loading": "Carregando..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Ordenar por coluna",
       "aria-label-order-direction": "Direção do pedido",
+      "aria-label-remove-order-by": "",
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Classifique os resultados com base em uma ou mais colunas em ordem crescente ou decrescente."
@@ -249,7 +257,8 @@
       "label-columns": "Colunas",
       "label-table": "Tabela",
       "placeholder-select-columns": "Selecionar colunas",
-      "placeholder-select-table": "Selecionar uma tabela"
+      "placeholder-select-table": "Selecionar uma tabela",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Granularidade de tempo"
