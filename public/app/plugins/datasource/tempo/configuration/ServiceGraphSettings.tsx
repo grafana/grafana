@@ -4,7 +4,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, useStyles2, Combobox } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, useStyles2, Combobox, TextLink } from '@grafana/ui';
 
 import { TempoJsonData } from '../types';
 
@@ -31,40 +31,28 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
 
   function metricsGeneratorDocsLink() {
     return (
-      <a
-        style={{ textDecoration: 'underline' }}
-        href="https://grafana.com/docs/tempo/latest/setup-and-configuration/metrics-generator/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <TextLink href="https://grafana.com/docs/tempo/latest/setup-and-configuration/metrics-generator/" external>
         Tempo metrics generator
-      </a>
+      </TextLink>
     );
   }
 
   function prometheusNativeHistogramsDocsLink() {
     return (
-      <a
-        style={{ textDecoration: 'underline' }}
-        href="https://prometheus.io/docs/specs/native_histograms/#native-histograms"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <TextLink href="https://prometheus.io/docs/specs/native_histograms/#native-histograms" external>
         Prometheus
-      </a>
+      </TextLink>
     );
   }
 
   function mimirNativeHistogramsDocsLink() {
     return (
-      <a
-        style={{ textDecoration: 'underline' }}
+      <TextLink
         href="https://grafana.com/docs/mimir/latest/configure/configure-native-histograms-ingestion/#configure-native-histograms-globally"
-        target="_blank"
-        rel="noopener noreferrer"
+        external
       >
         Mimir
-      </a>
+      </TextLink>
     );
   }
 

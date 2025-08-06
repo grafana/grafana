@@ -18,6 +18,7 @@ import {
   Stack,
   Tag,
   Text,
+  TextLink,
   Tooltip,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
@@ -189,15 +190,14 @@ export const OrgUsersTable = ({
                       <Trans i18nKey="admin.org-users.not-editable">
                         This user&apos;s role is not editable because it is synchronized from your auth provider. Refer
                         to the&nbsp;
-                        <a
+                        <TextLink
                           href={
                             'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
                           }
-                          rel="noreferrer"
-                          target="_blank"
+                          external
                         >
                           Grafana authentication docs
-                        </a>
+                        </TextLink>
                         &nbsp;for details.
                       </Trans>
                     </div>

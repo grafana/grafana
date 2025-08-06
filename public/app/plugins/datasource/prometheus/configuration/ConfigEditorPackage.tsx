@@ -6,7 +6,7 @@ import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { AlertingSettingsOverhaul, PromOptions, PromSettings } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { Alert, FieldValidationMessage, useTheme2 } from '@grafana/ui';
+import { Alert, FieldValidationMessage, TextLink, useTheme2 } from '@grafana/ui';
 
 import { AzureAuthSettings } from './AzureAuthSettings';
 import { AzurePromDataSourceSettings, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
@@ -78,9 +78,9 @@ export function docsTip(url?: string) {
   const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source';
 
   return (
-    <a href={url ? url : docsUrl} target="_blank" rel="noopener noreferrer">
+    <TextLink href={url ? url : docsUrl} external>
       Visit docs for more details here.
-    </a>
+    </TextLink>
   );
 }
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Stack, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, Select, useStyles2, TextLink } from '@grafana/ui';
 
 import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
@@ -304,7 +304,7 @@ const TraceQLSearch = ({
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
           Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
-          configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
+          configure it in the <TextLink href={`/datasources/edit/${datasource.uid}`}>datasource settings</TextLink>.
         </Alert>
       ) : null}
       {alertText && <TemporaryAlert severity={'error'} text={alertText} />}

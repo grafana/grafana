@@ -4,7 +4,7 @@ import { useToggle } from 'react-use';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
-import { AutoSizeInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, RadioButtonGroup, TextLink, useStyles2 } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
 import { SearchTableType, MetricsQueryType } from '../dataquery.gen';
@@ -209,15 +209,14 @@ const StreamingTooltip = () => {
         Indicates if streaming is currently enabled. Streaming allows you to view partial query results before the
         entire query completes.
       </span>
-      <a
+      <TextLink
+        external
         href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}
         aria-label={'Learn more about streaming query results'}
-        target={'_blank'}
-        rel="noreferrer"
         style={{ textDecoration: 'underline' }}
       >
         Learn more
-      </a>
+      </TextLink>
     </div>
   );
 };
