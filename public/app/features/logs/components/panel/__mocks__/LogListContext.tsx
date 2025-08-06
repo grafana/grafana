@@ -134,6 +134,7 @@ export const defaultProps: Props = {
   showTime: true,
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
+  timestampResolution: 'ms',
   wrapLogMessage: true,
 };
 
@@ -159,6 +160,7 @@ export const LogListContextProvider = ({
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
+  timestampResolution = 'ms',
   wrapLogMessage = true,
 }: Partial<Props> & { showDetails?: LogListModel[] }) => {
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
@@ -202,6 +204,7 @@ export const LogListContextProvider = ({
         showTime,
         sortOrder,
         syntaxHighlighting,
+        timestampResolution,
         wrapLogMessage,
       }}
     >
