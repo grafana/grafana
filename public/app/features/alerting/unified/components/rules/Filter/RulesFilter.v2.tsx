@@ -31,7 +31,7 @@ import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { useGetLabelsFromDataSourceName } from '../../../components/rule-editor/useAlertRuleSuggestions';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
-import { RuleHealth } from '../../../search/rulesSearchParser';
+import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
 import { PopupCard } from '../../HoverCard';
 
@@ -111,11 +111,17 @@ export default function RulesFilter() {
   });
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
-    // Handle search query form submission if needed
+
+    const parsedFilter = getSearchFilterFromQuery(values.query);
+    updateFilters(parsedFilter);
   };
 
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
-    updateFilters(formAdvancedFiltersToRuleFilter(values));
+    const newFilter = formAdvancedFiltersToRuleFilter(values);
+    updateFilters(newFilter);
+
+    const newSearchQuery = applySearchFilterToQuery('', newFilter);
+    setValue('query', newSearchQuery);
 
     // Filter out empty/default values before tracking
     const meaningfulValues = pickBy(values, (value, key) => {
@@ -179,6 +185,11 @@ export default function RulesFilter() {
           )}
           name="searchQuery"
           onChange={(string) => setValue('query', string)}
+          onBlur={() => {
+            const currentQuery = watch('query');
+            const parsedFilter = getSearchFilterFromQuery(currentQuery);
+            updateFilters(parsedFilter);
+          }}
           value={watch('query')}
         />
         {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
