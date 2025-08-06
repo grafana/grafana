@@ -24,6 +24,7 @@ import { Props } from './types';
 export const AdvancedDbConnectionSettings = (props: Props) => {
   const { options } = props;
   const styles = useStyles2(getInlineLabelStyles);
+  const [maxSeriesValue, setMaxSeriesValue] = useState(options.jsonData.maxSeries || '');
 
   const [advancedDbConnectionSettingsIsOpen, setAdvancedDbConnectionSettingsIsOpen] = useState(
     () => !!options.jsonData.timeInterval || !!options.jsonData.insecureGrpc
@@ -125,9 +126,13 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                 className="width-15"
                 data-testid="influxdb-v2-config-max-series"
                 onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMaxSeriesClicked}
-                onChange={onUpdateDatasourceJsonDataOption(props, 'maxSeries')}
+                onChange={(e) => {
+                  setMaxSeriesValue(e.currentTarget.value);
+                  onUpdateDatasourceJsonDataOption(props, 'maxSeries');
+                }}
                 placeholder="1000"
-                value={options.jsonData.maxSeries || ''}
+                value={maxSeriesValue}
+                type="number"
               />
             </InlineField>
           </InlineFieldRow>
