@@ -107,7 +107,9 @@ module.exports = [
       '**/mocks/**/*.{ts,tsx}',
       '**/spec/**/*.{ts,tsx}',
     ],
-    rules: { '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }] },
+    rules: {
+      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+    },
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
@@ -149,7 +151,12 @@ module.exports = [
       ],
     },
   },
-  { files: ['public/app/**/*.{ts,tsx}'], rules: { 'no-barrel-files/no-barrel-files': 'error' } },
+  {
+    files: ['public/app/**/*.{ts,tsx}'],
+    rules: {
+      'no-barrel-files/no-barrel-files': 'error',
+    },
+  },
   {
     // custom rule for Table to avoid performance regressions
     files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
