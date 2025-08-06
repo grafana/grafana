@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/dom';
+
 import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
@@ -276,7 +278,7 @@ describe('Dashboards list', () => {
     await updateScopes(scopesService, ['mimir']);
     await searchDashboards('unknown');
     expectDashboardsSearch();
-    expectNoDashboardsForFilter();
+    await waitFor(() => expectNoDashboardsForFilter());
 
     await clearNotFound();
     expectDashboardSearchValue('');
