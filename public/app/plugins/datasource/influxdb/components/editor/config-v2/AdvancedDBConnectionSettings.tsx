@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import {
   onUpdateDatasourceJsonDataOption,
@@ -31,7 +31,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
     () => !!options.jsonData.timeInterval || !!options.jsonData.insecureGrpc || !!options.jsonData.maxSeries
   );
 
-  const onMaxSeriesChange = (e: any) => {
+  const onMaxSeriesChange = (e: { currentTarget: { value: string } }) => {
     setMaxSeriesValue(e.currentTarget.value);
     const val = parseInt(e.currentTarget.value, 10);
     updateDatasourcePluginJsonDataOption(props, 'maxSeries', Number.isFinite(val) ? val : undefined);
@@ -133,7 +133,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                 className="width-15"
                 data-testid="influxdb-v2-config-max-series"
                 onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMaxSeriesClicked}
-                onChange={(e) => onMaxSeriesChange(e)}
+                onChange={onMaxSeriesChange}
                 placeholder="1000"
                 value={maxSeriesValue}
                 type="number"
