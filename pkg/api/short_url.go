@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -140,14 +141,14 @@ func (sk8s *shortURLK8sHandler) getKubernetesShortURLsHandler(c *contextmodel.Re
 
 	shortURLUID := web.Params(c.Req)[":uid"]
 	if !util.IsValidShortUID(shortURLUID) {
-		c.Logger.Warn("Invalid short URL UID format", "uid", shortURLUID)
+		c.JsonApiErr(http.StatusBadRequest, "Invalid short URL UID format", fmt.Errorf("invalid short URL UID", "uid", shortURLUID))
 		return
 	}
 
 	c.Logger.Debug("Fetching short URL", "uid", shortURLUID)
 	out, err := client.Get(c.Req.Context(), shortURLUID, v1.GetOptions{})
 	if err != nil {
-		c.Logger.Error("Failed to get short URL", "uid", shortURLUID, "error", err)
+		sk8s.writeError(c, err)
 		return
 	}
 
@@ -163,10 +164,10 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	shortURLUID := web.Params(c.Req)[":uid"]
 	if !util.IsValidShortUID(shortURLUID) {
 		c.Logger.Warn("Invalid short URL UID format", "uid", shortURLUID)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
-	c.Logger.Debug("Fetching short URL", "uid", shortURLUID)
 	out, err := client.Get(c.Req.Context(), shortURLUID, v1.GetOptions{})
 	// If we didn't get the URL for whatever reason, we redirect to the
 	// main page, otherwise we get into an endless loops of redirects, as
