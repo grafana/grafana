@@ -72,7 +72,3 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/yaml v1.5.0 // indirect
 )
-
-// transitive dependencies that need replaced
-// TODO: stop depending on grafana core
-replace github.com/grafana/grafana => ../..
