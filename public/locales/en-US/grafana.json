@@ -11096,11 +11096,11 @@
       "path-label": "Path",
       "permissions": {
         "pull-requests-label": "Pull requests",
-        "pull-requests-read-write": "Read and Write",
+        "pull-requests-read-write": "Read and write",
         "repository-label": "Repositories",
-        "repository-read-write-admin": "Read, Write, and Admin",
+        "repository-read-write-admin": "Read, and write",
         "webhooks-label": "Webhooks",
-        "webhooks-read-write": "Read and Write"
+        "webhooks-read-write": "Read and write"
       },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
@@ -11530,7 +11530,7 @@
     "token-permissions-info": {
       "and-click": "and click",
       "bitbucket": {
-        "create-token-button": "Create API token with scopes",
+        "create-token-button": "Create App passwords",
         "token-text": "Bitbucket Personal Access Token"
       },
       "gitlab": {

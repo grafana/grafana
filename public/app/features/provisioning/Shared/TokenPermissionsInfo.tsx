@@ -94,15 +94,15 @@ function getPermissionsForProvider(type: InstructionAvailability): Permission[] 
       return [
         {
           name: t('provisioning.bitbucket.permissions.repository-label', 'Repositories'),
-          access: t('provisioning.bitbucket.permissions.repository-read-write-admin', 'Read, Write, and Admin'),
+          access: t('provisioning.bitbucket.permissions.repository-read-write-admin', 'Read, and write'),
         },
         {
           name: t('provisioning.bitbucket.permissions.pull-requests-label', 'Pull requests'),
-          access: t('provisioning.bitbucket.permissions.pull-requests-read-write', 'Read and Write'),
+          access: t('provisioning.bitbucket.permissions.pull-requests-read-write', 'Read and write'),
         },
         {
           name: t('provisioning.bitbucket.permissions.webhooks-label', 'Webhooks'),
-          access: t('provisioning.bitbucket.permissions.webhooks-read-write', 'Read and Write'),
+          access: t('provisioning.bitbucket.permissions.webhooks-read-write', 'Read and write'),
         },
       ];
     default:
@@ -122,11 +122,12 @@ function AccessLevelField({ label, access }: { label: string; access: string }) 
 function connectStepInstruction() {
   return {
     bitbucket: {
-      createTokenLink: 'https://id.atlassian.com/manage-profile/security/api-tokens',
+      // Bitbucket App password will be replaced by API tokens on Sep 9 2025
+      createTokenLink: 'https://bitbucket.org/account/settings/app-passwords/',
       tokenText: t('provisioning.token-permissions-info.bitbucket.token-text', 'Bitbucket Personal Access Token'),
       createTokenButtonText: t(
         'provisioning.token-permissions-info.bitbucket.create-token-button',
-        'Create API token with scopes'
+        'Create App passwords'
       ),
     },
     gitlab: {
