@@ -40,13 +40,12 @@ jobs:
   build-grafana-hosted-runners:
     # needs: detect-changes
     # if: needs.detect-changes.outputs.changed == 'true'
-    name: Build Grafana - ubuntu-x64-${{ matrix.size }}${{ matrix.feature }}
+    name: Build Grafana - ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        size: ["large", "xlarge", "2xlarge"]
-        feature: ["-io", ""]
-    runs-on: ubuntu-${{ matrix.size }}-x64${{ matrix.feature }}
+        runner: ["ubuntu-x64-large", "ubuntu-x64-xlarge", "ubuntu-x64-2xlarge"]
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
     steps:
