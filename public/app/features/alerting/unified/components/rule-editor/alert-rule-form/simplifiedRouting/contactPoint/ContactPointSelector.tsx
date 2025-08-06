@@ -5,9 +5,10 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { ContactPointSelector as GrafanaManagedContactPointSelector, alertingAPI } from '@grafana/alerting/unstable';
 import { Trans, t } from '@grafana/i18n';
-import { Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
+import { Field, FieldValidationMessage, IconButton, Stack, TextLink } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { dispatch } from 'app/store/store';
 
 export interface ContactPointSelectorProps {
   alertManager: string;
@@ -21,9 +22,12 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
 
   // check if the contact point still exists, we'll use listReceiver to check if the contact point exists because getReceiver doesn't work with
   // contact point titles but with UUIDs (which is not what we store on the alert rule definition)
-  const { currentData, status } = alertingAPI.endpoints.listReceiver.useQuery({
-    fieldSelector: `spec.title=${contactPointInForm}`,
-  });
+  const { currentData, status } = alertingAPI.endpoints.listReceiver.useQuery(
+    {
+      fieldSelector: `spec.title=${contactPointInForm}`,
+    },
+    { skip: Boolean(contactPointInForm) === false }
+  );
 
   const contactPointNotFound = contactPointInForm && status === QueryStatus.fulfilled && isEmpty(currentData?.items);
 
@@ -50,6 +54,20 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
                   onChange={(contactPoint) => onChange(contactPoint.spec.title)}
                   width={50}
                   value={contactPointInForm}
+                />
+                <IconButton
+                  tooltip={t(
+                    'alerting.contact-point-selector.aria-label-refresh-list',
+                    'Refresh list of contact points'
+                  )}
+                  name="sync"
+                  aria-label={t(
+                    'alerting.contact-point-selector.aria-label-refresh-list',
+                    'Refresh list of contact points'
+                  )}
+                  onClick={() => {
+                    dispatch(alertingAPI.util.invalidateTags([{ type: 'Receiver' }]));
+                  }}
                 />
                 <LinkToContactPoints />
               </Stack>
