@@ -6,7 +6,7 @@ import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, L
 import { GrafanaTheme2 } from '@grafana/data/';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
@@ -58,13 +58,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
-    setTimestampFormat,
     setWrapLogMessage,
     showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
-    timestampResolution,
     wrapLogMessage,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
@@ -115,19 +113,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
   }, [fontSize, setFontSize]);
 
   const onShowTimestampsClick = useCallback(() => {
-    if (!config.featureToggles.newLogsPanel) {
-      reportInteraction('logs_log_list_controls_show_time_clicked', {
-        show_time: !showTime,
-      });
-      setShowTime(!showTime);
-      return;
-    }
-    if (!showTime || timestampResolution === 'ns') {
-      setShowTime(!showTime);
-    } else if (timestampResolution === 'ms') {
-      setTimestampFormat('ns');
-    }
-  }, [setShowTime, setTimestampFormat, showTime, timestampResolution]);
+    reportInteraction('logs_log_list_controls_show_time_clicked', {
+      show_time: !showTime,
+    });
+    setShowTime(!showTime);
+  }, [setShowTime, showTime]);
 
   const onShowUniqueLabelsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_unique_labels_clicked', {
@@ -291,14 +281,22 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 />
               </Dropdown>
               <div className={styles.divider} />
-              <IconButton
-                name={timestampResolution === 'ns' && showTime ? 'stopwatch' : 'clock-nine'}
-                aria-pressed={showTime}
-                className={showTime ? styles.controlButtonActive : styles.controlButton}
-                onClick={onShowTimestampsClick}
-                tooltip={getTimestampTooltip(showTime, timestampResolution)}
-                size="lg"
-              />
+              {config.featureToggles.newLogsPanel ? (
+                <TimestampResolutionButton />
+              ) : (
+                <IconButton
+                  name="clock-nine"
+                  aria-pressed={showTime}
+                  className={showTime ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onShowTimestampsClick}
+                  tooltip={
+                    showTime
+                      ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+                      : t('logs.logs-controls.show-timestamps', 'Show timestamps')
+                  }
+                  size="lg"
+                />
+              )}
               {/* When this is used in a Plugin context, app is unknown */}
               {showUniqueLabels !== undefined && app !== CoreApp.Unknown && (
                 <IconButton
@@ -458,6 +456,46 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
   );
 };
 
+const TimestampResolutionButton = () => {
+  const styles = useStyles2(getStyles);
+  const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
+
+  const onShowTimestampsClick = useCallback(() => {
+    if (!config.featureToggles.newLogsPanel) {
+      reportInteraction('logs_log_list_controls_show_time_clicked', {
+        show_time: !showTime,
+      });
+      setShowTime(!showTime);
+      return;
+    }
+    if (!showTime || timestampResolution === 'ns') {
+      setShowTime(!showTime);
+    } else if (timestampResolution === 'ms') {
+      setTimestampResolution('ns');
+    }
+  }, [setShowTime, setTimestampResolution, showTime, timestampResolution]);
+
+  return (
+    <Tooltip content={getTimestampTooltip(showTime, timestampResolution)}>
+      <button
+        aria-pressed={showTime}
+        className={`${styles.timestampResolutionButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
+        type="button"
+        onClick={onShowTimestampsClick}
+      >
+        <Icon name="clock-nine" size="lg" className={styles.timestampResolutionIcon} />
+        {showTime && (
+          <span className={styles.resolutionText}>
+            {timestampResolution === 'ms'
+              ? t('logs.logs-controls.resolution-ms', 'ms')
+              : t('logs.logs-controls.resolution-ms', 'ns')}
+          </span>
+        )}
+      </button>
+    </Tooltip>
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     navContainer: css({
@@ -517,15 +555,36 @@ const getStyles = (theme: GrafanaTheme2) => {
         backgroundColor: theme.colors.warning.main,
       },
     }),
+    timestampResolutionButton: css({
+      position: 'relative',
+      zIndex: 0,
+      margin: 0,
+      boxShadow: 'none',
+      border: 'none',
+      display: 'inline-flex',
+      background: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 0,
+      overflow: 'visible',
+    }),
+    timestampResolutionIcon: css({
+      verticalAlign: 'baseline',
+    }),
+    resolutionText: css({
+      color: theme.colors.text.primary,
+      fontSize: 10,
+      position: 'absolute',
+      bottom: -4,
+      right: 0,
+      lineHeight: '10px',
+      backgroundColor: theme.colors.background.elevated,
+      paddingLeft: 2,
+    }),
   };
 };
 
 function getTimestampTooltip(showTime: boolean, timestampResolution: LogLineTimestampResolution) {
-  if (!config.featureToggles.newLogsPanel) {
-    return showTime
-      ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-      : t('logs.logs-controls.show-timestamps', 'Show timestamps');
-  }
   if (!showTime) {
     return t('logs.logs-controls.show-ms-timestamps', 'Show millisecond timestamps');
   }
