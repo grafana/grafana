@@ -122,9 +122,10 @@ export function createShareLink(ruleIdentifier: RuleIdentifier): string | undefi
   return;
 }
 
-export function createViewPolicyLink(matchers: ObjectMatcher[]) {
+export function createViewPolicyLink(matchers: ObjectMatcher[], alertmanagerSourceName?: string) {
   return createRelativeUrl('/alerting/routes', {
     queryString: matchers.map((matcher) => matcher.join('')).join(','),
+    alertmanager: alertmanagerSourceName ?? 'grafana',
   });
 }
 

@@ -104,14 +104,14 @@ export const NotificationPreview = ({
             alertManagerSource.name === 'grafana' ? (
               <NotificationPreviewForGrafanaManaged
                 alertManagerSource={alertManagerSource}
-                potentialInstances={potentialInstances}
+                instances={potentialInstances}
                 onlyOneAM={onlyOneAM}
                 key={alertManagerSource.name}
               />
             ) : (
               <NotificationPreviewByAlertManager
                 alertManagerSource={alertManagerSource}
-                potentialInstances={potentialInstances}
+                instances={potentialInstances}
                 onlyOneAM={onlyOneAM}
                 key={alertManagerSource.name}
               />

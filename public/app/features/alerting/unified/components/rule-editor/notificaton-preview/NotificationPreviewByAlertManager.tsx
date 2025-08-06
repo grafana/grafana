@@ -1,31 +1,36 @@
 import { css } from '@emotion/css';
+import { groupBy } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { AlertManagerDataSource } from '../../../utils/datasource';
 
+import { ExternalContactPointGroup } from './ContactPointGroup';
 import { NotificationRoute } from './NotificationRoute';
 import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
 
+const UNKNOWN_RECEIVER = 'unknown';
+
 function NotificationPreviewByAlertManager({
   alertManagerSource,
-  potentialInstances,
+  instances,
   onlyOneAM,
 }: {
   alertManagerSource: AlertManagerDataSource;
-  potentialInstances: Labels[];
+  instances: Labels[];
   onlyOneAM: boolean;
 }) {
   const styles = useStyles2(getStyles);
 
-  const { routesByIdMap, matchingMap, loading, error } = useAlertmanagerNotificationRoutingPreview(
+  const { treeMatchingResults, isLoading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
-    potentialInstances
+    instances
   );
 
   if (error) {
@@ -39,7 +44,7 @@ function NotificationPreviewByAlertManager({
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <LoadingPlaceholder
         text={t(
@@ -50,7 +55,22 @@ function NotificationPreviewByAlertManager({
     );
   }
 
-  const matchingPoliciesFound = matchingMap.size > 0;
+  const matchingPoliciesFound = treeMatchingResults?.some((result) => result.matchedPolicies.size > 0);
+
+  // Group results by receiver name
+  // We need to flatten the structure first to group by receiver
+  const flattenedResults = treeMatchingResults?.flatMap((result) => {
+    const entries = Array.from(result.matchedPolicies.entries());
+    return entries.map(([policy, instances]) => ({
+      treeMetadata: result.treeMetadata,
+      expandedTree: result.expandedTree,
+      policy,
+      instances,
+      receiver: policy.receiver ?? UNKNOWN_RECEIVER,
+    }));
+  });
+
+  const contactPointGroups = groupBy(flattenedResults, 'receiver');
 
   return matchingPoliciesFound ? (
     <div className={styles.alertManagerRow}>
@@ -66,22 +86,29 @@ function NotificationPreviewByAlertManager({
         </Stack>
       )}
       <Stack gap={1} direction="column">
-        {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
-          const route = routesByIdMap.get(routeId);
+        {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) =>
+          resultsForReceiver.map(({ treeMetadata, expandedTree, policy, instances }) => {
+            const matchers =
+              policy.matchers?.map<ObjectMatcher>(
+                (matcher) => [matcher.label, matcher.type, matcher.value] as ObjectMatcher
+              ) ?? [];
 
-          if (!route) {
-            return null;
-          }
-          return (
-            <NotificationRoute
-              instanceMatches={instanceMatches}
-              route={route}
-              key={routeId}
-              routesByIdMap={routesByIdMap}
-              alertManagerSourceName={alertManagerSource.name}
-            />
-          );
-        })}
+            return (
+              <Stack direction="column" key={`${treeMetadata.name}-${policy.id}`}>
+                <ExternalContactPointGroup name={receiver} alertmanagerSourceName={alertManagerSource.name}>
+                  <NotificationRoute
+                    key={policy.id}
+                    // every instance has the same route that matched so it's fine to grab the first one
+                    isRootRoute={policy.id === expandedTree.id}
+                    matchers={matchers}
+                    matchedInstances={instances}
+                    alertManagerSourceName={alertManagerSource.name}
+                  />
+                </ExternalContactPointGroup>
+              </Stack>
+            );
+          })
+        )}
       </Stack>
     </div>
   ) : null;

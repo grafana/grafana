@@ -1,6 +1,6 @@
 import { isArray, pick, reduce } from 'lodash';
 
-import { AlertmanagerGroup, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
 import { Label, isLabelMatch, matchLabelsSet, normalizeMatchers, unquoteWithUnescape } from './matchers';
@@ -108,8 +108,8 @@ export function normalizeRoute<T extends Route>(rootRoute: T): T {
   return normalizedRootRoute;
 }
 
-export function unquoteRouteMatchers(route: RouteWithID): RouteWithID {
-  function unquoteRoute(route: RouteWithID) {
+export function unquoteRouteMatchers(route: Route): Route {
+  function unquoteRoute(route: Route) {
     route.object_matchers = route.object_matchers?.map(([name, operator, value]) => {
       return [unquoteWithUnescape(name), operator, unquoteWithUnescape(value)];
     });

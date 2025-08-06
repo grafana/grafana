@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { groupBy } from 'lodash';
 
 import { useMatchAlertInstancesToNotificationPolicies } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,15 +12,18 @@ import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/St
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { AlertManagerDataSource } from '../../../utils/datasource';
 
+import { GrafanaContactPointGroup } from './ContactPointGroup';
 import { NotificationRoute } from './NotificationRoute';
+
+const UNKNOWN_RECEIVER = 'unknown';
 
 function NotificationPreviewByAlertManager({
   alertManagerSource,
-  potentialInstances,
+  instances,
   onlyOneAM,
 }: {
   alertManagerSource: AlertManagerDataSource;
-  potentialInstances: Labels[];
+  instances: Labels[];
   onlyOneAM: boolean;
 }) {
   const styles = useStyles2(getStyles);
@@ -47,10 +51,23 @@ function NotificationPreviewByAlertManager({
     );
   }
 
-  const treeMatchingResults = matchInstancesToPolicies(potentialInstances.map((instance) => Object.entries(instance)));
-  console.log(treeMatchingResults);
-
+  const treeMatchingResults = matchInstancesToPolicies(instances.map((instance) => Object.entries(instance)));
   const matchingPoliciesFound = treeMatchingResults.some((result) => result.matchedPolicies.size > 0);
+
+  // Group results by receiver name
+  // We need to flatten the structure first to group by receiver
+  const flattenedResults = treeMatchingResults.flatMap((result) => {
+    const entries = Array.from(result.matchedPolicies.entries());
+    return entries.map(([policy, instances]) => ({
+      treeMetadata: result.treeMetadata,
+      expandedTree: result.expandedTree,
+      policy,
+      instances,
+      receiver: policy.receiver ?? UNKNOWN_RECEIVER,
+    }));
+  });
+
+  const contactPointGroups = groupBy(flattenedResults, 'receiver');
 
   return matchingPoliciesFound ? (
     <div className={styles.alertManagerRow}>
@@ -66,29 +83,29 @@ function NotificationPreviewByAlertManager({
         </Stack>
       )}
       <Stack gap={1} direction="column">
-        {treeMatchingResults.map(({ treeMetadata, expandedTree, matchedPolicies }) => (
-          <Stack direction="column">
-            <div>{treeMetadata.name}</div>
-            {Array.from(matchedPolicies.entries()).map(([matchedPolicy, matchedInstances]) => {
-              const matchers =
-                matchedPolicy.matchers?.map<ObjectMatcher>(
-                  (matcher) => [matcher.label, matcher.type, matcher.value] as ObjectMatcher
-                ) ?? [];
+        {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) =>
+          resultsForReceiver.map(({ treeMetadata, expandedTree, policy, instances }) => {
+            const matchers =
+              policy.matchers?.map<ObjectMatcher>(
+                (matcher) => [matcher.label, matcher.type, matcher.value] as ObjectMatcher
+              ) ?? [];
 
-              return (
-                <NotificationRoute
-                  key={matchedPolicy.id}
-                  // every instance has the same route that matched so it's fine to grab the first one
-                  isRootRoute={matchedPolicy.id === expandedTree.id}
-                  matchers={matchers}
-                  receiver={matchedPolicy.receiver ?? 'unknown'}
-                  matchedInstances={matchedInstances}
-                  alertManagerSourceName={alertManagerSource.name}
-                />
-              );
-            })}
-          </Stack>
-        ))}
+            return (
+              <Stack direction="column" key={`${treeMetadata.name}-${policy.id}`}>
+                <GrafanaContactPointGroup name={receiver}>
+                  <NotificationRoute
+                    key={policy.id}
+                    // every instance has the same route that matched so it's fine to grab the first one
+                    isRootRoute={policy.id === expandedTree.id}
+                    matchers={matchers}
+                    matchedInstances={instances}
+                    alertManagerSourceName={alertManagerSource.name}
+                  />
+                </GrafanaContactPointGroup>
+              </Stack>
+            );
+          })
+        )}
       </Stack>
     </div>
   ) : null;

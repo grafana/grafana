@@ -1,13 +1,9 @@
+import { MatchResult, matchAlertInstancesToPolicyTree } from '@grafana/alerting/unstable';
+
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
 
-import {
-  AlertInstanceMatch,
-  findMatchingAlertGroups,
-  findMatchingRoutes,
-  normalizeRoute,
-  unquoteRouteMatchers,
-} from './utils/notification-policies';
+import { findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './utils/notification-policies';
 
 export interface MatchOptions {
   unquoteMatchers?: boolean;
@@ -34,29 +30,20 @@ export const routeGroupsMatcher = {
     return routeGroupsMap;
   },
 
-  matchInstancesToRoute(
-    routeTree: RouteWithID,
-    instancesToMatch: Labels[],
-    options?: MatchOptions
-  ): Map<string, AlertInstanceMatch[]> {
-    const result = new Map<string, AlertInstanceMatch[]>();
-
+  matchInstancesToRoutes(routeTree: RouteWithID, instances: Labels[], options?: MatchOptions): MatchResult {
     const normalizedRootRoute = getNormalizedRoute(routeTree, options);
 
-    instancesToMatch.forEach((instance) => {
-      const matchingRoutes = findMatchingRoutes(normalizedRootRoute, Object.entries(instance));
-      matchingRoutes.forEach(({ route, labelsMatch }) => {
-        const currentRoute = result.get(route.id);
+    const normalizedLabels = instances.map((labels) => Object.entries(labels));
+    const treeMatchResults = matchAlertInstancesToPolicyTree(normalizedLabels, normalizedRootRoute);
 
-        if (currentRoute) {
-          currentRoute.push({ instance, labelsMatch });
-        } else {
-          result.set(route.id, [{ instance, labelsMatch }]);
-        }
-      });
-    });
-
-    return result;
+    return [
+      {
+        treeMetadata: {
+          name: 'user-defined',
+        },
+        ...treeMatchResults,
+      },
+    ];
   },
 };
 

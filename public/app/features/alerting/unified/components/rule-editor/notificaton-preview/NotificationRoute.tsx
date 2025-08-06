@@ -1,29 +1,28 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import { useToggle } from 'react-use';
 
+import { Route, RouteMatchResult } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, TagList, Text, TextLink, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
+import { LinkButton, Text, useStyles2 } from '@grafana/ui';
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { getAmMatcherFormatter } from '../../../utils/alertmanager';
-import { createContactPointSearchLink, createViewPolicyLink } from '../../../utils/misc';
-import { AlertInstanceMatch } from '../../../utils/notification-policies';
+import { createViewPolicyLink } from '../../../utils/misc';
+import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
 
 import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
-import UnknownContactPointDetails from './UnknownContactPointDetails';
 
 interface NotificationRouteHeaderProps {
   isRootRoute: boolean;
   matchers?: ObjectMatcher[];
   instancesCount?: number;
-  receiver: string;
   alertManagerSourceName: string;
   expandRoute?: boolean;
   onExpandRouteClick?: (isCollapsed: boolean) => void;
@@ -33,7 +32,6 @@ export function NotificationRouteHeader({
   isRootRoute = false,
   matchers = [],
   instancesCount = 0,
-  receiver,
   alertManagerSourceName,
   expandRoute = false,
   onExpandRouteClick,
@@ -50,7 +48,7 @@ export function NotificationRouteHeader({
         aria-label={t('alerting.notification-route-header.aria-label-expand-policy-route', 'Expand policy route')}
       />
 
-      <Stack flexGrow={1} gap={1}>
+      <Stack flexGrow={1} gap={1} alignItems="center">
         {/* TODO: fix keyboard a11y */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div onClick={() => onExpandRouteClick?.(!expandRoute)} className={styles.expandable}>
@@ -68,43 +66,25 @@ export function NotificationRouteHeader({
             )}
           </Stack>
         </div>
-        <Spacer />
-        <Stack gap={2} direction="row" alignItems="center">
+        <Text color="secondary" variant="bodySmall">
+          ⋅
+        </Text>
+        <Stack gap={1} direction="row" alignItems="center" flexGrow={1}>
           <MetaText icon="layers-alt" data-testid="matching-instances">
             {instancesCount ?? '-'} {pluralize('instance', instancesCount)}
           </MetaText>
-          <Stack gap={1} direction="row" alignItems="center">
-            <div>
-              <Text variant="bodySmall" color="secondary">
-                <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>{' '}
-                {receiver != null ? (
-                  <TextLink
-                    variant="bodySmall"
-                    href={createContactPointSearchLink(receiver, alertManagerSourceName)}
-                    color="primary"
-                    inline={false}
-                    external
-                  >
-                    {receiver}
-                  </TextLink>
-                ) : (
-                  <UnknownContactPointDetails receiverName={receiver ?? 'unknown'} />
-                )}
-              </Text>
-            </div>
 
-            <div className={styles.verticalBar} />
+          <Spacer />
 
-            <LinkButton
-              href={createViewPolicyLink(matchers)}
-              variant="secondary"
-              fill="outline"
-              size="sm"
-              target="_blank"
-            >
-              <Trans i18nKey="alerting.notification-route-header.see-details">View policy</Trans>
-            </LinkButton>
-          </Stack>
+          <LinkButton
+            href={createViewPolicyLink(matchers, alertManagerSourceName)}
+            variant="secondary"
+            fill="outline"
+            size="sm"
+            target="_blank"
+          >
+            <Trans i18nKey="alerting.notification-route-header.see-details">View policy</Trans>
+          </LinkButton>
         </Stack>
       </Stack>
     </div>
@@ -114,23 +94,18 @@ export function NotificationRouteHeader({
 interface NotificationRouteProps {
   isRootRoute: boolean;
   matchers?: ObjectMatcher[];
-  receiver: string;
   alertManagerSourceName: string;
-  matchedInstances: AlertInstanceMatch[];
+  matchedInstances: Array<RouteMatchResult<Route>>;
 }
 
 export function NotificationRoute({
   alertManagerSourceName,
   matchedInstances,
   isRootRoute,
-  receiver,
   matchers,
 }: NotificationRouteProps) {
   const styles = useStyles2(getStyles);
   const [expandRoute, setExpandRoute] = useToggle(false);
-  // @TODO: The color index might be updated at some point in the future.Maybe we should roll our own tag component,
-  // one that supports a custom function to define the color and allow manual color overrides
-  const GREY_COLOR_INDEX = 9;
 
   return (
     <div data-testid="matching-policy-route">
@@ -138,70 +113,54 @@ export function NotificationRoute({
         // every instance has the same route that matched so it's fine to grab the first one
         isRootRoute={isRootRoute}
         matchers={matchers}
-        receiver={receiver}
         instancesCount={matchedInstances.length}
         alertManagerSourceName={alertManagerSourceName}
         expandRoute={expandRoute}
         onExpandRouteClick={setExpandRoute}
       />
       {expandRoute && (
-        <Stack gap={1} direction="column">
-          <div className={styles.routeInstances} data-testid="route-matching-instance">
-            {matchedInstances.map((matchedInstance) => {
-              const matchArray = Array.from(matchedInstance.labelsMatch);
-              const matchResult = matchArray.map(([label, matchResult]) => ({
-                label: `${label[0]}=${label[1]}`,
-                match: matchResult.match,
-                colorIndex: matchResult.match ? getTagColorIndexFromName(label[0]) : GREY_COLOR_INDEX,
-              }));
-
-              const matchingLabels = matchResult.filter((mr) => mr.match);
-              const nonMatchingLabels = matchResult.filter((mr) => !mr.match);
+        <div className={styles.routeInstances} data-testid="route-matching-instance">
+          <Stack gap={1} direction="column">
+            {matchedInstances.map(({ labels, matchDetails }) => {
+              const matchingLabels = matchDetails.filter((mr) => mr.match);
+              const nonMatchingLabels = matchDetails.filter((mr) => !mr.match);
 
               return (
                 <div className={styles.tagListCard} key={uniqueId()}>
-                  {matchArray.length > 0 ? (
+                  {labels.length > 0 ? (
                     <>
                       {matchingLabels.length > 0 ? (
-                        <TagList
-                          tags={matchingLabels.map((mr) => mr.label)}
-                          className={styles.labelList}
-                          getColorIndex={(_, index) => matchingLabels[index].colorIndex}
+                        <AlertLabels
+                          size="sm"
+                          labels={Object.fromEntries(matchingLabels.map((mr) => labels[mr.labelIndex]))}
                         />
                       ) : (
-                        <div className={cx(styles.textMuted, styles.textItalic)}>
+                        <Text italic>
                           <Trans i18nKey="alerting.notification-route.no-matching-labels">No matching labels</Trans>
-                        </div>
+                        </Text>
                       )}
                       <div className={styles.labelSeparator} />
-                      <TagList
-                        tags={nonMatchingLabels.map((mr) => mr.label)}
-                        className={styles.labelList}
-                        getColorIndex={(_, index) => nonMatchingLabels[index].colorIndex}
+                      <AlertLabels
+                        size="sm"
+                        labels={Object.fromEntries(nonMatchingLabels.map((mr) => labels[mr.labelIndex]))}
                       />
                     </>
                   ) : (
-                    <div className={styles.textMuted}>
+                    <Text color="secondary">
                       <Trans i18nKey="alerting.notification-route.no-labels">No labels</Trans>
-                    </div>
+                    </Text>
                   )}
                 </div>
               );
             })}
-          </div>
-        </Stack>
+          </Stack>
+        </div>
       )}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  textMuted: css({
-    color: theme.colors.text.secondary,
-  }),
-  textItalic: css({
-    fontStyle: 'italic',
-  }),
   expandable: css({
     cursor: 'pointer',
   }),
@@ -210,15 +169,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'row',
     gap: theme.spacing(1),
     alignItems: 'center',
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    padding: theme.spacing(0.5, 0.5, 0.5, 0),
+    padding: theme.spacing(0.5),
     '&:hover': {
       backgroundColor: theme.components.table.rowHoverBackground,
     },
-  }),
-  labelList: css({
-    flex: '0 1 auto',
-    justifyContent: 'flex-start',
   }),
   labelSeparator: css({
     width: '1px',
@@ -237,27 +191,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `solid 1px ${theme.colors.border.weak}`,
   }),
   routeInstances: css({
-    padding: theme.spacing(1, 0, 1, 4),
-    position: 'relative',
-
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-
-    '&:before': {
-      content: '""',
-      position: 'absolute',
-      left: theme.spacing(2),
-      height: `calc(100% - ${theme.spacing(2)})`,
-      width: theme.spacing(4),
-      borderLeft: `solid 1px ${theme.colors.border.weak}`,
-    },
-  }),
-  verticalBar: css({
-    width: '1px',
-    height: '20px',
-    backgroundColor: theme.colors.secondary.main,
-    marginLeft: theme.spacing(1),
-    marginRight: theme.spacing(1),
+    padding: theme.spacing(1, 0, 1, 2),
   }),
 });
