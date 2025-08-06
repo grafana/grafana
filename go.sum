@@ -1634,8 +1634,8 @@ github.com/grafana/grafana/apps/preferences v0.0.0-20250805120407-0bba6e7b822b h
 github.com/grafana/grafana/apps/preferences v0.0.0-20250805120407-0bba6e7b822b/go.mod h1:NQlHMO5fHhjexw71wVjv522532NRvFg5F4tcjUEktjs=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 h1:83OGBndFNYijNjgQpSf4y1bSNlscVDq8ru97Q6PyU6o=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:qzFUVwLI1b5UIbVFxFydUYAsnOK27AgtA5so3EW8jM0=
-github.com/grafana/grafana/apps/secret v0.0.0-20250804150913-990f1c69ecc2 h1:r5oGyvRVxljzKHTQYHtpmK2Et+BVhWQVw7aXo+FUygk=
-github.com/grafana/grafana/apps/secret v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:pS2M5ILsHx9VNTM96glLtCjCVXHWyfGcT34WHvbbMtM=
+github.com/grafana/grafana/apps/secret v0.0.0-20250806084048-d8360c4e12c1 h1:yVJGmCYpbOwk0EJGGBwchGvoiwFziRhweuxNVfrKXAo=
+github.com/grafana/grafana/apps/secret v0.0.0-20250806084048-d8360c4e12c1/go.mod h1:pS2M5ILsHx9VNTM96glLtCjCVXHWyfGcT34WHvbbMtM=
 github.com/grafana/grafana/apps/shorturl v0.0.0-20250804150913-990f1c69ecc2 h1:n+PKetgDEzRYaenMmz5gXXrQMLScORlO+ZCnriZucQw=
 github.com/grafana/grafana/apps/shorturl v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:6F043DPw1shYLpIAAlbww4BMDtRtVX5MetfUf0s2zoA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250804150913-990f1c69ecc2 h1:1AdHE94bYfEG7cuFb92wFlBaVPeexF21l9zCFmN8im0=

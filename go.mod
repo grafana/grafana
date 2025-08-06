@@ -239,7 +239,7 @@ require (
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/preferences v0.0.0-20250805120407-0bba6e7b822b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/secret v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana/apps/secret v0.0.0-20250806084048-d8360c4e12c1 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/apps/shorturl v0.0.0-20250804150913-990f1c69ecc2 // @grafana/sharing-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
