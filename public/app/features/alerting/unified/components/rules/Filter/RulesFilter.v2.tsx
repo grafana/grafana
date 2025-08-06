@@ -97,6 +97,7 @@ export default function RulesFilter() {
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { searchQuery, updateFilters } = useRulesFilter();
+  const popupRef = useRef<HTMLDivElement>(null);
 
   // Check if plugins filter is enabled
   const { components } = useAlertingHomePageExtensions();
@@ -139,11 +140,26 @@ export default function RulesFilter() {
   };
 
   const handleOnToggle = () => {
-    if (!isPopupOpen) {
-      trackFilterButtonClick();
-    }
+    trackFilterButtonClick();
     setIsPopupOpen(!isPopupOpen);
   };
+
+  // Handle outside clicks to close the popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isPopupOpen && popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        setIsPopupOpen(false);
+      }
+    };
+
+    if (isPopupOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isPopupOpen]);
 
   const filterButtonLabel = t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Filter');
   return (
@@ -169,6 +185,7 @@ export default function RulesFilter() {
           onToggle={handleOnToggle}
           content={
             <div
+              ref={popupRef}
               className={styles.content}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
@@ -588,3 +605,4 @@ function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
+
