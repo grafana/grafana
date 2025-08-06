@@ -23,14 +23,14 @@ func NewNullMTDatasourceClientBuilder() MTDatasourceClientBuilder {
 	return &nullBuilder{}
 }
 
-type MtDatasourceClientBuilderWithClientSupplier struct {
+type MtDatasourceClientBuilderWithInstance struct {
 	instance clientapi.Instance
 	ctx      context.Context
 	headers  map[string]string
 	logger   log.Logger
 }
 
-func (b *MtDatasourceClientBuilderWithClientSupplier) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool) {
+func (b *MtDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool) {
 	dsClient, err := b.instance.GetDataSourceClient(
 		b.ctx,
 		v0alpha1.DataSourceRef{
@@ -46,14 +46,14 @@ func (b *MtDatasourceClientBuilderWithClientSupplier) BuildClient(pluginId strin
 	return dsClient, true
 }
 
-// TODO: I think we might be able to refactor this to just use the client supplier directly
-func NewMtDatasourceClientBuilderWithClientSupplier(
+// TODO: I think we might be able to refactor this to just use the instance
+func NewMtDatasourceClientBuilderWithInstance(
 	instance clientapi.Instance,
 	ctx context.Context,
 	headers map[string]string,
 	logger log.Logger,
 ) MTDatasourceClientBuilder {
-	return &MtDatasourceClientBuilderWithClientSupplier{
+	return &MtDatasourceClientBuilderWithInstance{
 		instance: instance,
 		ctx:      ctx,
 		headers:  headers,
