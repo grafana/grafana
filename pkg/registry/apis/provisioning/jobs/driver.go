@@ -3,7 +3,6 @@ package jobs
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -47,13 +46,10 @@ var _ Store = (*persistentStore)(nil)
 
 // jobDriver drives jobs to completion and manages the job queue.
 // There may be multiple jobDrivers running in parallel.
-// The jobDriver deals with cleaning up upon death and ensuring that jobs remain claimable.
+// The jobDriver processes jobs but does not handle cleanup - that's handled by ConcurrentJobDriver.
 type jobDriver struct {
 	// Timeout for processing a job. This must be less than a claim expiry.
 	jobTimeout time.Duration
-
-	// CleanupInterval is the time between cleanup runs.
-	cleanupInterval time.Duration
 
 	// JobInterval is the time between job ticks. This should be relatively low.
 	jobInterval time.Duration
@@ -72,34 +68,26 @@ type jobDriver struct {
 }
 
 func NewJobDriver(
-	jobTimeout, cleanupInterval, jobInterval time.Duration,
+	jobTimeout, jobInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs History,
 	workers ...Worker,
 ) (*jobDriver, error) {
-	if cleanupInterval < jobTimeout {
-		return nil, fmt.Errorf("the cleanup interval must be larger than the jobTimeout (cleanup:%s < job:%s)",
-			cleanupInterval.String(), jobTimeout.String())
-	}
 	return &jobDriver{
-		jobTimeout:      jobTimeout,
-		cleanupInterval: cleanupInterval,
-		jobInterval:     jobInterval,
-		store:           store,
-		repoGetter:      repoGetter,
-		historicJobs:    historicJobs,
-		workers:         workers,
+		jobTimeout:   jobTimeout,
+		jobInterval:  jobInterval,
+		store:        store,
+		repoGetter:   repoGetter,
+		historicJobs: historicJobs,
+		workers:      workers,
 	}, nil
 }
 
 // Run drives jobs to completion. This is a blocking function.
-// It will run until the context is canceled.
+// It will run until the context is canceled or an error occurs.
 // This is a thread-safe function; it may be called from multiple goroutines.
-func (d *jobDriver) Run(ctx context.Context) {
-	cleanupTicker := time.NewTicker(d.cleanupInterval)
-	defer cleanupTicker.Stop()
-
+func (d *jobDriver) Run(ctx context.Context) error {
 	jobTicker := time.NewTicker(d.jobInterval)
 	defer jobTicker.Stop()
 
@@ -107,13 +95,7 @@ func (d *jobDriver) Run(ctx context.Context) {
 	ctx = logging.Context(ctx, logger)
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants us access to all namespaces.
 	if err != nil {
-		logger.Error("failed to grant provisioning identity; this will panic!", "error", err)
-		panic("unreachable?: failed to grant provisioning identity: " + err.Error())
-	}
-
-	// Remove old jobs
-	if err = d.store.Cleanup(ctx); err != nil {
-		logger.Error("failed to clean up old jobs at start", "error", err)
+		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
 	}
 
 	// Drive without waiting on startup.
@@ -121,12 +103,8 @@ func (d *jobDriver) Run(ctx context.Context) {
 
 	for {
 		select {
-		case <-cleanupTicker.C:
-			if err := d.store.Cleanup(ctx); err != nil {
-				logger.Error("failed to cleanup jobs", "error", err)
-			}
-
-		// These events do not queue if the worker is already running
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-jobTicker.C:
 			d.processJobsUntilDoneOrError(ctx)
 		case <-d.store.InsertNotifications():

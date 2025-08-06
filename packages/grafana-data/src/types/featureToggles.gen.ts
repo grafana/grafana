@@ -80,11 +80,6 @@ export interface FeatureToggles {
   */
   mysqlAnsiQuotes?: boolean;
   /**
-  * Enable folder nesting
-  * @default true
-  */
-  nestedFolders?: boolean;
-  /**
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;

@@ -147,10 +147,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 			permissions = append(permissions, basicRole.Permissions...)
 		}
 	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	// we don't care about the error here, if this fails we get 0 and no
 	// permission assigned to user will be returned, only for org role.
@@ -232,9 +229,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	}
 
 	permissions = s.actionResolver.ExpandActionSets(permissions)
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	return permissions, nil
 }

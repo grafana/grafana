@@ -2098,19 +2098,6 @@
     },
     {
       "metadata": {
-        "name": "nestedFolders",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2022-10-26T14:15:14Z"
-      },
-      "spec": {
-        "description": "Enable folder nesting",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "newClickhouseConfigPageDesign",
         "resourceVersion": "1754075145003",
         "creationTimestamp": "2025-08-01T19:05:45Z"
