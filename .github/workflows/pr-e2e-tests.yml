@@ -36,6 +36,76 @@ jobs:
         uses: ./.github/actions/change-detection
         with:
           self: .github/workflows/pr-e2e-tests.yml
+  
+  build-grafana-hosted-runners:
+    # needs: detect-changes
+    # if: needs.detect-changes.outputs.changed == 'true'
+    name: Build & Package Grafana ${{ matrix.size }}-${{ matrix.arch }}${{ matrix.feature }}
+    matrix:
+      arch: ["x64", "arm64"]
+      size: ["ubuntu-small", "ubuntu", "ubuntu-large", "ubuntu-xlarge", "ubuntu-2xlarge"]
+      feature: ["-io", ""]
+    runs-on: ${{ matrix.size }}-${{ matrix.arch }}${{ matrix.feature }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # TODO: add a cleanup workflow to remove the cache when the PR is closed
+      # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#force-deletion-of-caches-overriding-default-cache-eviction-policy
+      # TODO: maybe we could just use the cache to store the build, instead of uploading as an artifact?
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
+          path: |
+            build-dir
+
+      # If no cache hit, build Grafana
+      - name: Build Grafana
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
+      - name: Cat built artifact
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: cat out.txt
+      - name: Move built artifacts
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p build-dir
+          mv "$(grep 'grafana_.*tar.gz$' out.txt | grep -Fv -m1 'docker')" build-dir/grafana.tar.gz
+          mv "$(grep 'grafana_.*docker.tar.gz$' out.txt)" build-dir/grafana.docker.tar.gz
+
+      # If cache hit, validate the artifact is present
+      - name: Validate artifact
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          if [ ! -f build-dir/grafana.tar.gz ]; then
+            echo "Error: build-dir/grafana.tar.gz not found in cache"
+            exit 1
+          fi
+
+      - name: Set artifact name
+        run: echo "artifact=grafana-server-${{github.run_number}}" >> "$GITHUB_OUTPUT"
+        id: artifact
+
+      - name: Upload grafana.tar.gz
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: grafana-tar-gz
+          path: build-dir/grafana.tar.gz
+
+      - name: Upload grafana docker tarball
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: grafana-docker-tar-gz
+          path: build-dir/grafana.docker.tar.gz
 
   build-grafana:
     needs: detect-changes
