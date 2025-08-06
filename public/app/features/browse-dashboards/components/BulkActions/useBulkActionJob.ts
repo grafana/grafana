@@ -18,9 +18,8 @@ export interface DeleteJobSpec {
 export interface MoveJobSpec {
   action: 'move';
   move: {
-    ref?: string;
+    targetPath: string; // Must end with '/' slash
     resources: ResourceRef[];
-    targetPath: string;
   };
 }
 

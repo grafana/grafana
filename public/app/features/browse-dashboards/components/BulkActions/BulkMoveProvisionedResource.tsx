@@ -12,6 +12,7 @@ import {
   RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
   ResourceWrapper,
+  Job,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -30,6 +31,7 @@ import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 import { MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
+import { MoveJobSpec, ResourceRef, useBulkActionJob } from './useBulkActionJob';
 import { useBulkActionRequest } from './useBulkActionRequest';
 import {
   BulkActionFormData,
@@ -48,6 +50,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
 
 function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
   // States
+  const [job, setJob] = useState<Job>();
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
   const [progress, setProgress] = useState<ProgressState | null>(null);
   const [failureResults, setFailureResults] = useState<MoveResultFailed[] | undefined>();
@@ -58,6 +61,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Hooks
+  const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const childrenByParentUID = useChildrenByParentUIDState();
@@ -138,89 +142,114 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     // 2. Setup
     const { targetFolderPathInRepo, targets } = setupMoveOperation();
 
-    // 3. Process items
-    const successes: BulkSuccessResponse<
-      CreateRepositoryFilesWithPathApiArg,
-      CreateRepositoryFilesWithPathApiResponse
-    > = [];
-    const failures: MoveResultFailed[] = [];
-
-    // Iterate through each selected item and move it
-    // We want sequential processing to avoid overwhelming the API
-    for (let i = 0; i < targets.length; i++) {
-      const { uid, isFolder, displayName } = targets[i];
-      setProgress({
-        current: i,
-        total: targets.length,
-        item: displayName,
-      });
-
-      try {
-        // 1. Get source path in repository
-        const currentPath = await getResourceCurrentPath(uid, isFolder);
-        if (!currentPath) {
-          failures.push({
-            status: 'failed',
-            title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
-            errorMessage: t('browse-dashboards.bulk-move-resources-form.error-path-not-found', 'Path not found'),
-          });
-          continue;
-        }
-
-        if (!targetFolderPathInRepo) {
-          failures.push({
-            status: 'failed',
-            title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
-            errorMessage: t(
-              'browse-dashboards.bulk-move-resources-form.error-target-folder-path-missing',
-              'Target folder path is missing'
-            ),
-          });
-          continue;
-        }
-
-        const newPath = getResourceTargetPath(currentPath, targetFolderPathInRepo);
-        const fileBody = await createFileBody(isFolder, displayName, currentPath);
-
-        // Build move parameters
-        const moveParams: CreateRepositoryFilesWithPathApiArg = {
-          name: repository.name,
-          path: newPath, // NEW target path
-          ref: workflow === 'write' ? undefined : data.ref,
-          message: data.comment || `Move resource ${displayName}`,
-          originalPath: currentPath, // CURRENT path (source)
-          body: fileBody, // File content
-        };
-
-        // Call endpoint to move resource
-        const response = await moveFile(moveParams).unwrap();
-        successes.push({ index: i, item: moveParams, data: response });
-      } catch (error: unknown) {
-        failures.push({
-          status: 'failed',
-          title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
-          errorMessage: extractErrorMessage(error),
-        });
-      }
-
-      setProgress({
-        current: i + 1,
-        total: targets.length,
-        item: targets[i + 1]?.displayName,
-      });
+    if (!targetFolderPathInRepo) {
+      // throw new Error('Target folder path is missing');
+      return;
     }
 
-    setProgress(null);
+    const resources: ResourceRef[] = targets.map(({ uid, isFolder }) => ({
+      name: uid,
+      group: isFolder ? 'folder.grafana.app' : 'dashboard.grafana.app',
+      kind: isFolder ? 'Folder' : 'Dashboard',
+    }));
+    // Create the move job spec
+    const jobSpec: MoveJobSpec = {
+      action: 'move',
+      move: {
+        targetPath: targetFolderPathInRepo,
+        resources,
+      },
+    };
 
-    if (successes.length > 0 && failures.length === 0) {
-      // handleSuccess(successes);
-      setSuccessState({
-        allSuccess: true,
-        repoUrl: successes[0].data.urls?.newPullRequestURL,
-      });
-    } else if (failures.length > 0) {
-      setFailureResults(failures);
-    }
+    // const result = await createBulkJob(repository, jobSpec);
+
+    // if (result.job) {
+    //   setJob(result.job); // Store the job for tracking
+    // }
+
+    // // 3. Process items
+    // const successes: BulkSuccessResponse<
+    //   CreateRepositoryFilesWithPathApiArg,
+    //   CreateRepositoryFilesWithPathApiResponse
+    // > = [];
+    // const failures: MoveResultFailed[] = [];
+
+    // // Iterate through each selected item and move it
+    // // We want sequential processing to avoid overwhelming the API
+    // for (let i = 0; i < targets.length; i++) {
+    //   const { uid, isFolder, displayName } = targets[i];
+    //   setProgress({
+    //     current: i,
+    //     total: targets.length,
+    //     item: displayName,
+    //   });
+
+    //   try {
+    //     // 1. Get source path in repository
+    //     const currentPath = await getResourceCurrentPath(uid, isFolder);
+    //     if (!currentPath) {
+    //       failures.push({
+    //         status: 'failed',
+    //         title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
+    //         errorMessage: t('browse-dashboards.bulk-move-resources-form.error-path-not-found', 'Path not found'),
+    //       });
+    //       continue;
+    //     }
+
+    //     if (!targetFolderPathInRepo) {
+    //       failures.push({
+    //         status: 'failed',
+    //         title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
+    //         errorMessage: t(
+    //           'browse-dashboards.bulk-move-resources-form.error-target-folder-path-missing',
+    //           'Target folder path is missing'
+    //         ),
+    //       });
+    //       continue;
+    //     }
+
+    //     const newPath = getResourceTargetPath(currentPath, targetFolderPathInRepo);
+    //     const fileBody = await createFileBody(isFolder, displayName, currentPath);
+
+    //     // Build move parameters
+    //     const moveParams: CreateRepositoryFilesWithPathApiArg = {
+    //       name: repository.name,
+    //       path: newPath, // NEW target path
+    //       ref: workflow === 'write' ? undefined : data.ref,
+    //       message: data.comment || `Move resource ${displayName}`,
+    //       originalPath: currentPath, // CURRENT path (source)
+    //       body: fileBody, // File content
+    //     };
+
+    //     // Call endpoint to move resource
+    //     const response = await moveFile(moveParams).unwrap();
+    //     successes.push({ index: i, item: moveParams, data: response });
+    //   } catch (error: unknown) {
+    //     failures.push({
+    //       status: 'failed',
+    //       title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
+    //       errorMessage: extractErrorMessage(error),
+    //     });
+    //   }
+
+    //   setProgress({
+    //     current: i + 1,
+    //     total: targets.length,
+    //     item: targets[i + 1]?.displayName,
+    //   });
+    // }
+
+    // setProgress(null);
+
+    // if (successes.length > 0 && failures.length === 0) {
+    //   // handleSuccess(successes);
+    //   setSuccessState({
+    //     allSuccess: true,
+    //     repoUrl: successes[0].data.urls?.newPullRequestURL,
+    //   });
+    // } else if (failures.length > 0) {
+    //   setFailureResults(failures);
+    // }
   };
 
   return (
