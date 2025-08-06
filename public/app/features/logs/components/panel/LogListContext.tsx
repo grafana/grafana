@@ -68,7 +68,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
-  setTimestampFormat: (format: LogLineTimestampResolution) => void;
+  setTimestampResolution: (format: LogLineTimestampResolution) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
   timestampResolution: LogLineTimestampResolution;
@@ -105,7 +105,7 @@ export const LogListContext = createContext<LogListContextData>({
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
-  setTimestampFormat: () => {},
+  setTimestampResolution: () => {},
   setWrapLogMessage: () => {},
   showDetails: [],
   showTime: true,
@@ -549,7 +549,7 @@ export const LogListContextProvider = ({
     [containerElement, logOptionsStorageKey]
   );
 
-  const setTimestampFormat = useCallback(
+  const setTimestampResolution = useCallback(
     (timestampResolution: LogLineTimestampResolution) => {
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.timestampResolution`, timestampResolution);
@@ -629,7 +629,7 @@ export const LogListContextProvider = ({
         setShowUniqueLabels,
         setSortOrder,
         setSyntaxHighlighting,
-        setTimestampFormat,
+        setTimestampResolution,
         setWrapLogMessage,
         showDetails,
         showTime: logListState.showTime,
