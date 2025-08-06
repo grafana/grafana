@@ -10,8 +10,8 @@ If you only would like to share functionality with certain plugin IDs.
 **How to add an API to the list?**
 
 1. Add the API to a separate file under `public/app/features/plugins/components/restrictedGrafanaApis/`
-2. Reference the API in the `restrictedGrafanaApis` variable in `public/app/features/plugins/components/AppRootPage.tsx`
-3. Update the `RestrictedGrafanaApisContextType` under `packages/grafana-data/src/context/plugins/RestrictedGrafanaApis.tsx`
+2. Reference the API in the `restrictedGrafanaApis` variable in `public/app/features/plugins/components/restrictedGrafanaApis/RestrictedGrafanaApisProvider.tsx`
+3. Update the `RestrictedGrafanaApisContextType` type under `packages/grafana-data/src/context/plugins/RestrictedGrafanaApis.tsx`
 
 **How to share an API with plugins?**
 Enabling plugins is done via the Grafana config (config.ini).
