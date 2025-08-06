@@ -1,7 +1,7 @@
 name: End-to-end tests
 
 on:
-  pull_request:
+  # pull_request: 
   push:
     branches:
       - main

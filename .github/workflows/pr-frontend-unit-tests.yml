@@ -35,12 +35,23 @@ jobs:
     # the `frontend-unit-tests-enterprise` workflow will run instead
     needs: detect-changes
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-latest-8-cores
-    name: "Unit tests (${{ matrix.chunk }} / 8)"
+    runs-on: ${{ matrix.runner }}
+    name: Unit ${{ matrix.chunk }}/${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        chunk: [1, 2, 3, 4, 5, 6, 7, 8]
+        runner:
+          - ubuntu-latest-8-cores
+          - ubuntu-x64
+          - ubuntu-x64-large
+          - ubuntu-x64-xlarge
+          - ubuntu-x64-2xlarge
+          - ubuntu-arm64
+          - ubuntu-arm64-large
+          - ubuntu-arm64-xlarge
+          - ubuntu-arm64-2xlarge
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shardTotal: [8]
     steps:
     - uses: actions/checkout@v4
       with:
@@ -55,7 +66,7 @@ jobs:
       env:
         TEST_MAX_WORKERS: 2
         TEST_SHARD: ${{ matrix.chunk }}
-        TEST_SHARD_TOTAL: 8
+        TEST_SHARD_TOTAL: ${{ matrix.shardTotal }}
 
   frontend-unit-tests-enterprise:
     permissions:
@@ -64,12 +75,23 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     needs: detect-changes
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-latest-8-cores
-    name: "Unit tests (${{ matrix.chunk }} / 8)"
+    runs-on: ${{ matrix.runner }}
+    name: Unit ${{ matrix.chunk }}/${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        chunk: [1, 2, 3, 4, 5, 6, 7, 8]
+        runner:
+          - ubuntu-latest-8-cores
+          - ubuntu-x64
+          - ubuntu-x64-large
+          - ubuntu-x64-xlarge
+          - ubuntu-x64-2xlarge
+          - ubuntu-arm64
+          - ubuntu-arm64-large
+          - ubuntu-arm64-xlarge
+          - ubuntu-arm64-2xlarge
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shardTotal: [8]
     steps:
     - uses: actions/checkout@v4
       with:
