@@ -136,12 +136,14 @@ func updateFieldOptionsVariableSyntax(options map[string]interface{}) {
 	}
 }
 
+// Define the regex pattern to match legacy variable names
+// Pattern matches: __series_name, $__series_name, __value_time, __field_name, $__field_name
+// Defined here to avoid compilation for every function call
+var legacyVariableNamesRegex = regexp.MustCompile(`(__series_name)|(\$__series_name)|(__value_time)|(__field_name)|(\$__field_name)`)
+
 // updateVariablesSyntax updates legacy variable names to new dotted syntax
 // This function replicates the frontend updateVariablesSyntax behavior
 func updateVariablesSyntax(text string) string {
-	// Define the regex pattern to match legacy variable names
-	// Pattern matches: __series_name, $__series_name, __value_time, __field_name, $__field_name
-	legacyVariableNamesRegex := regexp.MustCompile(`(__series_name)|(\$__series_name)|(__value_time)|(__field_name)|(\$__field_name)`)
 
 	return legacyVariableNamesRegex.ReplaceAllStringFunc(text, func(match string) string {
 		switch match {
