@@ -97,7 +97,7 @@ func TestClient_Push(t *testing.T) {
 	t.Run("push failure", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Bad request"))
+			_, _ = w.Write([]byte("Bad request"))
 		}))
 		defer server.Close()
 
@@ -139,7 +139,7 @@ func TestClient_RangeQuery(t *testing.T) {
 			assert.Equal(t, "100", params.Get("limit"))
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(expectedResponse)
+			_ = json.NewEncoder(w).Encode(expectedResponse)
 		}))
 		defer server.Close()
 
@@ -165,7 +165,7 @@ func TestClient_RangeQuery(t *testing.T) {
 			assert.Equal(t, "", params.Get("limit")) // Should not be set
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(QueryRes{})
+			_ = json.NewEncoder(w).Encode(QueryRes{})
 		}))
 		defer server.Close()
 
@@ -178,7 +178,7 @@ func TestClient_RangeQuery(t *testing.T) {
 	t.Run("query failure", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Bad query"))
+			_, _ = w.Write([]byte("Bad query"))
 		}))
 		defer server.Close()
 
