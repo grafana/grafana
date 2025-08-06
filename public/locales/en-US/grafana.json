@@ -4562,6 +4562,12 @@
       "overwrite": "Overwrite",
       "title-plugin-dashboard": "Plugin dashboard"
     },
+    "controls": {
+      "menu": {
+        "aria-label": "Dashboard controls menu",
+        "title": "Dashboard controls"
+      }
+    },
     "dash-nav": {
       "on-open-snapshot-original": {
         "confirmText": {

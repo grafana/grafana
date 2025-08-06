@@ -8,11 +8,14 @@ import { useElementSelection, useStyles2 } from '@grafana/ui';
 import { DashboardScene } from './DashboardScene';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
-  const variables = sceneGraph.getVariables(dashboard)!.useState();
+  const variables = sceneGraph
+    .getVariables(dashboard)!
+    .useState()
+    .variables.filter((v) => !v.state.showInControlsMenu);
 
   return (
     <>
-      {variables.variables.map((variable) => (
+      {variables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}
     </>
