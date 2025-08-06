@@ -276,7 +276,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 			"", createdName, "", createdName, "") // Empty and duplicate requested names
 		require.NoError(t, err)
 		require.Len(t, decryptedValues, 1)
-		decryptedResult, ok = decryptedValues[createdName]
+		_, ok = decryptedValues[createdName]
 		require.True(t, ok)
 
 		// empty request
