@@ -6,12 +6,11 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type PluginStorePanelProvider struct {
-	pluginStore pluginstore.Store
-	setting     *setting.Cfg
+	pluginStore  pluginstore.Store
+	buildVersion string
 }
 
 func (p *PluginStorePanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
@@ -21,7 +20,7 @@ func (p *PluginStorePanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
 	for i, plugin := range plugins {
 		version := plugin.Info.Version
 		if version == "" {
-			version = p.setting.BuildVersion
+			version = p.buildVersion
 		}
 		panels[i] = schemaversion.PanelPluginInfo{
 			ID:      plugin.ID,
@@ -32,22 +31,11 @@ func (p *PluginStorePanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
 }
 
 func (p *PluginStorePanelProvider) GetPanelPlugin(id string) schemaversion.PanelPluginInfo {
-	plugins := p.GetPanels()
-
-	panelPlugin := schemaversion.PanelPluginInfo{}
-
-	for _, plugin := range plugins {
+	for _, plugin := range p.GetPanels() {
 		if plugin.ID == id {
-			panelPlugin = schemaversion.PanelPluginInfo{
-				ID:      plugin.ID,
-				Version: plugin.Version,
-			}
+			return plugin
 		}
 	}
 
-	if panelPlugin.ID == "" {
-		return schemaversion.PanelPluginInfo{}
-	}
-
-	return panelPlugin
+	return schemaversion.PanelPluginInfo{}
 }

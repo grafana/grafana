@@ -208,8 +208,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         if (panel) {
           this._viewEventSub?.unsubscribe();
           this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });
+          this._viewEventSub = undefined;
         }
       });
+
+      this._scene.state.body.activateRepeaters?.();
     }
   }
 
