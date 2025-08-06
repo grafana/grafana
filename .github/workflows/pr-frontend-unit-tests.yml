@@ -64,6 +64,7 @@ jobs:
     - run: yarn install --immutable --check-cache
     - run: yarn run test:ci
       env:
+        TEST_MAX_WORKERS: 2
         TEST_SHARD: ${{ matrix.shard }}
         TEST_SHARD_TOTAL: ${{ matrix.shardTotal }}
 
@@ -78,7 +79,7 @@ jobs:
     name: Unit ${{ matrix.shard }}/${{ matrix.runner }}
     strategy:
       fail-fast: false
-      matrix: #foo
+      matrix:
         runner:
           - ubuntu-latest-8-cores
           - ubuntu-x64
@@ -107,6 +108,7 @@ jobs:
     - run: yarn install --immutable --check-cache
     - run: yarn run test:ci
       env:
+        TEST_MAX_WORKERS: 2
         TEST_SHARD: ${{ matrix.shard }}
         TEST_SHARD_TOTAL: ${{ matrix.shardTotal }}
 
