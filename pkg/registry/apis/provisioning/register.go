@@ -1181,6 +1181,16 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		}
 	}
 
+	// Check our secure values
+	secure, err := b.decryptSvc.Decrypt(ctx, provisioning.GROUP, r.Namespace,
+		r.Secure.Token.Name,
+		r.Secure.WebhookSecret.Name,
+	)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("SECURE: %v\n", secure)
+
 	switch r.Spec.Type {
 	case provisioning.BitbucketRepositoryType:
 		return nil, errors.New("repository type bitbucket is not available")

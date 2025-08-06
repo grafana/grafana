@@ -12,6 +12,15 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
+// Tester is a struct that implements the Tester interface
+// it's temporary
+// FIXME: remove as soon as controller and jobs refactoring PRs are merged
+type Tester struct{}
+
+func (t *Tester) TestRepository(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
+	return TestRepository(ctx, repo)
+}
+
 func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
 	errors := ValidateRepository(repo)
 	if len(errors) > 0 {

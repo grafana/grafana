@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/setting"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/setting"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -109,7 +110,7 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 }
 
 func (s *secretsService) Decrypt(ctx context.Context, namespace string, name string) ([]byte, error) {
-	results, err := s.decryptSvc.Decrypt(ctx, svcName, namespace, []string{name})
+	results, err := s.decryptSvc.Decrypt(ctx, svcName, namespace, name)
 	if err != nil {
 		return nil, err
 	}

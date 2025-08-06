@@ -27,7 +27,7 @@ func ProvideRepositorySecrets(
 //go:generate mockery --name RepositorySecrets --structname MockRepositorySecrets --inpackage --filename repository_secrets_mock.go --with-expecter
 type RepositorySecrets interface {
 	Encrypt(ctx context.Context, r *provisioning.Repository, name string, data string) (nameOrValue []byte, err error)
-	DecryptX(ctx context.Context, r *provisioning.Repository, nameOrValue string) (data []byte, err error)
+	Decrypt(ctx context.Context, r *provisioning.Repository, nameOrValue string) (data []byte, err error)
 	Delete(ctx context.Context, r *provisioning.Repository, nameOrValue string) error
 }
 

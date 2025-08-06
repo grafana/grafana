@@ -792,8 +792,6 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl, featureToggles)
-	secureValueValidator := validator3.ProvideSecureValueValidator()
-	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
@@ -803,10 +801,12 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
+	secureValueValidator := validator3.ProvideSecureValueValidator()
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3, cfg)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v4)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, repositorySecrets, tracingService, v4)
 	if err != nil {
 		return nil, err
 	}
@@ -1362,8 +1362,6 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl, featureToggles)
-	secureValueValidator := validator3.ProvideSecureValueValidator()
-	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
@@ -1373,10 +1371,12 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
+	secureValueValidator := validator3.ProvideSecureValueValidator()
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3, cfg)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v4)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, repositorySecrets, tracingService, v4)
 	if err != nil {
 		return nil, err
 	}

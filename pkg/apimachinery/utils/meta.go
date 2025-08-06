@@ -884,6 +884,23 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 		return vals, nil
 	}
 
+	if f.Kind() == reflect.Struct {
+		num := f.NumField()
+		vals = make(common.InlineSecureValues, num)
+		for i := 0; i < f.NumField(); i++ {
+			val := f.Field(i)
+			if val.IsValid() && val.CanInterface() {
+				inline, ok := property.(common.InlineSecureValue)
+				if !ok {
+					return nil, fmt.Errorf("secure property must be InlineSecureValue (found: %t)", val)
+				}
+				vals[val.Type().Field(i).Name] = inline
+				continue
+			}
+			return nil, fmt.Errorf("value not an interface")
+		}
+	}
+
 	fmt.Printf("TODO PROPERTY: (%t) %+v\n", property, property)
 
 	return nil, fmt.Errorf("support: %t", property)

@@ -29,7 +29,7 @@ type DecryptAuthorizer interface {
 
 // DecryptService is the interface for the decrypt service.
 type DecryptService interface {
-	Decrypt(ctx context.Context, serviceName string, namespace string, names []string) (map[string]DecryptResult, error)
+	Decrypt(ctx context.Context, serviceName string, namespace string, names ...string) (map[string]DecryptResult, error)
 	Close() error
 }
 
