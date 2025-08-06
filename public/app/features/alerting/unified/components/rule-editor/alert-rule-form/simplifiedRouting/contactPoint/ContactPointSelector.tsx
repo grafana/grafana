@@ -56,12 +56,8 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
                   value={contactPointInForm}
                 />
                 <IconButton
-                  tooltip={t(
-                    'alerting.contact-point-selector.aria-label-refresh-list',
-                    'Refresh list of contact points'
-                  )}
                   name="sync"
-                  aria-label={t(
+                  tooltip={t(
                     'alerting.contact-point-selector.aria-label-refresh-list',
                     'Refresh list of contact points'
                   )}
