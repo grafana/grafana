@@ -39,6 +39,7 @@ var appManifestData = app.ManifestData{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
 								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
 							},
 						},
 					},

@@ -2,6 +2,7 @@ package shorturl
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -369,6 +370,103 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 	})
 
+	t.Run("K8s API validation - invalid paths", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
+
+		testCases := []struct {
+			name          string
+			path          string
+			expectedError string
+		}{
+			{
+				name:          "absolute path should be rejected",
+				path:          "/dashboard/absolute-path",
+				expectedError: "path should be relative",
+			},
+			{
+				name:          "path with directory traversal should be rejected",
+				path:          "d/../../../etc/passwd",
+				expectedError: "invalid short URL path",
+			},
+			{
+				name:          "path with multiple directory traversals should be rejected",
+				path:          "d/some/../path/../../../secret",
+				expectedError: "invalid short URL path",
+			},
+			{
+				name:          "empty path",
+				path:          "",
+				expectedError: "invalid short URL path",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Attempt to create ShortURL with invalid path
+				invalidBody := fmt.Sprintf(`{ "metadata": { "generateName": "invalid-" }, "spec": { "path": "%s" } }`, tc.path)
+				response := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodPost,
+					Path:   "/apis/shorturl.grafana.app/v1alpha1/namespaces/default/shorturls",
+					Body:   []byte(invalidBody),
+				}, (*unstructured.Unstructured)(nil))
+
+				// Should get a validation error, ideally it should be 400 Bad Request
+				assert.Equal(t, http.StatusForbidden, response.Response.StatusCode,
+					"Expected 400 Bad Request for invalid path: %s", tc.path)
+
+				// Check that the error message contains expected validation error
+				assert.Contains(t, string(response.Body), tc.expectedError,
+					"Response should contain validation error message")
+
+				// Should not have created a resource
+				assert.Nil(t, response.Result, "No resource should be created for invalid path")
+			})
+		}
+	})
+
+	t.Run("K8s API validation - valid edge cases", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
+
+		validPaths := []string{
+			"d/dashboard/valid-path",
+			"dashboard/some-id",
+			"explore?from=123&to=456",
+			"d/abc123/dashboard-with-params?var-test=value",
+		}
+
+		for _, validPath := range validPaths {
+			t.Run(fmt.Sprintf("valid path: %s", validPath), func(t *testing.T) {
+				validBody := fmt.Sprintf(`{ "metadata": { "generateName": "valid-" }, "spec": { "path": "%s" } }`, validPath)
+				response := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodPost,
+					Path:   "/apis/shorturl.grafana.app/v1alpha1/namespaces/default/shorturls",
+					Body:   []byte(validBody),
+				}, &unstructured.Unstructured{})
+
+				// Should succeed
+				assert.Equal(t, http.StatusCreated, response.Response.StatusCode,
+					"Expected 201 Created for valid path: %s", validPath)
+				assert.NotNil(t, response.Result, "Resource should be created for valid path")
+
+				if response.Result != nil {
+					uid := response.Result.GetName()
+
+					// Clean up
+					err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+					assert.NoError(t, err, "Cleanup should succeed")
+				}
+			})
+		}
+	})
+
 	t.Run("Redirect functionality (unified only)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Editor,
@@ -398,12 +496,6 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
-
-	// TODO: Add admission validation tests here
-	// t.Run("Admission validation", func(t *testing.T) {
-	//     // Test that creating with absolute path fails
-	//     // This should work once admission validation is properly connected
-	// })
 }
 
 // Helper function to check if shortURL K8s APIs are available

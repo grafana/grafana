@@ -45,13 +45,6 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: shorturlv1alpha1.ShortURLKind(),
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-						// Skip validation for non-CREATE operations as specified in the manifest
-						// TODO: Remove this after the SDK fixes this bug where validation is called for all mutating operations
-						// ignoring what the manifest says
-						if req.Action != resource.AdmissionActionCreate {
-							return nil
-						}
-
 						// Cast the incoming object to ShortURL for validation
 						shortURL, ok := req.Object.(*shorturlv1alpha1.ShortURL)
 						if !ok {
@@ -59,7 +52,9 @@ func New(cfg app.Config) (app.App, error) {
 						}
 
 						relPath := strings.TrimSpace(shortURL.Spec.Path)
-
+						if relPath == "" {
+							return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, relPath)
+						}
 						if path.IsAbs(relPath) {
 							return fmt.Errorf("%w: %s", ErrShortURLAbsolutePath, relPath)
 						}
