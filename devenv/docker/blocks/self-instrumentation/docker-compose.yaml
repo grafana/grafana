@@ -1,11 +1,10 @@
   prometheus:
-    image: prom/prometheus:v2.45.0
+    image: prom/prometheus:v3.5.0
     ports:
-      - "9090:9090"
+      - '9090:9090'
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     command: >
-      --enable-feature=remote-write-receiver
       --enable-feature=exemplar-storage
       --enable-feature=native-histograms
       --config.file=/etc/prometheus/prometheus.yml
@@ -13,44 +12,42 @@
     volumes:
       - ./docker/blocks/self-instrumentation/prometheus.yaml:/etc/prometheus/prometheus.yml
   loki:
-    image: grafana/loki:2.8.2
+    image: grafana/loki:3.5.3
     ports:
-      - "3100:3100"
+      - '3100:3100'
     command: -config.file=/etc/loki/local-config.yaml
-  promtail:
-    image: grafana/promtail:2.8.2
-    command: -config.file=/etc/promtail/promtail.yaml
-    volumes:
-      - ./docker/blocks/self-instrumentation/promtail.yaml:/etc/promtail/promtail.yaml
-      - ../data/log:/var/log/grafana
   tempo:
-    image: grafana/tempo:2.1.1
+    image: grafana/tempo:2.8.1
     command: -config.file=/etc/tempo.yaml
     volumes:
       - ./docker/blocks/self-instrumentation/tempo.yaml:/etc/tempo.yaml
     ports:
-      - "14268:14268"
-      - "3200:3200"
-      - "4317:4317"
+      - '14268:14268'
+      - '3200:3200'
+      - '4317:4317'
   pyroscope:
-    image: "grafana/pyroscope:latest"
+    image: 'grafana/pyroscope:1.14.0'
     ports:
-      - "4040:4040"
+      - '4040:4040'
     extra_hosts:
-      - "host.docker.internal:host-gateway"
-  agent:
-    image: grafana/agent:v0.37.0
-    environment:
-      - AGENT_MODE=flow
-    entrypoint:
-      - /bin/grafana-agent
+      - 'host.docker.internal:host-gateway'
+  alloy:
+    image: grafana/alloy:v1.10.0
+    command:
       - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
       - --server.http.listen-addr=0.0.0.0:12345
-      - /etc/agent/config.river
-    volumes:
-      - ./docker/blocks/self-instrumentation/agent.flow:/etc/agent/config.river
+      - --stability.level=experimental # Enable all functionality
     ports:
-      - "12345:12345"
-      - "12347:12347"
+      - '12345:12345'
+    volumes:
+      - ./docker/blocks/self-instrumentation/config.alloy:/etc/alloy/config.alloy
+      - ../data/log:/var/log/grafana:ro # Mount Grafana logs directory
+    depends_on:
+      - tempo
+      - loki
+      - prometheus
+      - pyroscope
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'

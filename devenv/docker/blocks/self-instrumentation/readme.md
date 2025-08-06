@@ -18,8 +18,9 @@ format = json
 enabled = true
 custom_endpoint=http://localhost:12347/collect
 
-[tracing.opentelemetry.jaeger]
-address = http://localhost:14268/api/traces
+[tracing.opentelemetry.otlp]
+address = localhost:4317
+insecure = true
 ```
 
 To collect profiles with pyroscope, you need to run Grafana with the following env vars:

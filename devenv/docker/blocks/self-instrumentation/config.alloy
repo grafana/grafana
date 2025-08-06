@@ -1,0 +1,100 @@
+loki.write "default" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
+
+// Grafana log file discovery
+local.file_match "grafana_logs" {
+  path_targets = [
+    {
+      __path__ = "/var/log/grafana/*.log",
+    },
+  ]
+}
+
+// Grafana log source
+loki.source.file "grafana" {
+  targets    = local.file_match.grafana_logs.targets
+  forward_to = [loki.relabel.grafana.receiver]
+}
+
+// Add labels to Grafana logs
+loki.relabel "grafana" {
+  rule {
+    action       = "replace"
+    target_label = "job"
+    replacement  = "grafana"
+  }
+
+  rule {
+    action       = "replace"
+    target_label = "service"
+    replacement  = "grafana"
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+logging {
+	level = "debug"
+  format = "json"
+	// Forward internal logs to the local Loki instance.
+	write_to = [loki.write.default.receiver]
+}
+
+tracing {
+	sampling_fraction = 1.0
+
+	// Forward internal spans to the local Tempo instance.
+	write_to = [otelcol.exporter.otlp.tempo.input]
+}
+
+otelcol.receiver.otlp "otlp_receiver" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+			insecure = true
+		}
+  }
+}
+
+pyroscope.write "default" {
+  // Send metrics to a locally running Pyroscope instance.
+  endpoint {
+    url = "http://pyroscope:4040"
+  }
+}
+
+
+pyroscope.scrape "default" {
+  targets = [
+    {"__address__" = "pyroscope:4040", "service_name"="pyroscope"},
+    {"__address__" = "alloy:12345", "service_name"="alloy"},
+    {"__address__" = "host.docker.internal:6000", "service_name"="grafana"},
+  ]
+  forward_to = [pyroscope.write.default.receiver]
+}
+
+faro.receiver "frontend" {
+    server {
+        listen_address = "0.0.0.0"
+        listen_port = 12347
+        cors_allowed_origins = ["*"]
+    }
+
+    output {
+        logs   = [loki.write.default.receiver]
+        traces = [otelcol.exporter.otlp.tempo.input]
+    }
+}
