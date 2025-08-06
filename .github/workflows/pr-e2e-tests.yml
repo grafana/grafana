@@ -62,6 +62,9 @@ jobs:
       #     key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
       #     path: |
       #       build-dir
+      
+      - name: Login to DockerHub
+        uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
 
       # If no cache hit, build Grafana
       - name: Build Grafana
@@ -128,6 +131,9 @@ jobs:
           key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
           path: |
             build-dir
+            
+      - name: Login to DockerHub
+        uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
 
       # If no cache hit, build Grafana
       - name: Build Grafana
@@ -387,6 +393,8 @@ jobs:
         with:
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --blob-dir=./blob-report
+      - name: Login to DockerHub
+        uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
