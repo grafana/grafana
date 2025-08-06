@@ -20,25 +20,15 @@ Plugins enhance your Grafana experience with new ways to connect to and visualiz
 
 Read on for an overview on how to get started with plugins:
 
+- Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools). 
 - There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
-- Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
-- Learn how to [manage your plugins](#manage-your-plugins), including [installation](#install-a-plugin) and [verification](/plugin-signatures) your plugins.
+- [Manage your plugins](#manage-your-plugins). Learn [how to install](#install-a-plugin), [update](#update-a-plugin) and [verify](#verify-your-plugins) your plugins.
 
 Additionally, you can also:
 
 - [Customize navigation placement of plugin pages](/customize-navigation-placement-of-plugin-pages).
 - [Allow the frontends of installed plugins to communicate locally with the backends](#integrate-plugins) of other installed plugins.
 - Isolate plugin code with the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox).
-
-## Types of plugins
-
-Grafana supports three types of plugins:
-
-- [Panels](/grafana/plugins/panel-plugins) - These plugins make it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards.
-- [Data sources](/grafana/plugins/data-source-plugins) - These plugins allow you to pull data from various data sources such as databases, APIs, log files, and so on, and display it in the form of graphs, charts, and dashboards in Grafana.
-- [Apps](/grafana/plugins/app-plugins) - These plugins enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
-
-Read more in [Types of plugins](/plugin-types).
 
 ## Plugin catalog
 
@@ -69,6 +59,16 @@ If required, the Grafana plugin catalog can be disabled using the `plugin_admin_
 
 <a id="#plugin-catalog-entry"></a>
 
+### Types of plugins
+
+Grafana supports three types of plugins:
+
+- [Panels](/grafana/plugins/panel-plugins) - These plugins make it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards.
+- [Data sources](/grafana/plugins/data-source-plugins) - These plugins allow you to pull data from various data sources such as databases, APIs, log files, and so on, and display it in the form of graphs, charts, and dashboards in Grafana.
+- [Apps](/grafana/plugins/app-plugins) - These plugins enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
+
+Read more in [Types of plugins](/plugin-types).
+
 ### Browse plugins
 
 To browse for available plugins:
@@ -90,7 +90,9 @@ The most common way to install a plugin is through the Grafana UI.
 1. Click the plugin's logo.
 1. Click **Install**.
 
+{{< admonition type="note" >}}
 To see additional ways to install plugins refer to [Install a plugin](/plugin-install).
+{{< /admonition >}}
 
 ### Update a plugin
 
@@ -114,23 +116,25 @@ To uninstall a plugin:
 
 When the update is complete, a confirmation message will indicate the installation was successful.
 
-## Sign in your plugins
+### Verify your plugins 
 
 Plugin signature verification, also known as _signing_, is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned. Read more in [Plugin signatures](/plugin-sign).
 
-## Customize navigation placement of plugin pages
+## Advanced options
+
+### Customize navigation placement of plugin pages
 
 You can relocate app plugin pages to customize the navigation menu structure, as explained in [Customize navigation placement of plugin pages](/customize-navigation-placement-of-plugin-pages).
 
-## Integrate plugins
+### Integrate plugins
 
 You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. See how in [Integrate your plugins](/plugin-integrate).
 
-## Isolate plugin code with the Frontend Sandbox
+### Isolate plugin code with the Frontend Sandbox
 
 You can use the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox) to securely isolate plugin frontend code from the main Grafana application.
 
-## Learn more
+### Learn more
 
 - [Browse available plugins](/grafana/plugins)
 - [Develop your own plugins](/developers/plugin-tools)
