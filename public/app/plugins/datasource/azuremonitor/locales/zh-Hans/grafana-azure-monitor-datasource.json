@@ -115,9 +115,12 @@
       "aria-label-column": "列",
       "aria-label-column-value": "列值",
       "aria-label-operator": "运算符",
+      "aria-label-remove-filter": "",
       "label-or": "或"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "添加组",
       "label-and": "和",
       "label-filters": "筛选条件",
@@ -130,6 +133,8 @@
       "label-format-as": "格式为"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "选择列",
       "label-fuzzy-search": "模糊搜索",
       "placeholder-search-team": "输入搜索词",
@@ -144,6 +149,7 @@
       "aria-label-remove": "删除"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "分组依据",
       "tooltip-group-by": "根据指定的列将结果整理成不同类别。可以单独使用“按组排列”列出所选列中的唯一值，也可以与汇总函数结合使用，生成每个组的汇总统计数据。单独使用时，它会返回指定列的不同组合。"
     },
@@ -186,8 +192,10 @@
       "text-loading": "加载中..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "按列排序",
       "aria-label-order-direction": "排序方向",
+      "aria-label-remove-order-by": "",
       "label-by": "方式",
       "label-order-by": "排序根据",
       "tooltip-order-by": "根据一列或多列以升序或降序对结果进行排序。"
@@ -249,7 +257,8 @@
       "label-columns": "列",
       "label-table": "表格",
       "placeholder-select-columns": "选择列",
-      "placeholder-select-table": "选择表格"
+      "placeholder-select-table": "选择表格",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "时间颗粒"

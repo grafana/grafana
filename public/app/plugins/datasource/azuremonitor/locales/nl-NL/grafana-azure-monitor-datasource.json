@@ -115,9 +115,12 @@
       "aria-label-column": "Kolom",
       "aria-label-column-value": "Kolomwaarde",
       "aria-label-operator": "Operator",
+      "aria-label-remove-filter": "",
       "label-or": "OF"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Groep toevoegen",
       "label-and": "EN",
       "label-filters": "Filters",
@@ -130,6 +133,8 @@
       "label-format-as": "Opmaak als"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Kolom selecteren",
       "label-fuzzy-search": "Vage zoekopdracht",
       "placeholder-search-team": "Geef zoekterm op",
@@ -144,6 +149,7 @@
       "aria-label-remove": "Verwijderen"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Groeperen op",
       "tooltip-group-by": "Organiseer resultaten in categorieën op basis van gespecificeerde kolommen. Groeperen op kan onafhankelijk worden gebruikt om unieke waarden in geselecteerde kolommen weer te geven, of worden gecombineerd met aggregaatfuncties om samenvattende statistieken voor elke groep te produceren. Wanneer deze optie afzonderlijk wordt gebruikt, retourneert het verschillende combinaties van de gespecificeerde kolommen."
     },
@@ -186,8 +192,10 @@
       "text-loading": "Laden..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Sorteren op kolom",
       "aria-label-order-direction": "Volgorde sortering",
+      "aria-label-remove-order-by": "",
       "label-by": "OP",
       "label-order-by": "Sorteren op",
       "tooltip-order-by": "Sorteer resultaten op basis van een of meer kolommen in oplopende of aflopende volgorde."
@@ -249,7 +257,8 @@
       "label-columns": "Kolommen",
       "label-table": "Tabel",
       "placeholder-select-columns": "Selecteer kolommen",
-      "placeholder-select-table": "Selecteer een tabel"
+      "placeholder-select-table": "Selecteer een tabel",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Tijdsinterval"
