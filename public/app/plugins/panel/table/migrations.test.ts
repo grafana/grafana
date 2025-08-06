@@ -361,4 +361,11 @@ describe('Table Migrations', () => {
     expect(newFormat[1].fields[1].values[0][0].fields[0].values[0]).toBe('0_subA');
     expect(newFormat[1].fields[1].values[1][0].fields[0].values[0]).toBe('1_subA');
   });
+
+  describe('migrateTextWrapToFieldLevel', () => {
+    it.todo('migrates a top-level config.custom.cellOptions.wrapText to a config.custom.wrapText');
+
+    // needs to delete the wrapTexts from the existing cellOptions
+    it.todo('migrates field override config.custom.cellOptions.wrapTexts to a field override config.custom.wrapTexts');
+  });
 });

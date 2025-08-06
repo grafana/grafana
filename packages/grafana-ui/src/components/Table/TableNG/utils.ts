@@ -80,12 +80,7 @@ export function isCellInspectEnabled(field: Field): boolean {
  * Returns true if text wrapping should be applied to the cell.
  */
 export function shouldTextWrap(field: Field): boolean {
-  const cellOptions = getCellOptions(field);
-  // @ts-ignore - a handful of cellTypes have boolean wrapText, but not all of them.
-  // we should be very careful to only use boolean type for cellOptions.wrapText.
-  // TBH we will probably move this up to a field option which is showIf rendered anyway,
-  // but that'll be a migration to do, so it needs to happen post-GA.
-  return Boolean(cellOptions?.wrapText);
+  return Boolean(field.config.custom?.wrapText);
 }
 
 /**

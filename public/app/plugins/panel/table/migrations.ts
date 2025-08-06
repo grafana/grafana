@@ -1,4 +1,4 @@
-import { omitBy, isNil, isNumber, defaultTo, groupBy } from 'lodash';
+import { omitBy, isNil, isNumber, defaultTo, groupBy, omit } from 'lodash';
 
 import {
   PanelModel,
@@ -24,6 +24,8 @@ export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Optio
   if (!panel.pluginVersion && 'columns' in panel) {
     console.log('Was angular table', panel);
   }
+
+  migrateTextWrapToFieldLevel(panel);
 
   // Nothing changed
   return panel.options;
@@ -296,4 +298,33 @@ export const migrateFromParentRowIndexToNestedFrames = (frames: DataFrame[] | nu
 
 export const hasDeprecatedParentRowIndex = (frames: DataFrame[] | null) => {
   return frames?.some((df) => df.meta?.custom?.parentRowIndex !== undefined);
+};
+
+export const migrateTextWrapToFieldLevel = (panel: PanelModel<Partial<Options>>) => {
+  if (panel.fieldConfig?.defaults.custom?.wrapText !== undefined) {
+    // already migrated
+    return;
+  }
+
+  const legacyDefaultWrapText: boolean | undefined = panel.fieldConfig?.defaults.custom?.cellOptions?.wrapText;
+
+  panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+    if (override.properties) {
+      override.properties = override.properties.flatMap((property) => {
+        if (property.id === 'custom.cellOptions' && property.value && property.value.wrapText !== undefined) {
+          return [
+            { ...property, value: { ...omit(property.value, 'wrapText') } },
+            { id: 'custom.wrapText', value: property.value.wrapText },
+          ];
+        }
+        return [property];
+      });
+    }
+    return override;
+  });
+
+  panel.fieldConfig.defaults.custom = panel.fieldConfig.defaults.custom ?? {};
+  panel.fieldConfig.defaults.custom.wrapText = legacyDefaultWrapText;
+
+  return panel;
 };

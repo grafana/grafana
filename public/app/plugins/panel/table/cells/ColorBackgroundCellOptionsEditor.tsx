@@ -6,8 +6,6 @@ import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
-import { TextWrapOptionsEditor } from './TextWrapOptionsEditor';
-
 const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>> = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
@@ -52,14 +50,6 @@ export const ColorBackgroundCellOptionsEditor = ({
           onChange={onColorRowChange}
         />
       </Field>
-
-      <TextWrapOptionsEditor
-        cellOptions={cellOptions}
-        onChange={(updatedCellOptions) => {
-          cellOptions.wrapText = updatedCellOptions.wrapText;
-          onChange(cellOptions);
-        }}
-      />
     </>
   );
 };

@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellOptions, TableWrapTextOptions } from '@grafana/schema';
+import { TableCellOptions } from '@grafana/schema';
 import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
@@ -12,7 +12,6 @@ import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOpt
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
 import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
-import { TextWrapOptionsEditor } from './cells/TextWrapOptionsEditor';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -25,19 +24,6 @@ export interface TableCellEditorProps<T> {
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
-}
-
-const TEXT_WRAP_CELL_TYPES = new Set([
-  TableCellDisplayMode.Auto,
-  TableCellDisplayMode.Sparkline,
-  TableCellDisplayMode.ColorText,
-  TableCellDisplayMode.ColorBackground,
-  TableCellDisplayMode.DataLinks,
-  TableCellDisplayMode.Pill,
-]);
-
-function isTextWrapCellType(value: TableCellOptions): value is TableCellOptions & TableWrapTextOptions {
-  return TEXT_WRAP_CELL_TYPES.has(value.type);
 }
 
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
@@ -94,7 +80,6 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       <Field>
         <Combobox options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
-      {isTextWrapCellType(value) && <TextWrapOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />}
       {cellType === TableCellDisplayMode.Gauge && (
         <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
