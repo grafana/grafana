@@ -70,7 +70,7 @@ otelcol.exporter.otlp "tempo" {
 }
 
 pyroscope.write "default" {
-  // Send metrics to a locally running Pyroscope instance.
+  // Send profiles to a locally running Pyroscope instance.
   endpoint {
     url = "http://pyroscope:4040"
   }
