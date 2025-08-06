@@ -298,7 +298,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                   reportInteraction(INTERACTION_EVENT_NAME, {
                     item: INTERACTION_ITEM.SELECT_DS,
                     ds_type: ds.type,
-                    total_configured: dataSources.length,
                   });
                 }
               }}
