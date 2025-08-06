@@ -3055,9 +3055,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.0.13":
-  version: 0.0.13
-  resolution: "@grafana/assistant@npm:0.0.13"
+"@grafana/assistant@npm:0.0.14":
+  version: 0.0.14
+  resolution: "@grafana/assistant@npm:0.0.14"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3065,7 +3065,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/a0e62fe4f7ec84f8954c1e154763ca3248348442daeb2a938f9e473e339438f1c32abaf648f2a10710e4336786a11d96084a079068785a886440172dc4b4b5e8
+  checksum: 10/3e85effd69494b023d395940f5f926da1d2868850db613581d7b2f398e8f00fe07339fdb6fa12b3029603cd394d012104f187f2fd2fcb85196dac72cd6e072df
   languageName: node
   linkType: hard
 
@@ -18197,7 +18197,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/assistant": "npm:0.0.13"
+    "@grafana/assistant": "npm:0.0.14"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
