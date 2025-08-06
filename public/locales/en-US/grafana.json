@@ -12730,6 +12730,7 @@
     "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-by-field": "Selecting or hovering this field will show a tooltip containing the content within the target field. Markdown and HTML are supported.",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12745,6 +12746,7 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-tooltip-by-field": "Tooltip by field",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },

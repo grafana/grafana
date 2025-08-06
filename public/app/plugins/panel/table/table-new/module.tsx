@@ -80,6 +80,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           category: cellCategory,
           shouldApply: () => true,
         })
+        .addFieldNamePicker({
+          path: 'tooltipByField',
+          name: t('table-new.name-tooltip-by-field', 'Tooltip by field'),
+          description: t(
+            'table-new.description-tooltip-by-field',
+            'Show the value from a sibling field in a tooltip when hovering a cell in this field. Markdown and HTML are supported.'
+          ),
+          category: cellCategory,
+        })
         .addBooleanSwitch({
           path: 'inspect',
           name: t('table-new.name-cell-value-inspect', 'Cell value inspect'),

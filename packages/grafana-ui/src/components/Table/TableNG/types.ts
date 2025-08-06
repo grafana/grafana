@@ -1,4 +1,4 @@
-import { SyntheticEvent } from 'react';
+import { ReactNode, SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
 import {
@@ -149,6 +149,8 @@ export interface BaseTableProps {
 
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
+
+export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
 
 export interface TableCellRendererProps {
   rowIdx: number;
