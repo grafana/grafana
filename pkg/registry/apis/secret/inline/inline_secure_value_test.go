@@ -242,7 +242,8 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		tu := testutils.Setup(t)
 
-		secret := common.NewSecretValue("test-value")
+		rawSecret := "test-value"
+		secret := common.NewSecretValue(rawSecret)
 
 		serviceIdentity := "service-identity"
 
@@ -259,7 +260,15 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		decryptedResult, ok := decryptedValues[createdName]
 		require.True(t, ok)
-		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), secret.DangerouslyExposeAndConsumeValue())
+		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), rawSecret)
+
+		// can also decrypt with the owner.APIGroup as a decrypter
+		decryptedValues, err = tu.DecryptService.Decrypt(t.Context(), owner.APIGroup, owner.Namespace, []string{createdName})
+		require.NoError(t, err)
+
+		decryptedResult, ok = decryptedValues[createdName]
+		require.True(t, ok)
+		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), rawSecret)
 	})
 
 	t.Run("when the auth info is missing it returns an error", func(t *testing.T) {
