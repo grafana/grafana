@@ -3,6 +3,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
+
 test.describe(
   'Variables - Query - Add variable',
   {

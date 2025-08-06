@@ -36,7 +36,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     category,
     description: t('canvas.description-pan-zoom', 'Enable pan and zoom'),
     defaultValue: false,
-    showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
+    showIf: () => config.featureToggles.canvasPanelPanZoom,
   });
   builder.addCustomEditor({
     id: 'panZoomHelp',
@@ -47,15 +47,11 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
   builder.addBooleanSwitch({
-    path: 'infinitePan',
-    name: t('canvas.name-infinite-panning', 'Infinite panning'),
-    category,
-    description: t(
-      'canvas.description-infinite-panning',
-      'Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained'
-    ),
+    path: 'zoomToContent',
+    name: 'Zoom to content',
+    description: 'Automatically zoom to fit content',
     defaultValue: false,
-    showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
+    showIf: () => config.featureToggles.canvasPanelPanZoom,
   });
 
   category = [t('canvas.category-tooltip', 'Tooltip')];

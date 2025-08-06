@@ -97,7 +97,7 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 			return res, err
 		}
 
-		frames := traceql.TransformInstantMetricsResponse(tempoQuery, queryResponse)
+		frames := traceql.TransformInstantMetricsResponse(queryResponse)
 		result.Frames = frames
 	} else {
 		var queryResponse tempopb.QueryRangeResponse
