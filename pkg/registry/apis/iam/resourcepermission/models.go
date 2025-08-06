@@ -25,8 +25,9 @@ var (
 )
 
 type ListResourcePermissionsQuery struct {
-	UID   string
-	OrgID int64
+	UID     string
+	OrgID   int64
+	Actions string
 
 	Pagination common.Pagination
 }

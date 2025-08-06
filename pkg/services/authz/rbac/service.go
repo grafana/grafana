@@ -243,22 +243,10 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 	if err != nil {
 		return nil, err
 	}
+	// Resource permissions are handled by the resourcePermissionTranslation mapper
+	// No special parsing needed here - let the mapper handle the translation
 
-	if req.GetGroup() == "iam.grafana.app" && req.GetResource() == "resourcepermissions" {
-		// Special case for resource permissions, where the name is in the format "group-resource-id"
-		if req.GetName() == "" {
-			return nil, status.Error(codes.InvalidArgument, "name is required for resource permissions")
-		}
-		parts := strings.SplitN(req.GetName(), "-", 3)
-		if len(parts) != 3 {
-			return nil, status.Error(codes.InvalidArgument, "name must be in the format 'group-resource-id'")
-		}
-		req.Group = parts[0]
-		req.Resource = parts[1]
-		req.Name = parts[2]
-	}
-
-	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb(), req.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +279,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb(), "")
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +335,7 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 	return userUID, identityType, nil
 }
 
-func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
+func (s *Service) validateAction(ctx context.Context, group, resource, verb, name string) (string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
 	t, ok := s.mapper.Get(group, resource)
@@ -356,9 +344,52 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 		return "", status.Error(codes.NotFound, "unsupported resource")
 	}
 
+	// Special handling for resourcePermissionTranslation
+	if group == "iam.grafana.app" && resource == "resourcepermissions" {
+		return s.validateResourcePermissionAction(ctx, t, verb, name)
+	}
+
+	// Normal case for other resources
 	action, ok := t.Action(verb)
 	if !ok {
 		ctxLogger.Error("unsupport verb", "group", group, "resource", resource, "verb", verb)
+		return "", status.Error(codes.NotFound, "unsupported verb")
+	}
+
+	return action, nil
+}
+
+func (s *Service) validateResourcePermissionAction(ctx context.Context, t Mapping, verb, name string) (string, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+
+	rpt, ok := t.(resourcePermissionTranslation)
+	if !ok {
+		ctxLogger.Error("unexpected translation type for resource permissions")
+		return "", status.Error(codes.Internal, "unexpected translation type")
+	}
+
+	if name == "" {
+		// For list operations, we can't determine the specific resource type
+		// Return a template action that will be resolved later
+		action, ok := rpt.Action(verb)
+		if !ok {
+			ctxLogger.Error("unsupported verb for resource permissions", "verb", verb)
+			return "", status.Error(codes.NotFound, "unsupported verb")
+		}
+		return action, nil
+	}
+
+	// Parse the name to get the resource type
+	_, resourceType, _, ok := rpt.ParseResourcePermissionName(name)
+	if !ok {
+		ctxLogger.Error("invalid resource permission name format", "name", name)
+		return "", status.Error(codes.InvalidArgument, "invalid resource permission name format")
+	}
+
+	// Get the concrete action for the specific resource type
+	action, ok := rpt.ActionForResource(resourceType, verb)
+	if !ok {
+		ctxLogger.Error("unsupported verb for resource type", "resourceType", resourceType, "verb", verb)
 		return "", status.Error(codes.NotFound, "unsupported verb")
 	}
 

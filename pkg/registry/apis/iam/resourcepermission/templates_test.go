@@ -58,6 +58,36 @@ func TestListResourcePermissionsQuery(t *testing.T) {
 						Pagination: common.Pagination{Limit: 15, Continue: 5},
 					}),
 				},
+				{
+					Name: "with_actions",
+					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
+						Actions:    "dashboards",
+						Pagination: common.Pagination{Limit: 10, Continue: 0},
+					}),
+				},
+				{
+					Name: "with_uid",
+					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
+						UID:        "user123",
+						Pagination: common.Pagination{Limit: 10, Continue: 0},
+					}),
+				},
+				{
+					Name: "with_orgid",
+					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
+						OrgID:      5,
+						Pagination: common.Pagination{Limit: 10, Continue: 0},
+					}),
+				},
+				{
+					Name: "with_all_fields",
+					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{
+						UID:        "team456",
+						OrgID:      3,
+						Actions:    "folders",
+						Pagination: common.Pagination{Limit: 20, Continue: 10},
+					}),
+				},
 			},
 			resourcePermissionInsertTplt: {
 				{
