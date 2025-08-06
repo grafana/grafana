@@ -164,6 +164,8 @@ jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json
 cache_ttl = 60m
 
 # File containing one or more custom PEM Encoded CA Certificates
+# Used with jwk_set_url when the root CA is not trusted by the pre-packaged certifcates
+# Which is always true for selfsigned certificates.
 # tls_client_ca = /path/to/ca.crt
 
 # Skip CA Verification entirely
@@ -171,8 +173,7 @@ cache_ttl = 60m
 ```
 
 {{< admonition type="note" >}}
-If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the `cache_ttl` is not set, the default of `60m` is used. `no-store` and `no-cache` cache control headers are ignored.
-To disable jwks caching, set `cache_ttl = 0s`
+If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the `cache_ttl` is not set, the default of `60m` is used. `no-store` and `no-cache` cache control headers are ignored. To disable jwks caching, set `cache_ttl = 0s`
 {{< /admonition >}}
 
 ### Verify token using a JSON Web Key Set loaded from JSON file

@@ -71,7 +71,7 @@ func (s *AuthService) checkKeySetConfiguration() error {
 	return nil
 }
 
-// Initialize a provider for JWKSet, either file, or https
+// initKeySet creates a provider for JWKSet, either file, or https
 // nolint:gocyclo
 func (s *AuthService) initKeySet() error {
 	if err := s.checkKeySetConfiguration(); err != nil {
