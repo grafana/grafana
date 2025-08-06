@@ -19,6 +19,7 @@ type ConcurrentJobDriver struct {
 	repoGetter      RepoGetter
 	historicJobs    History
 	workers         []Worker
+	notifications   chan struct{}
 }
 
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns multiple job drivers.
@@ -28,6 +29,7 @@ func NewConcurrentJobDriver(
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs History,
+	notifications chan struct{},
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
@@ -46,6 +48,7 @@ func NewConcurrentJobDriver(
 		repoGetter:      repoGetter,
 		historicJobs:    historicJobs,
 		workers:         workers,
+		notifications:   notifications,
 	}, nil
 }
 
@@ -99,6 +102,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.store,
 				c.repoGetter,
 				c.historicJobs,
+				c.notifications,
 				c.workers...,
 			)
 			if err != nil {

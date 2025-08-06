@@ -48,31 +48,6 @@ func TestJobController_InsertNotifications(t *testing.T) {
 	}
 }
 
-func TestJobController_Run(t *testing.T) {
-	client := provisioningfake.NewSimpleClientset()
-	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
-	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
-
-	controller, err := NewJobController(jobInformer)
-	require.NoError(t, err)
-
-	// Start informer and wait for cache sync
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-
-	informerFactory.Start(ctx.Done())
-	informerFactory.WaitForCacheSync(ctx.Done())
-
-	// Run controller
-	go controller.Run(ctx)
-
-	// Wait a bit to ensure controller starts
-	time.Sleep(100 * time.Millisecond)
-
-	// Cancel context to stop controller
-	cancel()
-}
-
 func TestJobController_NotificationOnJobCreate(t *testing.T) {
 	client := provisioningfake.NewSimpleClientset()
 	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
@@ -84,7 +59,7 @@ func TestJobController_NotificationOnJobCreate(t *testing.T) {
 	// Start informer and wait for cache sync
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	
+
 	informerFactory.Start(ctx.Done())
 	informerFactory.WaitForCacheSync(ctx.Done())
 

@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"context"
-
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -45,21 +43,6 @@ func NewJobController(
 	return jc, nil
 }
 
-// Run starts the JobController.
-func (jc *JobController) Run(ctx context.Context) {
-	logger := jc.logger
-	ctx = logging.Context(ctx, logger)
-	logger.Info("Starting JobController")
-	defer logger.Info("Shutting down JobController")
-
-	if !cache.WaitForCacheSync(ctx.Done(), jc.jobSynced) {
-		return
-	}
-
-	logger.Info("JobController started")
-	<-ctx.Done()
-}
-
 // InsertNotifications returns a channel that receives notifications when jobs are created.
 // This replaces the InsertNotifications method from persistentstore.go.
 func (jc *JobController) InsertNotifications() chan struct{} {
@@ -73,4 +56,3 @@ func (jc *JobController) sendNotification() {
 		// Don't block if there's already a notification waiting
 	}
 }
-

@@ -556,7 +556,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
+			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
 			b.client = c.ProvisioningV0alpha1()
 
@@ -628,6 +630,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncWorker,
 			}
 
+			// Create JobController to handle job create notifications
+			jobController, err := controller.NewJobController(jobInformer)
+			if err != nil {
+				return err
+			}
+
 			// Add any extra workers
 			for _, extra := range b.extras {
 				workers = append(workers, extra.GetJobWorkers()...)
@@ -640,6 +648,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				22*time.Minute, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
 				30*time.Second, // Periodically look for new jobs
 				b.jobs, b, b.jobHistory,
+				jobController.InsertNotifications(),
 				workers...,
 			)
 			if err != nil {
@@ -668,6 +677,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			go jobController.Run(postStartHookCtx.Context)
 			return nil
 		},
 	}

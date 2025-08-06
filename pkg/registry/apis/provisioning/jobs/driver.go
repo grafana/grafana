@@ -34,10 +34,6 @@ type Store interface {
 	// An abandoned job is one that has been claimed by a worker, but the worker has not updated the job in a while.
 	Cleanup(ctx context.Context) error
 
-	// InsertNotifications returns a channel that will have a value sent to it when a new job is inserted.
-	// This is used to wake up the job driver when a new job is inserted.
-	InsertNotifications() chan struct{}
-
 	// Update saves the job back to the store.
 	Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
 }
@@ -65,6 +61,9 @@ type jobDriver struct {
 	// Workers process the job.
 	// Only the first worker who supports the job will process it; the rest are ignored.
 	workers []Worker
+
+	// notifications channel for job create events
+	notifications chan struct{}
 }
 
 func NewJobDriver(
@@ -72,15 +71,17 @@ func NewJobDriver(
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs History,
+	notifications chan struct{},
 	workers ...Worker,
 ) (*jobDriver, error) {
 	return &jobDriver{
-		jobTimeout:   jobTimeout,
-		jobInterval:  jobInterval,
-		store:        store,
-		repoGetter:   repoGetter,
-		historicJobs: historicJobs,
-		workers:      workers,
+		jobTimeout:    jobTimeout,
+		jobInterval:   jobInterval,
+		store:         store,
+		repoGetter:    repoGetter,
+		historicJobs:  historicJobs,
+		workers:       workers,
+		notifications: notifications,
 	}, nil
 }
 
@@ -107,7 +108,7 @@ func (d *jobDriver) Run(ctx context.Context) error {
 			return ctx.Err()
 		case <-jobTicker.C:
 			d.processJobsUntilDoneOrError(ctx)
-		case <-d.store.InsertNotifications():
+		case <-d.notifications:
 			d.processJobsUntilDoneOrError(ctx)
 		}
 	}
