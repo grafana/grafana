@@ -108,7 +108,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             name: rowColumnField,
             values: rowValues,
             type: keyRowField.type,
-            config: {},
+            config: { ...keyRowField.config },
           },
         ];
 

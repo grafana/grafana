@@ -10,7 +10,7 @@ require (
 	github.com/grafana/grafana-app-sdk v0.40.2
 	github.com/grafana/grafana-app-sdk/logging v0.40.1
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3
@@ -106,7 +106,7 @@ require (
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
-	github.com/go-sql-driver/mysql v1.9.2 // indirect
+	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
@@ -130,13 +130,13 @@ require (
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914 // indirect
-	github.com/grafana/grafana-aws-sdk v1.0.4 // indirect
+	github.com/grafana/grafana-aws-sdk v1.1.0 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // indirect
-	github.com/grafana/grafana/apps/provisioning v0.0.0-20250801193518-9f4773c9a5a3 // indirect
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b // indirect
+	github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250804150913-990f1c69ecc2 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
-	github.com/grafana/sqlds/v4 v4.2.3 // indirect
+	github.com/grafana/sqlds/v4 v4.2.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
