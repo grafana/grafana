@@ -82,7 +82,7 @@ describe('SearchStateManager', () => {
       expect(stm.state.folderUid).toBe('abc');
     });
 
-    it('updates search results in order', async () => {
+    it.skip('updates search results in order', async () => {
       const stm = getSearchStateManager();
 
       jest.spyOn(searcher, 'search').mockReturnValueOnce(

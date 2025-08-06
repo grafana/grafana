@@ -1,97 +1,100 @@
 {
-  "extends": [
-    "config:base"
-  ],
-  "enabledManagers": ["npm"],
-  "ignoreDeps": [
+  extends: ["config:recommended"],
+  enabledManagers: ["npm"],
+  ignoreDeps: [
+    // ignoring these until we can upgrade to react 19
+    // see epic here: https://github.com/grafana/grafana/issues/98813
+    '@types/react',
+    '@types/react-dom',
+    'eslint-plugin-react-hooks',
+    'react',
+    'react-dom',
+    'react-refresh',
+
     "@types/history", // this can be removed entirely when we upgrade history since v5 exposes types directly
     "history", // we should bump this together with react-router-dom (see https://github.com/grafana/grafana/issues/76744)
+    "react-router", // we should bump this together with history and react-router-dom
     "react-router-dom", // we should bump this together with history (see https://github.com/grafana/grafana/issues/76744)
-    "loader-utils", // v3 requires upstream changes in ngtemplate-loader. ignore, and remove when we remove angular.
     "monaco-editor", // due to us exposing this via @grafana/ui/CodeEditor's props bumping can break plugins
     "@fingerprintjs/fingerprintjs", // we don't want to bump to v4 due to licensing changes
-    "@swc/core", // versions ~1.4.5 contain multiple bugs related to baseUrl resolution breaking builds.
     "slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
-    "@types/slate" // we don't want to continue using this on the long run, use Monaco editor instead of Slate
+    "@types/slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
   ],
-  "includePaths": ["package.json", "packages/**", "public/app/plugins/**"],
-  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
-  "labels": ["area/frontend", "dependencies", "no-changelog"],
-  "postUpdateOptions": ["yarnDedupeHighest"],
-  "packageRules": [
+  includePaths: ["package.json", "packages/**", "public/app/plugins/**"],
+  ignorePaths: ["emails/**", "**/mocks/**"],
+  labels: ["area/frontend", "dependencies", "no-changelog"],
+  postUpdateOptions: ["yarnDedupeHighest"],
+  packageRules: [
     {
-      "automerge": true,
-      "matchCurrentVersion": "!/^0/",
-      "matchUpdateTypes": ["patch"],
-      "excludePackagePatterns": ["^@?storybook", "^@locker"]
+      automerge: true,
+      matchCurrentVersion: "!/^0/",
+      matchUpdateTypes: ["patch"],
+      matchPackageNames: ["!/^@?storybook/", "!/^@locker/"],
     },
     {
-      "matchPackagePatterns": ["^@?storybook"],
-      "extends": ["schedule:monthly"],
-      "groupName": "Storybook updates"
+      extends: ["schedule:monthly"],
+      groupName: "Storybook updates",
+      matchPackageNames: ["/^@?storybook/"],
+      rangeStrategy: "bump",
     },
     {
-      "groupName": "React Aria",
-      "matchPackagePrefixes": [
-        "@react-aria/",
-        "@react-stately/"
-      ]
+      groupName: "React Aria",
+      matchPackageNames: ["@react-aria/{/,}**", "@react-stately/{/,}**"],
     },
     {
-      "groupName": "Moveable",
-      "matchPackageNames": [
-        "moveable",
-        "react-moveable"
-      ]
+      groupName: "Moveable",
+      matchPackageNames: ["moveable", "react-moveable"],
     },
     {
-      "groupName": "Slate",
-      "matchPackageNames": [
-        "@types/slate",
-        "@types/slate-react",
-        "slate",
-        "slate-react"
-      ]
+      groupName: "Slate",
+      matchPackageNames: ["@types/slate", "@types/slate-react", "slate", "slate-react"],
     },
     {
-      "groupName": "d3",
-      "matchPackagePrefixes": [
-        "d3",
-        "@types/d3"
-      ]
+      groupName: "d3",
+      matchPackageNames: ["d3{/,}**", "@types/d3{/,}**"],
     },
     {
-      "groupName": "visx",
-      "matchPackagePrefixes": [
-        "@visx/"
-      ]
+      groupName: "scenes",
+      matchPackageNames: ["@grafana/scenes", "@grafana/scenes-react"],
     },
     {
-      "groupName": "uLibraries",
-      "matchPackageNames": [
-        "@leeoniya/ufuzzy",
-        "uplot"
-      ],
-      "reviewers": ["leeoniya"],
+      groupName: "faro",
+      matchPackageNames: ["@grafana/faro*"],
     },
     {
-      "groupName": "locker",
-      "matchPackagePrefixes": [
-        "@locker/"
-      ],
-      "reviewers": ["team:grafana/plugins-platform-frontend"],
+      groupName: "visx",
+      matchPackageNames: ["@visx/{/,}**"],
+    },
+    {
+      groupName: "uLibraries",
+      matchPackageNames: ["@leeoniya/**", "uplot"],
+      reviewers: ["leeoniya"],
+    },
+    {
+      groupName: "locker",
+      reviewers: ["team:grafana/plugins-platform-frontend"],
+      matchPackageNames: ["@locker/{/,}**"],
+    },
+    {
+      groupName: "augurs",
+      matchPackageNames: ["@bsull/augurs"],
+      reviewers: ["sd2k"],
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "prPriority": -1
     },
   ],
-  "pin": {
-    "enabled": false
+  pin: {
+    enabled: false,
   },
-  "prConcurrentLimit": 10,
-  "rebaseWhen": "conflicted",
-  "reviewers": ["team:grafana/frontend-ops"],
-  "separateMajorMinor": false,
-  "vulnerabilityAlerts": {
-    "addLabels": ["area/security"]
-  }
+  prConcurrentLimit: 10,
+  rebaseWhen: "conflicted",
+  reviewers: ["team:grafana/frontend-ops"],
+  separateMajorMinor: false,
+  vulnerabilityAlerts: {
+    addLabels: ["area/security"],
+  },
 }

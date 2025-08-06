@@ -52,7 +52,9 @@
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
+    "i18n-extract": "make i18n-extract",
     "betterer": "betterer",
+    "betterer:ci": "betterer ci --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:json": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/bettererResultsToJson.ts",
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
@@ -241,6 +243,7 @@
     "webpack-dev-server": "5.1.0",
     "webpack-manifest-plugin": "5.0.0",
     "webpack-merge": "5.10.0",
+    "webpack-subresource-integrity": "^5.2.0-rc.1",
     "webpackbar": "^6.0.0",
     "yaml": "^2.0.0",
     "yargs": "^17.5.1"
@@ -427,7 +430,9 @@
     "redux": "^5.0.0",
     "@storybook/blocks@npm:8.1.6": "patch:@storybook/blocks@npm%3A8.1.6#~/.yarn/patches/@storybook-blocks-npm-8.1.6-892f57a6d7.patch",
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
-    "@grafana/scenes/@grafana/e2e-selectors": "workspace:*"
+    "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
+    "form-data@~2.3.2": "2.5.4",
+    "form-data@^4.0.0": "4.0.4"
   },
   "workspaces": {
     "packages": [

@@ -10,10 +10,10 @@ load(
     "build_frontend_package_step",
     "build_storybook_step",
     "build_test_plugins_step",
+    "cloud_plugins_e2e_tests_step",
     "compile_build_cmd",
     "download_grabpl_step",
     "e2e_tests_artifacts",
-    "e2e_tests_step",
     "enterprise_downstream_step",
     "frontend_metrics_step",
     "grafana_server_step",
@@ -36,10 +36,6 @@ load(
 load(
     "scripts/drone/steps/rgm.star",
     "rgm_artifacts_step",
-)
-load(
-    "scripts/drone/utils/images.star",
-    "images",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -73,7 +69,6 @@ def build_e2e(trigger, ver_mode):
     build_steps = []
 
     create_packages = rgm_artifacts_step(
-        alpine = images["alpine"],
         artifacts = [
             "targz:grafana:linux/amd64",
             "targz:grafana:linux/arm64",
@@ -87,7 +82,6 @@ def build_e2e(trigger, ver_mode):
         ],
         file = "packages.txt",
         tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
-        ubuntu = images["ubuntu"],
         ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
     )
 
@@ -121,18 +115,17 @@ def build_e2e(trigger, ver_mode):
             publish_docker,
             build_test_plugins_step(),
             grafana_server_step(),
-            e2e_tests_step("dashboards-suite"),
-            e2e_tests_step("old-arch/dashboards-suite"),
-            e2e_tests_step("smoke-tests-suite"),
-            e2e_tests_step("old-arch/smoke-tests-suite"),
-            e2e_tests_step("panels-suite"),
-            e2e_tests_step("old-arch/panels-suite"),
-            e2e_tests_step("various-suite"),
-            e2e_tests_step("old-arch/various-suite"),
+            # Note: Main E2E test suites (dashboards, panels, smoke-tests, various) have been migrated to GitHub Actions
+            # Only keeping tests that are not yet covered by GitHub Actions
+            cloud_plugins_e2e_tests_step(
+                "cloud-plugins-suite",
+                cloud = "azure",
+                trigger = trigger_oss,
+            ),
             playwright_e2e_tests_step(),
             playwright_e2e_report_upload(),
             playwright_e2e_report_post_link(),
-            e2e_tests_artifacts(),
+            e2e_tests_artifacts(),  # Collects artifacts from remaining E2E tests
             build_storybook_step(ver_mode = ver_mode),
             test_a11y_frontend_step(ver_mode = ver_mode),
         ],

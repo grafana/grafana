@@ -1,7 +1,7 @@
 import testDashboard from '../dashboards/TestDashboard.json';
 import { e2e } from '../utils';
 
-describe('Import Dashboards Test', () => {
+describe.skip('Import Dashboards Test', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

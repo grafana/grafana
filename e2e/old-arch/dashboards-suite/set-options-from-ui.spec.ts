@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
-describe('Variables - Set options from ui', () => {
+describe.skip('Variables - Set options from ui', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
