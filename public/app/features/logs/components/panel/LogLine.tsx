@@ -99,6 +99,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      timestampFormat,
       onLogLineHover,
     } = useLogListContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
@@ -211,6 +212,7 @@ const LogLineComponent = memo(
               log={log}
               showTime={showTime}
               styles={styles}
+              timestampFormat={timestampFormat}
               wrapLogMessage={wrapLogMessage}
             />
           </div>
@@ -253,13 +255,18 @@ interface LogProps {
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
+  timestampFormat: 'ms' | 'ns';
   wrapLogMessage: boolean;
 }
 
-const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
+const Log = memo(({ displayedFields, log, showTime, styles, timestampFormat, wrapLogMessage }: LogProps) => {
   return (
     <>
-      {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
+      {showTime && (
+        <span className={`${styles.timestamp} level-${log.logLevel} field`}>
+          {timestampFormat === 'ms' ? log.timestamp : log.timestampNs}
+        </span>
+      )}
       {
         // When logs are unwrapped, we want an empty column space to align with other log lines.
       }

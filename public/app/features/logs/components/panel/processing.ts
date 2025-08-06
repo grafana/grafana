@@ -66,15 +66,7 @@ export class LogListModel implements LogRowModel {
 
   constructor(
     log: LogRowModel,
-    {
-      escape,
-      nanoseconds = false,
-      getFieldLinks,
-      grammar,
-      timeZone,
-      virtualization,
-      wrapLogMessage,
-    }: PreProcessLogOptions
+    { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -101,21 +93,15 @@ export class LogListModel implements LogRowModel {
     this.uid = log.uid;
     this.uniqueLabels = log.uniqueLabels;
 
-    let timestampSuffix = '';
-    if (nanoseconds) {
-      timestampSuffix = log.timeEpochNs.substring(log.timeEpochMs.toString().length);
-    }
-
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
     this._getFieldLinks = getFieldLinks;
     this._grammar = grammar;
-    this.timestamp =
-      dateTimeFormat(log.timeEpochMs, {
-        timeZone,
-        // YYYY-MM-DD HH:mm:ss.SSS
-        format: systemDateFormats.fullDateMS,
-      }) + timestampSuffix;
+    this.timestamp = dateTimeFormat(log.timeEpochMs, {
+      timeZone,
+      // YYYY-MM-DD HH:mm:ss.SSS
+      format: systemDateFormats.fullDateMS,
+    });
     this._virtualization = virtualization;
     this._wrapLogMessage = wrapLogMessage;
 
@@ -180,6 +166,11 @@ export class LogListModel implements LogRowModel {
 
   get sampledMessage(): string | undefined {
     return checkLogsSampled(this);
+  }
+
+  get timestampNs(): string {
+    let suffix = this.timeEpochNs.substring(this.timeEpochMs.toString().length);
+    return this.timestamp + suffix;
   }
 
   getDisplayedFieldValue(fieldName: string, stripAnsi = false): string {
@@ -257,11 +248,9 @@ export const preProcessLogs = (
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  const displayNanoseconds = logs.some((log) => log.timeEpochNs.endsWith('000000') === false);
   return orderedLogs.map((log) =>
     preProcessLog(log, {
       escape,
-      nanoseconds: displayNanoseconds,
       getFieldLinks,
       grammar,
       timeZone,
@@ -275,7 +264,6 @@ interface PreProcessLogOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
-  nanoseconds?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;

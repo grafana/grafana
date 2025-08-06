@@ -39,11 +39,13 @@ export const LogListContext = createContext<LogListContextData>({
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
+  setTimestampFormat: () => {},
   setWrapLogMessage: () => {},
   showDetails: [],
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  timestampFormat: 'ns',
   toggleDetails: () => {},
   wrapLogMessage: false,
   detailsMode: 'sidebar',
@@ -87,6 +89,7 @@ export const defaultValue: LogListContextData = {
   setSortOrder: jest.fn(),
   setPrettifyJSON: jest.fn(),
   setSyntaxHighlighting: jest.fn(),
+  setTimestampFormat: jest.fn(),
   setWrapLogMessage: jest.fn(),
   closeDetails: jest.fn(),
   detailsDisplayed: jest.fn(),
@@ -108,6 +111,7 @@ export const defaultValue: LogListContextData = {
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
+  timestampFormat: 'ns',
 };
 
 export const defaultProps: Props = {
