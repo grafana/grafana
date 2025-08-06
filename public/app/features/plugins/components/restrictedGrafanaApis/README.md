@@ -15,6 +15,20 @@ If you only would like to share functionality with certain plugin IDs.
 **How to share an API with plugins?**
 Enabling plugins is done via the Grafana config (config.ini).
 
+**Enabling APIs for a plugin**
+```ini
+[plugins.restricted_apis_allowlist]
+# This will share the `addPanel` api with app plugins that either have an id of "myorg-test-app"
+addPanel = "myorg-test-app
+```
+
+**Disabling APIs for a plugin**
+```ini
+[plugins.restricted_apis_blocklist]
+# This is not sharing the `addPanel` api with app plugins that either have an id of "myorg-test-app" 
+addPanel = "myorg-test-app"
+```
+
 **How to use restricted APIs in a plugin?**
 You should be access the restricted APIs in your plugin using the `useRestrictedGrafanaApis()` hook:
 ```ts

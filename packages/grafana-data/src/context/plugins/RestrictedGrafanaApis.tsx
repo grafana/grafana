@@ -1,13 +1,12 @@
 import { createContext, ReactElement, PropsWithChildren, useMemo, useContext } from 'react';
 
-import { VizPanel } from '@grafana/scenes';
-
-// Add new "restricted" APIs here
 export interface RestrictedGrafanaApisContextTypeInternal {
-  addPanel?: (vizPanel: VizPanel) => void;
+  // Add types for restricted Grafana APIs here
+  // (Make sure that they are typed as optional properties)
+  // e.g. addPanel?: (vizPanel: VizPanel) => void;
 }
 
-// We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available). 
+// We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).
 type RequireAllPropertiesOptional<T> = keyof T extends never
   ? T
   : { [K in keyof T]-?: undefined extends T[K] ? never : K }[keyof T] extends never
@@ -17,7 +16,7 @@ export type RestrictedGrafanaApisContextType = RequireAllPropertiesOptional<Rest
 
 // A type for allowing / blocking plugins for a given API
 export type RestrictedGrafanaApisAllowList = Partial<
-  Record<keyof RestrictedGrafanaApisContextType, Array<string | RegExp>>
+  Record<keyof RestrictedGrafanaApisContextType | string, Array<string | RegExp>>
 >;
 
 export const RestrictedGrafanaApisContext = createContext<RestrictedGrafanaApisContextType>({});
@@ -33,7 +32,6 @@ export type Props = {
 
 export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Props>): ReactElement {
   const { children, pluginId, apis, apiAllowList, apiBlockList } = props;
-
   const allowedApis = useMemo(() => {
     const allowedApis: RestrictedGrafanaApisContextType = {};
 
