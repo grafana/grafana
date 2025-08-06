@@ -14,12 +14,17 @@ import (
 
 type ProvisioningV0alpha1Interface interface {
 	RESTClient() rest.Interface
+	JobsGetter
 	RepositoriesGetter
 }
 
 // ProvisioningV0alpha1Client is used to interact with features provided by the provisioning.grafana.app group.
 type ProvisioningV0alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *ProvisioningV0alpha1Client) Jobs(namespace string) JobInterface {
+	return newJobs(c, namespace)
 }
 
 func (c *ProvisioningV0alpha1Client) Repositories(namespace string) RepositoryInterface {

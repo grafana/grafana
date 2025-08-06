@@ -961,7 +961,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
 	}
 
-	if access != nil && b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
+	if access != nil {
 		auth, ok := authlib.AuthInfoFrom(ctx)
 		if !ok {
 			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))

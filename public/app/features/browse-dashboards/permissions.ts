@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
 import { FolderDTO } from 'app/types/folders';
@@ -8,8 +7,8 @@ function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDT
 }
 
 function checkCanCreateFolders(folderDTO?: FolderDTO) {
-  // Can only create a folder if we have permissions and either we're at root or nestedFolders is enabled
-  if (folderDTO && folderDTO.uid !== 'general' && !config.featureToggles.nestedFolders) {
+  // Can only create a folder if we have permissions and either we're at root
+  if (folderDTO && folderDTO.uid !== 'general') {
     return false;
   }
 

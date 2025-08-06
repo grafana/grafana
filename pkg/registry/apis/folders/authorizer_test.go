@@ -162,7 +162,7 @@ func TestLegacyAuthorizer(t *testing.T) {
 		},
 	}
 
-	authz := newLegacyAuthorizer(acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders")))
+	authz := newLegacyAuthorizer(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
