@@ -2,6 +2,7 @@ import { Meta, StoryFn } from '@storybook/react';
 
 import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
+import { TextLink } from '../Link/TextLink';
 import { TagList } from '../Tags/TagList';
 
 import { Card } from './Card';
@@ -74,9 +75,9 @@ export const MultipleMetadataWithCustomSeparator: StoryFn<typeof Card> = (args) 
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Meta separator={'-'}>
         Grafana
-        <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="prom-link" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
     </Card>
   );
@@ -171,9 +172,9 @@ export const WithMediaElements: StoryFn<typeof Card> = (args) => {
       </Card.Figure>
       <Card.Meta>
         Grafana
-        <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="prom-link" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
     </Card>
   );
@@ -190,9 +191,9 @@ export const ActionCards: StoryFn<typeof Card> = (args) => {
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
       <Card.Meta>
         Prometheus
-        <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="link2" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
       <Card.Figure>
         <img src={logo} alt="Prometheus Logo" height="40" width="40" />
@@ -223,9 +224,9 @@ export const DisabledState: StoryFn<typeof Card> = (args) => {
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
       <Card.Meta>
         Grafana
-        <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="prom-link" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
       <Card.Figure>
         <img src={logo} alt="Grafana Logo" width="40" height="40" />
@@ -269,9 +270,9 @@ export const Full: StoryFn<typeof Card> = (args) => {
       </Card.Description>
       <Card.Meta>
         {['Subtitle', 'Meta info 1', 'Meta info 2']}
-        <a key="link" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="link" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
       <Card.Figure>
         <img src={logo} alt="Prometheus Logo" height="40" width="40" />

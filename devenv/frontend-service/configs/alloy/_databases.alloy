@@ -1,0 +1,15 @@
+loki.relabel "publish_logs" {
+	rule {
+		action       = "replace"
+		target_label = "instance"
+		replacement  = constants.hostname
+	}
+
+	forward_to = [loki.write.tilt_loki.receiver]
+}
+
+loki.write "tilt_loki" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
