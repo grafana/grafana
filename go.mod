@@ -237,6 +237,7 @@ require (
 	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/plugins v0.0.0 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/preferences v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/secret v0.0.0 // @grafana/grafana-operator-experience-squad
@@ -261,6 +262,7 @@ replace (
 	github.com/grafana/grafana/apps/iam => ./apps/iam
 	github.com/grafana/grafana/apps/investigations => ./apps/investigations
 	github.com/grafana/grafana/apps/playlist => ./apps/playlist
+	github.com/grafana/grafana/apps/plugins => ./apps/plugins
 	github.com/grafana/grafana/apps/preferences => ./apps/preferences
 	github.com/grafana/grafana/apps/provisioning => ./apps/provisioning
 	github.com/grafana/grafana/apps/secret => ./apps/secret
