@@ -644,6 +644,10 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	}
 
 	ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
+		// We want to finish building of the index even if original context is canceled.
+		// We reuse original context without cancel to keep the tracing spans correct.
+		ctx := context.WithoutCancel(ctx)
+
 		// Recheck if some other goroutine managed to build an index in the meantime.
 		// (That is, it finished running this function and stored the index into the cache)
 		idx, err := s.search.GetIndex(ctx, key)

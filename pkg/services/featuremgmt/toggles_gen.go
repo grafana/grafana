@@ -63,10 +63,6 @@ const (
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
-	// FlagNestedFolders
-	// Enable folder nesting
-	FlagNestedFolders = "nestedFolders"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
@@ -255,6 +251,10 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
+	// FlagKubernetesShortURLs
+	// Routes short url requests from /api to the /apis endpoint
+	FlagKubernetesShortURLs = "kubernetesShortURLs"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -414,6 +414,10 @@ const (
 	// FlagScopeApi
 	// In-development feature flag for the scope api using the app platform.
 	FlagScopeApi = "scopeApi"
+
+	// FlagUseScopeSingleNodeEndpoint
+	// Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+	FlagUseScopeSingleNodeEndpoint = "useScopeSingleNodeEndpoint"
 
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
@@ -614,10 +618,6 @@ const (
 	// FlagUnifiedStorageSearchSprinkles
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
-
-	// FlagUnifiedStorageSearchPermissionFiltering
-	// Enable permission filtering on unified storage search
-	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
 
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
@@ -971,6 +971,10 @@ const (
 	// Enables adhoc filtering support for the dashboard datasource
 	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
 
+	// FlagDashboardLevelTimeMacros
+	// Supports __from and __to macros that always use the dashboard level time range
+	FlagDashboardLevelTimeMacros = "dashboardLevelTimeMacros"
+
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
@@ -978,4 +982,12 @@ const (
 	// FlagAdhocFiltersInTooltips
 	// Enable adhoc filter buttons in visualization tooltips
 	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
+
+	// FlagNewLogContext
+	// New Log Context component
+	FlagNewLogContext = "newLogContext"
+
+	// FlagNewClickhouseConfigPageDesign
+	// Enables new design for the Clickhouse data source configuration page
+	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
 )

@@ -74,9 +74,12 @@ const dataSources = {
   }),
 };
 
-setupDataSources(...Object.values(dataSources));
-
 describe('Backend / Frontend result comparison', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setupDataSources(...Object.values(dataSources));
+  });
+
   const inputDir = path.join(
     __dirname,
     '..',

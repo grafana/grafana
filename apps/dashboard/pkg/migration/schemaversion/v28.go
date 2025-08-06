@@ -47,14 +47,23 @@ import (
 //	  ]
 //	}
 type v28Migrator struct {
-	panelProvider PanelPluginInfoProvider
-	panelPlugins  []PanelPluginInfo
+	panelProvider    PanelPluginInfoProvider
+	panelPlugins     []PanelPluginInfo
+	statPanelVersion string // Cached stat panel version
 }
 
 func V28(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
+	// Get stat panel version once during initialization
+	statPanelPlugin := panelProvider.GetPanelPlugin("stat")
+	statPanelVersion := ""
+	if statPanelPlugin.ID != "" {
+		statPanelVersion = statPanelPlugin.Version
+	}
+
 	migrator := &v28Migrator{
-		panelProvider: panelProvider,
-		panelPlugins:  panelProvider.GetPanels(),
+		panelProvider:    panelProvider,
+		panelPlugins:     panelProvider.GetPanels(),
+		statPanelVersion: statPanelVersion,
 	}
 
 	return func(dashboard map[string]interface{}) error {
@@ -109,6 +118,11 @@ func (m *v28Migrator) processPanels(panels []interface{}) error {
 				return err
 			}
 		}
+
+		// Normalize existing stat panels to ensure they have current default options
+		if p["type"] == "stat" {
+			m.normalizeStatPanel(p)
+		}
 	}
 
 	return nil
@@ -128,27 +142,56 @@ func (m *v28Migrator) migrateSinglestatPanel(panel map[string]interface{}) error
 
 	// Store original type for migration context (only for stat/gauge migration)
 	// This matches the frontend behavior where autoMigrateFrom is set in PanelModel.restoreModel
+	originalType := panel["type"].(string)
 	panel["autoMigrateFrom"] = panel["type"]
 	panel["type"] = targetType
 
-	// get stat panel plugin from panelPlugins array
-	statPanelPlugin := m.panelProvider.GetPanelPlugin("stat")
-
-	if statPanelPlugin.ID == "" {
-		//need to throw an error here
+	// Use cached stat panel version
+	if m.statPanelVersion == "" {
 		return NewMigrationError("stat panel plugin not found when migrating dashboard to schema version 28", 28, LATEST_VERSION)
 	}
 
-	panel["pluginVersion"] = statPanelPlugin.Version
+	panel["pluginVersion"] = m.statPanelVersion
 
 	// Migrate panel options and field config
-	m.migrateSinglestatOptions(panel)
+	m.migrateSinglestatOptions(panel, originalType)
 
 	return nil
 }
 
+// normalizeStatPanel ensures existing stat panels have all current default options
+func (m *v28Migrator) normalizeStatPanel(panel map[string]interface{}) {
+	if panel["options"] == nil {
+		panel["options"] = map[string]interface{}{}
+	}
+
+	options := panel["options"].(map[string]interface{})
+
+	// Apply missing default options that might not be present in older stat panels
+	if _, exists := options["percentChangeColorMode"]; !exists {
+		options["percentChangeColorMode"] = "standard"
+	}
+
+	// Ensure other critical defaults are present
+	if _, exists := options["justifyMode"]; !exists {
+		options["justifyMode"] = "auto"
+	}
+
+	if _, exists := options["textMode"]; !exists {
+		options["textMode"] = "auto"
+	}
+
+	if _, exists := options["wideLayout"]; !exists {
+		options["wideLayout"] = true
+	}
+
+	if _, exists := options["showPercentChange"]; !exists {
+		options["showPercentChange"] = false
+	}
+}
+
 // migrateSinglestatOptions handles the complete migration of singlestat panel options and field config
-func (m *v28Migrator) migrateSinglestatOptions(panel map[string]interface{}) {
+func (m *v28Migrator) migrateSinglestatOptions(panel map[string]interface{}, originalType string) {
 	// Initialize field config if not present
 	if panel["fieldConfig"] == nil {
 		panel["fieldConfig"] = map[string]interface{}{
@@ -160,8 +203,12 @@ func (m *v28Migrator) migrateSinglestatOptions(panel map[string]interface{}) {
 	fieldConfig := panel["fieldConfig"].(map[string]interface{})
 	defaults := fieldConfig["defaults"].(map[string]interface{})
 
-	// Migrate from angular singlestat configuration
-	m.migrateFromAngularSinglestat(panel, defaults)
+	// Migrate from angular singlestat configuration using appropriate strategy
+	if originalType == "grafana-singlestat-panel" {
+		m.migrateGrafanaSinglestatPanel(panel, defaults)
+	} else {
+		m.migratetSinglestat(panel, defaults)
+	}
 
 	// Apply shared migration logic
 	m.applySharedSinglestatMigration(defaults)
@@ -187,29 +234,109 @@ func (m *v28Migrator) getDefaultStatOptions() map[string]interface{} {
 	}
 }
 
-// migrateFromAngularSinglestat handles migration from angular singlestat panels
-// Based on sharedSingleStatPanelChangedHandler in packages/grafana-ui/src/components/SingleStatShared/SingleStatBaseOptions.ts
-// and statPanelChangedHandler in public/app/plugins/panel/stat/StatMigrations.ts
-func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{}, defaults map[string]interface{}) {
-	// Extract angular options
+// migratetSinglestat handles explicit migration from 'singlestat' panels
+// Based on explicit migration logic in DashboardMigrator.ts
+func (m *v28Migrator) migratetSinglestat(panel map[string]interface{}, defaults map[string]interface{}) {
 	angularOpts := m.extractAngularOptions(panel)
-	if angularOpts == nil {
-		return
-	}
 
-	// Set up basic options
+	// Explicit migration uses standard stat panel defaults
 	options := m.getDefaultStatOptions()
 
-	// Migrate value name to reducer
-	// Based on sharedSingleStatPanelChangedHandler line ~117: const reducer = fieldReducers.getIfExists(prevPanel.valueName)
-	if valueName, ok := angularOpts["valueName"].(string); ok {
-		reducer := m.getReducerForValueName(valueName)
-		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{reducer}
+	// Explicit migration: always set a reducer with fallback
+	var valueName string
+	if vn, ok := angularOpts["valueName"].(string); ok {
+		valueName = vn
 	}
 
+	if reducer := m.getReducerForValueName(valueName); reducer != "" {
+		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{reducer}
+	} else {
+		// Explicit migration fallback: use mean for invalid reducers
+		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{"mean"}
+	}
+
+	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
+	m.migrateThresholds(angularOpts, defaults)
+
+	// Apply common angular option migrations (value mappings can now use threshold colors)
+	m.applyCommonAngularMigration(panel, defaults, options, angularOpts)
+
+	panel["options"] = options
+}
+
+// migrateGrafanaSinglestatPanel handles auto-migration from 'grafana-singlestat-panel'
+// Based on frontend changePlugin() and sharedSingleStatPanelChangedHandler logic
+func (m *v28Migrator) migrateGrafanaSinglestatPanel(panel map[string]interface{}, defaults map[string]interface{}) {
+	angularOpts := m.extractAngularOptions(panel)
+
+	// Auto-migration uses different defaults (matches frontend changePlugin behavior)
+	options := map[string]interface{}{
+		"reduceOptions": map[string]interface{}{
+			"calcs":  []string{"lastNotNull"}, // Auto-migration default
+			"fields": "",
+			"values": false,
+		},
+		"orientation":            "auto", // Auto-migration uses auto
+		"justifyMode":            "auto",
+		"percentChangeColorMode": "standard",
+		"showPercentChange":      false,
+		"textMode":               "auto",
+		"wideLayout":             true,
+	}
+
+	// Auto-migration: only override if valid, otherwise keep default "lastNotNull"
+	var valueName string
+	if vn, ok := angularOpts["valueName"].(string); ok {
+		valueName = vn
+	}
+
+	if reducer := m.getReducerForValueName(valueName); reducer != "" {
+		options["reduceOptions"].(map[string]interface{})["calcs"] = []string{reducer}
+	}
+	// No fallback - keeps the auto-migration default "lastNotNull"
+
+	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
+	m.migrateThresholds(angularOpts, defaults)
+
+	// Apply common angular option migrations (value mappings can now use threshold colors)
+	m.applyCommonAngularMigration(panel, defaults, options, angularOpts)
+
+	panel["options"] = options
+}
+
+// migrateThresholds handles threshold migration for both singlestat panel types
+// Both panel types now create DEFAULT_THRESHOLDS when threshold string is empty (consolidated behavior)
+func (m *v28Migrator) migrateThresholds(angularOpts map[string]interface{}, defaults map[string]interface{}) {
+	if thresholds, ok := angularOpts["thresholds"].(string); ok {
+		if colors, ok := angularOpts["colors"].([]interface{}); ok {
+			if thresholds != "" {
+				// Non-empty thresholds: use normal migration
+				m.migrateThresholdsAndColors(defaults, thresholds, colors)
+			} else {
+				// Empty thresholds: use frontend DEFAULT_THRESHOLDS fallback (both panel types)
+				defaults["thresholds"] = map[string]interface{}{
+					"mode": "absolute",
+					"steps": []interface{}{
+						map[string]interface{}{
+							"color": "green",
+							"value": nil,
+						},
+						map[string]interface{}{
+							"color": "red",
+							"value": 80,
+						},
+					},
+				}
+			}
+		}
+	}
+}
+
+// applyCommonAngularMigration applies migrations common to both singlestat types
+func (m *v28Migrator) applyCommonAngularMigration(panel map[string]interface{}, defaults map[string]interface{}, options map[string]interface{}, angularOpts map[string]interface{}) {
 	// Migrate table column
 	// Based on sharedSingleStatPanelChangedHandler line ~125: options.reduceOptions.fields = `/^${prevPanel.tableColumn}$/`
-	if tableColumn, ok := angularOpts["tableColumn"].(string); ok {
+	if tableColumn, ok := angularOpts["tableColumn"].(string); ok && tableColumn != "" {
 		options["reduceOptions"].(map[string]interface{})["fields"] = "/^" + tableColumn + "$/"
 	}
 
@@ -234,14 +361,7 @@ func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{},
 		defaults["noValue"] = nullText
 	}
 
-	// Migrate thresholds and colors
-	if thresholds, ok := angularOpts["thresholds"].(string); ok {
-		if colors, ok := angularOpts["colors"].([]interface{}); ok {
-			m.migrateThresholdsAndColors(defaults, thresholds, colors)
-		}
-	}
-
-	// Migrate value mappings
+	// Migrate value mappings (thresholds should already be migrated)
 	valueMaps, _ := angularOpts["valueMaps"].([]interface{})
 	m.migrateValueMappings(angularOpts, defaults, valueMaps)
 
@@ -287,9 +407,6 @@ func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{},
 		defaults["min"] = angularOpts["gauge"].(map[string]interface{})["minValue"]
 		defaults["max"] = angularOpts["gauge"].(map[string]interface{})["maxValue"]
 	}
-
-	// Update panel options
-	panel["options"] = options
 }
 
 // applySharedSinglestatMigration applies shared migration logic for all singlestat panels
@@ -334,37 +451,33 @@ func (m *v28Migrator) applySharedSinglestatMigration(defaults map[string]interfa
 // Helper functions
 
 func (m *v28Migrator) extractAngularOptions(panel map[string]interface{}) map[string]interface{} {
-	// Handle different angular options structures
-	if angular, ok := panel["angular"].(map[string]interface{}); ok {
-		return angular
-	}
-
 	// Some panels might have angular options directly in the root
 	// Check for common angular properties
-	angularProps := []string{"valueName", "format", "decimals", "thresholds", "colors", "gauge", "sparkline"}
+	angularProps := []string{
+		"valueName", "tableColumn", "format", "decimals", "nullPointMode", "nullText",
+		"thresholds", "colors", "valueMaps", "gauge", "sparkline", "colorBackground", "colorValue",
+	}
 	for _, prop := range angularProps {
 		if _, exists := panel[prop]; exists {
 			return panel
 		}
 	}
 
-	return nil
+	return map[string]interface{}{}
 }
 
+// getReducerForValueName returns the mapped reducer or empty string for invalid values
 func (m *v28Migrator) getReducerForValueName(valueName string) string {
-	// Map value names to reducer IDs
-	// Based on fieldReducers mapping in @grafana/data and sharedSingleStatPanelChangedHandler
 	reducerMap := map[string]string{
 		"min":     "min",
 		"max":     "max",
-		"avg":     "mean",
 		"mean":    "mean",
 		"median":  "median",
 		"sum":     "sum",
 		"count":   "count",
 		"first":   "firstNotNull",
 		"last":    "lastNotNull",
-		"name":    "lastNotNull", // For name, we typically want the last value
+		"name":    "lastNotNull",
 		"current": "lastNotNull",
 		"total":   "sum",
 	}
@@ -373,7 +486,7 @@ func (m *v28Migrator) getReducerForValueName(valueName string) string {
 		return reducer
 	}
 
-	return "mean" // Default fallback
+	return ""
 }
 
 func (m *v28Migrator) migrateThresholdsAndColors(defaults map[string]interface{}, thresholdsStr string, colors []interface{}) {
@@ -453,8 +566,8 @@ func (m *v28Migrator) upgradeOldAngularValueMapping(old map[string]interface{}, 
 
 	// Use the color we would have picked from thresholds
 	var color interface{}
-	if text, ok := old["text"].(string); ok {
-		if numeric, err := strconv.ParseFloat(text, 64); err == nil {
+	if value, ok := old["value"]; ok {
+		if numeric, err := m.parseNumericValue(value); err == nil {
 			if thresholdsMap, ok := thresholds.(map[string]interface{}); ok {
 				if steps, ok := thresholdsMap["steps"].([]interface{}); ok {
 					level := m.getActiveThreshold(numeric, steps)
@@ -569,6 +682,26 @@ func (m *v28Migrator) getActiveThreshold(value float64, steps []interface{}) map
 		}
 	}
 	return nil
+}
+
+// parseNumericValue converts various types to float64 for threshold calculations
+func (m *v28Migrator) parseNumericValue(value interface{}) (float64, error) {
+	switch v := value.(type) {
+	case string:
+		return strconv.ParseFloat(v, 64)
+	case float64:
+		return v, nil
+	case float32:
+		return float64(v), nil
+	case int:
+		return float64(v), nil
+	case int32:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	default:
+		return 0, fmt.Errorf("cannot convert %T to numeric value", value)
+	}
 }
 
 // cleanupAngularProperties removes old angular properties after migration

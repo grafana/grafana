@@ -8,7 +8,7 @@
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "0.10.7",
+    "@grafana/plugin-ui": "0.10.8",
     "@grafana/runtime": "workspace:*",
     "@grafana/ui": "workspace:*",
     "lodash": "4.17.21",
@@ -24,8 +24,8 @@
   },
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
-    "@testing-library/dom": "10.4.0",
-    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.6.4",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
@@ -38,8 +38,8 @@
     "@types/uuid": "10.0.0",
     "jest": "29.7.0",
     "ts-node": "10.9.2",
-    "typescript": "5.8.3",
-    "webpack": "5.97.1"
+    "typescript": "5.9.2",
+    "webpack": "5.101.0"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"

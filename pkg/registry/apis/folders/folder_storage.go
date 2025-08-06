@@ -153,7 +153,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 		})
 	}
 	isNested := parentUID != ""
-	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
