@@ -3,10 +3,11 @@ package folders
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"k8s.io/apiserver/pkg/storage"
 	"net/http"
 	"slices"
+
+	"github.com/grafana/grafana/pkg/services/folder"
+	"k8s.io/apiserver/pkg/storage"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -116,5 +117,4 @@ func (r *subParentsREST) parents(ctx context.Context, folder *folders.Folder) *f
 		folder = parentFolder
 	}
 	return info
-
 }
