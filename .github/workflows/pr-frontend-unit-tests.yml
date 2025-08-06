@@ -28,6 +28,21 @@ jobs:
         uses: ./.github/actions/change-detection
         with:
           self: .github/workflows/pr-frontend-unit-tests.yml
+  
+  yarn-install:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-x64-large-io
+    name: Warm up yarn cache
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: ./.github/actions/setup-node
+    - run: yarn install --immutable
+      env:
+        YARN_ENABLE_HARDENED_MODE: 1 # Ensure hardened mode is always enabled
 
   frontend-unit-tests:
     permissions:
@@ -35,8 +50,11 @@ jobs:
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `frontend-unit-tests-enterprise` workflow will run instead
-    needs: detect-changes
+    needs:
+      - detect-changes
+      - yarn-install
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    # runs-on: ubuntu-x64-large
     runs-on: ubuntu-latest-8-cores
     name: "Unit tests (${{ matrix.chunk }} / 8)"
     strategy:
@@ -47,24 +65,23 @@ jobs:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
+    - uses: ./.github/actions/setup-node
+    - run: yarn install --immutable
+      env:
+        YARN_ENABLE_HARDENED_MODE: 0 # Disable hardened mode because it was already checked in the yarn-install step
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 2
         TEST_SHARD: ${{ matrix.chunk }}
-        TEST_SHARD_TOTAL: 8
 
   frontend-unit-tests-enterprise:
     permissions:
       contents: read
       id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    needs: detect-changes
+    needs:
+      - detect-changes
+      - yarn-install
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-latest-8-cores
     name: "Unit tests (${{ matrix.chunk }} / 8)"
@@ -76,16 +93,14 @@ jobs:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - uses: ./.github/actions/setup-node
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - run: yarn install --immutable --check-cache
+    - run: yarn install --immutable
+      env:
+        YARN_ENABLE_HARDENED_MODE: 0 # Disable hardened mode because it was already checked in the yarn-install step
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 2
@@ -101,12 +116,8 @@ jobs:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
+    - uses: ./.github/actions/setup-node
+    - run: yarn install --immutable
     - run: yarn run plugin:test:ci
 
   frontend-packages-unit-tests:
@@ -118,12 +129,8 @@ jobs:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
+    - uses: ./.github/actions/setup-node
+    - run: yarn install --immutable
     - run: yarn run packages:test:ci
 
 
