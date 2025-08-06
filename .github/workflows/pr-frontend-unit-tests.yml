@@ -36,7 +36,7 @@ jobs:
     needs: detect-changes
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     runs-on: ${{ matrix.runner }}
-    name: Unit ${{ matrix.chunk }}/${{ matrix.runner }}
+    name: Unit ${{ matrix.shard }}/${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -65,7 +65,7 @@ jobs:
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 2
-        TEST_SHARD: ${{ matrix.chunk }}
+        TEST_SHARD: ${{ matrix.shard }}
         TEST_SHARD_TOTAL: ${{ matrix.shardTotal }}
 
   frontend-unit-tests-enterprise:
@@ -76,7 +76,7 @@ jobs:
     needs: detect-changes
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     runs-on: ${{ matrix.runner }}
-    name: Unit ${{ matrix.chunk }}/${{ matrix.runner }}
+    name: Unit ${{ matrix.shard }}/${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -109,8 +109,8 @@ jobs:
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 2
-        TEST_SHARD: ${{ matrix.chunk }}
-        TEST_SHARD_TOTAL: 8
+        TEST_SHARD: ${{ matrix.shard }}
+        TEST_SHARD_TOTAL: ${{ matrix.shardTotal }}
 
   frontend-decoupled-plugin-tests:
     needs: detect-changes
