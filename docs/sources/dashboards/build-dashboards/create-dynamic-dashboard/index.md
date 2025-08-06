@@ -2,8 +2,6 @@
 labels:
   products:
     - cloud
-    - enterprise
-    - oss
   stage:
     - experimental
 _build:
