@@ -156,7 +156,7 @@ func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.Obje
 	return resp.GetName(), nil
 }
 
-func (g *GRPCInlineClient) DeleteWhenOwnedByResource(ctx context.Context, owner v0alpha1.ObjectReference, name string) error {
+func (g *GRPCInlineClient) DeleteWhenOwnedByResource(ctx context.Context, owner v0alpha1.ObjectReference, names ...string) error {
 	client, err := g.getClient(owner.Namespace)
 	if err != nil {
 		return err
@@ -170,7 +170,7 @@ func (g *GRPCInlineClient) DeleteWhenOwnedByResource(ctx context.Context, owner 
 			Namespace:  owner.Namespace,
 			Name:       owner.Name,
 		},
-		Name: name,
+		Names: names,
 	}
 
 	_, err = client.DeleteWhenOwnedByResource(ctx, req)

@@ -15,5 +15,5 @@ type InlineSecureValueSupport interface {
 	CreateInline(ctx context.Context, owner common.ObjectReference, value common.RawSecureValue) (string, error)
 
 	// DeleteWhenOwnedByResource removes secrets if and only if they are owned by a referenced object
-	DeleteWhenOwnedByResource(ctx context.Context, owner common.ObjectReference, name string) error
+	DeleteWhenOwnedByResource(ctx context.Context, owner common.ObjectReference, names ...string) error
 }
