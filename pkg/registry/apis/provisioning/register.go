@@ -637,7 +637,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
 				20*time.Minute, // Max time for each job
-				time.Minute,    // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
 				30*time.Second, // Lease renewal interval
 				b.jobs, b, b.jobHistory,
