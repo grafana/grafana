@@ -40,6 +40,14 @@ jobs:
       with:
         persist-credentials: false
     - uses: ./.github/actions/setup-node
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules
+        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        restore-keys: |
+          node_modules-${{ runner.os }}
     - run: yarn install --immutable
       env:
         PUPPETEER_SKIP_DOWNLOAD: true
@@ -68,7 +76,17 @@ jobs:
       with:
         persist-credentials: false
     - uses: ./.github/actions/setup-node
+    - name: Cache node_modules
+      uses: actions/cache/restore@v4
+      id: cache-node-modules
+      with:
+        path: |
+          node_modules
+        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        restore-keys: |
+          node_modules-${{ runner.os }}
     - run: yarn install --immutable
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
       env:
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
@@ -104,7 +122,17 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
+    - name: Cache node_modules
+      uses: actions/cache/restore@v4
+      id: cache-node-modules
+      with:
+        path: |
+          node_modules
+        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        restore-keys: |
+          node_modules-${{ runner.os }}
     - run: yarn install --immutable
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
       env:
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
