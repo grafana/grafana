@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Enable Basic Logs"
     },
     "config-editor": {
-      "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy.",
-      "description-request-timeout": "Set the request timeout in seconds. Default is 30 seconds.",
-      "title-additional-settings": "Additional settings",
-      "title-request-timeout": "Request Timeout"
+      "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.",
+      "title-additional-settings": "Additional settings"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Fallback credentials have been disabled. As user-based authentication only inherently supports requests with a user in scope, features such as alerting, recorded queries, or reporting will not function as expected. Please review the <2>documentation</2> for more details.",

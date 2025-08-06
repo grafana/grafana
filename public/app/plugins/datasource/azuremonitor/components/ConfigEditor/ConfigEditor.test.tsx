@@ -42,4 +42,35 @@ describe('AppInsights ConfigEditor', () => {
 
     expect(screen.queryByText('Azure Application Insights')).not.toBeInTheDocument();
   });
+
+  it('should render timeout correctly', () => {
+    const options = {
+      ...baseOptions,
+      jsonData,
+    };
+    render(
+      <ConfigEditor
+        options={{ ...options, jsonData: { ...options.jsonData, timeout: 10 } }}
+        onOptionsChange={onOptionsChange}
+      />
+    );
+
+    expect(screen.getByLabelText('Timeout')).toBeInTheDocument();
+  });
+
+  it('should render cookies correctly', () => {
+    const options = {
+      ...baseOptions,
+      jsonData,
+    };
+    render(
+      <ConfigEditor
+        options={{ ...options, jsonData: { ...options.jsonData, keepCookies: ['cookie1', 'cookie2'] } }}
+        onOptionsChange={onOptionsChange}
+      />
+    );
+
+    expect(screen.getByText('cookie1')).toBeInTheDocument();
+    expect(screen.getByText('cookie2')).toBeInTheDocument();
+  });
 });
