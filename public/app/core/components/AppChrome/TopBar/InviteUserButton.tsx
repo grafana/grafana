@@ -17,18 +17,20 @@ export function InviteUserButton() {
     }
   };
 
-  return shouldRenderInviteUserButton() ? (
-    <>
-      <ToolbarButton
-        icon="add-user"
-        iconOnly={!isLargeScreen}
-        onClick={handleClick}
-        tooltip={t('navigation.invite-user.invite-tooltip', 'Invite user')}
-        aria-label={t('navigation.invite-user.invite-tooltip', 'Invite user')}
-      >
-        {isLargeScreen ? t('navigation.invite-user.invite-button', 'Invite') : undefined}
-      </ToolbarButton>
-      <NavToolbarSeparator />
-    </>
-  ) : null;
+  return (
+    shouldRenderInviteUserButton() && (
+      <>
+        <ToolbarButton
+          icon="add-user"
+          iconOnly={!isLargeScreen}
+          onClick={handleClick}
+          tooltip={t('navigation.invite-user.invite-tooltip', 'Invite user')}
+          aria-label={t('navigation.invite-user.invite-tooltip', 'Invite user')}
+        >
+          {isLargeScreen ? t('navigation.invite-user.invite-button', 'Invite') : undefined}
+        </ToolbarButton>
+        <NavToolbarSeparator />
+      </>
+    )
+  );
 }

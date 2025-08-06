@@ -49,7 +49,9 @@ describe('InviteUserButtonUtils', () => {
     mockFeatureToggles.inviteUserExperimental = true;
     mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
     mockContextSrv.hasPermission.mockReturnValue(true);
-    mockGetExternalUserMngLinkUrl.mockReturnValue('https://example.com/invite?cnt=test');
+
+    // Dynamic mock that returns URL with the actual cnt parameter
+    mockGetExternalUserMngLinkUrl.mockImplementation((cnt: string) => `https://example.com/invite?cnt=${cnt}`);
   });
 
   describe('shouldRenderInviteUserButton', () => {
@@ -78,7 +80,7 @@ describe('InviteUserButtonUtils', () => {
   });
 
   describe('performInviteUserClick', () => {
-    it('should report interaction, get URL, and open window', () => {
+    it('should report interaction, get URL, and open window with correct cnt parameter', () => {
       const placement = 'top_bar_right';
       const cnt = 'invite-user-test';
 
@@ -88,7 +90,33 @@ describe('InviteUserButtonUtils', () => {
         placement,
       });
       expect(mockGetExternalUserMngLinkUrl).toHaveBeenCalledWith(cnt);
-      expect(mockWindowOpen).toHaveBeenCalledWith('https://example.com/invite?cnt=test', '_blank');
+      expect(mockWindowOpen).toHaveBeenCalledWith(`https://example.com/invite?cnt=${cnt}`, '_blank');
+    });
+
+    it('should work with different cnt values', () => {
+      const placement = 'top_bar_right';
+      const cnt = 'dashboard-header';
+
+      performInviteUserClick(placement, cnt);
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('invite_user_button_clicked', {
+        placement,
+      });
+      expect(mockGetExternalUserMngLinkUrl).toHaveBeenCalledWith(cnt);
+      expect(mockWindowOpen).toHaveBeenCalledWith(`https://example.com/invite?cnt=${cnt}`, '_blank');
+    });
+
+    it('should handle special characters in cnt parameter', () => {
+      const placement = 'menu-item';
+      const cnt = 'admin-panel_users-section';
+
+      performInviteUserClick(placement, cnt);
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('invite_user_button_clicked', {
+        placement,
+      });
+      expect(mockGetExternalUserMngLinkUrl).toHaveBeenCalledWith(cnt);
+      expect(mockWindowOpen).toHaveBeenCalledWith(`https://example.com/invite?cnt=${cnt}`, '_blank');
     });
   });
 });
