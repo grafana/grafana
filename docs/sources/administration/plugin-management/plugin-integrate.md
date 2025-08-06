@@ -21,7 +21,7 @@ weight: 350
 
 # Integrate your plugins
 
-You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. 
+You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins.
 
 By default, you can only communicate with plugin backends remotely. You can use this configuration to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
 
