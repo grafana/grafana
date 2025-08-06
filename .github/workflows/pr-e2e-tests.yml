@@ -40,12 +40,12 @@ jobs:
   build-grafana-hosted-runners:
     # needs: detect-changes
     # if: needs.detect-changes.outputs.changed == 'true'
-    name: Build & Package Grafana ${{ matrix.size }}-${{ matrix.arch }}${{ matrix.feature }}
+    name: Build Grafana - ${{ matrix.size }}-${{ matrix.feature }}
     strategy:
       fail-fast: false
       matrix:
-        arch: ["x64", "arm64"]
-        size: ["ubuntu-small", "ubuntu", "ubuntu-large", "ubuntu-xlarge", "ubuntu-2xlarge"]
+        arch: ["x64"]
+        size: ["ubuntu-large", "ubuntu-xlarge", "ubuntu-2xlarge"]
         feature: ["-io", ""]
     runs-on: ${{ matrix.size }}-${{ matrix.arch }}${{ matrix.feature }}
     permissions:
@@ -133,29 +133,29 @@ jobs:
 
       # If no cache hit, build Grafana
       - name: Build Grafana
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
           args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
       - name: Cat built artifact
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         run: cat out.txt
       - name: Move built artifacts
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p build-dir
           mv "$(grep 'grafana_.*tar.gz$' out.txt | grep -Fv -m1 'docker')" build-dir/grafana.tar.gz
           mv "$(grep 'grafana_.*docker.tar.gz$' out.txt)" build-dir/grafana.docker.tar.gz
 
-      # If cache hit, validate the artifact is present
-      - name: Validate artifact
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: |
-          if [ ! -f build-dir/grafana.tar.gz ]; then
-            echo "Error: build-dir/grafana.tar.gz not found in cache"
-            exit 1
-          fi
+      # # If cache hit, validate the artifact is present
+      # - name: Validate artifact
+      #   if: steps.cache.outputs.cache-hit == 'true'
+      #   run: |
+      #     if [ ! -f build-dir/grafana.tar.gz ]; then
+      #       echo "Error: build-dir/grafana.tar.gz not found in cache"
+      #       exit 1
+      #     fi
 
       - name: Set artifact name
         run: echo "artifact=grafana-server-${{github.run_number}}" >> "$GITHUB_OUTPUT"
