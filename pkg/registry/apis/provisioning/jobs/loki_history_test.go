@@ -1,14 +1,13 @@
 package jobs
 
 import (
+	"context"
+	"net/url"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +25,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 			UID:               types.UID("test-uid"),
 			CreationTimestamp: metav1.NewTime(time.Now()),
 			Labels: map[string]string{
-				"test": "label",
+				"test":        "label",
 				LabelJobClaim: "should-be-removed",
 			},
 		},
@@ -35,22 +34,20 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 			Repository: "test-repo",
 		},
 		Status: provisioning.JobStatus{
-			State:   provisioning.JobStateSuccess,
-			Started: time.Now().Unix() - 100,
+			State:    provisioning.JobStateSuccess,
+			Started:  time.Now().Unix() - 100,
 			Finished: time.Now().Unix(),
-			Message: "Job completed successfully",
+			Message:  "Job completed successfully",
 		},
 	}
 
 	t.Run("jobToStream creates correct stream", func(t *testing.T) {
 		history := createTestLokiJobHistory(t)
-		logger := log.NewNopLogger()
-
 		// Clean job copy like WriteJob does
 		jobCopy := job.DeepCopy()
 		delete(jobCopy.Labels, LabelJobClaim)
 
-		stream := history.jobToStream(jobCopy, logger)
+		stream := history.jobToStream(context.Background(), jobCopy)
 
 		// Verify labels
 		assert.Equal(t, JobHistoryLabelValue, stream.Stream[JobHistoryLabelKey])
@@ -60,7 +57,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 
 		// Verify we have a sample
 		require.Len(t, stream.Values, 1)
-		
+
 		// Verify timestamp (should use finished time)
 		expectedTime := time.Unix(job.Status.Finished, 0)
 		assert.Equal(t, expectedTime, stream.Values[0].T)
@@ -122,24 +119,29 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 func TestLokiJobHistory_Integration(t *testing.T) {
 	t.Run("loki job history can be created", func(t *testing.T) {
 		history := createTestLokiJobHistory(t)
-		
+
 		// Should return Loki implementation
-		_, ok := history.(*LokiJobHistory)
-		assert.True(t, ok)
+		assert.NotNil(t, history)
 	})
 }
 
 // createTestLokiJobHistory creates a LokiJobHistory for testing
 func createTestLokiJobHistory(t *testing.T) *LokiJobHistory {
 	logger := log.NewNopLogger()
-	config := lokiclient.LokiConfig{
+
+	// Create test URLs
+	readURL, _ := url.Parse("http://localhost:3100")
+	writeURL, _ := url.Parse("http://localhost:3100")
+
+	config := loki.Config{
+		ReadPathURL:  readURL,
+		WritePathURL: writeURL,
 		ExternalLabels: map[string]string{
 			"test-key": "test-value",
 		},
+		MaxQuerySize: 1000,
 	}
-	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), "test")
-	tracer := tracing.InitializeTracerForTest()
-	requester := lokiclient.NewFakeRequester()
 
-	return NewLokiJobHistory(logger, config, requester, metrics, tracer)
+	return NewLokiJobHistory(logger, config)
 }
+

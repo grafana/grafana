@@ -7,11 +7,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -28,14 +26,14 @@ const (
 
 const (
 	// Default query settings
-	defaultJobQueryRange = 30 * 24 * time.Hour // 30 days
-	maxJobsLimit         = 50                  // Maximum jobs to return per repository
+	defaultJobQueryRange = 24 * time.Hour // 1 days
+	maxJobsLimit         = 10             // Maximum jobs to return per repository
 )
 
 type remoteLokiJobClient interface {
 	Ping(context.Context) error
-	Push(context.Context, []lokiclient.Stream) error
-	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (lokiclient.QueryRes, error)
+	Push(context.Context, []loki.Stream) error
+	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (loki.QueryRes, error)
 	MaxQuerySize() int
 }
 
@@ -43,30 +41,26 @@ type remoteLokiJobClient interface {
 type LokiJobHistory struct {
 	client         remoteLokiJobClient
 	externalLabels map[string]string
-	log            log.Logger
-	metrics        *metrics.Historian
 }
 
 // NewLokiJobHistory creates a new Loki-based job history implementation
-func NewLokiJobHistory(logger log.Logger, cfg lokiclient.LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer) *LokiJobHistory {
+func NewLokiJobHistory(logger log.Logger, cfg loki.Config) *LokiJobHistory {
 	return &LokiJobHistory{
-		client:         lokiclient.NewLokiClient(cfg, req, metrics.BytesWritten, metrics.WriteDuration, logger, tracer, LokiJobSpanName),
+		client:         loki.NewClient(cfg, logger),
 		externalLabels: cfg.ExternalLabels,
-		log:            logger,
-		metrics:        metrics,
 	}
 }
 
 // WriteJob implements History.WriteJob by storing the job in Loki
 func (h *LokiJobHistory) WriteJob(ctx context.Context, job *provisioning.Job) error {
-	logger := h.log.FromContext(ctx)
+	logger := logging.FromContext(ctx)
 
 	// Clean up the job copy (remove claim label, similar to in-memory implementation)
 	jobCopy := job.DeepCopy()
 	delete(jobCopy.Labels, LabelJobClaim)
 
 	// Create Loki stream
-	stream := h.jobToStream(jobCopy, logger)
+	stream := h.jobToStream(ctx, jobCopy)
 	if len(stream.Values) == 0 {
 		return nil
 	}
@@ -82,7 +76,7 @@ func (h *LokiJobHistory) WriteJob(ctx context.Context, job *provisioning.Job) er
 
 		logger.Debug("Saving job history to Loki", "namespace", jobCopy.Namespace, "repository", jobCopy.Spec.Repository, "job", jobCopy.Name)
 
-		if err := h.client.Push(writeCtx, []lokiclient.Stream{stream}); err != nil {
+		if err := h.client.Push(writeCtx, []loki.Stream{stream}); err != nil {
 			logger.Error("Failed to save job history to Loki", "error", err)
 			errCh <- fmt.Errorf("failed to save job history: %w", err)
 			return
@@ -97,7 +91,7 @@ func (h *LokiJobHistory) WriteJob(ctx context.Context, job *provisioning.Job) er
 
 // RecentJobs implements History.RecentJobs by querying Loki for recent jobs
 func (h *LokiJobHistory) RecentJobs(ctx context.Context, namespace, repo string) (*provisioning.JobList, error) {
-	logger := h.log.FromContext(ctx)
+	logger := logging.FromContext(ctx)
 
 	// Build LogQL query
 	logQL := h.buildJobQuery(namespace, repo)
@@ -143,7 +137,8 @@ func (h *LokiJobHistory) GetJob(ctx context.Context, namespace, repo, uid string
 }
 
 // jobToStream converts a Job to a Loki stream
-func (h *LokiJobHistory) jobToStream(job *provisioning.Job, logger log.Logger) lokiclient.Stream {
+func (h *LokiJobHistory) jobToStream(ctx context.Context, job *provisioning.Job) loki.Stream {
+	logger := logging.FromContext(ctx)
 	// Create stream labels
 	labels := make(map[string]string)
 
@@ -161,7 +156,7 @@ func (h *LokiJobHistory) jobToStream(job *provisioning.Job, logger log.Logger) l
 	jobJSON, err := json.Marshal(job)
 	if err != nil {
 		logger.Error("Failed to marshal job to JSON", "error", err, "job", job.Name)
-		return lokiclient.Stream{Stream: labels, Values: []lokiclient.Sample{}}
+		return loki.Stream{Stream: labels, Values: []loki.Sample{}}
 	}
 
 	// Create timestamp (use finished time if available, otherwise creation time)
@@ -173,14 +168,14 @@ func (h *LokiJobHistory) jobToStream(job *provisioning.Job, logger log.Logger) l
 	}
 
 	// Create sample
-	sample := lokiclient.Sample{
+	sample := loki.Sample{
 		T: timestamp,
 		V: string(jobJSON),
 	}
 
-	return lokiclient.Stream{
+	return loki.Stream{
 		Stream: labels,
-		Values: []lokiclient.Sample{sample},
+		Values: []loki.Sample{sample},
 	}
 }
 
@@ -194,7 +189,7 @@ func (h *LokiJobHistory) buildJobQuery(namespace, repo string) string {
 }
 
 // resultToJobList converts Loki query results to a JobList
-func (h *LokiJobHistory) resultToJobList(result lokiclient.QueryRes) (*provisioning.JobList, error) {
+func (h *LokiJobHistory) resultToJobList(result loki.QueryRes) (*provisioning.JobList, error) {
 	var jobs []provisioning.Job
 
 	// Extract jobs from all streams
@@ -202,7 +197,7 @@ func (h *LokiJobHistory) resultToJobList(result lokiclient.QueryRes) (*provision
 		for _, sample := range stream.Values {
 			var job provisioning.Job
 			if err := json.Unmarshal([]byte(sample.V), &job); err != nil {
-				h.log.Error("Failed to unmarshal job from Loki", "error", err, "value", sample.V)
+				// Unable to log here without context, just continue to next sample
 				continue
 			}
 			jobs = append(jobs, job)
@@ -241,4 +236,3 @@ func (h *LokiJobHistory) getJobTimestamp(job *provisioning.Job) time.Time {
 func (h *LokiJobHistory) TestConnection(ctx context.Context) error {
 	return h.client.Ping(ctx)
 }
-

@@ -38,14 +38,11 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
@@ -63,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -101,19 +99,19 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistory         jobs.History
-	jobHistoryConfig   *JobHistoryConfig
-	tester             *RepositoryTester
-	resourceLister     resources.ResourceLister
-	repositoryLister   listers.RepositoryLister
-	legacyMigrator     legacy.LegacyMigrator
-	storageStatus      dualwrite.Service
-	unified            resource.ResourceClient
-	repositorySecrets  secrets.RepositorySecrets
-	client             client.ProvisioningV0alpha1Interface
-	access             authlib.AccessChecker
-	mutators           []controller.Mutator
-	statusPatcher      *controller.RepositoryStatusPatcher
+	jobHistory        jobs.History
+	jobHistoryConfig  *JobHistoryConfig
+	tester            *RepositoryTester
+	resourceLister    resources.ResourceLister
+	repositoryLister  listers.RepositoryLister
+	legacyMigrator    legacy.LegacyMigrator
+	storageStatus     dualwrite.Service
+	unified           resource.ResourceClient
+	repositorySecrets secrets.RepositorySecrets
+	client            client.ProvisioningV0alpha1Interface
+	access            authlib.AccessChecker
+	mutators          []controller.Mutator
+	statusPatcher     *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
@@ -199,17 +197,7 @@ func (b *APIBuilder) createJobHistory(config *JobHistoryConfig, configProvider a
 
 	// If Loki backend is specified and config is provided
 	if config.Backend == "loki" && config.Loki != nil {
-		// We need a logger for Loki history - use a basic one for now
-		logger := log.New("provisioning.job.history")
-		
-		// Create a fake requester for now - in a real implementation this would come from configuration
-		requester := lokiclient.NewFakeRequester()
-		
-		// Create metrics
-		reg := prometheus.NewRegistry()
-		historianMetrics := metrics.NewHistorianMetrics(reg, "provisioning_job_history")
-		
-		return jobs.NewLokiJobHistory(logger, *config.Loki, requester, historianMetrics, tracer)
+		return jobs.NewLokiJobHistory(*config.Loki)
 	}
 
 	// Fallback to in-memory cache for any other cases
