@@ -240,6 +240,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     modal: css({
       width: '80%',
       maxWidth: '1200px',
+      minHeight: '80%',
 
       [theme.breakpoints.down('md')]: {
         width: '100%',
@@ -248,7 +249,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     modalContent: css({
       display: 'flex',
       flexDirection: 'row',
-      height: '100%',
+      flex: 1,
 
       [theme.breakpoints.down('md')]: {
         flexDirection: 'column',
