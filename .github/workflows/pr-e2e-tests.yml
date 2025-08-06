@@ -44,10 +44,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: ["x64"]
-        size: ["ubuntu-large", "ubuntu-xlarge", "ubuntu-2xlarge"]
+        size: ["large", "xlarge", "2xlarge"]
         feature: ["-io", ""]
-    runs-on: ${{ matrix.size }}-${{ matrix.arch }}${{ matrix.feature }}
+    runs-on: ubuntu-${{ matrix.size }}-x64${{ matrix.feature }}
     permissions:
       contents: read
     steps:
