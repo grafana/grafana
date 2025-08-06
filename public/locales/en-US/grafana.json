@@ -3569,6 +3569,9 @@
       "select-checkbox": "Select",
       "tags-column": "Tags"
     },
+    "delete-folder": {
+      "read-only-message": "To delete this folder, please remove the folder from your repository."
+    },
     "delete-provisioned-folder-form": {
       "api-error": "Failed to delete folder",
       "button-cancel": "Cancel",
@@ -3610,6 +3613,9 @@
     },
     "name-cell": {
       "no-items": "No items"
+    },
+    "new-folder": {
+      "read-only-message": "To create this folder, please add the resource in your repository directly."
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
