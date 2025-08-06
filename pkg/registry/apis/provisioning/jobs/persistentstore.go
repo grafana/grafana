@@ -279,24 +279,45 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	return nil
 }
 
-// Cleanup should be called periodically to clean up abandoned jobs.
-// An abandoned job is one that has been claimed by a worker, but the worker has not updated the job in a while.
-func (s *persistentStore) Cleanup(ctx context.Context) error {
-	if err := s.cleanupClaims(ctx); err != nil {
-		return apifmt.Errorf("failed to clean up claims: %w", err)
+// RenewLease renews the lease for a claimed job, extending its expiry time.
+// Returns an error if the lease cannot be renewed (e.g., job was completed or lease expired).
+func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job) error {
+	if job.Labels == nil || job.Labels[LabelJobClaim] == "" {
+		return apifmt.Errorf("job '%s' in '%s' is not claimed", job.GetName(), job.GetNamespace())
 	}
 
+	// Update the claim timestamp to current time
+	updatedJob := job.DeepCopy()
+	updatedJob.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
+
+	// Update the job in storage
+	_, _, err := s.jobStore.Update(ctx,
+		updatedJob.GetName(),                      // name
+		rest.DefaultUpdatedObjectInfo(updatedJob), // objInfo
+		failCreation,                              // createValidation
+		nil,                                       // updateValidation
+		false,                                     // forceAllowCreate
+		&metav1.UpdateOptions{},                   // options
+	)
+	if apierrors.IsConflict(err) {
+		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': lease conflict", job.GetName(), job.GetNamespace())
+	}
+	if apierrors.IsNotFound(err) || errors.Is(err, errWouldCreate) {
+		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
+	}
+	if err != nil {
+		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	}
+
+	// Update the job's claim timestamp in memory
+	job.Labels[LabelJobClaim] = updatedJob.Labels[LabelJobClaim]
 	return nil
 }
 
-// cleanupClaims will clean up abandoned claims.
-// Any claim that is older than the expiry time will have their claims removed.
-//
-// This is only necessary because Kubernetes does not support logical OR in label selectors.
-func (s *persistentStore) cleanupClaims(ctx context.Context) error {
-	// We will list all jobs that have been claimed but not updated in a while.
-	// We will then remove the claim from them.
-	// We will not care about the result of the update, as the job may have been completed in the meantime.
+// Cleanup finds jobs with expired leases and marks them as failed.
+// This replaces the old cleanup mechanism and should be called more frequently.
+func (s *persistentStore) Cleanup(ctx context.Context) error {
+	// Find jobs with expired leases (older than expiry time)
 	expiry := s.clock().Add(-s.expiry).UnixMilli()
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.LessThan, []string{strconv.FormatInt(expiry, 10)})
 	if err != nil {
@@ -306,12 +327,11 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	jobsObj, err := s.jobStore.List(timeoutCtx, &internalversion.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*requirement),
-		// We don't need to clean up everything all the time. Just do enough such that we have a fair amount of work.
-		Limit: 100,
+		Limit:         100, // Process in batches
 	})
-	cancel() // by the time we have the list, there is no response body to read, so just cancel immediately
+	cancel()
 	if err != nil {
-		return apifmt.Errorf("failed to list jobs: %w", err)
+		return apifmt.Errorf("failed to list jobs with expired leases: %w", err)
 	}
 	jobs, ok := jobsObj.(*provisioning.JobList)
 	if !ok {
@@ -319,36 +339,25 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 	}
 
 	for _, job := range jobs.Items {
-		if job.Labels == nil {
-			job.Labels = make(map[string]string)
-		}
-		delete(job.Labels, LabelJobClaim)
-		job.Status.State = provisioning.JobStatePending
+		// Mark job as failed due to lease expiry and archive it
+		job := job.DeepCopy()
+		job.Status.State = provisioning.JobStateError
+		job.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
 
-		// We list jobs from all namespaces. So when we want to update a specific job, we also need its namespace in the context.
+		// Set namespace context for the completion
 		ctx := request.WithNamespace(ctx, job.GetNamespace())
-		// Likewise, we should use the provisioning identity now that we have the namespace we are operating within.
 		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 		if err != nil {
-			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
 			return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 		}
 
-		timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		_, _, err := s.jobStore.Update(timeoutCtx,
-			job.GetName(),                       // name
-			rest.DefaultUpdatedObjectInfo(&job), // objInfo
-			failCreation,                        // createValidation
-			nil,                                 // updateValidation
-			false,                               // forceAllowCreate
-			&metav1.UpdateOptions{},             // options
-		)
-		cancel() // we have no response body to read, so just cancel immediately
-		if apierrors.IsConflict(err) || errors.Is(err, errWouldCreate) {
-			continue
-		}
-		if err != nil {
-			return apifmt.Errorf("failed to unclaim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+		// Use Complete to properly archive the failed job
+		if err := s.Complete(ctx, job); err != nil {
+			if apierrors.IsNotFound(err) {
+				// Job was already completed/deleted by another process
+				continue
+			}
+			return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 		}
 	}
 
