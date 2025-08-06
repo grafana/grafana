@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
