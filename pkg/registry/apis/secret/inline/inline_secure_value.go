@@ -1,4 +1,4 @@
-package service
+package inline
 
 import (
 	"context"
@@ -20,25 +20,27 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type inlineSecureValueService struct {
+type LocalInlineSecureValueService struct {
 	tracer             trace.Tracer
 	secureValueService contracts.SecureValueService
 	accessChecker      authlib.AccessChecker
 }
 
-func ProvideInlineSecureValueService(
+var _ contracts.InlineSecureValueSupport = &LocalInlineSecureValueService{}
+
+func NewLocalInlineSecureValueService(
 	tracer trace.Tracer,
 	secureValueService contracts.SecureValueService,
 	accessClient authlib.AccessClient,
 ) contracts.InlineSecureValueSupport {
-	return &inlineSecureValueService{
+	return &LocalInlineSecureValueService{
 		tracer:             tracer,
 		secureValueService: secureValueService,
 		accessChecker:      accessClient,
 	}
 }
 
-func (s *inlineSecureValueService) CanReference(ctx context.Context, owner common.ObjectReference, names ...string) error {
+func (s *LocalInlineSecureValueService) CanReference(ctx context.Context, owner common.ObjectReference, names ...string) error {
 	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.CanReference", trace.WithAttributes(
 		attribute.String("owner.namespace", owner.Namespace),
 		attribute.String("owner.apiGroup", owner.APIGroup),
@@ -86,7 +88,7 @@ func (s *inlineSecureValueService) CanReference(ctx context.Context, owner commo
 	return nil
 }
 
-func (s *inlineSecureValueService) isSecureValueOwnedByResource(ctx context.Context, owner common.ObjectReference, name string) (bool, error) {
+func (s *LocalInlineSecureValueService) isSecureValueOwnedByResource(ctx context.Context, owner common.ObjectReference, name string) (bool, error) {
 	sv, err := s.secureValueService.Read(ctx, xkube.Namespace(owner.Namespace), name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
@@ -127,7 +129,7 @@ func (s *inlineSecureValueService) isSecureValueOwnedByResource(ctx context.Cont
 	return false, nil
 }
 
-func (s *inlineSecureValueService) canIdentityReadSecureValue(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.Context, namespace xkube.Namespace, name string) error {
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -156,7 +158,7 @@ func (s *inlineSecureValueService) canIdentityReadSecureValue(ctx context.Contex
 	return nil
 }
 
-func (s *inlineSecureValueService) CreateInline(ctx context.Context, owner common.ObjectReference, value common.RawSecureValue) (string, error) {
+func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner common.ObjectReference, value common.RawSecureValue) (string, error) {
 	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.CreateInline", trace.WithAttributes(
 		attribute.String("owner.namespace", owner.Namespace),
 		attribute.String("owner.apiGroup", owner.APIGroup),
@@ -219,14 +221,14 @@ func (s *inlineSecureValueService) CreateInline(ctx context.Context, owner commo
 	return createdSv.GetName(), nil
 }
 
-func (s *inlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Context, owner common.ObjectReference, name string) error {
+func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Context, owner common.ObjectReference, names ...string) error {
 	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.DeleteWhenOwnedByResource", trace.WithAttributes(
 		attribute.String("owner.namespace", owner.Namespace),
 		attribute.String("owner.apiGroup", owner.APIGroup),
 		attribute.String("owner.apiVersion", owner.APIVersion),
 		attribute.String("owner.kind", owner.Kind),
 		attribute.String("owner.name", owner.Name),
-		attribute.String("secureValue.name", name),
+		attribute.StringSlice("secureValueNames", names),
 	))
 	defer span.End()
 
@@ -243,17 +245,18 @@ func (s *inlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Context
 		return fmt.Errorf("owner reference must have a valid API group, API version, kind and name")
 	}
 
-	owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
-	if err != nil {
-		return fmt.Errorf("error checking if secure value %s is owned by %v: %w", name, owner, err)
-	}
+	for _, name := range names {
+		owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
+		if err != nil {
+			return fmt.Errorf("error checking if secure value %s is owned by %v: %w", name, owner, err)
+		}
 
-	if owned {
-		if _, err := s.secureValueService.Delete(ctx, xkube.Namespace(owner.Namespace), name); err != nil {
-			return fmt.Errorf("error deleting secure value %s for owner %v: %w", name, owner, err)
+		if owned {
+			if _, err := s.secureValueService.Delete(ctx, xkube.Namespace(owner.Namespace), name); err != nil {
+				return fmt.Errorf("error deleting secure value %s for owner %v: %w", name, owner, err)
+			}
 		}
 	}
 
-	// if it is not owned, this is a no-op
 	return nil
 }
