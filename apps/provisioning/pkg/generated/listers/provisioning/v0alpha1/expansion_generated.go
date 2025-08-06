@@ -4,6 +4,14 @@
 
 package v0alpha1
 
+// JobListerExpansion allows custom methods to be added to
+// JobLister.
+type JobListerExpansion interface{}
+
+// JobNamespaceListerExpansion allows custom methods to be added to
+// JobNamespaceLister.
+type JobNamespaceListerExpansion interface{}
+
 // RepositoryListerExpansion allows custom methods to be added to
 // RepositoryLister.
 type RepositoryListerExpansion interface{}

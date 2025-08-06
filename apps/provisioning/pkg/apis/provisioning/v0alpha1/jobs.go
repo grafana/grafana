@@ -4,6 +4,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// When this code is changed, make sure to update the code generation.
+// As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
+// If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
+// +genclient
+
 // The repository name and type are stored as labels
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Job struct {
@@ -229,21 +234,4 @@ type JobResourceSummary struct {
 	// Report errors for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info
 	Errors []string `json:"errors,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type WebhookResponse struct {
-	metav1.TypeMeta `json:",inline"`
-
-	// HTTP Status code
-	// 200 implies that the payload was understood but nothing is required
-	// 202 implies that an async job has been scheduled to handle the request
-	Code int `json:"code,omitempty"`
-
-	// Optional message
-	Message string `json:"added,omitempty"`
-
-	// Jobs to be processed
-	// When the response is 202 (Accepted) the queued jobs will be returned
-	Job *JobSpec `json:"job,omitempty"`
 }
