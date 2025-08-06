@@ -256,10 +256,10 @@ func TestIntegrationAuthorizationHeaderJWKHTTPSClient(t *testing.T) {
 	}
 
 	t.Run("jwk_set_bearer_token_file being empty returns no token", func(t *testing.T) {
-		s, err := initAuthService(t, urlConfigure)
+		_, err := initAuthService(t, urlConfigure)
 		require.NoError(t, err)
 
-		token, err := s.keySet.(*keySetHTTP).getBearerToken()
+		token, err := getBearerToken("")
 		assert.Empty(t, token)
 		assert.Error(t, err) // Error is expected as getBearerToken is only invoked when bearer token file is configured
 	})
@@ -283,7 +283,7 @@ func TestIntegrationAuthorizationHeaderJWKHTTPSClient(t *testing.T) {
 		s, err := initAuthService(t, urlConfigure, configure)
 		require.NoError(t, err)
 
-		token, err := s.keySet.(*keySetHTTP).getBearerToken()
+		token, err := getBearerToken(s.keySet.(*keySetHTTP).bearerTokenPath)
 		assert.Equal(t, "Bearer fake_token_string", token, "Token should have been prefixed with 'Bearer '")
 		assert.NoError(t, err)
 	})
@@ -307,21 +307,23 @@ func TestIntegrationAuthorizationHeaderJWKHTTPSClient(t *testing.T) {
 		s, err := initAuthService(t, urlConfigure, configure)
 		require.NoError(t, err)
 
-		token, err := s.keySet.(*keySetHTTP).getBearerToken()
+		token, err := getBearerToken(s.keySet.(*keySetHTTP).bearerTokenPath)
 		assert.Equal(t, "Bearer fake_token_string", token, "Token should have kept existing prefix")
 		assert.NoError(t, err)
 	})
 
 	t.Run("jwk_set_bearer_token_file file is just spaces", func(t *testing.T) {
-		configure := func(t *testing.T, cfg *setting.Cfg) {
-			file, err := os.CreateTemp(os.TempDir(), "token-*")
-			require.NoError(t, err)
-			t.Cleanup(func() {
-				if err := os.Remove(file.Name()); err != nil {
-					panic(err)
-				}
-			})
+		// Create file outside 'configure' as getBearerToken needs to know the path
+		// As initAuthService returns an error when token is missing
+		file, err := os.CreateTemp(os.TempDir(), "token-*")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			if err := os.Remove(file.Name()); err != nil {
+				panic(err)
+			}
+		})
 
+		configure := func(t *testing.T, cfg *setting.Cfg) {
 			_, err = file.WriteString("       ")
 			require.NoError(t, err)
 
@@ -329,9 +331,10 @@ func TestIntegrationAuthorizationHeaderJWKHTTPSClient(t *testing.T) {
 		}
 
 		s, err := initAuthService(t, urlConfigure, configure)
+		require.Nil(t, s.keySet)
 		require.Error(t, err)
 
-		token, err := s.keySet.(*keySetHTTP).getBearerToken()
+		token, err := getBearerToken(file.Name())
 		assert.Equal(t, "", token, "Should return an empty token")
 		assert.Error(t, err)
 	})
