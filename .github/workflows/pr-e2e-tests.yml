@@ -41,10 +41,12 @@ jobs:
     # needs: detect-changes
     # if: needs.detect-changes.outputs.changed == 'true'
     name: Build & Package Grafana ${{ matrix.size }}-${{ matrix.arch }}${{ matrix.feature }}
-    matrix:
-      arch: ["x64", "arm64"]
-      size: ["ubuntu-small", "ubuntu", "ubuntu-large", "ubuntu-xlarge", "ubuntu-2xlarge"]
-      feature: ["-io", ""]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: ["x64", "arm64"]
+        size: ["ubuntu-small", "ubuntu", "ubuntu-large", "ubuntu-xlarge", "ubuntu-2xlarge"]
+        feature: ["-io", ""]
     runs-on: ${{ matrix.size }}-${{ matrix.arch }}${{ matrix.feature }}
     permissions:
       contents: read
