@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	libmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -51,7 +52,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		//   test dash 23
 		//   test dash 45
 		// test dash 67
-		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
+		folderStore := folderimpl.ProvideStore(sqlStore)
+		savedFolder = insertTestDashFolder(t, dashboardStore, folderStore, "1 test dash folder", 1, 0, "", "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
 		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod")
@@ -814,7 +816,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
@@ -931,7 +933,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	}
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
@@ -970,110 +972,89 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		folderIDs      []int64
 		folderUIDs     []string
 		query          string
-		expectedResult map[string][]res
+		expectedResult []res
 		typ            string
 	}{
 		{
-			desc:       "find dashboard under general using folder UID",
-			folderUIDs: []string{folder.GeneralFolderUID},
-			typ:        searchstore.TypeDashboard,
-			expectedResult: map[string][]res{
-				"":                            {{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under general"}},
-			},
+			desc:           "find dashboard under general using folder UID",
+			folderUIDs:     []string{folder.GeneralFolderUID},
+			typ:            searchstore.TypeDashboard,
+			expectedResult: []res{{title: "dashboard under general"}},
 		},
 		{
-			desc:       "find dashboard under general using folder UID",
-			folderUIDs: []string{folder.GeneralFolderUID},
-			typ:        searchstore.TypeDashboard,
-			expectedResult: map[string][]res{
-				"":                            {{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under general"}},
-			},
+			desc:           "find dashboard under general using folder UID",
+			folderUIDs:     []string{folder.GeneralFolderUID},
+			typ:            searchstore.TypeDashboard,
+			expectedResult: []res{{title: "dashboard under general"}},
 		},
 		{
-			desc:       "find dashboard under f0 using folder UID",
-			folderUIDs: []string{f0.UID},
-			typ:        searchstore.TypeDashboard,
-			expectedResult: map[string][]res{
-				"":                            {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title}},
-			},
+			desc:           "find dashboard under f0 using folder UID",
+			folderUIDs:     []string{f0.UID},
+			typ:            searchstore.TypeDashboard,
+			expectedResult: []res{{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title}},
 		},
 		{
 			desc:       "find dashboard under f0 or f1 using folder UID",
 			folderUIDs: []string{f0.UID, f1.UID},
 			typ:        searchstore.TypeDashboard,
-			expectedResult: map[string][]res{
-				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title}},
+			expectedResult: []res{
+				{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+				{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
 			},
 		},
 		{
 			desc:       "find dashboard under general or f0 using folder UID",
 			folderUIDs: []string{folder.GeneralFolderUID, f0.UID},
 			typ:        searchstore.TypeDashboard,
-			expectedResult: map[string][]res{
-				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under general"}},
+			expectedResult: []res{
+				{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+				{title: "dashboard under general"},
 			},
 		},
 		{
 			desc:       "find dashboard under general or f0 or f1 using folder UID",
 			folderUIDs: []string{folder.GeneralFolderUID, f0.UID, f1.UID},
 			typ:        searchstore.TypeDashboard,
-			expectedResult: map[string][]res{
-				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
-					{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
-					{title: "dashboard under general"}},
+			expectedResult: []res{
+				{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+				{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
+				{title: "dashboard under general"},
 			},
 		},
 		{
-			desc:       "find subfolder",
-			folderUIDs: []string{f0.UID},
-			typ:        searchstore.TypeFolder,
-			expectedResult: map[string][]res{
-				"":                            {},
-				featuremgmt.FlagNestedFolders: {{title: subfolder.Title, folderUID: f0.UID, folderTitle: f0.Title}},
-			},
+			desc:           "find subfolder",
+			folderUIDs:     []string{f0.UID},
+			typ:            searchstore.TypeFolder,
+			expectedResult: []res{{title: subfolder.Title, folderUID: f0.UID, folderTitle: f0.Title}},
 		},
 	}
 
 	for _, tc := range testCases {
-		for featureFlags := range tc.expectedResult {
-			t.Run(fmt.Sprintf("%s with featureFlags: %v", tc.desc, featureFlags), func(t *testing.T) {
-				dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featureFlags), tagimpl.ProvideService(sqlStore))
-				require.NoError(t, err)
-				res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
-					SignedInUser: user,
-					Type:         tc.typ,
-					FolderUIDs:   tc.folderUIDs,
-				})
-				require.NoError(t, err)
-				require.Equal(t, len(tc.expectedResult[featureFlags]), len(res))
-
-				for i, r := range tc.expectedResult[featureFlags] {
-					assert.Equal(t, r.title, res[i].Title)
-					if r.folderUID != "" {
-						assert.Equal(t, r.folderUID, res[i].FolderUID)
-					} else {
-						assert.Empty(t, res[i].FolderUID)
-					}
-					if r.folderTitle != "" {
-						assert.Equal(t, r.folderTitle, res[i].FolderTitle)
-					} else {
-						assert.Empty(t, res[i].FolderTitle)
-					}
-				}
+		t.Run(tc.desc, func(t *testing.T) {
+			dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+			require.NoError(t, err)
+			res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
+				SignedInUser: user,
+				Type:         tc.typ,
+				FolderUIDs:   tc.folderUIDs,
 			})
-		}
+			require.NoError(t, err)
+			require.Equal(t, len(tc.expectedResult), len(res))
+
+			for i, r := range tc.expectedResult {
+				assert.Equal(t, r.title, res[i].Title)
+				if r.folderUID != "" {
+					assert.Equal(t, r.folderUID, res[i].FolderUID)
+				} else {
+					assert.Empty(t, res[i].FolderUID)
+				}
+				if r.folderTitle != "" {
+					assert.Equal(t, r.folderTitle, res[i].FolderTitle)
+				} else {
+					assert.Empty(t, res[i].FolderTitle)
+				}
+			}
+		})
 	}
 }
 
@@ -1257,6 +1238,34 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	require.NotNil(t, dash)
 	dash.Data.Set("id", dash.ID)
 	dash.Data.Set("uid", dash.UID)
+	return dash
+}
+
+func insertTestDashFolder(t *testing.T, dashboardStore dashboards.Store, folderStore folder.Store, title string, orgId int64,
+	folderId int64, folderUID string, tags ...interface{}) *dashboards.Dashboard {
+	t.Helper()
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:     orgId,
+		FolderID:  folderId, // nolint:staticcheck
+		FolderUID: folderUID,
+		IsFolder:  true,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+			"tags":  tags,
+		}),
+	}
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
+	require.NoError(t, err)
+	require.NotNil(t, dash)
+	dash.Data.Set("id", dash.ID)
+	dash.Data.Set("uid", dash.UID)
+	_, err = folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title: title,
+		UID:   dash.UID,
+		OrgID: orgId,
+	})
+	require.NoError(t, err)
 	return dash
 }
 

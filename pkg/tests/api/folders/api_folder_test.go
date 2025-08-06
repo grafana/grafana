@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests"
@@ -46,7 +45,6 @@ func TestIntegrationFolderServiceGetFolder(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
@@ -199,7 +197,7 @@ func TestIntegrationCreateFolder(t *testing.T) {
 	})
 }
 
-func TestIntegrationNestedFoldersOn(t *testing.T) {
+func TestIntegrationNestedFolders(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -359,7 +357,6 @@ func TestIntegrationSharedWithMe(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -550,7 +547,6 @@ func TestIntegrationFineGrainedPermissions(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)

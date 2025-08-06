@@ -1402,7 +1402,6 @@ func TestSearchDashboards(t *testing.T) {
 
 	t.Run("Should handle Shared with me folder correctly", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			if len(req.Options.Fields) == 0 {
@@ -2095,9 +2094,9 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				// Setup mocks and service
 				dashboardStore := &dashboards.FakeDashboardStore{}
 				folderStore := foldertest.FakeFolderStore{}
-				features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+				features := featuremgmt.WithFeatures()
 				if tc.featureKubernetesDashboards {
-					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagNestedFolders)
+					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards)
 				}
 
 				permService := acmock.NewMockedPermissionsService()

@@ -202,8 +202,7 @@ export const browseDashboardsAPI = createApi({
         };
 
         for (const folderCounts of results) {
-          // TODO remove nullish coalescing once nestedFolders is toggled on
-          totalCounts.folder += folderCounts.folder ?? 0;
+          totalCounts.folder += folderCounts.folder;
           totalCounts.dashboard += folderCounts.dashboard;
           totalCounts.alertRule += folderCounts.alertrule;
           totalCounts.libraryPanel += folderCounts.librarypanel;

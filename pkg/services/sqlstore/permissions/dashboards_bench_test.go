@@ -44,11 +44,6 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 	}}
 
 	features := featuremgmt.WithFeatures()
-	// if nestingLevel > 0 enable nested folders
-	if nestingLevel > 0 {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	}
-
 	store := setupBenchMark(b, usr, features, numUsers, numDashboards, numFolders, nestingLevel)
 
 	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()

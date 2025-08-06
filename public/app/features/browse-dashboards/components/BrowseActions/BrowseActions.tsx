@@ -43,10 +43,7 @@ export function BrowseActions({ folderDTO }: Props) {
   );
 
   // Folders can only be moved if nested folders is enabled
-  const moveIsInvalid = useMemo(
-    () => !config.featureToggles.nestedFolders && Object.values(selectedItems.folder).some((v) => v),
-    [selectedItems]
-  );
+  const moveIsInvalid = useMemo(() => Object.values(selectedItems.folder).some((v) => v), [selectedItems]);
 
   const isSearching = stateManager.hasSearchFilters();
 

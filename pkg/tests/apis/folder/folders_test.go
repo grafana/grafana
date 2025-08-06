@@ -150,9 +150,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagNestedFolders,
-				},
 			}))
 		})
 
@@ -165,9 +162,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					folders.RESOURCEGROUP: {
 						DualWriterMode: modeDw,
 					},
-				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagNestedFolders,
 				},
 			}))
 		})
@@ -182,9 +176,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagNestedFolders,
-				},
 			}))
 		})
 
@@ -197,9 +188,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					folders.RESOURCEGROUP: {
 						DualWriterMode: modeDw,
 					},
-				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagNestedFolders,
 				},
 			}))
 		})
@@ -228,9 +216,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					},
 					// We set it to 1 here, so we always get forced pagination based on the response size.
 					UnifiedStorageMaxPageSizeBytes: 1,
-					EnableFeatureToggles: []string{
-						featuremgmt.FlagNestedFolders,
-					},
 				}), mode)
 			})
 		}
@@ -669,9 +654,6 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 							DualWriterMode: modeDw,
 						},
 					},
-					EnableFeatureToggles: []string{
-						featuremgmt.FlagNestedFolders,
-					},
 				})
 
 				user := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
@@ -775,9 +757,6 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 						folders.RESOURCEGROUP: {
 							DualWriterMode: modeDw,
 						},
-					},
-					EnableFeatureToggles: []string{
-						featuremgmt.FlagNestedFolders,
 					},
 				})
 
@@ -959,9 +938,6 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 							DualWriterMode: modeDw,
 						},
 					},
-					EnableFeatureToggles: []string{
-						featuremgmt.FlagNestedFolders,
-					},
 				})
 
 				userTest := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
@@ -1134,7 +1110,6 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 						},
 					},
 					EnableFeatureToggles: []string{
-						featuremgmt.FlagNestedFolders,
 						featuremgmt.FlagUnifiedStorageSearch,
 					},
 				})

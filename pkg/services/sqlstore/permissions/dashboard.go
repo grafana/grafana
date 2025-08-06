@@ -220,36 +220,23 @@ func (f *accessControlDashboardPermissionFilter) buildClauses(dialect migrator.D
 			}
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
-			case true:
-				if len(permSelectorArgs) > 0 {
-					switch f.recursiveQueriesAreSupported {
-					case true:
-						builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
-						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
-						builder.WriteString(fmt.Sprintf("WHERE d.org_id = ? AND d.uid IN (SELECT uid FROM %s)", recQueryName))
-						args = append(args, orgID)
-					default:
-						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard", "folder_id", "d.id", orgID)
-						builder.WriteRune('(')
-						builder.WriteString(nestedFoldersSelectors)
-						args = append(args, nestedFoldersArgs...)
-					}
-				} else {
+			if len(permSelectorArgs) > 0 {
+				switch f.recursiveQueriesAreSupported {
+				case true:
 					builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
-					builder.WriteString("WHERE 1 = 0")
-				}
-			default:
-				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
-				if len(permSelectorArgs) > 0 {
-					builder.WriteString("WHERE d.org_id = ? AND d.uid IN ")
+					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
+					builder.WriteString(fmt.Sprintf("WHERE d.org_id = ? AND d.uid IN (SELECT uid FROM %s)", recQueryName))
 					args = append(args, orgID)
-					builder.WriteString(permSelector.String())
-					args = append(args, permSelectorArgs...)
-				} else {
-					builder.WriteString("WHERE 1 = 0")
+				default:
+					nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard", "folder_id", "d.id", orgID)
+					builder.WriteRune('(')
+					builder.WriteString(nestedFoldersSelectors)
+					args = append(args, nestedFoldersArgs...)
 				}
+			} else {
+				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
+				builder.WriteString("WHERE 1 = 0")
 			}
 			builder.WriteString(") AND NOT dashboard.is_folder)")
 
@@ -297,33 +284,22 @@ func (f *accessControlDashboardPermissionFilter) buildClauses(dialect migrator.D
 
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
-			case true:
-				if len(permSelectorArgs) > 0 {
-					switch f.recursiveQueriesAreSupported {
-					case true:
-						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
-						builder.WriteString("(dashboard.uid IN ")
-						builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
-					default:
-						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard", "uid", "d.uid", orgID)
-						builder.WriteRune('(')
-						builder.WriteString(nestedFoldersSelectors)
-						builder.WriteRune(')')
-						args = append(args, nestedFoldersArgs...)
-					}
-				} else {
-					builder.WriteString("(1 = 0")
-				}
-			default:
-				if len(permSelectorArgs) > 0 {
+			if len(permSelectorArgs) > 0 {
+				switch f.recursiveQueriesAreSupported {
+				case true:
+					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs, orgID)
 					builder.WriteString("(dashboard.uid IN ")
-					builder.WriteString(permSelector.String())
-					args = append(args, permSelectorArgs...)
-				} else {
-					builder.WriteString("(1 = 0")
+					builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
+				default:
+					nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard", "uid", "d.uid", orgID)
+					builder.WriteRune('(')
+					builder.WriteString(nestedFoldersSelectors)
+					builder.WriteRune(')')
+					args = append(args, nestedFoldersArgs...)
 				}
+			} else {
+				builder.WriteString("(1 = 0")
 			}
 			builder.WriteString(" AND dashboard.is_folder)")
 		} else {

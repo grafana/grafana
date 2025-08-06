@@ -933,7 +933,8 @@ func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
 				// Check that the permissions and assignment are stored correctly
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
-				assert.ElementsMatch(t, r.cmd.Permissions, perms)
+				// shared with me is added by default for all users in pkg/services/accesscontrol/acimpl/service.go
+				assert.Equal(t, append([]accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, r.cmd.Permissions...), perms)
 			}
 		})
 	}
@@ -989,7 +990,8 @@ func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
 				// Check that the permissions and assignment are removed correctly
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
-				assert.Empty(t, perms)
+				// shared with me is added by default for all users in pkg/services/accesscontrol/acimpl/service.go
+				assert.Equal(t, []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, perms)
 			}
 		})
 	}
