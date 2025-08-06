@@ -1162,7 +1162,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	isNested := obj.GetFolder() != ""
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
 		// legacy behavior
-		if !isNested || !dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		if !isNested {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
@@ -1392,7 +1392,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboards")
 	defer span.End()
 
-	if dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
+	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
 		start := time.Now()
 		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
 		if err != nil {

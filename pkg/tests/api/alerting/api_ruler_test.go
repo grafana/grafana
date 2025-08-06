@@ -361,7 +361,6 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,

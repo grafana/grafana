@@ -3,6 +3,8 @@ package decrypt
 import (
 	"context"
 
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -19,7 +21,14 @@ func NewLocalDecryptClient(decryptStorage contracts.DecryptStorage) (*LocalDecry
 	}, nil
 }
 
-func (c *LocalDecryptClient) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
+func (c *LocalDecryptClient) Decrypt(ctx context.Context, serviceName, namespace string, names []string) (map[string]contracts.DecryptResult, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID, identity.WithServiceIdentityName(serviceName))
+
 	results := make(map[string]contracts.DecryptResult, len(names))
 
 	for _, name := range names {
@@ -32,8 +41,4 @@ func (c *LocalDecryptClient) Decrypt(ctx context.Context, namespace string, name
 	}
 
 	return results, nil
-}
-
-func (c *LocalDecryptClient) Close() error {
-	return nil
 }

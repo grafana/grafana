@@ -153,8 +153,8 @@ func RegisterAPIService(
 	migration.Initialize(&datasourceInfoProvider{
 		datasourceService: datasourceService,
 	}, &PluginStorePanelProvider{
-		pluginStore: pluginStore,
-		setting:     cfg,
+		pluginStore:  pluginStore,
+		buildVersion: cfg.BuildVersion,
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
