@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -890,18 +891,32 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 		for i := 0; i < f.NumField(); i++ {
 			val := f.Field(i)
 			if val.IsValid() && val.CanInterface() {
+				property = val.Interface()
 				inline, ok := property.(common.InlineSecureValue)
 				if !ok {
-					return nil, fmt.Errorf("secure property must be InlineSecureValue (found: %t)", val)
+					return nil, fmt.Errorf("secure property must be InlineSecureValue (found: %T)", property)
 				}
-				vals[val.Type().Field(i).Name] = inline
+
+				if inline.IsZero() {
+					continue // nothing
+				}
+
+				field := f.Type().Field(i)
+				fname := field.Tag.Get("json")
+				if fname == "" {
+					fname = field.Name
+				} else {
+					fname, _ = strings.CutSuffix(fname, ",omitempty")
+				}
+				vals[fname] = inline
 				continue
 			}
 			return nil, fmt.Errorf("value not an interface")
 		}
+		return vals, nil
 	}
 
-	fmt.Printf("TODO PROPERTY: (%t) %+v\n", property, property)
+	fmt.Printf("TODO PROPERTY: (%T) %+v\n", property, property)
 
 	return nil, fmt.Errorf("support: %t", property)
 }

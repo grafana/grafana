@@ -121,7 +121,10 @@ func (in *TestResource2) DeepCopyObject() runtime.Object {
 
 // Spec defines model for Spec.
 type ExplicitSecureValues struct {
+	// Non-pointer
 	Value1 common.InlineSecureValue `json:"v1,omitempty"`
+
+	// Pointer value
 	Value2 common.InlineSecureValue `json:"v2,omitempty"`
 }
 
@@ -396,7 +399,7 @@ func TestMetaAccessor(t *testing.T) {
 
 		secure, err := meta.GetSecureValues()
 		require.NoError(t, err)
-		require.JSONEq(t, `{"x": {"name": "hello"}}`, asJSON(secure, true))
+		require.JSONEq(t, `{"v1": {"name": "hello"}}`, asJSON(secure, true))
 	})
 
 	t.Run("test reading old repo fields (now manager+source)", func(t *testing.T) {

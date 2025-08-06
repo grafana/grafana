@@ -219,8 +219,6 @@ func TestDecryptService(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, decryptService)
 
-		t.Cleanup(func() { require.NoError(t, decryptService.Close()) })
-
 		svcIdentity := "provsysoning-test"
 
 		result, err := decryptService.Decrypt(t.Context(), svcIdentity, namespace, "secure-value-1")

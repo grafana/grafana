@@ -46,7 +46,3 @@ func (c *LocalDecryptClient) Decrypt(ctx context.Context, serviceName, namespace
 
 	return results, nil
 }
-
-func (c *LocalDecryptClient) Close() error {
-	return nil
-}
