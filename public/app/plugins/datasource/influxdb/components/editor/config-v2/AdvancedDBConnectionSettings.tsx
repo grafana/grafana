@@ -5,6 +5,7 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionChecked,
   onUpdateDatasourceJsonDataOptionSelect,
+  updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, Combobox, InlineSwitch, Input, Space, useStyles2 } from '@grafana/ui';
 
@@ -24,7 +25,7 @@ import { Props } from './types';
 export const AdvancedDbConnectionSettings = (props: Props) => {
   const { options } = props;
   const styles = useStyles2(getInlineLabelStyles);
-  const [maxSeriesValue, setMaxSeriesValue] = useState(options.jsonData.maxSeries || '');
+  const [maxSeriesValue, setMaxSeriesValue] = useState(options.jsonData.maxSeries?.toString() || '');
 
   const [advancedDbConnectionSettingsIsOpen, setAdvancedDbConnectionSettingsIsOpen] = useState(
     () => !!options.jsonData.timeInterval || !!options.jsonData.insecureGrpc
@@ -128,7 +129,8 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                 onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMaxSeriesClicked}
                 onChange={(e) => {
                   setMaxSeriesValue(e.currentTarget.value);
-                  onUpdateDatasourceJsonDataOption(props, 'maxSeries');
+                  const val = parseInt(e.currentTarget.value, 10);
+                  updateDatasourcePluginJsonDataOption(props, 'maxSeries', Number.isFinite(val) ? val : undefined);
                 }}
                 placeholder="1000"
                 value={maxSeriesValue}
