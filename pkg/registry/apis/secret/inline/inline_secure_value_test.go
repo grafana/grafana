@@ -507,4 +507,31 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		require.NotNil(t, sv)
 		require.Equal(t, sv1, sv.GetName())
 	})
+
+	t.Run("when a secure value is owned and exists but another one doesnt, it deletes the first one but returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		tu := testutils.Setup(t)
+
+		sv1 := "test-secure-value-1"
+		createdSv1, err := tu.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = sv1
+			cfg.Sv.Namespace = defaultNs
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdSv1)
+
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
+
+		ctx := testutils.CreateServiceAuthContext(t.Context(), "", defaultNs, nil)
+
+		err = svc.DeleteWhenOwnedByResource(ctx, owner, sv1, "does-not-exist")
+		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+
+		// got deleted
+		sv, err := tu.SecureValueService.Read(ctx, xkube.Namespace(owner.Namespace), sv1)
+		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+		require.Nil(t, sv)
+	})
 }
