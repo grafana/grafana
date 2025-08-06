@@ -5,7 +5,7 @@ import { useMemo, ReactNode } from 'react';
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
@@ -17,7 +17,6 @@ interface Props {
   actions?: ActionModel[];
   value?: ReactNode;
   coords: DataLinksActionsTooltipCoords;
-  root?: HTMLElement;
   onTooltipClose?: () => void;
 }
 
@@ -25,7 +24,8 @@ interface Props {
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose, root }: Props) => {
+export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   // the order of middleware is important!
@@ -84,7 +84,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
     <>
       {/* TODO: we can remove `value` from this component when tableNextGen is fully rolled out */}
       {value}
-      <Portal root={root}>
+      <Portal zIndex={theme.zIndex.tooltip}>
         <div
           ref={refCallback}
           {...getReferenceProps()}
@@ -120,7 +120,6 @@ export const renderSingleLink = (link: LinkModel, children: ReactNode, className
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     tooltipWrapper: css({
-      zIndex: theme.zIndex.portal,
       whiteSpace: 'pre',
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
