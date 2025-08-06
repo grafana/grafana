@@ -241,6 +241,7 @@ const LogListComponent = ({
     showDetails,
     showTime,
     sortOrder,
+    timestampFormat,
     toggleDetails,
     wrapLogMessage,
   } = useLogListContext();
@@ -253,8 +254,9 @@ const LogListComponent = ({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
-    () => (wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields)),
-    [displayedFields, processedLogs, virtualization, wrapLogMessage]
+    () =>
+      wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields, timestampFormat),
+    [displayedFields, processedLogs, timestampFormat, virtualization, wrapLogMessage]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;

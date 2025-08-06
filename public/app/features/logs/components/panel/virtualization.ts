@@ -176,7 +176,7 @@ export class LogLineVirtualization {
     };
   };
 
-  calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = []) => {
+  calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = [], timestampFormat: 'ms' | 'ns') => {
     if (!logs.length) {
       return [];
     }
@@ -184,7 +184,7 @@ export class LogLineVirtualization {
     let levelWidth = 0;
     const fieldWidths: Record<string, number> = {};
     for (let i = 0; i < logs.length; i++) {
-      let width = this.measureTextWidth(logs[i].timestamp);
+      let width = this.measureTextWidth(timestampFormat === 'ms' ? logs[i].timestamp : logs[i].timestampNs);
       if (width > timestampWidth) {
         timestampWidth = Math.round(width);
       }
