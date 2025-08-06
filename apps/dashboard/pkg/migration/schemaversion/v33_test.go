@@ -9,7 +9,7 @@ import (
 
 func TestV33(t *testing.T) {
 	// Pass the mock provider to V33
-	migration := schemaversion.V33(testutil.GetTestProvider())
+	migration := schemaversion.V33(testutil.GetTestDataSourceProvider())
 
 	tests := []migrationTestCase{
 		{

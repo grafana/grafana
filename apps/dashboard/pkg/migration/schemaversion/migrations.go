@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	MIN_VERSION    = 28
+	MIN_VERSION    = 27
 	LATEST_VERSION = 41
 )
 
@@ -24,8 +24,21 @@ type DataSourceInfoProvider interface {
 	GetDataSourceInfo() []DataSourceInfo
 }
 
-func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
+type PanelPluginInfo struct {
+	ID      string
+	Version string
+}
+
+type PanelPluginInfoProvider interface {
+	// Gets all the panels from the plugin store.
+	// Equivalent to grafanaBootData.settings.panels on the frontend.
+	GetPanels() []PanelPluginInfo
+	GetPanelPlugin(id string) PanelPluginInfo
+}
+
+func GetMigrations(dsInfoProvider DataSourceInfoProvider, panelProvider PanelPluginInfoProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
+		28: V28(panelProvider),
 		29: V29,
 		30: V30,
 		31: V31,

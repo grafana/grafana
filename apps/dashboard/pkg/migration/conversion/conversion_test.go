@@ -25,7 +25,7 @@ import (
 
 func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
-	migration.Initialize(testutil.GetTestProvider())
+	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
 	versions := []v1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -76,7 +76,7 @@ func TestDeepCopyValid(t *testing.T) {
 
 func TestDashboardConversionToAllVersions(t *testing.T) {
 	// Initialize the migrator with a test data source provider
-	migration.Initialize(testutil.GetTestProvider())
+	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
