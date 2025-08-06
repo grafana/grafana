@@ -38,11 +38,14 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
@@ -76,6 +79,12 @@ var (
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
 
+// JobHistoryConfig holds configuration for job history backends
+type JobHistoryConfig struct {
+	Backend string                 `json:"backend"`
+	Loki    *lokiclient.LokiConfig `json:"loki,omitempty"`
+}
+
 type APIBuilder struct {
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -92,18 +101,19 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistory        jobs.History
-	tester            *RepositoryTester
-	resourceLister    resources.ResourceLister
-	repositoryLister  listers.RepositoryLister
-	legacyMigrator    legacy.LegacyMigrator
-	storageStatus     dualwrite.Service
-	unified           resource.ResourceClient
-	repositorySecrets secrets.RepositorySecrets
-	client            client.ProvisioningV0alpha1Interface
-	access            authlib.AccessChecker
-	mutators          []controller.Mutator
-	statusPatcher     *controller.RepositoryStatusPatcher
+	jobHistory         jobs.History
+	jobHistoryConfig   *JobHistoryConfig
+	tester             *RepositoryTester
+	resourceLister     resources.ResourceLister
+	repositoryLister   listers.RepositoryLister
+	legacyMigrator     legacy.LegacyMigrator
+	storageStatus      dualwrite.Service
+	unified            resource.ResourceClient
+	repositorySecrets  secrets.RepositorySecrets
+	client             client.ProvisioningV0alpha1Interface
+	access             authlib.AccessChecker
+	mutators           []controller.Mutator
+	statusPatcher      *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
@@ -126,6 +136,7 @@ func NewAPIBuilder(
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	jobHistoryConfig *JobHistoryConfig,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
@@ -153,12 +164,15 @@ func NewAPIBuilder(
 		unified:             unified,
 		repositorySecrets:   repositorySecrets,
 		access:              access,
-		jobHistory:          jobs.NewJobHistoryCache(),
+		jobHistoryConfig:    jobHistoryConfig,
 		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
 			provisioning.LocalRepositoryType:  true,
 			provisioning.GitHubRepositoryType: true,
 		},
 	}
+
+	// Create job history based on configuration
+	b.jobHistory = b.createJobHistory(jobHistoryConfig, configProvider, tracer)
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
@@ -174,6 +188,32 @@ func NewAPIBuilder(
 	}
 
 	return b
+}
+
+// createJobHistory creates the appropriate job history backend based on configuration
+func (b *APIBuilder) createJobHistory(config *JobHistoryConfig, configProvider apiserver.RestConfigProvider, tracer tracing.Tracer) jobs.History {
+	// Default to in-memory cache if no config provided
+	if config == nil || config.Backend == "" || config.Backend == "memory" {
+		return jobs.NewJobHistoryCache()
+	}
+
+	// If Loki backend is specified and config is provided
+	if config.Backend == "loki" && config.Loki != nil {
+		// We need a logger for Loki history - use a basic one for now
+		logger := log.New("provisioning.job.history")
+		
+		// Create a fake requester for now - in a real implementation this would come from configuration
+		requester := lokiclient.NewFakeRequester()
+		
+		// Create metrics
+		reg := prometheus.NewRegistry()
+		historianMetrics := metrics.NewHistorianMetrics(reg, "provisioning_job_history")
+		
+		return jobs.NewLokiJobHistory(logger, *config.Loki, requester, historianMetrics, tracer)
+	}
+
+	// Fallback to in-memory cache for any other cases
+	return jobs.NewJobHistoryCache()
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -194,6 +234,7 @@ func RegisterAPIService(
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	jobHistoryConfig *JobHistoryConfig,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
@@ -213,6 +254,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
+		jobHistoryConfig,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
