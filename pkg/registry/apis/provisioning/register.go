@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -38,6 +39,7 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -60,7 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -79,8 +81,8 @@ var (
 
 // JobHistoryConfig holds configuration for job history backends
 type JobHistoryConfig struct {
-	Backend string                 `json:"backend"`
-	Loki    *lokiclient.LokiConfig `json:"loki,omitempty"`
+	Backend string       `json:"backend"`
+	Loki    *loki.Config `json:"loki,omitempty"`
 }
 
 type APIBuilder struct {
@@ -188,6 +190,43 @@ func NewAPIBuilder(
 	return b
 }
 
+// createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
+func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
+	// If LokiURL is defined, use Loki
+	if cfg.ProvisioningLokiURL != "" {
+		parsedURL, err := url.Parse(cfg.ProvisioningLokiURL)
+		if err != nil {
+			logging.DefaultLogger.Error("Invalid Loki URL in provisioning config", "url", cfg.ProvisioningLokiURL, "error", err)
+			return &JobHistoryConfig{Backend: "memory"}
+		}
+
+		lokiCfg := &loki.Config{
+			ReadPathURL:    parsedURL,
+			WritePathURL:   parsedURL,
+			TenantID:       cfg.ProvisioningLokiTenantID,
+			ExternalLabels: map[string]string{"source": "grafana-provisioning"},
+			MaxQuerySize:   5000, // Default query size
+		}
+
+		// Parse basic auth if provided
+		if cfg.ProvisioningLokiBasicAuth != "" {
+			parts := strings.SplitN(cfg.ProvisioningLokiBasicAuth, ":", 2)
+			if len(parts) == 2 {
+				lokiCfg.BasicAuthUser = parts[0]
+				lokiCfg.BasicAuthPassword = parts[1]
+			}
+		}
+
+		return &JobHistoryConfig{
+			Backend: "loki",
+			Loki:    lokiCfg,
+		}
+	}
+
+	// Default to memory backend
+	return &JobHistoryConfig{Backend: "memory"}
+}
+
 // createJobHistory creates the appropriate job history backend based on configuration
 func (b *APIBuilder) createJobHistory(config *JobHistoryConfig, configProvider apiserver.RestConfigProvider, tracer tracing.Tracer) jobs.History {
 	// Default to in-memory cache if no config provided
@@ -197,7 +236,8 @@ func (b *APIBuilder) createJobHistory(config *JobHistoryConfig, configProvider a
 
 	// If Loki backend is specified and config is provided
 	if config.Backend == "loki" && config.Loki != nil {
-		return jobs.NewLokiJobHistory(*config.Loki)
+		logger := log.NewNopLogger()
+		return jobs.NewLokiJobHistory(logger, *config.Loki)
 	}
 
 	// Fallback to in-memory cache for any other cases
@@ -222,7 +262,6 @@ func RegisterAPIService(
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	jobHistoryConfig *JobHistoryConfig,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
@@ -242,7 +281,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		jobHistoryConfig,
+		createJobHistoryConfigFromSettings(cfg),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil

@@ -132,6 +132,11 @@ type Cfg struct {
 	HomePath                   string
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
+	// Job History Configuration
+	ProvisioningJobHistoryBackend string
+	ProvisioningLokiURL           string
+	ProvisioningLokiBasicAuth     string
+	ProvisioningLokiTenantID      string
 	DataPath                   string
 	LogsPath                   string
 	PluginsPath                string
@@ -2076,6 +2081,13 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
 		}
 	}
+
+	// Read job history configuration
+	cfg.ProvisioningJobHistoryBackend = valueAsString(iniFile.Section("provisioning"), "job_history_backend", "memory")
+	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
+	cfg.ProvisioningLokiBasicAuth = valueAsString(iniFile.Section("provisioning"), "loki_basic_auth", "")
+	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
+
 	return nil
 }
 
