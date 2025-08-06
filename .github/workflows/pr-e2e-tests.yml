@@ -48,6 +48,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,7 +63,7 @@ jobs:
       #     key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
       #     path: |
       #       build-dir
-      
+
       - name: Login to DockerHub
         uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
 
@@ -117,6 +118,7 @@ jobs:
     runs-on: ubuntu-latest-16-cores
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
