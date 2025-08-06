@@ -238,7 +238,9 @@ export const LogListContextProvider = ({
   showUniqueLabels,
   sortOrder,
   syntaxHighlighting,
-  timestampResolution = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ns') : 'ns',
+  timestampResolution = logOptionsStorageKey
+    ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
+    : 'ms',
   wrapLogMessage,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -371,16 +373,13 @@ export const LogListContextProvider = ({
     };
   }, [containerElement, logOptionsStorageKey]);
 
-  // Sync timestamp format
+  // Sync timestamp resolution
   useEffect(() => {
-    const nsPresent = logs.some((log) => log.timeEpochNs.endsWith('000000') === false);
-    if (nsPresent === false && logListState.timestampResolution === 'ns') {
-      setLogListState({
-        ...logListState,
-        timestampResolution: 'ms',
-      });
-    }
-  }, [logListState, logs]);
+    setLogListState((state) => ({
+      ...state,
+      timestampResolution,
+    }));
+  }, [timestampResolution]);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),

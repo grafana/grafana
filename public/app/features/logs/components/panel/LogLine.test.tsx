@@ -85,7 +85,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       <LogListContext.Provider
         value={{
           ...defaultValue,
-          timestampFormat: 'ms',
+          timestampResolution: 'ms',
         }}
       >
         <LogLine {...defaultProps} />
@@ -102,7 +102,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       <LogListContext.Provider
         value={{
           ...defaultValue,
-          timestampFormat: 'ns',
+          timestampResolution: 'ns',
         }}
       >
         <LogLine {...defaultProps} />

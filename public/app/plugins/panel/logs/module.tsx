@@ -35,20 +35,20 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         });
     } else {
       builder.addRadio({
-          path: 'timestampResolution',
-          name: t('logs.timestamp-format', 'Timestamp resolution'),
-          category,
-          description: '',
-          settings: {
-            options: [
-              { value: 'default', label: t('logs.logs.timestamp-resolution.label-milliseconds', 'Milliseconds') },
-              {
-                value: 'small',
-                label: t('logs.logs.timestamp-resolution.label-nanoseconds', 'Nanoseconds'),
-              },
-            ],
-          },
-        })
+        path: 'timestampResolution',
+        name: t('logs.timestamp-format', 'Timestamp resolution'),
+        category,
+        description: '',
+        settings: {
+          options: [
+            { value: 'ms', label: t('logs.logs.timestamp-resolution.label-milliseconds', 'Milliseconds') },
+            {
+              value: 'ns',
+              label: t('logs.logs.timestamp-resolution.label-nanoseconds', 'Nanoseconds'),
+            },
+          ],
+        },
+      });
     }
 
     builder.addBooleanSwitch({
