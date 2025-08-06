@@ -358,7 +358,7 @@ jobs:
   run-playwright-tests:
     needs:
       - build-grafana
-    name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
+    name: PW ${{ matrix.shard }}/${{ matrix.runner }}
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
@@ -366,6 +366,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        runner:
+          - ubuntu-latest-8-cores
+          - ubuntu-x64
+          - ubuntu-x64-large
+          - ubuntu-x64-xlarge
+          - ubuntu-x64-2xlarge
         shard: [1, 2, 3, 4, 5, 6, 7, 8]
         shardTotal: [8]
 
@@ -384,7 +390,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: playwright-blob-${{ github.run_number }}-${{ matrix.shard }}
+          name: playwright-blob-${{ github.run_number }}-${{ matrix.shard }}-${{ matrix.runner }}
           path: ./blob-report
           retention-days: 1
 
