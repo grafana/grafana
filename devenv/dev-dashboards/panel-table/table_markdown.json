@@ -1,0 +1,124 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1735,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "gdev-testdata"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "wrapHeaderText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "markdown"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "markdown",
+                  "dynamicHeight": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 18,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "lg",
+        "footer": {
+          "enablePagination": true,
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "id,markdown\n1,\"<dl>\n  <dt>Definition list</dt>\n  <dd>Is something people use sometimes.</dd>\n  <dt>Markdown in HTML</dt>\n  <dd>Does *not* work **very** well. Use HTML <em onclick=\"\"alert('hi');\"\">tags</em>.</dd>\n</dl>\"\n2,\"Three or more...\n\n---\n\nHyphens\n\n***\n\nAsterisks\n\n___\n\nUnderscores\"\n3,\"Here's a line for us to start with.\n\nThis line is separated from the one above by two newlines, so it will be a *separate paragraph*.\n\nThis line is also a separate paragraph, but...\nThis line is only separated by a single newline, so it's a separate line in the *same paragraph*.\"\n4,\"<span style='color:red'>red</span>, <span style='color:green'>green</span>, <span style='color:blue'>blue</span>\"\n5,\"<img src='https://placecats.com/bella/300/180'>\"\n6,\"[Link](https://grafana.com), or <a href=\"\"https://grafana.com\"\" target=\"\"_blank\"\" ref=\"\"noopener noreferrer\"\">HTML link</a>\"\n7,\"1. foo\n1. bar\n    - baz\n    * bim\n3. bip\"\n8,\"# heading 1\n## heading 2\n### heading 3\n#### heading 4\n##### heading 5\n###### heading 6\"\n9,\"Emphasis, aka italics, with *asterisks* or _underscores_.\n\nStrong emphasis, aka bold, with **asterisks** or __underscores__.\n\nCombined emphasis with **asterisks and _underscores_**.\n\nStrikethrough uses two tildes. ~~Scratch this.~~\n\n<u>underline does require an HTML element tho.</u>\"\n10,\"```javascript\nvar s = 'JavaScript syntax highlighting';\nalert(s);\n```\"\n11,\"<style>thead { border-bottom: 1px solid lightgray; }  td, th { padding: 6px; }</style>\n| Month     | Savings |\n| --------  | ------- |\n| I heard   | $250    |\n| you like  | $80     |\n| tables    | $365    |\"\n",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "gdev-testdata"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Markdown Table",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - Table - Markdown",
+  "uid": "2769f5d8-0094-4ac4-a4f0-f68f620339cc",
+  "version": 1
+}

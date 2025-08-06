@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -80,11 +81,13 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := setting.NewCfg()
 	cfg.SecretsManagement = setting.SecretsManagerSettings{
-		DecryptServerType:         "local",
 		CurrentEncryptionProvider: "secret_key.v1",
 		ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
+	require.NoError(t, err)
+
+	globalDataKeyStore, err := encryptionstorage.ProvideGlobalDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
@@ -120,7 +123,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		keeperService = setupCfg.KeeperService
 	}
 
-	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
+	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService, nil)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
@@ -128,12 +131,11 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	testCfg := setting.NewCfg()
-	testCfg.SecretsManagement = setting.SecretsManagerSettings{
-		DecryptServerType: "local",
-	}
 
 	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
 	require.NoError(t, err)
+
+	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
 
 	return Sut{
 		SecureValueService:          secureValueService,
@@ -145,6 +147,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		SQLKeeper:                   sqlKeeper,
 		Database:                    database,
 		AccessClient:                accessClient,
+		ConsolidationService:        consolidationService,
+		EncryptionManager:           encryptionManager,
+		GlobalDataKeyStore:          globalDataKeyStore,
 	}
 }
 
@@ -158,6 +163,9 @@ type Sut struct {
 	SQLKeeper                   *sqlkeeper.SQLKeeper
 	Database                    *database.Database
 	AccessClient                types.AccessClient
+	ConsolidationService        contracts.ConsolidationService
+	EncryptionManager           contracts.EncryptionManager
+	GlobalDataKeyStore          contracts.GlobalDataKeyStorage
 }
 
 type CreateSvConfig struct {
@@ -233,8 +241,9 @@ func CreateUserAuthContext(ctx context.Context, namespace string, permissions ma
 	return types.WithAuthInfo(ctx, requester)
 }
 
-func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, permissions []string) context.Context {
+func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, namespace string, permissions []string) context.Context {
 	requester := &identity.StaticRequester{
+		Namespace: namespace,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
 				Permissions:     permissions,
@@ -244,4 +253,71 @@ func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, permi
 	}
 
 	return types.WithAuthInfo(ctx, requester)
+}
+
+// CreateOBOAuthContext emulates a context where the request is made on-behalf-of (OBO) a user, with an access token.
+func CreateOBOAuthContext(
+	ctx context.Context,
+	serviceIdentity string,
+	namespace string,
+	userPermissions map[string][]string,
+	delegatedPermissions []string,
+) context.Context {
+	requester := &identity.StaticRequester{
+		Namespace: namespace,
+		Type:      types.TypeUser,
+		OrgID:     1,
+		UserID:    1,
+		Permissions: map[int64]map[string][]string{
+			1: userPermissions,
+		},
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				ServiceIdentity:      serviceIdentity,
+				DelegatedPermissions: delegatedPermissions,
+				Actor: &authn.ActorClaims{
+					Subject: "user:1",
+				},
+			},
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
+}
+
+type TestCertPaths struct {
+	ClientCert string
+	ClientKey  string
+	ServerCert string
+	ServerKey  string
+	CA         string
+}
+
+func CreateX509TestDir(t *testing.T) TestCertPaths {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	ca := testcerts.NewCA()
+	caCertFile, _, err := ca.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	serverKp, err := ca.NewKeyPair("localhost")
+	require.NoError(t, err)
+
+	serverCertFile, serverKeyFile, err := serverKp.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	clientKp, err := ca.NewKeyPair()
+	require.NoError(t, err)
+	clientCertFile, clientKeyFile, err := clientKp.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	return TestCertPaths{
+		ClientCert: clientCertFile.Name(),
+		ClientKey:  clientKeyFile.Name(),
+		ServerCert: serverCertFile.Name(),
+		ServerKey:  serverKeyFile.Name(),
+		CA:         caCertFile.Name(),
+	}
 }

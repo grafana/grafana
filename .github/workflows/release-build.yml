@@ -1,6 +1,12 @@
 name: Build Release Packages
 on:
   workflow_dispatch:
+    inputs:
+      source-event:
+        description: If this workflow was triggered by another workflow, this value should be set to the GITHUB_EVENT_NAME of that source workflow.
+        type: string
+        required: false
+        default: workflow_dispatch
   schedule:
     # Every weeknight at midnight
     # "Scheduled workflows will only run on the default branch." (docs.github.com)
@@ -133,22 +139,31 @@ jobs:
         include:
           - name: linux-amd64
             artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
+            verify: true
           - name: linux-arm64
             artifacts: targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
+            verify: false
           - name: linux-s390x
             artifacts: targz:grafana:linux/s390x,deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
+            verify: true
           - name: linux-armv7
             artifacts: targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
+            verify: true
           - name: linux-armv6
             artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
+            verify: true
           - name: windows-amd64
             artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+            verify: true
           - name: windows-arm64
             artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+            verify: true
           - name: darwin-amd64
             artifacts: targz:grafana:darwin/amd64
+            verify: true
           - name: darwin-arm64
             artifacts: targz:grafana:darwin/arm64
+            verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@main
       - uses: actions/checkout@v4
@@ -167,7 +182,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ needs.setup.outputs.version }}
           output: artifacts-${{ matrix.name }}.txt
-          verify: true
+          verify: ${{ matrix.verify }}
           build-id: ${{ github.run_id }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

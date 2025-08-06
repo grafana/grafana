@@ -533,7 +533,7 @@ func newTestDashboardsIndex(t TB, threshold int64, size int64, batchSize int64, 
 		Root:          tmpdir,
 		FileThreshold: threshold, // use in-memory for tests
 		BatchSize:     int(batchSize),
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 
 	rv := int64(10)
@@ -553,7 +553,7 @@ func newTestDashboardsIndex(t TB, threshold int64, size int64, batchSize int64, 
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, rv, info.Fields, writer)
+	}, size, rv, info.Fields, "test", writer)
 	require.NoError(t, err)
 
 	return index, tmpdir

@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests"
@@ -46,7 +45,6 @@ func TestIntegrationFolderServiceGetFolder(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesClientDashboardsFolders},
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
@@ -114,9 +112,8 @@ func TestIntegrationUpdateFolder(t *testing.T) {
 	}
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
+		EnableQuota:      true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -157,9 +154,8 @@ func TestIntegrationUpdateFolder(t *testing.T) {
 
 func TestIntegrationCreateFolder(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
+		EnableQuota:      true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -201,14 +197,13 @@ func TestIntegrationCreateFolder(t *testing.T) {
 	})
 }
 
-func TestIntegrationNestedFoldersOn(t *testing.T) {
+func TestIntegrationNestedFolders(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		EnableFeatureToggles: []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		DisableAnonymous: true,
+		EnableQuota:      true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -362,7 +357,6 @@ func TestIntegrationSharedWithMe(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesClientDashboardsFolders},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -416,7 +410,6 @@ func TestIntegrationBasicRoles(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -554,7 +547,6 @@ func TestIntegrationFineGrainedPermissions(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesClientDashboardsFolders},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)

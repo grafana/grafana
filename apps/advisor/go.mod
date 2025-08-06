@@ -7,10 +7,10 @@ require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.40.1
-	github.com/grafana/grafana-app-sdk/logging v0.40.0
+	github.com/grafana/grafana-app-sdk v0.40.2
+	github.com/grafana/grafana-app-sdk/logging v0.40.1
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725144121-b1592b5e36d2
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3
@@ -27,8 +27,8 @@ require (
 	cloud.google.com/go/compute/metadata v0.7.0 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.9.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect
@@ -79,6 +79,7 @@ require (
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/elazarl/goproxy v1.7.2 // indirect
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
@@ -105,7 +106,7 @@ require (
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
-	github.com/go-sql-driver/mysql v1.9.2 // indirect
+	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
@@ -113,7 +114,7 @@ require (
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.3 // indirect
 	github.com/golang-migrate/migrate/v4 v4.7.0 // indirect
 	github.com/golang/mock v1.7.0-rc.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -125,16 +126,17 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250725130805-615c8286e14b // indirect
+	github.com/grafana/alerting v0.0.0-20250729175202-b4b881b7b263 // indirect
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914 // indirect
-	github.com/grafana/grafana-aws-sdk v1.0.4 // indirect
-	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b // indirect
+	github.com/grafana/grafana-aws-sdk v1.1.0 // indirect
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // indirect
+	github.com/grafana/grafana/apps/provisioning v0.0.0-20250804150913-990f1c69ecc2 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250804150913-990f1c69ecc2 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
-	github.com/grafana/sqlds/v4 v4.2.3 // indirect
+	github.com/grafana/sqlds/v4 v4.2.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
@@ -190,6 +192,7 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
+	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
@@ -213,6 +216,7 @@ require (
 	github.com/prometheus/exporter-toolkit v0.14.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -267,7 +271,7 @@ require (
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
-	google.golang.org/grpc v1.74.0 // indirect
+	google.golang.org/grpc v1.74.2 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
@@ -284,6 +288,10 @@ require (
 	k8s.io/component-base v0.33.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20241210054802-24370beab758 // indirect
+	modernc.org/libc v1.65.0 // indirect
+	modernc.org/mathutil v1.7.1 // indirect
+	modernc.org/memory v1.10.0 // indirect
+	modernc.org/sqlite v1.37.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect

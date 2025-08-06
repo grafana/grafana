@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { BulkActionProgress, ProgressState } from './BulkActionProgress';
 
-const setup = (progressOverrides: Partial<ProgressState> = {}) => {
+const setup = (progressOverrides: Partial<ProgressState> = {}, action: 'delete' | 'move' = 'delete') => {
   const defaultProgress: ProgressState = {
     current: 5,
     total: 10,
@@ -15,7 +15,7 @@ const setup = (progressOverrides: Partial<ProgressState> = {}) => {
   };
 
   return {
-    ...render(<BulkActionProgress {...props} />),
+    ...render(<BulkActionProgress {...props} action={action} />),
     props,
   };
 };
@@ -58,5 +58,12 @@ describe('BulkActionProgress', () => {
     // Current item text
     expect(screen.getByText(/Deleting:/)).toBeInTheDocument();
     expect(screen.getByText(/Complex Dashboard Name/)).toBeInTheDocument();
+  });
+
+  it('should render moving action text when action is move', () => {
+    setup({ current: 2, total: 4, item: 'Moving Dashboard' }, 'move');
+
+    expect(screen.getByText(/Moving:/)).toBeInTheDocument();
+    expect(screen.getByText(/Moving Dashboard/)).toBeInTheDocument();
   });
 });

@@ -29,15 +29,15 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
-	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -619,7 +619,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
-			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible)
+			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
 			workers := []jobs.Worker{
 				deleteWorker,
 				exportWorker,
@@ -633,17 +633,24 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				workers = append(workers, extra.GetJobWorkers()...)
 			}
 
-			driver, err := jobs.NewJobDriver(
-				time.Minute*20, // Max time for each job
-				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
-				time.Second*30, // Periodically look for new jobs
+			// This is basically our own JobQueue system
+			driver, err := jobs.NewConcurrentJobDriver(
+				3,              // 3 drivers for now
+				20*time.Minute, // Max time for each job
+				22*time.Minute, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				30*time.Second, // Periodically look for new jobs
 				b.jobs, b, b.jobHistory,
 				workers...,
 			)
 			if err != nil {
 				return err
 			}
-			go driver.Run(postStartHookCtx.Context)
+
+			go func() {
+				if err := driver.Run(postStartHookCtx.Context); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("job driver failed", "error", err)
+				}
+			}()
 
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
@@ -680,7 +687,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
+	defsBase := "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1."
 	refsBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
 
 	sub := oas.Paths.Paths[repoprefix+"/test"]

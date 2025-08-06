@@ -18,7 +18,7 @@ weight: 310
 # Manage users and teams with SCIM
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 {{< admonition type="warning" >}}

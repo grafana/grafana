@@ -7,5 +7,5 @@
       GRAPHITE_PREFIX: collectd.
       REPORT_BY_CPU: 'false'
       COLLECT_INTERVAL: 10
-    links:
+    depends_on:
       - graphite
