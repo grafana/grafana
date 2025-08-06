@@ -6,6 +6,9 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+// InlineSecureValueSupport allows resources to manage secrets inline
+//
+//go:generate mockery --name InlineSecureValueSupport --structname MockInlineSecureValueSupport --inpackage --filename inline_mock.go --with-expecter
 type InlineSecureValueSupport interface {
 	// Check that the request user can reference secure value names in the context of a given resource (owner)
 	CanReference(ctx context.Context, owner common.ObjectReference, names ...string) error

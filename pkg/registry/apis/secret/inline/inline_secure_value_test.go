@@ -3,15 +3,16 @@ package inline_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
@@ -255,7 +256,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, createdName)
 
-		decryptedValues, err := tu.DecryptService.Decrypt(t.Context(), serviceIdentity, owner.Namespace, []string{createdName})
+		decryptedValues, err := tu.DecryptService.Decrypt(t.Context(), serviceIdentity, owner.Namespace, createdName)
 		require.NoError(t, err)
 
 		decryptedResult, ok := decryptedValues[createdName]
@@ -263,7 +264,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), rawSecret)
 
 		// can also decrypt with the owner.APIGroup as a decrypter
-		decryptedValues, err = tu.DecryptService.Decrypt(t.Context(), owner.APIGroup, owner.Namespace, []string{createdName})
+		decryptedValues, err = tu.DecryptService.Decrypt(t.Context(), owner.APIGroup, owner.Namespace, createdName)
 		require.NoError(t, err)
 
 		decryptedResult, ok = decryptedValues[createdName]
