@@ -40,7 +40,7 @@ jobs:
   build-grafana-hosted-runners:
     # needs: detect-changes
     # if: needs.detect-changes.outputs.changed == 'true'
-    name: Build Grafana - ${{ matrix.size }}${{ matrix.feature }}
+    name: Build Grafana - ubuntu-x64-${{ matrix.size }}${{ matrix.feature }}
     strategy:
       fail-fast: false
       matrix:
