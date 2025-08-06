@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -25,11 +26,13 @@ func TestIntegrationShortURLService(t *testing.T) {
 	store := db.InitTestDB(t)
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
-		const refPath = "mock/path?test=true"
+		cmd := &dtos.CreateShortURLCmd{
+			Path: "mock/path?test=true",
+		}
 
 		service := ShortURLService{SQLStore: &sqlStore{db: store}}
 
-		newShortURL, err := service.CreateShortURL(context.Background(), user, refPath)
+		newShortURL, err := service.CreateShortURL(context.Background(), user, cmd)
 		require.NoError(t, err)
 		require.NotNil(t, newShortURL)
 		require.NotEmpty(t, newShortURL.Uid)
@@ -37,7 +40,7 @@ func TestIntegrationShortURLService(t *testing.T) {
 		existingShortURL, err := service.GetShortURLByUID(context.Background(), user, newShortURL.Uid)
 		require.NoError(t, err)
 		require.NotNil(t, existingShortURL)
-		require.Equal(t, refPath, existingShortURL.Path)
+		require.Equal(t, cmd.Path, existingShortURL.Path)
 
 		t.Run("and update last seen at", func(t *testing.T) {
 			origGetTime := getTime
@@ -59,7 +62,7 @@ func TestIntegrationShortURLService(t *testing.T) {
 		})
 
 		t.Run("and stale short urls can be deleted", func(t *testing.T) {
-			staleShortURL, err := service.CreateShortURL(context.Background(), user, refPath)
+			staleShortURL, err := service.CreateShortURL(context.Background(), user, cmd)
 			require.NoError(t, err)
 			require.NotNil(t, staleShortURL)
 			require.NotEmpty(t, staleShortURL.Uid)
@@ -100,18 +103,25 @@ func TestIntegrationShortURLService(t *testing.T) {
 
 		ctx := context.Background()
 
-		absolutePath := "/path?test=true"
-		newShortURL, err := service.CreateShortURL(ctx, user, absolutePath)
+		cmd := &dtos.CreateShortURLCmd{
+			Path: "/path?test=true",
+		}
+
+		newShortURL, err := service.CreateShortURL(ctx, user, cmd)
 		require.ErrorIs(t, err, shorturls.ErrShortURLAbsolutePath)
 		require.Nil(t, newShortURL)
 
-		relativePath := "path/../test?test=true"
-		newShortURL, err = service.CreateShortURL(ctx, user, relativePath)
+		cmd2 := &dtos.CreateShortURLCmd{
+			Path: "path/../test?test=true",
+		}
+		newShortURL, err = service.CreateShortURL(ctx, user, cmd2)
 		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
 		require.Nil(t, newShortURL)
 
-		relativePath = "../path/test?test=true"
-		newShortURL, err = service.CreateShortURL(ctx, user, relativePath)
+		cmd3 := &dtos.CreateShortURLCmd{
+			Path: "../path/test?test=true",
+		}
+		newShortURL, err = service.CreateShortURL(ctx, user, cmd3)
 		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
 		require.Nil(t, newShortURL)
 	})
@@ -121,19 +131,53 @@ func TestIntegrationShortURLService(t *testing.T) {
 
 		ctx := context.Background()
 
-		const refPath = "mock/path?test=true"
-
-		newShortURL1, err := service.CreateShortURL(ctx, user, refPath)
+		cmd := &dtos.CreateShortURLCmd{
+			Path: "mock/path?test=true",
+		}
+		newShortURL1, err := service.CreateShortURL(ctx, user, cmd)
 		require.NoError(t, err)
 		require.NotNil(t, newShortURL1)
 		require.NotEmpty(t, newShortURL1.Uid)
 
-		newShortURL2, err := service.CreateShortURL(ctx, user, refPath)
+		newShortURL2, err := service.CreateShortURL(ctx, user, cmd)
 		require.NoError(t, err)
 		require.NotNil(t, newShortURL2)
 		require.NotEmpty(t, newShortURL2.Uid)
 
 		require.NotEqual(t, newShortURL1.Uid, newShortURL2.Uid)
 		require.Equal(t, newShortURL1.Path, newShortURL2.Path)
+	})
+
+	t.Run("Create URL providing the UID", func(t *testing.T) {
+		service := ShortURLService{SQLStore: &sqlStore{db: store}}
+
+		ctx := context.Background()
+
+		cmd := &dtos.CreateShortURLCmd{
+			Path: "mock/path?test=true",
+			UID:  "custom-uid",
+		}
+		newShortURL1, err := service.CreateShortURL(ctx, user, cmd)
+		require.NoError(t, err)
+		require.NotNil(t, newShortURL1)
+		require.Equal(t, cmd.UID, newShortURL1.Uid)
+	})
+
+	t.Run("Create URL providing an existing UID should fail", func(t *testing.T) {
+		service := ShortURLService{SQLStore: &sqlStore{db: store}}
+
+		ctx := context.Background()
+
+		cmd := &dtos.CreateShortURLCmd{
+			Path: "mock/path?test=true",
+			UID:  "custom-uid",
+		}
+		newShortURL1, err := service.CreateShortURL(ctx, user, cmd)
+		require.NoError(t, err)
+		require.NotNil(t, newShortURL1)
+		require.Equal(t, cmd.UID, newShortURL1.Uid)
+
+		_, err = service.CreateShortURL(ctx, user, cmd)
+		require.Error(t, err)
 	})
 }

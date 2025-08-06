@@ -35,7 +35,14 @@ var appManifestData = app.ManifestData{
 					Plural:     "ShortURLs",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaShortURLv1alpha1,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+							},
+						},
+					},
+					Schema: &versionSchemaShortURLv1alpha1,
 				},
 			},
 		},

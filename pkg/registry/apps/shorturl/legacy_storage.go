@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -112,11 +113,20 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, fmt.Errorf("unsupported identity type")
 	}
 
+	if createValidation != nil {
+		if err := createValidation(ctx, obj.DeepCopyObject()); err != nil {
+			return nil, err
+		}
+	}
 	p, ok := obj.(*shorturl.ShortURL)
 	if !ok {
 		return nil, fmt.Errorf("expected shorturl?")
 	}
-	out, err := s.service.CreateShortURL(ctx, signedInUser, p.Spec.Path)
+	cmd := &dtos.CreateShortURLCmd{
+		Path: p.Spec.Path,
+		UID:  p.Name,
+	}
+	out, err := s.service.CreateShortURL(ctx, signedInUser, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +146,16 @@ func (s *legacyStorage) Update(ctx context.Context,
 
 // GracefulDeleter
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("Delete for shorturl not implemented")
+	v, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return v, false, err // includes the not-found error
+	}
+	p, ok := v.(*shorturl.ShortURL)
+	if !ok {
+		return v, false, fmt.Errorf("expected a shorturl response from Get")
+	}
+	err = s.service.DeleteStaleShortURLs(ctx, &shorturls.DeleteShortUrlCommand{Uid: name})
+	return p, true, err // true is instant delete
 }
 
 // CollectionDeleter

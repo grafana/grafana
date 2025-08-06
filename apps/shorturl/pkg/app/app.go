@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
@@ -41,6 +43,34 @@ func New(cfg app.Config) (app.App, error) {
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: shorturlv1alpha1.ShortURLKind(),
+				Validator: &simple.Validator{
+					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+						klog.Info("SHORTURL APP VALIDATOR: Received admission request", "action", req.Action, "object", fmt.Sprintf("%T", req.Object))
+
+						// Skip validation for non-CREATE operations as specified in the manifest
+						// TODO: Remove this after the SDK fixes this bug where validation is called for all mutating operations
+						// ignoring what the manifest says
+						if req.Action != resource.AdmissionActionCreate {
+							return nil
+						}
+
+						// Cast the incoming object to ShortURL for validation
+						shortURL, ok := req.Object.(*shorturlv1alpha1.ShortURL)
+						if !ok {
+							return fmt.Errorf("expected ShortURL object, got %T", req.Object)
+						}
+
+						relPath := strings.TrimSpace(shortURL.Spec.Path)
+
+						if path.IsAbs(relPath) {
+							return fmt.Errorf("%w: %s", ErrShortURLAbsolutePath, relPath)
+						}
+						if strings.Contains(relPath, "../") {
+							return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, relPath)
+						}
+						return nil
+					},
+				},
 			},
 		},
 	}
