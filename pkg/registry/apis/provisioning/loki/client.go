@@ -78,35 +78,6 @@ func NewClient(cfg Config) *Client {
 	}
 }
 
-func (c *Client) Ping(ctx context.Context) error {
-	log := logging.FromContext(ctx)
-	uri := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/labels")
-	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
-	if err != nil {
-		return fmt.Errorf("error creating request: %w", err)
-	}
-	c.setAuthAndTenantHeaders(req)
-
-	req = req.WithContext(ctx)
-	res, err := c.client.Do(req)
-	if res != nil {
-		defer func() {
-			if err := res.Body.Close(); err != nil {
-				log.Warn("Failed to close response body", "err", err)
-			}
-		}()
-	}
-	if err != nil {
-		return fmt.Errorf("error sending request: %w", err)
-	}
-
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return fmt.Errorf("ping request to loki endpoint returned a non-200 status code: %d", res.StatusCode)
-	}
-	log.Debug("Ping request to Loki endpoint succeeded", "status", res.StatusCode)
-	return nil
-}
-
 func (c *Client) Push(ctx context.Context, streams []Stream) error {
 	log := logging.FromContext(ctx)
 
@@ -202,10 +173,6 @@ func (c *Client) RangeQuery(ctx context.Context, logQL string, start, end, limit
 
 	log.Debug("Successfully queried Loki", "status", res.StatusCode, "streams", len(queryRes.Data.Result))
 	return queryRes, nil
-}
-
-func (c *Client) MaxQuerySize() int {
-	return c.cfg.MaxQuerySize
 }
 
 func (c *Client) setAuthAndTenantHeaders(req *http.Request) {

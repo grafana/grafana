@@ -29,16 +29,15 @@ const (
 	maxJobsLimit         = 10             // Maximum jobs to return per repository
 )
 
-type remoteLokiJobClient interface {
-	Ping(context.Context) error
+//go:generate mockery --name LokiClient --structname MockLokiClient --inpackage --filename loki_client_mock.go --with-expecter
+type LokiClient interface {
 	Push(context.Context, []loki.Stream) error
 	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (loki.QueryRes, error)
-	MaxQuerySize() int
 }
 
 // LokiJobHistory implements the History interface using Loki for storage
 type LokiJobHistory struct {
-	client         remoteLokiJobClient
+	client         LokiClient
 	externalLabels map[string]string
 }
 
@@ -64,28 +63,19 @@ func (h *LokiJobHistory) WriteJob(ctx context.Context, job *provisioning.Job) er
 		return nil
 	}
 
-	// Push to Loki asynchronously
-	errCh := make(chan error, 1)
-	go func() {
-		defer close(errCh)
+	// Push to Loki synchronously
+	writeCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 
-		writeCtx := context.Background()
-		writeCtx, cancel := context.WithTimeout(writeCtx, 30*time.Second)
-		defer cancel()
+	logger.Debug("Saving job history to Loki", "namespace", jobCopy.Namespace, "repository", jobCopy.Spec.Repository, "job", jobCopy.Name)
 
-		logger.Debug("Saving job history to Loki", "namespace", jobCopy.Namespace, "repository", jobCopy.Spec.Repository, "job", jobCopy.Name)
+	if err := h.client.Push(writeCtx, []loki.Stream{stream}); err != nil {
+		logger.Error("Failed to save job history to Loki", "error", err)
+		return fmt.Errorf("failed to save job history: %w", err)
+	}
 
-		if err := h.client.Push(writeCtx, []loki.Stream{stream}); err != nil {
-			logger.Error("Failed to save job history to Loki", "error", err)
-			errCh <- fmt.Errorf("failed to save job history: %w", err)
-			return
-		}
-
-		logger.Debug("Successfully saved job history to Loki")
-	}()
-
-	// Wait for result
-	return <-errCh
+	logger.Debug("Successfully saved job history to Loki")
+	return nil
 }
 
 // RecentJobs implements History.RecentJobs by querying Loki for recent jobs
@@ -231,9 +221,4 @@ func (h *LokiJobHistory) getJobTimestamp(job *provisioning.Job) time.Time {
 		return time.Unix(job.Status.Started, 0)
 	}
 	return job.CreationTimestamp.Time
-}
-
-// TestConnection tests the connection to Loki
-func (h *LokiJobHistory) TestConnection(ctx context.Context) error {
-	return h.client.Ping(ctx)
 }

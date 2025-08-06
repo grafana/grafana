@@ -58,61 +58,6 @@ func TestSample_UnmarshalJSON(t *testing.T) {
 	})
 }
 
-func TestClient_Ping(t *testing.T) {
-	t.Run("successful ping", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "/loki/api/v1/labels", r.URL.Path)
-			assert.Equal(t, http.MethodGet, r.Method)
-			w.WriteHeader(http.StatusOK)
-		}))
-		defer server.Close()
-
-		client := createTestClient(t, server.URL, server.URL)
-
-		err := client.Ping(context.Background())
-		assert.NoError(t, err)
-	})
-
-	t.Run("ping with auth headers", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Check basic auth
-			username, password, ok := r.BasicAuth()
-			assert.True(t, ok)
-			assert.Equal(t, "testuser", username)
-			assert.Equal(t, "testpass", password)
-
-			// Check tenant header
-			assert.Equal(t, "test-tenant", r.Header.Get("X-Scope-OrgID"))
-
-			w.WriteHeader(http.StatusOK)
-		}))
-		defer server.Close()
-
-		cfg := createTestConfig(t, server.URL, server.URL)
-		cfg.BasicAuthUser = "testuser"
-		cfg.BasicAuthPassword = "testpass"
-		cfg.TenantID = "test-tenant"
-
-		client := NewClient(cfg)
-
-		err := client.Ping(context.Background())
-		assert.NoError(t, err)
-	})
-
-	t.Run("ping failure", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-		}))
-		defer server.Close()
-
-		client := createTestClient(t, server.URL, server.URL)
-
-		err := client.Ping(context.Background())
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "non-200 status code")
-	})
-}
-
 func TestClient_Push(t *testing.T) {
 	t.Run("successful push", func(t *testing.T) {
 		var receivedBody PushRequest
@@ -261,15 +206,6 @@ func TestClient_RangeQuery(t *testing.T) {
 	})
 }
 
-func TestClient_MaxQuerySize(t *testing.T) {
-	cfg := createTestConfig(t, "http://localhost", "http://localhost")
-	cfg.MaxQuerySize = 5000
-
-	client := NewClient(cfg)
-
-	assert.Equal(t, 5000, client.MaxQuerySize())
-}
-
 func TestClient_setAuthAndTenantHeaders(t *testing.T) {
 	t.Run("with basic auth and tenant", func(t *testing.T) {
 		cfg := createTestConfig(t, "http://localhost", "http://localhost")
@@ -359,23 +295,6 @@ func createTestConfig(t *testing.T, readURL, writeURL string) Config {
 }
 
 func TestClient_ContextCancellation(t *testing.T) {
-	t.Run("ping with cancelled context", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// This handler should not be reached
-			t.Error("Handler should not be called with cancelled context")
-		}))
-		defer server.Close()
-
-		client := createTestClient(t, server.URL, server.URL)
-
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel() // Cancel immediately
-
-		err := client.Ping(ctx)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "context canceled")
-	})
-
 	t.Run("push with cancelled context", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			t.Error("Handler should not be called with cancelled context")
