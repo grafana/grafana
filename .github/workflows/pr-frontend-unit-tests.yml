@@ -56,8 +56,7 @@ jobs:
       - detect-changes
       - yarn-install
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
-    # runs-on: ubuntu-x64-large
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     name: "Unit tests (${{ matrix.chunk }} / 8)"
     strategy:
       fail-fast: false
@@ -87,7 +86,7 @@ jobs:
       - detect-changes
       - yarn-install
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     name: "Unit tests (${{ matrix.chunk }} / 8)"
     strategy:
       fail-fast: false
@@ -114,9 +113,11 @@ jobs:
         TEST_SHARD_TOTAL: 8
 
   frontend-decoupled-plugin-tests:
-    needs: detect-changes
+    needs:
+      - detect-changes
+      - yarn-install
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     name: "Decoupled plugin tests"
     steps:
     - uses: actions/checkout@v4
@@ -127,9 +128,11 @@ jobs:
     - run: yarn run plugin:test:ci
 
   frontend-packages-unit-tests:
-    needs: detect-changes
+    needs:
+      - detect-changes
+      - yarn-install
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     name: "Packages unit tests"
     steps:
     - uses: actions/checkout@v4
