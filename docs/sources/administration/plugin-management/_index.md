@@ -20,7 +20,7 @@ Plugins enhance your Grafana experience with new ways to connect to and visualiz
 
 Read on for an overview on how to get started with plugins:
 
-- Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools). 
+- Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
 - There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
 - [Manage your plugins](#manage-your-plugins). Learn [how to install](#install-a-plugin), [update](#update-a-plugin) and [verify](#verify-your-plugins) your plugins.
 
@@ -116,7 +116,7 @@ To uninstall a plugin:
 
 When the update is complete, a confirmation message will indicate the installation was successful.
 
-### Verify your plugins 
+### Verify your plugins
 
 Plugin signature verification, also known as _signing_, is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned. Read more in [Plugin signatures](/plugin-sign).
 
