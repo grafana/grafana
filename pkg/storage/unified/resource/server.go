@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
 	"reflect"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -479,6 +481,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 	if len(secure) > 0 {
+		found := make(map[string]bool, len(secure))
+
 		// Make sure the secure values are safe to save (just in case)
 		for _, v := range secure {
 			if !v.Create.IsZero() {
@@ -490,6 +494,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			if v.Name == "" {
 				return nil, NewBadRequestError("secure value requires name")
 			}
+			found[v.Name] = true
 		}
 		if s.secure == nil {
 			return nil, AsErrorResult(fmt.Errorf("secure value store not configured"))
@@ -503,7 +508,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			secureValuesChanged = reflect.DeepEqual(secure, oldSecureValues)
 		}
 		if secureValuesChanged {
-			if err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), secure); err != nil {
+			names := slices.Collect(maps.Keys(found))
+			if err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), names...); err != nil {
 				return nil, AsErrorResult(err)
 			}
 		}
