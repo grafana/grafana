@@ -39,6 +39,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         name: t('logs.timestamp-format', 'Timestamp resolution'),
         category,
         description: '',
+        defaultValue: 'ms',
         settings: {
           options: [
             { value: 'ms', label: t('logs.logs.timestamp-resolution.label-milliseconds', 'Milliseconds') },
