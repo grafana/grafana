@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -355,6 +356,12 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 // Cleanup finds jobs with expired leases and marks them as failed.
 // This replaces the old cleanup mechanism and should be called more frequently.
 func (s *persistentStore) Cleanup(ctx context.Context) error {
+	// Set up provisioning identity to access jobs across all namespaces
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants access to all namespaces
+	if err != nil {
+		return apifmt.Errorf("failed to grant provisioning identity for cleanup: %w", err)
+	}
+
 	// Find jobs with expired leases (older than expiry time)
 	expiry := s.clock().Add(-s.expiry).UnixMilli()
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.LessThan, []string{strconv.FormatInt(expiry, 10)})
@@ -374,6 +381,11 @@ func (s *persistentStore) Cleanup(ctx context.Context) error {
 	jobs, ok := jobsObj.(*provisioning.JobList)
 	if !ok {
 		return apifmt.Errorf("unexpected object type %T", jobsObj)
+	}
+
+	// If no jobs found, cleanup is complete
+	if len(jobs.Items) == 0 {
+		return nil
 	}
 
 	for _, job := range jobs.Items {
