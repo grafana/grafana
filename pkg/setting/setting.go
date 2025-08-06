@@ -157,6 +157,7 @@ type Cfg struct {
 	DisableInitAdminCreation             bool
 	DisableBruteForceLoginProtection     bool
 	BruteForceLoginProtectionMaxAttempts int64
+	DisableUsernameLoginProtection       bool
 	DisableIPAddressLoginProtection      bool
 	CookieSecure                         bool
 	CookieSameSiteDisabled               bool
@@ -1587,6 +1588,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
+	cfg.DisableUsernameLoginProtection = security.Key("disable_username_login_protection").MustBool(false)
 	cfg.DisableIPAddressLoginProtection = security.Key("disable_ip_address_login_protection").MustBool(true)
 
 	// Ensure at least one login attempt can be performed.
