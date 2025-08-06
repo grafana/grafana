@@ -125,7 +125,6 @@ TableFieldOptions: {
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
 	cellOptions: TableCellOptions
-	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
@@ -136,4 +135,4 @@ TableFieldOptions: {
   wrapHeaderText?: bool
   // Selecting or hovering this field will show a tooltip containing the content within the target field
   tooltip?: TableCellTooltipOptions
-} @cuetsy(kind="interface")
+} & HideableFieldConfig @cuetsy(kind="interface")

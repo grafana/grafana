@@ -114,7 +114,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           defaultValue: defaultTableFieldOptions.wrapHeaderText,
         })
         .addBooleanSwitch({
-          path: 'hidden',
+          path: 'hideFrom.viz',
           name: t('table.name-hide-in-table', 'Hide in table'),
           category,
           defaultValue: undefined,

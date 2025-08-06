@@ -996,7 +996,7 @@ export enum TableCellTooltipPlacement {
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
  * Generally defines alignment, filtering capabilties, display options, etc.
  */
-export interface TableFieldOptions {
+export interface TableFieldOptions extends HideableFieldConfig {
   align: FieldTextAlignment;
   cellOptions: TableCellOptions;
   /**
@@ -1004,7 +1004,6 @@ export interface TableFieldOptions {
    */
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
-  hidden?: boolean; // ?? default is missing or false ??
   /**
    * Hides any header for a column, useful for columns that show some static content or buttons.
    */

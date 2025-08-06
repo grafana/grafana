@@ -26,6 +26,7 @@ export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Optio
   }
 
   migrateTextWrapToFieldLevel(panel);
+  migrateHiddenFields(panel);
 
   // Nothing changed
   return panel.options;
@@ -325,6 +326,22 @@ export const migrateTextWrapToFieldLevel = (panel: PanelModel<Partial<Options>>)
 
   panel.fieldConfig.defaults.custom = panel.fieldConfig.defaults.custom ?? {};
   panel.fieldConfig.defaults.custom.wrapText = legacyDefaultWrapText;
+
+  return panel;
+};
+
+export const migrateHiddenFields = (panel: PanelModel<Partial<Options>>) => {
+  panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+    if (override.properties) {
+      override.properties = override.properties.map((property) => {
+        if (property.id === 'custom.hidden') {
+          return { ...property, id: 'custom.hideFrom.viz' };
+        }
+        return property;
+      });
+    }
+    return override;
+  });
 
   return panel;
 };

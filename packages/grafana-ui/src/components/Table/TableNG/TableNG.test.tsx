@@ -143,13 +143,13 @@ const createNestedDataFrame = (): DataFrame => {
         name: '__depth',
         type: FieldType.number,
         values: [0, 0],
-        config: { custom: { hidden: true } },
+        config: { custom: { hideFrom: { viz: true } } },
       },
       {
         name: '__index',
         type: FieldType.number,
         values: [0, 1],
-        config: { custom: { hidden: true } },
+        config: { custom: { hideFrom: { viz: true } } },
       },
       {
         name: '__nestedFrames',
