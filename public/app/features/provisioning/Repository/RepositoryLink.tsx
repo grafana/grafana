@@ -8,9 +8,10 @@ import { getRepoHref } from '../utils/git';
 
 type RepositoryLinkProps = {
   name?: string;
+  jobType: 'sync' | 'delete' | 'move';
 };
 
-export function RepositoryLink({ name }: RepositoryLinkProps) {
+export function RepositoryLink({ name, jobType }: RepositoryLinkProps) {
   const repoQuery = useGetRepositoryQuery(name ? { name } : skipToken);
   const repo = repoQuery.data;
 
@@ -22,12 +23,16 @@ export function RepositoryLink({ name }: RepositoryLinkProps) {
 
   return (
     <Stack direction="column" gap={1}>
-      <Text>
-        <Trans i18nKey="provisioning.repository-link.grafana-repository-synced">
-          Your resources are now in your external storage and provisioned into your instance. From now on, your instance
-          and the external storage will be synchronized.
-        </Trans>
-      </Text>
+
+      {jobType === 'delete' && (
+        <Text>
+          <Trans i18nKey="provisioning.repository-link.grafana-repository-synced">
+            Your resources are now in your external storage and provisioned into your instance. From now on, your instance
+            and the external storage will be synchronized.
+          </Trans>
+        </Text>
+      )}
+
       {repoHref && (
         <Stack direction="row" gap={2}>
           <TextLink href={repoHref} external>

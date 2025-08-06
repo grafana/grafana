@@ -7,6 +7,7 @@ export type MoveResultFailed = {
   errorMessage?: string;
 };
 
+// TODO: DELETE ? LEAVE IT?
 export function BulkActionFailureBanner({ result, onDismiss }: { result: MoveResultFailed[]; onDismiss: () => void }) {
   return (
     <Alert

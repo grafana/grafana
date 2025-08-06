@@ -64,6 +64,7 @@ export function formatFolderName(folderName?: string): string {
 }
 
 // Fetch provisioned dashboard path in repository
+// TODO: DELETE
 export async function fetchProvisionedDashboardPath(uid: string): Promise<string | undefined> {
   try {
     const dto = await getDashboardAPI().getDashboardDTO(uid);

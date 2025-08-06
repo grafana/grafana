@@ -16,12 +16,14 @@ export interface BulkActionProvisionResourceProps {
   onDismiss?: () => void;
 }
 
+// TODO: DELETE
 export type BulkSuccessResponse<T, K> = Array<{
   index: number;
   item: T;
   data: K;
 }>;
 
+// TODO: DELETE
 export type MoveResultSuccessState = {
   allSuccess: boolean;
   repoUrl?: string;

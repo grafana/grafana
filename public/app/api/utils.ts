@@ -38,6 +38,7 @@ export const handleError = (e: unknown, dispatch: ThunkDispatch, message: string
   }
 };
 
+// TODO: DELETE
 export function extractErrorMessage(error: unknown): string {
   if (error && typeof error === 'object') {
     if ('data' in error && error.data && typeof error.data === 'object' && 'message' in error.data) {

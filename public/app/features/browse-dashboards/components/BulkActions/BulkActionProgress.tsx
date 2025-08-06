@@ -13,6 +13,7 @@ interface Props {
   action: 'move' | 'delete';
 }
 
+// TODO: DELETE
 export function BulkActionProgress({ progress, action }: Props) {
   const progressPercentage = Math.round((progress.current / progress.total) * 100);
 

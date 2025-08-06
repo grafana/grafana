@@ -1,13 +1,10 @@
-import { useState } from 'react';
-
-import { useCreateRepositoryJobsMutation, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { useCreateRepositoryJobsMutation, RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
 export interface ResourceRef {
   name: string;
-  group: string;
-  kind: string;
+  group: 'dashboard.grafana.app' | 'folder.grafana.app';
+  kind: 'Dashboard' | 'Folder';
 }
 
 export interface DeleteJobSpec {
