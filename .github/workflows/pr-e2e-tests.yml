@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ["ubuntu-x64-large", "ubuntu-x64-xlarge", "ubuntu-x64-2xlarge"]
+        runner: ["ubuntu-x64-large", "ubuntu-x64-xlarge", "ubuntu-x64-2xlarge", "ubuntu-x64-large-io", "ubuntu-x64-xlarge-io", "ubuntu-x64-2xlarge-io"]
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
