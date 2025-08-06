@@ -258,7 +258,9 @@ const LogListComponent = ({
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
     () =>
-      wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields, timestampResolution),
+      wrapLogMessage
+        ? []
+        : virtualization.calculateFieldDimensions(processedLogs, displayedFields, timestampResolution),
     [displayedFields, processedLogs, timestampResolution, virtualization, wrapLogMessage]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
