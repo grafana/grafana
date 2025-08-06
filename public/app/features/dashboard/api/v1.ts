@@ -161,7 +161,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           result.meta.folderUid = folder.uid;
           result.meta.folderId = folder.id;
         } catch (e) {
-          throw new Error('Failed to load folder');
+          // If user has access to dashboard but not to folder, continue without folder info
+          if (getStatusFromError(e) !== 403) {
+            throw new Error('Failed to load folder');
+          }
+          // we still want to save the folder uid so that we can properly handle disabling the folder picker in Settings -> General
+          // this is an edge case when user has edit access to a dashboard but doesn't have access to the folder
+          result.meta.folderUid = dash.metadata.annotations?.[AnnoKeyFolder];
         }
       }
 

@@ -127,7 +127,7 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
   });
 
-  it('throws an error if folder is not found', async () => {
+  it('throws an error if folder service returns an error other than 403', async () => {
     mockGet.mockResolvedValueOnce({
       ...mockDashboardDto,
       metadata: {
@@ -141,6 +141,20 @@ describe('v2 dashboard API', () => {
 
     const api = new K8sDashboardV2API();
     await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
+  });
+
+  it('should not throw an error if folder is not found and user has access to dashboard but not to folder', async () => {
+    mockGet.mockResolvedValueOnce({
+      ...mockDashboardDto,
+      metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoKeyFolder]: 'new-folder' } },
+    });
+    jest.spyOn(backendSrv, 'getFolderByUid').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
+
+    const api = new K8sDashboardV2API();
+    const dashboardDTO = await api.getDashboardDTO('test');
+    expect(dashboardDTO.spec).toMatchObject({
+      title: '',
+    });
   });
   describe('v2 dashboard API - Save', () => {
     beforeEach(() => {
