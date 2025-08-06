@@ -63,22 +63,6 @@ export function formatFolderName(folderName?: string): string {
   return result;
 }
 
-// Fetch provisioned dashboard path in repository
-// TODO: DELETE
-export async function fetchProvisionedDashboardPath(uid: string): Promise<string | undefined> {
-  try {
-    const dto = await getDashboardAPI().getDashboardDTO(uid);
-    const sourcePath =
-      'meta' in dto
-        ? dto.meta.k8s?.annotations?.[AnnoKeySourcePath] || dto.meta.provisionedExternalId
-        : dto.metadata?.annotations?.[AnnoKeySourcePath];
-    return `${sourcePath}`;
-  } catch (error) {
-    console.error('Error fetching provisioned dashboard path:', error);
-    return undefined;
-  }
-}
-
 // Collect selected dashboard and folder from the DashboardTreeSelection
 // This is used to prepare the items for bulk delete operation.
 export function collectSelectedItems(

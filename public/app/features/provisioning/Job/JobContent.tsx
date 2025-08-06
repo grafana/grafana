@@ -76,7 +76,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
         {['working', 'pending'].includes(state ?? '') && (
           <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
             <Spinner size={24} />
-            <Text element="h4" color="secondary">
+            <Text element="h5" color="secondary">
               {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
             </Text>
           </Stack>

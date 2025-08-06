@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -59,8 +61,18 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
     const result = await createBulkJob(repository, jobSpec);
 
-    if (result.job) {
+    if (result.success && result.job) {
       setJob(result.job); // Store the job for tracking
+    } else if (!result.success && result.error) {
+      // Handle error case - show error alert
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t('browse-dashboards.bulk-delete-resources-form.error-deleting-resources', 'Error deleting resources'),
+          result.error,
+        ],
+      });
+      setHasSubmitted(false); // Reset submit state so user can try again
     }
   };
 

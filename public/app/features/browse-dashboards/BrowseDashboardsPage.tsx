@@ -101,7 +101,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     canCreateDashboards,
     canCreateFolders,
   } = getFolderPermissions(folder);
-  console.log('canCreateFolders', canCreateFolders);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
