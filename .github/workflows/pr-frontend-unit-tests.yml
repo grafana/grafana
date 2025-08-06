@@ -57,11 +57,12 @@ jobs:
       - yarn-install
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
-    name: "Unit tests (${{ matrix.chunk }} / 8)"
+    name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
       fail-fast: false
       matrix:
-        chunk: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        total: 16
     steps:
     - uses: actions/checkout@v4
       with:
@@ -74,8 +75,9 @@ jobs:
         YARN_ENABLE_HARDENED_MODE: 0 # Disable hardened mode because it was already checked in the yarn-install step
     - run: yarn run test:ci
       env:
-        TEST_MAX_WORKERS: 2
-        TEST_SHARD: ${{ matrix.chunk }}
+        TEST_MAX_WORKERS: 4
+        TEST_SHARD: ${{ matrix.shard }}
+        TEST_SHARD_TOTAL: ${{ matrix.total }}
 
   frontend-unit-tests-enterprise:
     permissions:
@@ -87,11 +89,12 @@ jobs:
       - yarn-install
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
-    name: "Unit tests (${{ matrix.chunk }} / 8)"
+    name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
       fail-fast: false
       matrix:
-        chunk: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        total: 16
     steps:
     - uses: actions/checkout@v4
       with:
@@ -108,9 +111,9 @@ jobs:
         YARN_ENABLE_HARDENED_MODE: 0 # Disable hardened mode because it was already checked in the yarn-install step
     - run: yarn run test:ci
       env:
-        TEST_MAX_WORKERS: 2
-        TEST_SHARD: ${{ matrix.chunk }}
-        TEST_SHARD_TOTAL: 8
+        TEST_MAX_WORKERS: 4
+        TEST_SHARD: ${{ matrix.shard }}
+        TEST_SHARD_TOTAL: ${{ matrix.total }}
 
   frontend-decoupled-plugin-tests:
     needs:
