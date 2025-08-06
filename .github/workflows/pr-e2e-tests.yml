@@ -1,11 +1,16 @@
 name: End-to-end tests
 
 # DISABLED for 11.4.8 compatibility - entire workflow disabled
-# This workflow has extensive and broad compatibility issues with 11.4.8:
+#
+# CONTEXT: 11.4.8 is a maintenance-only release branch (1 month remaining lifecycle)
+# intended for security patches and critical bug fixes only. E2E test compatibility
+# engineering effort exceeds cost-benefit for this legacy branch.
+#
+# TECHNICAL ISSUES:
 # - E2E tests expect modern UI selectors/CSS that don't exist in 11.4.8
-# - Build system flaky due to dependency, version, and cache issues
+# - Build system flaky due to dependency, version, and cache issues  
 # - E2E UI infra differences cause >70% test failures
-# - Workflow kept for reference but disabled via workflow_dispatch only trigger
+# - Original 11.4.8 E2E system had external dependency failures (musl.cc/ziglang.org)
 on:
   workflow_dispatch: # Manual trigger only - workflow disabled
 
