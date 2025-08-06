@@ -125,7 +125,6 @@ export function TableNG(props: TableNGProps) {
 
   const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps | null>(null);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
-  const tooltipContainerRef = useRef<HTMLDivElement>(null);
 
   const resizeHandler = useColumnResize(onColumnResize);
 
@@ -734,14 +733,11 @@ export function TableNG(props: TableNGProps) {
         </div>
       )}
 
-      <div ref={tooltipContainerRef} />
-
       {tooltipState && (
         <DataLinksActionsTooltip
           links={tooltipState.links ?? []}
           actions={tooltipState.actions}
           coords={tooltipState.coords}
-          root={tooltipContainerRef.current ?? undefined}
           onTooltipClose={() => setTooltipState(undefined)}
         />
       )}
