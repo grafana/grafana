@@ -64,7 +64,6 @@ jobs:
     - run: yarn install --immutable --check-cache
     - run: yarn run test:ci
       env:
-        TEST_MAX_WORKERS: 2
         TEST_SHARD: ${{ matrix.shard }}
         TEST_SHARD_TOTAL: ${{ matrix.shardTotal }}
 
@@ -108,7 +107,6 @@ jobs:
     - run: yarn install --immutable --check-cache
     - run: yarn run test:ci
       env:
-        TEST_MAX_WORKERS: 2
         TEST_SHARD: ${{ matrix.shard }}
         TEST_SHARD_TOTAL: ${{ matrix.shardTotal }}
 
