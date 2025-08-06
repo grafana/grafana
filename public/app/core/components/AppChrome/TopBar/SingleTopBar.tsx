@@ -107,7 +107,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           {config.featureToggles.extensionSidebar && !isSmallScreen && <ExtensionToolbarItem />}
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
-          {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
+          <InviteUserButton />
           {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
         </Stack>
       </div>

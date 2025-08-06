@@ -1,10 +1,9 @@
-import { reportInteraction } from '@grafana/runtime';
-import { config } from 'app/core/config';
-import { contextSrv } from 'app/core/services/context_srv';
+import { reportInteraction, config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
-export const shouldRenderInviteUserButton =
+export const shouldRenderInviteUserButton = () =>
   config.featureToggles.inviteUserExperimental &&
   config.externalUserMngLinkUrl &&
   contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
