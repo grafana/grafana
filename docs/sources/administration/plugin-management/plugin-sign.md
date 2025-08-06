@@ -27,7 +27,7 @@ Learn more at [plugin policies](https://grafana.com/legal/plugins/).
 
 ## How does verifiction work?
 
-At startup, Grafana verifies the signatures of every plugin in the plugin directory. 
+At startup, Grafana verifies the signatures of every plugin in the plugin directory.
 
 To see the result of this verification for each plugin, navigate to **Configuration** -> **Plugins**. A signature can have any of the following signature status:
 
@@ -38,7 +38,6 @@ To see the result of this verification for each plugin, navigate to **Configurat
 | Modified signature | The plugin has changed since it was signed. This may indicate malicious intent. |
 | Unsigned           | The plugin is not signed.                                                       |
 | Signed             | The plugin signature was successfully verified.                                 |
-
 
 ### What happens if a plugin is not signed?
 
