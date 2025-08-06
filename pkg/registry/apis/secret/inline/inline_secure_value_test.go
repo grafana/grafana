@@ -242,7 +242,8 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		tu := testutils.Setup(t)
 
-		secret := common.NewSecretValue("test-value")
+		rawSecret := "test-value"
+		secret := common.NewSecretValue(rawSecret)
 
 		serviceIdentity := "service-identity"
 
@@ -259,7 +260,15 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		decryptedResult, ok := decryptedValues[createdName]
 		require.True(t, ok)
-		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), secret.DangerouslyExposeAndConsumeValue())
+		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), rawSecret)
+
+		// can also decrypt with the owner.APIGroup as a decrypter
+		decryptedValues, err = tu.DecryptService.Decrypt(t.Context(), owner.APIGroup, owner.Namespace, []string{createdName})
+		require.NoError(t, err)
+
+		decryptedResult, ok = decryptedValues[createdName]
+		require.True(t, ok)
+		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), rawSecret)
 	})
 
 	t.Run("when the auth info is missing it returns an error", func(t *testing.T) {
@@ -506,5 +515,32 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, sv)
 		require.Equal(t, sv1, sv.GetName())
+	})
+
+	t.Run("when a secure value is owned and exists but another one doesnt, it deletes the first one but returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		tu := testutils.Setup(t)
+
+		sv1 := "test-secure-value-1"
+		createdSv1, err := tu.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = sv1
+			cfg.Sv.Namespace = defaultNs
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdSv1)
+
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
+
+		ctx := testutils.CreateServiceAuthContext(t.Context(), "", defaultNs, nil)
+
+		err = svc.DeleteWhenOwnedByResource(ctx, owner, sv1, "does-not-exist")
+		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+
+		// got deleted
+		sv, err := tu.SecureValueService.Read(ctx, xkube.Namespace(owner.Namespace), sv1)
+		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+		require.Nil(t, sv)
 	})
 }
