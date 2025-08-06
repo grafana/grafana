@@ -1,9 +1,10 @@
-package decrypt
+package inline
 
 import (
 	"fmt"
 
 	authnlib "github.com/grafana/authlib/authn"
+	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -11,7 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage contracts.DecryptStorage) (contracts.DecryptService, error) {
+func ProvideInlineSecureValueService(
+	cfg *setting.Cfg,
+	tracer trace.Tracer,
+	secureValueService contracts.SecureValueService,
+	accessClient authlib.AccessClient,
+) (contracts.InlineSecureValueSupport, error) {
 	if cfg.SecretsManagement.GrpcClientEnable {
 		grpcClientConfig := grpcutils.ReadGrpcClientConfig(cfg)
 
@@ -33,15 +39,15 @@ func ProvideDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage
 
 		tlsConfig := readTLSFromConfig(cfg)
 
-		client, err := NewGRPCDecryptClientWithTLS(tokenExchangeClient, tracer, cfg.SecretsManagement.GrpcServerAddress, tlsConfig)
+		client, err := NewGRPCInlineClient(tokenExchangeClient, tracer, cfg.SecretsManagement.GrpcServerAddress, tlsConfig)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create grpc decrypt client: %w", err)
+			return nil, fmt.Errorf("failed to create grpc inline secure value client: %w", err)
 		}
 
 		return client, nil
 	}
 
-	return NewLocalDecryptClient(decryptStorage)
+	return NewLocalInlineSecureValueService(tracer, secureValueService, accessClient), nil
 }
 
 func readTLSFromConfig(cfg *setting.Cfg) TLSConfig {

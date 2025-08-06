@@ -44,6 +44,7 @@ import (
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	secretinline "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
@@ -428,6 +429,7 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideDecryptStorage,
 	secretdecrypt.ProvideDecryptAuthorizer,
 	secretdecrypt.ProvideDecryptService,
+	secretinline.ProvideInlineSecureValueService,
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideGlobalDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
