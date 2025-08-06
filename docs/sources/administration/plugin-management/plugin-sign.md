@@ -23,7 +23,13 @@ weight: 200
 
 Plugin signature verification, also known as _signing_, is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned when inspecting and verifying its digital signature.
 
-A signature can have any of the following signature status:
+Learn more at [plugin policies](https://grafana.com/legal/plugins/).
+
+## How does verifiction work?
+
+At startup, Grafana verifies the signatures of every plugin in the plugin directory. 
+
+To see the result of this verification for each plugin, navigate to **Configuration** -> **Plugins**. A signature can have any of the following signature status:
 
 | Signature status   | Description                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
@@ -33,13 +39,10 @@ A signature can have any of the following signature status:
 | Unsigned           | The plugin is not signed.                                                       |
 | Signed             | The plugin signature was successfully verified.                                 |
 
-Learn more at [plugin policies](https://grafana.com/legal/plugins/).
 
-# How does verifiction work?
+### What happens if a plugin is not signed?
 
-At startup, Grafana verifies the signatures of every plugin in the plugin directory. If a plugin is unsigned, then Grafana neither loads nor starts it. To see the result of this verification for each plugin, navigate to **Configuration** -> **Plugins**.
-
-Grafana also writes an error message to the server log:
+If a plugin is unsigned, then Grafana neither loads nor starts it. Grafana also writes an error message to the server log:
 
 ```bash
 WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
