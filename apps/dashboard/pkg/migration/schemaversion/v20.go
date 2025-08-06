@@ -144,16 +144,16 @@ func updateVariablesSyntax(text string) string {
 	legacyVariableNamesRegex := regexp.MustCompile(`(__series_name)|(\$__series_name)|(__value_time)|(__field_name)|(\$__field_name)`)
 
 	return legacyVariableNamesRegex.ReplaceAllStringFunc(text, func(match string) string {
-		switch {
-		case match == "__series_name":
+		switch match {
+		case "__series_name":
 			return "__series.name"
-		case match == "$__series_name":
+		case "$__series_name":
 			return "${__series.name}"
-		case match == "__value_time":
+		case "__value_time":
 			return "__value.time"
-		case match == "__field_name":
+		case "__field_name":
 			return "__field.name"
-		case match == "$__field_name":
+		case "$__field_name":
 			return "${__field.name}"
 		default:
 			return match
