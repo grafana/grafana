@@ -76,8 +76,8 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 	}
 
 	decrypters := []string{svcName}
-	if s.cfg.SecretsManagement.DecryptGrafanaServiceName != "" {
-		decrypters = append(decrypters, s.cfg.SecretsManagement.DecryptGrafanaServiceName)
+	if s.cfg.SecretsManagement.GrpcGrafanaServiceName != "" {
+		decrypters = append(decrypters, s.cfg.SecretsManagement.GrpcGrafanaServiceName)
 	}
 
 	// Create the secret directly as unstructured
