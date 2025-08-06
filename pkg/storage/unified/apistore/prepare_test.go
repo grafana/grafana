@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
 
-	authtypes "github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,8 +37,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		},
 	}
 
-	ctx := authtypes.WithAuthInfo(context.Background(),
-		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser},
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser},
 	)
 
 	t.Run("Error getting auth info from context", func(t *testing.T) {
@@ -148,8 +148,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Nil(t, ts)
 
 		// Change the user... and only update metadata
-		ctx = authtypes.WithAuthInfo(context.Background(),
-			&identity.StaticRequester{UserID: 1, UserUID: "user2", Type: authtypes.TypeUser},
+		ctx = authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "user2", Type: authlib.TypeUser},
 		)
 
 		// Change the status... but generation is the same
@@ -324,7 +324,7 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 
-	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser})
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser})
 
 	dashboard := dashv1.Dashboard{}
 	dashboard.Name = "test-name"

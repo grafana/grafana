@@ -599,6 +599,7 @@ func (in *Repository) DeepCopyInto(out *Repository) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	in.Spec.DeepCopyInto(&out.Spec)
+	out.Secure = in.Secure
 	in.Status.DeepCopyInto(&out.Status)
 	return
 }

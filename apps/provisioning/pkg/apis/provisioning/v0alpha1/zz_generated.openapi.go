@@ -1334,6 +1334,12 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositorySpec"),
 						},
 					},
+					"secure": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SecureValues"),
+						},
+					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
@@ -1344,7 +1350,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositorySpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositorySpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SecureValues", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

@@ -25,6 +25,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
+
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -99,7 +101,8 @@ type APIBuilder struct {
 	legacyMigrator    legacy.LegacyMigrator
 	storageStatus     dualwrite.Service
 	unified           resource.ResourceClient
-	repositorySecrets secrets.RepositorySecrets
+	decryptSvc        secret.DecryptService
+	repositorySecrets secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
 	client            client.ProvisioningV0alpha1Interface
 	access            authlib.AccessChecker
 	mutators          []controller.Mutator
@@ -122,6 +125,7 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
+	decryptSvc secret.DecryptService,
 	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
@@ -151,6 +155,7 @@ func NewAPIBuilder(
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
+		decryptSvc:          decryptSvc,
 		repositorySecrets:   repositorySecrets,
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
@@ -191,6 +196,7 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
+	decryptSvc secret.DecryptService,
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -209,6 +215,7 @@ func RegisterAPIService(
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		usageStats,
+		decryptSvc,
 		repositorySecrets,
 		access,
 		tracer,
@@ -387,7 +394,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
-		getter: b,
+		getter:     b,
+		decryptSvc: b.decryptSvc,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)

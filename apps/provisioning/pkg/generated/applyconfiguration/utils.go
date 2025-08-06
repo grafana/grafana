@@ -38,6 +38,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.RepositoryStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ResourceCount"):
 		return &provisioningv0alpha1.ResourceCountApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SecureValues"):
+		return &provisioningv0alpha1.SecureValuesApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncOptions"):
 		return &provisioningv0alpha1.SyncOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncStatus"):

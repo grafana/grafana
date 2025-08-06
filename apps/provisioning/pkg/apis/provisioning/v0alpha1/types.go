@@ -17,6 +17,7 @@ type Repository struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   RepositorySpec   `json:"spec,omitempty"`
+	Secure SecureValues     `json:"secure,omitempty"`
 	Status RepositoryStatus `json:"status,omitempty"`
 }
 
