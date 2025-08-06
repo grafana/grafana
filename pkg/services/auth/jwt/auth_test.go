@@ -1,16 +1,11 @@
 package jwt
 
 import (
-	"bytes"
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -20,6 +15,7 @@ import (
 
 	jose "github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -194,16 +190,14 @@ func TestIntegrationCustomRootCAJWKHTTPSClient(t *testing.T) {
 
 	t.Run("tls_client_ca path is read and added to client.RootCAs", func(t *testing.T) {
 		configure := func(t *testing.T, cfg *setting.Cfg) {
-			file, err := os.CreateTemp(os.TempDir(), "ca-*.crt")
-			require.NoError(t, err)
+			caFilename := createTestRootCAFile(t)
 			t.Cleanup(func() {
-				if err := os.Remove(file.Name()); err != nil {
+				if err := os.Remove(caFilename); err != nil {
 					panic(err)
 				}
 			})
-			_ = createTestRootCAFile(t, file.Name())
 
-			cfg.JWTAuth.TlsClientCa = file.Name()
+			cfg.JWTAuth.TlsClientCa = caFilename
 		}
 
 		s, err := initAuthService(t, urlConfigure, configure)
@@ -668,42 +662,14 @@ func configurePKIXPublicKeyFile(t *testing.T, cfg *setting.Cfg) {
 	cfg.JWTAuth.KeyFile = file.Name()
 }
 
-// Copied from pkg/setting/setting_secure_socks_proxy_test.go and modified key size for faster generation
-func createTestRootCAFile(t *testing.T, path string) string {
+func createTestRootCAFile(t *testing.T) (filename string) {
 	t.Helper()
 
-	ca := &x509.Certificate{
-		SerialNumber: big.NewInt(2019),
-		Subject: pkix.Name{
-			Organization: []string{"Grafana Labs"},
-			CommonName:   "Grafana",
-		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(10, 0, 0),
-		IsCA:                  true,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		BasicConstraintsValid: true,
-	}
-	caPrivKey, err := rsa.GenerateKey(rand.Reader, 1024) //nolint:gosec
-	require.NoError(t, err)
-	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
+	tmpDir := t.TempDir()
+	ca := testcerts.NewCA()
+
+	caCertFile, _, err := ca.ToTempFile(tmpDir)
 	require.NoError(t, err)
 
-	// nolint:gosec
-	caCertFile, err := os.Create(path)
-	require.NoError(t, err)
-
-	block := &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: caBytes,
-	}
-	err = pem.Encode(caCertFile, block)
-	require.NoError(t, err)
-
-	buf := new(bytes.Buffer)
-	err = pem.Encode(buf, block)
-	require.NoError(t, err)
-
-	return buf.String()
+	return caCertFile.Name()
 }
