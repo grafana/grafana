@@ -273,6 +273,7 @@ const config = async (env: Env): Promise<Configuration> => {
                 '.eslintcache'
               ),
               configType: 'flat',
+              failOnError: false,
             }),
           ]
         : []),
