@@ -12,8 +12,28 @@ import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 // Mock contextSrv before importing the component since permission check happens at module level
 jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
+let mockFilterState = { 
+  ruleName: '', 
+  ruleState: '*', 
+  dataSourceNames: [], 
+  freeFormWords: [], 
+  labels: [] 
+};
+const mockUpdateFilters = jest.fn();
+
+jest.mock('../../hooks/useFilteredRules', () => ({
+  useRulesFilter: jest.fn(() => ({
+    searchQuery: '',
+    filterState: mockFilterState,
+    updateFilters: mockUpdateFilters,
+    hasActiveFilters: false,
+    activeFilters: [],
+  })),
+}));
+
 import RulesFilter from './Filter/RulesFilter';
 import RulesFilterV2 from './Filter/RulesFilter.v2';
+import { useRulesFilter } from '../../hooks/useFilteredRules';
 
 setupMswServer();
 
@@ -80,6 +100,15 @@ const ui = {
 beforeEach(() => {
   locationService.replace({ search: '' });
   jest.clearAllMocks();
+
+  mockFilterState = { 
+    ruleName: '', 
+    ruleState: '*', 
+    dataSourceNames: [], 
+    freeFormWords: [], 
+    labels: [] 
+  };
+  mockUpdateFilters.mockClear();
 
   // Reset plugin components hook to default (no plugins)
   setPluginComponentsHook(() => ({
@@ -159,6 +188,82 @@ describe('RulesFilterV2', () => {
     await user.click(ui.filterButton.get());
     await user.click(ui.clearButton.get());
     expect(ui.ruleNameInput.get()).toHaveValue('');
+  });
+
+  it('Should populate search field with query string when filters are applied via rule name', async () => {
+    const { user } = render(<RulesFilterV2 />);
+    
+    await user.click(ui.filterButton.get());
+    
+    await user.type(ui.ruleNameInput.get(), 'test');
+    
+    await user.click(ui.applyButton.get());
+    
+    // Check that the search input contains the generated query string
+    expect(ui.searchInput.get()).toHaveValue('rule:test');
+  });
+
+  it('Should parse search query and call updateFilters when user types directly in search field', async () => {
+    const { user, rerender } = render(<RulesFilterV2 />);
+    
+    // Type a search query directly into the search input
+    await user.type(ui.searchInput.get(), 'rule:test state:firing');
+    
+    // Trigger the onBlur handler by clicking elsewhere
+    await user.click(document.body);
+    
+    // Verify updateFilters was called with the parsed filter
+    expect(mockUpdateFilters).toHaveBeenCalledWith({
+      dataSourceNames: [],
+      freeFormWords: [],
+      labels: [],
+      ruleName: 'test',
+      ruleState: 'firing',
+    });
+    
+    // Simulate the filter state update by updating our mock
+    mockFilterState = {
+      dataSourceNames: [],
+      freeFormWords: [],
+      labels: [],
+      ruleName: 'test',
+      ruleState: 'firing',
+    };
+    
+    // Update the mock to return the new state
+    (useRulesFilter as jest.Mock).mockReturnValue({
+      searchQuery: '',
+      filterState: mockFilterState,
+      updateFilters: mockUpdateFilters,
+      hasActiveFilters: false,
+      activeFilters: [],
+    });
+    
+    // Force a re-render to pick up the new filter state
+    rerender(<RulesFilterV2 />);
+    
+    // Open the filter popup
+    await user.click(ui.filterButton.get());
+    
+
+    expect(ui.ruleNameInput.get()).toHaveValue('test');
+    
+
+    const firingRadio = screen.getByRole('radio', { name: 'Firing' });
+    expect(firingRadio).toBeChecked();
+  });
+
+  it('Should handle free-form rule name search in query string', async () => {
+    const { user } = render(<RulesFilterV2 />);
+    
+    // Type a free-form search (no filter prefix)
+    await user.type(ui.searchInput.get(), 'test');
+    
+    // Trigger the search by pressing Enter
+    await user.keyboard('{Enter}');
+    
+    // The search input should retain the value
+    expect(ui.searchInput.get()).toHaveValue('test');
   });
 
   describe('Conditional Fields', () => {
