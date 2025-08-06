@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Stack, Tooltip } from '@grafana/ui';
+import { Button, Drawer, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
