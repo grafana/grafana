@@ -207,6 +207,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 			Value:       &secret,
 			Decrypters: []string{
 				serviceIdentity,
+				owner.APIGroup,
 			},
 		},
 	}
