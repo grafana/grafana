@@ -7,6 +7,7 @@ package server
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -69,6 +70,11 @@ import (
 var provisioningExtras = wire.NewSet(
 	webhooks.ProvideWebhooks,
 	extras.ProvideProvisioningOSSExtras,
+)
+
+var configProviderExtras = wire.NewSet(
+	configprovider.ProvideService,
+	wire.Bind(new(configprovider.ConfigProvider), new(*configprovider.OSSConfigProvider)),
 )
 
 var wireExtsBasicSet = wire.NewSet(
@@ -144,6 +150,7 @@ var wireExtsBasicSet = wire.NewSet(
 	gsmKMSProviders.ProvideOSSKMSProviders,
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
+	configProviderExtras,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -173,6 +180,7 @@ var wireExtsBaseCLISet = wire.NewSet(
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
+	configProviderExtras,
 )
 
 // wireModuleServerSet is a wire set for the ModuleServer.
