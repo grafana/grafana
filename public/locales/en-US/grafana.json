@@ -9543,6 +9543,12 @@
         "total-bytes-processed": "Total bytes processed"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "Milliseconds",
+        "label-nanoseconds": "Nanoseconds"
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplication",
       "disable-highlighting": "Disable highlighting",
@@ -9568,6 +9574,8 @@
       "remove-escaping": "Remove escaping",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
+      "show-ms-timestamps": "Show millisecond timestamps",
+      "show-ns-timestamps": "Show nanosecond timestamps",
       "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
@@ -9600,7 +9608,7 @@
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",
-    "name-time": "Time",
+    "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
     "name-wrap-lines": "Wrap lines",
     "order-options": {
@@ -9616,6 +9624,7 @@
       "line-contains": "Add as line contains filter",
       "line-contains-not": "Add as line does not contain filter"
     },
+    "timestamp-format": "Timestamp resolution",
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
       "aria-label-fields": "Fields",
