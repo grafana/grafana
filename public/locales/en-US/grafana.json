@@ -3489,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
       "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
       "cancel-button": "Cancel",
-      "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
@@ -3588,6 +3587,7 @@
     },
     "folder-actions-button": {
       "delete": "Delete",
+      "delete-folder-error": "Error deleting folder. Please try again later.",
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move"
@@ -4318,7 +4318,7 @@
       "source-label": "Source",
       "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>"
     },
-    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation</2>",
     "target-form": {
       "control-rules": "This field is required.",
       "sub-text": "<0>Define what the correlation will link to. With the query type, a query will run when the correlation is clicked. With the external type, clicking the correlation will open a URL.</0>",
@@ -4721,7 +4721,7 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
@@ -7496,6 +7496,9 @@
     "badge-tooltip": "Provisioned"
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": "Folder deleted"
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -11094,6 +11097,14 @@
       "branch-required": "Branch is required",
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
+      "permissions": {
+        "pull-requests-label": "Pull requests",
+        "pull-requests-read-write": "Read and write",
+        "repository-label": "Repositories",
+        "repository-read-write-admin": "Read, and write",
+        "webhooks-label": "Webhooks",
+        "webhooks-read-write": "Read and write"
+      },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
       "token-description": "Bitbucket App Password with repository permissions",
@@ -11307,6 +11318,14 @@
       "branch-required": "Branch is required",
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
+      "permissions": {
+        "api": "API",
+        "api-read-write": "Read and write",
+        "repository-label": "Repository",
+        "repository-read-write": "Read and write",
+        "user-label": "User",
+        "user-read": "Read only"
+      },
       "pr-workflow-description": "Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.",
       "pr-workflow-label": "Enable merge request option when saving",
       "token-description": "GitLab Project Access Token with repository permissions",
@@ -11513,6 +11532,14 @@
     },
     "token-permissions-info": {
       "and-click": "and click",
+      "bitbucket": {
+        "create-token-button": "Create App passwords",
+        "token-text": "Bitbucket Personal Access Token"
+      },
+      "gitlab": {
+        "create-token-button": "Add new token",
+        "token-text": "GitLab Personal Access Token"
+      },
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
