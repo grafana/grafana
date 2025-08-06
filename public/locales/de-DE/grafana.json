@@ -1523,7 +1523,10 @@
       "group-loading-error": "Fehler beim Laden der Gruppe",
       "interval": "Intervall",
       "namespace": "Namensraum",
-      "new": ""
+      "new": "",
+      "title": {
+        "back": ""
+      }
     },
     "group-edit": {
       "ds-error": "Fehler beim Laden der Datenquellendetails",
@@ -2240,6 +2243,9 @@
       "title-attention": "Achtung",
       "title-manage-contact-point-permissions": "Kontaktpunkt-Berechtigungen verwalten"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": ""
+    },
     "receivers-section": {
       "button-more": "Mehr",
       "new-menu": {
@@ -2566,6 +2572,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "",
       "error-loading": "Beim Laden der Regel ist ein Fehler aufgetreten",
       "evaluation-interval": "Alle {{interval}}",
       "prometheus-consistency-check": {
@@ -3563,12 +3570,12 @@
       "tags-column": "Tags"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Ordner erfolgreich gelöscht",
       "api-error": "Ordner konnte nicht gelöscht werden",
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
-      "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:"
+      "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nachfolgerinformationen können nicht abgerufen werden"
@@ -3611,7 +3618,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Fehler beim Erstellen des Ordners",
-      "alert-folder-created-successfully": "Der Ordner wurde erfolgreich erstellt",
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
@@ -3759,7 +3765,6 @@
       }
     },
     "description-experimental-types": "Auswahl experimenteller Elementtypen aktivieren",
-    "description-infinite-panning": "Unbegrenztes Schwenken aktivieren – nützlich für umfangreiche Leinwände. Warnung: Dies ist eine experimentelle Funktion und funktioniert momentan nur mit Elementen gut, die oben/links eingeschränkt sind",
     "description-inline-editing": "Direkte Bearbeitung des Panels aktivieren",
     "description-pan-zoom": "Schwenken und Zoomen aktivieren",
     "direction-options": {
@@ -3860,7 +3865,6 @@
     "name-align-text": "Text ausrichten",
     "name-color": "Textfarbe",
     "name-experimental-types": "Experimentelle Elementtypen",
-    "name-infinite-panning": "Unbegrenztes Schwenken",
     "name-inline-editing": "Inline-Bearbeitung",
     "name-pan-zoom": "Schwenken und Zoomen",
     "name-text": "Text",
@@ -4130,11 +4134,39 @@
       "body": "Probieren Sie den neuen Advisor aus, um mögliche Probleme mit Ihren Datenquellen und Plugins zu erkennen.",
       "go-to-advisor": "Zu Advisor"
     },
+    "cloud": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "collector": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "integrations": {
+          "subtitle": "",
+          "title": ""
+        },
+        "private-data-source-connections": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
+    },
     "connect-data": {
       "category-header-label": "Datenquellen",
       "empty-message": "Es wurden keine Ergebnisse gefunden, die Ihrer Abfrage entsprechen",
       "request-data-source": "Neue Datenquelle anfordern",
       "roadmap": "Roadmap anzeigen"
+    },
+    "connections-home-page": {
+      "welcome-to-connections": ""
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link zu Verbindungen",
@@ -4165,6 +4197,19 @@
     },
     "not-found-datasource": {
       "body": "Möglicherweise haben Sie die URL falsch eingegeben oder das Plugin mit der ID <1></1> ist nicht verfügbar.<3></3>Um eine Liste der verfügbaren Datenquellen anzuzeigen, <5>klicken Sie bitte hier</5>."
+    },
+    "oss": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
     },
     "search": {
       "aria-label-search-all": "Alle durchsuchen",
@@ -4947,6 +4992,10 @@
       "description": "Beschreibung",
       "title-option": "Titel"
     },
+    "options-pane-category": {
+      "aria-label-collapse": "",
+      "aria-label-expand": ""
+    },
     "options-pane-options": {
       "placeholder-search-options": "Suchoptionen",
       "Recent options-title-recent-options": "Aktuelle Optionen",
@@ -5645,6 +5694,7 @@
       "delete-read-only-file-message": "Dieses Dashboard kann nicht direkt von Grafana aus gelöscht werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu löschen, entfernen Sie bitte die Datei aus Ihrem Git-Repository.",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
+      "success-message": "",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
     "description-label": {
@@ -5656,9 +5706,6 @@
           "edit-link": "Link bearbeiten"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Dashboard-Änderungen erfolgreich gespeichert"
     },
     "email-list": {
       "aria-label-emailmenu": "E-Mail-Menü umschalten"
@@ -5818,6 +5865,7 @@
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
       "api-error": "",
       "cancel-action": "",
       "current-file-not-found": "",
@@ -5827,6 +5875,7 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
+      "success-message": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -6601,6 +6650,7 @@
       "label-source": "Quelle"
     },
     "resource-picker": {
+      "aria-label-clear-value": "",
       "render-small-resource-picker": {
         "set-icon": "Symbol festlegen"
       }
@@ -6637,6 +6687,7 @@
       "noOptionsMessage-no-fields-found": ""
     },
     "text-dimension-editor": {
+      "aria-label-clear-value": "",
       "description-field": "Feldwert anzeigen",
       "description-fixed": "Fester Wert",
       "label-field": "Feld",
@@ -6774,7 +6825,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Schaltfläche zum Einklappen von Elementen der Inhaltsübersicht"
+        "aria-label-content-outline-item-collapse-button": "Schaltfläche zum Einklappen von Elementen der Inhaltsübersicht",
+        "aria-label-content-outline-item-delete-button": ""
       }
     },
     "correlation-editor-mode-bar": {
@@ -6984,6 +7036,7 @@
       "content-streaming": "Streaming"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "",
       "label-reload-log-volume": "Log-Volumen neu laden",
       "loading": "Wird geladen ...",
       "title-failed-volume-query": "Das Log-Volumen für diese Abfrage konnte nicht geladen werden",
@@ -7282,6 +7335,7 @@
       "split-widen": "Bereich verbreitern"
     },
     "trace-page-header": {
+      "aria-label-share-dropdown": "",
       "duration": "",
       "export-started": "",
       "give-feedback": "",
@@ -7306,6 +7360,7 @@
       "label-show-paths": "Schalter „Nur kritischen Pfad anzeigen“"
     },
     "trace-view": {
+      "aria-label-copy": "",
       "no-data": "Keine Daten",
       "tooltip-copy-icon": "Kopiert"
     },
@@ -7438,7 +7493,7 @@
     "loading": "Ordner werden geladen …"
   },
   "folder-repo": {
-    "badge-text": "Bereitgestellt"
+    "badge-tooltip": ""
   },
   "folders": {
     "get-loading-nav": {
@@ -7610,6 +7665,7 @@
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
+      "aria-label-close": "",
       "tooltip-show-measure-tools": "Messtools anzeigen"
     },
     "name-initial-view": "",
@@ -8642,6 +8698,7 @@
       "csv-placeholder": "CSV hier eingeben …",
       "filter-placeholder": "Filterwerte",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "",
       "filter-popup-cancel": "Abbrechen",
       "filter-popup-clear": "Filter löschen",
       "filter-popup-heading": "Nach Werten filtern:",
@@ -9364,6 +9421,15 @@
       "show-less": "weniger anzeigen",
       "show-more": "mehr anzeigen",
       "tooltip-error": "Fehler: {{errorMessage}}"
+    },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
     },
     "log-line-details": {
       "clear-search": "Löschen",
@@ -11015,6 +11081,9 @@
     "title-created-branch-in-repo": "",
     "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Diese Funktion befindet sich momentan in der aktiven Entwicklung. Für die bestmögliche Nutzererfahrung und die neuesten Verbesserungen empfehlen wir die Nutzung von <2>Nightly Build</2> von Grafana."
@@ -11056,6 +11125,9 @@
     },
     "check-repository": {
       "check": "Überprüfen"
+    },
+    "code-block": {
+      "aria-label-copy": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository-Einstellungen gespeichert",
@@ -11874,7 +11946,7 @@
         "recommended": "Empfohlen",
         "results": "Ergebnisse"
       },
-      "search": "Suche"
+      "search": ""
     }
   },
   "search": {
@@ -12511,6 +12583,19 @@
       "label-medium": "Mittel",
       "label-small": "Klein"
     },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Wenn dies ausgewählt ist, wird die gesamte Zeile so eingefärbt, wie es diese Zelle wäre.",
       "description-wrap-text": "Wenn dies ausgewählt ist, wird der Text auf die Breite des Textes in der konfigurierten Spalte umgebrochen",
@@ -12545,6 +12630,13 @@
       "label-alt-text": "Alt-Text",
       "label-title-text": "Titeltext"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
+    },
     "name-calculation": "Berechnung",
     "name-cell-height": "Zellenhöhe",
     "name-cell-type": "Zellentyp",
@@ -12561,7 +12653,10 @@
     "name-show-table-header": "Tabellenüberschirft anzeigen",
     "name-wrap-header-text": "Kopfzeilentext umbrechen",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alle numerischen Felder"
+    "placeholder-fields": "Alle numerischen Felder",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
     "category-cell-options": "Zellenoptionen",
@@ -13089,6 +13184,7 @@
       }
     },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "",
       "label-field": "Feld",
       "label-match": "Übereinstimmung",
       "label-value": "Wert",
@@ -13276,22 +13372,6 @@
       "label-row": "Zeile",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Boolescher falscher Wert",
-          "boolean-true-value": "Boolescher wahrer Wert",
-          "empty-string": "Leerer String",
-          "null-value": "Nullwert",
-          "number-value": "Wert Zahl 0"
-        },
-        "label": {
-          "empty": "Leer",
-          "false": "Falsch",
-          "null": "Null",
-          "true": "Richtig",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13644,6 +13724,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

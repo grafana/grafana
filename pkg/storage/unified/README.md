@@ -263,8 +263,6 @@ unifiedStorageSearchUI = true
 unifiedStorageSearch = true
 ; (optional) Allows you to sort dashboards by usage insights fields when using enterprise
 ; unifiedStorageSearchSprinkles = true
-; (optional) Will skip search results filter based on user permissions
-; unifiedStorageSearchPermissionFiltering = false
 ```
 
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
@@ -367,8 +365,6 @@ signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
 
 [feature_toggles]
-kubernetesDashboardsAPI = true
-kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageSearch = true
 
@@ -415,8 +411,6 @@ http_port = 3011
 http_addr = "127.0.0.2"
 
 [feature_toggles]
-kubernetesDashboardsAPI = true
-kubernetesFolders = true
 unifiedStorageSearchUI = true
 
 [unified_storage.dashboards.dashboard.grafana.app]
@@ -875,7 +869,6 @@ Unified Search requires several feature flags to be enabled depending on the des
 |--------------|---------|-------|--------------|
 | `unifiedStorageSearch` | Core search functionality | Experimental | Search API servers, indexing |
 | `unifiedStorageSearchUI` | Frontend search interface | Experimental | Grafana UI search |
-| `unifiedStorageSearchPermissionFiltering` | User permission filtering | GA | Access control in search results |
 | `unifiedStorageSearchSprinkles` | Usage insights integration | Experimental | Dashboard usage sorting (Enterprise) |
 | `unifiedStorageSearchDualReaderEnabled` | Shadow traffic to unified search | Experimental | Shadow traffic during migration |
 
@@ -890,9 +883,6 @@ unifiedStorageSearch = true
 
 ; Enable search UI (required for frontend)
 unifiedStorageSearchUI = true
-
-; Enable permission filtering (recommended)
-unifiedStorageSearchPermissionFiltering = true
 
 ; Enable shadow traffic during migration (optional)
 unifiedStorageSearchDualReaderEnabled = true

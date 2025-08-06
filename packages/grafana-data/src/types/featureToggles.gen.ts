@@ -80,11 +80,6 @@ export interface FeatureToggles {
   */
   mysqlAnsiQuotes?: boolean;
   /**
-  * Enable folder nesting
-  * @default true
-  */
-  nestedFolders?: boolean;
-  /**
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
@@ -285,6 +280,10 @@ export interface FeatureToggles {
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
+  /**
+  * Routes short url requests from /api to the /apis endpoint
+  */
+  kubernetesShortURLs?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -679,11 +678,6 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
-  /**
-  * Enable permission filtering on unified storage search
-  * @default true
-  */
-  unifiedStorageSearchPermissionFiltering?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -1091,4 +1085,13 @@ export interface FeatureToggles {
   * Enable adhoc filter buttons in visualization tooltips
   */
   adhocFiltersInTooltips?: boolean;
+  /**
+  * New Log Context component
+  */
+  newLogContext?: boolean;
+  /**
+  * Enables new design for the Clickhouse data source configuration page
+  * @default false
+  */
+  newClickhouseConfigPageDesign?: boolean;
 }
