@@ -677,7 +677,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
-			go jobController.Run(postStartHookCtx.Context)
 			return nil
 		},
 	}
