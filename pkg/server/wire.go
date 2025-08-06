@@ -44,6 +44,7 @@ import (
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	secretinline "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
@@ -101,6 +102,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -323,6 +325,7 @@ var wireBasicSet = wire.NewSet(
 	serviceaccountsmanager.ProvideServiceAccountsService,
 	serviceaccountsproxy.ProvideServiceAccountsProxy,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsproxy.ServiceAccountsProxy)),
+	mtdsclient.NewNullMTDatasourceClientBuilder,
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
@@ -426,8 +429,11 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideDecryptStorage,
 	secretdecrypt.ProvideDecryptAuthorizer,
 	secretdecrypt.ProvideDecryptService,
+	secretinline.ProvideInlineSecureValueService,
 	secretencryption.ProvideDataKeyStorage,
+	secretencryption.ProvideGlobalDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
+	secretencryption.ProvideGlobalEncryptedValueStorage,
 	secretsecurevalueservice.ProvideSecureValueService,
 	secretvalidator.ProvideKeeperValidator,
 	secretvalidator.ProvideSecureValueValidator,

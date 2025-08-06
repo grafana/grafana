@@ -4,16 +4,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 )
 
 func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	setup := testutils.Setup(t)
 
 	validator := validator.ProvideSecureValueValidator()
@@ -21,11 +24,15 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 	client := ProvideSecureValueClient(
 		setup.SecureValueService,
 		validator,
+		setup.AccessClient,
 	)
 
 	ns := "stacks-1234"
 	ctx := testutils.CreateUserAuthContext(t.Context(), ns, map[string][]string{
-		"securevalues:read": {"securevalues:uid:*"},
+		"securevalues:create": {"securevalues:uid:*"},
+		"securevalues:read":   {"securevalues:uid:*"},
+		"securevalues:write":  {"securevalues:uid:*"},
+		"securevalues:delete": {"securevalues:uid:*"},
 	})
 
 	nsClient, err := client.Client(ctx, ns)
@@ -104,6 +111,68 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	read, err = nsClient.Get(ctx, createdSv.Name, metav1.GetOptions{})
-	require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+	var apiErr *apierrors.StatusError
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, apiErr.ErrStatus.Reason, metav1.StatusReasonNotFound)
+	require.Nil(t, read)
+}
+
+func Test_SecureValueClient_CRUD_NoPermissions(t *testing.T) {
+	setup := testutils.Setup(t)
+
+	validator := validator.ProvideSecureValueValidator()
+
+	client := ProvideSecureValueClient(
+		setup.SecureValueService,
+		validator,
+		setup.AccessClient,
+	)
+
+	ns := "stacks-1234"
+	ctx := testutils.CreateUserAuthContext(t.Context(), ns, nil)
+
+	nsClient, err := client.Client(ctx, ns)
+	require.NoError(t, err)
+	require.NotNil(t, nsClient)
+
+	sv := &secretv1beta1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-sv",
+			Namespace: ns,
+		},
+	}
+
+	unstructured, err := toUnstructured(sv)
+	require.NoError(t, err)
+
+	// Create
+	created, err := nsClient.Create(ctx, unstructured, metav1.CreateOptions{})
+	var apiErr *apierrors.StatusError
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, apiErr.ErrStatus.Reason, metav1.StatusReasonForbidden)
+	require.Nil(t, created)
+
+	// Read
+	read, err := nsClient.Get(ctx, sv.Name, metav1.GetOptions{})
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, apiErr.ErrStatus.Reason, metav1.StatusReasonForbidden)
+	require.Nil(t, created)
+
+	// Update
+	updated, err := nsClient.Update(ctx, unstructured, metav1.UpdateOptions{})
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, apiErr.ErrStatus.Reason, metav1.StatusReasonForbidden)
+	require.Nil(t, updated)
+
+	// List
+	list, err := nsClient.List(ctx, metav1.ListOptions{})
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, apiErr.ErrStatus.Reason, metav1.StatusReasonForbidden)
+	require.Nil(t, list)
+
+	// Delete
+	err = nsClient.Delete(ctx, sv.Name, metav1.DeleteOptions{})
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, apiErr.ErrStatus.Reason, metav1.StatusReasonForbidden)
 	require.Nil(t, read)
 }

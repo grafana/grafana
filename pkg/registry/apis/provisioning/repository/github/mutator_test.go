@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +22,74 @@ func TestMutator(t *testing.T) {
 		expectedEncryptedToken string
 		expectedError          string
 	}{
+		{
+			name: "trims trailing .git and slash from GitHub URL",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo1",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo.git/",
+					},
+				},
+			},
+			setupMocks:             func(mockSecrets *secrets.MockRepositorySecrets) {},
+			expectedToken:          "",
+			expectedEncryptedToken: "",
+		},
+		{
+			name: "trims only trailing slash from GitHub URL",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo2",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo/",
+					},
+				},
+			},
+			setupMocks:             func(mockSecrets *secrets.MockRepositorySecrets) {},
+			expectedToken:          "",
+			expectedEncryptedToken: "",
+		},
+		{
+			name: "trims only trailing .git from GitHub URL",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo3",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo.git",
+					},
+				},
+			},
+			setupMocks:             func(mockSecrets *secrets.MockRepositorySecrets) {},
+			expectedToken:          "",
+			expectedEncryptedToken: "",
+		},
+		{
+			name: "does not trim if no .git or slash",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo4",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo",
+					},
+				},
+			},
+			setupMocks:             func(mockSecrets *secrets.MockRepositorySecrets) {},
+			expectedToken:          "",
+			expectedEncryptedToken: "",
+		},
 		{
 			name: "successful token encryption",
 			obj: &provisioning.Repository{

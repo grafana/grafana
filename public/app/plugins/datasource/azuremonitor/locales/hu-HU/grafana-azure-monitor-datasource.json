@@ -115,9 +115,12 @@
       "aria-label-column": "Oszlop",
       "aria-label-column-value": "Oszlopérték",
       "aria-label-operator": "Műveleti jel",
+      "aria-label-remove-filter": "",
       "label-or": "VAGY"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Csoport hozzáadása",
       "label-and": "ÉS",
       "label-filters": "Szűrők",
@@ -130,6 +133,8 @@
       "label-format-as": "Formázás mint"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Oszlop kiválasztása",
       "label-fuzzy-search": "Hozzávetőleges keresés",
       "placeholder-search-team": "Keresési kifejezés megadása",
@@ -144,6 +149,7 @@
       "aria-label-remove": "Eltávolítás"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Csoportosítási szempont",
       "tooltip-group-by": "Rendezze az eredményeket kategóriákba a megadott oszlopok alapján. A Csoportosítási szempont használható önállóan a kiválasztott oszlopok egyedi értékeinek felsorolására, vagy kombinálható összesítési függvényekkel az egyes csoportok összesített statisztikáinak előállításához. Ha önmagában használják, a megadott oszlopok különböző kombinációit adja vissza."
     },
@@ -186,8 +192,10 @@
       "text-loading": "Betöltés…"
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Rendezés oszlop szerint",
       "aria-label-order-direction": "Rendezési irány",
+      "aria-label-remove-order-by": "",
       "label-by": "SZEMPONT",
       "label-order-by": "Rendezési szempont",
       "tooltip-order-by": "Az eredmények rendezése egy vagy több oszlop alapján növekvő vagy csökkenő sorrendben."
@@ -233,7 +241,7 @@
       "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Hatókör"
     },
     "search": {
       "aria-label-resource-search": "Erőforrás keresése",
@@ -249,7 +257,8 @@
       "label-columns": "Oszlopok",
       "label-table": "Táblázat",
       "placeholder-select-columns": "Oszlopok kiválasztása",
-      "placeholder-select-table": "Tábla kiválasztása"
+      "placeholder-select-table": "Tábla kiválasztása",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Időszemcse"

@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "勾選此選項將優先使用具有 {{exampleParameter}} 參數的序列端點，而非具有 {{exampleParameter}} 參數的標籤值端點。雖然標籤值端點被視為擁有更佳效能，但有些使用者可能會更喜歡該序列，因為它具有 POST 方法，而標籤值端點僅具有 GET 方法。"
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
@@ -209,11 +213,104 @@
         "label-verbose": ""
       }
     },
-    "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "透過正規表達式搜尋篩選指標名稱，並使用額外的 Prometheus API 呼叫。",
-        "disable-text-wrap": "停用文字換行"
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
       },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
+    "querybuilder": {
       "feedback-link": {
         "give-feedback": "提供意見回饋",
         "title-give-feedback": "指標瀏覽器為新功能，請告訴我們如何改善"
@@ -227,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
         "type": ""
       },
       "get-prom-types": {
@@ -277,15 +371,10 @@
         "tooltip-metric": "選擇性設定：回傳指定指標中該標籤名稱的標籤值清單。"
       },
       "metrics-modal": {
-        "additional-settings": "附加設定",
-        "aria-label-additional-settings": "附加設定",
         "aria-label-browse-metrics": "瀏覽指標",
         "currently-selected": "目前已選取：{{selected}}",
         "metrics-pre-filtered": "這些指標已透過標籤篩選條件中選擇的標籤進行預先篩選。",
-        "placeholder-results-per-page": "每頁顯示結果",
-        "results-per-page": "每頁顯示的結果",
-        "title-metrics-explorer": "指標瀏覽器",
-        "results-amount_other": "結果共 {{count}} 項，顯示 {{num}} 項"
+        "title-metrics-explorer": "指標瀏覽器"
       },
       "nested-query": {
         "label": {
@@ -317,6 +406,13 @@
       "operation-param-editor": {
         "title-add": "新增{{name}}",
         "title-remove": "移除{{name}}"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "設定步驟參數的下限",
@@ -391,7 +487,6 @@
         "message-expand-search": "",
         "message-no-metrics-found": "",
         "name": "名稱（名字）",
-        "select": "選取",
         "type": "類型"
       },
       "update-function-args": {

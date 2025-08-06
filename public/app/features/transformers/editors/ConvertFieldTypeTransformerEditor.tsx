@@ -15,7 +15,7 @@ import {
 import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
-import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
+import { getAllFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
 import { findField } from 'app/features/dimensions/utils';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -34,7 +34,7 @@ export const ConvertFieldTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
-  const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
+  const allTypes = getAllFieldTypeIconOptions().filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
   // Format timezone options

@@ -703,12 +703,16 @@ PostgreSQL, MySQL, and MSSQL data sources don't use the proxy and are not affect
 
 Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout).
 Default is `false`.
-An existing user's account is unable to login for five minutes if all login attempts are spent within a 5 minute window.
+Login is blocked for five minutes if all login attempts are spent within a 5 minute window.
 
 #### `brute_force_login_protection_max_attempts`
 
-Configure how many login attempts a user can have within a five minute window before their account is locked.
+Configure how many login attempts can be made within a five minute window before being blocked.
 Default is `5`.
+
+#### `disable_username_login_protection`
+
+Set to `true` to disable [brute force login protection by username](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. User will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
 
 #### `disable_ip_address_login_protection`
 
@@ -2654,8 +2658,6 @@ If `true`, propagate the tracing context to the plugin backend and enable tracin
 ### `as_external`
 
 Load an external version of a core plugin if it has been installed.
-
-Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
 
 <hr>
 

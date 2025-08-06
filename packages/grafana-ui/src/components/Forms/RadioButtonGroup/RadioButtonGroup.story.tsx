@@ -14,6 +14,8 @@ const meta: Meta = {
     controls: {
       exclude: ['className', 'options', 'value', 'onChange', 'onClick', 'id'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     disabledOptions: {

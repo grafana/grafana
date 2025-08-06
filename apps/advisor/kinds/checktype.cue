@@ -7,8 +7,8 @@ checktype: {
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				frontend: true
-				backend:  true
+				ts: {enabled: false}
+				go: {enabled: true}
 			}
 			schema: {
 				#Step: {

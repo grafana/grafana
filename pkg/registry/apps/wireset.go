@@ -7,12 +7,15 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 )
 
 var WireSet = wire.NewSet(
-	ProvideRegistryServiceSink,
-	playlist.RegisterApp,
+	ProvideAppInstallers,
+	ProvideBuilderRunners,
+	playlist.RegisterAppInstaller,
 	investigations.RegisterApp,
 	advisor.RegisterApp,
 	notifications.RegisterApp,
+	shorturl.RegisterAppInstaller,
 )

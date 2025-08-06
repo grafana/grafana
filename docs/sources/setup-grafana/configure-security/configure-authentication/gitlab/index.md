@@ -88,7 +88,6 @@ Ensure that you have access to the [Grafana configuration file](../../../configu
 To configure GitLab authentication with Grafana, follow these steps:
 
 1. Create an OAuth application in GitLab.
-
    1. Set the redirect URI to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/gitlab`.
 
       Ensure that the Redirect URI is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/gitlab`.
@@ -237,7 +236,7 @@ use_refresh_token = true
 ## Configure team synchronization
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 By using Team Sync, you can map GitLab groups to teams within Grafana. This will automatically assign users to the appropriate teams.

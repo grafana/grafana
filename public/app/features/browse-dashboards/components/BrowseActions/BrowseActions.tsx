@@ -14,6 +14,8 @@ import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDa
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
+import { BulkDeleteProvisionedResource } from '../BulkActions/BulkDeleteProvisionedResource';
+import { BulkMoveProvisionedResource } from '../BulkActions/BulkMoveProvisionedResource';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -26,6 +28,7 @@ export interface Props {
 
 export function BrowseActions({ folderDTO }: Props) {
   const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
+  const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
 
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
@@ -40,10 +43,7 @@ export function BrowseActions({ folderDTO }: Props) {
   );
 
   // Folders can only be moved if nested folders is enabled
-  const moveIsInvalid = useMemo(
-    () => !config.featureToggles.nestedFolders && Object.values(selectedItems.folder).some((v) => v),
-    [selectedItems]
-  );
+  const moveIsInvalid = useMemo(() => Object.values(selectedItems.folder).some((v) => v), [selectedItems]);
 
   const isSearching = stateManager.hasSearchFilters();
 
@@ -69,6 +69,24 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showMoveModal = () => {
+    if (provisioningEnabled && hasProvisioned && hasNonProvisioned) {
+      // Mixed selection
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: SelectedMixResourcesMsgModal,
+          props: {},
+        })
+      );
+      return;
+    }
+
+    if (provisioningEnabled && hasProvisioned) {
+      // Only provisioned items
+      setShowBulkMoveProvisionedResource(true);
+      return;
+    }
+
+    // only non-provisioned items
     appEvents.publish(
       new ShowModalReactEvent({
         component: MoveModal,
@@ -127,16 +145,39 @@ export function BrowseActions({ folderDTO }: Props) {
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
         </Button>
       </Stack>
+      {/* bulk delete */}
       {showBulkDeleteProvisionedResource && (
         <Drawer
           title={t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
           onClose={() => setShowBulkDeleteProvisionedResource(false)}
           size="md"
         >
-          {/* TODO: Implement bulk delete for provisioned resources, PR will merge soon https://github.com/grafana/grafana/pull/107800 */}
-          <Trans i18nKey="browse-dashboards.action.bulk-delete-provisioned-resources-not-implemented">
-            Bulk delete for provisioned resources is not implemented yet.
-          </Trans>
+          <BulkDeleteProvisionedResource
+            selectedItems={selectedItems}
+            folderUid={folderDTO?.uid || ''}
+            onDismiss={() => {
+              setShowBulkDeleteProvisionedResource(false);
+              onActionComplete();
+            }}
+          />
+        </Drawer>
+      )}
+
+      {/* bulk move */}
+      {showBulkMoveProvisionedResource && (
+        <Drawer
+          title={t('browse-dashboards.action.bulk-move-provisioned-resources', 'Bulk Move Provisioned Resources')}
+          onClose={() => setShowBulkMoveProvisionedResource(false)}
+          size="md"
+        >
+          <BulkMoveProvisionedResource
+            selectedItems={selectedItems}
+            folderUid={folderDTO?.uid}
+            onDismiss={() => {
+              setShowBulkMoveProvisionedResource(false);
+              onActionComplete();
+            }}
+          />
         </Drawer>
       )}
     </>

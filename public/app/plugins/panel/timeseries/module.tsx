@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -16,6 +17,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
+
+    if (config.featureToggles.timeComparison) {
+      commonOptionsBuilder.addTimeCompareOption(builder);
+    }
 
     builder.addCustomEditor({
       id: 'timezone',
