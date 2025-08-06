@@ -17,10 +17,6 @@ export async function listFolders(
   page = 1,
   pageSize = PAGE_SIZE
 ): Promise<DashboardViewItem[]> {
-  if (parentUID) {
-    return [];
-  }
-
   const backendSrv = getBackendSrv();
 
   // TODO: what to do here for unified search?
