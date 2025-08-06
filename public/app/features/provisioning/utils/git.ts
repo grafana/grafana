@@ -1,5 +1,7 @@
 import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
+import { InstructionAvailability, RepoType } from '../Wizard/types';
+
 /**
  * Validates a Git branch name according to the following rules:
  * 1. The branch name cannot start with `/`, end with `/`, `.`, or whitespace.
@@ -64,3 +66,7 @@ export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
       return undefined;
   }
 };
+
+export function getHasTokenInstructions(type: RepoType): type is InstructionAvailability {
+  return type === 'github' || type === 'gitlab' || type === 'bitbucket';
+}

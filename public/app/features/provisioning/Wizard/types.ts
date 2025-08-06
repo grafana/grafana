@@ -41,3 +41,5 @@ export type StepStatusInfo =
   | { status: 'success'; success?: string | StatusInfo }
   | { status: 'error'; error: string | StatusInfo }
   | { status: 'warning'; warning: string | StatusInfo };
+
+export type InstructionAvailability = Extract<RepoType, 'bitbucket' | 'gitlab' | 'github'>;
