@@ -49,7 +49,7 @@ export const SaveDashboardErrorProxy = ({
               </Trans>
             </div>
           }
-          confirmText="Save and overwrite"
+          confirmText={t('dashboard.save-dashboard-error-proxy.confirmText-save-and-overwrite', 'Save and overwrite')}
           onConfirm={async () => {
             await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
             onDismiss();
@@ -90,7 +90,10 @@ export const SaveDashboardErrorProxy = ({
                   </Trans>
                 </div>
               }
-              confirmText="Save and overwrite"
+              confirmText={t(
+                'dashboard.save-dashboard-error-proxy.confirmText-save-and-overwrite',
+                'Save and overwrite'
+              )}
               onConfirm={async () => {
                 await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
                 onDismiss();

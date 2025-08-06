@@ -52,6 +52,7 @@
       "button-use-query": "Diese Abfrage nutzen",
       "label-categories": "Kategorien",
       "label-query-results": "Abfrageergebnisse: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Alle Kategorien",
       "placeholder-search-logs": "Logs-Abfragen durchsuchen",
       "text-loading": "Wird geladen ..."
@@ -114,9 +115,12 @@
       "aria-label-column": "Spalte",
       "aria-label-column-value": "Spaltenwert",
       "aria-label-operator": "Bediener",
+      "aria-label-remove-filter": "",
       "label-or": "ODER"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Gruppe hinzufügen",
       "label-and": "UND",
       "label-filters": "Filter",
@@ -129,6 +133,8 @@
       "label-format-as": "Formatieren als"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Spalte auswählen",
       "label-fuzzy-search": "Unscharfe Suche",
       "placeholder-search-team": "Suchbegriff eingeben",
@@ -143,6 +149,7 @@
       "aria-label-remove": "Entfernen"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Gruppieren nach",
       "tooltip-group-by": "Organisieren Sie die Ergebnisse in Kategorien, basierend auf den angegebenen Spalten. „Gruppieren nach“ kann unabhängig verwendet werden, um eindeutige Werte in ausgewählten Spalten aufzulisten, oder mit Aggregatfunktionen kombiniert werden, um zusammenfassende Statistiken für jede Gruppe zu erstellen. Wenn es allein verwendet wird, gibt es unterschiedliche Kombinationen der angegebenen Spalten zurück."
     },
@@ -161,6 +168,8 @@
       "tooltip-limit": "Beschränken Sie die Zahl der zurückgegebenen Zeilen (Standard ist 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Für Abfragen von Basis-Logs fallen Kosten an, je nach der Menge der gescannten Daten.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Abfragen von Basis-Logs",
@@ -183,8 +192,10 @@
       "text-loading": "Wird geladen ..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Nach Spalte ordnen",
       "aria-label-order-direction": "Ordnungsrichtung",
+      "aria-label-remove-order-by": "",
       "label-by": "NACH",
       "label-order-by": "Ordnen nach",
       "tooltip-order-by": "Sortieren Sie die Ergebnisse auf der Grundlage einer oder mehrerer Spalten in aufsteigender oder absteigender Reihenfolge."
@@ -194,8 +205,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure-Logs starten Ihre Abfrage-Schaltfläche",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Starten Sie Ihre Abfrage",
       "button-run-query": "Abfrage ausführen",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Dienst",
       "placeholder-service": "Dienst …",
       "title-switch-mode": "Editor-Modus wechseln?"
@@ -222,6 +240,9 @@
       "text-no-resources": "Keine Ressourcen gefunden",
       "title-error-occurred": "Bei der Anforderung von Ressourcen von Azure Monitor ist ein Fehler aufgetreten"
     },
+    "scope-selector": {
+      "label": "Bereich"
+    },
     "search": {
       "aria-label-resource-search": "Ressourcensuche",
       "placeholder-resource-search": "Suchen Sie eine Ressource"
@@ -236,7 +257,8 @@
       "label-columns": "Spalten",
       "label-table": "Tabelle",
       "placeholder-select-columns": "Spalten auswählen",
-      "placeholder-select-table": "Tabelle auswählen"
+      "placeholder-select-table": "Tabelle auswählen",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Zeitgranularität"

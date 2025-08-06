@@ -164,7 +164,7 @@ func NewTarball(
 	if err != nil {
 		return nil, err
 	}
-	frontendArtifact, err := NewFrontend(ctx, log, version, artifact, enterprise, src, cache)
+	frontendArtifact, err := NewFrontend(ctx, log, artifact, version, enterprise, src, cache)
 	if err != nil {
 		return nil, err
 	}
@@ -378,8 +378,12 @@ func verifyTarball(
 		WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
 		Args: []string{"./bin/grafana", "server"},
 	})
+	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarnCache, nodeVersion)
+	if err != nil {
+		return err
+	}
 
-	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, svc, src, yarnCache, nodeVersion)); err != nil {
+	if _, err := containers.ExitError(ctx, result); err != nil {
 		return err
 	}
 	return nil

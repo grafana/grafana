@@ -479,7 +479,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				nil,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -491,13 +491,18 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				nil,
 				true,
 				&user.SignedInUser{},
-			), nil)
+			)
 
+			err := b.Validate(context.Background(), admAttr, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+
+			err = b.Mutate(context.Background(), admAttr, nil)
+			require.NoError(t, err)
+			require.Equal(t, tt.input, tt.expected)
 		})
 	}
 }
@@ -585,7 +590,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				existingObj,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -597,13 +602,18 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 				nil,
 				true,
 				&user.SignedInUser{},
-			), nil)
+			)
 
+			err := b.Validate(context.Background(), admAttr, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+
+			err = b.Mutate(context.Background(), admAttr, nil)
+			require.NoError(t, err)
+			require.Equal(t, tt.input, tt.expected)
 		})
 	}
 }

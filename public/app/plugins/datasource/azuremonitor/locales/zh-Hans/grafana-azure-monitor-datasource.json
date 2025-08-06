@@ -52,6 +52,7 @@
       "button-use-query": "使用此查询",
       "label-categories": "类别",
       "label-query-results": "查询结果：{{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "所有类别",
       "placeholder-search-logs": "在日志查询中搜索",
       "text-loading": "加载中..."
@@ -114,9 +115,12 @@
       "aria-label-column": "列",
       "aria-label-column-value": "列值",
       "aria-label-operator": "运算符",
+      "aria-label-remove-filter": "",
       "label-or": "或"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "添加组",
       "label-and": "和",
       "label-filters": "筛选条件",
@@ -129,6 +133,8 @@
       "label-format-as": "格式为"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "选择列",
       "label-fuzzy-search": "模糊搜索",
       "placeholder-search-team": "输入搜索词",
@@ -143,6 +149,7 @@
       "aria-label-remove": "删除"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "分组依据",
       "tooltip-group-by": "根据指定的列将结果整理成不同类别。可以单独使用“按组排列”列出所选列中的唯一值，也可以与汇总函数结合使用，生成每个组的汇总统计数据。单独使用时，它会返回指定列的不同组合。"
     },
@@ -161,6 +168,8 @@
       "tooltip-limit": "限制返回的行数（默认为 1000）。"
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "基本日志查询根据扫描的数据量产生费用。",
       "label-logs": "日志",
       "title-basic-logs-queries": "基本日志查询",
@@ -183,8 +192,10 @@
       "text-loading": "加载中..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "按列排序",
       "aria-label-order-direction": "排序方向",
+      "aria-label-remove-order-by": "",
       "label-by": "方式",
       "label-order-by": "排序根据",
       "tooltip-order-by": "根据一列或多列以升序或降序对结果进行排序。"
@@ -194,8 +205,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 日志启动查询按钮",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "启动您的查询",
       "button-run-query": "运行查询",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "服务",
       "placeholder-service": "服务...",
       "title-switch-mode": "切换编辑器模式？"
@@ -222,6 +240,9 @@
       "text-no-resources": "未找到资源",
       "title-error-occurred": "从 Azure Monitor 请求资源时发生错误"
     },
+    "scope-selector": {
+      "label": "范围"
+    },
     "search": {
       "aria-label-resource-search": "资源搜索",
       "placeholder-resource-search": "搜索资源"
@@ -236,7 +257,8 @@
       "label-columns": "列",
       "label-table": "表格",
       "placeholder-select-columns": "选择列",
-      "placeholder-select-table": "选择表格"
+      "placeholder-select-table": "选择表格",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "时间颗粒"

@@ -52,6 +52,7 @@
       "button-use-query": "Utiliser cette requête",
       "label-categories": "Catégories",
       "label-query-results": "Résultats de la requête : {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Toutes les catégories",
       "placeholder-search-logs": "Rechercher des requêtes de journaux",
       "text-loading": "Chargement en cours..."
@@ -114,9 +115,12 @@
       "aria-label-column": "Colonne",
       "aria-label-column-value": "Valeur de la colonne",
       "aria-label-operator": "Opérateur",
+      "aria-label-remove-filter": "",
       "label-or": "OU"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Ajouter un groupe",
       "label-and": "ET",
       "label-filters": "Filtres",
@@ -129,6 +133,8 @@
       "label-format-as": "Formater en tant que"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Sélectionner une colonne",
       "label-fuzzy-search": "Recherche approximative",
       "placeholder-search-team": "Saisir le terme de recherche",
@@ -143,6 +149,7 @@
       "aria-label-remove": "Supprimer"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Regrouper par",
       "tooltip-group-by": "Organisez les résultats en catégories en fonction des colonnes spécifiées. La fonction « Regrouper par » peut être utilisée de manière indépendante pour répertorier les valeurs uniques dans les colonnes sélectionnées, ou combinée avec des fonctions d’agrégation pour produire des statistiques récapitulatives pour chaque groupe. Lorsqu’elle est utilisée seule, elle renvoie des combinaisons distinctes des colonnes spécifiées."
     },
@@ -161,6 +168,8 @@
       "tooltip-limit": "Limitez le nombre de lignes renvoyées (la valeur par défaut est 1 000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Les requêtes de journaux de base entraînent des coûts en fonction de la quantité de données analysées.",
       "label-logs": "Journaux",
       "title-basic-logs-queries": "Requêtes de journaux de base",
@@ -183,8 +192,10 @@
       "text-loading": "Chargement en cours..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Classer par colonne",
       "aria-label-order-direction": "Sens du classement",
+      "aria-label-remove-order-by": "",
       "label-by": "PAR",
       "label-order-by": "Classer par",
       "tooltip-order-by": "Triez les résultats en fonction d’une ou plusieurs colonne(s) par ordre croissant ou décroissant."
@@ -194,8 +205,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Bouton Lancer votre requête des journaux Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Lancer votre requête",
       "button-run-query": "Exécuter la requête",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Service",
       "placeholder-service": "Service...",
       "title-switch-mode": "Passer au mode d’édition ?"
@@ -222,6 +240,9 @@
       "text-no-resources": "Aucune ressource trouvée",
       "title-error-occurred": "Une erreur s’est produite lors de la demande de ressources à Azure Monitor"
     },
+    "scope-selector": {
+      "label": "Portée"
+    },
     "search": {
       "aria-label-resource-search": "Recherche de ressources",
       "placeholder-resource-search": "Rechercher une ressource"
@@ -236,7 +257,8 @@
       "label-columns": "Colonnes",
       "label-table": "Tableau",
       "placeholder-select-columns": "Sélectionner les colonnes",
-      "placeholder-select-table": "Sélectionner un tableau"
+      "placeholder-select-table": "Sélectionner un tableau",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Fragment de temps"

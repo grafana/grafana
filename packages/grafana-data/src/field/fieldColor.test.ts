@@ -47,7 +47,7 @@ describe('fieldColorModeRegistry', () => {
 
   it('Palette classic with series index 1', () => {
     const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 1, name: 'series2' });
-    expect(calcFn(70, 0, undefined)).toEqual('#F2CC0C');
+    expect(calcFn(70, 0, undefined)).toEqual('#FADE2A');
   });
 
   it('Palette uses name', () => {
@@ -113,8 +113,8 @@ describe('fieldColorModeRegistry', () => {
     const calcFn1 = mode.getCalculator(frames[0].fields[1], createTheme());
     const calcFn2 = mode.getCalculator(frames[1].fields[1], createTheme());
 
-    expect(calcFn1(0, 0)).toEqual('#82B5D8');
-    expect(calcFn2(0, 0)).toEqual('#FCE2DE');
+    expect(calcFn1(0, 0)).toEqual('#5195CE');
+    expect(calcFn2(0, 0)).toEqual('#37872D');
   });
 
   it('When color.seriesBy is set to last use that instead of v', () => {

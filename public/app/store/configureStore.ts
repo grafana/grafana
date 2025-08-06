@@ -2,7 +2,8 @@ import { configureStore as reduxConfigureStore, createListenerMiddleware } from 
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
-import { alertingAPIv0alpha1 } from '@grafana/alerting/unstable';
+import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
@@ -43,7 +44,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
         listenerMiddleware.middleware,
         alertingApi.middleware,
-        alertingAPIv0alpha1.middleware,
+        alertingPackageAPI.middleware,
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
@@ -53,6 +54,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         provisioningAPIv0alpha1.middleware,
         folderAPIv1beta1.middleware,
         advisorAPIv0alpha1.middleware,
+        dashboardAPIv0alpha1.middleware,
         // PLOP_INJECT_MIDDLEWARE
         // Used by the API client generator
         ...extraMiddleware

@@ -11,9 +11,9 @@ import { PrometheusDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
 import { PromVisualQueryBinary } from '../types';
 
-import { QueryBuilderContent } from './shared/QueryBuilderContent';
+import { QueryBuilderContent } from './QueryBuilderContent';
 
-export interface NestedQueryProps {
+interface NestedQueryProps {
   nestedQuery: PromVisualQueryBinary;
   datasource: PrometheusDatasource;
   index: number;

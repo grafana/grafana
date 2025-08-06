@@ -52,6 +52,7 @@
       "button-use-query": "Usar esta consulta",
       "label-categories": "Categorias",
       "label-query-results": "Resultados da consulta: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Todas as categorias",
       "placeholder-search-logs": "Fazer buscas nas consultas de logs",
       "text-loading": "Carregando..."
@@ -114,9 +115,12 @@
       "aria-label-column": "Coluna",
       "aria-label-column-value": "Valor da coluna",
       "aria-label-operator": "Operador",
+      "aria-label-remove-filter": "",
       "label-or": "OU"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Adicionar grupo",
       "label-and": "E",
       "label-filters": "Filtros",
@@ -129,6 +133,8 @@
       "label-format-as": "Formatar como"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Selecionar a coluna",
       "label-fuzzy-search": "Pesquisa difusa",
       "placeholder-search-team": "Digite o termo de pesquisa",
@@ -143,6 +149,7 @@
       "aria-label-remove": "Remover"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Agrupar por",
       "tooltip-group-by": "Organize os resultados em categorias com base nas colunas especificadas. O recurso \"Agrupar por\" pode ser usado de forma independente para listar valores exclusivos em colunas selecionadas ou em conjunto com funções de agregação para produzir estatísticas resumidas para cada grupo. Ao usá-lo sozinho, ele retorna combinações distintas das colunas especificadas."
     },
@@ -161,6 +168,8 @@
       "tooltip-limit": "Restrinja a quantidade de linhas retornadas (o valor padrão é 1.000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "As consultas de logs básicos incorrem em custos com base na quantidade de dados verificados.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Consultas de logs básicos",
@@ -183,8 +192,10 @@
       "text-loading": "Carregando..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Ordenar por coluna",
       "aria-label-order-direction": "Direção do pedido",
+      "aria-label-remove-order-by": "",
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Classifique os resultados com base em uma ou mais colunas em ordem crescente ou decrescente."
@@ -194,8 +205,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Botão de iniciar consulta de logs do Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Iniciar sua consulta",
       "button-run-query": "Executar consulta",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Serviço",
       "placeholder-service": "Serviço...",
       "title-switch-mode": "Deseja trocar para o modo de edição?"
@@ -222,6 +240,9 @@
       "text-no-resources": "Nenhum recurso encontrado",
       "title-error-occurred": "Ocorreu um erro ao solicitar recursos do Azure Monitor"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Pesquisa de recursos",
       "placeholder-resource-search": "Pesquisar um recurso"
@@ -236,7 +257,8 @@
       "label-columns": "Colunas",
       "label-table": "Tabela",
       "placeholder-select-columns": "Selecionar colunas",
-      "placeholder-select-table": "Selecionar uma tabela"
+      "placeholder-select-table": "Selecionar uma tabela",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Granularidade de tempo"

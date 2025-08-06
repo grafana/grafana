@@ -54,9 +54,7 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *Or
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
 
 	return provider
 }

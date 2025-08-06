@@ -17,12 +17,9 @@ import {
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import {
-  AzureLogAnalyticsMetadataTable,
-  AzureLogAnalyticsMetadataColumn,
-  AzureMonitorQuery,
-  EngineSchema,
-} from '../../types';
+import { AzureLogAnalyticsMetadataTable, AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
+import { EngineSchema } from '../../types/types';
 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
@@ -134,7 +131,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   );
 
   return (
-    <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
+    <span data-testid={selectors.components.queryEditor.logsQueryBuilder.container.input}>
       <EditorRows>
         {schema && tables.length === 0 && (
           <Alert

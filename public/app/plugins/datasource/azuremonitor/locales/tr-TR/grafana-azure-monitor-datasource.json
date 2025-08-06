@@ -52,6 +52,7 @@
       "button-use-query": "Bu sorguyu kullanın",
       "label-categories": "Kategoriler",
       "label-query-results": "Sorgu sonuçları: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Tüm kategoriler",
       "placeholder-search-logs": "Günlük sorgusu ara",
       "text-loading": "Yükleniyor..."
@@ -114,9 +115,12 @@
       "aria-label-column": "Sütun",
       "aria-label-column-value": "Sütun değeri",
       "aria-label-operator": "İşleç",
+      "aria-label-remove-filter": "",
       "label-or": "VEYA"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Grup ekle",
       "label-and": "VE",
       "label-filters": "Filtreler",
@@ -129,6 +133,8 @@
       "label-format-as": "Farklı biçimlendir"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Sütunu seçin",
       "label-fuzzy-search": "Benzer Öge Arama",
       "placeholder-search-team": "Arama terimi girin",
@@ -143,6 +149,7 @@
       "aria-label-remove": "Kaldır"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Gruplama ölçütü",
       "tooltip-group-by": "Sonuçları belirtilen sütunlara göre kategorilere ayırın. Gruplandırma, seçilen sütunlardaki tekil değerleri listelemek için tek başına kullanılabileceği gibi, her grup için özet istatistikleri üretmek üzere toplama işlevleriyle birlikte de kullanılabilir. Tek başına kullanıldığında, belirtilen sütunların farklı kombinasyonlarını döndürür."
     },
@@ -161,6 +168,8 @@
       "tooltip-limit": "Döndürülen satır sayısını kısıtlayın (varsayılan 1000'dir)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Temel Günlük sorguları, taranan veri miktarına bağlı olarak maliyet doğurur.",
       "label-logs": "Günlük kayıtları",
       "title-basic-logs-queries": "Temel Günlük Sorguları",
@@ -183,8 +192,10 @@
       "text-loading": "Yükleniyor..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Sütuna göre sırala",
       "aria-label-order-direction": "Sıralama Yönü",
+      "aria-label-remove-order-by": "",
       "label-by": "ÖLÇÜT",
       "label-order-by": "Sıralama Ölçütü",
       "tooltip-order-by": "Sonuçları bir veya daha fazla sütuna göre artan veya azalan düzende sıralayın."
@@ -194,8 +205,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure günlükleri sorgu hızlı başlatma düğmesi",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Sorgunuzu hızlı başlatın",
       "button-run-query": "Sorgu çalıştır",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Hizmet",
       "placeholder-service": "Hizmet...",
       "title-switch-mode": "Düzenleyici moduna geçilsin mi?"
@@ -222,6 +240,9 @@
       "text-no-resources": "Hiçbir kaynak bulunmadı",
       "title-error-occurred": "Azure Monitor'dan kaynaklar istenirken bir hata oluştu"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Kaynak arama",
       "placeholder-resource-search": "Kaynak ara"
@@ -236,7 +257,8 @@
       "label-columns": "Sütunlar",
       "label-table": "Tablo",
       "placeholder-select-columns": "Sütunları seçin",
-      "placeholder-select-table": "Bir tablo seçin"
+      "placeholder-select-table": "Bir tablo seçin",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Zaman aralığı"

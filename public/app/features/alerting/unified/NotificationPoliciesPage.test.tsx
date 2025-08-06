@@ -29,7 +29,7 @@ import {
   MatcherOperator,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import NotificationPolicies from './NotificationPoliciesPage';
 import { findRoutesMatchingFilters } from './components/notification-policies/NotificationPoliciesList';

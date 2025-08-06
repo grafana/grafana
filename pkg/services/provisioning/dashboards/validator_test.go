@@ -31,7 +31,10 @@ const (
 	twoDashboardsWithUID   = "testdata/test-dashboards/two-dashboards-with-uid"
 )
 
-func TestDuplicatesValidator(t *testing.T) {
+func TestIntegrationDuplicatesValidator(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 
@@ -45,7 +48,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	logger := log.New("test.logger")
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+	features := featuremgmt.WithFeatures()
 	fStore := folderimpl.ProvideStore(sql)
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)

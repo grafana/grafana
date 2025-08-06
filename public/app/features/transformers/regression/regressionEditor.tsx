@@ -15,8 +15,10 @@ import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/regression.svg';
+import lightImage from '../images/light/regression.svg';
 
-import { DEFAULTS, ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+import { DEFAULTS, DEGREES, ModelType, getRegressionTransformer, RegressionTransformerOptions } from './regression';
 
 const fieldNamePickerSettings = {
   editor: FieldNamePicker,
@@ -141,12 +143,12 @@ export const RegressionTransformerEditor = ({
         >
           <Select<number>
             value={options.degree ?? DEFAULTS.degree}
-            options={[
-              { label: t('transformers.regression-transformer-editor.label.quadratic', 'Quadratic'), value: 2 },
-              { label: t('transformers.regression-transformer-editor.label.cubic', 'Cubic'), value: 3 },
-              { label: t('transformers.regression-transformer-editor.label.quartic', 'Quartic'), value: 4 },
-              { label: t('transformers.regression-transformer-editor.label.quintic', 'Quintic'), value: 5 },
-            ]}
+            options={DEGREES.map((deg) => {
+              return {
+                label: deg.label(),
+                value: deg.value,
+              };
+            })}
             onChange={(v) => {
               onChange({ ...options, degree: v.value });
             }}
@@ -157,12 +159,18 @@ export const RegressionTransformerEditor = ({
   );
 };
 
-export const regressionTransformerRegistryItem: TransformerRegistryItem<RegressionTransformerOptions> = {
-  id: DataTransformerID.regression,
-  editor: RegressionTransformerEditor,
-  transformation: RegressionTransformer,
-  name: RegressionTransformer.name,
-  description: RegressionTransformer.description,
-  categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(DataTransformerID.regression).helperDocs,
+export const getRegressionTransformerRegistryItem: () => TransformerRegistryItem<RegressionTransformerOptions> = () => {
+  const regressionTransformer = getRegressionTransformer();
+  return {
+    id: DataTransformerID.regression,
+    editor: RegressionTransformerEditor,
+    transformation: regressionTransformer,
+    name: regressionTransformer.name,
+    description: regressionTransformer.description,
+    categories: new Set([TransformerCategory.CalculateNewFields]),
+    help: getTransformationContent(DataTransformerID.regression).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+    tags: new Set([t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis')]),
+  };
 };

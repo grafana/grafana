@@ -10,7 +10,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Introduction
-title: Introduction to Alerting
+title: Introduction to Grafana Alerting
 weight: 100
 refs:
   notifications:
@@ -58,27 +58,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
+  multi-dimensional-alerts-example:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/multi-dimensional-alerts/
+  tutorials:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/tutorials/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/tutorials/
 ---
 
-# Introduction to Alerting
+# Introduction to Grafana Alerting
 
-Whether you’re just starting out or you're a more experienced user of Grafana Alerting, learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly.
+Grafana Alerting lets you define alert rules across multiple data sources and manage notifications with flexible routing.
+
+Built on the Prometheus alerting model, it integrates with the Grafana stack to provide a scalable and effective alerting setup across a wide range of environments.
 
 {{< admonition type="tip" >}}
-For a hands-on introduction, refer to our [tutorial to get started with Grafana Alerting](http://grafana.com/tutorials/alerting-get-started/).
+For a hands-on introduction, refer to [Getting started with Grafana Alerting tutorials](ref:tutorials).
 {{< /admonition  >}}
-
-The following diagram gives you an overview of Grafana Alerting and introduces you to some of the fundamental features that are the principles of how Grafana Alerting works.
-
-<br/>
-
-{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="How Grafana Alerting works" >}}
 
 ## How it works at a glance
 
-- Grafana Alerting periodically queries data sources and evaluates the condition defined in the alert rule
-- If the condition is breached, an alert instance fires
-- Firing (and resolved) alert instances are sent for notifications, either directly to a contact point or through notification policies for more flexibility
+{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="How Grafana Alerting works" >}}
+
+1. Grafana Alerting periodically evaluates alert rules by executing their data source queries and checking their conditions.
+1. Each alert rule can produce multiple alert instances—one per time series or dimension.
+1. If a condition is breached, an alert instance fires.
+1. Firing (and resolved) alert instances are sent for notifications, either directly to a contact point or through notification policies for more flexibility.
 
 ## Fundamentals
 
@@ -90,9 +99,13 @@ An [alert rule](ref:alert-rules) consists of one or more queries and expressions
 
 In the alert rule, choose the contact point or notification policies to determine how to receive the alert notifications.
 
+### Alert rule evaluation
+
+[Alert rules are frequently evaluated](ref:alert-rule-evaluation) and the state of their alert instances is updated accordingly. Only alert instances that are in a firing or resolved state are sent in notifications.
+
 ### Alert instances
 
-Each alert rule can produce multiple alert instances (also known as alerts) - one alert instance for each time series. This is exceptionally powerful as it allows you to observe multiple series in a single expression.
+Each alert rule can produce multiple alert instances (also known as alerts) - one alert instance for each time series or dimension. This is allows you to observe multiple resources in a single expression.
 
 ```promql
 sum by(cpu) (
@@ -102,9 +115,9 @@ sum by(cpu) (
 
 A rule using the PromQL expression above creates as many alert instances as the amount of CPUs after the first evaluation, enabling a single rule to report the status of each CPU.
 
-{{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" caption="Multiple alert instances from a single alert rule" >}}
+{{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" alt="Multiple alert instances from a single alert rule" >}}
 
-[Alert rules are frequently evaluated](ref:alert-rule-evaluation) and the state of their alert instances is updated accordingly. Only alert instances that are in a firing or resolved state are sent in notifications.
+_For a demo, see the [multi-dimensional alerts example](ref:multi-dimensional-alerts-example)._
 
 ### Contact points
 
@@ -118,57 +131,20 @@ In the alert rule, you can choose a contact point to receive the alert notificat
 
 ### Notification policies
 
-[Notification policies](ref:notification-policies) is an advanced option to handle alert notifications for larger systems.
+[Notification policies](ref:notification-policies) are an advanced option for handling alert notifications by distinct scopes, such as by team or service—ideal for managing large alerting systems.
 
-Notification policies routes alerts to contact points via label matching. Each notification policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined in a tree structure, where the root of the notification policy tree is the **Default notification policy**, which ensures all alert instances are handled.
+Notification policies routes alerts to contact points via label matching. They are defined in a tree structure, where the root of the notification policy tree is the **Default notification policy**, which ensures all alert instances are handled.
 
 {{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" alt="A diagram displaying how the notification policy tree routes alerts" caption="Routing firing alert instances through notification policies" >}}
 
 <br/>
 
-Each notification policy decides where to send the alert (contact point) and when to send the notification (timing options). Additionally, it can [group multiple firing alert instances into a single notification](ref:group-alert-notifications) to reduce alert noise.
+Each notification policy decides where to send the alert (contact point) and when to send the notification (timing options).
 
-{{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-v5.png" max-width="750px" alt="A diagram of the notification policy component" >}}
+### Notification grouping
+
+To reduce alert noise, Grafana Alerting [groups related firing alerts into a single notification](ref:group-alert-notifications) by default. You can customize this behavior in the alert rule or notification policy settings.
 
 ### Silences and mute timings
 
 [Silences](ref:silences) and [mute timings](ref:mute-timings) allow you to pause notifications without interrupting alert rule evaluation. Use a silence to pause notifications on a one-time basis, such as during a maintenance window; and use mute timings to pause notifications at regular intervals, such as evenings and weekends.
-
-### Architecture
-
-Grafana Alerting is built on the Prometheus model of designing alerting systems. Prometheus-based alerting systems have two main components:
-
-- An alert generator that [evaluates alert rules](ref:alert-rule-evaluation) and sends firing and resolved alerts to the alert receiver.
-- An alert receiver (also known as Alertmanager) that receives the alerts and is responsible for sending their [notifications](ref:notifications).
-
-## Design your Alerting system
-
-Monitoring complex IT systems and understanding whether everything is up and running correctly is a difficult task. Setting up an effective alert management system is therefore essential to inform you when things are going wrong before they start to impact your business outcomes.
-
-Designing and configuring an alert management set up that works takes time.
-
-Here are some tips on how to create an effective alert management set up for your business:
-
-**Which are the key metrics for your business that you want to monitor and alert on?**
-
-- Find events that are important to know about and not so trivial or frequent that recipients ignore them.
-- Alerts should only be created for big events that require immediate attention or intervention.
-- Consider quality over quantity.
-
-**How do you want to organize your alerts and notifications?**
-
-- Be selective about who you set to receive alerts. Consider sending them to the right teams, whoever is on call, and the specific channels.
-- Think carefully about priority and severity levels.
-- Automate as far as possible provisioning Alerting resources with the API or Terraform.
-
-**Which information should you include in notifications?**
-
-- Consider who the alert receivers and responders are.
-- Share information that helps responders identify and address potential issues.
-- Link alerts to dashboards to guide responders on which data to investigate.
-
-**How can you reduce alert fatigue?**
-
-- Avoid noisy, unnecessary alerts by using silences, mute timings, or pausing alert rule evaluation.
-- Continually tune your alert rules to review effectiveness. Remove alert rules to avoid duplication or ineffective alerts.
-- Continually review your thresholds and evaluation rules.

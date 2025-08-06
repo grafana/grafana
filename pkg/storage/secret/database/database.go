@@ -6,6 +6,8 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -19,6 +21,7 @@ type contextSessionTxKey struct{}
 type Database struct {
 	dbType string
 	sqlx   *sqlx.DB
+	tracer trace.Tracer
 
 	// Keep the xorm.Engine instance and its references alive until the apiserver is shut down.
 	// This is only needed because the xorm.Engine calls a runtime.SetFinalizer, in a RAII-like pattern to close the DB,
@@ -34,13 +37,14 @@ type Database struct {
 	engine *xorm.Engine
 }
 
-func ProvideDatabase(db db.DB) *Database {
+func ProvideDatabase(db db.DB, tracer trace.Tracer) *Database {
 	engine := db.GetEngine()
 
 	return &Database{
 		dbType: string(db.GetDBType()),
 		sqlx:   sqlx.NewDb(engine.DB().DB, db.GetDialect().DriverName()),
 		engine: engine,
+		tracer: tracer,
 	}
 }
 
@@ -48,25 +52,31 @@ func (db *Database) DriverName() string {
 	return db.dbType
 }
 
-func (db *Database) Transaction(ctx context.Context, callback func(context.Context) error) error {
-	txCtx := ctx
-
+func (db *Database) Transaction(ctx context.Context, callback func(context.Context) error) (err error) {
 	// If another transaction is already open, we just use that one instead of nesting.
-	sqlxTx, ok := txCtx.Value(contextSessionTxKey{}).(*sqlx.Tx)
+	sqlxTx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx)
 	if sqlxTx != nil && ok {
 		// We are already in a transaction, so we don't commit or rollback, let the outermost transaction do it.
-		return callback(txCtx)
+		return callback(ctx)
 	}
 
-	tx, err := db.sqlx.Beginx()
+	spanCtx, span := db.tracer.Start(ctx, "Database.Transaction")
+	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, "Transaction failed")
+			span.RecordError(err)
+		}
+	}()
+
+	sqlxTx, err = db.sqlx.BeginTxx(spanCtx, nil)
 	if err != nil {
 		return err
 	}
 
-	sqlxTx = tx
-
 	// Save it in the context so the transaction can be reused in case it is nested.
-	txCtx = context.WithValue(ctx, contextSessionTxKey{}, sqlxTx)
+	txCtx := context.WithValue(spanCtx, contextSessionTxKey{}, sqlxTx)
 
 	if err := callback(txCtx); err != nil {
 		if rbErr := sqlxTx.Rollback(); rbErr != nil {
@@ -80,19 +90,25 @@ func (db *Database) Transaction(ctx context.Context, callback func(context.Conte
 }
 
 func (db *Database) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	spanCtx, span := db.tracer.Start(ctx, "Database.ExecContext")
+	defer span.End()
+
 	// If another transaction is already open, we just use that one instead of nesting.
 	if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
-		return tx.ExecContext(ctx, db.sqlx.Rebind(query), args...)
+		return tx.ExecContext(spanCtx, db.sqlx.Rebind(query), args...)
 	}
 
-	return db.sqlx.ExecContext(ctx, db.sqlx.Rebind(query), args...)
+	return db.sqlx.ExecContext(spanCtx, db.sqlx.Rebind(query), args...)
 }
 
 func (db *Database) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
+	spanCtx, span := db.tracer.Start(ctx, "Database.QueryContext")
+	defer span.End()
+
 	// If another transaction is already open, we just use that one instead of nesting.
 	if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
-		return tx.QueryContext(ctx, db.sqlx.Rebind(query), args...)
+		return tx.QueryContext(spanCtx, db.sqlx.Rebind(query), args...)
 	}
 
-	return db.sqlx.QueryContext(ctx, db.sqlx.Rebind(query), args...)
+	return db.sqlx.QueryContext(spanCtx, db.sqlx.Rebind(query), args...)
 }

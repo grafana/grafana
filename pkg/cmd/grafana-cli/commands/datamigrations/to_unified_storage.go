@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,7 +51,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		Resources: []schema.GroupResource{
 			{Group: folders.GROUP, Resource: folders.RESOURCE},
 			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
-			{Group: dashboard.GROUP, Resource: dashboard.LIBRARY_PANEL_RESOURCE},
 		},
 		LargeObjects: nil, // TODO... from config
 		Progress: func(count int, msg string) {
@@ -62,6 +62,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			}
 		},
 	}
+
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return err
+	}
+	featureToggles := featuremgmt.ProvideToggles(featureManager)
 
 	provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
 	if err != nil {
@@ -75,21 +81,24 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		provisioning,
 		nil, // no librarypanels.Service
 		sort.ProvideService(),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		featureToggles,
 	)
 
-	if c.Bool("non-interactive") {
-		client, err := newUnifiedClient(cfg, sqlStore)
-		if err != nil {
-			return err
-		}
+	client, err := newUnifiedClient(cfg, sqlStore, featureToggles)
+	if err != nil {
+		return err
+	}
 
+	if c.Bool("non-interactive") {
 		opts.Store = client
 		opts.BlobStore = client
+		opts.WithHistory = true // always include history in non-interactive mode
 		rsp, err := migrator.Migrate(ctx, opts)
-		if err != nil {
-			msg := fmt.Sprintf("Failed to migrate legacy resources: %+v", err)
-			return cli.Exit(msg, 1)
+		if exitErr := handleMigrationError(err, rsp); exitErr != nil {
+			return exitErr
 		}
+
 		logger.Info("Migrated legacy resources successfully in", time.Since(start))
 		if rsp != nil {
 			jj, _ := json.MarshalIndent(rsp, "", "  ")
@@ -154,11 +163,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 	if yes {
-		client, err := newUnifiedClient(cfg, sqlStore)
-		if err != nil {
-			return err
-		}
-
 		// Check the stats (eventually compare)
 		req := &resourcepb.ResourceStatsRequest{
 			Namespace: opts.Namespace,
@@ -218,10 +222,10 @@ func promptYesNo(prompt string) (bool, error) {
 	}
 }
 
-func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
+func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB, featureToggles featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
 		Cfg:      cfg,
-		Features: featuremgmt.WithFeatures(), // none??
+		Features: featureToggles,
 		DB:       sqlStore,
 		Tracer:   tracing.NewNoopTracerService(),
 		Reg:      prometheus.NewPedanticRegistry(),
@@ -237,4 +241,20 @@ func newParquetClient(file *os.File) (resourcepb.BulkStoreClient, error) {
 	}
 	client := parquet.NewBulkResourceWriterClient(writer)
 	return client, nil
+}
+
+func handleMigrationError(err error, rsp *resourcepb.BulkResponse) error {
+	if err != nil {
+		return cli.Exit(fmt.Sprintf("Failed to migrate legacy resources: %+v", err), 1)
+	}
+
+	if rsp != nil && rsp.Error != nil {
+		msg := fmt.Sprintf("Failed to migrate legacy resources: %s", rsp.Error.Message)
+		if rsp.Error.Reason != "" {
+			msg += fmt.Sprintf(" (%s)", rsp.Error.Reason)
+		}
+		return cli.Exit(msg, 1)
+	}
+
+	return nil
 }

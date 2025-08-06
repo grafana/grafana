@@ -52,6 +52,7 @@
       "button-use-query": "Använd denna fråga",
       "label-categories": "Kategorier",
       "label-query-results": "Resultat av fråga: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Alla kategorier",
       "placeholder-search-logs": "Sök loggfrågor",
       "text-loading": "Laddar …"
@@ -114,9 +115,12 @@
       "aria-label-column": "Kolumn",
       "aria-label-column-value": "Kolumnvärde",
       "aria-label-operator": "Operatör",
+      "aria-label-remove-filter": "",
       "label-or": "ELLER"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Skapa grupp",
       "label-and": "OCH",
       "label-filters": "Filter",
@@ -129,6 +133,8 @@
       "label-format-as": "Formatera som"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Välj kolumn",
       "label-fuzzy-search": "Fuzzy-sökning",
       "placeholder-search-team": "Ange en sökterm",
@@ -143,6 +149,7 @@
       "aria-label-remove": "Ta bort"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Gruppera efter",
       "tooltip-group-by": "Organisera resultat i kategorier baserat på angivna kolumner. Gruppera efter kan användas fristående för att lista unika värden i valda kolumner, eller kombineras med aggregeringsfunktioner för att skapa sammanfattande statistik för varje grupp. Vid fristående användning returnerar den unika kombinationer av de angivna kolumnerna."
     },
@@ -161,6 +168,8 @@
       "tooltip-limit": "Begränsa antalet rader som returneras (standard är 1 000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Grundläggande loggfrågor medför kostnader baserat på mängden data som skannas.",
       "label-logs": "Loggar",
       "title-basic-logs-queries": "Grundläggande loggfrågor",
@@ -183,8 +192,10 @@
       "text-loading": "Laddar …"
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Ordna efter kolumn",
       "aria-label-order-direction": "Sorteringsordning",
+      "aria-label-remove-order-by": "",
       "label-by": "AV",
       "label-order-by": "Ordnad efter",
       "tooltip-order-by": "Sortera resultat baserat på en eller flera kolumner i stigande eller fallande ordning."
@@ -194,8 +205,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Knapp för att kickstarta Azure-loggfrågor",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Kickstarta din fråga",
       "button-run-query": "Kör fråga",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Service",
       "placeholder-service": "Service …",
       "title-switch-mode": "Växla redigeringsläge?"
@@ -222,6 +240,9 @@
       "text-no-resources": "Inga resurser hittades",
       "title-error-occurred": "Ett fel uppstod vid begäran av resurser från Azure Monitor"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Resurssökning",
       "placeholder-resource-search": "Sök efter en resurs"
@@ -236,7 +257,8 @@
       "label-columns": "Kolumner",
       "label-table": "Tabell",
       "placeholder-select-columns": "Välj kolumner",
-      "placeholder-select-table": "Välj en tabell"
+      "placeholder-select-table": "Välj en tabell",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Tidsgranularitet"

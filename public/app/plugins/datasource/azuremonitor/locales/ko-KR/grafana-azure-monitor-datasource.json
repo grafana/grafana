@@ -52,6 +52,7 @@
       "button-use-query": "이 쿼리 사용",
       "label-categories": "범주",
       "label-query-results": "쿼리 결과: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "모든 범주",
       "placeholder-search-logs": "로그 쿼리 검색",
       "text-loading": "로딩 중..."
@@ -114,9 +115,12 @@
       "aria-label-column": "열",
       "aria-label-column-value": "열 값",
       "aria-label-operator": "작업 수행자",
+      "aria-label-remove-filter": "",
       "label-or": "또는"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "그룹 추가",
       "label-and": "그리고",
       "label-filters": "필터",
@@ -129,6 +133,8 @@
       "label-format-as": "형식:"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "열 선택",
       "label-fuzzy-search": "퍼지 검색",
       "placeholder-search-team": "검색어 입력",
@@ -143,6 +149,7 @@
       "aria-label-remove": "제거"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "그룹화 기준",
       "tooltip-group-by": "지정된 열을 기준으로 결과를 카테고리별로 분류합니다. 그룹화 기준은 선택한 열의 고유 값을 나열하는 데 독립적으로 사용하거나 집계 함수와 결합하여 각 그룹에 대한 요약 통계를 생성하는 데 사용할 수 있습니다. 단독으로 사용하면 지정된 열의 고유한 조합을 반환합니다."
     },
@@ -161,6 +168,8 @@
       "tooltip-limit": "반환되는 행 수를 제한합니다(기본값은 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "기본 로그 쿼리는 스캔된 데이터 양에 따라 비용이 발생합니다.",
       "label-logs": "로그",
       "title-basic-logs-queries": "기본 로그 쿼리",
@@ -183,8 +192,10 @@
       "text-loading": "로딩 중..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "열을 기준으로 정렬",
       "aria-label-order-direction": "정렬 방향",
+      "aria-label-remove-order-by": "",
       "label-by": "기준",
       "label-order-by": "정렬 기준",
       "tooltip-order-by": "하나 이상의 열을 기준으로 결과를 오름차순 또는 내림차순으로 정렬합니다."
@@ -194,8 +205,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 로그 쿼리 시작 버튼",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "쿼리 시작하기",
       "button-run-query": "쿼리 실행",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "서비스",
       "placeholder-service": "서비스...",
       "title-switch-mode": "편집기 모드를 전환하시겠어요?"
@@ -222,6 +240,9 @@
       "text-no-resources": "리소스를 찾을 수 없음",
       "title-error-occurred": "Azure Monitor에서 리소스를 요청하는 동안 오류가 발생했습니다."
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "리소스 검색",
       "placeholder-resource-search": "리소스 검색"
@@ -236,7 +257,8 @@
       "label-columns": "열",
       "label-table": "표",
       "placeholder-select-columns": "열 선택",
-      "placeholder-select-table": "테이블 선택"
+      "placeholder-select-table": "테이블 선택",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "시간 단위"

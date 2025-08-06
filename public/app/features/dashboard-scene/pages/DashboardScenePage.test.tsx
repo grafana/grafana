@@ -11,11 +11,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';

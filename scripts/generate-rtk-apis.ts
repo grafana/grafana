@@ -57,7 +57,6 @@ const config: ConfigFile = {
     '../public/app/api/clients/folder/v1beta1/endpoints.gen.ts': {
       apiFile: '../public/app/api/clients/folder/v1beta1/baseAPI.ts',
       schemaFile: '../data/openapi/folder.grafana.app-v1beta1.json',
-      filterEndpoints: ['getFolder'],
       tag: true,
     },
     '../public/app/api/clients/advisor/v0alpha1/endpoints.gen.ts': {
@@ -80,6 +79,17 @@ const config: ConfigFile = {
       filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
       tag: true,
     },
+    '../public/app/api/clients/dashboard/v0alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/dashboard/v0alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/dashboard.grafana.app-v0alpha1.json',
+      filterEndpoints: [
+        // Do not use any other endpoints from this version
+        // If other endpoints are required, they must be used from a newer version of the dashboard API
+        'getSearch',
+      ],
+      tag: true,
+    },
+
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };

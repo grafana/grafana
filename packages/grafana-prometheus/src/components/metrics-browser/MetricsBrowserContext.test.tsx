@@ -7,7 +7,7 @@ import { TimeRange } from '@grafana/data';
 import { DEFAULT_SERIES_LIMIT, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
 import { PrometheusDatasource } from '../../datasource';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
-import { getMockTimeRange } from '../../test/__mocks__/datasource';
+import { getMockTimeRange } from '../../test/mocks/datasource';
 
 import { MetricsBrowserProvider, useMetricsBrowser } from './MetricsBrowserContext';
 

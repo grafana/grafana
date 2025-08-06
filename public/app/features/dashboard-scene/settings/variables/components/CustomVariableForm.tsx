@@ -46,7 +46,7 @@ export function CustomVariableForm({
       </VariableLegend>
 
       <VariableTextAreaField
-        name="Values separated by comma"
+        name={t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'Values separated by comma')}
         defaultValue={query}
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"

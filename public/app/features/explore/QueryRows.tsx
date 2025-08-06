@@ -4,7 +4,8 @@ import { useCallback, useMemo } from 'react';
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { useDispatch, useSelector } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
@@ -16,23 +17,25 @@ import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
   exploreId: string;
+  changeCompactMode: (compact: boolean) => void;
+  isOpen?: boolean;
 }
 
 const makeSelectors = (exploreId: string) => {
   const exploreItemSelector = getExploreItemSelector(exploreId);
   return {
-    getQueries: createSelector(exploreItemSelector, (s) => s!.queries),
-    getQueryResponse: createSelector(exploreItemSelector, (s) => s!.queryResponse),
-    getHistory: createSelector(exploreItemSelector, (s) => s!.history),
-    getEventBridge: createSelector(exploreItemSelector, (s) => s!.eventBridge),
+    getQueries: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.queries),
+    getQueryResponse: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.queryResponse),
+    getHistory: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.history),
+    getEventBridge: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.eventBridge),
     getDatasourceInstanceSettings: createSelector(
       exploreItemSelector,
-      (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
+      (s: ExploreItemState | undefined) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
   };
 };
 
-export const QueryRows = ({ exploreId }: Props) => {
+export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const dispatch = useDispatch();
   const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
     () => makeSelectors(exploreId),
@@ -86,6 +89,12 @@ export const QueryRows = ({ exploreId }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
+  const onQueryOpenChanged = () => {
+    // Disables compact mode when query is opened.
+    // Compact mode can also be disabled by opening Content Outline.
+    changeCompactMode(false);
+  };
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
@@ -98,10 +107,12 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueryRemoved={onQueryRemoved}
       onQueryToggled={onQueryToggled}
       onQueryReplacedFromLibrary={onQueryReplacedFromLibrary}
+      onQueryOpenChanged={onQueryOpenChanged}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      isOpen={isOpen}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}

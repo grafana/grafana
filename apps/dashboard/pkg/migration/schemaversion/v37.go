@@ -1,9 +1,76 @@
 package schemaversion
 
-// V37 normalizes legend configuration in panels to use a consistent format:
-// - Converts boolean legend values to object format
-// - Standardizes hidden legends to use showLegend: false with displayMode: list
-// - Ensures visible legends have showLegend: true
+// V37 normalizes legend configuration to use `showLegend` property consistently.
+//
+// This migration addresses inconsistencies in how legend visibility was handled.
+// There were two ways to hide the legend:
+// 1. Using displayMode: "hidden"
+// 2. Using showLegend: false
+//
+// The migration normalizes both approaches to use showLegend consistently:
+// - If displayMode is "hidden" OR showLegend is false, set displayMode to "list" and showLegend to false
+// - For all other existing legend objects, ensure showLegend is true
+//
+// Note: This migration only processes legend configurations that already exist as objects.
+// Boolean legend values are not processed by this migration.
+//
+// Example transformations:
+//
+// Before migration (hidden displayMode):
+//
+//	options: {
+//	  legend: {
+//	    displayMode: "hidden",
+//	    placement: "bottom"
+//	  }
+//	}
+//
+// After migration:
+//
+//	options: {
+//	  legend: {
+//	    displayMode: "list",
+//	    showLegend: false,
+//	    placement: "bottom"
+//	  }
+//	}
+//
+// Before migration (showLegend false):
+//
+//	options: {
+//	  legend: {
+//	    displayMode: "table",
+//	    showLegend: false
+//	  }
+//	}
+//
+// After migration:
+//
+//	options: {
+//	  legend: {
+//	    displayMode: "list",
+//	    showLegend: false
+//	  }
+//	}
+//
+// Before migration (visible legend):
+//
+//	options: {
+//	  legend: {
+//	    displayMode: "table",
+//	    placement: "bottom"
+//	  }
+//	}
+//
+// After migration:
+//
+//	options: {
+//	  legend: {
+//	    displayMode: "table",
+//	    placement: "bottom",
+//	    showLegend: true
+//	  }
+//	}
 func V37(dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(37)
 
@@ -12,9 +79,25 @@ func V37(dashboard map[string]interface{}) error {
 		return nil
 	}
 
+	// Process all panels, including nested ones
+	processPanelsV37(panels)
+
+	return nil
+}
+
+// processPanelsV37 recursively processes panels, including nested panels within rows
+func processPanelsV37(panels []interface{}) {
 	for _, panel := range panels {
 		p, ok := panel.(map[string]interface{})
 		if !ok {
+			continue
+		}
+
+		// Process nested panels if this is a row panel
+		if p["type"] == "row" {
+			if nestedPanels, ok := p["panels"].([]interface{}); ok {
+				processPanelsV37(nestedPanels)
+			}
 			continue
 		}
 
@@ -23,40 +106,23 @@ func V37(dashboard map[string]interface{}) error {
 			continue
 		}
 
-		// Skip if no legend config exists
+		// Only process legend if it exists and is an object (not boolean)
 		legendValue := options["legend"]
-		if legendValue == nil {
-			continue
-		}
-
-		// Convert boolean legend to object format
-		if legendBool, ok := legendValue.(bool); ok {
-			options["legend"] = map[string]interface{}{
-				"displayMode": "list",
-				"showLegend":  legendBool,
-			}
-			continue
-		}
-
-		// Handle object format legend
 		legend, ok := legendValue.(map[string]interface{})
-		if !ok {
+		if !ok || legend == nil {
 			continue
 		}
 
-		displayMode, hasDisplayMode := legend["displayMode"].(string)
+		displayMode, _ := legend["displayMode"].(string)
 		showLegend, hasShowLegend := legend["showLegend"].(bool)
 
-		// Normalize hidden legends
-		if (hasDisplayMode && displayMode == "hidden") || (hasShowLegend && !showLegend) {
+		// If displayMode is "hidden" OR showLegend is false, normalize to hidden legend
+		if displayMode == "hidden" || (hasShowLegend && !showLegend) {
 			legend["displayMode"] = "list"
 			legend["showLegend"] = false
-			continue
+		} else {
+			// For all other cases, ensure showLegend is true
+			legend["showLegend"] = true
 		}
-
-		// Ensure visible legends have showLegend true
-		legend["showLegend"] = true
 	}
-
-	return nil
 }

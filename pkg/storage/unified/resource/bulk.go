@@ -244,7 +244,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Namespace: summary.Namespace,
 				Group:     summary.Group,
 				Resource:  summary.Resource,
-			}, summary.Count, summary.ResourceVersion)
+			}, summary.Count, summary.ResourceVersion, "rebuildAfterBatchLoad")
 			if err != nil {
 				s.log.Warn("error building search index after batch load", "err", err)
 				rsp.Error = &resourcepb.ErrorResult{
@@ -305,7 +305,7 @@ func (b *batchRunner) Next() bool {
 
 		// Mention resource in the span.
 		attrs := []attribute.KeyValue{
-			attribute.String("key", k),
+			attribute.String("key", nsgrWithName(key)),
 		}
 		if b.err != nil {
 			attrs = append(attrs, attribute.String("error", b.err.Error()))

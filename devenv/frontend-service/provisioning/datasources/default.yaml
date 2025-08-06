@@ -1,0 +1,14 @@
+apiVersion: 1
+
+prune: true
+
+datasources:
+  # From devenv/datasources.yaml
+  - name: Testdata
+    uid: PD8C576611E62080A
+    type: grafana-testdata-datasource
+
+  - name: Loki Logs
+    uid: fs-loki
+    type: loki
+    url: http://loki:3100

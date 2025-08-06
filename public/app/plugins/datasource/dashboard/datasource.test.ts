@@ -7,15 +7,19 @@ import {
   getDefaultTimeRange,
   LoadingState,
   standardTransformersRegistry,
+  FieldType,
+  DataFrame,
+  AdHocVariableFilter,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils, config } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
   SceneDataNode,
   SceneDataTransformer,
   SceneFlexItem,
   SceneFlexLayout,
+  SceneObject,
   VizPanel,
 } from '@grafana/scenes';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
@@ -131,6 +135,536 @@ describe('DashboardDatasource', () => {
     // on further emissions the result should be the unmodified original dataframe
     expect(rsp!.data[0].fields[0].state).toEqual({});
   });
+
+  describe('AdHoc Filtering', () => {
+    // Shared test utilities
+    interface TestField {
+      name: string;
+      type: FieldType;
+      values: unknown[];
+    }
+
+    function createTestFrame(fields: TestField[]) {
+      return {
+        name: 'TestData',
+        fields: fields.map((field) => ({
+          name: field.name,
+          type: field.type,
+          values: field.values,
+          config: {},
+          state: {},
+        })),
+        length: fields[0]?.values.length || 0,
+        refId: 'A',
+      };
+    }
+
+    function createQueryRequest(filters: AdHocVariableFilter[], scene: SceneObject) {
+      return {
+        timezone: 'utc',
+        targets: [{ refId: 'A', panelId: 1 }],
+        requestId: '',
+        interval: '',
+        intervalMs: 0,
+        range: getDefaultTimeRange(),
+        scopedVars: {
+          __sceneObject: new SafeSerializableSceneObject(scene),
+        },
+        app: '',
+        startTime: 0,
+        filters: filters,
+      };
+    }
+
+    // Test AdHoc filtering via the Public API first, to ensure Integration
+    describe('Integration (Public API)', () => {
+      const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
+
+      beforeEach(() => {
+        config.featureToggles.dashboardDsAdHocFiltering = true;
+      });
+
+      afterEach(() => {
+        config.featureToggles.dashboardDsAdHocFiltering = originalToggleValue;
+      });
+
+      it('should apply basic filtering end-to-end through public query method', async () => {
+        const testFrame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: {
+                    series: [testFrame],
+                    state: LoadingState.Done,
+                    timeRange: getDefaultTimeRange(),
+                  },
+                }),
+              }),
+            }),
+          ],
+        });
+
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+        const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '=', value: 'John' }];
+
+        const observable = ds.query(createQueryRequest(filters, scene));
+
+        let result: DataQueryResponse | undefined;
+        observable.subscribe({ next: (data) => (result = data) });
+
+        expect(result?.data[0].fields[0].values).toEqual(['John']);
+        expect(result?.data[0].fields[1].values).toEqual([25]);
+        expect(result?.data[0].length).toBe(1);
+      });
+
+      it('should respect feature toggle and not filter when disabled', async () => {
+        // Temporarily disable the feature toggle for this test
+        config.featureToggles.dashboardDsAdHocFiltering = false;
+
+        const testFrame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: {
+                    series: [testFrame],
+                    state: LoadingState.Done,
+                    timeRange: getDefaultTimeRange(),
+                  },
+                }),
+              }),
+            }),
+          ],
+        });
+
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+        const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '=', value: 'John' }];
+
+        const observable = ds.query(createQueryRequest(filters, scene));
+
+        let result: DataQueryResponse | undefined;
+        observable.subscribe({ next: (data) => (result = data) });
+
+        // Should return unfiltered data since feature toggle is disabled
+        expect(result?.data[0].fields[0].values).toEqual(['John', 'Jane', 'Bob']);
+        expect(result?.data[0].fields[1].values).toEqual([25, 30, 35]);
+        expect(result?.data[0].length).toBe(3);
+      });
+
+      it('should apply multiple filters with AND logic through public API', async () => {
+        const testFrame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'status', type: FieldType.string, values: ['active', 'active', 'inactive'] },
+        ]);
+
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: {
+                    series: [testFrame],
+                    state: LoadingState.Done,
+                    timeRange: getDefaultTimeRange(),
+                  },
+                }),
+              }),
+            }),
+          ],
+        });
+
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+        const filters: AdHocVariableFilter[] = [
+          { key: 'name', operator: '!=', value: 'John' },
+          { key: 'status', operator: '=', value: 'active' },
+        ];
+
+        const observable = ds.query(createQueryRequest(filters, scene));
+
+        let result: DataQueryResponse | undefined;
+        observable.subscribe({ next: (data) => (result = data) });
+
+        expect(result?.data[0].fields[0].values).toEqual(['Jane']);
+        expect(result?.data[0].fields[1].values).toEqual(['active']);
+        expect(result?.data[0].length).toBe(1);
+      });
+    });
+
+    // Now test AdHoc filtering with unit-tests to test all aspects of behaviour.
+    // Here we test a private method, which allows for smaller, simpler,
+    // faster tests.
+    // This is the bottom of the 'Test Pyramid'
+    describe('Algorithm (but by testing a Private Method)', () => {
+      const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+      // Type-safe interface for accessing private methods in tests
+      interface DashboardDatasourceWithPrivateMethods {
+        applyAdHocFilters: (frame: DataFrame, filters: AdHocVariableFilter[]) => DataFrame;
+      }
+
+      it('should apply equality filter correctly', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'name', operator: '=', value: 'John' },
+        ]);
+
+        expect(result.fields[0].values).toEqual(['John']);
+        expect(result.fields[1].values).toEqual([25]);
+        expect(result.length).toBe(1);
+      });
+
+      it('should apply not-equal filter correctly', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'name', operator: '!=', value: 'John' },
+        ]);
+
+        expect(result.fields[0].values).toEqual(['Jane', 'Bob']);
+        expect(result.fields[1].values).toEqual([30, 35]);
+        expect(result.length).toBe(2);
+      });
+
+      it('should apply multiple filters with AND logic', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'status', type: FieldType.string, values: ['active', 'active', 'inactive'] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'name', operator: '!=', value: 'John' },
+          { key: 'status', operator: '=', value: 'active' },
+        ]);
+
+        expect(result.fields[0].values).toEqual(['Jane']);
+        expect(result.fields[1].values).toEqual(['active']);
+        expect(result.length).toBe(1);
+      });
+
+      it('should handle null values correctly', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', null, 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'name', operator: '!=', value: 'John' },
+        ]);
+
+        expect(result.fields[0].values).toEqual([null, 'Bob']);
+        expect(result.fields[1].values).toEqual([30, 35]);
+        expect(result.length).toBe(2);
+      });
+
+      it('should apply equality filter on numeric fields', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'age', operator: '=', value: '30' },
+        ]);
+
+        expect(result.fields[0].values).toEqual(['Jane']);
+        expect(result.fields[1].values).toEqual([30]);
+        expect(result.length).toBe(1);
+      });
+
+      it('should apply not-equal filter on numeric fields', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'age', operator: '!=', value: '30' },
+        ]);
+
+        expect(result.fields[0].values).toEqual(['John', 'Bob']);
+        expect(result.fields[1].values).toEqual([25, 35]);
+        expect(result.length).toBe(2);
+      });
+
+      it('should handle numeric fields with null values', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, null, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'age', operator: '!=', value: '25' },
+        ]);
+
+        expect(result.fields[0].values).toEqual(['Jane', 'Bob']);
+        expect(result.fields[1].values).toEqual([null, 35]);
+        expect(result.length).toBe(2);
+      });
+
+      it('should handle mixed string and numeric filtering', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob', 'Alice'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 25, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'name', operator: '!=', value: 'Bob' },
+          { key: 'age', operator: '=', value: '25' },
+        ]);
+
+        // Should match: name != 'Bob' AND age = 25
+        // John: !Bob + 25 ✓
+        // Jane: !Bob + 30 ✗
+        // Bob: Bob + 25 ✗
+        // Alice: !Bob + 35 ✗
+        expect(result.fields[0].values).toEqual(['John']);
+        expect(result.fields[1].values).toEqual([25]);
+        expect(result.length).toBe(1);
+      });
+
+      it('should handle floating point numbers correctly', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['Alice', 'Bob', 'Charlie', 'Diana'] },
+          { name: 'score', type: FieldType.number, values: [95.5, 87.25, 95.5, 92.0] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'score', operator: '=', value: '95.5' },
+        ]);
+
+        expect(result.fields[0].values).toEqual(['Alice', 'Charlie']);
+        expect(result.fields[1].values).toEqual([95.5, 95.5]);
+        expect(result.length).toBe(2);
+      });
+
+      it('should handle floating point numbers with != operator', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['Alice', 'Bob', 'Charlie'] },
+          { name: 'temperature', type: FieldType.number, values: [98.6, 99.1, 98.6] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'temperature', operator: '!=', value: '98.6' },
+        ]);
+
+        expect(result.fields[0].values).toEqual(['Bob']);
+        expect(result.fields[1].values).toEqual([99.1]);
+        expect(result.length).toBe(1);
+      });
+
+      it('should handle precision edge cases with floats', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['Test1', 'Test2', 'Test3'] },
+          { name: 'value', type: FieldType.number, values: [0.1 + 0.2, 0.3, 1.0000001] },
+        ]);
+
+        // Note: 0.1 + 0.2 !== 0.3 in JavaScript due to floating point precision
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'value', operator: '=', value: '0.3' },
+        ]);
+
+        // Should only match the exact 0.3, not the computed 0.1 + 0.2
+        expect(result.fields[0].values).toEqual(['Test2']);
+        expect(result.fields[1].values).toEqual([0.3]);
+        expect(result.length).toBe(1);
+      });
+
+      it('should handle empty data frames', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: [] },
+          { name: 'age', type: FieldType.number, values: [] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'name', operator: '=', value: 'John' },
+        ]);
+
+        expect(result.fields[0].values).toEqual([]);
+        expect(result.fields[1].values).toEqual([]);
+        expect(result.length).toBe(0);
+      });
+
+      it.skip('should handle remaining operators', () => {
+        // Not yet implemented, so we explicitly don't specify any behaviour for this
+      });
+
+      it.skip('should handle remaining field types (eg. date)', () => {
+        // Not yet implemented, so we explicitly don't specify any behaviour for this
+      });
+
+      it('should handle filters on missing fields with = operator', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'missing_field', operator: '=', value: 'test' },
+        ]);
+
+        // Should return empty result since field doesn't exist
+        expect(result.fields[0].values).toEqual([]);
+        expect(result.fields[1].values).toEqual([]);
+        expect(result.length).toBe(0);
+      });
+
+      it('should handle filters on missing fields with != operator', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'missing_field', operator: '!=', value: 'test' },
+        ]);
+
+        // Should return all rows since field doesn't exist (all rows are "not equal")
+        expect(result.fields[0].values).toEqual(['John', 'Jane', 'Bob']);
+        expect(result.fields[1].values).toEqual([25, 30, 35]);
+        expect(result.length).toBe(3);
+      });
+
+      it('should handle complex filtering scenario', () => {
+        const frame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Admin', 'Bob'] },
+          { name: 'status', type: FieldType.string, values: ['active', 'inactive', 'active', 'active'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35, 40] },
+        ]);
+
+        const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+          { key: 'status', operator: '=', value: 'active' },
+          { key: 'name', operator: '!=', value: 'Admin' },
+          { key: 'missing_field', operator: '!=', value: 'ignored' }, // Should be ignored
+        ]);
+
+        // Should match: status=active AND name!=Admin
+        // John: active + !Admin ✓
+        // Jane: inactive + !Admin ✗
+        // Admin: active + Admin ✗
+        // Bob: active + !Admin ✓
+        expect(result.fields[0].values).toEqual(['John', 'Bob']);
+        expect(result.fields[1].values).toEqual(['active', 'active']);
+        expect(result.fields[2].values).toEqual([25, 40]);
+        expect(result.length).toBe(2);
+      });
+    });
+
+    describe('getFiltersApplicability', () => {
+      const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
+      const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+      beforeEach(() => {
+        config.featureToggles.dashboardDsAdHocFiltering = true;
+      });
+
+      afterEach(() => {
+        config.featureToggles.dashboardDsAdHocFiltering = originalToggleValue;
+      });
+
+      it('should return empty array when feature toggle is disabled', async () => {
+        config.featureToggles.dashboardDsAdHocFiltering = false;
+
+        const result = await ds.getFiltersApplicability({
+          filters: [{ key: 'name', operator: '=', value: 'test' }],
+        });
+
+        expect(result).toEqual([]);
+      });
+
+      it('should mark supported operators as applicable', async () => {
+        const result = await ds.getFiltersApplicability({
+          filters: [
+            { key: 'name', operator: '=', value: 'John' },
+            { key: 'age', operator: '!=', value: '25' },
+          ],
+        });
+
+        expect(result).toEqual([
+          { key: 'name', applicable: true },
+          { key: 'age', applicable: true },
+        ]);
+      });
+
+      it('should mark unsupported operators as not applicable with reason', async () => {
+        const result = await ds.getFiltersApplicability({
+          filters: [
+            { key: 'name', operator: '>', value: 'John' },
+            { key: 'age', operator: '<', value: '25' },
+            { key: 'score', operator: '=~', value: 'pattern' },
+          ],
+        });
+
+        expect(result).toEqual([
+          {
+            key: 'name',
+            applicable: false,
+            reason: "Operator '>' is not supported. Only '=' and '!=' operators are supported.",
+          },
+          {
+            key: 'age',
+            applicable: false,
+            reason: "Operator '<' is not supported. Only '=' and '!=' operators are supported.",
+          },
+          {
+            key: 'score',
+            applicable: false,
+            reason: "Operator '=~' is not supported. Only '=' and '!=' operators are supported.",
+          },
+        ]);
+      });
+
+      it('should handle mixed applicable and non-applicable filters', async () => {
+        const result = await ds.getFiltersApplicability({
+          filters: [
+            { key: 'name', operator: '=', value: 'John' },
+            { key: 'age', operator: '>', value: '25' },
+            { key: 'status', operator: '!=', value: 'active' },
+          ],
+        });
+
+        expect(result).toEqual([
+          { key: 'name', applicable: true },
+          {
+            key: 'age',
+            applicable: false,
+            reason: "Operator '>' is not supported. Only '=' and '!=' operators are supported.",
+          },
+          { key: 'status', applicable: true },
+        ]);
+      });
+
+      it('should handle empty filters array', async () => {
+        const result = await ds.getFiltersApplicability({ filters: [] });
+        expect(result).toEqual([]);
+      });
+
+      it('should handle missing options', async () => {
+        const result = await ds.getFiltersApplicability();
+        expect(result).toEqual([]);
+      });
+    });
+  });
 });
 
 function setup(query: DashboardQuery, requestId?: string) {
@@ -140,7 +674,6 @@ function setup(query: DashboardQuery, requestId?: string) {
         series: [arrayToDataFrame([1, 2, 3])],
         state: LoadingState.Done,
         timeRange: getDefaultTimeRange(),
-        structureRev: 11,
       },
     }),
     transformations: [{ id: 'reduce', options: {} }],

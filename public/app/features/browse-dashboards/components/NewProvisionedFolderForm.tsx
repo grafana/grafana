@@ -1,132 +1,108 @@
-import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { css } from '@emotion/css';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
-import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Text, Button, Field, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Folder } from 'app/api/clients/folder/v1beta1';
+import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
-import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
-import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
+import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
+import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
+import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
+import {
+  useProvisionedRequestHandler,
+  ProvisionedOperationInfo,
+} from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { WorkflowOption } from 'app/features/provisioning/types';
-import { validateBranchName } from 'app/features/provisioning/utils/git';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
-type FormData = {
-  ref?: string;
-  path: string;
-  comment?: string;
-  repo: string;
-  workflow?: WorkflowOption;
-  title: string;
-};
+import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
+import { validateFolderName } from './NewFolderForm';
+import { formatFolderName, hasFolderNameCharactersToReplace } from './utils';
+
+interface FormProps extends Props {
+  initialValues: BaseProvisionedFormData;
+  repository?: RepositoryView;
+  workflowOptions: Array<{ label: string; value: string }>;
+  folder?: Folder;
+}
 interface Props {
-  onSubmit: () => void;
-  onCancel: () => void;
   parentFolder?: FolderDTO;
+  onDismiss?: () => void;
 }
 
-const initialFormValues: Partial<FormData> = {
-  title: '',
-  comment: '',
-  ref: `folder/${Date.now()}`,
-};
-
-export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: Props) {
-  const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: parentFolder?.uid });
-  const prURL = usePullRequestParam();
+function FormContent({ initialValues, repository, workflowOptions, folder, onDismiss }: FormProps) {
+  const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
-  const isGitHub = Boolean(repository?.type === 'github');
+  const methods = useForm<BaseProvisionedFormData>({
+    defaultValues: initialValues,
+    mode: 'onBlur', // Validates when user leaves the field
+  });
+  const { handleSubmit, watch, register, formState } = methods;
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-    control,
-    setValue,
-  } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repository) } });
+  const [workflow, title] = watch(['workflow', 'title']);
 
-  const [workflow, ref] = watch(['workflow', 'ref']);
-
-  useEffect(() => {
-    setValue('workflow', getDefaultWorkflow(repository));
-  }, [repository, setValue]);
-
-  useEffect(() => {
-    const appEvents = getAppEvents();
-    if (request.isSuccess && repository) {
-      onSubmit();
-
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [
-          t(
-            'browse-dashboards.new-provisioned-folder-form.alert-folder-created-successfully',
-            'Folder created successfully'
-          ),
-        ],
+  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
+    const prUrl = urls?.newPullRequestURL;
+    if (prUrl) {
+      const url = buildResourceBranchRedirectUrl({
+        paramName: 'new_pull_request_url',
+        paramValue: prUrl,
+        repoType: info.repoType,
       });
+      navigate(url);
+    }
+  };
 
-      // TODO: Update when the upsert type is fixed
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const folder = request.data.resource?.upsert as Resource;
-      if (folder?.metadata?.name) {
-        navigate(`/dashboards/f/${folder?.metadata?.name}/`);
-        return;
-      }
+  const onWriteSuccess = (resource: Resource<FolderDTO>) => {
+    // Navigation for new folders (resource-specific concern)
+    if (resource?.metadata?.name) {
+      navigate(`/dashboards/f/${resource.metadata.name}/`);
+      return;
+    }
 
+    // Fallback to provisioning URL
+    if (repository?.name && request.data?.path) {
       let url = `${PROVISIONING_URL}/${repository.name}/file/${request.data.path}`;
       if (request.data.ref?.length) {
         url += '?ref=' + request.data.ref;
       }
       navigate(url);
-    } else if (request.isError) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder', 'Error creating folder'),
-          request.error,
-        ],
-      });
-    }
-  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, request.data, workflow, navigate, repository]);
-
-  if (isLoading) {
-    return <Spinner />;
-  }
-
-  if (!repository) {
-    return (
-      <Alert
-        title={t('browse-dashboards.new-provisioned-folder-form.title-repository-not-found', 'Repository not found')}
-        severity="error"
-      />
-    );
-  }
-
-  const validateFolderName = async (folderName: string) => {
-    try {
-      await validationSrv.validateNewFolderName(folderName);
-      return true;
-    } catch (e) {
-      if (e instanceof Error) {
-        return e.message;
-      }
-      return t('browse-dashboards.new-provisioned-folder-form.error-invalid-folder-name', 'Invalid folder name');
     }
   };
 
-  const doSave = async ({ ref, title, workflow, comment }: FormData) => {
+  const onError = (error: unknown) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [
+        t('browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder', 'Error creating folder'),
+        error,
+      ],
+    });
+  };
+
+  // Use the repository-type and resource-type aware provisioned request handler
+  useProvisionedRequestHandler<FolderDTO>({
+    request,
+    workflow,
+    repository,
+    resourceType: 'folder',
+    handlers: {
+      onDismiss,
+      onBranchSuccess,
+      onWriteSuccess: (_, resource) => onWriteSuccess(resource),
+      onError,
+    },
+  });
+
+  const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
     const repoName = repository?.name;
     if (!title || !repoName) {
       return;
@@ -134,10 +110,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
 
     // Convert folder title to filename format (lowercase, replace spaces with hyphens)
-    const titleInFilenameFormat = title
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '');
+    const titleInFilenameFormat = formatFolderName(title); // TODO: this is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
 
     const prefix = basePath ? `${basePath}/` : '';
     const path = `${prefix}${titleInFilenameFormat}/`;
@@ -161,106 +134,139 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   };
 
   return (
-    <form onSubmit={handleSubmit(doSave)}>
-      <Stack direction="column" gap={2}>
-        {!repository?.workflows?.length && (
-          <Alert
-            title={t(
-              'browse-dashboards.new-provisioned-folder-form.title-this-repository-is-read-only',
-              'This repository is read only'
-            )}
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(doSave)}>
+        <Stack direction="column" gap={2}>
+          {!repository?.workflows?.length && (
+            <Alert
+              title={t(
+                'browse-dashboards.new-provisioned-folder-form.title-this-repository-is-read-only',
+                'This repository is read only'
+              )}
+            >
+              <Trans i18nKey="browse-dashboards.text-this-repository-is-read-only">
+                If you have direct access to the target, copy the JSON and paste it there.
+              </Trans>
+            </Alert>
+          )}
+
+          <Field
+            noMargin
+            label={t('browse-dashboards.new-provisioned-folder-form.label-folder-name', 'Folder name')}
+            invalid={!!formState.errors.title}
+            error={formState.errors.title?.message}
           >
-            <Trans i18nKey="browse-dashboards.text-this-repository-is-read-only">
-              If you have direct access to the target, copy the JSON and paste it there.
-            </Trans>
-          </Alert>
-        )}
+            <Input
+              {...register('title', {
+                required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
+                validate: validateFolderName,
+              })}
+              placeholder={t(
+                'browse-dashboards.new-provisioned-folder-form.folder-name-input-placeholder-enter-folder-name',
+                'Enter folder name'
+              )}
+              id="folder-name-input"
+            />
+          </Field>
+          <FolderNamePreviewMessage folderName={title} />
 
-        <Field
-          label={t('browse-dashboards.new-provisioned-folder-form.label-folder-name', 'Folder name')}
-          invalid={!!errors.title}
-          error={errors.title?.message}
-        >
-          <Input
-            {...register('title', {
-              required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
-              validate: validateFolderName,
-            })}
-            placeholder={t(
-              'browse-dashboards.new-provisioned-folder-form.folder-name-input-placeholder-enter-folder-name',
-              'Enter folder name'
-            )}
-            id="folder-name-input"
+          <ResourceEditFormSharedFields
+            resourceType="folder"
+            isNew={false}
+            workflow={workflow}
+            workflowOptions={workflowOptions}
+            repository={repository}
+            hidePath
           />
-        </Field>
 
-        <Field label={t('browse-dashboards.new-provisioned-folder-form.label-comment', 'Comment')}>
-          <TextArea
-            {...register('comment')}
-            placeholder={t(
-              'browse-dashboards.new-provisioned-folder-form.folder-comment-input-placeholder-describe-changes-optional',
-              'Add a note to describe your changes (optional)'
-            )}
-            id="folder-comment-input"
-            rows={5}
-          />
-        </Field>
+          {prURL && (
+            <Alert
+              severity="info"
+              title={t(
+                'browse-dashboards.new-provisioned-folder-form.title-pull-request-created',
+                'Pull request created'
+              )}
+            >
+              <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.text-pull-request-created">
+                A pull request has been created with changes to this folder:
+              </Trans>{' '}
+              <a href={prURL} target="_blank" rel="noopener noreferrer">
+                {prURL}
+              </a>
+            </Alert>
+          )}
 
-        {isGitHub && (
-          <>
-            <Field label={t('browse-dashboards.new-provisioned-folder-form.label-workflow', 'Workflow')}>
-              <Controller
-                control={control}
-                name="workflow"
-                render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup {...field} options={getWorkflowOptions(repository)} id={'folder-workflow'} />
-                )}
-              />
-            </Field>
-            {workflow === 'branch' && (
-              <Field
-                label={t('browse-dashboards.new-provisioned-folder-form.label-branch', 'Branch')}
-                description={t(
-                  'browse-dashboards.new-provisioned-folder-form.description-branch-name-in-git-hub',
-                  'Branch name in GitHub'
-                )}
-                invalid={!!errors?.ref}
-                error={errors.ref ? <BranchValidationError /> : ''}
-              >
-                <Input {...register('ref', { validate: validateBranchName })} id="branch-name-input" />
-              </Field>
-            )}
-          </>
-        )}
-
-        {prURL && (
-          <Alert
-            severity="info"
-            title={t(
-              'browse-dashboards.new-provisioned-folder-form.title-pull-request-created',
-              'Pull request created'
-            )}
-          >
-            <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.text-pull-request-created">
-              A pull request has been created with changes to this folder:
-            </Trans>{' '}
-            <a href={prURL} target="_blank" rel="noopener noreferrer">
-              {prURL}
-            </a>
-          </Alert>
-        )}
-
-        <Stack gap={2}>
-          <Button variant="secondary" fill="outline" onClick={onCancel}>
-            <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
-          </Button>
-          <Button type="submit" disabled={request.isLoading}>
-            {request.isLoading
-              ? t('browse-dashboards.new-provisioned-folder-form.button-creating', 'Creating...')
-              : t('browse-dashboards.new-provisioned-folder-form.button-create', 'Create')}
-          </Button>
+          <Stack gap={2}>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
+            </Button>
+            <Button type="submit" disabled={request.isLoading}>
+              {request.isLoading
+                ? t('browse-dashboards.new-provisioned-folder-form.button-creating', 'Creating...')
+                : t('browse-dashboards.new-provisioned-folder-form.button-create', 'Create')}
+            </Button>
+          </Stack>
         </Stack>
-      </Stack>
-    </form>
+      </form>
+    </FormProvider>
   );
 }
+
+export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
+  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
+    folderUid: parentFolder?.uid,
+    action: 'create',
+    title: '', // Empty title for new folders
+  });
+
+  if (!initialValues) {
+    return null;
+  }
+
+  return (
+    <FormContent
+      parentFolder={parentFolder}
+      onDismiss={onDismiss}
+      initialValues={initialValues}
+      repository={repository}
+      workflowOptions={workflowOptions}
+      folder={folder}
+    />
+  );
+}
+
+function FolderNamePreviewMessage({ folderName }: { folderName: string }) {
+  const styles = useStyles2(getStyles);
+  const isValidFolderName =
+    folderName.length && hasFolderNameCharactersToReplace(folderName) && validateFolderName(folderName);
+
+  if (!isValidFolderName) {
+    return null;
+  }
+
+  return (
+    <div className={styles.folderNameMessage}>
+      <Icon name="check-circle" type="solid" />
+      <Text color="success">
+        {t(
+          'browse-dashboards.new-provisioned-folder-form.text-your-folder-will-be-created-as',
+          'Your folder will be created as {{folderName}}',
+          {
+            folderName: formatFolderName(folderName),
+          }
+        )}
+      </Text>
+    </div>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    folderNameMessage: css({
+      display: 'flex',
+      alignItems: 'center',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.success.text,
+    }),
+  };
+};

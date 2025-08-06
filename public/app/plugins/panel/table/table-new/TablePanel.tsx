@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   ActionModel,
@@ -17,6 +17,7 @@ import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
+import { getConfig } from 'app/core/config';
 
 import { getActions } from '../../../../features/actions/utils';
 
@@ -26,7 +27,7 @@ import { Options } from './panelcfg.gen';
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables } = props;
+  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables, transparent } = props;
 
   useMemo(() => {
     cacheFieldDisplayNames(data.series);
@@ -34,6 +35,10 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
+  const _getActions = useCallback(
+    (frame: DataFrame, field: Field, rowIndex: number) => getCellActions(frame, field, rowIndex, replaceVariables),
+    [replaceVariables]
+  );
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
     : data.series;
@@ -57,6 +62,8 @@ export function TablePanel(props: Props) {
 
   const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
 
+  const disableSanitizeHtml = getConfig().disableSanitizeHtml;
+
   const tableElement = (
     <TableNG
       height={tableHeight}
@@ -75,8 +82,10 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}
-      getActions={getCellActions}
-      replaceVariables={replaceVariables}
+      getActions={_getActions}
+      structureRev={data.structureRev}
+      transparent={transparent}
+      disableSanitizeHtml={disableSanitizeHtml}
     />
   );
 
@@ -158,28 +167,39 @@ const getCellActions = (
   field: Field,
   rowIndex: number,
   replaceVariables: InterpolateFunction | undefined
-) => {
-  const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
+): Array<ActionModel<Field>> => {
+  const numActions = field.config.actions?.length ?? 0;
 
-  const actionsModel = getActions(
-    dataFrame,
-    field,
-    field.state!.scopedVars!,
-    replaceVariables ?? replaceVars,
-    field.config.actions ?? [],
-    { valueRowIndex: rowIndex }
-  );
+  if (numActions > 0) {
+    const actions = getActions(
+      dataFrame,
+      field,
+      field.state!.scopedVars!,
+      replaceVariables ?? replaceVars,
+      field.config.actions ?? [],
+      { valueRowIndex: rowIndex }
+    );
 
-  actionsModel.forEach((action) => {
-    const key = `${action.title}`;
-    if (!actionLookup.has(key)) {
-      actions.push(action);
-      actionLookup.add(key);
+    if (actions.length === 1) {
+      return actions;
+    } else {
+      const actionsOut: Array<ActionModel<Field>> = [];
+      const actionLookup = new Set<string>();
+
+      actions.forEach((action) => {
+        const key = action.title;
+
+        if (!actionLookup.has(key)) {
+          actionsOut.push(action);
+          actionLookup.add(key);
+        }
+      });
+
+      return actionsOut;
     }
-  });
+  }
 
-  return actions;
+  return [];
 };
 
 const tableStyles = {

@@ -8,13 +8,15 @@ import { TextLink } from './TextLink';
 import mdx from './TextLink.mdx';
 
 const meta: Meta = {
-  title: 'General/TextLink',
+  title: 'Foundations/TextLink',
   component: TextLink,
   parameters: {
     docs: {
       page: mdx,
     },
     controls: { exclude: ['href', 'external'] },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     variant: {

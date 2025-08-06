@@ -2,8 +2,8 @@ import { cloneDeep } from 'lodash';
 
 import { DataQueryResponse, Field, FieldType, QueryResultMetaStat } from '@grafana/data';
 
-import { getMockFrames } from './__mocks__/frames';
 import { cloneQueryResponse, combineResponses } from './mergeResponses';
+import { getMockFrames } from './mocks/frames';
 
 describe('cloneQueryResponse', () => {
   const { logFrameA } = getMockFrames();

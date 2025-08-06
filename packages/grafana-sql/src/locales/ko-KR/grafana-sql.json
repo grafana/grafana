@@ -55,6 +55,10 @@
       },
       "query-header": {
         "content-invalid-query": "",
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        },
         "label-dataset": "",
         "label-filter": "필터",
         "label-format": "형식",

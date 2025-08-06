@@ -7,7 +7,7 @@ import { UseSplitterOptions, useSplitter } from './useSplitter';
 import mdx from './useSplitter.mdx';
 
 const meta: Meta = {
-  title: 'General/Layout/useSplitter',
+  title: 'Utilities/useSplitter',
   parameters: {
     docs: { page: mdx },
     controls: {

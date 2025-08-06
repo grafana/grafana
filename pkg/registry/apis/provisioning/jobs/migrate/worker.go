@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -43,7 +43,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("missing migrate settings")
 	}
 
-	progress.Strict()
 	progress.SetTotal(ctx, 10) // will show a progress bar
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {

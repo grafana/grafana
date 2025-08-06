@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
@@ -14,9 +15,10 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
-import { DashboardEditFormSharedFields } from '../../components/Provisioned/DashboardEditFormSharedFields';
+import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
+import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
-import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { ProvisionedDashboardFormData } from '../shared';
 
@@ -26,10 +28,10 @@ import { getProvisionedMeta } from './utils/getProvisionedMeta';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  isGitHub: boolean;
   loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   readOnly: boolean;
+  repository?: RepositoryView;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -39,9 +41,9 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  isGitHub,
   workflowOptions,
   readOnly,
+  repository,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -58,25 +60,15 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onRequestError = (error: unknown) => {
+  const onRequestError = (error: unknown, info: ProvisionedOperationInfo) => {
     appEvents.publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'), error],
     });
   };
 
-  const onWriteSuccess = () => {
-    panelEditor?.onDiscard();
-    drawer.onClose();
-    locationService.partial({
-      viewPanel: null,
-      editPanel: null,
-    });
-  };
-
-  const onNewDashboardSuccess = (upsert: Resource<Dashboard>) => {
-    panelEditor?.onDiscard();
-    drawer.onClose();
+  const handleNewDashboard = (upsert: Resource<Dashboard>) => {
+    // Navigation for new dashboards
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: upsert.metadata.name,
@@ -84,27 +76,50 @@ export function SaveProvisionedDashboardForm({
         currentQueryParams: window.location.search,
       })
     );
-
     navigate(url);
   };
 
-  const onBranchSuccess = (ref: string, path: string) => {
-    panelEditor?.onDiscard();
-    drawer.onClose();
-    navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+  const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    if (isNew && upsert?.metadata.name) {
+      handleNewDashboard(upsert);
+    } else {
+      locationService.partial({
+        viewPanel: null,
+        editPanel: null,
+      });
+    }
   };
 
-  useProvisionedRequestHandler({
-    dashboard,
+  const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    if (isNew && upsert?.metadata?.name) {
+      handleNewDashboard(upsert);
+    } else {
+      const url = buildResourceBranchRedirectUrl({
+        baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        paramName: 'ref',
+        paramValue: ref,
+        repoType: info.repoType,
+      });
+      navigate(url);
+    }
+  };
+
+  const onDismiss = () => {
+    dashboard.setState({ isDirty: false });
+    panelEditor?.onDiscard();
+    drawer.onClose();
+  };
+
+  useProvisionedRequestHandler<Dashboard>({
     request,
     workflow,
+    resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess: ({ ref, path }) => onBranchSuccess(ref, path),
+      onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      onNewDashboardSuccess,
       onError: onRequestError,
+      onDismiss,
     },
-    isNew,
   });
 
   // Submit handler for saving the form data
@@ -120,6 +135,8 @@ export function SaveProvisionedDashboardForm({
       ref = loadedFromRef;
     }
 
+    const message = comment || `Save dashboard: ${dashboard.state.title}`;
+
     const body = dashboard.getSaveResource({
       isNew,
       title,
@@ -130,7 +147,7 @@ export function SaveProvisionedDashboardForm({
       ref,
       name: repo,
       path,
-      message: comment,
+      message,
       body,
     });
   };
@@ -214,11 +231,12 @@ export function SaveProvisionedDashboardForm({
 
           {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
-          <DashboardEditFormSharedFields
+          <ResourceEditFormSharedFields
+            resourceType="dashboard"
             readOnly={readOnly}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            repository={repository}
             isNew={isNew}
           />
 

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -45,14 +46,9 @@ func TestImportDashboardService(t *testing.T) {
 		}
 
 		importLibraryPanelsForDashboard := false
-		connectLibraryPanelsForDashboardCalled := false
 		libraryPanelService := &libraryPanelServiceMock{
 			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
 				importLibraryPanelsForDashboard = true
-				return nil
-			},
-			connectLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error {
-				connectLibraryPanelsForDashboardCalled = true
 				return nil
 			},
 		}
@@ -67,6 +63,7 @@ func TestImportDashboardService(t *testing.T) {
 			dashboardService:       dashboardService,
 			libraryPanelService:    libraryPanelService,
 			folderService:          folderService,
+			features:               featuremgmt.WithFeatures(),
 		}
 
 		req := &dashboardimport.ImportDashboardRequest{
@@ -96,7 +93,6 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, "prom", panel.Get("datasource").MustString())
 
 		require.True(t, importLibraryPanelsForDashboard)
-		require.True(t, connectLibraryPanelsForDashboardCalled)
 	})
 
 	t.Run("When importing a non-plugin dashboard should save dashboard and sync library panels", func(t *testing.T) {
@@ -127,6 +123,7 @@ func TestImportDashboardService(t *testing.T) {
 			dashboardService:    dashboardService,
 			libraryPanelService: libraryPanelService,
 			folderService:       folderService,
+			features:            featuremgmt.WithFeatures(),
 		}
 
 		loadResp, err := loadTestDashboard(context.Background(), &plugindashboards.LoadPluginDashboardRequest{

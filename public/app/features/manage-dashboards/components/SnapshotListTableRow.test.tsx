@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { contextSrv } from 'app/core/services/context_srv';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
 

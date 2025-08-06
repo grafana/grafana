@@ -5,7 +5,7 @@ import { locationService } from '@grafana/runtime';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
-import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
+import { QueryGroupDataSource, QueryGroupOptions } from 'app/types/query';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state/PanelModel';

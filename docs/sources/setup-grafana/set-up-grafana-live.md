@@ -201,7 +201,7 @@ In a high availability Grafana setup involving several Grafana server instances 
 - Streaming from Telegraf will deliver data only to clients connected to the same instance which received Telegraf data, active stream cache is not shared between different Grafana instances.
 - A separate unidirectional stream between Grafana and backend data source may be opened on different Grafana servers for the same channel.
 
-To bypass these limitations, Grafana v8.1 has an experimental Live HA engine that requires Redis to work.
+To bypass these limitations, Grafana has a Live HA engine that requires Redis to work.
 
 ### Configure Redis Live engine
 
@@ -232,5 +232,10 @@ Live currently does not support Redis Sentinel. We recommend using a Redis Clust
    ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
    ha_engine_password: $__file{/your/redis/password/secret/mount}
 ```
+
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+The Redis Live HA engine does not currently support TLS.
 
 {{< /admonition >}}
