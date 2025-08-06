@@ -201,23 +201,16 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 		}
 
 		lokiCfg := &loki.Config{
-			ReadPathURL:    parsedURL,
-			WritePathURL:   parsedURL,
-			TenantID:       cfg.ProvisioningLokiTenantID,
+			ReadPathURL:       parsedURL,
+			WritePathURL:      parsedURL,
+			BasicAuthUser:     cfg.ProvisioningLokiUser,
+			BasicAuthPassword: cfg.ProvisioningLokiPassword,
+			TenantID:          cfg.ProvisioningLokiTenantID,
 			ExternalLabels: map[string]string{
 				"source":       "grafana-provisioning",
 				"service_name": "grafana-provisioning",
 			},
-			MaxQuerySize:   5000, // Default query size
-		}
-
-		// Parse basic auth if provided
-		if cfg.ProvisioningLokiBasicAuth != "" {
-			parts := strings.SplitN(cfg.ProvisioningLokiBasicAuth, ":", 2)
-			if len(parts) == 2 {
-				lokiCfg.BasicAuthUser = parts[0]
-				lokiCfg.BasicAuthPassword = parts[1]
-			}
+			MaxQuerySize: 5000, // Default query size
 		}
 
 		return &JobHistoryConfig{

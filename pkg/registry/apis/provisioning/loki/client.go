@@ -216,4 +216,3 @@ func (c *Client) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Set("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
-
