@@ -26,7 +26,9 @@ export const StreamingSection = ({ options, onOptionsChange }: Props) => {
       description={
         <Stack gap={0.5}>
           <div>Enable streaming for different Tempo features.</div>
-          <TextLink href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}>Learn more</TextLink>
+          <TextLink external href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}>
+            Learn more
+          </TextLink>
         </Stack>
       }
     >
