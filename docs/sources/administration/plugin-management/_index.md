@@ -74,7 +74,11 @@ To browse for available plugins:
 1. Use the search to filter based on name, keywords, organization and other metadata.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
-## Install a plugin
+## Manage your plugins
+
+We strongly recommend running the latest plugin version. Use [Grafana Advisor](../grafana-advisor/#plugins) to check the status of your data sources and plugins.
+
+### Install a plugin
 
 The most common way to install a plugin is through the Grafana UI, but alternative methods are also available.
 
@@ -84,10 +88,6 @@ The most common way to install a plugin is through the Grafana UI, but alternati
 1. Click **Install**.
 
 To see additional ways to install plugins refer to [Install a plugin](/plugin-install).
-
-## Manage your plugins
-
-We strongly recommend running the latest plugin version. Use [Grafana Advisor](../grafana-advisor/#plugins) to check the status of your data sources and plugins.
 
 ### Update a plugin
 
@@ -121,28 +121,7 @@ You can relocate app plugin pages to customize the navigation menu structure, as
 
 ## Integrate plugins
 
-You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. By default, you can only communicate with plugin backends remotely. You can use this configuration to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
-
-To enable backend communication between plugins:
-
-1. Set the plugins you want to communicate with. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable and then set the following configuration option:
-
-   ```
-   actions_allow_post_url=
-   ```
-
-   This is a comma-separated list that uses glob matching.
-   - To allow access to all plugins that have a backend:
-
-     ```
-     actions_allow_post_url=/api/plugins/*
-     ```
-
-   - To access to the backend of only one plugin:
-
-     ```
-     actions_allow_post_url=/api/plugins/<GRAFANA_SPECIAL_APP>
-     ```
+You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. See how in [Integrate your plugins](/plugin-integrate).
 
 ## Isolate plugin code with the Frontend Sandbox
 
