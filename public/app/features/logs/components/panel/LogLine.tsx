@@ -524,6 +524,14 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       border: 'none',
       display: 'inline',
     }),
+    loadMoreTopContainer: css({
+      backgroundColor: tinycolor(theme.colors.background.primary).setAlpha(0.75).toString(),
+      left: 0,
+      position: 'absolute',
+      top: 0,
+      width: '100%',
+      zIndex: theme.zIndex.navbarFixed,
+    }),
     overflows: css({
       outline: 'solid 1px red',
     }),
