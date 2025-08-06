@@ -28,6 +28,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { trackFilterButtonApplyClick, trackFilterButtonClearClick, trackFilterButtonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
+import { useGetLabelsFromDataSourceName } from '../../../components/rule-editor/useAlertRuleSuggestions';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
@@ -37,7 +38,6 @@ import { PopupCard } from '../../HoverCard';
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 import { emptyAdvancedFilters, formAdvancedFiltersToRuleFilter, searchQueryToDefaultValues } from './utils';
 
-// Contact point selector permission check
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 /**
@@ -148,7 +148,13 @@ export default function RulesFilter() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isPopupOpen && popupRef.current && !popupRef.current.contains(event.target as Node)) {
-        setIsPopupOpen(false);
+        // Check if click is on a portal element (combobox dropdown)
+        const target = event.target as Element;
+        const isPortalClick = target.closest('[data-popper-placement]') || target.closest('[role="listbox"]');
+        
+        if (!isPortalClick) {
+          setIsPopupOpen(false);
+        }
       }
     };
 
@@ -326,6 +332,27 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
     return Array.from(groupSet).sort();
   }, [grafanaPromRules, externalPromRulesQueries]);
 
+  const { labels: grafanaLabels, isLoading: isLoadingGrafanaLabels } = useGetLabelsFromDataSourceName(GRAFANA_RULES_SOURCE_NAME);
+
+  // Create label options for the multi-select dropdown
+  const labelOptions = useMemo((): Array<ComboboxOption<string>> => {
+    const options: Array<ComboboxOption<string>> = [];
+    
+    grafanaLabels.forEach((values, key) => {
+      values.forEach((value) => {
+        const labelPair = `${key}=${value}`;
+        options.push({
+          label: labelPair,
+          value: labelPair,
+          description: `Label: ${key}, Value: ${value}`,
+        });
+      });
+    });
+
+    // Sort alphabetically by label key, then by value
+    return options.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+  }, [grafanaLabels]);
+
   // Generate appropriate placeholder text
   const namespacePlaceholder = useMemo(() => {
     if (isLoadingNamespaces) {
@@ -391,8 +418,24 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
           <Label>
             <Trans i18nKey="alerting.search.property.labels">Labels</Trans>
           </Label>
-          {/* @TODO some visual label picker */}
-          <Input {...register('labels')} />
+          <Controller
+            name="labels"
+            control={control}
+            render={({ field }) => (
+              <MultiCombobox
+                options={labelOptions}
+                value={field.value}
+                onChange={(selections) => field.onChange(selections.map((s) => s.value))}
+                placeholder={isLoadingGrafanaLabels ? t('common.loading', 'Loading...') : t('alerting.rules-filter.placeholder-labels', 'Select labels')}
+                loading={isLoadingGrafanaLabels}
+                disabled={isLoadingGrafanaLabels || labelOptions.length === 0}
+                portalContainer={portalContainer}
+                width="auto"
+                minWidth={40}
+                maxWidth={80}
+              />
+            )}
+          />
           <Label>
             <Trans i18nKey="alerting.search.property.namespace">Folder / Namespace</Trans>
           </Label>
