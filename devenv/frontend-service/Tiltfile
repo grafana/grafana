@@ -56,10 +56,10 @@ local_resource(
 # --- Docker Compose
 docker_compose("./docker-compose.yaml")
 dc_resource("proxy",
-  resource_deps=["backend", "frontend-service"],
+  resource_deps=["grafana-api", "frontend-service"],
   labels=["services"]
 )
-dc_resource("backend",
+dc_resource("grafana-api",
   resource_deps=["yarn start", "backend-build"],
   labels=["services"]
 )
@@ -67,6 +67,8 @@ dc_resource("frontend-service",
   resource_deps=["yarn start", "backend-build"],
   labels=["services"],
 )
+dc_resource("alloy", labels=["observability"])
+dc_resource("loki", labels=["observability"])
 
 # paths in tilt files are confusing....
 # - if tilt is dealing the the path, it is relative to the Tiltfile

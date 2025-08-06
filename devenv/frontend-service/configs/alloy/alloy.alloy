@@ -1,0 +1,23 @@
+// 
+// Self-config
+//
+
+livedebugging {
+	enabled = true
+}
+
+// Alloy logs
+logging {
+	level    = "info"
+	write_to = [loki.relabel.alloy.receiver]
+}
+
+loki.relabel "alloy" {
+	rule {
+		action       = "replace"
+		target_label = "job"
+		replacement  = "alloy"
+	}
+
+	forward_to = [loki.relabel.publish_logs.receiver]
+}
