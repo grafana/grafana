@@ -1,7 +1,7 @@
 name: End-to-end tests
 
 on:
-  # pull_request: 
+  pull_request: 
   push:
     branches:
       - main
@@ -66,6 +66,15 @@ jobs:
 
       - name: Login to DockerHub
         uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      
+      - name: Start Dagger engine
+        run: |
+          docker run --rm \
+            -v /var/lib/dagger \
+            -v /etc/buildkitd.toml:/etc/dagger/engine.toml \
+            --name dagger-engine-custom \
+            --privileged \
+            registry.dagger.io/engine:v0.18.14
 
       # If no cache hit, build Grafana
       - name: Build Grafana
@@ -83,6 +92,10 @@ jobs:
           mkdir -p build-dir
           mv "$(grep 'grafana_.*tar.gz$' out.txt | grep -Fv -m1 'docker')" build-dir/grafana.tar.gz
           mv "$(grep 'grafana_.*docker.tar.gz$' out.txt)" build-dir/grafana.docker.tar.gz
+
+      - name: Stop Engine
+        run: docker stop -t 300 $(docker ps --filter name="dagger-engine-*" -q)
+        if: always()
 
       # # If cache hit, validate the artifact is present
       # - name: Validate artifact
@@ -370,6 +383,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
+      id-token: write
 
     strategy:
       fail-fast: false
@@ -390,6 +404,14 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: grafana-tar-gz
+      - name: Start Dagger engine
+        run: |
+          docker run --rm \
+            -v /var/lib/dagger \
+            -v /etc/buildkitd.toml:/etc/dagger/engine.toml \
+            --name dagger-engine-custom \
+            --privileged \
+            registry.dagger.io/engine:v0.18.14
       - name: Run E2E tests
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
@@ -403,6 +425,9 @@ jobs:
           name: playwright-blob-${{ github.run_number }}-${{ matrix.shard }}-${{ matrix.runner }}
           path: ./blob-report
           retention-days: 1
+      - name: Stop Engine
+        run: docker stop -t 300 $(docker ps --filter name="dagger-engine-*" -q)
+        if: always()
 
   required-playwright-tests:
     needs:
