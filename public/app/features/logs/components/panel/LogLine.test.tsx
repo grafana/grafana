@@ -65,7 +65,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
         <LogLine {...defaultProps} />
       </LogListContextProvider>
     );
-    expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+    expect(screen.getByText(log.timestampNs)).toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
@@ -79,13 +79,45 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
+  test('Renders a log line millisecond timestamps', () => {
+    log.timestamp = '2025-08-06 11:35:19.504';
+    render(
+      <LogListContext.Provider
+        value={{
+          ...defaultValue,
+          timestampFormat: 'ms',
+        }}
+      >
+        <LogLine {...defaultProps} />
+      </LogListContext.Provider>
+    );
+    expect(screen.getByText('2025-08-06 11:35:19.504')).toBeInTheDocument();
+  });
+
+  test('Renders a log line nanosecond timestamps', () => {
+    log.timestamp = '2025-08-06 11:35:19.504';
+    log.timeEpochMs = 1754472919504;
+    log.timeEpochNs = '1754472919504133766';
+    render(
+      <LogListContext.Provider
+        value={{
+          ...defaultValue,
+          timestampFormat: 'ns',
+        }}
+      >
+        <LogLine {...defaultProps} />
+      </LogListContext.Provider>
+    );
+    expect(screen.getByText('2025-08-06 11:35:19.504133766')).toBeInTheDocument();
+  });
+
   test('Renders a log line with displayed fields', () => {
     render(
       <LogListContextProvider {...contextProps}>
         <LogLine {...defaultProps} displayedFields={['place']} />
       </LogListContextProvider>
     );
-    expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+    expect(screen.getByText(log.timestampNs)).toBeInTheDocument();
     expect(screen.queryByText(log.body)).not.toBeInTheDocument();
     expect(screen.getByText('luna')).toBeInTheDocument();
   });
@@ -96,7 +128,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
         <LogLine {...defaultProps} displayedFields={['place', LOG_LINE_BODY_FIELD_NAME]} />
       </LogListContextProvider>
     );
-    expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+    expect(screen.getByText(log.timestampNs)).toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
     expect(screen.getByText('luna')).toBeInTheDocument();
   });
@@ -347,7 +379,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           </LogListSearchContext.Provider>
         </LogListContextProvider>
       );
-      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.getByText(log.timestampNs)).toBeInTheDocument();
       expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
       expect(screen.getByText('message')).toBeInTheDocument();
     });
@@ -372,7 +404,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           </LogListSearchContext.Provider>
         </LogListContextProvider>
       );
-      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.getByText(log.timestampNs)).toBeInTheDocument();
       expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
       expect(screen.getByText('message')).toBeInTheDocument();
     });
@@ -425,7 +457,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           </LogListSearchContext.Provider>
         </LogListContextProvider>
       );
-      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.getByText(log.timestampNs)).toBeInTheDocument();
       expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
       expect(screen.queryByText('luna')).not.toBeInTheDocument();
       expect(screen.getByText('un')).toBeInTheDocument();
