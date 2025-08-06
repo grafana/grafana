@@ -42,9 +42,6 @@ export function BrowseActions({ folderDTO }: Props) {
     folderDTO?.managedBy === ManagerKind.Repo
   );
 
-  // Folders can only be moved if nested folders is enabled
-  const moveIsInvalid = useMemo(() => Object.values(selectedItems.folder).some((v) => v), [selectedItems]);
-
   const isSearching = stateManager.hasSearchFilters();
 
   const onActionComplete = () => {
@@ -125,7 +122,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const moveButton = (
-    <Button onClick={showMoveModal} variant="secondary" disabled={moveIsInvalid}>
+    <Button onClick={showMoveModal} variant="secondary">
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
     </Button>
   );
@@ -133,13 +130,9 @@ export function BrowseActions({ folderDTO }: Props) {
   return (
     <>
       <Stack gap={1} data-testid="manage-actions">
-        {moveIsInvalid ? (
-          <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
-            {moveButton}
-          </Tooltip>
-        ) : (
+        {
           moveButton
-        )}
+        }
 
         <Button onClick={showDeleteModal} variant="destructive">
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
