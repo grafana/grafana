@@ -3,6 +3,7 @@ import { pickBy } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
+import { ContactPoint, ContactPointSelector } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -26,7 +27,6 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { trackFilterButtonApplyClick, trackFilterButtonClearClick, trackFilterButtonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
-import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
@@ -309,34 +309,6 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
     return Array.from(groupSet).sort();
   }, [grafanaPromRules, externalPromRulesQueries]);
 
-  // Fetch contact points using traditional alerting API as fallback
-  const { currentData: alertmanagerConfig, isLoading: isLoadingContactPoints } =
-    alertmanagerApi.useGetAlertmanagerConfigurationQuery(GRAFANA_RULES_SOURCE_NAME);
-
-  // Extract contact point names from alertmanager config
-  // Note: Using traditional API instead of ContactPointSelector from @grafana/alerting/unstable
-  // due to compatibility issues with the v0alpha1 API in some Grafana configurations
-  const contactPointOptions = useMemo(() => {
-    if (!alertmanagerConfig?.alertmanager_config?.receivers) {
-      return [];
-    }
-
-    return alertmanagerConfig.alertmanager_config.receivers.map((receiver) => ({
-      label: receiver.name,
-      value: receiver.name,
-    }));
-  }, [alertmanagerConfig]);
-
-  const contactPointPlaceholder = useMemo(() => {
-    if (isLoadingContactPoints) {
-      return t('common.loading', 'Loading...');
-    }
-    if (contactPointOptions.length === 0) {
-      return t('alerting.rules-filter.no-contact-points', 'No contact points available');
-    }
-    return t('alerting.notification-policies-filter.placeholder-search-by-contact-point', 'Choose a contact point');
-  }, [isLoadingContactPoints, contactPointOptions.length]);
-
   // Generate appropriate placeholder text
   const namespacePlaceholder = useMemo(() => {
     if (isLoadingNamespaces) {
@@ -493,14 +465,13 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
                 control={control}
                 render={({ field }) => {
                   return (
-                    <Combobox<string>
-                      placeholder={contactPointPlaceholder}
-                      options={contactPointOptions}
-                      onChange={(option) => field.onChange(option?.value || null)}
+                    <ContactPointSelector
+                      placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
                       value={field.value}
-                      loading={isLoadingContactPoints}
-                      disabled={isLoadingContactPoints || contactPointOptions.length === 0}
                       isClearable
+                      onChange={(contactPoint: ContactPoint | null) => {
+                        field.onChange(contactPoint?.spec.title || null);
+                      }}
                       portalContainer={portalContainer}
                     />
                   );
@@ -611,7 +582,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     grid: css({
       display: 'grid',
-      gridTemplateColumns: 'repeat(2, auto)',
+      gridTemplateColumns: 'auto 1fr',
       alignItems: 'center',
       gap: theme.spacing(2),
     }),
