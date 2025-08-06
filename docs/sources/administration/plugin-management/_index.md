@@ -22,10 +22,13 @@ Read on for an overview on how to get started with plugins:
 
 - There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
 - Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
-- Learn how to [install](#install-a-plugin), [manage](#manage-your-plugins) and [sign in](/plugin-signatures) your plugins.
-- You can [customize navigation placement of plugin pages](/customize-navigation-placement-of-plugin-pages).
-- You can also [allow the frontends of installed plugins to communicate locally with the backends](#integrate-plugins) of other installed plugins.
-- Finally, see how to isolate plugin code with the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox).
+- Learn how to [manage your plugins](#manage-your-plugins), including [installation](#install-a-plugin) and [verification](/plugin-signatures) your plugins.
+
+Additionally, you can also:
+
+- [Customize navigation placement of plugin pages](/customize-navigation-placement-of-plugin-pages).
+- [Allow the frontends of installed plugins to communicate locally with the backends](#integrate-plugins) of other installed plugins.
+- Isolate plugin code with the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox).
 
 ## Types of plugins
 
@@ -80,7 +83,7 @@ We strongly recommend running the latest plugin version. Use [Grafana Advisor](.
 
 ### Install a plugin
 
-The most common way to install a plugin is through the Grafana UI, but alternative methods are also available.
+The most common way to install a plugin is through the Grafana UI.
 
 1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
 1. Browse and find a plugin.
