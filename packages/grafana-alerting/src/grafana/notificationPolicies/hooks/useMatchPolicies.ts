@@ -46,10 +46,10 @@ export function useMatchAlertInstancesToNotificationPolicies() {
 
         // construct a pseudo-route from the route tree we get from the API
         // @TODO make type stricter here and remove type assertions
-        const rootPolicy: Route = {
-          ...(tree.spec.defaults as Route),
+        const rootPolicy = {
+          ...tree.spec.defaults,
           routes: tree.spec.routes as Route[],
-        };
+        } as Route;
 
         const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree(instances, rootPolicy);
 
