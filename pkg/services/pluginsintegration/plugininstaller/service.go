@@ -102,6 +102,8 @@ func (s *Service) installPluginsWithTimeout(pluginsToInstall []setting.InstallPl
 }
 
 func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion string, pluginURL string) bool {
+	// If the plugin is installed from a URL, we cannot check for updates as we do not have the version information
+	// from the repository. Therefore, we assume that the plugin should be updated if the URL is provided.
 	if pluginURL != "" {
 		return true
 	}

@@ -395,12 +395,12 @@ func Test_migrateInstallPluginsToPreinstallPluginsSync(t *testing.T) {
 			},
 		},
 		{name: "parse private plugin",
-			installPluginsVal: "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.0+linux.zip;our-plugin-datasource",
+			installPluginsVal: "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.0+linux.zip;our-plugin-datasource 1.2.0",
 			preinstallPlugins: map[string]InstallPlugin{},
 			expectedPlugins: map[string]InstallPlugin{
 				"our-plugin-datasource": {
 					ID:      "our-plugin-datasource",
-					Version: "",
+					Version: "1.2.0",
 					URL:     "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.0+linux.zip",
 				},
 			},
