@@ -155,6 +155,27 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.Equal(t, "error", state, "move job should have failed due to non-existent file")
 	})
 
+	t.Run("move non-existent uid", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				TargetPath: "moved-nonexistent/",
+				Resources: []provisioning.ResourceRef{
+					{
+						Name:  "non-existent-move-uid",
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
+				},
+			},
+		}
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		require.NotNil(t, job, "should find a move job for non-existent file")
+		state := mustNestedString(job.Object, "status", "state")
+		require.Equal(t, "error", state, "move job should have failed due to non-existent uid")
+	})
+
 	t.Run("move without target path", func(t *testing.T) {
 		// Create move job without target path (should fail)
 		spec := provisioning.JobSpec{
