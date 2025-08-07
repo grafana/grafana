@@ -51,6 +51,9 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Yarn install
       run: yarn install --immutable
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 4
@@ -87,6 +90,8 @@ jobs:
       env:
         # If the PR isn't from a fork then don't use the slower yarn checks
         YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 4
@@ -110,6 +115,8 @@ jobs:
       env:
         # If the PR isn't from a fork then don't use the slower yarn checks
         YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
     - run: yarn run plugin:test:ci
 
   frontend-packages-unit-tests:
@@ -129,6 +136,8 @@ jobs:
       env:
         # If the PR isn't from a fork then don't use the slower yarn checks
         YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
     - run: yarn run packages:test:ci
 
   # This is the job that is actually required by rulesets.
