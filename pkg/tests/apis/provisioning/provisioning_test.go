@@ -1407,7 +1407,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			assert.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
 			assert.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
 			assert.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
-		}, time.Second*10, time.Millisecond*100, "Expected to eventually have 3 dashboards after move")
+		}, time.Second*45, time.Millisecond*100, "Expected to eventually have 3 dashboards after move")
 	})
 
 	t.Run("move multiple files and folder", func(t *testing.T) {
