@@ -52,7 +52,12 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
 
   if (shouldCheckFinishedJobs) {
     return (
-      <FinishedJobStatus jobUid={watch.metadata?.uid!} repositoryName={repoLabel} onStatusChange={onStatusChange} />
+      <FinishedJobStatus
+        jobUid={watch.metadata?.uid!}
+        repositoryName={repoLabel}
+        onStatusChange={onStatusChange}
+        jobType={jobType}
+      />
     );
   }
 

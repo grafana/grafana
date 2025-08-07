@@ -120,27 +120,27 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                 repository={repository}
                 hidePath
               />
+
+              <Stack gap={2}>
+                <Button
+                  tooltip={
+                    !targetFolder
+                      ? t('browse-dashboards.bulk-move-resources-form.button-tooltip', 'Please select a target folder')
+                      : undefined
+                  }
+                  type="submit"
+                  disabled={!!job || isCreatingJob || hasSubmitted || !targetFolder}
+                >
+                  {isCreatingJob
+                    ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')
+                    : t('browse-dashboards.bulk-move-resources-form.button-move', 'Move')}
+                </Button>
+                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
+                  <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
+                </Button>
+              </Stack>
             </>
           )}
-
-          <Stack gap={2}>
-            <Button
-              tooltip={
-                !targetFolder
-                  ? t('browse-dashboards.bulk-move-resources-form.button-tooltip', 'Please select a target folder')
-                  : undefined
-              }
-              type="submit"
-              disabled={!!job || isCreatingJob || hasSubmitted || !targetFolder}
-            >
-              {isCreatingJob
-                ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')
-                : t('browse-dashboards.bulk-move-resources-form.button-move', 'Move')}
-            </Button>
-            <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
-              <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
-            </Button>
-          </Stack>
         </Stack>
       </form>
     </FormProvider>

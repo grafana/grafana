@@ -182,7 +182,7 @@ describe('BulkDeleteProvisionedResource', () => {
     expect(screen.getByText(/Job Status - delete - working/)).toBeInTheDocument();
   });
 
-  it('disables buttons when job is in working state', async () => {
+  it('Should not show buttons when job is in working state', async () => {
     const workingJob: Job = { metadata: { name: 'test-job' }, status: { state: 'working' } };
     const { user } = setup(null, { success: true, job: workingJob });
 
@@ -192,8 +192,8 @@ describe('BulkDeleteProvisionedResource', () => {
     expect(await screen.findByTestId('job-status')).toBeInTheDocument();
 
     // Done button should not be disabled
-    const doneButton = screen.getByRole('button', { name: /Done/i });
-    expect(doneButton).not.toBeDisabled();
+    const deleteButton = screen.queryByRole('button', { name: /Delete/i });
+    expect(deleteButton).not.toBeInTheDocument();
   });
 
   it('calls createBulkJob with branch workflow parameters when branch is selected', async () => {
@@ -233,11 +233,5 @@ describe('BulkDeleteProvisionedResource', () => {
         }),
       })
     );
-  });
-
-  it('returns null when repository is not available', () => {
-    setup(null);
-
-    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
   });
 });

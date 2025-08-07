@@ -11414,8 +11414,13 @@
       "title-repository-is-unhealthy": "Repository is unhealthy"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": "View repository"
+      },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
-      "view-repository": "View repository"
+      "sync-job": {
+        "view-repository": "View repository"
+      }
     },
     "repository-overview": {
       "checked": "Checked:",

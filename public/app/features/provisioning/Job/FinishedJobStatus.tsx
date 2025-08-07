@@ -11,10 +11,11 @@ import { JobContent } from './JobContent';
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
+  jobType: 'sync' | 'delete' | 'move';
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
 }
 
-export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: FinishedJobProps) {
+export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange }: FinishedJobProps) {
   const hasRetried = useRef(false);
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
@@ -96,5 +97,5 @@ export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: Fi
     );
   }
 
-  return <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType="sync" />;
+  return <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType={jobType} />;
 }
