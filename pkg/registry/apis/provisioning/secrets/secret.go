@@ -10,9 +10,11 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-const svcName = "provisioning"
+const svcName = provisioning.GROUP
 
 //go:generate mockery --name SecureValueClient --structname MockSecureValueClient --inpackage --filename secure_value_client_mock.go --with-expecter
 type SecureValueClient = secret.SecureValueClient
@@ -76,8 +78,8 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 	}
 
 	decrypters := []string{svcName}
-	if s.cfg.SecretsManagement.DecryptGrafanaServiceName != "" {
-		decrypters = append(decrypters, s.cfg.SecretsManagement.DecryptGrafanaServiceName)
+	if s.cfg.SecretsManagement.GrpcGrafanaServiceName != "" {
+		decrypters = append(decrypters, s.cfg.SecretsManagement.GrpcGrafanaServiceName)
 	}
 
 	// Create the secret directly as unstructured

@@ -2128,15 +2128,15 @@
     },
     {
       "metadata": {
-        "name": "nestedFolders",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2022-10-26T14:15:14Z"
+        "name": "newClickhouseConfigPageDesign",
+        "resourceVersion": "1754075145003",
+        "creationTimestamp": "2025-08-01T19:05:45Z"
       },
       "spec": {
-        "description": "Enable folder nesting",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "expression": "true"
+        "description": "Enables new design for the Clickhouse data source configuration page",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
@@ -3044,7 +3044,8 @@
       "metadata": {
         "name": "teamHttpHeadersMimir",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-13T10:42:47Z"
+        "creationTimestamp": "2025-01-13T10:42:47Z",
+        "deletionTimestamp": "2025-08-06T08:19:47Z"
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
@@ -3253,21 +3254,6 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "unifiedStorageSearchPermissionFiltering",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-22T11:38:37Z"
-      },
-      "spec": {
-        "description": "Enable permission filtering on unified storage search",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true,
-        "expression": "true"
       }
     },
     {
