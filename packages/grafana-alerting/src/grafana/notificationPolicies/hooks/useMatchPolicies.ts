@@ -3,13 +3,23 @@ import { useCallback } from 'react';
 import { RoutingTree, alertingAPI } from '../../api/v0alpha1/api.gen';
 import { Label } from '../../matchers/types';
 import { Route } from '../types';
-import { TreeMatch, matchAlertInstancesToPolicyTree } from '../utils';
+import { RouteMatchResult, RouteWithID, matchAlertInstancesToPolicyTree } from '../utils';
 
-export type MatchResult = Array<
-  {
-    treeMetadata: Pick<RoutingTree['metadata'], 'name'>;
-  } & TreeMatch
->;
+export type RouteMatch = {
+  policy: Route;
+  policyTree: {
+    metadata: Pick<RoutingTree['metadata'], 'name'>;
+    /* we'll include the entire expanded policy tree for diagnostics */
+    expandedSpec: RouteWithID;
+  };
+  matchDetails: RouteMatchResult<RouteWithID>;
+};
+
+export type InstanceMatchResult = {
+  labels: Label[];
+  /* the routes that matched the labels where the key is a route and the value is an array of instances that match that route */
+  matchedPolicies: RouteMatch[];
+};
 
 /**
  * React hook that finds notification policy routes in all routing trees that match the provided set of alert instances.
@@ -33,7 +43,7 @@ export function useMatchAlertInstancesToNotificationPolicies() {
 
   // @TODO do we really need this to be a separate function?
   const matchInstancesToPolicies = useCallback(
-    (instances: Label[][]): MatchResult => {
+    (instances: Label[][]): InstanceMatchResult[] => {
       if (!data) {
         return [];
       }
@@ -41,30 +51,44 @@ export function useMatchAlertInstancesToNotificationPolicies() {
       // the routing trees are returned as an array of items because there can be several
       const trees = data.items;
 
-      const matchResult = trees.reduce<MatchResult>((acc, tree) => {
-        const treeName = tree.metadata.name ?? 'unknown';
+      return instances.map<InstanceMatchResult>((labels) => {
+        // Array to collect all matched policies from all trees
+        const allMatchedPolicies: RouteMatch[] = [];
 
-        // construct a pseudo-route from the route tree we get from the API
-        // @TODO make type stricter here and remove type assertions
-        const rootPolicy = {
-          ...tree.spec.defaults,
-          routes: tree.spec.routes as Route[],
-        } as Route;
+        // Process all trees for this instance
+        trees.forEach((tree) => {
+          const treeName = tree.metadata.name ?? 'user-defined';
 
-        const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree(instances, rootPolicy);
+          // construct a pseudo-route from the route tree we get from the API
+          const rootPolicy = {
+            ...tree.spec.defaults,
+            routes: tree.spec.routes as Route[],
+          } as Route;
 
-        acc.push({
-          treeMetadata: {
-            name: treeName,
-          },
-          expandedTree,
-          matchedPolicies,
+          // Match this single instance against the policy tree
+          const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree([labels], rootPolicy);
+
+          // Process each matched policy from the tree
+          matchedPolicies.forEach((results, policy) => {
+            // For each match result, create a RouteMatch object
+            results.forEach((matchDetails) => {
+              allMatchedPolicies.push({
+                policy,
+                policyTree: {
+                  metadata: { name: treeName },
+                  expandedSpec: expandedTree,
+                },
+                matchDetails,
+              });
+            });
+          });
         });
 
-        return acc;
-      }, []);
-
-      return matchResult;
+        return {
+          labels,
+          matchedPolicies: allMatchedPolicies,
+        };
+      });
     },
     [data]
   );

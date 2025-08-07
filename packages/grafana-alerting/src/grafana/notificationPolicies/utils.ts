@@ -129,13 +129,7 @@ export function matchAlertInstancesToPolicyTree(instances: Label[][], routingTre
 
   // compute the entire expanded tree for matching routes and diagnostics
   // this will include inherited properties from parent nodes
-  // @TODO I don't like the type cast here :(
-  const expandedTree = addUniqueIdentifier(
-    computeInheritedTree({
-      ...(routingTree as Route),
-      routes: routingTree.routes as Route[],
-    })
-  );
+  const expandedTree = addUniqueIdentifier(computeInheritedTree(routingTree));
 
   // let's first find all matching routes for the provided instances
   const matchesArray = instances.flatMap((labels) => findMatchingRoutes(expandedTree, labels));
@@ -143,7 +137,6 @@ export function matchAlertInstancesToPolicyTree(instances: Label[][], routingTre
   // now group the matches by route ID
   // this will give us a map of route IDs to their matching instances
   // we use the route ID as the key to ensure uniqueness
-  // and to allow for easy lookup later
   const groupedByRoute = groupBy(matchesArray, (match) => match.route.id);
   Object.entries(groupedByRoute).forEach(([_key, match]) => {
     matchedPolicies.set(match[0].route, match);
