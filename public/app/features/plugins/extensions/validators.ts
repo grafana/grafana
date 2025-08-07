@@ -68,15 +68,35 @@ export function isLinkPathValid(pluginId: string, path: string) {
 export function isExtensionPointIdValid({
   extensionPointId,
   pluginId,
+  isInsidePlugin,
+  isCoreGrafanaPlugin,
+  log,
 }: {
   extensionPointId: string;
   pluginId: string;
+  isInsidePlugin: boolean;
+  isCoreGrafanaPlugin: boolean;
+  log: ExtensionsLog;
 }) {
-  if (extensionPointId.startsWith('grafana/')) {
-    return true;
+  const startsWithPluginId =
+    extensionPointId.startsWith(`${pluginId}/`) || extensionPointId.startsWith(`plugins/${pluginId}/`);
+
+  if (isInsidePlugin && !isCoreGrafanaPlugin && !startsWithPluginId) {
+    log.error(errors.INVALID_EXTENSION_POINT_ID_PLUGIN(pluginId, extensionPointId));
+    return false;
   }
 
-  return Boolean(extensionPointId.startsWith(`plugins/${pluginId}/`) || extensionPointId.startsWith(`${pluginId}/`));
+  if (!isInsidePlugin && !extensionPointId.startsWith('grafana/')) {
+    log.error(errors.INVALID_EXTENSION_POINT_ID_GRAFANA_PREFIX(extensionPointId));
+    return false;
+  }
+
+  if (!isInsidePlugin && !Object.values<string>(PluginExtensionPoints).includes(extensionPointId)) {
+    log.error(errors.INVALID_EXTENSION_POINT_ID_GRAFANA_EXPOSED);
+    return false;
+  }
+
+  return true;
 }
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {
@@ -137,25 +157,25 @@ export const isAddedLinkMetaInfoMissing = (
 ) => {
   const logPrefix = 'Could not register link extension. Reason:';
   const app = config.apps[pluginId];
-  const pluginJsonMetaInfo = app ? app.extensions.addedLinks.find(({ title }) => title === metaInfo.title) : null;
+  const pluginJsonMetaInfo = app ? app.extensions.addedLinks.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
     log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
     return true;
   }
 
-  if (!pluginJsonMetaInfo) {
+  if (!pluginJsonMetaInfo || pluginJsonMetaInfo.length === 0) {
     log.error(`${logPrefix} ${errors.ADDED_LINK_META_INFO_MISSING}`);
     return true;
   }
 
   const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
-  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
+  if (!targets.every((target) => pluginJsonMetaInfo.some(({ targets }) => targets.includes(target)))) {
     log.error(`${logPrefix} ${errors.TARGET_NOT_MATCHING_META_INFO}`);
     return true;
   }
 
-  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+  if (pluginJsonMetaInfo.some(({ description }) => description !== metaInfo.description)) {
     log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
   }
 
@@ -169,25 +189,25 @@ export const isAddedFunctionMetaInfoMissing = (
 ) => {
   const logPrefix = 'Could not register function extension. Reason:';
   const app = config.apps[pluginId];
-  const pluginJsonMetaInfo = app ? app.extensions.addedFunctions.find(({ title }) => title === metaInfo.title) : null;
+  const pluginJsonMetaInfo = app ? app.extensions.addedFunctions.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
     log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
     return true;
   }
 
-  if (!pluginJsonMetaInfo) {
+  if (!pluginJsonMetaInfo || pluginJsonMetaInfo.length === 0) {
     log.error(`${logPrefix} ${errors.ADDED_FUNCTION_META_INFO_MISSING}`);
     return true;
   }
 
   const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
-  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
+  if (!targets.every((target) => pluginJsonMetaInfo.some(({ targets }) => targets.includes(target)))) {
     log.error(`${logPrefix} ${errors.TARGET_NOT_MATCHING_META_INFO}`);
     return true;
   }
 
-  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+  if (pluginJsonMetaInfo.some(({ description }) => description !== metaInfo.description)) {
     log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
   }
 
@@ -201,25 +221,27 @@ export const isAddedComponentMetaInfoMissing = (
 ) => {
   const logPrefix = 'Could not register component extension. Reason:';
   const app = config.apps[pluginId];
-  const pluginJsonMetaInfo = app ? app.extensions.addedComponents.find(({ title }) => title === metaInfo.title) : null;
+  const pluginJsonMetaInfo = app
+    ? app.extensions.addedComponents.filter(({ title }) => title === metaInfo.title)
+    : null;
 
   if (!app) {
     log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
     return true;
   }
 
-  if (!pluginJsonMetaInfo) {
+  if (!pluginJsonMetaInfo || pluginJsonMetaInfo.length === 0) {
     log.error(`${logPrefix} ${errors.ADDED_COMPONENT_META_INFO_MISSING}`);
     return true;
   }
 
   const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
-  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
+  if (!targets.every((target) => pluginJsonMetaInfo.some(({ targets }) => targets.includes(target)))) {
     log.error(`${logPrefix} ${errors.TARGET_NOT_MATCHING_META_INFO}`);
     return true;
   }
 
-  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+  if (pluginJsonMetaInfo.some(({ description }) => description !== metaInfo.description)) {
     log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
   }
 
@@ -233,24 +255,24 @@ export const isExposedComponentMetaInfoMissing = (
 ) => {
   const logPrefix = 'Could not register exposed component extension. Reason:';
   const app = config.apps[pluginId];
-  const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.find(({ id }) => id === metaInfo.id) : null;
+  const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.filter(({ id }) => id === metaInfo.id) : null;
 
   if (!app) {
     log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
     return true;
   }
 
-  if (!pluginJsonMetaInfo) {
+  if (!pluginJsonMetaInfo || pluginJsonMetaInfo.length === 0) {
     log.error(`${logPrefix} ${errors.EXPOSED_COMPONENT_META_INFO_MISSING}`);
     return true;
   }
 
-  if (pluginJsonMetaInfo.title !== metaInfo.title) {
+  if (pluginJsonMetaInfo.some(({ title }) => title !== metaInfo.title)) {
     log.error(`${logPrefix} ${errors.TITLE_NOT_MATCHING_META_INFO}`);
     return true;
   }
 
-  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+  if (pluginJsonMetaInfo.some(({ description }) => description !== metaInfo.description)) {
     log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
   }
 

@@ -119,10 +119,10 @@
       "users-heading": "Uživatelé organizace"
     },
     "enterprise-auth-features-card": {
-      "dismiss": "",
-      "heading": "",
-      "learn-more-link": "",
-      "text": ""
+      "dismiss": "Zamítnout",
+      "heading": "Ověření Enterprise",
+      "learn-more-link": "Další informace",
+      "text": "Spravujte uživatele, týmy a oprávnění automaticky pomocí <1>SAML</1>, <3>SCIM</3>, <6>LDAP</6> a <8>RBAC</8> – dostupné v Grafana Cloud a Enterprise."
     },
     "feature-listing": {
       "title-auditing": "Provádění auditu",
@@ -374,11 +374,21 @@
       "am-active-timing-select-label-active-timings": "Aktivní časování"
     },
     "ad": {
-      "close": "",
-      "learn-more": ""
+      "close": "Zavřít",
+      "learn-more": "Další informace"
     },
     "add-button": {
       "add-more": "Přidat další"
+    },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "feedback-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
     },
     "alert": {
       "alert-state": "Stav výstrahy",
@@ -395,12 +405,12 @@
       "missing-series-resolve": "Chybějící série hodnocení k vyřešení",
       "no-annotations": "Žádné vysvětlivky",
       "notification-configuration": {
-        "active-timings": "",
+        "active-timings": "Aktivní časové intervaly",
         "contact-point": "Kontaktní bod",
         "group-by": "Seskupeno podle",
-        "group-title": "",
+        "group-title": "Konfigurace oznámení",
         "mute-timings": "Ztlumit časování",
-        "timing-options": ""
+        "timing-options": "Časování"
       },
       "pending-period": "Čekající období",
       "rule": "Pravidlo",
@@ -515,6 +525,9 @@
           "text": "Definujte, jak se vyhodnotí pravidlo nahrávání."
         }
       }
+    },
+    "alert-rule": {
+      "term": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -963,7 +976,7 @@
     },
     "contactPoints": {
       "validation": {
-        "notFound": ""
+        "notFound": "Kontaktní bod „{{contactPoint}}“ se nepodařilo najít"
       }
     },
     "continue-matching-indicator": {
@@ -972,7 +985,7 @@
     "copy-to-clipboard": "Kopírovat „{{label}}“ do schránky",
     "create-metadata": {
       "label": {
-        "contact-point": "",
+        "contact-point": "Oznámení jsou doručována na",
         "dashboard": "Nástěnka",
         "dashboard-and-panel": "Nástěnka a panel",
         "evaluation-interval": "Interval hodnocení",
@@ -1120,7 +1133,7 @@
       "content-show-all-errors": "Zobrazit všechny chyby"
     },
     "errors": {
-      "failedWith": ""
+      "failedWith": "{{-config}} selhalo se stavem {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1517,15 +1530,15 @@
     "group-details": {
       "ds-features-error": "Chyba při načítání podrobností o zdroji dat",
       "edit": "Upravit",
-      "evaluations-to-fire": "Cykly hodnocení ke spuštění",
       "export": "Exportovat",
       "folder": "Složka",
       "group-loading-error": "Chyba při načítání skupiny",
       "interval": "Interval",
       "namespace": "Jmenný prostor",
-      "pending-period": "Období čekání",
-      "recording": "Probíhá záznam",
-      "rule-name": "Jméno pravidla"
+      "new": "",
+      "title": {
+        "back": ""
+      }
     },
     "group-edit": {
       "ds-error": "Chyba při načítání podrobností o zdroji dat",
@@ -1550,11 +1563,11 @@
       "group-not-editable": "Vybranou skupinu nelze upravit",
       "group-not-editable-description": "Tato skupina patří ke zdroji dat, který nepodporuje úpravy.",
       "page-title": "Upravit skupinu pravidel",
-      "rule-group-error": "Chyba při načítání skupiny pravidel",
-      "title": "Upravit hodnotící skupinu"
+      "rule-group-error": "Chyba při načítání skupiny pravidel"
     },
     "group-loader": {
-      "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}"
+      "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Probíhá odstranění skupiny"
@@ -1571,21 +1584,20 @@
       }
     },
     "home": {
-      "irm-card-description": "",
-      "irm-card-item-1": "",
-      "irm-card-item-2": "",
-      "irm-card-item-3": "",
-      "irm-card-item-4": "",
-      "irm-card-title": "",
+      "irm-card-description": "Sjednoťte pohotovostní službu, upozorňování a reakci na incidenty pomocí Grafana Cloud IRM.",
+      "irm-card-item-1": "Spravujte plány pohotovostních služeb pomocí kalendáře nebo Terraformu.",
+      "irm-card-item-2": "Reagujte na incidenty přes web, aplikaci, Slack nebo jiné kanály.",
+      "irm-card-item-3": "Přesně určete základní příčiny pomocí Grafana SIFT s umělou inteligencí.",
+      "irm-card-item-4": "Analyzujte minulé incidenty, abyste zlepšili reakci a odolnost.",
+      "irm-card-title": "Reakce a správa incidentů",
       "label-get-started": "Začínáme",
       "label-insights": "观察",
-      "synthetic-monitoring-card-description": "",
-      "synthetic-monitoring-card-item-1": "",
-      "synthetic-monitoring-card-item-2": "",
-      "synthetic-monitoring-card-item-3": "",
-      "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Výstrahy"
+      "synthetic-monitoring-card-description": "Monitorujte kritické uživatelské toky, webové stránky a rozhraní API externě z globálních lokalit.",
+      "synthetic-monitoring-card-item-1": "Simulujte cesty koncových uživatelů pomocí kontrol prohlížeče.",
+      "synthetic-monitoring-card-item-2": "Spusťte kontroly pingu, DNS, HTTP/S a TCP na každé síťové vrstvě.",
+      "synthetic-monitoring-card-item-3": "Použijte více než 20 globálních nebo soukromých sond za firewallem.",
+      "synthetic-monitoring-card-item-4": "Sledujte SLO pomocí vestavěných Prometheus výstrah přímo z uživatelského rozhraní.",
+      "synthetic-monitoring-card-title": "Syntetické monitorování"
     },
     "import-to-gma": {
       "action-button": "Importovat",
@@ -1599,7 +1611,7 @@
         "no-rules-body-yaml": "Neexistují žádná pravidla k importu. Vyberte jiný soubor YAML.",
         "no-rules-title": "Žádná pravidla k importu",
         "not-using-rules-managed-by-integrations-or-plugins": {
-          "text": "",
+          "text": "Pravidla spravovaná integracemi nebo doplňky by neměla být importována do pravidel spravovaných Grafanou.",
           "title": "Informace"
         },
         "plugin-rules-warning": {
@@ -1981,7 +1993,7 @@
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Hledat podle kontaktního bodu",
-      "placeholder-search-by-contact-point": "",
+      "placeholder-search-by-contact-point": "Vyberte kontaktní bod",
       "search-query-input-placeholder-search": "Hledat"
     },
     "notification-policies-list": {
@@ -2249,11 +2261,17 @@
       "title-attention": "Pozor",
       "title-manage-contact-point-permissions": "Spravovat oprávnění kontaktního bodu"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": ""
+    },
     "receivers-section": {
       "button-more": "Další",
       "new-menu": {
         "label-export-all": "Exportovat vše"
       }
+    },
+    "recording-rule": {
+      "term": ""
     },
     "recording-rule-editor": {
       "error-no-query-editor": "Nelze načíst editor dotazů, důvod: {{errorMessage}}"
@@ -2474,7 +2492,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurovat",
-      "draft-new-rule": "Navrhnout nové pravidlo",
       "ds-error": {
         "title": "Nelze načíst pravidla pro tento zdroj dat"
       },
@@ -2495,11 +2512,12 @@
         "new-badge": "Nové!",
         "text": "Importovat do pravidel spravovaných Grafanou"
       },
-      "loading-more-groups": "",
+      "loading-more-groups": "Načítání dalších skupin…",
       "more": "Další",
       "new-alert-rule": "Nové pravidlo výstrahy",
       "new-datasource-recording-rule": "Nové pravidlo nahrávání zdroje dat",
       "new-grafana-recording-rule": "Nové pravidlo nahrávání Grafany",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Zobrazit více…"
       },
@@ -2580,6 +2598,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "",
       "error-loading": "Při načítání pravidla se něco pokazilo",
       "evaluation-interval": "Každý {{interval}}",
       "prometheus-consistency-check": {
@@ -2675,6 +2694,11 @@
     },
     "selecting-data-source-tooltip": {
       "tooltip-content": "Nenašli jste požadovaný zdroj dat? Některé zdroje dat nepodporují upozorňování. Další informace zobrazíte kliknutím na ikonu."
+    },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
     },
     "settings-content": {
       "add-new-alertmanager": "Přidat nového správce výstrah",
@@ -2811,6 +2835,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Obnovit náhled",
+      "empty-state": "",
       "label-preview": "Náhled",
       "refresh": "Obnovit"
     },
@@ -2910,6 +2935,11 @@
     },
     "timestamp": {
       "time-ago": "(před {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3042,51 +3072,51 @@
     }
   },
   "alertlist": {
-    "category-alert-state-filter": "",
-    "category-filter": "",
-    "category-options": "",
-    "descriptino-alerts-linked-to-dashboard": "",
-    "description-alert-instance-label": "",
-    "description-alert-name": "",
-    "description-datasource": "",
-    "description-folder": "",
-    "description-group-by": "",
-    "description-group-mode": "",
-    "description-max-items": "",
-    "description-show-inactive-alerts": "",
-    "description-sort-order": "",
-    "description-view-mode": "",
+    "category-alert-state-filter": "Filtr stavu výstrahy",
+    "category-filter": "Filtrovat",
+    "category-options": "Možnosti",
+    "descriptino-alerts-linked-to-dashboard": "Zobrazit pouze výstrahy propojené s touto nástěnkou",
+    "description-alert-instance-label": "Filtrovat instance výstrah pomocí dotazování na štítky, např.: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
+    "description-alert-name": "Filtrovat výstrahy obsahující tento text",
+    "description-datasource": "Filtrovat ze zdroje výstrahy",
+    "description-folder": "Filtrovat výstrahy ve vybrané složce (pouze pro pravidla výstrah spravovaná Grafanou)",
+    "description-group-by": "Filtrovat výstrahy pomocí dotazování na štítky",
+    "description-group-mode": "Jak by měly být seskupeny instance výstrah",
+    "description-max-items": "Maximální počet výstrah k zobrazení",
+    "description-show-inactive-alerts": "Zahrnout pravidla výstrah, která mají 0 (nula) instancí. Protože tato pravidla nemají žádné instance, zůstanou skryta, pokud je nakonfigurován filtr štítků výstrahy instance.",
+    "description-sort-order": "Pořadí řazení výstrah a jejich instancí",
+    "description-view-mode": "Přepínání mezi zobrazením seznamu a statistik",
     "group-by": {
       "aria-label-group-by-label-keys": "seřadit podle klíčů štítků",
       "placeholder-group-by": "Seřadit podle"
     },
     "group-mode-options": {
-      "label-custom-grouping": "",
-      "label-default-grouping": ""
+      "label-custom-grouping": "Vlastní seskupení",
+      "label-default-grouping": "Výchozí seskupení"
     },
-    "name-alert-instance-label": "",
-    "name-alert-name": "",
-    "name-alerts-linked-to-dashboard": "",
-    "name-datasource": "",
-    "name-error": "",
-    "name-firing": "",
-    "name-folder": "",
-    "name-group-by": "",
-    "name-group-mode": "",
-    "name-max-items": "",
-    "name-no-data": "",
-    "name-normal": "",
-    "name-pending": "",
-    "name-recovering": "",
-    "name-show-inactive-alerts": "",
-    "name-sort-order": "",
-    "name-view-mode": "",
+    "name-alert-instance-label": "Štítek instance výstrahy",
+    "name-alert-name": "Název výstrahy",
+    "name-alerts-linked-to-dashboard": "Výstrahy propojené s touto nástěnkou",
+    "name-datasource": "Zdroj dat",
+    "name-error": "Chyba",
+    "name-firing": "Upozorňování/spuštění",
+    "name-folder": "Složka",
+    "name-group-by": "Seřadit podle",
+    "name-group-mode": "Režim řazení",
+    "name-max-items": "Max. počet položek",
+    "name-no-data": "Žádná data",
+    "name-normal": "Normální",
+    "name-pending": "Nevyřízeno",
+    "name-recovering": "Probíhá obnovení",
+    "name-show-inactive-alerts": "Zobrazit výstrahy s 0 instancemi",
+    "name-sort-order": "Pořadí řazení",
+    "name-view-mode": "Režim zobrazení",
     "sort-order-options": {
-      "label-alphabetical-asc": "",
-      "label-alphabetical-desc": "",
-      "label-importance": "",
-      "label-time-asc": "",
-      "label-time-desc": ""
+      "label-alphabetical-asc": "Abecedně (vzestupně)",
+      "label-alphabetical-desc": "Abecedně (sestupně)",
+      "label-importance": "Důležitost",
+      "label-time-asc": "Čas (vzestupně)",
+      "label-time-desc": "Čas (sestupně)"
     },
     "ungrouped-mode-view": {
       "active-for": "po dobu <1>{{duration}}</1>",
@@ -3102,8 +3132,8 @@
       "title-permission-required": "Je vyžadováno oprávnění"
     },
     "view-mode-options": {
-      "label-list": "",
-      "label-stat": ""
+      "label-list": "Seznam",
+      "label-stat": "Statistika"
     }
   },
   "annolist": {
@@ -3116,31 +3146,31 @@
     "annotation-list-item": {
       "tooltip-created-by": "Autor:<1></1> {{email}}"
     },
-    "category-annotation-query": "",
-    "category-display": "",
-    "category-link-behaviour": "",
-    "description-tags": "",
+    "category-annotation-query": "Dotaz na vysvětlivky",
+    "category-display": "Zobrazit",
+    "category-link-behaviour": "Chování odkazu",
+    "description-tags": "Porovnat tagy vysvětlivek",
     "link-target-options": {
-      "label-dashboard": "",
-      "label-panel": ""
+      "label-dashboard": "Nástěnka",
+      "label-panel": "Panel"
     },
-    "name-limit": "",
-    "name-link-target": "",
-    "name-query-filter": "",
-    "name-show-tags": "",
-    "name-show-time": "",
-    "name-show-user": "",
-    "name-tags": "",
-    "name-time-after": "",
-    "name-time-before": "",
-    "name-time-range": "",
+    "name-limit": "Limit",
+    "name-link-target": "Cíl odkazu",
+    "name-query-filter": "Filtr dotazu",
+    "name-show-tags": "Ukázat štítky",
+    "name-show-time": "Zobrazit čas",
+    "name-show-user": "Zobrazit uživatele",
+    "name-tags": "Štítky",
+    "name-time-after": "Čas po",
+    "name-time-before": "Čas před",
+    "name-time-range": "Časový rozsah",
     "query-filter-options": {
-      "label-all-dashboards": "",
-      "label-this-dashboard": ""
+      "label-all-dashboards": "Všechny nástěnky",
+      "label-this-dashboard": "Tato nástěnka"
     },
     "time-range-options": {
-      "label-none": "",
-      "label-this-dashboard": ""
+      "label-none": "Žádné",
+      "label-this-dashboard": "Tato nástěnka"
     }
   },
   "annotations": {
@@ -3155,6 +3185,16 @@
       "info-box-content": "<0>Vysvětlivky umožňují integraci údajů o události do vašich grafů. Jsou vizualizovány jako svislé čáry a ikony na všech panelech grafu. Po najetí kurzorem myši na ikonu vysvětlivek získáte text a tagy události. Události vysvětlivek můžete přidat přímo z Grafany podržením CTRL nebo CMD + kliknutím na graf (nebo přetažením oblasti). Ty budou uloženy v anotační databázi Grafany.</0>",
       "info-box-content-2": "Další informace najdete v <2> dokumentaci k vysvětlivkám</2>.",
       "title": "Nejsou k dispozici žádné vlastní dotazy s vysvětlivkami"
+    },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "",
+        "results-split-on-comma": ""
+      },
+      "placeholder": {
+        "text-or-the-first-field": "",
+        "time-or-the-first-field": ""
+      }
     },
     "standard-annotation-query-editor": {
       "events-found": "Počet událostí: {{numEvents}} (z {{numFields}} polí)",
@@ -3231,6 +3271,9 @@
       "define-allowed-teams-ids-label": "Definovat povolená ID týmů",
       "display-name-description": "Zobrazí se na přihlašovací stránce jako „Přihlásit se přes…“. Užitečné, pokud používáte více než jednoho poskytovatele identity nebo protokoly SSO.",
       "display-name-label": "Zobrazované jméno",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Název klíče, který se použije pro vyhledání e-mailu uživatele v mapě atributů ID tokenu OAuth2.",
       "email-attribute-name-label": "Název atributu e-mailu",
       "email-attribute-path-description": "Výraz JMESPath, který se použije pro vyhledání e-mailu uživatele z informací o uživateli.",
@@ -3247,6 +3290,11 @@
       "id-token-attribute-name-label": "Název atributu ID tokenu",
       "login-attribute-path-description": "Výraz JMESPath, který se použije pro vyhledání přihlašovacích údajů uživatele z tokenu ID uživatele.",
       "login-attribute-path-label": "Cesta atributu přihlášení",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "ID klienta spravované identity federovaných identifikačních údajů vaší aplikace OAuth2.",
       "managed-identity-client-id-label": "ID klienta spravované identity FIC",
       "name-attribute-path-description": "Výraz JMESPath, který se použije pro vyhledání uživatelského jména z tokenu ID uživatele.\nToto jméno bude použito jako zobrazované jméno uživatele.",
@@ -3317,8 +3365,8 @@
       }
     },
     "provider-card": {
-      "saml-learn-more": "",
-      "scim-learn-more": "",
+      "saml-learn-more": "Jednotné přihlášení (SSO) pomocí SAML.",
+      "scim-learn-more": " Synchronizujte uživatele a týmy pomocí SCIM.",
       "text-badge-enabled": "Povoleno",
       "text-badge-not-enabled": "Není povoleno"
     },
@@ -3345,6 +3393,9 @@
       "text-badge-enabled": "Povoleno",
       "text-badge-not-enabled": "Není povoleno"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Koncový bod .well-known / openid-configuration pro vašeho poskytovatele identity",
       "title-open-id-connect-discovery-url": "Adresa URL OpenID Connect Discovery"
@@ -3355,99 +3406,99 @@
   },
   "bar-chart": {
     "warn": {
-      "missing-numeric": "",
-      "missing-series": ""
+      "missing-numeric": "Nebyla nalezena žádná číselná pole",
+      "missing-series": "Sloupcové grafy vyžadují řetězec nebo časové pole"
     }
   },
   "barchart": {
     "config": {
-      "category-thresholds": "",
-      "description-color-by-field": "",
-      "description-x-label-max-length": "",
-      "name-bar-radius": "",
-      "name-bar-width": "",
-      "name-color-by-field": "",
-      "name-fill-opacity": "",
-      "name-full-highlight": "",
-      "name-gradient-mode": "",
-      "name-group-width": "",
-      "name-line-width": "",
-      "name-orientation": "",
-      "name-rotate-x-labels": "",
-      "name-show-thresholds": "",
-      "name-show-values": "",
-      "name-stacking": "",
-      "name-transform": "",
-      "name-x-axis": "",
-      "name-x-label-max-length": "",
-      "name-x-label-min-spacing": "",
+      "category-thresholds": "Prahové hodnoty",
+      "description-color-by-field": "Použijte hodnotu barvy pro příbuzné pole k obarvení každé hodnoty lišty.",
+      "description-x-label-max-length": "Štítky na ose X budou zkráceny na zadanou délku",
+      "name-bar-radius": "Poloměr lišty",
+      "name-bar-width": "Šířka lišty",
+      "name-color-by-field": "Barva podle pole",
+      "name-fill-opacity": "Průhlednost výplně",
+      "name-full-highlight": "Zvýraznit celou oblast při najetí",
+      "name-gradient-mode": "Režim přechodu",
+      "name-group-width": "Šířka skupiny",
+      "name-line-width": "Šířka řádku",
+      "name-orientation": "Orientace",
+      "name-rotate-x-labels": "Otočit štítky na ose x",
+      "name-show-thresholds": "Zobrazit prahové hodnoty",
+      "name-show-values": "Zobrazit hodnoty",
+      "name-stacking": "Stohování",
+      "name-transform": "Transformovat",
+      "name-x-axis": "Osa X",
+      "name-x-label-max-length": "Maximální délka štítku na ose X",
+      "name-x-label-min-spacing": "Minimální rozteč štítků na ose X",
       "orientation-options": {
-        "label-auto": "",
-        "label-horizontal": "",
-        "label-line-vertical": ""
+        "label-auto": "Auto",
+        "label-horizontal": "Horizontální",
+        "label-line-vertical": "Vertikální"
       },
-      "placeholder-x-axis": "",
-      "placeholder-x-label-max-length": "",
+      "placeholder-x-axis": "První řetězec nebo časové pole",
+      "placeholder-x-label-max-length": "Žádné",
       "show-values-options": {
-        "label-always": "",
-        "label-auto": "",
-        "label-never": ""
+        "label-always": "Vždy",
+        "label-auto": "Auto",
+        "label-never": "Nikdy"
       },
       "transform-options": {
-        "description-constant": "",
-        "description-negative-y": "",
-        "label-constant": "",
-        "label-negative-y": ""
+        "description-constant": "První hodnota se zobrazí jako konstantní čára",
+        "description-negative-y": "Převrátit výsledky na záporné hodnoty na ose Y",
+        "label-constant": "Konstantní",
+        "label-negative-y": "Záporné Y"
       }
     },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Vyžadovat místo z pravé strany",
       "gaps-options": {
-        "description-large": "",
-        "description-medium": "",
-        "description-none": "",
-        "description-small": "",
-        "label-large": "",
-        "label-medium": "",
-        "label-none": "",
-        "label-small": ""
+        "description-large": "Vyžadovat {{spacing}} rozestupy",
+        "description-medium": "Vyžadovat {{spacing}} rozestupy",
+        "description-none": "Zobrazit všechny zaškrtávací značky",
+        "description-small": "Vyžadovat {{spacing}} rozestupy",
+        "label-large": "Velké",
+        "label-medium": "Střední",
+        "label-none": "Žádné",
+        "label-small": "Malé"
       },
       "label-rtl": "RTL"
     }
   },
   "bargauge": {
     "bar-size-options": {
-      "label-auto": "",
-      "label-manual": ""
+      "label-auto": "Auto",
+      "label-manual": "Manuálně"
     },
-    "category-bar-gauge": "",
-    "description-max-height": "",
-    "description-min-height": "",
-    "description-min-width": "",
-    "description-show-unfilled-area": "",
+    "category-bar-gauge": "Měrka lišty",
+    "description-max-height": "Maximální výška řádku (vodorovná orientace)",
+    "description-min-height": "Minimální výška řádku (vodorovná orientace)",
+    "description-min-width": "Minimální šířka sloupce (svislá orientace)",
+    "description-show-unfilled-area": "Pokud je povoleno, vykreslí nevyplněnou oblast jako šedou",
     "display-mode-options": {
-      "label-basic": "",
-      "label-gradient": "",
-      "label-retro": ""
+      "label-basic": "Základní",
+      "label-gradient": "Přechod",
+      "label-retro": "Retro LCD"
     },
-    "name-bar-size": "",
-    "name-display-mode": "",
-    "name-max-height": "",
-    "name-min-height": "",
-    "name-min-width": "",
-    "name-name-placement": "",
+    "name-bar-size": "Velikost lišty",
+    "name-display-mode": "Režim zobrazení",
+    "name-max-height": "Max. výška",
+    "name-min-height": "Min. výška",
+    "name-min-width": "Min. šířka",
+    "name-name-placement": "Umístění názvu",
     "name-placement-options": {
-      "label-auto": "",
-      "label-hidden": "",
-      "label-left": "",
-      "label-top": ""
+      "label-auto": "Auto",
+      "label-hidden": "Skryté",
+      "label-left": "Vlevo",
+      "label-top": "Horní"
     },
-    "name-show-unfilled-area": "",
-    "name-value-display": "",
+    "name-show-unfilled-area": "Zobrazit nevyplněnou oblast",
+    "name-value-display": "Zobrazení hodnoty",
     "value-display-options": {
-      "label-hidden": "",
-      "label-text-color": "",
-      "label-value-color": ""
+      "label-hidden": "Skryté",
+      "label-text-color": "Barva textu",
+      "label-value-color": "Barva hodnoty"
     }
   },
   "bookmarks-page": {
@@ -3461,8 +3512,9 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Zrušit",
-      "cannot-move-folders": "Složky nelze přesunout",
       "confirmation-text": "Odstranit",
       "delete-button": "Odstranit",
       "delete-modal-invalid-text": "Jedna nebo více složek obsahuje panely knihovny nebo pravidla výstrah. Chcete-li pokračovat, nejprve je odstraňte.",
@@ -3470,7 +3522,7 @@
       "delete-modal-restore-dashboards-text": "Tato akce okamžitě odstraní vybrané složky, ale vybrané nástěnky budou označeny k odstranění za 30 dnů. Správce organizace může obnovit nástěnky kdykoli před uplynutím 30 dnů. Složky nelze obnovit.",
       "delete-modal-text": "Tato akce odstraní následující obsah:",
       "delete-modal-title": "Odstranit",
-      "delete-provisioned-folder": "",
+      "delete-provisioned-folder": "Odstranit poskytnutou složku",
       "deleting": "Probíhá odstranění…",
       "manage-permissions-button": "Spravovat oprávnění",
       "move-button": "Přesunout",
@@ -3479,7 +3531,9 @@
       "move-modal-text": "Tato akce přesune následující obsah:",
       "move-modal-title": "Přesunout",
       "moving": "Probíhá přesouvání…",
-      "new-folder-name-required-phrase": "Název složky je povinný."
+      "new-folder-name-required-phrase": "Název složky je povinný.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Nedávno odstraněné"
@@ -3490,6 +3544,37 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Tato složka je prázdná"
+    },
+    "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
+      "failed-alert_one": "",
+      "failed-alert_few": "",
+      "failed-alert_many": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": ""
+    },
+    "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
+      "deleting": "",
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} pravidlo výstrahy",
@@ -3522,12 +3607,12 @@
       "tags-column": "Tagy"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "",
-      "api-error": "",
-      "button-cancel": "",
-      "button-delete": "",
-      "button-deleting": "",
-      "delete-warning": ""
+      "api-error": "Složku se nepodařilo odstranit",
+      "button-cancel": "Zrušit",
+      "button-delete": "Odstranit",
+      "button-deleting": "Probíhá odstraňování…",
+      "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
+      "success-message": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nelze načíst informace o následovníkovi"
@@ -3540,6 +3625,7 @@
     },
     "folder-actions-button": {
       "delete": "Odstranit",
+      "delete-folder-error": "",
       "folder-actions": "Akce složky",
       "manage-permissions": "Spravovat oprávnění",
       "move": "Přesunout"
@@ -3551,6 +3637,7 @@
       "empty-message": "Nebyly nalezeny žádné složky",
       "error-title": "Chyba při načítání složek",
       "non-folder-item": "Bez složky {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Vyhledat složky",
       "unknown-error": "Neznámá chyba"
     },
@@ -3569,15 +3656,14 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Chyba při vytváření složky",
-      "alert-folder-created-successfully": "Složka úspěšně vytvořena",
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
-      "error-invalid-folder-name": "Neplatný název složky",
       "error-required": "Název složky je povinný",
       "folder-name-input-placeholder-enter-folder-name": "Zadejte název složky",
       "label-folder-name": "Název složky",
       "text-pull-request-created": "Byl vytvořen pull request se změnami v této složce:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Pull request byl vytvořen",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
@@ -3586,52 +3672,52 @@
       "text": "Nebyly nalezeny žádné výsledky pro váš dotaz"
     },
     "restore": {
-      "success": ""
+      "success": "Nástěnka {{name}} byla obnovena"
     },
     "text-this-repository-is-read-only": "Pokud máte přímý přístup k cíli, zkopírujte JSON a vložte ho tam.",
     "trash-state-manager": {
       "label": {
-        "alphabetically-az": "",
-        "alphabetically-za": ""
+        "alphabetically-az": "Abecedně (A–Z)",
+        "alphabetically-za": "Abecedně (Z–A)"
       }
     }
   },
   "candlestick": {
     "additional-fields-options": {
-      "label-ignore": "",
-      "label-include": ""
+      "label-ignore": "Ignorovat",
+      "label-include": "Zahrnout"
     },
     "candle-style-options": {
-      "label-candles": "",
-      "label-ohlc-bars": ""
+      "label-candles": "Svíčky",
+      "label-ohlc-bars": "Lišty OHLC"
     },
-    "category-candlestick": "",
+    "category-candlestick": "Svícen",
     "color-strategy-options": {
-      "label-since-open": "",
-      "label-since-prior-close": ""
+      "label-since-open": "Od otevření",
+      "label-since-prior-close": "Od předchozího uzavření"
     },
-    "description-additional-fields": "",
-    "description-close": "",
-    "description-high": "",
-    "description-low": "",
-    "description-open": "",
-    "description-volume": "",
+    "description-additional-fields": "Použijte standardní možnosti časových řad k nakonfigurování všech polí, která nejsou mapována výše",
+    "description-close": "Hodnota na konci vykazovaného období",
+    "description-high": "Maximální hodnota v rámci období",
+    "description-low": "Minimální hodnota v rámci období",
+    "description-open": "Hodnota na začátku vykazovaného období",
+    "description-volume": "Počet vzorků v rámci období",
     "mode-options": {
-      "label-both": "",
-      "label-candles": "",
-      "label-volume": ""
+      "label-both": "Oba",
+      "label-candles": "Svíčky",
+      "label-volume": "Objem"
     },
-    "name-additional-fields": "",
-    "name-candle-style": "",
-    "name-close": "",
-    "name-color-strategy": "",
-    "name-down-color": "",
-    "name-high": "",
-    "name-low": "",
-    "name-mode": "",
-    "name-open": "",
-    "name-up-color": "",
-    "name-volume": ""
+    "name-additional-fields": "Dodatečná pole",
+    "name-candle-style": "Styl svíčky",
+    "name-close": "Zavřít",
+    "name-color-strategy": "Barevná škála",
+    "name-down-color": "Podkladová barva",
+    "name-high": "Vysoký",
+    "name-low": "Nízký",
+    "name-mode": "Režim",
+    "name-open": "Otevřít",
+    "name-up-color": "Horní barva",
+    "name-volume": "Objem"
   },
   "canvas": {
     "apieditor": {
@@ -3646,18 +3732,18 @@
       }
     },
     "button-item": {
-      "category-button": "",
+      "category-button": "Tlačítko",
       "label": {
         "center": "Střed",
         "left": "Vlevo",
         "right": "Vpravo"
       },
-      "name-align-text": "",
-      "name-api": "",
-      "name-style": "",
-      "name-text": "",
-      "name-text-color": "",
-      "name-text-size": "",
+      "name-align-text": "Zarovnat text",
+      "name-api": "API",
+      "name-style": "Styl",
+      "name-text": "Text",
+      "name-text-color": "Barva textu",
+      "name-text-size": "Velikost textu",
       "placeholder": {
         "auto": "Automaticky"
       }
@@ -3684,20 +3770,21 @@
         }
       }
     },
-    "category-arrow-direction": "",
-    "category-background": "",
-    "category-border": "",
-    "category-canvas": "",
-    "category-color": "",
-    "category-data-links": "",
-    "category-line-style": "",
-    "category-metric-value": "",
-    "category-radius": "",
-    "category-selected-connection": "",
-    "category-selected-element": "",
-    "category-size": "",
+    "category-arrow-direction": "Směr šipky",
+    "category-background": "Pozadí",
+    "category-border": "Okraj",
+    "category-canvas": "Plátno",
+    "category-color": "Barva",
+    "category-data-links": "Propojení dat a akce",
+    "category-line-style": "Styl čáry",
+    "category-metric-value": "Metrická hodnota",
+    "category-radius": "Poloměr",
+    "category-selected-connection": "Vybrané připojení",
+    "category-selected-element": "Vybraný prvek ({{element}})",
+    "category-size": "Velikost",
+    "category-tooltip": "",
     "cloud-item": {
-      "category-cloud": "",
+      "category-cloud": "Cloud",
       "label": {
         "bottom": "Spodní",
         "center": "Střed",
@@ -3706,48 +3793,47 @@
         "right": "Vpravo",
         "top": "Horní"
       },
-      "name-align-text": "",
-      "name-text": "",
-      "name-text-color": "",
-      "name-text-size": "",
-      "name-vertical-align": "",
+      "name-align-text": "Zarovnat text",
+      "name-text": "Text",
+      "name-text-color": "Barva textu",
+      "name-text-size": "Velikost textu",
+      "name-vertical-align": "Vertikální zarovnání",
       "placeholder": {
         "auto": "Automaticky"
       }
     },
-    "description-experimental-types": "",
-    "description-infinite-panning": "",
-    "description-inline-editing": "",
-    "description-pan-zoom": "",
+    "description-experimental-types": "Povolit výběr experimentálních typů prvků",
+    "description-inline-editing": "Povolit přímé úpravy panelu",
+    "description-pan-zoom": "Povolit posouvání a přiblížení",
     "direction-options": {
-      "label-both": "",
-      "label-forward": "",
-      "label-none": "",
-      "label-reverse": ""
+      "label-both": "Oba",
+      "label-forward": "Dopředu",
+      "label-none": "Žádné",
+      "label-reverse": "Dozadu"
     },
     "drone-front-item": {
-      "category-drone-front": "",
-      "name-roll-angle": ""
+      "category-drone-front": "Přední strana dronu",
+      "name-roll-angle": "Úhel příčného sklonu"
     },
     "drone-side-item": {
-      "category-drone-side": "",
-      "name-pitch-angle": ""
+      "category-drone-side": "Boční strana dronu",
+      "name-pitch-angle": "Úhel rozteče"
     },
     "drone-top-item": {
-      "category-drone-top": "",
-      "name-back-left-rotor-rpm": "",
-      "name-back-right-rotor-rpm": "",
-      "name-front-left-rotor-rpm": "",
-      "name-front-right-rotor-rpm": "",
-      "name-yaw-angle": ""
+      "category-drone-top": "Horní strana dronu",
+      "name-back-left-rotor-rpm": "Otáčky levého zadního rotoru",
+      "name-back-right-rotor-rpm": "Otáčky pravého zadního rotoru",
+      "name-front-left-rotor-rpm": "Otáčky levého předního rotoru",
+      "name-front-right-rotor-rpm": "Otáčky pravého předního rotoru",
+      "name-yaw-angle": "Úhel natočení"
     },
     "element-editor": {
-      "category-layout": "",
-      "description-unsupported": "",
-      "name-quick-placement": ""
+      "category-layout": "Rozvržení",
+      "description-unsupported": "Vybraný typ prvku není aktuálním nastavením podporován. Povolte pokročilé typy prvků.",
+      "name-quick-placement": "Rychlé umístění"
     },
     "ellipse-item": {
-      "category-ellipse": "",
+      "category-ellipse": "Elipsa",
       "label": {
         "bottom": "Spodní",
         "center": "Střed",
@@ -3756,50 +3842,50 @@
         "right": "Vpravo",
         "top": "Horní"
       },
-      "name-align-text": "",
-      "name-text": "",
-      "name-text-color": "",
-      "name-text-size": "",
-      "name-vertical-align": "",
+      "name-align-text": "Zarovnat text",
+      "name-text": "Text",
+      "name-text-color": "Barva textu",
+      "name-text-size": "Velikost textu",
+      "name-vertical-align": "Vertikální zarovnání",
       "placeholder": {
         "auto": "Automaticky"
       }
     },
     "icon-item": {
-      "category-icon": "",
-      "name-fill-color": "",
-      "name-svg-path": ""
+      "category-icon": "Ikona",
+      "name-fill-color": "Barva výplně",
+      "name-svg-path": "Cesta SVG"
     },
     "inline-edit": {
       "canvas-inline-editor": "Vložený editor plátna",
       "tooltip-close-inline-editor": "Zavřít vložený editor"
     },
     "inline-edit-body": {
-      "category-selected-element": "",
+      "category-selected-element": "Vybraný prvek ({{element}})",
       "label-add-item": "Přidat položku",
       "please-select-an-element": "Vyberte prvek"
     },
-    "label-actions": "",
-    "label-color": "",
-    "label-direction": "",
-    "label-image": "",
-    "label-image-size": "",
-    "label-line-style": "",
-    "label-links": "",
-    "label-radius": "",
-    "label-size": "",
-    "label-width": "",
+    "label-actions": "Akce",
+    "label-color": "Barva",
+    "label-direction": "Směr",
+    "label-image": "Obrázek",
+    "label-image-size": "Velikost obrázku",
+    "label-line-style": "Styl čáry",
+    "label-links": "Odkazy",
+    "label-radius": "Poloměr",
+    "label-size": "Velikost",
+    "label-width": "Šířka",
     "layer-editor": {
-      "category-layer": "",
-      "category-layout": "",
-      "name-constraints": "",
-      "name-elements": ""
+      "category-layer": "Vrstva",
+      "category-layout": "Rozvržení",
+      "name-constraints": "Omezení",
+      "name-elements": "Prvky"
     },
     "line-style-editor": {
       "label-animate": "Animovat"
     },
     "line-style-options": {
-      "label-solid": ""
+      "label-solid": "Pevný"
     },
     "metric-value-item": {
       "label": {
@@ -3814,15 +3900,14 @@
         "auto": "Automaticky"
       }
     },
-    "name-align-text": "",
-    "name-color": "",
-    "name-experimental-types": "",
-    "name-infinite-panning": "",
-    "name-inline-editing": "",
-    "name-pan-zoom": "",
-    "name-text": "",
-    "name-text-size": "",
-    "name-vertical-align": "",
+    "name-align-text": "Zarovnat text",
+    "name-color": "Barva textu",
+    "name-experimental-types": "Experimentální typy prvků",
+    "name-inline-editing": "Přímé upravování",
+    "name-pan-zoom": "Posouvání a přiblížení",
+    "name-text": "Text",
+    "name-text-size": "Velikost textu",
+    "name-vertical-align": "Vertikální zarovnání",
     "not-found-display": {
       "not-found": "<0>Nenalezeno: </0><config />"
     },
@@ -3835,7 +3920,7 @@
       "zoom-scroll-wheel": "Přiblížení: Rolovací kolečko"
     },
     "parallelogram-item": {
-      "category-parallelogram": "",
+      "category-parallelogram": "Rovnoběžník",
       "label": {
         "bottom": "Spodní",
         "center": "Střed",
@@ -3844,11 +3929,11 @@
         "right": "Vpravo",
         "top": "Horní"
       },
-      "name-align-text": "",
-      "name-text": "",
-      "name-text-color": "",
-      "name-text-size": "",
-      "name-vertical-align": "",
+      "name-align-text": "Zarovnat text",
+      "name-text": "Text",
+      "name-text-color": "Barva textu",
+      "name-text-size": "Velikost textu",
+      "name-vertical-align": "Vertikální zarovnání",
       "placeholder": {
         "auto": "Automaticky"
       }
@@ -3861,21 +3946,21 @@
     },
     "placement-editor": {
       "horizontal-options": {
-        "label-center": "",
-        "label-left": "",
-        "label-left-and-right": "",
-        "label-right": "",
-        "label-scale": ""
+        "label-center": "Střed",
+        "label-left": "Vlevo",
+        "label-left-and-right": "Vlevo a vpravo",
+        "label-right": "Vpravo",
+        "label-scale": "Rozsah"
       },
       "label-constraints": "Omezení",
       "label-position": "Poloha",
       "loading": "Načítání…",
       "vertical-options": {
-        "label-bottom": "",
-        "label-center": "",
-        "label-scale": "",
-        "label-top": "",
-        "label-top-and-bottom": ""
+        "label-bottom": "Dolní",
+        "label-center": "Střed",
+        "label-scale": "Rozsah",
+        "label-top": "Horní",
+        "label-top-and-bottom": "Horní a dolní"
       }
     },
     "quick-positioning": {
@@ -3887,7 +3972,7 @@
       "tooltip-align-vertical-centers": "Zarovnat svislé středy"
     },
     "rectangle-item": {
-      "category-rectangle": "",
+      "category-rectangle": "Obdélník",
       "label": {
         "bottom": "Spodní",
         "center": "Střed",
@@ -3896,33 +3981,33 @@
         "right": "Vpravo",
         "top": "Horní"
       },
-      "name-align-text": "",
-      "name-text": "",
-      "name-text-color": "",
-      "name-text-size": "",
-      "name-vertical-align": "",
+      "name-align-text": "Zarovnat text",
+      "name-text": "Text",
+      "name-text-color": "Barva textu",
+      "name-text-size": "Velikost textu",
+      "name-vertical-align": "Vertikální zarovnání",
       "placeholder": {
         "auto": "Automaticky"
       }
     },
     "server-item": {
-      "category-server": "",
-      "name-blink-rate": "",
-      "name-bulb-color": "",
-      "name-status-color": "",
-      "name-type": "",
+      "category-server": "Server",
+      "name-blink-rate": "Rychlost blikání [hz] (0 = vypnuto)",
+      "name-bulb-color": "Barva žárovky",
+      "name-status-color": "Barva stavu",
+      "name-type": "Typ",
       "type-options": {
-        "label-database": "",
-        "label-single": "",
-        "label-stack": "",
-        "label-terminal": ""
+        "label-database": "Databáze",
+        "label-single": "Jednorázový",
+        "label-stack": "Zásobník",
+        "label-terminal": "Terminál"
       }
     },
     "text-display": {
       "double-click-to-set": "Dvojklikem nastavíte text"
     },
     "text-item": {
-      "category-text": "",
+      "category-text": "Text",
       "label": {
         "bottom": "Spodní",
         "center": "Střed",
@@ -3931,13 +4016,20 @@
         "right": "Vpravo",
         "top": "Horní"
       },
-      "name-align-text": "",
-      "name-text": "",
-      "name-text-color": "",
-      "name-text-size": "",
-      "name-vertical-align": "",
+      "name-align-text": "Zarovnat text",
+      "name-text": "Text",
+      "name-text-color": "Barva textu",
+      "name-text-size": "Velikost textu",
+      "name-vertical-align": "Vertikální zarovnání",
       "placeholder": {
         "auto": "Automaticky"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -3957,7 +4049,7 @@
       "tooltip-remove": "Odebrat"
     },
     "triangle-item": {
-      "category-triangle": "",
+      "category-triangle": "Trojúhelník",
       "label": {
         "bottom": "Spodní",
         "center": "Střed",
@@ -3966,18 +4058,18 @@
         "right": "Vpravo",
         "top": "Horní"
       },
-      "name-align-text": "",
-      "name-text": "",
-      "name-text-color": "",
-      "name-text-size": "",
-      "name-vertical-align": "",
+      "name-align-text": "Zarovnat text",
+      "name-text": "Text",
+      "name-text-color": "Barva textu",
+      "name-text-size": "Velikost textu",
+      "name-vertical-align": "Vertikální zarovnání",
       "placeholder": {
         "auto": "Automaticky"
       }
     },
     "wind-turbine-item": {
-      "category-wind-turbine": "",
-      "name-rpm": ""
+      "category-wind-turbine": "Větrná turbína",
+      "name-rpm": "Otáčky za minutu"
     }
   },
   "carousel": {
@@ -3994,8 +4086,8 @@
   "close-button": {
     "tooltip": "Zavřít"
   },
-  "cloud-enterprise-feature-badge": "",
-  "cloud-feature-badge": "",
+  "cloud-enterprise-feature-badge": "Cloud a Enterprise",
+  "cloud-feature-badge": "Cloud",
   "combobox": {
     "async": {
       "error": "Při načítání možností došlo k chybě."
@@ -4080,11 +4172,39 @@
       "body": "Vyzkoušejte nového poradce a odhalte potenciální problémy se zdroji dat a pluginy.",
       "go-to-advisor": "Přejít na poradce"
     },
+    "cloud": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "collector": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "integrations": {
+          "subtitle": "",
+          "title": ""
+        },
+        "private-data-source-connections": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
+    },
     "connect-data": {
       "category-header-label": "Zdroje dat",
       "empty-message": "Nebyly nalezeny žádné výsledky odpovídající vašemu dotazu",
       "request-data-source": "Požádat o nový zdroj dat",
       "roadmap": "Zobrazit plán"
+    },
+    "connections-home-page": {
+      "welcome-to-connections": ""
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Odkaz na Připojení",
@@ -4115,6 +4235,19 @@
     },
     "not-found-datasource": {
       "body": "Možná jste zadali nesprávnou adresu URL nebo plugin s ID <1></1> není k dispozici.<3></3>Chcete-li zobrazit seznam dostupných zdrojů dat, <5>klikněte sem</5>."
+    },
+    "oss": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
     },
     "search": {
       "aria-label-search-all": "Hledat vše",
@@ -4223,7 +4356,7 @@
       "source-label": "Zdroj",
       "sub-text": "<0>Definujte, jaký zdroj dat bude zobrazovat korelaci a jaká data nahradí dříve definované proměnné.</0>"
     },
-    "sub-title": "Definujte, jak spolu souvisí data uložená v různých zdrojích dat. Další informace najdete v <2>dokumentaci<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Toto pole je povinné.",
       "sub-text": "<0>Definujte, na co bude korelace odkazovat. S typem dotazu se dotaz spustí po kliknutí na korelaci. U externího typu se kliknutím na korelaci otevře adresa URL.</0>",
@@ -4525,7 +4658,7 @@
       }
     },
     "description": {
-      "action": ""
+      "action": "Změnit popis nástěnky"
     },
     "dynamic-config-value-editor": {
       "render-label": {
@@ -4534,12 +4667,17 @@
     },
     "edit-actions": {
       "add": "Přidat {{typeName}}",
-      "move": "",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
+      "move": "Přesunout {{typeName}}",
       "panel-background": "Změnit pozadí panelu",
       "panel-description": "Změnit popis panelu",
-      "panel-max-repeats-per-row": "",
+      "panel-max-repeats-per-row": "Max. počet opakování na řádek",
       "panel-repeat-direction": "Opakovat směr",
-      "panel-repeat-variable": "",
+      "panel-repeat-variable": "Opakování panelu podle",
       "panel-title": "Změnit název panelu",
       "paste-panel": "Vložit panel",
       "remove": "Odebrat {{typeName}}",
@@ -4548,6 +4686,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Nástěnka",
+        "element": "",
         "local-variable": "Lokální proměnná",
         "multiple-elements": "Více prvků",
         "multiple-elements-delete-text": "Opravdu chcete odstranit tyto prvky?",
@@ -4620,12 +4759,20 @@
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
-      "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku"
     },
     "errors": {
       "failed-to-load": "Nástěnku se nepodařilo načíst"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -4665,7 +4812,7 @@
     "get-field-override-categories": {
       "label-add-field-override": "Přidat přepsání pole",
       "label-add-override-property": "Přidat vlastnost přepsání",
-      "override-name": "",
+      "override-name": "Přepsat {{overrideNum}}",
       "title": {
         "add-button": "přidat tlačítko"
       }
@@ -4697,6 +4844,18 @@
         "alert": "Výstraha",
         "query": "Dotaz",
         "transform-data": "Transformovat data"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
       }
     },
     "get-panel-frame-category": {
@@ -4871,6 +5030,10 @@
       "description": "Popis",
       "title-option": "Název"
     },
+    "options-pane-category": {
+      "aria-label-collapse": "",
+      "aria-label-expand": ""
+    },
     "options-pane-options": {
       "placeholder-search-options": "Možnosti hledání",
       "Recent options-title-recent-options": "Nedávné možnosti",
@@ -4880,7 +5043,7 @@
       "title-matched_other": "Shoda možností: {{count}}/{{totalCount}}"
     },
     "outline": {
-      "repeated-item": "",
+      "repeated-item": "Opakovat",
       "tree-item": {
         "empty": "(prázdné)",
         "no-title": "<bez názvu>"
@@ -5038,8 +5201,8 @@
       "label-changes": "Změny",
       "label-details": "Podrobnosti",
       "title": "Uložit nástěnku",
-      "title-copy": "",
-      "title-provisioned": ""
+      "title-copy": "Uložit kopii nástěnky",
+      "title-provisioned": "Zajištěná nástěnka"
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem.<1></1><2>Chcete přesto tuto nástěnku uložit?</2>",
@@ -5116,7 +5279,7 @@
       }
     },
     "title": {
-      "action": ""
+      "action": "Změnit název nástěnky"
     },
     "toolbar": {
       "add": "Přidat",
@@ -5262,7 +5425,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Hledat transformaci",
       "show-images": "Zobrazit obrázky",
-      "title-add-another-transformation": "Přidejte další transformaci"
+      "title-add-another-transformation": "Přidejte další transformaci",
+      "view-all": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": ""
@@ -5298,6 +5462,20 @@
       "invalid-json": "Neplatný JSON",
       "tags-expected-array": "očekávané pole tagů",
       "tags-expected-strings": "očekávané pole řetězců tagů"
+    },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
     },
     "version-history-comparison": {
       "button-restore": "Obnovit na verzi {{version}}",
@@ -5550,12 +5728,13 @@
       }
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "",
+      "api-error": "Nástěnku se nepodařilo odstranit",
       "cancel-action": "Zrušit",
       "delete-action": "Odstranit nástěnku",
-      "delete-read-only-file-message": "",
+      "delete-read-only-file-message": "Tuto nástěnku nelze odstranit přímo z Grafany, protože úložiště je pouze pro čtení. Chcete-li tuto nástěnku odstranit, odeberte soubor z úložiště Git.",
       "deleting": "Probíhá odstranění…",
-      "drawer-title": "",
+      "drawer-title": "Odstranit zajištěnou nástěnku",
+      "success-message": "",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
     "description-label": {
@@ -5567,9 +5746,6 @@
           "edit-link": "Upravit odkaz"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Přepnout e-mailovou nabídku"
@@ -5604,6 +5780,40 @@
       "title": {
         "column-options": "Možnosti sloupce",
         "row-height-options": "Možnosti výšky řádku"
+      }
+    },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "",
+        "dynamically-switch-source-multiple-panels": "",
+        "group": "",
+        "hidden-constant-variable": "",
+        "users-enter-arbitrary-strings-textbox": "",
+        "values-are-static-and-defined-manually": "",
+        "values-fetched-source-query": "",
+        "values-timespans": ""
+      },
+      "name": {
+        "ad-hoc-filters": "",
+        "constant": "",
+        "custom": "",
+        "data-source": "",
+        "group-by": "",
+        "interval": "",
+        "query": "",
+        "textbox": ""
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
       }
     },
     "get-panel-frame-options": {
@@ -5696,6 +5906,21 @@
       "usage-count_many": "Použito na {{count}} nástěnkách",
       "usage-count_other": "Použito na {{count}} nástěnkách"
     },
+    "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "",
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "success-message": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem. Chcete přesto tuto nástěnku uložit?",
       "title-name-already-exists": "Název již existuje"
@@ -5717,7 +5942,7 @@
       }
     },
     "panel-data-alerting-tab": {
-      "tab-label": ""
+      "tab-label": "Výstraha"
     },
     "panel-data-alerting-tab-rendered": {
       "alert": {
@@ -5728,14 +5953,14 @@
       "title-dashboard-not-saved": "Nástěnka není uložena"
     },
     "panel-data-queries-tab": {
-      "tab-label": ""
+      "tab-label": "Dotazy"
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "Přidat dotaz",
       "expression": "Výraz "
     },
     "panel-data-transformations-tab": {
-      "tab-label": ""
+      "tab-label": "Transformace"
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "Přidejte další transformaci",
@@ -5793,10 +6018,13 @@
       "description-examples": "Pojmenované skupiny zachycení lze použít k oddělení zobrazovaného textu a hodnoty (<1>viz příklady</1>).",
       "description-optional": "Volitelné, pokud chcete extrahovat část názvu řady nebo segmentu uzlu metriky.",
       "label-data-source": "Zdroj dat",
+      "label-static-options-sort": "",
       "label-target-data-source": "Cílový zdroj dat",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Možnosti dotazu",
-      "selection-options": "Možnosti výběru"
+      "selection-options": "Možnosti výběru",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -5827,15 +6055,16 @@
       "label-folder": "Složka",
       "render-footer": {
         "title-failed-to-save-dashboard": "Nástěnku se nepodařilo uložit"
-      }
+      },
+      "required": ""
     },
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Změny",
         "label-details": "Podrobnosti",
         "title": "Uložit nástěnku",
-        "title-copy": "",
-        "title-provisioned": ""
+        "title-copy": "Uložit kopii nástěnky",
+        "title-provisioned": "Zajištěná nástěnka"
       }
     },
     "save-dashboard-form": {
@@ -5854,8 +6083,8 @@
         "title-someone-else-has-updated-this-dashboard": "Tuto nástěnku aktualizoval jiný uživatel",
         "would-still-dashboard": "Chcete přesto tuto nástěnku uložit?"
       },
-      "schema-v2-library-panels-export": "Funkce dynamické nástěnky panelu je experimentální a nemá plnou funkčnost srovnatelnou se současným chováním nástěnek. Je založena na novém formátu schématu, který nepodporuje panely knihovny. To znamená, že při exportu nástěnky pro použití v jiné instanci nebudeme zahrnovat panely knihoven. Jejich podpora je naplánována v rámci <2>životního cyklu</2> funkce.",
-      "schema-v2-library-panels-export-title": "Schéma nástěnky V2 zatím nepodporuje export panelů knihoven pro použití v jiné instanci",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Nástěnka byla nevratně změněna"
     },
     "save-dashboard-form-common-options": {
@@ -6161,18 +6390,18 @@
     }
   },
   "dashlist": {
-    "category-dashboard-list": "",
-    "name-folder": "",
-    "name-include-current-template-variables": "",
-    "name-include-current-time-range": "",
-    "name-max-items": "",
-    "name-query": "",
-    "name-recently-viewed": "",
-    "name-search": "",
-    "name-show-folder-names": "",
-    "name-show-headings": "",
-    "name-starred": "",
-    "name-tags": ""
+    "category-dashboard-list": "Seznam nástěnek",
+    "name-folder": "Složka",
+    "name-include-current-template-variables": "Zahrnout aktuální hodnoty proměnných šablony",
+    "name-include-current-time-range": "Zahrnout aktuální časový rozsah",
+    "name-max-items": "Max. počet položek",
+    "name-query": "Dotaz",
+    "name-recently-viewed": "Nedávno zobrazené",
+    "name-search": "Hledat",
+    "name-show-folder-names": "Zobrazit názvy složek",
+    "name-show-headings": "Zobrazit záhlaví",
+    "name-starred": "Označeno hvězdičkou",
+    "name-tags": "Štítky"
   },
   "data-source-list": {
     "empty-state": {
@@ -6434,15 +6663,15 @@
   "dimensions": {
     "background-size-editor": {
       "options": {
-        "label-contain": "",
-        "label-cover": "",
-        "label-fill": "",
-        "label-original": "",
-        "label-tile": ""
+        "label-contain": "Obsahovat",
+        "label-cover": "Překrýt",
+        "label-fill": "Vyplnit",
+        "label-original": "Původní",
+        "label-tile": "Dlaždice"
       }
     },
     "color-dimension-editor": {
-      "label-fixed-color": "",
+      "label-fixed-color": "Pevná barva",
       "noOptionsMessage-no-fields-found": ""
     },
     "file-dropzone-custom-children": {
@@ -6457,14 +6686,15 @@
       "placeholder-search": "Hledat"
     },
     "resource-dimension-editor": {
-      "description-field": "",
-      "description-fixed": "",
+      "description-field": "Použít výsledek řetězcového pole",
+      "description-fixed": "Fixní hodnota",
       "label-field": "Pole",
-      "label-fixed": "",
+      "label-fixed": "Fixní",
       "label-mappings": "Mapování",
       "label-source": "Zdroj"
     },
     "resource-picker": {
+      "aria-label-clear-value": "",
       "render-small-resource-picker": {
         "set-icon": "Nastavit ikonu"
       }
@@ -6477,16 +6707,16 @@
     },
     "scalar-dimension-editor": {
       "fixed-value-options": {
-        "label-fixed-values": ""
+        "label-fixed-values": "Fixní hodnota"
       },
       "label-limit": "Limit",
       "label-value": "Hodnota",
       "noOptionsMessage-no-fields-found": "",
       "scalar-options": {
-        "description-clamped": "",
-        "description-mod": "",
-        "label-clamped": "",
-        "label-mod": ""
+        "description-clamped": "Použít hodnoty pole, upnuté na max. a min.",
+        "description-mod": "Použít hodnoty pole, mod z max.",
+        "label-clamped": "Upnuto",
+        "label-mod": "Mod"
       }
     },
     "scale-dimension-editor": {
@@ -6501,10 +6731,11 @@
       "noOptionsMessage-no-fields-found": ""
     },
     "text-dimension-editor": {
-      "description-field": "",
-      "description-fixed": "",
+      "aria-label-clear-value": "",
+      "description-field": "Zobrazit hodnotu pole",
+      "description-fixed": "Fixní hodnota",
       "label-field": "Pole",
-      "label-fixed": "",
+      "label-fixed": "Fixní",
       "label-source": "Zdroj",
       "label-template": "Šablona",
       "label-value": "Hodnota"
@@ -6518,16 +6749,16 @@
       "description-percentage-means-thresholds-relative": "Procento znamená prahové hodnoty s ohledem na min. a max. hodnoty",
       "modes": {
         "description": {
-          "threshold-based-percent-between-minmax": "",
-          "thresholds-based-absolute-values": ""
+          "threshold-based-percent-between-minmax": "Vyberte prahovou hodnotu na základě procenta mezi min./max.",
+          "thresholds-based-absolute-values": "Vyberte prahové hodnoty na základě absolutních hodnot"
         },
         "label": {
-          "absolute": "",
-          "percentage": ""
+          "absolute": "Absolutní",
+          "percentage": "Procento"
         }
       },
       "thresholds-mode": "Režim prahových hodnot",
-      "value-base": ""
+      "value-base": "Základ"
     },
     "urlpicker-tab": {
       "label-preview": "Náhled"
@@ -6638,7 +6869,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Tlačítko sbalení položky osnovy obsahu"
+        "aria-label-content-outline-item-collapse-button": "Tlačítko sbalení položky osnovy obsahu",
+        "aria-label-content-outline-item-delete-button": ""
       }
     },
     "correlation-editor-mode-bar": {
@@ -6848,6 +7080,7 @@
       "content-streaming": "Streamování"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "",
       "label-reload-log-volume": "Znovu načíst objem protokolu",
       "loading": "Načítání…",
       "title-failed-volume-query": "Objem protokolu pro tento dotaz se nepodařilo načíst",
@@ -6875,6 +7108,9 @@
         "learn-more": "Zjistěte víc",
         "pro-tip-define-sources-through-configuration-files": " Pro tip: Zdroje dat můžete definovat také prostřednictvím konfiguračních souborů. "
       }
+    },
+    "pane": {
+      "loading-placeholder": ""
     },
     "prev": "Předch.",
     "queryless-apps-extensions": {
@@ -7061,6 +7297,7 @@
           "start-time": "Čas zahájení:"
         }
       },
+      "share-span": "",
       "warnings": "Varování"
     },
     "span-filters": {
@@ -7141,18 +7378,25 @@
       "split-tooltip": "Rozdělit podokno",
       "split-widen": "Rozšířit podokno"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Poskytnout zpětnou vazbu",
-      "label-copied": "Zkopírováno!",
-      "label-export": "Exportovat",
-      "label-trace-id": "ID trasování",
-      "title-share-thoughts-about-tracing-grafana": "Podělte se o svůj názor na trasování v Grafaně."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Částečné trasování",
-      "tooltip-url": "{{url}} nebo {{target}} nebo {{path}}"
+      "aria-label-share-dropdown": "",
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tlačítko Vymazat filtry",
@@ -7160,6 +7404,7 @@
       "label-show-paths": "Zobrazit přepínač Pouze kritické cesty"
     },
     "trace-view": {
+      "aria-label-copy": "",
       "no-data": "Žádná data",
       "tooltip-copy-icon": "Zkopírováno"
     },
@@ -7292,9 +7537,12 @@
     "loading": "Načítání složek…"
   },
   "folder-repo": {
-    "badge-text": "Zajištěno"
+    "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -7328,23 +7576,23 @@
     "title": "Opustit stránku?"
   },
   "gauge": {
-    "category-gauge": "",
-    "description-min-height": "",
-    "description-min-width": "",
-    "description-neutral": "",
-    "description-show-threshold-labels": "",
-    "description-show-threshold-markers": "",
+    "category-gauge": "Měřidlo",
+    "description-min-height": "Minimální výška řádku (vodorovná orientace)",
+    "description-min-width": "Minimální šířka sloupce (svislá orientace)",
+    "description-neutral": "Ponechte prázdné pro použití Min. jako neutrálního bodu",
+    "description-show-threshold-labels": "Vykreslit prahové hodnoty kolem měřicí lišty",
+    "description-show-threshold-markers": "Vykreslí prahové hodnoty jako vnější lištu",
     "gauge-size-options": {
-      "label-auto": "",
-      "label-manual": ""
+      "label-auto": "Auto",
+      "label-manual": "Manuálně"
     },
-    "name-gauge-size": "",
-    "name-min-height": "",
-    "name-min-width": "",
-    "name-neutral": "",
-    "name-show-threshold-labels": "",
-    "name-show-threshold-markers": "",
-    "placeholder-neutral": ""
+    "name-gauge-size": "Velikost měřidla",
+    "name-min-height": "Min. výška",
+    "name-min-width": "Min. šířka",
+    "name-neutral": "Neutrální",
+    "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
+    "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
+    "placeholder-neutral": "auto."
   },
   "gen-ai": {
     "apply-suggestion": "Použít",
@@ -7408,6 +7656,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7463,10 +7712,12 @@
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
+      "aria-label-close": "",
       "tooltip-show-measure-tools": "Zobrazit nástroje pro měření"
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -7640,6 +7891,409 @@
       }
     }
   },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "",
+            "name-g-unit": "",
+            "name-meters-sec": ""
+          },
+          "name": ""
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "",
+            "name-arc-seconds": "",
+            "name-degrees": "",
+            "name-gradian": "",
+            "name-radians": ""
+          },
+          "name": ""
+        },
+        "area": {
+          "formats": {
+            "name-acres": "",
+            "name-hectares": "",
+            "name-square-feet": "",
+            "name-square-meters": "",
+            "name-square-miles": ""
+          },
+          "name": ""
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "",
+            "name-true-false": "",
+            "name-yes-no": ""
+          },
+          "name": ""
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "",
+            "name-flops": "",
+            "name-gflops": "",
+            "name-mflops": "",
+            "name-pflops": "",
+            "name-tflops": "",
+            "name-yflops": "",
+            "name-zflops": ""
+          },
+          "name": ""
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "",
+            "name-g-nm3": "",
+            "name-mg-dl": "",
+            "name-mg-m3": "",
+            "name-mg-nm3": "",
+            "name-mmol-l": "",
+            "name-ng-m3": "",
+            "name-ng-nm3": "",
+            "name-ppb": "",
+            "name-ppm": "",
+            "name-ug-m3": "",
+            "name-ug-nm3": ""
+          },
+          "name": ""
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "",
+            "name-brl": "",
+            "name-btc": "",
+            "name-chf": "",
+            "name-czk": "",
+            "name-dkk": "",
+            "name-eur": "",
+            "name-gbp": "",
+            "name-idr": "",
+            "name-ils": "",
+            "name-inr": "",
+            "name-isk": "",
+            "name-jpy": "",
+            "name-krw": "",
+            "name-mbtc": "",
+            "name-myr": "",
+            "name-nok": "",
+            "name-php": "",
+            "name-pln": "",
+            "name-pyg": "",
+            "name-rub": "",
+            "name-sek": "",
+            "name-try": "",
+            "name-uah": "",
+            "name-ubtc": "",
+            "name-usd": "",
+            "name-uyu": "",
+            "name-vnd": "",
+            "name-xpf": "",
+            "name-zar": ""
+          },
+          "name": ""
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "",
+            "name-bits-si": "",
+            "name-bytes-iec": "",
+            "name-bytes-si": "",
+            "name-gibibytes": "",
+            "name-gigabytes": "",
+            "name-kibibytes": "",
+            "name-kilobytes": "",
+            "name-mebibytes": "",
+            "name-megabytes": "",
+            "name-pebibytes": "",
+            "name-petabytes": "",
+            "name-tebibytes": "",
+            "name-terabytes": ""
+          },
+          "name": ""
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "",
+            "name-bits-sec-si": "",
+            "name-bytes-sec-iec": "",
+            "name-bytes-sec-si": "",
+            "name-gibibits-sec": "",
+            "name-gibibytes-sec": "",
+            "name-gigabits-sec": "",
+            "name-gigabytes-sec": "",
+            "name-kibibits-sec": "",
+            "name-kibibytes-sec": "",
+            "name-kilobits-sec": "",
+            "name-kilobytes-sec": "",
+            "name-mebibits-sec": "",
+            "name-mebibytes-sec": "",
+            "name-megabits-sec": "",
+            "name-megabytes-sec": "",
+            "name-packets-sec": "",
+            "name-pebibits-sec": "",
+            "name-pebibytes-sec": "",
+            "name-petabits-sec": "",
+            "name-petabytes-sec": "",
+            "name-tebibits-sec": "",
+            "name-tebibytes-sec": "",
+            "name-terabits-sec": "",
+            "name-terabytes-sec": ""
+          },
+          "name": ""
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "",
+            "name-datetime-iso": "",
+            "name-datetime-iso-no-date": "",
+            "name-datetime-local": "",
+            "name-datetime-local-no-date": "",
+            "name-datetime-us": "",
+            "name-datetime-us-no-date": "",
+            "name-from-now": ""
+          },
+          "name": ""
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "",
+            "name-ampere-hour": "",
+            "name-decibel-milliwatt": "",
+            "name-electron-volt": "",
+            "name-farad": "",
+            "name-femtofarad": "",
+            "name-gigawatt": "",
+            "name-henry": "",
+            "name-joule": "",
+            "name-kiloampere": "",
+            "name-kiloampere-hour": "",
+            "name-kiloohm": "",
+            "name-kilovolt": "",
+            "name-kilovolt-ampere": "",
+            "name-kilovolt-ampere-reactive": "",
+            "name-kilowatt": "",
+            "name-kilowatt-hour": "",
+            "name-kilowatt-min": "",
+            "name-lumens": "",
+            "name-megaohm": "",
+            "name-megawatt": "",
+            "name-megawatt-hour": "",
+            "name-microfarad": "",
+            "name-microhenry": "",
+            "name-milliampere": "",
+            "name-milliampere-hour": "",
+            "name-millihenry": "",
+            "name-milliohm": "",
+            "name-millivolt": "",
+            "name-milliwatt": "",
+            "name-nanofarad": "",
+            "name-ohm": "",
+            "name-picofarad": "",
+            "name-volt": "",
+            "name-volt-ampere": "",
+            "name-volt-ampere-reactive": "",
+            "name-watt": "",
+            "name-watt-hour": "",
+            "name-watt-hour-per-kg": "",
+            "name-watt-square-meter": ""
+          },
+          "name": ""
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "",
+            "name-cubic-feet-sec": "",
+            "name-cubic-meters-sec": "",
+            "name-gallons-min": "",
+            "name-litre-hour": "",
+            "name-litre-min": "",
+            "name-lux": "",
+            "name-millilitre-min": ""
+          },
+          "name": ""
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "",
+            "name-kilonewtons": "",
+            "name-newton-meters": "",
+            "name-newtons": ""
+          },
+          "name": ""
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "",
+            "name-gigahashes-sec": "",
+            "name-hashes-sec": "",
+            "name-kilohashes-sec": "",
+            "name-megahashes-sec": "",
+            "name-petahashes-sec": "",
+            "name-terahashes-sec": ""
+          },
+          "name": ""
+        },
+        "length": {
+          "formats": {
+            "name-feet": "",
+            "name-inch": "",
+            "name-kilometer": "",
+            "name-meter": "",
+            "name-mile": "",
+            "name-millimeter": ""
+          },
+          "name": ""
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "",
+            "name-kilogram": "",
+            "name-metric-ton": "",
+            "name-milligram": "",
+            "name-pound": ""
+          },
+          "name": ""
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "",
+            "name-decibel": "",
+            "name-hexadecimal": "",
+            "name-hexadecimal-0x": "",
+            "name-humidity": "",
+            "name-locale": "",
+            "name-number": "",
+            "name-percent-1": "",
+            "name-percent-100": "",
+            "name-pixels": "",
+            "name-scientific": "",
+            "name-short": "",
+            "name-si-short": "",
+            "name-string": ""
+          },
+          "name": ""
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "",
+            "name-hectopascals": "",
+            "name-inches-mercury": "",
+            "name-kilobars": "",
+            "name-kilopascals": "",
+            "name-millibars": "",
+            "name-pascals": "",
+            "name-psi": ""
+          },
+          "name": ""
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "",
+            "name-curie": "",
+            "name-exposure": "",
+            "name-gray": "",
+            "name-microsievert": "",
+            "name-microsievert-hour": "",
+            "name-millisievert": "",
+            "name-millisievert-hour": "",
+            "name-rad": "",
+            "name-rem": "",
+            "name-roentgen": "",
+            "name-sievert": "",
+            "name-sievert-hour": ""
+          },
+          "name": ""
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "",
+            "name-gigahertz": "",
+            "name-hertz": "",
+            "name-kilohertz": "",
+            "name-megahertz": "",
+            "name-radians-sec": "",
+            "name-rpm": ""
+          },
+          "name": ""
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "",
+            "name-fahrenheit": "",
+            "name-kelvin": ""
+          },
+          "name": ""
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "",
+            "name-counts-sec": "",
+            "name-events-min": "",
+            "name-events-sec": "",
+            "name-io-ops-sec": "",
+            "name-messages-min": "",
+            "name-messages-sec": "",
+            "name-ops-min": "",
+            "name-ops-sec": "",
+            "name-reads-min": "",
+            "name-reads-sec": "",
+            "name-records-min": "",
+            "name-records-sec": "",
+            "name-requests-min": "",
+            "name-requests-sec": "",
+            "name-rows-min": "",
+            "name-rows-sec": "",
+            "name-writes-min": "",
+            "name-writes-sec": ""
+          },
+          "name": ""
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "",
+            "name-clock-s": "",
+            "name-days": "",
+            "name-duration-dhms": "",
+            "name-duration-hms": "",
+            "name-duration-ms": "",
+            "name-duration-s": "",
+            "name-hertz": "",
+            "name-hours": "",
+            "name-microseconds": "",
+            "name-milliseconds": "",
+            "name-minutes": "",
+            "name-nanoseconds": "",
+            "name-seconds": "",
+            "name-timeticks": ""
+          },
+          "name": ""
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "",
+            "name-knot": "",
+            "name-meters-second": "",
+            "name-miles-hour": ""
+          },
+          "name": ""
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "",
+            "name-cubic-meter": "",
+            "name-gallons": "",
+            "name-litre": "",
+            "name-millilitre": "",
+            "name-normal-cubic-meter": ""
+          },
+          "name": ""
+        }
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -7678,90 +8332,93 @@
     },
     "builder": {
       "axis": {
-        "category-axis": "",
-        "color-label": "",
+        "category-axis": "Osa",
+        "color-label": "Barva",
         "color-options": {
-          "label-series": "",
-          "label-text": ""
+          "label-series": "Řady",
+          "label-text": "Text"
         },
         "grid-line-options": {
-          "label-auto": "",
-          "label-off": "",
-          "label-on": ""
+          "label-auto": "Auto",
+          "label-off": "Vypnuto",
+          "label-on": "Zapnuto"
         },
-        "name-centered-zero": "",
-        "name-grid-lines": "",
-        "name-label": "",
-        "name-placement": "",
-        "name-scale": "",
-        "name-show-border": "",
-        "name-soft-max": "",
-        "name-soft-min": "",
-        "name-width": "",
-        "placeholder-label": "",
-        "placeholder-soft-max": "",
-        "placeholder-soft-min": "",
-        "placeholder-width": "",
+        "name-centered-zero": "Vystředěno na nulu",
+        "name-grid-lines": "Zobrazit čáry mřížky",
+        "name-label": "Štítek",
+        "name-placement": "Umístění",
+        "name-scale": "Rozsah",
+        "name-show-border": "Zobrazit okraj",
+        "name-soft-max": "Měkké max.",
+        "name-soft-min": "Měkké min.",
+        "name-width": "Šířka",
+        "placeholder-label": "Volitelný text",
+        "placeholder-soft-max": "Viz: Standardní možnosti > Max.",
+        "placeholder-soft-min": "Viz: Standardní možnosti > Min.",
+        "placeholder-width": "Auto",
         "scale-distribution-editor": {
           "distribution-options": {
-            "label-linear": "",
-            "label-log": "",
-            "label-symlog": ""
+            "label-linear": "Lineární",
+            "label-log": "Logaritmický",
+            "label-symlog": "Symetricky logický"
           }
         }
       },
       "legend": {
-        "category": "",
-        "description-values": "",
+        "category": "Legenda",
+        "description-values": "Vyberte hodnoty nebo výpočty, které chcete zobrazit v legendě",
         "mode-options": {
-          "label-list": "",
-          "label-table": ""
+          "label-list": "Seznam",
+          "label-table": "Tabulka"
         },
-        "name-mode": "",
-        "name-placement": "",
-        "name-values": "",
-        "name-visibility": "",
-        "name-width": "",
+        "name-mode": "Režim",
+        "name-placement": "Umístění",
+        "name-values": "Hodnoty",
+        "name-visibility": "Viditelnost",
+        "name-width": "Šířka",
         "placement-options": {
-          "label-bottom": "",
-          "label-right": ""
+          "label-bottom": "Dolní",
+          "label-right": "Vpravo"
         }
       },
       "stacking": {
-        "name-stack-series": ""
+        "name-stack-series": "Skládat řady"
       },
       "text": {
-        "category-text-size": "",
-        "name-percent-change": "",
-        "name-title": "",
-        "name-value": "",
-        "placeholder-percent-change": "",
-        "placeholder-title": "",
-        "placeholder-value": ""
+        "category-text-size": "Velikost textu",
+        "name-percent-change": "Procentuální změna",
+        "name-title": "Název",
+        "name-value": "Hodnota",
+        "placeholder-percent-change": "Auto",
+        "placeholder-title": "Auto",
+        "placeholder-value": "Auto"
       },
       "tooltip": {
-        "category": "",
-        "description-hover-proximity": "",
+        "category": "Popisek",
+        "description-hover-proximity": "Jak blízko musí být kurzor k bodu, aby se spustil popisek, v pixelech",
         "modeOptions": {
-          "label-all": "",
-          "label-hidden": "",
-          "label-single": ""
+          "label-all": "Vše",
+          "label-hidden": "Skryté",
+          "label-single": "Jednorázový"
         },
-        "name-hide-zeros": "",
-        "name-hover-proximity": "",
-        "name-max-height": "",
-        "name-max-width": "",
-        "name-tooltip-mode": "",
-        "name-values-sort-order": "",
+        "name-hide-zeros": "Skrýt nuly",
+        "name-hover-proximity": "Blízkost najetí",
+        "name-max-height": "Max. výška",
+        "name-max-width": "Max. šířka",
+        "name-tooltip-mode": "Režim popisku",
+        "name-values-sort-order": "Pořadí řazení hodnot",
         "sortOptions": {
-          "label-ascending": "",
-          "label-descending": "",
-          "label-none": ""
+          "label-ascending": "Vzestupně",
+          "label-descending": "Sestupně",
+          "label-none": "Žádné"
         }
       }
     },
     "card": {
       "option": "možnost"
+    },
+    "carousel": {
+      "aria-label-open-image": ""
     },
     "cascader": {
       "clear-button": "Vymazat výběr"
@@ -7775,6 +8432,7 @@
       "aria-label-selected-color": "{{colorLabel}} barva"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Zrušit",
       "confirmText-delete": ""
     },
@@ -7879,6 +8537,60 @@
       "previous-label": "Předchozí měsíc",
       "select-placeholder": "Vyberte datum/čas"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Zavřít"
     },
@@ -7918,19 +8630,33 @@
       "tooltip-expand-all": "Rozbalit všechny řádky"
     },
     "matchers-ui": {
-      "description-field-name-by-regex-matcher": "",
-      "description-fields-by-query": "",
-      "description-fields-with-name": "",
-      "description-fields-with-type": "",
-      "description-fields-with-value": "",
+      "description-field-name-by-regex-matcher": "Nastavit vlastnosti pro pole s názvy odpovídajícími regulárnímu výrazu",
+      "description-fields-by-query": "Nastavit vlastnosti pro pole z konkrétního dotazu",
+      "description-fields-with-name": "Nastavit vlastnosti pro konkrétní pole",
+      "description-fields-with-type": "Nastavit vlastnosti pro pole určitého typu (číslo, řetězec, logická hodnota)",
+      "description-fields-with-value": "Nastavit vlastnosti pro pole s podmínkou reduktoru",
       "field-name-picker": {
-        "placeholder": ""
+        "placeholder": "Vyberte pole"
       },
-      "name-field-name-by-regex-matcher": "",
-      "name-fields-by-query": "",
-      "name-fields-with-name": "",
-      "name-fields-with-type": "",
-      "name-fields-with-value": ""
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
+      },
+      "name-field-name-by-regex-matcher": "Pole s názvem odpovídajícím regulárnímu výrazu",
+      "name-fields-by-query": "Pole vrácená dotazem",
+      "name-fields-with-name": "Pole s názvem",
+      "name-fields-with-type": "Pole s typem",
+      "name-fields-with-value": "Pole s hodnotami"
     },
     "menu-item": {
       "keyboard-shortcut-label": "Klávesová zkratka"
@@ -8019,6 +8745,7 @@
       "csv-placeholder": "Zadej CSV tady…",
       "filter-placeholder": "Filtrovat hodnoty",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "",
       "filter-popup-cancel": "Zrušit",
       "filter-popup-clear": "Vymazat filtr",
       "filter-popup-heading": "Filtrovat podle hodnot:",
@@ -8026,14 +8753,21 @@
       "filter-popup-match-case": "Rozlišovat malá a velká písmena",
       "inspect-drawer-title": "Zkontrolovat hodnotu",
       "inspect-menu-label": "Zkontrolovat hodnotu",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Žádné hodnoty",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tagy"
     },
     "tags-input": {
       "add": "Přidat",
+      "placeholder-new-tag": "",
       "remove": "Odebrat tag: {{name}}"
     },
     "time-sync-button": {
@@ -8050,55 +8784,55 @@
       "config": {
         "get-graph-field-options": {
           "axis-placement": {
-            "description-auto": "",
-            "label-auto": "",
-            "label-hidden": "",
-            "label-left": "",
-            "label-right": ""
+            "description-auto": "První pole vlevo, vše ostatní vpravo",
+            "label-auto": "Auto",
+            "label-hidden": "Skryté",
+            "label-left": "Vlevo",
+            "label-right": "Vpravo"
           },
           "bar-alignment": {
-            "description-after": "",
-            "description-before": "",
-            "description-center": ""
+            "description-after": "Po",
+            "description-before": "Před",
+            "description-center": "Střed"
           },
           "draw-style": {
-            "label-bars": "",
-            "label-lines": "",
-            "label-points": ""
+            "label-bars": "Lišty",
+            "label-lines": "Čáry",
+            "label-points": "Body"
           },
           "fill-gradient": {
-            "description-hue": "",
-            "description-opacity": "",
-            "description-scheme": "",
-            "label-hue": "",
-            "label-none": "",
-            "label-opacity": "",
-            "label-scheme": ""
+            "description-hue": "Malý barevný odstín přechodu",
+            "description-opacity": "Povolit přechod průhlednosti výplně",
+            "description-scheme": "Použít barevné schéma pro definování přechodu",
+            "label-hue": "Odstín",
+            "label-none": "Žádné",
+            "label-opacity": "Neprůhlednost",
+            "label-scheme": "Schéma"
           },
           "line-interpolation": {
-            "description-linear": "",
-            "description-smooth": "",
-            "description-step-after": "",
-            "description-step-before": ""
+            "description-linear": "Lineární",
+            "description-smooth": "Vyhlazení",
+            "description-step-after": "Krok po",
+            "description-step-before": "Krok před"
           },
           "show-points": {
-            "description-auto": "",
-            "label-always": "",
-            "label-auto": "",
-            "label-never": ""
+            "description-auto": "Zobrazit body, když je hustota nízká",
+            "label-always": "Vždy",
+            "label-auto": "Auto",
+            "label-never": "Nikdy"
           },
           "stacking": {
-            "label-100": "",
-            "label-normal": "",
-            "label-off": ""
+            "label-100": "100 %",
+            "label-normal": "Normální",
+            "label-off": "Vypnuto"
           },
           "thresholds-display-mode": {
-            "label-dashed-lines": "",
-            "label-filled-regions": "",
-            "label-filled-regions-and-dashed-lines": "",
-            "label-filled-regions-and-lines": "",
-            "label-lines": "",
-            "label-off": ""
+            "label-dashed-lines": "Jako čáry (přerušované)",
+            "label-filled-regions": "Jako vyplněné oblasti",
+            "label-filled-regions-and-dashed-lines": "Jako vyplněné oblasti a čáry (přerušované)",
+            "label-filled-regions-and-lines": "Jako vyplněné oblasti a čáry",
+            "label-lines": "Jako čáry",
+            "label-off": "Vypnuto"
           }
         }
       }
@@ -8126,6 +8860,7 @@
       "footer-add-annotation": "Přidat vysvětlivku",
       "footer-click-to-action": "Klikněte pro {{actionTitle}}",
       "footer-click-to-navigate": "Klikněte pro otevření {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Časová známka"
     },
     "week-start-picker": {
@@ -8145,78 +8880,78 @@
   },
   "heatmap": {
     "calculate-from-data-options": {
-      "label-no": "",
-      "label-yes": ""
+      "label-no": "Ne",
+      "label-yes": "Ano"
     },
-    "category-cell-display": "",
-    "category-colors": "",
-    "category-exemplars": "",
-    "category-heatmap": "",
-    "category-legend": "",
-    "category-tooltip": "",
-    "category-y-axis": "",
+    "category-cell-display": "Zobrazení buňky",
+    "category-colors": "Barvy",
+    "category-exemplars": "Příklady",
+    "category-heatmap": "Teplotní mapa",
+    "category-legend": "Legenda",
+    "category-tooltip": "Popisek",
+    "category-y-axis": "Osa Y",
     "mode-options": {
-      "label-opacity": "",
-      "label-scheme": ""
+      "label-opacity": "Neprůhlednost",
+      "label-scheme": "Schéma"
     },
-    "name-axis-label": "",
-    "name-axis-width": "",
-    "name-calculate-from-data": "",
-    "name-cell-gap": "",
-    "name-color": "",
-    "name-decimals": "",
-    "name-end-color-at-value": "",
-    "name-exponent": "",
-    "name-hide-cells-gt": "",
-    "name-hide-cells-lt": "",
-    "name-max-height": "",
-    "name-max-value": "",
-    "name-max-width": "",
-    "name-min-value": "",
-    "name-mode": "",
-    "name-placement": "",
-    "name-reverse": "",
-    "name-scale": "",
-    "name-scheme": "",
-    "name-show-color-scale": "",
-    "name-show-histogram": "",
-    "name-show-legend": "",
-    "name-start-color-from-value": "",
-    "name-steps": "",
-    "name-tick-alignment": "",
-    "name-tooltip-mode": "",
-    "name-unit": "",
-    "name-value-name": "",
-    "name-y-axis-scale": "",
-    "placeholder-axis-label": "",
-    "placeholder-axis-width": "",
-    "placeholder-decimals": "",
-    "placeholder-end-color-at-value": "",
-    "placeholder-hide-cells-gt": "",
-    "placeholder-hide-cells-lt": "",
-    "placeholder-max-value": "",
-    "placeholder-min-value": "",
-    "placeholder-start-color-from-value": "",
-    "placeholder-value-name": "",
+    "name-axis-label": "Štítek osy",
+    "name-axis-width": "Šířka osy",
+    "name-calculate-from-data": "Vypočítat z dat",
+    "name-cell-gap": "Mezera mezi buňkami",
+    "name-color": "Barva",
+    "name-decimals": "Desetinná čísla",
+    "name-end-color-at-value": "Ukončit barevnou škálu na hodnotě",
+    "name-exponent": "Mocnitel",
+    "name-hide-cells-gt": "Skrýt buňky s hodnotami >=",
+    "name-hide-cells-lt": "Skrýt buňky s hodnotami <=",
+    "name-max-height": "Max. výška",
+    "name-max-value": "Max. hodnota",
+    "name-max-width": "Max. šířka",
+    "name-min-value": "Min. hodnota",
+    "name-mode": "Režim",
+    "name-placement": "Umístění",
+    "name-reverse": "Dozadu",
+    "name-scale": "Rozsah",
+    "name-scheme": "Schéma",
+    "name-show-color-scale": "Zobrazit barevnou škálu",
+    "name-show-histogram": "Zobrazit histogram (osa Y)",
+    "name-show-legend": "Zobrazit legendu",
+    "name-start-color-from-value": "Začít barevnou škálu od hodnoty",
+    "name-steps": "Kroky",
+    "name-tick-alignment": "Zarovnání zaškrtnutí",
+    "name-tooltip-mode": "Režim popisku",
+    "name-unit": "Jednotka",
+    "name-value-name": "Název hodnoty",
+    "name-y-axis-scale": "Měřítko osy Y",
+    "placeholder-axis-label": "Auto",
+    "placeholder-axis-width": "Auto",
+    "placeholder-decimals": "Auto",
+    "placeholder-end-color-at-value": "Auto. (max.)",
+    "placeholder-hide-cells-gt": "Žádné",
+    "placeholder-hide-cells-lt": "Žádné",
+    "placeholder-max-value": "Auto",
+    "placeholder-min-value": "Auto",
+    "placeholder-start-color-from-value": "Auto. (min.)",
+    "placeholder-value-name": "Hodnota",
     "placement-options": {
-      "label-hidden": "",
-      "label-left": "",
-      "label-right": ""
+      "label-hidden": "Skryté",
+      "label-left": "Vlevo",
+      "label-right": "Vpravo"
     },
     "scale-options": {
-      "label-exponential": "",
-      "label-linear": ""
+      "label-exponential": "Exponenciální",
+      "label-linear": "Lineární"
     },
     "tick-alignment-options": {
-      "label-auto": "",
-      "label-bottom": "",
-      "label-middle": "",
-      "label-top": ""
+      "label-auto": "Auto",
+      "label-bottom": "Dolní (GE)",
+      "label-middle": "Střed",
+      "label-top": "Horní (LE)"
     },
     "tooltip-mode-options": {
-      "label-all": "",
-      "label-hidden": "",
-      "label-single": ""
+      "label-all": "Vše",
+      "label-hidden": "Skryté",
+      "label-single": "Jednorázový"
     }
   },
   "help-modal": {
@@ -8276,14 +9011,14 @@
     "troubleshooting-help": "Chcete-li požádat o pomoc s řešením problémů, odešlete snímek tohoto panelu technické podpoře Grafana Labs. Snímek obsahuje data odpovědi na dotaz a nastavení panelu."
   },
   "histogram": {
-    "category-histogram": "",
+    "category-histogram": "Histogram",
     "histogram-panel": {
       "no-histogram-found-in-response": "V odpovědi nebyl nalezen žádný histogram"
     },
-    "name-fill-opacity": "",
-    "name-gradient-mode": "",
-    "name-line-width": "",
-    "name-stacking": ""
+    "name-fill-opacity": "Průhlednost výplně",
+    "name-gradient-mode": "Režim přechodu",
+    "name-line-width": "Šířka řádku",
+    "name-stacking": "Stohování"
   },
   "inspector": {
     "inspect-data-tab": {
@@ -8598,9 +9333,7 @@
     "share-panel": {
       "config-description": "Vytvořte personalizovaný přímý odkaz pro sdílení panelu v rámci vaší organizace s následujícími možnostmi přizpůsobení:",
       "download-image": "Stáhnout obrázek",
-      "render-image": "Generovat obrázek",
-      "render-image-error": "Obrázek panelu se nepodařilo vykreslit",
-      "render-image-error-description": "Při generování obrázku došlo k chybě"
+      "render-image": "Generovat obrázek"
     }
   },
   "live": {
@@ -8676,16 +9409,16 @@
     }
   },
   "logs": {
-    "category-logs": "",
+    "category-logs": "Protokoly",
     "deduplication-options": {
-      "label-exact": "",
-      "label-none": "",
-      "label-numbers": "",
-      "label-signature": ""
+      "label-exact": "Přesné",
+      "label-none": "Žádné",
+      "label-numbers": "Čísla",
+      "label-signature": "Podpis"
     },
-    "description-enable-infinite-scrolling": "",
-    "description-enable-syntax-highlighting": "",
-    "description-show-controls": "",
+    "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
+    "description-enable-syntax-highlighting": "Použijte předdefinovanou gramatiku barev syntaxe pro zvýraznění příslušných částí řádků protokolu",
+    "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
     "fields": {
       "type": {
         "loki": {
@@ -8705,8 +9438,8 @@
       }
     },
     "font-size-options": {
-      "label-default": "",
-      "label-small": ""
+      "label-default": "Výchozí",
+      "label-small": "Malé"
     },
     "get-dataframe-fields": {
       "vars": {
@@ -8752,55 +9485,74 @@
       "show-more": "zobrazit více",
       "tooltip-error": "Chyba: {{errorMessage}}"
     },
+    "log-line-context": {
+      "center-matched-line": "",
+      "newer-logs": "",
+      "no-more-logs-available": "",
+      "older-logs": "",
+      "open-in-split-view": "",
+      "title-log-context": "",
+      "title-log-line": ""
+    },
     "log-line-details": {
-      "clear-search": "",
-      "close": "",
-      "copy-shortlink": "",
-      "copy-to-clipboard": "",
+      "clear-search": "Vymazat",
+      "close": "Zavřít podrobnosti protokolu",
+      "copy-shortlink": "Kopírovat krátký odkaz",
+      "copy-to-clipboard": "Kopírovat do schránky",
       "displayed-fields-section": "",
       "fields": {
-        "adhoc-statistics": "",
-        "copy-value-to-clipboard": "",
-        "filter-out": "",
-        "filter-out-query": "",
+        "adhoc-statistics": "Ad-hoc statistiky",
+        "copy-value-to-clipboard": "Zkopírovat hodnotu do schránky",
+        "filter-out": "Odfiltrovat hodnotu",
+        "filter-out-query": "Odfiltrovat hodnotu v dotazu {{query}}",
         "toggle-field-button": {
-          "field-instead-message": "",
-          "hide-this-field": ""
+          "field-instead-message": "Zobrazit toto pole místo zprávy",
+          "hide-this-field": "Skrýt toto pole"
         }
       },
-      "fields-section": "",
-      "hide-log-line": "",
-      "links-section": "",
+      "fields-section": "Pole",
+      "hide-log-line": "Skrýt řádek protokolu",
+      "inline-mode": "",
+      "links-section": "Odkazy",
       "log-line-field": "",
-      "log-line-section": "",
-      "no-details": "",
-      "pin-line": "",
+      "log-line-section": "Řádek protokolu",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
+      "no-details": "Žádná pole k zobrazení.",
+      "open-assistant": "",
+      "pin-line": "Připnout protokol",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
-        "no-results": ""
+        "no-results": "Žádné výsledky k zobrazení."
       },
-      "search-placeholder": "",
-      "show-context": "",
-      "show-log-line": "",
-      "unpin-line": ""
+      "search-placeholder": "Hledat názvy a hodnoty polí",
+      "show-context": "Zobrazit kontext",
+      "show-log-line": "Zobrazit řádek protokolu",
+      "sidebar-mode": "",
+      "unpin-line": "Odepnout protokol"
     },
     "log-line-menu": {
       "copy-link": "Kopírovat odkaz na řádek protokolu",
       "copy-log": "Kopírovat řádek protokolu",
       "hide-details": "Zobrazit podrobnosti protokolu",
       "icon-label": "Nabídka protokolu",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Připnout protokol",
       "show-context": "Zobrazit kontext",
       "show-details": "Skrýt podrobnosti protokolu",
       "unpin-from-outline": "Odepnout protokol"
     },
     "log-list-search": {
-      "close": "",
-      "filter": "",
-      "info": "",
-      "input-placeholder": "",
-      "next": "",
-      "prev": ""
+      "close": "Zavřít vyhledávání",
+      "filter": "Filtrovat odpovídající protokoly",
+      "info": "Vyhledávání řetězců na straně klienta v rámci zobrazených protokolů. Nesmí se zaměňovat s filtry dotazů. Pomocí této komponenty můžete vyhledat konkrétní řetězce ve výsledcích protokolu.",
+      "input-placeholder": "Vyhledávání v protokolech",
+      "next": "Další výsledek",
+      "prev": "Předchozí výsledek"
     },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Chyba při načítání dalších protokolů.",
@@ -8855,7 +9607,7 @@
       "escape-newlines": "Opravit nesprávně uniklé sekvence nového řádku a záložek v řádcích protokolu",
       "font-size-default": "Použít malou velikost písma",
       "font-size-small": "Použít výchozí velikost písma",
-      "hide-search": "",
+      "hide-search": "Zavřít vyhledávání",
       "hide-timestamps": "Skrýt časová razítka",
       "hide-unique-labels": "Skrýt jedinečné štítky",
       "newest-first": "Seřazeno od nejnovějších protokolů – kliknutím zobrazíte nejstarší protokoly jako první",
@@ -8864,7 +9616,7 @@
       "remove-escaping": "Odebrat únik",
       "scroll-bottom": "Posunout dolů",
       "scroll-top": "Posunout nahoru",
-      "show-search": "",
+      "show-search": "Výsledek vyhledávání v protokolech",
       "show-timestamps": "Zobrazit časová razítka",
       "show-unique-labels": "Zobrazit jedinečné štítky",
       "unwrap-lines": "Rozbalit řádky",
@@ -8882,21 +9634,26 @@
         "common-labels": "Běžné štítky:"
       }
     },
-    "name-common-labels": "",
-    "name-deduplication": "",
-    "name-enable-infinite-scrolling": "",
-    "name-enable-log-details": "",
-    "name-enable-syntax-highlighting": "",
-    "name-font-size": "",
-    "name-order": "",
-    "name-prettify-json": "",
-    "name-show-controls": "",
-    "name-time": "",
-    "name-unique-labels": "",
-    "name-wrap-lines": "",
+    "name-common-labels": "Běžné štítky",
+    "name-deduplication": "Deduplikace",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
+    "name-enable-infinite-scrolling": "Povolit nekonečné posouvání",
+    "name-enable-log-details": "Povolit podrobnosti protokolu",
+    "name-enable-syntax-highlighting": "Povolit zvýraznění syntaxe",
+    "name-font-size": "Velikost písma",
+    "name-order": "Objednávka",
+    "name-prettify-json": "Zkrášlit JSON",
+    "name-show-controls": "Zobrazit ovládací prvky",
+    "name-time": "Čas",
+    "name-unique-labels": "Jedinečné štítky",
+    "name-wrap-lines": "Zalomit řádky",
     "order-options": {
-      "label-newest-first": "",
-      "label-oldest-first": ""
+      "label-newest-first": "Seřadit od nejnovějších",
+      "label-oldest-first": "Seřadit od nejstarších"
     },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "Konec vybraného časového rozsahu."
@@ -8910,7 +9667,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",
       "aria-label-fields": "Pole",
-      "aria-label-line": "",
+      "aria-label-line": "Řádek protokolu",
       "aria-label-log-level": "Úroveň protokolu",
       "aria-label-no-details": "Žádné podrobnosti"
     },
@@ -8931,27 +9688,27 @@
     }
   },
   "logs-new": {
-    "category-logs": "",
+    "category-logs": "Protokoly",
     "deduplication-options": {
-      "label-exact": "",
-      "label-none": "",
-      "label-numbers": "",
-      "label-signature": ""
+      "label-exact": "Přesné",
+      "label-none": "Žádné",
+      "label-numbers": "Čísla",
+      "label-signature": "Podpis"
     },
-    "description-infinite-scrolling": "",
-    "description-show-controls": "",
-    "description-syntax-highlighting": "",
-    "name-deduplication": "",
-    "name-enable-log-details": "",
-    "name-infinite-scrolling": "",
-    "name-order": "",
-    "name-show-controls": "",
-    "name-syntax-highlighting": "",
-    "name-time": "",
-    "name-wrap-lines": "",
+    "description-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
+    "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
+    "description-syntax-highlighting": "Použijte předdefinovanou gramatiku barev syntaxe pro zvýraznění příslušných částí řádků protokolu",
+    "name-deduplication": "Deduplikace",
+    "name-enable-log-details": "Povolit podrobnosti protokolu",
+    "name-infinite-scrolling": "Povolit nekonečné posouvání",
+    "name-order": "Objednávka",
+    "name-show-controls": "Zobrazit ovládací prvky",
+    "name-syntax-highlighting": "Povolit zvýraznění syntaxe",
+    "name-time": "Čas",
+    "name-wrap-lines": "Zalomit řádky",
     "order-options": {
-      "label-newest-first": "",
-      "label-oldest-first": ""
+      "label-newest-first": "Seřadit od nejnovějších",
+      "label-oldest-first": "Seřadit od nejstarších"
     }
   },
   "manage-dashbaords": {
@@ -8989,6 +9746,12 @@
       "text": {
         "import-dashboard": "Importovat nástěnku"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "",
+      "message-reserved-name": "",
+      "message-same-name": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -9142,6 +9905,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Nástěnku už zajišťuje a spravuje Grafana v cloudové instanci. Doporučujeme používat zajištěnou nástěnku. Pokud si přesto přejete zkopírovat nástěnku do cloudové instance, změňte ID nástěnky v JSON nástěnky, uložte nový snímek a nahrajte ji znovu.",
         "datasource-already-managed": "Zdroj dat už zajišťuje a spravuje Grafana v cloudové instanci. Pokud se jedná o jiný zdroj, nastavte jiné UID a zkuste to znovu.",
         "datasource-invalid-url": "Existuje zdroj dat s neplatnou adresou URL. Zadejte platnou adresu URL a zkuste to znovu.",
@@ -9609,7 +10374,9 @@
       "aria-label": "Nápověda"
     },
     "invite-user": {
-      "invite-new-member-button": "Pozvat nového člena"
+      "invite-button": "Pozvat",
+      "invite-new-user-button": "",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Přidat do záložek",
@@ -9641,12 +10408,12 @@
     "rss-button": "Novinky z blogu"
   },
   "news": {
-    "category-news": "",
-    "description-show-image": "",
-    "description-url": "",
+    "category-news": "Novinky",
+    "description-show-image": "Určuje, zda se nad textovým obsahem zobrazí obrázek sociální sítě (og:image)",
+    "description-url": "Podporuje kanály RSS a Atom",
     "link-title": "Přejít na blog Grafana Labs",
-    "name-show-image": "",
-    "name-url": "",
+    "name-show-image": "Ukázat obrázek",
+    "name-url": "URL",
     "news-panel": {
       "body-error-loading-rss-feed": "Ujistěte se, že adresa URL kanálu je správná a že CORS je na serveru správně nakonfigurován. Viz <2>panel Novinky.</2>",
       "loading": "Načítání…",
@@ -9655,27 +10422,27 @@
     "title": "Novinky z blogu"
   },
   "node-graph": {
-    "category-edges": "",
-    "category-node-graph": "",
-    "category-nodes": "",
+    "category-edges": "Hrany",
+    "category-node-graph": "Graf uzlu",
+    "category-nodes": "Uzly",
     "layout-algorithm-options": {
-      "description-force": "",
-      "description-grid": "",
-      "description-layered": "",
-      "label-force": "",
-      "label-grid": "",
-      "label-layered": ""
+      "description-force": "Použít rozvržení řízené silou",
+      "description-grid": "Použít rozvržení mřížky",
+      "description-layered": "Použít vrstvené rozvržení",
+      "label-force": "Síla",
+      "label-grid": "Mřížka",
+      "label-layered": "Vrstvené"
     },
-    "name-arc-sections": "",
-    "name-layout-algorithm": "",
-    "name-main-stat-unit": "",
-    "name-secondary-stat-unit": "",
-    "name-zoom-mode": "",
+    "name-arc-sections": "Obloukové sekce",
+    "name-layout-algorithm": "Algoritmus rozvržení",
+    "name-main-stat-unit": "Hlavní statistická jednotka",
+    "name-secondary-stat-unit": "Sekundární statistická jednotka",
+    "name-zoom-mode": "Režim přiblížení",
     "zoom-mode-options": {
-      "description-cooperative": "",
-      "description-greedy": "",
-      "label-cooperative": "",
-      "label-greedy": ""
+      "description-cooperative": "Umožňuje normální posouvání stránky",
+      "description-greedy": "Reaguje na všechna gesta přiblížení",
+      "label-cooperative": "Kooperativní",
+      "label-greedy": "Chamtivý"
     }
   },
   "nodeGraph": {
@@ -9760,40 +10527,40 @@
     },
     "registry": {
       "get-all-option-editors": {
-        "description-time-zone": "",
-        "name-time-zone": ""
+        "description-time-zone": "Volba časového pásma",
+        "name-time-zone": "Časové pásmo"
       },
       "standard-field-condigs": {
-        "category-data-links": ""
+        "category-data-links": "Propojení dat a akce"
       },
       "standard-field-configs": {
-        "category": "",
-        "category-thresholds": "",
-        "category-value-mappings": "",
-        "description-display-name": "",
-        "description-field-min-max": "",
-        "description-max": "",
-        "description-min": "",
-        "description-no-value": "",
-        "description-value-mappings": "",
-        "name-actions": "",
-        "name-ad-hoc": "",
-        "name-color-scheme": "",
-        "name-data-links": "",
-        "name-decimals": "",
-        "name-display-name": "",
-        "name-field-min-max": "",
-        "name-max": "",
-        "name-min": "",
-        "name-no-value": "",
-        "name-thresholds": "",
-        "name-unit": "",
-        "name-value-mappings": "",
-        "placeholder-decimals": "",
-        "placeholder-display-name": "",
-        "placeholder-max": "",
-        "placeholder-min": "",
-        "placeholder-unit": ""
+        "category": "Standardní možnosti",
+        "category-thresholds": "Prahové hodnoty",
+        "category-value-mappings": "Mapování hodnot",
+        "description-display-name": "Změnit název pole nebo řady",
+        "description-field-min-max": "Vypočítat min. a max. hodnotu na pole",
+        "description-max": "Ponechte prázdné pro výpočet na základě všech hodnot",
+        "description-min": "Ponechte prázdné pro výpočet na základě všech hodnot",
+        "description-no-value": "Co zobrazit, když neexistuje žádná hodnota",
+        "description-value-mappings": "Upravit zobrazovaný text na základě vstupní hodnoty",
+        "name-actions": "Akce",
+        "name-ad-hoc": "Ad-hoc filtrovatelné",
+        "name-color-scheme": "Barevné schéma",
+        "name-data-links": "Propojení dat",
+        "name-decimals": "Desetinná čísla",
+        "name-display-name": "Zobrazované jméno",
+        "name-field-min-max": "Pole min./max.",
+        "name-max": "Max.",
+        "name-min": "Min.",
+        "name-no-value": "Žádná hodnota",
+        "name-thresholds": "Prahové hodnoty",
+        "name-unit": "Jednotka",
+        "name-value-mappings": "Mapování hodnot",
+        "placeholder-decimals": "auto.",
+        "placeholder-display-name": "žádná",
+        "placeholder-max": "auto.",
+        "placeholder-min": "auto.",
+        "placeholder-unit": "žádná"
       }
     },
     "units": {
@@ -9902,13 +10669,13 @@
     },
     "panel-data-error-view": {
       "missing-value": {
-        "number": "",
-        "string": "",
-        "time": "",
-        "unknown": ""
+        "number": "V datech chybí číselné pole",
+        "string": "V datech chybí řetězcové pole",
+        "time": "V datech chybí časové pole",
+        "unknown": "Data nelze vizualizovat"
       },
       "no-value": {
-        "default": ""
+        "default": "Žádná data"
       },
       "open-visualization-suggestions": "Otevřít návrhy vizualizací",
       "switch-to-table": "Přepnout na tabulku"
@@ -9948,25 +10715,25 @@
     "select-placeholder": "Filtrovat podle typu"
   },
   "piechart": {
-    "category-legend": "",
-    "category-pie-chart": "",
-    "description-labels": "",
-    "description-pie-chart-type": "",
+    "category-legend": "Legenda",
+    "category-pie-chart": "Koláčový graf",
+    "description-labels": "Vyberte štítky, které se mají zobrazit v koláčovém grafu",
+    "description-pie-chart-type": "Jak by měl být koláčový graf vykreslen",
     "labels-options": {
-      "label-name": "",
-      "label-percent": "",
-      "label-value": ""
+      "label-name": "Název",
+      "label-percent": "Procento",
+      "label-value": "Hodnota"
     },
     "legend-values-options": {
-      "label-percent": "",
-      "label-value": ""
+      "label-percent": "Procento",
+      "label-value": "Hodnota"
     },
-    "name-labels": "",
-    "name-legend-values": "",
-    "name-pie-chart-type": "",
+    "name-labels": "Štítky",
+    "name-legend-values": "Hodnoty legendy",
+    "name-pie-chart-type": "Typ koláčového grafu",
     "pie-chart-type-options": {
-      "label-donut": "",
-      "label-pie": ""
+      "label-donut": "Kobliha",
+      "label-pie": "Koláč"
     }
   },
   "playlist": {
@@ -10134,7 +10901,7 @@
         "dependencies": "Závislosti",
         "documentation": "Dokumentace",
         "downloads": "Stažení",
-        "from": "",
+        "from": "Od",
         "installedVersion": "Nainstalovaná verze",
         "lastCommitDate": "Datum posledního nasazení:",
         "latestReleaseDate": "Nejnovější datum vydání:",
@@ -10204,7 +10971,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "Tento plugin není publikován na <2>grafana.com/plugins</2> a nelze ho spravovat prostřednictvím katalogu.",
-      "enterprise-plugin-info": "",
+      "enterprise-plugin-info": "Tento plugin je k dispozici pouze v Grafana Cloud a Grafana Enterprise.",
       "learn-more": "Zjistěte víc",
       "no-valid-grafana-enterprise-license-detected": "Nebyla zjištěna žádná platná licence Grafana Enterprise.",
       "title-dev-alert": "Toto je vývojové sestavení pluginu a nelze jej odinstalovat.",
@@ -10362,29 +11129,60 @@
   },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
-      "comment-placeholder-describe-changes-optional": "",
-      "description-branch-name-in-git-hub": "",
+      "comment-placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné)",
+      "description-branch-name-in-git-hub": "Název větvě v GitHubu",
       "description-inside-repository": "",
-      "label-branch": "",
-      "label-comment": "",
-      "label-path": "",
-      "label-workflow": ""
+      "label-branch": "Větev",
+      "label-comment": "Komentář",
+      "label-path": "Cesta",
+      "label-workflow": "Pracovní tok"
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
+  "provisioned-resource-request-handler": "",
+  "provisioned-resource-request-handler-dashboard": "",
+  "provisioned-resource-request-handler-folder": "",
   "provisioning": {
     "banner": {
       "message": "Tato funkce je v současné době v aktivním vývoji. Pro nejlepší zážitek a nejnovější vylepšení doporučujeme použít <2>noční sestavení</2> Grafany."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Pojmenujte jasně toto připojení k úložišti",
@@ -10395,13 +11193,24 @@
       "label-display-name": "Zobrazované jméno",
       "placeholder-my-repository-connection": "Moje připojení k úložišti",
       "text-loading-resource-information": "Načítání informací o zdroji…",
+      "dashboards-count_one": "",
+      "dashboards-count_few": "",
+      "dashboards-count_many": "",
+      "dashboards-count_other": "",
       "files-count_one": "Počet souborů: {{count}}",
       "files-count_few": "Počet souborů: {{count}}",
       "files-count_many": "Počet souborů: {{count}}",
-      "files-count_other": "Počet souborů: {{count}}"
+      "files-count_other": "Počet souborů: {{count}}",
+      "folders-count_one": "",
+      "folders-count_few": "",
+      "folders-count_many": "",
+      "folders-count_other": ""
     },
     "check-repository": {
       "check": "Kontrola"
+    },
+    "code-block": {
+      "aria-label-copy": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Nastavení úložiště bylo uloženo",
@@ -10409,36 +11218,20 @@
       "button-save": "Uložit",
       "button-saving": "Ukládání…",
       "description-enabled": "Jakmile je povoleno automatické tažení, cíl nelze změnit.",
-      "description-path": "Cesta k dílčímu adresáři v úložišti Git",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
-      "description-repository-url": "Zadejte adresu URL úložiště GitHub",
       "description-title": "Člověkem čitelný název konfigurace",
       "error-required": "Toto pole je povinné.",
       "error-save-repository": "Nastavení úložiště se nepodařilo uložit",
-      "error-valid-github-url": "Zadejte platnou adresu URL úložiště GitHub",
       "label-automatic-pulling": "Automatické vyžádání",
-      "label-branch": "Větev",
       "label-enabled": "Povoleno",
-      "label-github-token": "Token GitHubu",
       "label-interval-seconds": "Interval (sekundy)",
-      "label-local-path": "Místní cesta",
-      "label-path": "Cesta",
-      "label-pr-workflow": "Povolit možnost pull request při ukládání",
       "label-repository-type": "Typ úložiště",
-      "label-repository-url": "Adresa URL úložiště",
       "label-target": "Cíl",
       "label-title": "Název",
       "option-entire-instance": "Celá instance",
-      "option-github": "GitHub",
-      "option-local": "Místní",
       "option-managed-folder": "Spravovaná složka",
-      "placeholder-branch": "hlavní",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Moje konfigurace",
-      "placeholder-select-repository-type": "Vyberte typ úložiště"
+      "placeholder-my-config": "Moje konfigurace"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Nakonfigurujte webhooky</0> a získejte okamžité aktualizace v Grafaně ihned po potvrzení změn. Před zveřejněním zkontrolujte a schvalte změny pomocí pull requestů.",
@@ -10452,26 +11245,7 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurovat",
-      "configure-file": "Konfigurovat zajištění souborů",
-      "configure-git-sync": "Konfigurovat synchronizaci Git",
       "repository-limit-info-alert": "Bylo dosaženo limitu úložiště ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Větev, která bude použita pro úložiště GitHub",
-      "description-github-path": "Toto je cesta k dílčímu adresáři ve vašem úložišti GitHub, kde budou uloženy a zajištěny nástěnky",
-      "description-paste-your-git-hub-personal-access-token": "Vložte svůj osobní přístupový token GitHub",
-      "description-repository-url": "Vložte adresu URL svého úložiště GitHub",
-      "error-field-required": "Toto pole je povinné.",
-      "error-invalid-github-url": "Zadejte platnou adresu URL úložiště GitHub",
-      "label-access-token": "Přístupový token GitHub",
-      "label-branch": "Název pobočky",
-      "label-local-path": "Místní cesta",
-      "label-path": "Cesta k dílčímu adresáři v úložišti",
-      "label-repository-url": "Adresa URL úložiště GitHub",
-      "placeholder-branch": "hlavní",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
@@ -10504,17 +11278,17 @@
       "title-instant-updates-requests-webhooks": "Okamžité aktualizace a pull requesty pomocí webhooků.",
       "title-visual-previews-in-pull-requests": "Vizuální náhledy v pull requestech s vykreslením obrázků"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Specifikace úlohy",
-      "summary": "Shrnutí",
-      "title-error": "Chyba"
+      "summary": "Shrnutí"
     },
     "features-list": {
       "actions": {
         "set-up-required-feature-toggles": "Nastavit povinné přepínače funkcí"
       },
-      "manage-dashboards-provision-updates-automatically": "Spravuje nástěnky jako kód v GitHubu a automaticky zajišťujte aktualizace",
-      "manage-your-dashboards-with-remote-provisioning": "Začněte s GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Ukládejte nástěnky do úložiště s pevně nastavenou verzí pro lepší organizaci a sledování historie"
     },
     "file-history-page": {
@@ -10535,18 +11309,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Přidá náhled obrázku změn nástěnky v pull requestech. Obrázky nástěnek Grafana budou sdíleny ve vašem úložišti Git a uvidí je každý, kdo má přístup k úložišti.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Vyžaduje vykreslení obrázků. <2>Nastavit vykreslování obrázků</2>",
-      "description-often-shall-instance-updates-git-hub": "Jak často bude instance stahovat aktualizace z GitHubu?",
-      "description-pr-enable-description": "Umožňuje uživatelům zvolit, zda se má při ukládání změn otevřít pull request. Pokud úložiště neumožňuje přímé změny hlavní větve, může být stále vyžadován pull request.",
+      "description-preview-requirements": "",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
-      "description-webhooks-enable": "Umožňuje uživatelům zvolit, zda se má při ukládání změn otevřít pull request. Pokud úložiště neumožňuje přímé změny hlavní větve, může být stále vyžadován pull request.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Povolit náhledy nástěnek v pull requestech",
-      "label-pr-workflow": "Povolit možnost pull request při ukládání",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Jen pro čtení",
-      "label-update-instance-interval-seconds": "Interval aktualizace instance (sekundy)",
-      "placeholder": "60",
-      "text-setup-later": "Toto můžete kdykoli nastavit později",
-      "title-enhance-github": "Vylepšete své zkušenosti s GitHubem"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
@@ -10577,6 +11349,65 @@
       "header": "Zajišťování",
       "subtitle-provisioning-feature": "Zobrazujte a spravujte vazby zajištění"
     },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
     "history-view": {
       "not-found": "Nenalezeno"
     },
@@ -10603,9 +11434,18 @@
       "starting": "Spouštění…",
       "status": {
         "title-error-running-job": "Chyba při spouštění úlohy",
-        "title-job-completed-successfully": "Úloha byla úspěšně dokončena"
+        "title-success-running-job": "",
+        "title-warning-running-job": ""
       },
-      "summary": "Shrnutí"
+      "summary": "Shrnutí",
+      "title": {
+        "error-fetching-active-job": ""
+      }
+    },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
     },
     "mode-options": {
       "folder": {
@@ -10631,7 +11471,7 @@
     },
     "repository-actions": {
       "settings": "Nastavení",
-      "source-code": "Zdrojový kód"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10696,6 +11536,24 @@
       "title-legacy-storage": "Starší verze úložiště",
       "title-queued-for-deletion": "Zařazeno do fronty k odstranění"
     },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
+    },
     "resource-view": {
       "base": "Základ",
       "dashboard-preview": "Náhled nástěnky",
@@ -10725,6 +11583,12 @@
       "label-current-step": "Aktuální krok",
       "label-pending-step": "Nevyřízený krok"
     },
+    "success-title-default": "",
+    "sync-job": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": ""
+    },
     "sync-repository": {
       "body-edit-configuration": "Upravit konfiguraci",
       "button-edit": "Upravit",
@@ -10735,17 +11599,23 @@
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
-      "error-no-job-id": "Nepodařilo se spustit úlohu",
-      "error-no-repository-name": "Nebyl zadán žádný název úložiště",
-      "error-starting-job": "Chyba při spouštění úlohy",
       "synchronization-description": "Zahrnout předložení pro každou historickou hodnotu",
       "synchronization-options": "Možnosti synchronizace"
     },
     "token-permissions-info": {
       "and-click": "a klikněte",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Přejít na",
       "make-sure": "Nezapomeňte zahrnout tato oprávnění"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Během tohoto procesu nebude možné vytvářet, upravovat ani odstraňovat zdroje. V posledním kroku zmizí.",
       "alert-point-2": "Po zajištění se zdroje znovu zobrazí a budou spravovány prostřednictvím externího úložiště.",
@@ -10754,6 +11624,12 @@
       "alert-title": "Důležité: Nebudou ztracena žádná data ani konfigurace, ale nástěnky budou na několik minut dočasně nedostupné.",
       "button-next": "Dokončit",
       "button-start": "Zahájit synchronizaci",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Vyberte, co chcete synchronizovat",
       "step-connect": "Připojit",
       "step-finish": "Vybrat další nastavení",
@@ -10768,6 +11644,7 @@
     "wizard-content": {
       "button-cancel": "Zrušit",
       "button-cancelling": "Probíhá zrušení…",
+      "button-previous": "",
       "button-submitting": "Odesílání…",
       "error-instance-repository-exists": "Instance úložiště už existuje"
     }
@@ -11176,7 +12053,7 @@
         "recommended": "Doporučeno",
         "results": "Výsledky"
       },
-      "search": "Hledat"
+      "search": ""
     }
   },
   "search": {
@@ -11372,6 +12249,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exportovat jako JSON",
       "share-externally-title": "Sdílet externě",
       "share-internally-title": "Sdílet interně",
@@ -11407,6 +12285,19 @@
       "view-button": "Zobrazit JSON",
       "view-button-yaml": "Zobrazit YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Vytvořit panel knihovny."
     },
@@ -11415,7 +12306,7 @@
       "info-text": "Vytvořte přímý odkaz na tuto nástěnku nebo panel přizpůsobený možnostmi dole.",
       "link-url": "Odkaz adresy URL",
       "render-alert": "Plugin pro renderování obrázků není nainstalován",
-      "render-instructions": "Chcete-li vyrenderovat obrázek panelu, musíte si nainstalovat <2>plugin Grafana pro renderování obrázků</2>. Chcete-li nainstalovat plugin, obraťte se na správce Grafany.",
+      "render-instructions": "",
       "rendered-image": "Přímý odkaz na vyrenderovaný obrázek",
       "save-alert": "Nástěnka není uložena",
       "save-dashboard": "Chcete-li vyrenderovat obrázek panelu, musíte nejprve uložit nástěnku.",
@@ -11483,6 +12374,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Náhled panelu"
     },
@@ -11642,112 +12539,112 @@
   },
   "stat": {
     "add-orientation-option": {
-      "description-orientation": "",
-      "name-orientation": "",
+      "description-orientation": "Orientace rozvržení",
+      "name-orientation": "Orientace",
       "orientation-options": {
-        "label-auto": "",
-        "label-horizontal": "",
-        "label-vertical": ""
+        "label-auto": "Auto",
+        "label-horizontal": "Horizontální",
+        "label-vertical": "Vertikální"
       }
     },
     "add-standard-data-reduce-options": {
-      "category-value-options": "",
-      "description-calculation": "",
-      "description-fields": "",
-      "description-limit": "",
-      "description-show": "",
+      "category-value-options": "Možnosti hodnoty",
+      "description-calculation": "Vyberte funkci reduktoru / výpočet",
+      "description-fields": "Vyberte pole, která by měla být zahrnuta do panelu",
+      "description-limit": "Maximální počet řádků k zobrazení",
+      "description-show": "Vypočítat jednu hodnotu na sloupec nebo řadu nebo zobrazit každý řádek",
       "fields-options": {
-        "label-all-fields": "",
-        "label-numeric-fields": ""
+        "label-all-fields": "Všechna pole",
+        "label-numeric-fields": "Číselná pole"
       },
-      "name-calculation": "",
-      "name-fields": "",
-      "name-limit": "",
-      "name-show": "",
+      "name-calculation": "Výpočet",
+      "name-fields": "Pole",
+      "name-limit": "Limit",
+      "name-show": "Zobrazit",
       "show-options": {
-        "label-all-values": "",
-        "label-calculate": ""
+        "label-all-values": "Všechny hodnoty",
+        "label-calculate": "Spočítat"
       }
     },
-    "category-stat-styles": "",
+    "category-stat-styles": "Statistické styly",
     "color-mode-options": {
-      "label-background-gradient": "",
-      "label-background-solid": "",
-      "label-none": "",
-      "label-value": ""
+      "label-background-gradient": "Přechodné pozadí",
+      "label-background-solid": "Pevné pozadí",
+      "label-none": "Žádné",
+      "label-value": "Hodnota"
     },
-    "description-graph-mode": "",
-    "description-text-mode": "",
+    "description-graph-mode": "Graf statistického panelu / režim sparkline",
+    "description-text-mode": "Určuje, zda se zobrazí název a hodnota, nebo pouze název",
     "graph-mode": {
       "options": {
-        "label-area": "",
-        "label-none": ""
+        "label-area": "Oblast",
+        "label-none": "Žádné"
       }
     },
     "name-color-modcolor-mode-options": {
-      "label": ""
+      "label": "Barevný režim"
     },
-    "name-graph-mode": "",
-    "name-show-percent-change": "",
-    "name-text-alignment": "",
-    "name-text-mode": "",
-    "name-wide-layout": "",
-    "percent-change-color-mode": "",
+    "name-graph-mode": "Režim grafu",
+    "name-show-percent-change": "Zobrazit procentuální změnu",
+    "name-text-alignment": "Zarovnání textu",
+    "name-text-mode": "Textový režim",
+    "name-wide-layout": "Široké rozvržení",
+    "percent-change-color-mode": "Režim barev procentuální změny",
     "percent-change-color-mode-options": {
-      "label-inverted": "",
-      "label-same-as-value": "",
-      "label-standard": ""
+      "label-inverted": "Invertované",
+      "label-same-as-value": "Stejné jako hodnota",
+      "label-standard": "Standardní"
     },
     "text-alignment-options": {
-      "label-auto": "",
-      "label-center": ""
+      "label-auto": "Auto",
+      "label-center": "Střed"
     },
     "text-mode-options": {
-      "label-auto": "",
-      "label-name": "",
-      "label-none": "",
-      "label-value": "",
-      "label-value-and-name": ""
+      "label-auto": "Auto",
+      "label-name": "Název",
+      "label-none": "Žádné",
+      "label-value": "Hodnota",
+      "label-value-and-name": "Hodnota a název"
     },
     "wide-layout-options": {
-      "label-off": "",
-      "label-on": ""
+      "label-off": "Vypnuto",
+      "label-on": "Zapnuto"
     }
   },
   "state-timeline": {
     "align-values-options": {
-      "label-center": "",
-      "label-left": "",
-      "label-right": ""
+      "label-center": "Střed",
+      "label-left": "Vlevo",
+      "label-right": "Vpravo"
     },
-    "category-state-timeline": "",
-    "name-align-values": "",
-    "name-connect-null-values": "",
-    "name-disconnect-values": "",
-    "name-fill-opacity": "",
-    "name-line-width": "",
-    "name-merge-equal-consecutive-values": "",
-    "name-page-size": "",
-    "name-row-height": "",
-    "name-show-values": "",
+    "category-state-timeline": "Časová osa stavu",
+    "name-align-values": "Zarovnat hodnoty",
+    "name-connect-null-values": "Připojit nulové hodnoty",
+    "name-disconnect-values": "Odpojit hodnoty",
+    "name-fill-opacity": "Průhlednost výplně",
+    "name-line-width": "Šířka řádku",
+    "name-merge-equal-consecutive-values": "Sloučit stejné postupné hodnoty",
+    "name-page-size": "Velikost stránky (povolit stránkování)",
+    "name-row-height": "Výška řádku",
+    "name-show-values": "Zobrazit hodnoty",
     "show-values-options": {
-      "label-always": "",
-      "label-auto": "",
-      "label-never": ""
+      "label-always": "Vždy",
+      "label-auto": "Auto",
+      "label-never": "Nikdy"
     }
   },
   "status-history": {
-    "category-status-history": "",
-    "name-column-width": "",
-    "name-fill-opacity": "",
-    "name-line-width": "",
-    "name-page-size": "",
-    "name-row-height": "",
-    "name-show-values": "",
+    "category-status-history": "Historie stavu",
+    "name-column-width": "Šířka sloupce",
+    "name-fill-opacity": "Průhlednost výplně",
+    "name-line-width": "Šířka řádku",
+    "name-page-size": "Velikost stránky (povolit stránkování)",
+    "name-row-height": "Výška řádku",
+    "name-show-values": "Zobrazit hodnoty",
     "show-values-options": {
-      "label-always": "",
-      "label-auto": "",
-      "label-never": ""
+      "label-always": "Vždy",
+      "label-auto": "Auto",
+      "label-never": "Nikdy"
     },
     "status-history-panel": {
       "too-many-points_one": "Příliš mnoho bodů pro správnou vizualizaci. <1></1>Aktualizujte dotaz pro získání méně bodů. <3></3>(přijaté body: {{count}})",
@@ -11789,13 +12686,26 @@
       "label-gauge-display-mode": "Režim zobrazení měřidla",
       "label-value-display": "Zobrazení hodnoty"
     },
-    "category-cell-options": "",
-    "category-table": "",
-    "category-table-footer": "",
+    "category-cell-options": "Možnosti buněk",
+    "category-table": "Tabulka",
+    "category-table-footer": "Zápatí tabulky",
     "cell-height-options": {
-      "label-large": "",
-      "label-medium": "",
-      "label-small": ""
+      "label-large": "Velké",
+      "label-medium": "Střední",
+      "label-small": "Malé"
+    },
+    "cell-types": {
+      "actions": "",
+      "auto": "",
+      "color-background": "",
+      "color-text": "",
+      "data-links": "",
+      "gauge": "",
+      "image": "",
+      "json": "",
+      "markdown": "",
+      "pill": "",
+      "sparkline": ""
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Pokud je vybrán, celý řádek bude barevný jako tato buňka.",
@@ -11805,26 +12715,25 @@
       },
       "label-apply-to-entire-row": "Použít na celý řádek",
       "label-background-display-mode": "Režim zobrazení pozadí",
-      "label-wrap-text": "Zalomení textu",
       "wrap-text": "Zalomení textu"
     },
     "column-alignment-options": {
-      "label-auto": "",
-      "label-center": "",
-      "label-left": "",
-      "label-right": ""
+      "label-auto": "Auto",
+      "label-center": "Střed",
+      "label-left": "Vlevo",
+      "label-right": "Vpravo"
     },
     "container": {
       "content": "Zobrazení příliš mnoha sloupců v jedné tabulce může ovlivnit výkon a zhoršit čitelnost dat. Zvažte upřesnění dotazů.",
       "show-all-series": "Zobrazit všechny sloupce",
       "show-only-series": "Zobrazuje se pouze {{MAX_NUMBER_OF_COLUMNS}} sloupců"
     },
-    "description-calculation": "",
-    "description-cell-value-inspect": "",
-    "description-column-filter": "",
-    "description-count-rows": "",
-    "description-fields": "",
-    "description-min-column-width": "",
+    "description-calculation": "Vyberte funkci reduktoru / výpočet",
+    "description-cell-value-inspect": "Povolit kontrolu hodnoty buňky v modálním okně",
+    "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
+    "description-count-rows": "Zobrazit jeden počet pro všechny datové řádky",
+    "description-fields": "Vyberte pole, která by měla být vypočtena",
+    "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativní text, který se zobrazí, pokud nelze zobrazit obrázek, nebo pro uživatele, kteří používají čtečku obrazovky",
@@ -11832,69 +12741,71 @@
       "label-alt-text": "Alternativní text",
       "label-title-text": "Text názvu"
     },
-    "name-calculation": "",
-    "name-cell-height": "",
-    "name-cell-type": "",
-    "name-cell-value-inspect": "",
-    "name-column-alignment": "",
-    "name-column-filter": "",
-    "name-column-width": "",
-    "name-count-rows": "",
-    "name-enable-paginations": "",
-    "name-fields": "",
-    "name-hide-in-table": "",
-    "name-min-column-width": "",
-    "name-show-table-footer": "",
-    "name-show-table-header": "",
-    "name-wrap-header-text": "",
-    "pill-cell-options-editor": {
-      "description-color-mode": "",
-      "description-fixed-color": "",
-      "description-value-mappings-info": "",
-      "label-color-mode": "",
-      "label-fixed-color": "",
-      "label-value-mappings-info": ""
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-dynamic-height": ""
     },
-    "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "name-calculation": "Výpočet",
+    "name-cell-height": "Výška buňky",
+    "name-cell-type": "Typ buňky",
+    "name-cell-value-inspect": "Kontrola hodnoty buňky",
+    "name-column-alignment": "Zarovnání sloupce",
+    "name-column-filter": "Filtr sloupce",
+    "name-column-width": "Šířka sloupce",
+    "name-count-rows": "Spočítat řádky",
+    "name-enable-paginations": "Povolit stránkování",
+    "name-fields": "Pole",
+    "name-hide-in-table": "Skrýt v tabulce",
+    "name-min-column-width": "Minimální šířka sloupce",
+    "name-show-table-footer": "Zobrazit zápatí tabulky",
+    "name-show-table-header": "Zobrazit záhlaví tabulky",
+    "name-wrap-header-text": "Zalomit text záhlaví",
+    "placeholder-column-width": "auto.",
+    "placeholder-fields": "Všechna číselná pole",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    }
   },
   "table-new": {
-    "category-cell-options": "",
-    "category-table": "",
-    "category-table-footer": "",
+    "category-cell-options": "Možnosti buněk",
+    "category-table": "Tabulka",
+    "category-table-footer": "Zápatí tabulky",
     "cell-height-options": {
-      "label-large": "",
-      "label-medium": "",
-      "label-small": ""
+      "label-large": "Velké",
+      "label-medium": "Střední",
+      "label-small": "Malé"
     },
     "column-alignment-options": {
-      "label-auto": "",
-      "label-center": "",
-      "label-left": "",
-      "label-right": ""
+      "label-auto": "Auto",
+      "label-center": "Střed",
+      "label-left": "Vlevo",
+      "label-right": "Vpravo"
     },
-    "description-calculation": "",
-    "description-cell-value-inspect": "",
-    "description-column-filter": "",
-    "description-count-rows": "",
-    "description-fields": "",
-    "description-min-column-width": "",
-    "name-calculation": "",
-    "name-cell-height": "",
-    "name-cell-type": "",
-    "name-cell-value-inspect": "",
-    "name-column-alignment": "",
-    "name-column-filter": "",
-    "name-column-width": "",
-    "name-count-rows": "",
-    "name-enable-pagination": "",
-    "name-fields": "",
-    "name-hide-in-table": "",
-    "name-min-column-width": "",
-    "name-show-table-footer": "",
-    "name-show-table-header": "",
-    "placeholder-column-width": "",
-    "placeholder-fields": ""
+    "description-calculation": "Vyberte funkci reduktoru / výpočet",
+    "description-cell-value-inspect": "Povolit kontrolu hodnoty buňky v modálním okně",
+    "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
+    "description-count-rows": "Zobrazit jeden počet pro všechny datové řádky",
+    "description-fields": "Vyberte pole, která by měla být vypočtena",
+    "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
+    "name-calculation": "Výpočet",
+    "name-cell-height": "Výška buňky",
+    "name-cell-type": "Typ buňky",
+    "name-cell-value-inspect": "Kontrola hodnoty buňky",
+    "name-column-alignment": "Zarovnání sloupce",
+    "name-column-filter": "Filtr sloupce",
+    "name-column-width": "Šířka sloupce",
+    "name-count-rows": "Spočítat řádky",
+    "name-enable-pagination": "Povolit stránkování",
+    "name-fields": "Pole",
+    "name-hide-in-table": "Skrýt v tabulce",
+    "name-min-column-width": "Minimální šířka sloupce",
+    "name-show-table-footer": "Zobrazit zápatí tabulky",
+    "name-show-table-header": "Zobrazit záhlaví tabulky",
+    "placeholder-column-width": "auto.",
+    "placeholder-fields": "Všechna číselná pole"
   },
   "tag-filter": {
     "clear-button": "Vymazat tagy",
@@ -11979,17 +12890,17 @@
     }
   },
   "text": {
-    "category-text": "",
+    "category-text": "Text",
     "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
+      "label-code": "Kód",
+      "label-html": "HTML",
+      "label-markdown": "Snížení"
     },
-    "name-content": "",
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": "",
-    "name-show-mini-map": ""
+    "name-content": "Obsah",
+    "name-language": "Jazyk",
+    "name-mode": "Režim",
+    "name-show-line-numbers": "Zobrazovat čísla řádek",
+    "name-show-mini-map": "Zobrazit mini mapu"
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -12037,7 +12948,7 @@
       "apply-button": "Použít časový rozsah",
       "default-error": "Zadejte dřívější datum nebo „{{now}}“",
       "fiscal-year": "Fiskální rok: {{from}}–{{to}}",
-      "from-input": "",
+      "from-input": "Od",
       "open-input-calendar": "Otevřít kalendář",
       "range-error": "„Od“ nemůže být po „Do“",
       "to-input": "Do"
@@ -12055,7 +12966,7 @@
       "aria-role": "Výběr časového rozsahu",
       "default-title": "Časové rozsahy",
       "example-title": "Příklad časových rozsahů",
-      "from-label": "",
+      "from-label": "Od",
       "from-to": "{{timeOptionFrom}} do {{timeOptionTo}}",
       "specify": "Zadejte časový rozsah",
       "submit-button-label": "Tlačítko odeslání voliče času",
@@ -12068,8 +12979,8 @@
   },
   "timeline": {
     "missing-field": {
-      "all": "",
-      "time": ""
+      "all": "Žádná pole s možností zobrazení v grafu",
+      "time": "Data nemají časové pole"
     }
   },
   "timeseries": {
@@ -12087,54 +12998,54 @@
       "tooltip-delete": "Odstranit",
       "tooltip-edit": "Upravit"
     },
-    "category-axis": "",
+    "category-axis": "Osa",
     "config": {
       "get-graph-field-config": {
-        "aria-label-bar-width-factor": "",
-        "aria-label-fill-opacity": "",
-        "aria-label-line-width": "",
-        "aria-label-point-size": "",
-        "category-graph-styles": "",
-        "category-thresholds": "",
-        "name-bar-alignment": "",
-        "name-bar-width-factor": "",
-        "name-connect-nulls": "",
-        "name-disconnect-values": "",
-        "name-fill-below-to": "",
-        "name-fill-opacity": "",
-        "name-gradient-mode": "",
-        "name-line-interpolation": "",
-        "name-line-style": "",
-        "name-line-width": "",
-        "name-point-size": "",
-        "name-show-points": "",
-        "name-show-thresholds": "",
-        "name-style": "",
-        "name-transform": "",
+        "aria-label-bar-width-factor": "Faktor šířky lišty",
+        "aria-label-fill-opacity": "Průhlednost výplně",
+        "aria-label-line-width": "Šířka řádku",
+        "aria-label-point-size": "Velikost bodu",
+        "category-graph-styles": "Styly grafu",
+        "category-thresholds": "Prahové hodnoty",
+        "name-bar-alignment": "Zarovnání lišty",
+        "name-bar-width-factor": "Faktor šířky lišty",
+        "name-connect-nulls": "Připojit nulové hodnoty",
+        "name-disconnect-values": "Odpojit hodnoty",
+        "name-fill-below-to": "Vyplnit níže na",
+        "name-fill-opacity": "Průhlednost výplně",
+        "name-gradient-mode": "Režim přechodu",
+        "name-line-interpolation": "Interpolace čar",
+        "name-line-style": "Styl čáry",
+        "name-line-width": "Šířka řádku",
+        "name-point-size": "Velikost bodu",
+        "name-show-points": "Zobrazit body",
+        "name-show-thresholds": "Zobrazit prahové hodnoty",
+        "name-style": "Styl",
+        "name-transform": "Transformovat",
         "transform-options": {
-          "description-constant": "",
-          "description-style": "",
-          "label-constant": "",
-          "label-style": ""
+          "description-constant": "První hodnota se zobrazí jako konstantní čára",
+          "description-style": "Převrátit výsledky na záporné hodnoty na ose Y",
+          "label-constant": "Konstantní",
+          "label-style": "Záporné Y"
         }
       }
     },
     "insert-nulls-editor": {
       "disconnect-options": {
-        "label-never": "",
-        "label-threshold": ""
+        "label-never": "Nikdy",
+        "label-threshold": "Prahová hodnota"
       }
     },
     "line-style-editor": {
       "line-fill-options": {
-        "label-dash": "",
-        "label-dots": "",
-        "label-solid": ""
+        "label-dash": "Pomlčka",
+        "label-dots": "Tečky",
+        "label-solid": "Pevný"
       },
       "title-the-input-expects-a-segment-list": "Vstup očekává seznam segmentů",
       "tooltip-help": "Nápověda"
     },
-    "name-time-zone": "",
+    "name-time-zone": "Časové pásmo",
     "nulls-threshold-input": {
       "placeholder-never": "Nikdy"
     },
@@ -12144,9 +13055,9 @@
     },
     "span-nulls-editor": {
       "gaps-options": {
-        "label-always": "",
-        "label-never": "",
-        "label-threshold": ""
+        "label-always": "Vždy",
+        "label-never": "Nikdy",
+        "label-threshold": "Prahová hodnota"
       }
     },
     "timezones-editor": {
@@ -12155,17 +13066,17 @@
     }
   },
   "traces": {
-    "category-span-filters": "",
-    "name-critical-path-only": "",
-    "name-find-in-trace": "",
-    "name-max-duration": "",
-    "name-min-duration": "",
-    "name-service-name": "",
-    "name-service-name-operator": "",
-    "name-show-matches-only": "",
-    "name-span-name": "",
-    "name-span-name-operator": "",
-    "name-tags": "",
+    "category-span-filters": "Filtry rozsahu",
+    "name-critical-path-only": "Zobrazit pouze kritickou cestu",
+    "name-find-in-trace": "Najít ve stopě",
+    "name-max-duration": "Max. doba trvání",
+    "name-min-duration": "Min. doba trvání",
+    "name-service-name": "Název služby",
+    "name-service-name-operator": "Operátor názvu služby",
+    "name-show-matches-only": "Zobrazit pouze shody",
+    "name-span-name": "Název rozsahu",
+    "name-span-name-operator": "Operátor názvu rozsahu",
+    "name-tags": "Štítky",
     "traces-panel": {
       "no-data-found-in-response": "V odpovědi nebyla nalezena žádná data"
     }
@@ -12180,20 +13091,20 @@
     "axis-editor": {
       "log-mode-options": {
         "description": {
-          "split-the-buckets-based-on-size": ""
+          "split-the-buckets-based-on-size": "Rozdělit segmenty podle velikosti"
         },
         "label": {
-          "split": ""
+          "split": "Rozdělit"
         }
       },
       "mode-options": {
         "description": {
-          "split-the-buckets-based-on-count": "",
-          "split-the-buckets-based-on-size": ""
+          "split-the-buckets-based-on-count": "Rozdělit segmenty podle počtu",
+          "split-the-buckets-based-on-size": "Rozdělit segmenty podle velikosti"
         },
         "label": {
-          "count": "",
-          "size": ""
+          "count": "Počet",
+          "size": "Velikost"
         }
       },
       "placeholder-auto": "Automaticky"
@@ -12207,20 +13118,39 @@
       "placeholder-fields-or-number": "Pole nebo číslo"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "",
+          "reduce-row": "",
+          "row-index": "",
+          "unary-operation": ""
+        }
+      },
+      "label": {
+        "cumulative-functions": "",
+        "window-functions": ""
+      },
       "label-alias": "Přezdívka",
       "label-mode": "Režim",
       "label-replace-all-fields": "Nahradit všechna pole"
     },
     "calculate-heatmap": {
       "add-heatmap-calculation-options": {
-        "name-x-bucket": "",
-        "name-y-bucket": "",
-        "name-y-bucket-scale": ""
+        "name-x-bucket": "Segment X",
+        "name-y-bucket": "Segment Y",
+        "name-y-bucket-scale": "Měřítko segmentu Y"
       }
     },
     "concatenate-transformer-editor": {
       "label-label": "Štítek",
       "label-name": "Název",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "",
+          "ignore-the-frame-name": "",
+          "label-frame": ""
+        }
+      },
       "placeholder-frame": "Obrazový rám"
     },
     "config-from-query-transformer-editor": {
@@ -12232,6 +13162,9 @@
       "aria-label-add-a-convert-field-type-transformer": "Přidat transformátor typu pole konverze",
       "aria-label-remove-convert-field-type-transformer": "Odebrat transformátor typu pole konverze",
       "convert-field-type": "",
+      "description": {
+        "convert-to-specified-field-type": ""
+      },
       "label": {
         "browser": "Prohlížeč",
         "utc": "UTC"
@@ -12242,7 +13175,13 @@
       "label-input-format": "Vstupní formát",
       "label-join-with": "Propojit s",
       "label-set-timezone": "Nastavit časové pásmo",
+      "name": {
+        "convert-field-type": ""
+      },
       "placeholder-type": "Typ",
+      "tags": {
+        "format-field": ""
+      },
       "tooltip-explicit-separator-joining-array-values": "Použít explicitní oddělovač při spojování hodnot polí",
       "tooltip-input-format": "Zadejte formát vstupního pole, aby Grafana mohla správně analyzovat řetězec data.",
       "tooltip-specify-the-output-format": "Zadejte výstupní formát.",
@@ -12260,9 +13199,22 @@
       "tooltip-enable": "Povolit"
     },
     "draggable-sort-order": {
-      "asc": "",
-      "desc": "",
+      "asc": "ASC",
+      "desc": "DESC",
       "off": "Vypnuto"
+    },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": ""
+        },
+        "name": {
+          "concatenate-fields": ""
+        },
+        "tags": {
+          "combine": ""
+        }
+      }
     },
     "enum-mapping-editor": {
       "add-enum-value": "Přidat hodnotu výčtu",
@@ -12274,6 +13226,9 @@
       "remove-enum-row-tooltip-delete": "Odstranit"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": ""
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": ""
@@ -12284,6 +13239,9 @@
       "label-keep-time": "Ponechat čas",
       "label-replace-all-fields": "Nahradit všechna pole",
       "label-source": "Zdroj",
+      "name": {
+        "extract-fields": ""
+      },
       "placeholder-auto": "Automaticky",
       "placeholder-select-delimiter": "Vyberte oddělovač…",
       "tooltip-regexp": "Příklad: {{regexExample}}"
@@ -12292,6 +13250,9 @@
       "aria-label-threshold-color": "Barva prahové hodnoty"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": ""
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": ""
@@ -12301,7 +13262,10 @@
         }
       },
       "label-field": "Pole",
-      "label-lookup": "Vyhledávání"
+      "label-lookup": "Vyhledávání",
+      "name": {
+        "lookup-fields-from-resource": ""
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "Další nastavení",
@@ -12310,13 +13274,28 @@
       "use-as": "Použít jako"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": ""
+      },
       "label-from-variable": "Z proměnné",
       "label-identifier": "Identifikátor",
       "label-use-variable": "Použít proměnnou",
       "label-variable": "Proměnná",
+      "name": {
+        "filter-fields-by-name": ""
+      },
       "placeholder-regular-expression-pattern": "Vzor regulárního výrazu"
     },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": ""
+      },
+      "name": {
+        "filter-data-by-query": ""
+      }
+    },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "",
       "label-field": "Pole",
       "label-match": "Shoda",
       "label-value": "Hodnota",
@@ -12325,6 +13304,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Přidejte podmínku",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": ""
+      },
       "filter-match": {
         "label": {
           "match-all": "",
@@ -12338,7 +13320,10 @@
         }
       },
       "label-conditions": "Podmínky",
-      "label-filter-type": "Typ filtru"
+      "label-filter-type": "Typ filtru",
+      "name": {
+        "filter-data-by-values": ""
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12353,12 +13338,84 @@
       "label-format": "Formát",
       "label-substring-range": "Rozsah dílčího řetězce"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": ""
+      },
+      "name": {
+        "format-string": ""
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "Formát",
       "label-set-timezone": "Nastavit časové pásmo",
       "label-time-field": "Pole času",
       "tooltip-format": "Výstupní formát pro pole zadané jako <2>řetězec formátu Moment.js</2>.",
       "tooltip-timezone-manually": "Nastavit časové pásmo data manuálně"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": ""
+      },
+      "name": {
+        "format-time": ""
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": ""
+      },
+      "name": {
+        "add-field-from-calculation": ""
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": ""
+      },
+      "name": {
+        "config-from-query-results": ""
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": ""
+      },
+      "name": {
+        "create-heatmap": ""
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": ""
+      },
+      "name": {
+        "join-by-labels": ""
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": ""
+      },
+      "name": {
+        "partition-by-values": ""
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": ""
+      },
+      "name": {
+        "rows-to-fields": ""
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": ""
+      },
+      "name": {
+        "spatial-operations": ""
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12387,40 +13444,54 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "",
+          "group-by": ""
+        }
+      },
       "placeholder-ignored": "Ignorováno",
       "placeholder-select-stats": "Vyberte statistiky"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": ""
+      },
+      "name": {
+        "group-by": ""
+      },
       "title-calc-alert": "Výpočty nebudou mít vliv, pokud nebudou seskupena žádná pole"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": ""
+      },
       "description-show-field-names": "Pokud je povoleno, vnořené tabulky zobrazí názvy polí jako záhlaví tabulky",
       "label-show-field-names-in-nested-tables": "Zobrazit názvy polí ve vnořených tabulkách",
+      "name": {
+        "group-to-nested-tables": ""
+      },
       "title-calc-alert": "Výpočty nebudou mít vliv, pokud nebudou seskupena žádná pole."
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": ""
+      },
       "label-cell-value": "Hodnota buňky",
       "label-column": "Sloupec",
       "label-empty-value": "Prázdná hodnota",
       "label-row": "Řádek",
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Booleovská nepravdivá hodnota",
-          "boolean-true-value": "Booleovská pravdivá hodnota",
-          "empty-string": "Prázdný řetězec",
-          "null-value": "Nulová hodnota",
-          "number-value": "Hodnota číslo 0"
-        },
-        "label": {
-          "empty": "Prázdný",
-          "false": "Nepravda",
-          "null": "Prázdný",
-          "true": "Pravda",
-          "zero": "Nula"
-        }
+      "name": {
+        "grouping-to-matrix": ""
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": ""
+      },
+      "name": {
+        "histogram": ""
+      },
       "placeholder-auto": "Automaticky",
       "placeholder-default": "Výchozí hodnota: 30",
       "placeholder-none": "Žádné"
@@ -12429,7 +13500,16 @@
       "label-as-percentile": "Jako percentil",
       "tooltip-transform-index-percentile": "Transformovat index řádku jako percentil."
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": ""
+      },
+      "name": {
+        "join-by-field": ""
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "",
       "info": {
         "input-contain-labels": "Vstup neobsahuje žádné štítky",
         "no-input-or-labels-found": "Nebyl nalezen žádný vstup (nebo štítky)",
@@ -12451,10 +13531,30 @@
       "label-labels": "Štítky",
       "label-mode": "Režim",
       "label-value-field-name": "Název pole hodnoty",
+      "modes": {
+        "label": {
+          "columns": "",
+          "rows": ""
+        }
+      },
       "placeholder-optional-select-label": "Vybrat štítek (nepovinné)",
       "tooltip-replace-value-field-label": "Nahradit název pole hodnoty štítkem"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": ""
+      },
+      "name": {
+        "labels-to-fields": ""
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": ""
+      },
+      "name": {
+        "limit": ""
+      },
       "placeholder-value-or-variable": "Hodnota nebo proměnná"
     },
     "long-info": {
@@ -12465,7 +13565,13 @@
       "string-values-separate": "Hodnoty řetězců jsou reprezentovány jako samostatná pole místo štítků"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "Sloučení nemá žádný vliv při použití na jeden snímek."
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "merge-effect-applied-single-frame": "Sloučení nemá žádný vliv při použití na jeden snímek.",
+      "name": {
+        "merge": ""
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "Všechny hodnoty jsou číselné",
@@ -12475,10 +13581,16 @@
       "time-in-ascending-order": "Čas ve vzestupném pořadí"
     },
     "organize-fields-transformer-editor": {
-      "field-order": "",
+      "description": {
+        "reorder-hide-or-rename-fields": ""
+      },
+      "field-order": "Pořadí pole",
       "field-order-auto": "Automaticky",
-      "field-order-manual": "",
-      "first-frame-warning": "Uspořádání polí funguje jenom s jedním snímkem. Nejprve zvažte použití transformace spojení nebo filtrování vstupu."
+      "field-order-manual": "Manuálně",
+      "first-frame-warning": "Uspořádání polí funguje jenom s jedním snímkem. Nejprve zvažte použití transformace spojení nebo filtrování vstupu.",
+      "name": {
+        "organize-fields": ""
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "Nastavuje způsob zobrazování názvů vybraných polí. Název snímku je obvykle lepší pro tabulková data"
@@ -12503,9 +13615,41 @@
       "partition-values-works-single-frame": "Rozdělení podle hodnot funguje jenom s jedním snímkem.",
       "tooltip-keeps-partition-fields-frames": "Udržuje pole oddílů ve snímcích"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": ""
+      },
+      "name": {
+        "prepare-time-series": ""
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "Formát",
-      "label-info": "Info"
+      "label-info": "Info",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": ""
+        },
+        "label": {
+          "long-time-series": ""
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": ""
+        },
+        "label": {
+          "multiframe-time-series": ""
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": ""
+        },
+        "label": {
+          "wide-time-series": ""
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "a",
@@ -12517,6 +13661,9 @@
       "label-operation": "Činnost"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": ""
+      },
       "label-calculations": "Výpočty",
       "label-include-time": "Zahrnout čas",
       "label-labels-to-fields": "Štítky k polím",
@@ -12531,11 +13678,22 @@
           "series-to-rows": "Řady na řádky"
         }
       },
+      "name": {
+        "reduce": ""
+      },
       "placeholder-choose-stat": "Vyberte statistiku"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "Hodnota nebo proměnná",
       "variable-regex-documentation": "Formátuje vícehodnotovou proměnnou na řetězec regex"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": ""
+      },
+      "name": {
+        "trendline": ""
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12555,8 +13713,19 @@
           "polynomial": "Polynomický"
         }
       },
-      "regression": "",
+      "regression": "regrese",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Počet bodů X, Y k předpovědi"
+    },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": ""
+      },
+      "name": {
+        "rename-fields-by-regex": ""
+      }
     },
     "rename-by-regex-transformer-editor": {
       "label-match": "Shoda",
@@ -12566,11 +13735,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Pole",
-      "label-mode": "Režim"
+      "label-mode": "Režim",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "",
+          "join-on-a-field": "",
+          "keep-all-rows": ""
+        },
+        "label": {
+          "inner": "",
+          "outer-tabular": "",
+          "outer-time-series": ""
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "name": {
+        "series-to-rows": ""
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": ""
+      },
       "label-field": "Pole",
       "label-reverse": "Dozadu",
+      "name": {
+        "sort-by": ""
+      },
       "placeholder-select-field": "Vyberte pole"
     },
     "supplier": {
@@ -12590,6 +13785,17 @@
         "transform": "Transformovat"
       }
     },
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": ""
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": ""
+      },
+      "name": {
+        "time-series-to-table": ""
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "Statistika",
       "label-time-field": "Pole času",
@@ -12603,9 +13809,49 @@
       "placeholder-value": "Hodnota",
       "tooltip-name-for-value-fields": "Název polí hodnot"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": ""
+      },
+      "name": {
+        "transpose": ""
+      },
+      "tags": {
+        "pivot": "",
+        "transform": "",
+        "translate": ""
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "Činnost",
       "placeholder-field": "Pole"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "",
+        "combine": "",
+        "create-new-visualization": "",
+        "filter": "",
+        "perform-spatial-operations": "",
+        "reformat": "",
+        "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "Pole s více hodnotami libovolného typu",
@@ -12639,10 +13885,10 @@
     }
   },
   "trend": {
-    "category-x-axis": "",
-    "description-x-field": "",
-    "name-x-field": "",
-    "placeholder-x-field": ""
+    "category-x-axis": "Osa X",
+    "description-x-field": "Rostoucí číselná hodnota",
+    "name-x-field": "Pole X",
+    "placeholder-x-field": "První číselná hodnota"
   },
   "upgrade-box": {
     "discovery-text": "Objevili jste Pro funkci!",
@@ -12811,6 +14057,16 @@
         }
       }
     },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
+    },
     "text-box-variable-editor": {
       "name-default-value": "",
       "placeholder-default-value-if-any": "výchozí hodnota, pokud existuje",
@@ -12895,20 +14151,20 @@
     }
   },
   "xychart": {
-    "category-xychart": "",
-    "name-fill-opacity": "",
-    "name-line-style": "",
-    "name-line-width": "",
-    "name-max-point-size": "",
-    "name-min-point-size": "",
-    "name-point-shape": "",
-    "name-point-size": "",
-    "name-point-stroke-width": "",
-    "name-series-mapping": "",
-    "name-show": "",
+    "category-xychart": "Graf XY",
+    "name-fill-opacity": "Průhlednost výplně",
+    "name-line-style": "Styl čáry",
+    "name-line-width": "Šířka řádku",
+    "name-max-point-size": "Max. velikost bodu",
+    "name-min-point-size": "Min. velikost bodu",
+    "name-point-shape": "Tvar bodu",
+    "name-point-size": "Velikost bodu",
+    "name-point-stroke-width": "Šířka tahu bodu",
+    "name-series-mapping": "Mapování řady",
+    "name-show": "Zobrazit",
     "point-shape-options": {
-      "label-circle": "",
-      "label-square": ""
+      "label-circle": "Kruh",
+      "label-square": "Čtverec"
     },
     "series-editor": {
       "add-series": "Přidat řady",
@@ -12920,18 +14176,18 @@
       "label-y-field": "Pole Y",
       "placeholder-all-frames": "Všechny snímky",
       "placeholder-select-frame": "Vybrat snímek",
-      "placeholder-x-field": "",
-      "placeholder-y-field": "",
+      "placeholder-x-field": "První číslo nebo časové pole v každém rámečku",
+      "placeholder-y-field": "Zbývající číselná pole v každém rámečku",
       "tooltip-delete-series": "Odstranit řady"
     },
     "series-mapping-options": {
-      "label-auto": "",
-      "label-manual": ""
+      "label-auto": "Auto",
+      "label-manual": "Manuálně"
     },
     "show-options": {
-      "label-both": "",
-      "label-lines": "",
-      "label-points": ""
+      "label-both": "Oba",
+      "label-lines": "Čáry",
+      "label-points": "Body"
     }
   }
 }

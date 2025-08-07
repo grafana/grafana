@@ -49,6 +49,113 @@ func TestUrlValidator(t *testing.T) {
 	}
 }
 
+func TestDomainValidator(t *testing.T) {
+	tc := []testCase{
+		{
+			name: "passes when domain is valid",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "example.com"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "passes when domain is empty",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": ""},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "passes when domain has subdomain",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "sub.example.com"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fails when domain is invalid",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "invalid-domain"},
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Domain Hint contains an invalid domain."),
+		},
+		{
+			name: "fails when domain has invalid characters",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "example.com!"},
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Domain Hint contains an invalid domain."),
+		},
+		{
+			name: "fails when TLD is too short (1 character)",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "example.x"},
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Domain Hint contains an invalid domain."),
+		},
+		{
+			name: "passes when TLD is minimum length (2 characters)",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "example.co"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "passes when TLD is maximum length (6 characters)",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "example.museum"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fails when TLD is too long (7+ characters)",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "example.toolong"},
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Domain Hint contains an invalid domain."),
+		},
+		{
+			name: "passes when domain is maximum reasonable length",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "very-long-subdomain-name-that-is-still-valid.example-organization.museum"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fails when domain segment is too long (over 63 characters)",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "this-is-a-very-long-subdomain-name-that-exceeds-the-maximum-allowed-length-for-a-dns-label.example.com"},
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Domain Hint contains an invalid domain."),
+		},
+		{
+			name: "passes when domain segment is exactly 63 characters",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "this-is-exactly-sixty-three-characters-long-which-is-the-max.com"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fails when domain is just a single character",
+			input: &social.OAuthInfo{
+				Extra: map[string]string{"domain_hint": "a"},
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Domain Hint contains an invalid domain."),
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			err := DomainValidator(tt.input.Extra["domain_hint"], "Domain Hint")(tt.input, tt.requester)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestRequiredValidator(t *testing.T) {
 	tc := []testCase{
 		{

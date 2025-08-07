@@ -127,8 +127,12 @@ describe('SoloPanelPage', () => {
   soloPanelPageScenario('Dashboard init completed ', (ctx) => {
     ctx.setup(() => {
       // Needed for AutoSizer to work in test
-      Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 500 });
-      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 500 });
+      Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+        value: jest.fn(() => ({
+          width: 500,
+          height: 500,
+        })),
+      });
 
       ctx.mount();
       ctx.setDashboard();

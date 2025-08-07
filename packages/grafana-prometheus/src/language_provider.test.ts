@@ -14,7 +14,6 @@ import { PrometheusDatasource } from './datasource';
 import {
   exportToAbstractQuery,
   importFromAbstractQuery,
-  removeQuotesIfExist,
   PrometheusLanguageProviderInterface,
   PrometheusLanguageProvider,
   populateMatchParamsFromQueries,
@@ -656,62 +655,6 @@ describe('Query transformation', () => {
         ],
       });
     });
-  });
-});
-
-describe('removeQuotesIfExist', () => {
-  it('removes quotes from a string with double quotes', () => {
-    const input = '"hello"';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('hello');
-  });
-
-  it('returns the original string if it does not start and end with quotes', () => {
-    const input = 'hello';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('hello');
-  });
-
-  it('returns the original string if it has mismatched quotes', () => {
-    const input = '"hello';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('"hello');
-  });
-
-  it('removes quotes for strings with special characters inside quotes', () => {
-    const input = '"hello, world!"';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('hello, world!');
-  });
-
-  it('removes quotes for strings with spaces inside quotes', () => {
-    const input = '"   "';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('   ');
-  });
-
-  it('returns the original string for an empty string', () => {
-    const input = '';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('');
-  });
-
-  it('returns the original string if the string only has a single quote character', () => {
-    const input = '"';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('"');
-  });
-
-  it('handles strings with nested quotes correctly', () => {
-    const input = '"nested \"quotes\""';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('nested \"quotes\"');
-  });
-
-  it('removes quotes from a numeric string wrapped in quotes', () => {
-    const input = '"12345"';
-    const result = removeQuotesIfExist(input);
-    expect(result).toBe('12345');
   });
 });
 

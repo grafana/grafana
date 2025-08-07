@@ -4,6 +4,7 @@ import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -59,7 +60,6 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
       workflow: getDefaultWorkflow(repository, loadedFromRef),
     },
     isNew: !meta.k8s?.name,
-    isGitHub: repository?.type === 'github',
     repository,
   };
 }
@@ -73,7 +73,6 @@ export interface ProvisionedDashboardData {
   loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   isNew: boolean;
-  isGitHub: boolean;
   readOnly: boolean;
 }
 
@@ -105,15 +104,12 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
       loadedFromRef,
       workflowOptions: [],
       isNew: false,
-      isGitHub: false,
       readOnly: true,
     };
   }
 
-  const { values, isNew, isGitHub, repository } = defaultValuesResult;
+  const { values, isNew, repository } = defaultValuesResult;
   const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
-
-  const readOnly = !repository?.workflows?.length;
 
   return {
     isReady: true,
@@ -122,8 +118,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
     loadedFromRef,
     workflowOptions,
     isNew,
-    isGitHub,
-    readOnly,
+    readOnly: getIsReadOnlyRepo(repository),
     isLoading,
     setIsLoading,
   };

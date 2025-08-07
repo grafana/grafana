@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { EmptySearchResult, FilterInput, Stack } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { EmptyState, FilterInput, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryCard } from '../Repository/RepositoryCard';
@@ -27,18 +27,20 @@ export function RepositoryList({ items }: Props) {
             value={query}
             onChange={setQuery}
           />
-          <ConnectRepositoryButton items={items} showDropdown />
+          <ConnectRepositoryButton items={items} />
         </Stack>
       )}
-      <Stack direction={'column'}>
+      <Stack direction={'column'} gap={2}>
         {filteredItems.length ? (
           filteredItems.map((item) => <RepositoryCard key={item.metadata?.name} repository={item} />)
         ) : (
-          <EmptySearchResult>
-            <Trans i18nKey="provisioning.folder-repository-list.no-results-matching-your-query">
-              No results matching your query
-            </Trans>
-          </EmptySearchResult>
+          <EmptyState
+            variant="not-found"
+            message={t(
+              'provisioning.folder-repository-list.no-results-matching-your-query',
+              'No results matching your query'
+            )}
+          />
         )}
       </Stack>
     </Stack>

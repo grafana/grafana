@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
     "config-editor": {
-      "description-additional-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat. To zahrnuje zabezpečený proxy server Socks.",
-      "description-request-timeout": "Nastavte časový limit požadavku v sekundách. Výchozí hodnota je 30 sekund.",
-      "title-additional-settings": "Další nastavení",
-      "title-request-timeout": "Vypršení časového limitu požadavku"
+      "description-additional-settings": "",
+      "title-additional-settings": "Další nastavení"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Záložní přihlašovací údaje byly zakázány. Vzhledem k tomu, že ověření uživatele samo o sobě podporuje pouze požadavky s uživatelem v rozsahu, funkce, jako je upozorňování, zaznamenané dotazy nebo vykazování, nebudou fungovat podle očekávání. Další podrobnosti najdete v <2>dokumentaci</2>.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Sloupec",
       "aria-label-column-value": "Hodnota sloupce",
       "aria-label-operator": "Operátor",
+      "aria-label-remove-filter": "",
       "label-or": "NEBO"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Přidat skupinu",
       "label-and": "A",
       "label-filters": "Filtry",
@@ -130,6 +131,8 @@
       "label-format-as": "Formátovat jako"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Vybrat sloupec",
       "label-fuzzy-search": "Hledání s přibližnými výsledky",
       "placeholder-search-team": "Zadejte hledaný výraz",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Odebrat"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Seřadit podle",
       "tooltip-group-by": "Uspořádejte výsledky do kategorií na základě zadaných sloupců. Funkci Seřadit podle lze použít nezávisle k výpisu jedinečných hodnot ve vybraných sloupcích nebo v kombinaci s agregovanými funkcemi k vytvoření souhrnných statistik pro každou skupinu. Při samostatném použití vrátí odlišné kombinace zadaných sloupců."
     },
@@ -186,8 +190,10 @@
       "text-loading": "Načítání…"
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Seřazení podle sloupce",
       "aria-label-order-direction": "Směr řazení",
+      "aria-label-remove-order-by": "",
       "label-by": "PODLE",
       "label-order-by": "Seřadit podle",
       "tooltip-order-by": "Seřadit výsledky podle jednoho nebo více sloupců ve vzestupném nebo sestupném pořadí."
@@ -233,7 +239,7 @@
       "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Rozsah"
     },
     "search": {
       "aria-label-resource-search": "Vyhledávání zdrojů",
@@ -249,7 +255,8 @@
       "label-columns": "Sloupce",
       "label-table": "Tabulka",
       "placeholder-select-columns": "Zvolte sloupce",
-      "placeholder-select-table": "Vyberte tabulku"
+      "placeholder-select-table": "Vyberte tabulku",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Časové zrno"

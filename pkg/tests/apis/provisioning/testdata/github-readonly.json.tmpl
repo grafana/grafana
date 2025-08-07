@@ -9,10 +9,10 @@
         "description": "{{ or .Description .Name "Load grafana dashboard from fake repository" }}",
         "type": "github",
         "github": {
-            "url": "{{ or .URL "https://github.com/grafana/git-ui-sync-demo" }}",
-            "branch": "{{ or .Branch "dummy" }}",
+            "url": "{{ or .URL "https://github.com/grafana/grafana-git-sync-demo" }}",
+            "branch": "{{ or .Branch "integration-test" }}",
             "generateDashboardPreviews": {{ if .GenerateDashboardPreviews }} true {{ else }} false {{ end }},
-            "token": "{{ or .Token "github_pat_dummy" }}",
+            "token": "{{ or .Token "" }}",
             "path": "{{ or .Path "grafana/" }}"
         },
         "sync": {

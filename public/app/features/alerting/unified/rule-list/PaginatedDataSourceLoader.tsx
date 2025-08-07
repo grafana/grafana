@@ -51,9 +51,7 @@ function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter
   const hasFilters = Boolean(groupFilter || namespaceFilter);
 
   const { uid, name } = rulesSourceIdentifier;
-  const prometheusGroupsGenerator = usePrometheusGroupsGenerator({
-    populateCache: hasFilters ? false : true,
-  });
+  const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
 
   // If there are no filters we can match one frontend page to one API page.
   // However, if there are filters, we need to fetch more groups from the API to populate one frontend page

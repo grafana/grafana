@@ -12,7 +12,7 @@ import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 import { DataSourceHttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
 import { overhaulStyles } from './shared/utils';
-export type PrometheusConfigProps = DataSourcePluginOptionsEditorProps<PromOptions>;
+type PrometheusConfigProps = DataSourcePluginOptionsEditorProps<PromOptions>;
 
 export const ConfigEditor = (props: PrometheusConfigProps) => {
   const { options, onOptionsChange } = props;

@@ -85,6 +85,15 @@ func (s *SocialBase) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) st
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
+	return s.getAuthCodeURL(state, opts...)
+}
+
+func (s *SocialBase) getAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	if s.info.LoginPrompt != "" {
+		promptOpt := oauth2.SetAuthURLParam("prompt", s.info.LoginPrompt)
+		opts = append(opts, promptOpt)
+	}
+
 	return s.Config.AuthCodeURL(state, opts...)
 }
 
@@ -268,5 +277,7 @@ func validateInfo(info *social.OAuthInfo, oldInfo *social.OAuthInfo, requester i
 		validation.AllowAssignGrafanaAdminValidator(info, oldInfo, requester),
 		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator,
 		validation.OrgAttributePathValidator(info, oldInfo, requester),
-		validation.OrgMappingValidator(info, oldInfo, requester))
+		validation.OrgMappingValidator(info, oldInfo, requester),
+		validation.LoginPromptValidator,
+	)
 }

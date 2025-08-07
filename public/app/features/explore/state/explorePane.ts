@@ -43,7 +43,14 @@ export interface ChangeSizePayload {
   exploreId: string;
   width: number;
 }
+
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
+
+interface ChangeCompactModePayload {
+  exploreId: string;
+  compact: boolean;
+}
+export const changeCompactModeAction = createAction<ChangeCompactModePayload>('explore/changeCompactMode');
 
 /**
  * Tracks the state of explore panels that gets synced with the url.
@@ -52,7 +59,9 @@ interface ChangePanelsState {
   exploreId: string;
   panelsState: ExplorePanelsState;
 }
+
 export const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
+
 export function changePanelState(
   exploreId: string,
   panel: PreferredVisualisationType,
@@ -83,6 +92,7 @@ interface ChangeCorrelationHelperData {
   exploreId: string;
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 }
+
 export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
   'explore/changeCorrelationHelperData'
 );
@@ -97,19 +107,23 @@ interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
+  compact: boolean;
   eventBridge: EventBusExtended;
 }
+
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
 export interface SetUrlReplacedPayload {
   exploreId: string;
 }
+
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
 
 export interface SaveCorrelationsPayload {
   exploreId: string;
   correlations: CorrelationData[];
 }
+
 export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('explore/saveCorrelationsAction');
 
 /**
@@ -118,6 +132,10 @@ export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('exp
  */
 export function changeSize(exploreId: string, { width }: { width: number }): PayloadAction<ChangeSizePayload> {
   return changeSizeAction({ exploreId, width });
+}
+
+export function changeCompactMode(exploreId: string, compact: boolean): PayloadAction<ChangeCompactModePayload> {
+  return changeCompactModeAction({ exploreId, compact });
 }
 
 export interface InitializeExploreOptions {
@@ -129,7 +147,9 @@ export interface InitializeExploreOptions {
   correlationHelperData?: ExploreCorrelationHelperData;
   position?: number;
   eventBridge: EventBusExtended;
+  compact: boolean;
 }
+
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -147,6 +167,7 @@ export const initializeExplore = createAsyncThunk(
       queries,
       range,
       panelsState,
+      compact,
       correlationHelperData,
       eventBridge,
     }: InitializeExploreOptions,
@@ -169,6 +190,7 @@ export const initializeExplore = createAsyncThunk(
         range: getRange(range, getTimeZone(getState().user)),
         datasourceInstance: instance,
         history,
+        compact,
         eventBridge,
       })
     );
@@ -214,8 +236,13 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = timeReducer(state, action);
 
   if (changeSizeAction.match(action)) {
-    const containerWidth = action.payload.width;
+    const containerWidth = Math.floor(action.payload.width);
     return { ...state, containerWidth };
+  }
+
+  if (changeCompactModeAction.match(action)) {
+    const compact = action.payload.compact;
+    return { ...state, compact };
   }
 
   if (changePanelsStateAction.match(action)) {
@@ -236,7 +263,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { queries, range, datasourceInstance, history, eventBridge } = action.payload;
+    const { queries, range, datasourceInstance, history, eventBridge, compact } = action.payload;
 
     return {
       ...state,
@@ -250,6 +277,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queryResponse: createEmptyQueryResponse(),
       cache: [],
       correlations: [],
+      compact,
     };
   }
 

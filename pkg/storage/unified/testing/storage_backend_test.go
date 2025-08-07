@@ -11,7 +11,6 @@ import (
 )
 
 func TestBadgerKVStorageBackend(t *testing.T) {
-	t.Skip("failing with 'panic: DB Closed'")
 	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 		opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 		db, err := badger.Open(opts)

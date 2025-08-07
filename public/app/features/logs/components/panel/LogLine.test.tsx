@@ -14,6 +14,11 @@ import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn(() => [true, jest.fn()]),
+}));
+
 jest.mock('./LogListContext');
 jest.mock('../LogDetails');
 
@@ -45,6 +50,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       displayedFields: [],
       index: 0,
       log,
+      logs: [log],
       onClick: jest.fn(),
       showTime: true,
       style: {},

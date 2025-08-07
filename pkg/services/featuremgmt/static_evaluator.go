@@ -3,57 +3,46 @@ package featuremgmt
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
+	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
 // StaticFlagEvaluator provides methods for evaluating static feature flags
 // it is only used when static provider is configured
 type StaticFlagEvaluator interface {
-	EvalFlag(ctx context.Context, flagKey string) (openfeature.BooleanEvaluationDetails, error)
-	EvalAllFlags(ctx context.Context) (OFREPBulkResponse, error)
+	EvalFlag(ctx context.Context, flagKey string) (goffmodel.OFREPEvaluateSuccessResponse, error)
+	EvalAllFlags(ctx context.Context) (goffmodel.OFREPBulkEvaluateSuccessResponse, error)
 }
 
-// ProvideStaticEvaluator creates a static evaluator from configuration
-// This can be used in wire dependency injection
-func ProvideStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
-	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		l := log.New("static-evaluator")
-		l.Debug("cannot create static evaluator if configured provider is goff")
-		return &staticEvaluator{}, nil
+// CreateStaticEvaluator is a dependency for ofrep APIBuilder
+func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
+	if cfg.OpenFeature.ProviderType != setting.StaticProviderType {
+		return nil, fmt.Errorf("provider is not a static provider, type %s", setting.StaticProviderType)
 	}
 
-	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+	staticFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
+		return nil, fmt.Errorf("failed to read feature flags from config: %w", err)
 	}
 
-	return createStaticEvaluator(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags)
-}
-
-// createStaticEvaluator evaluator that allows evaluating static flags from config.ini
-func createStaticEvaluator(providerType string, u *url.URL, staticFlags map[string]bool) (StaticFlagEvaluator, error) {
-	provider, err := createProvider(providerType, u, staticFlags)
+	staticProvider, err := newStaticProvider(staticFlags)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create static provider: %w", err)
 	}
 
-	staticProvider, ok := provider.(*inMemoryBulkProvider)
+	p, ok := staticProvider.(*inMemoryBulkProvider)
 	if !ok {
-		return nil, fmt.Errorf("provider is not a static provider")
+		return nil, fmt.Errorf("static provider is not of type inMemoryBulkProvider")
 	}
 
-	client, err := createClient(provider)
-	if err != nil {
-		return nil, err
-	}
+	c := openfeature.GetApiInstance().GetClient()
 
 	return &staticEvaluator{
-		provider: staticProvider,
-		client:   client,
+		provider: p,
+		client:   c,
 		log:      log.New("static-evaluator"),
 	}, nil
 }
@@ -65,22 +54,29 @@ type staticEvaluator struct {
 	log      log.Logger
 }
 
-func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (openfeature.BooleanEvaluationDetails, error) {
+func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmodel.OFREPEvaluateSuccessResponse, error) {
 	result, err := s.client.BooleanValueDetails(ctx, flagKey, false, openfeature.TransactionContext(ctx))
 	if err != nil {
-		return openfeature.BooleanEvaluationDetails{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
+		return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
+	}
+	resp := goffmodel.OFREPEvaluateSuccessResponse{
+		Key:      flagKey,
+		Value:    result.Value,
+		Reason:   "static provider evaluation result",
+		Variant:  result.Variant,
+		Metadata: result.FlagMetadata,
 	}
 
-	return result, nil
+	return resp, nil
 }
 
-func (s *staticEvaluator) EvalAllFlags(ctx context.Context) (OFREPBulkResponse, error) {
+func (s *staticEvaluator) EvalAllFlags(ctx context.Context) (goffmodel.OFREPBulkEvaluateSuccessResponse, error) {
 	flags, err := s.provider.ListFlags()
 	if err != nil {
-		return OFREPBulkResponse{}, fmt.Errorf("static provider failed to list all flags: %w", err)
+		return goffmodel.OFREPBulkEvaluateSuccessResponse{}, fmt.Errorf("static provider failed to list all flags: %w", err)
 	}
 
-	allFlags := make([]OFREPFlag, 0, len(flags))
+	allFlags := make([]goffmodel.OFREPFlagBulkEvaluateSuccessResponse, 0, len(flags))
 	for _, flagKey := range flags {
 		result, err := s.client.BooleanValueDetails(ctx, flagKey, false, openfeature.TransactionContext(ctx))
 		if err != nil {
@@ -88,32 +84,18 @@ func (s *staticEvaluator) EvalAllFlags(ctx context.Context) (OFREPBulkResponse, 
 			continue
 		}
 
-		allFlags = append(allFlags, OFREPFlag{
-			Key:          flagKey,
-			Value:        result.Value,
-			Reason:       "static provider evaluation result",
-			Variant:      result.Variant,
+		allFlags = append(allFlags, goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
+			OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{
+				Key:      flagKey,
+				Value:    result.Value,
+				Reason:   "static provider evaluation result",
+				Variant:  result.Variant,
+				Metadata: result.FlagMetadata,
+			},
 			ErrorCode:    string(result.ErrorCode),
 			ErrorDetails: result.ErrorMessage,
 		})
 	}
 
-	return OFREPBulkResponse{Flags: allFlags}, nil
-}
-
-// OFREPBulkResponse represents the response for bulk flag evaluation
-type OFREPBulkResponse struct {
-	Flags    []OFREPFlag    `json:"flags"`
-	Metadata map[string]any `json:"metadata,omitempty"`
-}
-
-// OFREPFlag represents a single flag in the bulk response
-type OFREPFlag struct {
-	Key          string         `json:"key"`
-	Value        bool           `json:"value"`
-	Reason       string         `json:"reason"`
-	Variant      string         `json:"variant,omitempty"`
-	Metadata     map[string]any `json:"metadata,omitempty"`
-	ErrorCode    string         `json:"errorCode,omitempty"`
-	ErrorDetails string         `json:"errorDetails,omitempty"`
+	return goffmodel.OFREPBulkEvaluateSuccessResponse{Flags: allFlags}, nil
 }

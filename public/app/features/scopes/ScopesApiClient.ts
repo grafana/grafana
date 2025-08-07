@@ -1,5 +1,5 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, config } from '@grafana/runtime';
 
 import { getAPINamespace } from '../../api/utils';
 
@@ -82,6 +82,18 @@ export class ScopesApiClient {
       return response?.items ?? [];
     } catch (err) {
       return [];
+    }
+  };
+
+  public fetchScopeNode = async (scopeNodeId: string): Promise<ScopeNode | undefined> => {
+    if (!config.featureToggles.useScopeSingleNodeEndpoint) {
+      return Promise.resolve(undefined);
+    }
+    try {
+      const response = await getBackendSrv().get<ScopeNode>(apiUrl + `/scopenodes/${scopeNodeId}`);
+      return response;
+    } catch (err) {
+      return undefined;
     }
   };
 }

@@ -161,6 +161,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -177,6 +178,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -192,6 +194,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -227,6 +230,10 @@ const injectedRtkApi = api
       }),
       getRepositoryJobsWithPath: build.query<GetRepositoryJobsWithPathApiResponse, GetRepositoryJobsWithPathApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs/${queryArg.uid}` }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryRefs: build.query<GetRepositoryRefsApiResponse, GetRepositoryRefsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/refs` }),
         providesTags: ['Repository'],
       }),
       getRepositoryRenderWithPath: build.query<
@@ -523,6 +530,8 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
   body: {
     [key: string]: any;
   };
@@ -539,6 +548,8 @@ export type CreateRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
   body: {
     [key: string]: any;
   };
@@ -555,6 +566,8 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {
@@ -589,6 +602,18 @@ export type GetRepositoryJobsWithPathApiArg = {
   name: string;
   /** Original Job UID */
   uid: string;
+};
+export type GetRepositoryRefsApiResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
+export type GetRepositoryRefsApiArg = {
+  /** name of the RefList */
+  name: string;
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
@@ -733,9 +758,37 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type ResourceRef = {
+  /** Group is the group of the resource, such as "dashboard.grafana.app". */
+  group?: string;
+  /** Kind is the type of resource, for example, "Dashboard". */
+  kind?: string;
+  /** Name is the name of the resource, such as a dashboard UID. */
+  name?: string;
+};
+export type DeleteJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash to delete from */
+  ref?: string;
+  /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
+};
+export type MoveJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash that should move */
+  ref?: string;
+  /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+  /** Destination path for the move (e.g. "new-location/") */
+  targetPath?: string;
 };
 export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
@@ -752,22 +805,30 @@ export type SyncJobOptions = {
   incremental: boolean;
 };
 export type ExportJobOptions = {
-  /** Target branch for export (only git) */
+  /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
-  /** Prefix in target file system */
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
+  /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {
   /** Possible enum values:
+     - `"delete"` deletes files in the remote repository
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"move"` moves files in the remote repository
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'migrate' | 'pr' | 'pull' | 'push';
+  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+  /** Delete when the action is `delete` */
+  delete?: DeleteJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
+  /** Move when the action is `move` */
+  move?: MoveJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
   /** Required when the action is `pull` */
@@ -803,8 +864,9 @@ export type JobStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state?: 'error' | 'pending' | 'success' | 'working';
+  state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
 };
@@ -835,6 +897,22 @@ export type JobList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type BitbucketRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
+  token?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
+  /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
+  url?: string;
+};
 export type GitRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
@@ -846,6 +924,8 @@ export type GitRepositoryConfig = {
   path?: string;
   /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
   /** The repository URL (e.g. `https://github.com/example/test.git`). */
   url?: string;
 };
@@ -865,6 +945,20 @@ export type GitHubRepositoryConfig = {
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
+export type GitLabRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
+  token?: string;
+  /** The repository URL (e.g. `https://gitlab.com/example/test`). */
+  url?: string;
+};
 export type LocalRepositoryConfig = {
   path?: string;
 };
@@ -881,12 +975,16 @@ export type SyncOptions = {
   target: 'folder' | 'instance';
 };
 export type RepositorySpec = {
+  /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
+  bitbucket?: BitbucketRepositoryConfig;
   /** Repository description */
   description?: string;
   /** The repository on Git. Mutually exclusive with local | github | git. */
   git?: GitRepositoryConfig;
   /** The repository on GitHub. Mutually exclusive with local | github | git. */
   github?: GitHubRepositoryConfig;
+  /** The repository on GitLab. Mutually exclusive with local | github | git. */
+  gitlab?: GitLabRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | github. */
   local?: LocalRepositoryConfig;
   /** Sync settings -- how values are pulled from the repository into grafana */
@@ -896,10 +994,12 @@ export type RepositorySpec = {
   /** The repository type.  When selected oneOf the values below should be non-nil
     
     Possible enum values:
+     - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"gitlab"`
      - `"local"` */
-  type: 'git' | 'github' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
@@ -937,8 +1037,9 @@ export type SyncStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state: 'error' | 'pending' | 'success' | 'working';
+  state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
 export type WebhookStatus = {
   encryptedSecret?: string;
@@ -1031,10 +1132,12 @@ export type ResourceRepositoryInfo = {
   /** The repository type
     
     Possible enum values:
+     - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"gitlab"`
      - `"local"` */
-  type: 'git' | 'github' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
 };
 export type Unstructured = {
   [key: string]: any;
@@ -1059,8 +1162,9 @@ export type ResourceObjects = {
     Possible enum values:
      - `"create"`
      - `"delete"`
+     - `"move"`
      - `"update"` */
-  action?: 'create' | 'delete' | 'update';
+  action?: 'create' | 'delete' | 'move' | 'update';
   /** The value returned from a dryRun request */
   dryRun?: Unstructured;
   /** The same value, currently saved in the grafana database */
@@ -1168,16 +1272,20 @@ export type RepositoryView = {
   /** The repository type
     
     Possible enum values:
+     - `"bitbucket"`
      - `"git"`
      - `"github"`
+     - `"gitlab"`
      - `"local"` */
-  type: 'git' | 'github' | 'local';
+  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
   /** The supported workflows */
   workflows: ('branch' | 'write')[];
 };
 export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
+  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'gitlab' | 'local')[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
@@ -1222,6 +1330,7 @@ export const {
   useGetRepositoryJobsQuery,
   useCreateRepositoryJobsMutation,
   useGetRepositoryJobsWithPathQuery,
+  useGetRepositoryRefsQuery,
   useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,

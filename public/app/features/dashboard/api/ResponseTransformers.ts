@@ -41,7 +41,7 @@ import {
   defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
@@ -183,7 +183,7 @@ export function ensureV2Response(
   };
 
   return {
-    apiVersion: 'v2alpha1',
+    apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
     metadata: {
       creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
@@ -425,52 +425,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
     return [panelKind, element_identifier];
   } else {
     // PanelKind
-
-    const queries = getPanelQueries(
-      (p.targets as unknown as DataQuery[]) || [],
-      p.datasource || getDefaultDatasource()
-    );
-
-    const transformations = getPanelTransformations(p.transformations || []);
-
-    const panelKind: PanelKind = {
-      kind: 'Panel',
-      spec: {
-        title: p.title || '',
-        description: p.description || '',
-        vizConfig: {
-          kind: p.type,
-          spec: {
-            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
-            options: p.options as any,
-            pluginVersion: p.pluginVersion!,
-          },
-        },
-        links:
-          p.links?.map<DataLink>((l) => ({
-            title: l.title,
-            url: l.url || '',
-            targetBlank: l.targetBlank,
-          })) || [],
-        id: p.id!,
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries,
-            transformations,
-            queryOptions: {
-              cacheTimeout: p.cacheTimeout,
-              maxDataPoints: p.maxDataPoints,
-              interval: p.interval,
-              hideTimeOverride: p.hideTimeOverride,
-              queryCachingTTL: p.queryCachingTTL,
-              timeFrom: p.timeFrom,
-              timeShift: p.timeShift,
-            },
-          },
-        },
-      },
-    };
+    const panelKind = buildPanelKind(p);
     return [panelKind, element_identifier];
   }
 }
@@ -521,6 +476,53 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
   });
 }
 
+export function buildPanelKind(p: Panel): PanelKind {
+  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource || getDefaultDatasource());
+
+  const transformations = getPanelTransformations(p.transformations || []);
+
+  const panelKind: PanelKind = {
+    kind: 'Panel',
+    spec: {
+      title: p.title || '',
+      description: p.description || '',
+      vizConfig: {
+        kind: 'VizConfig',
+        group: p.type,
+        version: p.pluginVersion!,
+        spec: {
+          fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+          options: p.options as any,
+        },
+      },
+      links:
+        p.links?.map<DataLink>((l) => ({
+          title: l.title,
+          url: l.url || '',
+          targetBlank: l.targetBlank,
+        })) || [],
+      id: p.id!,
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries,
+          transformations,
+          queryOptions: {
+            cacheTimeout: p.cacheTimeout,
+            maxDataPoints: p.maxDataPoints,
+            interval: p.interval,
+            hideTimeOverride: p.hideTimeOverride,
+            queryCachingTTL: p.queryCachingTTL,
+            timeFrom: p.timeFrom,
+            timeShift: p.timeShift,
+          },
+        },
+      },
+    },
+  };
+  return panelKind;
+}
+
 function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {
   return transformations.map((t) => {
     return {
@@ -543,6 +545,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
       skipUrlSync: Boolean(v.skipUrlSync),
       hide: transformVariableHideToEnum(v.hide),
     };
+
+    let ds: DataSourceRef | undefined;
+    let dsType: string | undefined;
 
     switch (v.type) {
       case 'query':
@@ -634,17 +639,27 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         variables.push(cv);
         break;
       case 'adhoc':
+        ds = v.datasource || getDefaultDatasource();
+        dsType = ds.type ?? getDefaultDatasourceType();
+
         const av: AdhocVariableKind = {
           kind: 'AdhocVariable',
+          group: dsType,
           spec: {
             ...commonProperties,
-            datasource: v.datasource || getDefaultDatasource(),
             baseFilters: validateFiltersOrigin(v.baseFilters) || [],
             filters: validateFiltersOrigin(v.filters) || [],
             defaultKeys: v.defaultKeys || [],
             allowCustomValue: v.allowCustomValue ?? true,
           },
         };
+
+        if (ds.uid) {
+          av.datasource = {
+            name: ds.uid,
+          };
+        }
+
         variables.push(av);
         break;
       case 'constant':
@@ -698,11 +713,14 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         variables.push(tx);
         break;
       case 'groupby':
+        ds = v.datasource || getDefaultDatasource();
+        dsType = ds.type ?? getDefaultDatasourceType();
+
         const gb: GroupByVariableKind = {
           kind: 'GroupByVariable',
+          group: dsType,
           spec: {
             ...commonProperties,
-            datasource: v.datasource || getDefaultDatasource(),
             options: v.options,
             current: {
               value: v.current.value,
@@ -711,6 +729,13 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
           },
         };
+
+        if (ds.uid) {
+          gb.datasource = {
+            name: ds.uid,
+          };
+        }
+
         variables.push(gb);
         break;
       default:
@@ -868,7 +893,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       case 'GroupByVariable':
         const gv: VariableModel = {
           ...commonProperties,
-          datasource: v.spec.datasource,
+          datasource: {
+            uid: v.datasource?.name,
+            type: v.group,
+          },
           current: v.spec.current,
           options: v.spec.options,
         };
@@ -877,7 +905,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       case 'AdhocVariable':
         const av: VariableModel = {
           ...commonProperties,
-          datasource: v.spec.datasource,
+          datasource: {
+            uid: v.datasource?.name,
+            type: v.group,
+          },
           // @ts-expect-error
           baseFilters: v.spec.baseFilters,
           filters: v.spec.filters,
@@ -936,12 +967,12 @@ function transformV2PanelToV1Panel(
     const panel = p.spec;
     return {
       id: panel.id,
-      type: panel.vizConfig.kind,
+      type: panel.vizConfig.group,
       title: panel.title,
       description: panel.description,
       fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
       options: panel.vizConfig.spec.options,
-      pluginVersion: panel.vizConfig.spec.pluginVersion,
+      pluginVersion: panel.vizConfig.version,
       links:
         // @ts-expect-error - Panel link is wrongly typed as DashboardLink
         panel.links?.map<DashboardLink>((l) => ({

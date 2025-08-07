@@ -101,6 +101,8 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       allValue: 'test-all',
       isMulti: true,
+      staticOptions: [{ label: 'test', value: 'test' }],
+      staticOptionsOrder: 'after',
     });
 
     const set = new SceneVariableSet({
@@ -136,6 +138,13 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "staticOptions": [
+        {
+          "text": "test",
+          "value": "test",
+        },
+      ],
+      "staticOptionsOrder": "after",
       "type": "query",
     }
     `);
@@ -155,6 +164,8 @@ describe('sceneVariablesSetToVariables', () => {
       allValue: 'test-all',
       allowCustomValue: false,
       isMulti: true,
+      staticOptions: [{ label: 'test', value: 'test' }],
+      staticOptionsOrder: 'after',
     });
     const set = new SceneVariableSet({
       variables: [variable],
@@ -189,6 +200,13 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "staticOptions": [
+        {
+          "text": "test",
+          "value": "test",
+        },
+      ],
+      "staticOptionsOrder": "after",
       "type": "query",
     }
     `);
@@ -221,7 +239,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result[0].options).toEqual([]);
   });
 
-  it('should handle Query variable when sceneVariablesSetToVariables shoudl keep options', () => {
+  it('should handle Query variable when sceneVariablesSetToVariables should keep options', () => {
     const variable = new QueryVariable({
       name: 'test',
       label: 'test-label',
@@ -846,6 +864,8 @@ describe('sceneVariablesSetToVariables', () => {
         includeAll: true,
         allValue: 'test-all',
         isMulti: true,
+        staticOptions: [{ label: 'test', value: 'test' }],
+        staticOptionsOrder: 'after',
       });
 
       const set = new SceneVariableSet({
@@ -892,6 +912,13 @@ describe('sceneVariablesSetToVariables', () => {
             "regex": "",
             "skipUrlSync": false,
             "sort": "disabled",
+            "staticOptions": [
+              {
+                "text": "test",
+                "value": "test",
+              },
+            ],
+            "staticOptionsOrder": "after",
           },
         }
       `);
@@ -1178,6 +1205,10 @@ describe('sceneVariablesSetToVariables', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchInlineSnapshot(`
     {
+      "datasource": {
+        "name": "fake-uid",
+      },
+      "group": "fake-type",
       "kind": "AdhocVariable",
       "spec": {
         "allowCustomValue": true,
@@ -1188,10 +1219,6 @@ describe('sceneVariablesSetToVariables', () => {
             "value": "test",
           },
         ],
-        "datasource": {
-          "type": "fake-type",
-          "uid": "fake-uid",
-        },
         "defaultKeys": [],
         "description": "test-desc",
         "filters": [
@@ -1254,6 +1281,10 @@ describe('sceneVariablesSetToVariables', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchInlineSnapshot(`
     {
+      "datasource": {
+        "name": "fake-uid",
+      },
+      "group": "fake-type",
       "kind": "AdhocVariable",
       "spec": {
         "allowCustomValue": true,
@@ -1264,10 +1295,6 @@ describe('sceneVariablesSetToVariables', () => {
             "value": "test",
           },
         ],
-        "datasource": {
-          "type": "fake-type",
-          "uid": "fake-uid",
-        },
         "defaultKeys": [
           {
             "text": "some",
@@ -1334,15 +1361,15 @@ describe('sceneVariablesSetToVariables', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchInlineSnapshot(`
       {
+        "datasource": {
+          "name": "fake-uid",
+        },
+        "group": "fake-type",
         "kind": "GroupByVariable",
         "spec": {
           "current": {
             "text": [],
             "value": [],
-          },
-          "datasource": {
-            "type": "fake-type",
-            "uid": "fake-uid",
           },
           "defaultValue": undefined,
           "description": "test-desc",
