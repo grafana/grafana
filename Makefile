@@ -368,6 +368,14 @@ test-js: ## Run tests for frontend.
 .PHONY: test
 test: test-go test-js ## Run all tests.
 
+.PHONY: test-run
+test-run:
+	@echo "test run.sh script"
+	docker run --rm \
+		-v $$PWD/packaging/docker/test_run.sh:/test_run.sh \
+		--entrypoint /test_run.sh \
+		grafana/grafana$(TAG_SUFFIX):dev
+
 ##@ Linting
 .PHONY: golangci-lint
 golangci-lint:
