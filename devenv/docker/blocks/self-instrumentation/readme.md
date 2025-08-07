@@ -30,3 +30,19 @@ export GF_DIAGNOSTICS_PROFILING_ENABLED=true
 export GF_DIAGNOSTICS_PROFILING_ADDR=0.0.0.0
 make run
 ```
+
+To enable profiling in your plugin add the following to your `custom.ini`:
+
+```ini
+[plugin.grafana-bigquery-datasource]
+profiling_enabled = true
+profiling_port = 6161
+profiling_block_rate = 1
+profiling_mutex_rate = 1
+```
+
+and the following to your `config.alloy` in the `pyroscope.scrape.targets` section:
+
+```yaml
+  {"__address__" = "host.docker.internal:6161", "service_name"="grafana-bigquery-datasource"},
+```
