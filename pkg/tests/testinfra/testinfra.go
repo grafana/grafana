@@ -37,11 +37,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
-// Some comments to tigger the enterprise tests
 // StartGrafana starts a Grafana server.
 // The server address is returned.
 func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, db.DB) {
 	addr, env := StartGrafanaEnv(t, grafDir, cfgPath)
+	fmt.Println("trigger enterprise tests")
+
 	return addr, env.SQLStore
 }
 
