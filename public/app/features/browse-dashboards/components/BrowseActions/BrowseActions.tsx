@@ -148,7 +148,6 @@ export function BrowseActions({ folderDTO }: Props) {
             folderUid={folderDTO?.uid || ''}
             onDismiss={() => {
               setShowBulkDeleteProvisionedResource(false);
-              onActionComplete();
             }}
           />
         </Drawer>
@@ -166,7 +165,6 @@ export function BrowseActions({ folderDTO }: Props) {
             folderUid={folderDTO?.uid}
             onDismiss={() => {
               setShowBulkMoveProvisionedResource(false);
-              onActionComplete();
             }}
           />
         </Drawer>
