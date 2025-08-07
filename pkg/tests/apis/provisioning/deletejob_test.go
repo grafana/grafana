@@ -51,24 +51,14 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	require.Equal(t, 1, len(folders.Items), "should have 1 folder after sync")
 
 	t.Run("delete single file", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"dashboard1.json"},
+			},
+		}
 		// Create delete job for single file
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{
-					Paths: []string{"dashboard1.json"},
-				},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "should be able to create delete job")
-
-		// Wait for job to complete
-		helper.AwaitJobs(t, repo)
+		helper.TriggerJobAndWait(t, repo, spec)
 
 		// Verify file is deleted from repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
@@ -88,24 +78,13 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	})
 
 	t.Run("delete multiple files", func(t *testing.T) {
-		// Create delete job for multiple files
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{
-					Paths: []string{"dashboard2.json", "folder/dashboard3.json"},
-				},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "should be able to create delete job")
-
-		// Wait for job to complete
-		helper.AwaitJobs(t, repo)
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"dashboard2.json", "folder/dashboard3.json"},
+			},
+		}
+		helper.TriggerJobAndWait(t, repo, spec)
 
 		// Verify files are deleted from repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
@@ -163,30 +142,20 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		}
 
 		t.Run("delete single dashboard by resource reference", func(t *testing.T) {
-			// Create delete job for single dashboard using ResourceRef
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Body(asJSON(&provisioning.JobSpec{
-					Action: provisioning.JobActionDelete,
-					Delete: &provisioning.DeleteJobOptions{
-						Resources: []provisioning.ResourceRef{
-							{
-								Name:  "resourceref1", // UID from modified all-panels.json
-								Kind:  "Dashboard",
-								Group: "dashboard.grafana.app",
-							},
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "resourceref1", // UID from modified all-panels.json
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
 						},
 					},
-				})).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "should be able to create delete job with ResourceRef")
+				},
+			}
 
-			// Wait for job to complete
-			helper.AwaitJobs(t, repo)
+			helper.TriggerJobAndWait(t, repo, spec)
 
 			// Verify corresponding file is deleted from repository
 			_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "resource-test-1.json")
@@ -206,35 +175,24 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		})
 
 		t.Run("delete multiple resources by reference", func(t *testing.T) {
-			// Create delete job for multiple resources using ResourceRef
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Body(asJSON(&provisioning.JobSpec{
-					Action: provisioning.JobActionDelete,
-					Delete: &provisioning.DeleteJobOptions{
-						Resources: []provisioning.ResourceRef{
-							{
-								Name:  "resourceref2", // UID from modified text-options.json
-								Kind:  "Dashboard",
-								Group: "dashboard.grafana.app",
-							},
-							{
-								Name:  "resourceref3", // UID from modified timeline-demo.json
-								Kind:  "Dashboard",
-								Group: "dashboard.grafana.app",
-							},
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "resourceref2", // UID from modified text-options.json
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
+						},
+						{
+							Name:  "resourceref3", // UID from modified timeline-demo.json
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
 						},
 					},
-				})).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "should be able to create delete job with multiple ResourceRefs")
-
-			// Wait for job to complete
-			helper.AwaitJobs(t, repo)
+				},
+			}
+			helper.TriggerJobAndWait(t, repo, spec)
 
 			// Verify both dashboards are removed from Grafana
 			_, err = helper.DashboardsV1.Resource.Get(ctx, "resourceref2", metav1.GetOptions{})
@@ -274,31 +232,21 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			helper.SyncAndWait(t, repo, nil)
 
-			// Create delete job that combines both paths and resource references
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Body(asJSON(&provisioning.JobSpec{
-					Action: provisioning.JobActionDelete,
-					Delete: &provisioning.DeleteJobOptions{
-						Paths: []string{"mixed-test-1.json"}, // Delete by path
-						Resources: []provisioning.ResourceRef{
-							{
-								Name:  "resourceref2", // Delete by resource reference
-								Kind:  "Dashboard",
-								Group: "dashboard.grafana.app",
-							},
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Paths: []string{"mixed-test-1.json"}, // Delete by path
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "resourceref2", // Delete by resource reference
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
 						},
 					},
-				})).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "should be able to create mixed delete job")
+				},
+			}
 
-			// Wait for job to complete
-			helper.AwaitJobs(t, repo)
+			helper.TriggerJobAndWait(t, repo, spec)
 
 			// Verify both targeted resources are deleted from Grafana
 			_, err = helper.DashboardsV1.Resource.Get(ctx, "resourceref1", metav1.GetOptions{})
@@ -356,30 +304,19 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "test-folder", "dashboard-in-folder.json")
 			require.NoError(t, err, "dashboard inside folder should exist")
 
-			// Create delete job for the folder using ResourceRef (use the actual generated name)
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Body(asJSON(&provisioning.JobSpec{
-					Action: provisioning.JobActionDelete,
-					Delete: &provisioning.DeleteJobOptions{
-						Resources: []provisioning.ResourceRef{
-							{
-								Name:  testFolderName, // Use the actual generated folder name
-								Kind:  "Folder",
-								Group: "folder.grafana.app",
-							},
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  testFolderName, // Use the actual generated folder name
+							Kind:  "Folder",
+							Group: "folder.grafana.app",
 						},
 					},
-				})).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "should be able to create delete job for folder")
-
-			// Wait for job to complete
-			helper.AwaitJobs(t, repo)
+				},
+			}
+			helper.TriggerJobAndWait(t, repo, spec)
 
 			// Verify folder is deleted from Grafana
 			_, err = helper.Folders.Resource.Get(ctx, testFolderName, metav1.GetOptions{})
@@ -415,6 +352,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Do(ctx)
 			require.NoError(t, result.Error(), "should be able to create delete job")
 
+			// TODO: Simply all this
 			// Wait for job to complete - should record error but continue
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				list := &unstructured.UnstructuredList{}
@@ -473,6 +411,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			Do(ctx)
 		require.NoError(t, result.Error(), "should be able to create delete job")
 
+		// TODO: Simplify this
 		// Wait for job to complete - should fail due to strict error handling
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			list := &unstructured.UnstructuredList{}

@@ -48,32 +48,14 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	require.Equal(t, 1, len(folders.Items), "should have 1 folder after sync")
 
 	t.Run("move single file", func(t *testing.T) {
-		// Create move job for single file
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
-					Paths:      []string{"dashboard1.json"},
-					TargetPath: "moved/",
-				},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "should be able to create move job")
-
-		raw, err := result.Raw()
-		require.NoError(t, err)
-
-		obj := &unstructured.Unstructured{}
-		err = json.Unmarshal(raw, obj)
-		require.NoError(t, err)
-
-		// Wait for job to complete
-		helper.AwaitJobSuccess(t, ctx, obj)
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"dashboard1.json"},
+				TargetPath: "moved/",
+			},
+		}
+		helper.TriggerJobAndWait(t, repo, spec)
 
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
@@ -95,6 +77,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 		// Verify dashboard still exists in Grafana after sync
 		// Use eventually to let unified storage reflect the changes in dashboards.
+		// FIXME: investigate this
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 			assert.NoError(collect, err)
@@ -320,32 +303,21 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		helper.SyncAndWait(t, refRepo, nil)
 
 		t.Run("move single dashboard by resource reference", func(t *testing.T) {
-			// Create move job for single dashboard using ResourceRef
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(refRepo).
-				SubResource("jobs").
-				Body(asJSON(&provisioning.JobSpec{
-					Action: provisioning.JobActionMove,
-					Move: &provisioning.MoveJobOptions{
-						TargetPath: "moved-by-ref/",
-						Resources: []provisioning.ResourceRef{
-							{
-								Name:  "moveref1", // UID from modified all-panels.json
-								Kind:  "Dashboard",
-								Group: "dashboard.grafana.app",
-							},
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionMove,
+				Move: &provisioning.MoveJobOptions{
+					TargetPath: "moved-by-ref/",
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "moveref1", // UID from modified all-panels.json
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
 						},
 					},
-				})).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "should be able to create move job with ResourceRef")
+				},
+			}
 
-			// Wait for job to complete
-			helper.AwaitJobs(t, refRepo)
-
+			helper.TriggerJobAndWait(t, refRepo, spec)
 			// Verify corresponding file is moved in repository
 			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "moved-by-ref", "move-source-1.json")
 			require.NoError(t, err, "file should be moved to new location in repository")
@@ -366,31 +338,20 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		})
 
 		t.Run("move multiple resources by reference", func(t *testing.T) {
-			// Create move job for remaining resource using ResourceRef
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(refRepo).
-				SubResource("jobs").
-				Body(asJSON(&provisioning.JobSpec{
-					Action: provisioning.JobActionMove,
-					Move: &provisioning.MoveJobOptions{
-						TargetPath: "archived-by-ref/",
-						Resources: []provisioning.ResourceRef{
-							{
-								Name:  "moveref2", // UID from modified text-options.json
-								Kind:  "Dashboard",
-								Group: "dashboard.grafana.app",
-							},
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionMove,
+				Move: &provisioning.MoveJobOptions{
+					TargetPath: "archived-by-ref/",
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "moveref2", // UID from modified text-options.json
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
 						},
 					},
-				})).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "should be able to create move job with ResourceRef")
-
-			// Wait for job to complete
-			helper.AwaitJobs(t, refRepo)
+				},
+			}
+			helper.TriggerJobAndWait(t, refRepo, spec)
 
 			// Verify file is moved in repository
 			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "archived-by-ref", "move-source-2.json")
@@ -424,31 +385,21 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			helper.SyncAndWait(t, refRepo, nil)
 
 			// Create move job that combines both paths and resource references
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(refRepo).
-				SubResource("jobs").
-				Body(asJSON(&provisioning.JobSpec{
-					Action: provisioning.JobActionMove,
-					Move: &provisioning.MoveJobOptions{
-						TargetPath: "mixed-target/",
-						Paths:      []string{"mixed-move-1.json"}, // Move by path
-						Resources: []provisioning.ResourceRef{
-							{
-								Name:  "mixedmove2", // Move by resource reference
-								Kind:  "Dashboard",
-								Group: "dashboard.grafana.app",
-							},
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionMove,
+				Move: &provisioning.MoveJobOptions{
+					TargetPath: "mixed-target/",
+					Paths:      []string{"mixed-move-1.json"}, // Move by path
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "mixedmove2", // Move by resource reference
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
 						},
 					},
-				})).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "should be able to create mixed move job")
-
-			// Wait for job to complete
-			helper.AwaitJobs(t, refRepo)
+				},
+			}
+			helper.TriggerJobAndWait(t, refRepo, spec)
 
 			// Verify both targeted resources are moved in repository
 			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-target", "mixed-move-1.json")

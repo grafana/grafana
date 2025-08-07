@@ -46,24 +46,14 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	_, err = helper.Repositories.Resource.Create(ctx, createBody, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create repository")
 
-	// Now export...
-	result := helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("jobs").
-		SetHeader("Content-Type", "application/json").
-		Body(asJSON(&provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{
-				Folder: "", // export entire instance
-				Path:   "", // no prefix necessary for testing
-			},
-		})).
-		Do(ctx)
-	require.NoError(t, result.Error())
-
-	// And time to assert.
-	helper.AwaitJobs(t, repo)
+	// Now export
+	spec := provisioning.JobSpec{
+		Push: &provisioning.ExportJobOptions{
+			Folder: "", // export entire instance
+			Path:   "", // no prefix necessary for testing
+		},
+	}
+	helper.TriggerJobAndWait(t, repo, spec)
 
 	type props struct {
 		title      string
@@ -143,22 +133,14 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	printFileTree(t, helper.ProvisioningPath)
 
 	// Initial export
-	result := helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo1).
-		SubResource("jobs").
-		SetHeader("Content-Type", "application/json").
-		Body(asJSON(&provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{
-				Folder: "", // export entire instance
-				Path:   "", // no prefix necessary for testing
-			},
-		})).
-		Do(ctx)
-	require.NoError(t, result.Error(), "should be able to create export job for first repo")
-	helper.AwaitJobsWithStates(t, repo1, []string{"success"})
-	// Wait for first repository to sync
+	spec := provisioning.JobSpec{
+		Push: &provisioning.ExportJobOptions{
+			Folder: "", // export entire instance
+			Path:   "", // no prefix necessary for testing
+		},
+	}
+
+	helper.TriggerJobAndWait(t, repo1, spec)
 	helper.SyncAndWait(t, repo1, nil)
 
 	printFileTree(t, helper.ProvisioningPath)
@@ -227,25 +209,15 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err)
 
 	// Export from second repository - this should only export the unmanaged dashboard3
-	result = helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo2).
-		SubResource("jobs").
-		SetHeader("Content-Type", "application/json").
-		Body(asJSON(&provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{
-				Folder: "", // export entire instance
-				Path:   "", // no prefix necessary for testing
-			},
-		})).
-		Do(ctx)
-	require.NoError(t, result.Error(), "should be able to create export job for second repo")
+	spec = provisioning.JobSpec{
+		Push: &provisioning.ExportJobOptions{
+			Folder: "", // export entire instance
+			Path:   "", // no prefix necessary for testing
+		},
+	}
+	helper.TriggerJobAndWait(t, repo2, spec)
 
-	// Wait for second repository export to complete
-	helper.AwaitJobsWithStates(t, repo2, []string{"success"})
-
-	// Wait for second repository to sync
+	// Wait for both repositories to sync
 	helper.SyncAndWait(t, repo1, nil)
 	helper.SyncAndWait(t, repo2, nil)
 
