@@ -92,7 +92,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           <Field label={<div style={{ marginBottom: '5px' }}>URL</div>} noMargin>
             <Input
               data-testid="influxdb-v2-config-url-input"
-              placeholder="http://localhost:3000/"
+              placeholder="http://localhost:8086/"
               onChange={onUrlChange}
               value={options.url || ''}
               onBlur={trackInfluxDBConfigV2URLInputField}
