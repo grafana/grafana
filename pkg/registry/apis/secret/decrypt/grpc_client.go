@@ -6,17 +6,19 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 
 	"github.com/fullstorydev/grpchan"
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -109,10 +111,20 @@ func createTLSCredentials(config TLSConfig) (credentials.TransportCredentials, e
 }
 
 // Decrypt a set of secure value names in a given namespace for a specific service name.
-func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names []string) (map[string]contracts.DecryptResult, error) {
+func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
 	_, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
+	}
+
+	unique := make(map[string]bool, len(names))
+	for _, v := range names {
+		if v != "" {
+			unique[v] = true
+		}
+	}
+	if len(unique) < 1 {
+		return map[string]contracts.DecryptResult{}, nil
 	}
 
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
@@ -132,7 +144,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 
 	req := &decryptv1beta1.SecureValueDecryptRequest{
 		Namespace: namespace,
-		Names:     names,
+		Names:     slices.Collect(maps.Keys(unique)),
 	}
 
 	// Decryption will still use the service identity from the auth token,

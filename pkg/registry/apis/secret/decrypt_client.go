@@ -6,6 +6,8 @@ import (
 )
 
 // DecryptService is a decrypt client for secure value secrets.
+//
+//go:generate mockery --name DecryptService --structname MockDecryptService --inpackage --filename decrypt_client_mock.go --with-expecter
 type DecryptService = contracts.DecryptService
 
 var (

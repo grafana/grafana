@@ -9,8 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -19,6 +17,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
+	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
@@ -48,7 +48,7 @@ func TestDecryptService(t *testing.T) {
 		decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
-		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", []string{"secure-value-1"})
+		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", "secure-value-1")
 		require.NotNil(t, resp)
 		require.NoError(t, err)
 		require.EqualValues(t, decryptedValuesResp, resp)
@@ -76,7 +76,7 @@ func TestDecryptService(t *testing.T) {
 		decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
-		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", []string{"secure-value-1", "secure-value-2"})
+		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", "secure-value-1", "secure-value-2")
 		require.NotNil(t, resp)
 		require.NoError(t, err)
 		require.EqualValues(t, decryptedValuesResp, resp)
@@ -104,7 +104,7 @@ func TestDecryptService(t *testing.T) {
 		decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
-		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", []string{"secure-value-1", "secure-value-2"})
+		resp, err := decryptService.Decrypt(ctx, "svc-name", "default", "secure-value-1", "secure-value-2")
 		require.NotNil(t, resp)
 		require.NoError(t, err)
 		require.EqualValues(t, decryptedValuesResp, resp)
@@ -221,7 +221,7 @@ func TestDecryptService(t *testing.T) {
 
 		svcIdentity := "provsysoning-test"
 
-		result, err := decryptService.Decrypt(t.Context(), svcIdentity, namespace, []string{"secure-value-1"})
+		result, err := decryptService.Decrypt(t.Context(), svcIdentity, namespace, "secure-value-1")
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
