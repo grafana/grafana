@@ -57,14 +57,14 @@ export const addQueryHistoryToQueryLibrary = async () => {
 
 export const submitAddToQueryLibrary = async ({ title }: { title: string }) => {
   const container = screen.getByRole('dialog', {
-    name: /Drawer title/,
+    name: /Drawer title/i,
   });
-  within(container).getByText('Query library');
-  const input = await within(container).findByRole('textbox', { name: /title/i });
-  // const input = within(screen.getByRole('dialog')).getByLabelText('Title');
-  await userEvent.type(input, title);
-  const saveButton = within(container).getByRole('button', { name: 'Save' });
 
+  const input = within(container).getByRole('textbox', { name: /title/i });
+  await userEvent.type(input, title);
+  const saveButton = screen.getByRole('button', {
+    name: /^save$/i,
+  });
   await userEvent.click(saveButton);
 };
 
