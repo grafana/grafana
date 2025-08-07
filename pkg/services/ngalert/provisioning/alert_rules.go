@@ -80,6 +80,61 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
+type ListAlertRulesOptions struct {
+	RuleType      models.RuleTypeFilter
+	Limit         int64
+	ContinueToken string
+	// TODO: plumb more options
+}
+
+func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
+	q := models.ListAlertRulesExtendedQuery{
+		ListAlertRulesQuery: models.ListAlertRulesQuery{
+			OrgID: user.GetOrgID(),
+		},
+		RuleType:      opts.RuleType,
+		Limit:         opts.Limit,
+		ContinueToken: opts.ContinueToken,
+	}
+	rules, nextToken, err = service.ruleStore.ListAlertRulesPaginated(ctx, &q)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	provenances = make(map[string]models.Provenance)
+	if len(rules) > 0 {
+		resourceType := rules[0].ResourceType()
+		provenances, err = service.provenanceStore.GetProvenances(ctx, user.GetOrgID(), resourceType)
+		if err != nil {
+			return nil, nil, "", err
+		}
+	}
+
+	can, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	if can {
+		return rules, provenances, nextToken, nil
+	}
+	// If user does not have blanket privilege to read rules, remove all rules that are not allowed to the user.
+	groups := models.GroupByAlertRuleGroupKey(rules)
+	result := make([]*models.AlertRule, 0, len(rules))
+	for _, group := range groups {
+		if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
+			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
+				// remove provenances for rules that will not be added to the output
+				for _, rule := range group {
+					delete(provenances, rule.ResourceID())
+				}
+				continue
+			}
+			return nil, nil, "", err
+		}
+		result = append(result, group...)
+	}
+	return result, provenances, nextToken, nil
+}
+
 func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, map[string]models.Provenance, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: user.GetOrgID(),

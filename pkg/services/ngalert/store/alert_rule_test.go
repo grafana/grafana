@@ -1956,6 +1956,146 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	})
 }
 
+func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
+	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	orgID := int64(1)
+	ruleGen := models.RuleGen
+	ruleGen = ruleGen.With(
+		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		ruleGen.WithOrgID(orgID),
+	)
+	t.Run("filter by RuleType", func(t *testing.T) {
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		alertingGen := ruleGen
+		recordingGen := ruleGen.With(models.RuleMuts.WithAllRecordingRules(), models.RuleMuts.WithMetric("metric1"), models.RuleMuts.WithRecordFrom("A"))
+
+		alertingRules := []*models.AlertRule{
+			createRule(t, store, alertingGen),
+			createRule(t, store, alertingGen),
+		}
+		recordingRules := []*models.AlertRule{
+			createRule(t, store, recordingGen),
+			createRule(t, store, recordingGen),
+		}
+
+		t.Run("should return only alerting rules", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID: orgID,
+				},
+				RuleType: models.RuleTypeFilterAlerting,
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Empty(t, continueToken, "continue token should be empty when no pagination is applied")
+			require.NotEmpty(t, result)
+			for _, rule := range result {
+				require.Equal(t, models.RuleTypeAlerting, rule.Type())
+			}
+		})
+
+		t.Run("should return only recording rules", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID: orgID,
+				},
+				RuleType: models.RuleTypeFilterRecording,
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Empty(t, continueToken, "continue token should be empty when no pagination is applied")
+			require.NotEmpty(t, result)
+			for _, rule := range result {
+				require.Equal(t, models.RuleTypeRecording, rule.Type())
+			}
+		})
+
+		t.Run("should return both alerting and recording rules when RuleType is not set", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID: orgID,
+				},
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Empty(t, continueToken, "continue token should be empty when no pagination is applied")
+			require.NotEmpty(t, result)
+			var alertingCount, recordingCount int
+			for _, rule := range result {
+				switch rule.Type() {
+				case models.RuleTypeAlerting:
+					alertingCount++
+				case models.RuleTypeRecording:
+					recordingCount++
+				}
+			}
+			require.GreaterOrEqual(t, alertingCount, len(alertingRules))
+			require.GreaterOrEqual(t, recordingCount, len(recordingRules))
+		})
+		t.Run("should return both alerting and recording rules when RuleType is all", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID: orgID,
+				},
+				RuleType: models.RuleTypeFilterAll,
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Empty(t, continueToken, "continue token should be empty when no pagination is applied")
+			require.NotEmpty(t, result)
+			var alertingCount, recordingCount int
+			for _, rule := range result {
+				switch rule.Type() {
+				case models.RuleTypeAlerting:
+					alertingCount++
+				case models.RuleTypeRecording:
+					recordingCount++
+				}
+			}
+			require.GreaterOrEqual(t, alertingCount, len(alertingRules))
+			require.GreaterOrEqual(t, recordingCount, len(recordingRules))
+		})
+	})
+	t.Run("list rules with pagination", func(t *testing.T) {
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		alertingGen := ruleGen.With(ruleGen.WithNamespaceUID("paginate-test"))
+		for i := 0; i < 10; i++ {
+			createRule(t, store, alertingGen)
+		}
+		t.Run("should return paginated results", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID:         orgID,
+					NamespaceUIDs: []string{"paginate-test"},
+				},
+				Limit: 5, // set page size to 5
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Len(t, result, 5, "should return 5 rules as per page size")
+			require.NotEmpty(t, continueToken, "continue token should not be empty for paginated results")
+
+			// continue with the next page
+			query.ContinueToken = continueToken
+			result2, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Len(t, result2, 5, "should return next 5 rules")
+			require.Empty(t, continueToken, "continue token should be empty when all rules are fetched")
+
+			require.NotElementsMatch(t, result, result2, "should not have same rules in both pages")
+		})
+	})
+}
+
 func TestIntegration_ListDeletedRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
