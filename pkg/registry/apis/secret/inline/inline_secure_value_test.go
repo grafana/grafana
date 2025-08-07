@@ -270,6 +270,19 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 		decryptedResult, ok = decryptedValues[createdName]
 		require.True(t, ok)
 		require.Equal(t, decryptedResult.Value().DangerouslyExposeAndConsumeValue(), rawSecret)
+
+		// Ignores empty values and duplicates
+		decryptedValues, err = tu.DecryptService.Decrypt(t.Context(), owner.APIGroup, owner.Namespace,
+			"", createdName, "", createdName, "") // Empty and duplicate requested names
+		require.NoError(t, err)
+		require.Len(t, decryptedValues, 1)
+		_, ok = decryptedValues[createdName]
+		require.True(t, ok)
+
+		// empty request
+		decryptedValues, err = tu.DecryptService.Decrypt(t.Context(), owner.APIGroup, owner.Namespace, "")
+		require.NoError(t, err)
+		require.Len(t, decryptedValues, 0) // << empty
 	})
 
 	t.Run("when the auth info is missing it returns an error", func(t *testing.T) {
