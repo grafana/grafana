@@ -705,7 +705,7 @@ func TestPrometheusRulesToGrafana_ExtraLabels(t *testing.T) {
 		require.Equal(t, expectedLabels, grafanaGroup.Rules[0].Labels)
 	})
 
-	t.Run("extra labels are applied to recording rules", func(t *testing.T) {
+	t.Run("extra labels are not applied to recording rules", func(t *testing.T) {
 		promGroup := PrometheusRuleGroup{
 			Name:     "test-group-2",
 			Interval: prommodel.Duration(10 * time.Second),
@@ -721,8 +721,12 @@ func TestPrometheusRulesToGrafana_ExtraLabels(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, grafanaGroup.Rules, 1)
 
-		expectedLabels := withInternalLabel(cfg.ExtraLabels)
+		expectedLabels := withInternalLabel(make(map[string]string))
 		require.Equal(t, expectedLabels, grafanaGroup.Rules[0].Labels)
+
+		for key := range cfg.ExtraLabels {
+			require.NotContains(t, grafanaGroup.Rules[0].Labels, key)
+		}
 	})
 }
 
