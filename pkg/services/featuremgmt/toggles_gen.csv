@@ -182,7 +182,6 @@ investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,fal
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
-teamHttpHeadersMimir,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false

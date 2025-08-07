@@ -3476,7 +3476,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "キャンセル",
-      "cannot-move-folders": "フォルダは移動できません",
       "confirmation-text": "削除",
       "delete-button": "削除",
       "delete-modal-invalid-text": "1つ以上のフォルダにライブラリパネルまたはアラートルールが含まれています。続行するには、まずこれらを削除してください。",
@@ -3569,6 +3568,7 @@
     },
     "folder-actions-button": {
       "delete": "削除",
+      "delete-folder-error": "",
       "folder-actions": "フォルダの操作",
       "manage-permissions": "権限を管理する",
       "move": "移動"
@@ -4299,7 +4299,7 @@
       "source-label": "送信元",
       "sub-text": "<0>どのデータソースが相関を表示するか、どのデータが以前に定義された変数を置き換えるかを定義します。</0>"
     },
-    "sub-title": "異なるデータソースに存在するデータがどのように相互に関連しているかを定義します。詳細については、<2>ドキュメント<1></1></2>をご覧ください",
+    "sub-title": "",
     "target-form": {
       "control-rules": "このフィールドは必須です。",
       "sub-text": "<0>相関がリンクするものを定義します。クエリタイプを使用すると、相関がクリックされたときにクエリが実行されます。外部タイプでは、相関をクリックするとURLが開きます。</0>",
@@ -4702,7 +4702,7 @@
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
-      "import-a-dashboard-body": "ファイルまたは<1>grafana.com</1>からダッシュボードをインポートします。",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート"
     },
@@ -7474,6 +7474,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10282,7 +10285,7 @@
     },
     "invite-user": {
       "invite-button": "招待",
-      "invite-new-member-button": "新しいメンバーの招待",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11061,6 +11064,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11271,6 +11282,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11477,6 +11496,14 @@
     },
     "token-permissions-info": {
       "and-click": "そしてクリック",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "進む",
       "make-sure": "これらの権限を必ず含めてください"
     },
