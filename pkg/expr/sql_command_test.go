@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -187,3 +188,8 @@ type testSpan struct {
 
 func (ts *testSpan) End(opt ...trace.SpanEndOption) {
 }
+
+func (ts *testSpan) RecordError(err error, opt ...trace.EventOption) {
+}
+
+func (ts *testSpan) SetStatus(code codes.Code, msg string) {}
