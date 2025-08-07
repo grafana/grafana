@@ -955,6 +955,7 @@ export interface FeatureToggles {
   metricsFromProfiles?: boolean;
   /**
   * Enables integration with Grafana Assistant in Profiles Drilldown
+  * @default true
   */
   grafanaAssistantInProfilesDrilldown?: boolean;
   /**

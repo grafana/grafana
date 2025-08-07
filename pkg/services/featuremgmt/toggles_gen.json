@@ -1444,17 +1444,18 @@
     {
       "metadata": {
         "name": "grafanaAssistantInProfilesDrilldown",
-        "resourceVersion": "1754381159511",
+        "resourceVersion": "1754572610001",
         "creationTimestamp": "2025-08-01T07:43:17Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-05 08:05:59.511953 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-08-07 13:16:50.001205 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables integration with Grafana Assistant in Profiles Drilldown",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
