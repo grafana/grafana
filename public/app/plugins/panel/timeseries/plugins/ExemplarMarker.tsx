@@ -9,17 +9,16 @@ import {
   useHover,
   useInteractions,
 } from '@floating-ui/react';
-import { CSSProperties, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { DataFrame, DataFrameFieldIndex, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { DisplayValue } from 'app/features/visualization/data-hover/DataHoverView';
-import { ExemplarHoverView } from 'app/features/visualization/data-hover/ExemplarHoverView';
-
-import { ExemplarModalHeader } from '../../heatmap/ExemplarModalHeader';
+import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
@@ -30,6 +29,7 @@ interface ExemplarMarkerProps {
   clickedExemplarFieldIndex: DataFrameFieldIndex | undefined;
   setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
   maxHeight?: number;
+  maxWidth?: number;
 }
 
 export const ExemplarMarker = ({
@@ -41,8 +41,9 @@ export const ExemplarMarker = ({
   clickedExemplarFieldIndex,
   setClickedExemplarFieldIndex,
   maxHeight,
+  maxWidth,
 }: ExemplarMarkerProps) => {
-  const styles = useStyles2(getExemplarMarkerStyles);
+  const styles = useStyles2(getExemplarMarkerStyles, maxHeight, maxWidth);
   const [isOpen, setIsOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
 
@@ -155,17 +156,15 @@ export const ExemplarMarker = ({
       });
     });
 
-    const exemplarHeaderCustomStyle: CSSProperties = {
-      position: 'relative',
-      top: '35px',
-      right: '5px',
-      marginRight: 0,
-    };
-
     return (
-      <div className={styles.tooltip} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
-        {isLocked && <ExemplarModalHeader onClick={onClose} style={exemplarHeaderCustomStyle} />}
-        <ExemplarHoverView displayValues={displayValues} links={links} maxHeight={maxHeight} />
+      <div
+        className={cx(styles.tooltipWrapper, isLocked && styles.pinned)}
+        ref={refs.setFloating}
+        style={floatingStyles}
+        {...getFloatingProps()}
+      >
+        {isLocked && <CloseButton onClick={onClose} />}
+        <ExemplarTooltip displayValues={displayValues} links={links} isPinned={isLocked} />
       </div>
     );
   }, [
@@ -177,7 +176,6 @@ export const ExemplarMarker = ({
     floatingStyles,
     getFloatingProps,
     refs.setFloating,
-    maxHeight,
   ]);
 
   const seriesColor = config
@@ -220,12 +218,8 @@ export const ExemplarMarker = ({
   );
 };
 
-const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
-  const bg = theme.isDark ? theme.v1.palette.dark2 : theme.v1.palette.white;
-  const headerBg = theme.isDark ? theme.v1.palette.dark9 : theme.v1.palette.gray5;
-  const shadowColor = theme.isDark ? theme.v1.palette.black : theme.v1.palette.white;
-  const tableBgOdd = theme.isDark ? theme.v1.palette.dark3 : theme.v1.palette.gray6;
-
+const getExemplarMarkerStyles = (theme: GrafanaTheme2, maxHeight: number | undefined, maxWidth: number | undefined) => {
+  console.log('maxHeight', maxHeight, 'maxWidth', maxWidth);
   return {
     markerWrapper: css({
       padding: '0 4px 4px 4px',
@@ -249,66 +243,6 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       borderBottom: `4px solid ${theme.v1.palette.red}`,
       pointerEvents: 'none',
     }),
-    wrapper: css({
-      background: bg,
-      border: `1px solid ${headerBg}`,
-      borderRadius: theme.shape.borderRadius(2),
-      boxShadow: `0 0 20px ${shadowColor}`,
-      padding: theme.spacing(1),
-    }),
-    exemplarsTable: css({
-      width: '100%',
-      'tr td': {
-        padding: '5px 10px',
-        whiteSpace: 'nowrap',
-        borderBottom: `4px solid ${theme.components.panel.background}`,
-      },
-      tr: {
-        backgroundColor: theme.colors.background.primary,
-        '&:nth-child(even)': {
-          backgroundColor: tableBgOdd,
-        },
-      },
-    }),
-    valueWrapper: css({
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      columnGap: theme.spacing(1),
-      '> span': {
-        flexGrow: 0,
-      },
-      '> *': {
-        flex: '1 1',
-        alignSelf: 'center',
-      },
-    }),
-    tooltip: css({
-      background: 'none',
-      padding: 0,
-      overflowY: 'auto',
-      maxHeight: '95vh',
-      boxShadow: theme.shadows.z2,
-    }),
-    header: css({
-      background: headerBg,
-      padding: '6px 10px',
-      display: 'flex',
-    }),
-    title: css({
-      fontWeight: theme.typography.fontWeightMedium,
-      paddingRight: theme.spacing(2),
-      overflow: 'hidden',
-      display: 'inline-block',
-      whiteSpace: 'nowrap',
-      textOverflow: 'ellipsis',
-      flexGrow: 1,
-    }),
-    body: css({
-      fontWeight: theme.typography.fontWeightMedium,
-      borderRadius: theme.shape.borderRadius(2),
-      overflow: 'hidden',
-    }),
     marble: css({
       display: 'block',
       opacity: 0.5,
@@ -320,6 +254,21 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       transform: 'scale(1.3)',
       opacity: 1,
       filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.5))',
+    }),
+    tooltipWrapper: css({
+      background: theme.colors.background.elevated,
+      maxHeight: maxHeight ?? 'none',
+      overflowY: 'auto',
+      maxWidth: maxWidth ?? 'none',
+      whiteSpace: 'pre',
+      borderRadius: theme.shape.radius.default,
+      position: 'fixed',
+      border: `1px solid ${theme.colors.border.weak}`,
+      boxShadow: theme.shadows.z2,
+      userSelect: 'text',
+    }),
+    pinned: css({
+      boxShadow: theme.shadows.z3,
     }),
   };
 };
