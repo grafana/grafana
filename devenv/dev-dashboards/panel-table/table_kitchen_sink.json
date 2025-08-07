@@ -96,6 +96,22 @@
                     "url": "https://google.com/search?q=${__value:percentencode}"
                   }
                 ]
+              },
+              {
+                "id": "actions",
+                "value": [
+                  {
+                    "fetch": {
+                      "body": "{}",
+                      "headers": [["Content-Type", "application/json"]],
+                      "method": "GET",
+                      "queryParams": [],
+                      "url": "https://grafana.com"
+                    },
+                    "title": "My action",
+                    "type": "fetch"
+                  }
+                ]
               }
             ]
           },
@@ -512,5 +528,5 @@
   "timezone": "",
   "title": "Panel Tests - Table - Kitchen Sink",
   "uid": "dcb9f5e9-8066-4397-889e-864b99555dbb",
-  "version": 2
+  "version": 3
 }
