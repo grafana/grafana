@@ -239,9 +239,8 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
   return {
     modal: css({
       width: '80%',
-      height: '80%',
       maxWidth: '1200px',
-      maxHeight: '900px',
+      minHeight: '80%',
 
       [theme.breakpoints.down('md')]: {
         width: '100%',
@@ -250,7 +249,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     modalContent: css({
       display: 'flex',
       flexDirection: 'row',
-      height: '100%',
+      flex: 1,
 
       [theme.breakpoints.down('md')]: {
         flexDirection: 'column',
@@ -260,7 +259,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       width: '50%',
-      height: '100%',
+      maxHeight: '100%',
       paddingRight: theme.spacing(4),
       borderRight: `1px solid ${theme.colors.border.weak}`,
 
@@ -276,7 +275,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       width: '50%',
-      height: '100%',
+      minHeight: '100%',
       justifyItems: 'space-evenly',
       alignItems: 'stretch',
       paddingLeft: theme.spacing(4),
@@ -284,7 +283,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.down('md')]: {
         width: '100%',
         paddingLeft: 0,
-        flex: 0,
+        flexShrink: 0,
       },
     }),
     builtInDataSources: css({
