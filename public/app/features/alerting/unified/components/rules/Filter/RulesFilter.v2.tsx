@@ -35,6 +35,7 @@ import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
 import { PopupCard } from '../../HoverCard';
 
+import { RulesFilterProps } from './RulesFilter';
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 import { emptyAdvancedFilters, formAdvancedFiltersToRuleFilter, searchQueryToDefaultValues } from './utils';
 
@@ -91,11 +92,11 @@ type SearchQueryForm = {
   query: string;
 };
 
-export default function RulesFilter() {
+export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterProps) {
   const styles = useStyles2(getStyles);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const { searchQuery, updateFilters } = useRulesFilter();
+  const { searchQuery, updateFilters, setSearchQuery } = useRulesFilter();
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Check if plugins filter is enabled
@@ -119,7 +120,7 @@ export default function RulesFilter() {
     updateFilters(newFilter);
 
     const newSearchQuery = applySearchFilterToQuery('', newFilter);
-    setValue('query', newSearchQuery);
+    setSearchQuery(newSearchQuery);
 
     // Filter out empty/default values before tracking
     const meaningfulValues = pickBy(values, (value, key) => {
@@ -141,7 +142,7 @@ export default function RulesFilter() {
 
   const handleClearFilters = () => {
     updateFilters(formAdvancedFiltersToRuleFilter(emptyAdvancedFilters));
-    setValue('query', '');
+    setSearchQuery(undefined);
   };
 
   const handleOnToggle = () => {
@@ -249,8 +250,7 @@ export default function RulesFilter() {
               {filterButtonLabel}
             </Button>
           </PopupCard>
-          {/* show list view / group view */}
-          <RulesViewModeSelector />
+          <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
         </Stack>
       </div>
     </form>
