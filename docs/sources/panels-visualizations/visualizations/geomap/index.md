@@ -710,14 +710,15 @@ For these layer types, choose from the following tooltip options:
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
 
-When a data point on the geomap represents one row&mdash;that is, only a single row of response data is relevant to that point&mdash;the tooltip displays a grid with the row's names and values.
+When a data point on the geomap represents one row&mdash;that is, only a single row of response data is relevant to that point&mdash;the tooltip displays a grid with the row's names and values:
 
-[screenshot]
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-single-row-marker-v12.1.png" max-width="750px" alt="A data point with one row of associated data" >}}
 
-When a data point represents more than one row&mdash;that is, different rows but with the same geographical information&mdash;then each row appears as a single entry, containing the name and value of the first column of the respective row.
-Clicking one of these rows expands it and shows the grid with the row details.
+When a data point represents more than one row&mdash;that is, different rows but with the same geographical information&mdash;then each row appears as a single entry, containing the name and value of the first column of the respective row:
 
-[screenshot]
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-multiple-row-marker-v12.1.png" max-width="750px" alt="A data point with mulitple rows of associated data" >}}
+
+Clicking these rows expands it and shows the grid with the row details.
 
 The name of each top-level row of the tooltip is determined by [exact language from engineering would be great here...].
 
