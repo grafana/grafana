@@ -9,10 +9,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -43,6 +44,7 @@ func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingServic
 			caching:     cachingService,
 			log:         log,
 			features:    features,
+			tracer:      otel.Tracer("github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"),
 		}
 	})
 }
@@ -53,13 +55,14 @@ type CachingMiddleware struct {
 	caching  caching.CachingService
 	log      log.Logger
 	features featuremgmt.FeatureToggles
+	tracer   trace.Tracer
 }
 
 // QueryData receives a data request and attempts to access results already stored in the cache for that request.
 // If data is found, it will return it immediately. Otherwise, it will perform the queries as usual, then write the response to the cache.
 // If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.
 func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	ctx, span := tracing.Start(ctx, "PluginClient.CachingMiddleware.QueryData")
+	ctx, span := m.tracer.Start(ctx, "CachingMiddleware.QueryData")
 	defer span.End()
 
 	if req != nil {
@@ -135,7 +138,7 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 // If data is found, it will return it immediately. Otherwise, it will perform the request as usual. The caller of CallResource is expected to explicitly update the cache with any responses.
 // If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.
 func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctx, span := tracing.Start(ctx, "PluginClient.CachingMiddleware.CallResource")
+	ctx, span := m.tracer.Start(ctx, "CachingMiddleware.CallResource")
 	defer span.End()
 
 	if req != nil {
