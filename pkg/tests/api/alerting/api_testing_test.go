@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -21,7 +22,6 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -247,7 +247,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("authentication permissions", func(t *testing.T) {
-		if !setting.IsEnterprise {
+		if !extensions.IsEnterprise {
 			t.Skip("Enterprise-only test")
 		}
 

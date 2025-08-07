@@ -26,6 +26,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -36,7 +37,6 @@ import (
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -1694,7 +1694,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		Login:          "grafana",
 	})
 
-	if setting.IsEnterprise {
+	if extensions.IsEnterprise {
 		// add blanket access to data sources.
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
 			1,
@@ -2407,13 +2407,13 @@ func TestIntegrationEval(t *testing.T) {
 			`,
 			expectedResponse: func() string { return "" },
 			expectedStatusCode: func() int {
-				if setting.IsEnterprise {
+				if extensions.IsEnterprise {
 					return http.StatusForbidden
 				}
 				return http.StatusBadRequest
 			},
 			expectedMessage: func() string {
-				if setting.IsEnterprise {
+				if extensions.IsEnterprise {
 					return "user is not authorized to access one or many data sources"
 				}
 				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
@@ -3106,13 +3106,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					},
 				},
 				expectedCode: func() int {
-					if setting.IsEnterprise {
+					if extensions.IsEnterprise {
 						return http.StatusForbidden
 					}
 					return http.StatusBadRequest
 				}(),
 				expectedMessage: func() string {
-					if setting.IsEnterprise {
+					if extensions.IsEnterprise {
 						return "user is not authorized to create a new alert rule 'AlwaysFiring'"
 					}
 					return "failed to update rule group: invalid alert rule 'AlwaysFiring': failed to build query 'A': data source not found"
