@@ -179,60 +179,80 @@ export default function RulesFilter() {
   const filterButtonLabel = t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Filter');
   return (
     <form onSubmit={handleSubmit(submitHandler)} onReset={() => {}}>
-      <Stack direction="row">
-        <FilterInput
-          data-testid="search-query-input"
-          placeholder={t(
-            'alerting.rules-filter.filter-options.placeholder-search-input',
-            'Search by name or enter filter query...'
-          )}
-          name="searchQuery"
-          onChange={(string) => setValue('query', string)}
-          onBlur={() => {
-            const currentQuery = watch('query');
-            const parsedFilter = getSearchFilterFromQuery(currentQuery);
-            updateFilters(parsedFilter);
-          }}
-          value={watch('query')}
-        />
-        {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
-        <PopupCard
-          showOn="click"
-          placement="auto"
-          disableBlur={true}
-          isOpen={isPopupOpen}
-          onClose={() => setIsPopupOpen(false)}
-          onToggle={handleOnToggle}
-          content={
-            // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-            <div
-              ref={popupRef}
-              className={styles.content}
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.stopPropagation();
-                }
-              }}
-              role="dialog"
-              aria-label={t('alerting.rules-filter.filter-options.aria-label', 'Filter options')}
-              tabIndex={-1}
-            >
-              <FilterOptions
-                onSubmit={handleAdvancedFilters}
-                onClear={handleClearFilters}
-                pluginsFilterEnabled={pluginsFilterEnabled}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <Label htmlFor="rulesSearchInput">
+          <Stack gap={0.5} alignItems="center">
+            <span>
+              <Trans i18nKey="alerting.rules-filter.search">Search</Trans>
+            </span>
+            <PopupCard content={<SearchQueryHelp />}>
+              <Icon
+                name="info-circle"
+                size="sm"
+                tabIndex={0}
+                title={t('alerting.rules-filter.title-search-help', 'Search help')}
               />
-            </div>
-          }
-        >
-          <Button name="filter" icon="filter" variant="secondary" aria-label={filterButtonLabel}>
-            {filterButtonLabel}
-          </Button>
-        </PopupCard>
-        {/* show list view / group view */}
-        <RulesViewModeSelector />
-      </Stack>
+            </PopupCard>
+          </Stack>
+        </Label>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <div style={{ flex: 1 }}>
+            <FilterInput
+              id="rulesSearchInput"
+              data-testid="search-query-input"
+              placeholder={t(
+                'alerting.rules-filter.filter-options.placeholder-search-input',
+                'Search by name or enter filter query...'
+              )}
+              name="searchQuery"
+              onChange={(string) => setValue('query', string)}
+              onBlur={() => {
+                const currentQuery = watch('query');
+                const parsedFilter = getSearchFilterFromQuery(currentQuery);
+                updateFilters(parsedFilter);
+              }}
+              value={watch('query')}
+            />
+          </div>
+          {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
+          <PopupCard
+            showOn="click"
+            placement="auto"
+            disableBlur={true}
+            isOpen={isPopupOpen}
+            onClose={() => setIsPopupOpen(false)}
+            onToggle={handleOnToggle}
+            content={
+              // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+              <div
+                ref={popupRef}
+                className={styles.content}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                  }
+                }}
+                role="dialog"
+                aria-label={t('alerting.rules-filter.filter-options.aria-label', 'Filter options')}
+                tabIndex={-1}
+              >
+                <FilterOptions
+                  onSubmit={handleAdvancedFilters}
+                  onClear={handleClearFilters}
+                  pluginsFilterEnabled={pluginsFilterEnabled}
+                />
+              </div>
+            }
+          >
+            <Button name="filter" icon="filter" variant="secondary" aria-label={filterButtonLabel}>
+              {filterButtonLabel}
+            </Button>
+          </PopupCard>
+          {/* show list view / group view */}
+          <RulesViewModeSelector />
+        </Stack>
+      </div>
     </form>
   );
 }
@@ -499,7 +519,38 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             }}
           />
           <Label>
-            <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
+            <Stack gap={0.5} alignItems="center">
+              <span>
+                <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
+              </span>
+              <Tooltip
+                content={
+                  <div>
+                    <p>
+                      <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                        Data sources containing configured alert rules are Mimir or Loki data sources where alert rules
+                        are stored and evaluated in the data source itself.
+                      </Trans>
+                    </p>
+                    <p>
+                      <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                        In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                        alert rules in the Grafana UI as well as in the data source where they were configured.
+                      </Trans>
+                    </p>
+                  </div>
+                }
+              >
+                <Icon
+                  name="info-circle"
+                  size="sm"
+                  title={t(
+                    'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
+                    'Search by data sources help'
+                  )}
+                />
+              </Tooltip>
+            </Stack>
           </Label>
           <Controller
             name="dataSourceNames"
@@ -654,6 +705,75 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
     </form>
   );
 };
+
+function SearchQueryHelp() {
+  const styles = useStyles2(helpStyles);
+
+  return (
+    <div>
+      <div>
+        <Trans i18nKey="alerting.search-query-help.search-syntax">
+          Search syntax allows to query alert rules by the parameters defined below.
+        </Trans>
+      </div>
+      <hr />
+      <div className={styles.grid}>
+        <div>
+          <Trans i18nKey="alerting.search-query-help.filter-type">Filter type</Trans>
+        </div>
+        <div>
+          <Trans i18nKey="alerting.search-query-help.expression">Expression</Trans>
+        </div>
+        <HelpRow
+          title={t('alerting.search-query-help.title-datasources', 'Datasources')}
+          expr="datasource:mimir datasource:prometheus"
+        />
+        <HelpRow
+          title={t('alerting.search-query-help.title-folder-namespace', 'Folder/Namespace')}
+          expr="namespace:global"
+        />
+        <HelpRow title={t('alerting.search-query-help.title-group', 'Group')} expr="group:cpu-usage" />
+        <HelpRow title={t('alerting.search-query-help.title-rule', 'Rule')} expr='rule:"cpu 80%"' />
+        <HelpRow title={t('alerting.search-query-help.title-labels', 'Labels')} expr="label:team=A label:cluster=a1" />
+        <HelpRow title={t('alerting.search-query-help.title-state', 'State')} expr="state:firing|normal|pending" />
+        <HelpRow title={t('alerting.search-query-help.title-type', 'Type')} expr="type:alerting|recording" />
+        <HelpRow title={t('alerting.search-query-help.title-health', 'Health')} expr="health:ok|nodata|error" />
+        <HelpRow
+          title={t('alerting.search-query-help.title-dashboard-uid', 'Dashboard UID')}
+          expr="dashboard:eadde4c7-54e6-4964-85c0-484ab852fd04"
+        />
+        <HelpRow
+          title={t('alerting.search-query-help.title-contact-point', 'Contact point')}
+          expr="contactPoint:slack"
+        />
+      </div>
+    </div>
+  );
+}
+
+function HelpRow({ title, expr }: { title: string; expr: string }) {
+  const styles = useStyles2(helpStyles);
+
+  return (
+    <>
+      <div>{title}</div>
+      <code className={styles.code}>{expr}</code>
+    </>
+  );
+}
+
+const helpStyles = (theme: GrafanaTheme2) => ({
+  grid: css({
+    display: 'grid',
+    gridTemplateColumns: 'max-content auto',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+  }),
+  code: css({
+    display: 'block',
+    textAlign: 'center',
+  }),
+});
 
 function getStyles(theme: GrafanaTheme2) {
   return {
