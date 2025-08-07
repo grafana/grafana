@@ -23,9 +23,17 @@ var ErrTenantQueueFull = errors.New("tenant queue full")
 var ErrNilRunnable = errors.New("cannot enqueue nil runnable")
 var ErrMissingTenantID = errors.New("item requires TenantID")
 
+// queuedItem represents a runnable task annotated with its enqueue timestamp.
+// The timestamp allows us to compute how long the task spent waiting in the queue
+// before being picked up by a worker.
+type queuedItem struct {
+	runnable   func()
+	enqueuedAt time.Time
+}
+
 type tenantQueue struct {
 	id       string
-	items    []func()
+	items    []queuedItem
 	isActive bool
 }
 
@@ -43,7 +51,7 @@ func (tq *tenantQueue) isFull(maxSize int) bool {
 	return maxSize > 0 && len(tq.items) >= maxSize
 }
 func (tq *tenantQueue) addItem(runnable func()) {
-	tq.items = append(tq.items, runnable)
+	tq.items = append(tq.items, queuedItem{runnable: runnable, enqueuedAt: time.Now()})
 }
 
 type enqueueRequest struct {
@@ -107,6 +115,7 @@ type Queue struct {
 	queueLength       *prometheus.GaugeVec
 	discardedRequests *prometheus.CounterVec
 	enqueueDuration   prometheus.Histogram
+	queueWaitDuration *prometheus.HistogramVec
 }
 
 type QueueOptions struct {
@@ -153,6 +162,11 @@ func NewQueue(opts *QueueOptions) *Queue {
 		Help:    "Duration of enqueue operation in seconds",
 		Buckets: prometheus.DefBuckets,
 	})
+	q.queueWaitDuration = promauto.With(opts.Registerer).NewHistogramVec(prometheus.HistogramOpts{
+		Name:                        "queue_wait_duration_seconds",
+		Help:                        "Time items spend waiting in the queue before being dequeued, in seconds",
+		NativeHistogramBucketFactor: 1.1,
+	}, []string{"tenant"})
 
 	q.Service = services.NewBasicService(nil, q.dispatcherLoop, q.stopping)
 
@@ -175,8 +189,11 @@ func (q *Queue) scheduleRoundRobin() {
 		tq := tenantElem.Value.(*tenantQueue)
 
 		// Get and deliver the runnable item
-		item := tq.items[0]
-		req.respChan <- dequeueResponse{runnable: item, err: nil}
+		qi := tq.items[0]
+		req.respChan <- dequeueResponse{runnable: qi.runnable, err: nil}
+
+		// Observe how long the item spent waiting in the queue.
+		q.queueWaitDuration.WithLabelValues(tq.id).Observe(time.Since(qi.enqueuedAt).Seconds())
 
 		// Update bookkeeping
 		q.pendingDequeueRequests.Remove(reqElem)
@@ -200,7 +217,7 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 	if !exists {
 		tq = &tenantQueue{
 			id:    req.tenantID,
-			items: make([]func(), 0, 8),
+			items: make([]queuedItem, 0, 8),
 		}
 		q.tenantQueues[req.tenantID] = tq
 	}
