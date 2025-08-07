@@ -472,7 +472,7 @@ Admin consent may be required for this permission.
 
 ### Force fetching groups from Microsoft Graph API
 
-To force fetching groups from Microsoft Graph API instead of the `id_token`, you can use the `force_use_graph_api` config option.
+To force fetching groups from Microsoft Graph API instead of the `id_token`, you can use the `force_use_graph_api` configuration option.
 
 ```ini
 [auth.azuread]
