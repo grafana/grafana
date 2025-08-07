@@ -157,9 +157,12 @@ func NewQueue(opts *QueueOptions) *Queue {
 		Help: "Total number of discarded requests",
 	}, []string{"tenant", "reason"})
 	q.queueWaitDuration = promauto.With(opts.Registerer).NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "queue_wait_duration_seconds",
-		Help:                        "Time items spend waiting in the queue before being dequeued, in seconds",
-		NativeHistogramBucketFactor: 1.1,
+		Name:                            "queue_wait_duration_seconds",
+		Help:                            "Time items spend waiting in the queue before being dequeued, in seconds",
+		NativeHistogramBucketFactor:     1.1,
+		NativeHistogramMaxBucketNumber:  160,
+		NativeHistogramMinResetDuration: time.Hour,
+		NativeHistogramMaxZeroThreshold: 4,
 	}, []string{"tenant"})
 
 	q.Service = services.NewBasicService(nil, q.dispatcherLoop, q.stopping)
