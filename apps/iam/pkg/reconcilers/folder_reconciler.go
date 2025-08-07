@@ -2,6 +2,7 @@ package reconcilers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -238,6 +239,16 @@ func (r *FolderReconciler) handleDeleteFolder(ctx context.Context, folder *folde
 }
 
 func (r *FolderReconciler) Reconcile(ctx context.Context, req operator.TypedReconcileRequest[*foldersKind.Folder]) (operator.ReconcileResult, error) {
+	logger := logging.FromContext(ctx)
+
+	// Log all contents of the req object as JSON
+	reqJSON, err := json.MarshalIndent(req, "", "  ")
+	if err != nil {
+		logger.Error("Failed to marshal req object to JSON", "error", err)
+	} else {
+		logger.Info("Reconcile request received", "req", string(reqJSON))
+	}
+
 	switch req.Action {
 	case operator.ReconcileActionCreated:
 		return r.handleUpdateFolder(ctx, req.Object)
