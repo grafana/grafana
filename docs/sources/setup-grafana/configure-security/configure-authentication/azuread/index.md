@@ -462,7 +462,7 @@ You can make Grafana always get group information from the Microsoft Graph API b
 1. Under the **GroupMember** section, select **GroupMember.Read.All**.
 1. Click **Add permissions**.
 1. Select **Microsoft Graph** from the list of APIs.
-1. Select **Delegated permissions**..
+1. Select **Delegated permissions**.
 1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
 1. Click the **Add permissions** button at the bottom of the page.
 
@@ -472,9 +472,10 @@ Admin consent may be required for this permission.
 
 ### Force fetching groups from Microsoft Graph API
 
-To force fetching groups from Microsoft Graph API instead of the `id_token`. You can use the `force_use_graph_api` config option.
+To force fetching groups from Microsoft Graph API instead of the `id_token`, you can use the `force_use_graph_api` configuration option.
 
-```
+```ini
+[auth.azuread]
 force_use_graph_api = true
 ```
 
