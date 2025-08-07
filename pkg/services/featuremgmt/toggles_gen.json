@@ -3014,7 +3014,8 @@
       "metadata": {
         "name": "teamHttpHeadersMimir",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-13T10:42:47Z"
+        "creationTimestamp": "2025-01-13T10:42:47Z",
+        "deletionTimestamp": "2025-08-06T08:19:47Z"
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
