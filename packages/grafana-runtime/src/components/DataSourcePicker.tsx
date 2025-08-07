@@ -2,15 +2,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
 // Components
-import {
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  getDataSourceUID,
-  isUnsignedPluginSignature,
-  SelectableValue,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, getDataSourceUID, isUnsignedPluginSignature } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/ui';
+import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
@@ -71,11 +65,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const {
     current = null,
     onChange = () => {},
-    hideTextValue,
     onBlur,
     onClear,
     autoFocus = false,
-    openMenuOnFocus = false,
     placeholder = 'Select data source',
     width,
     inputId,
@@ -108,21 +100,23 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     }
   }, [current, dataSourceSrv]);
 
-  const handleChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
-    if (actionMeta.action === 'clear' && onClear) {
+  const handleChange = (item: ComboboxOption<string> | null) => {
+    if (item === null && onClear) {
       onClear();
       return;
     }
 
-    const dsSettings = dataSourceSrv.getInstanceSettings(item.value);
+    if (item) {
+      const dsSettings = dataSourceSrv.getInstanceSettings(item.value);
 
-    if (dsSettings) {
-      onChange(dsSettings);
-      setError(undefined);
+      if (dsSettings) {
+        onChange(dsSettings);
+        setError(undefined);
+      }
     }
   };
 
-  const getCurrentValue = (): SelectableValue<string> | undefined => {
+  const getCurrentValue = (): ComboboxOption<string> | undefined => {
     if (!current && noDefault) {
       return;
     }
@@ -133,27 +127,24 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       return {
         label: ds.name.slice(0, 37),
         value: ds.uid,
-        imgUrl: ds.meta.info.logos.small,
-        hideText: hideTextValue,
-        meta: ds.meta,
       };
     }
 
     const uid = getDataSourceUID(current);
 
     if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
-      return { label: uid, value: uid, hideText: hideTextValue };
+      return { label: uid, value: uid };
     }
 
     return {
       label: (uid ?? 'no name') + ' - not found',
-      value: uid ?? undefined,
-      imgUrl: '',
-      hideText: hideTextValue,
+      value: uid ?? '',
     };
   };
 
-  const options = useMemo(() => {
+  const value = getCurrentValue();
+
+  const options = useMemo((): Array<ComboboxOption<string>> => {
     return dataSourceSrv
       .getList({
         alerting,
@@ -168,12 +159,19 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
         filter,
         type,
       })
-      .map((ds) => ({
-        value: ds.name,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
+      .map((ds) => {
+        const baseLabel = `${ds.name}${ds.isDefault ? ' (default)' : ''}`;
+        // Check for unsigned plugins for UI indication
+        const isCurrentlySelected = value?.value === ds.name;
+        const hasUnsignedSignature = ds.meta && isUnsignedPluginSignature(ds.meta.signature);
+
+        const label = hasUnsignedSignature && !isCurrentlySelected ? `${baseLabel} (unsigned plugin)` : baseLabel;
+
+        return {
+          value: ds.name,
+          label,
+        };
+      });
   }, [
     alerting,
     tracing,
@@ -187,44 +185,28 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     filter,
     type,
     dataSourceSrv,
+    value,
   ]);
 
-  const value = getCurrentValue();
   const isClearable = typeof onClear === 'function';
 
   return (
     <div aria-label="Data source picker select container" data-testid={selectors.components.DataSourcePicker.container}>
-      <Select
-        isLoading={isLoading}
+      <Combobox
+        loading={isLoading}
         disabled={disabled}
-        aria-label={'Select a data source'}
+        aria-labelledby={'Select a data source'}
         data-testid={selectors.components.DataSourcePicker.inputV2}
-        inputId={inputId || 'data-source-picker'}
-        className="ds-picker select-container"
-        isMulti={false}
+        id={inputId || 'data-source-picker'}
         isClearable={isClearable}
-        backspaceRemovesValue={false}
         onChange={handleChange}
         options={options}
         autoFocus={autoFocus}
         onBlur={onBlur}
         width={width}
-        openMenuOnFocus={openMenuOnFocus}
-        maxMenuHeight={500}
         placeholder={placeholder}
-        noOptionsMessage="No datasources found"
         value={value ?? null}
         invalid={Boolean(error) || Boolean(invalid)}
-        getOptionLabel={(o) => {
-          if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
-            return (
-              <Stack alignItems="center" justifyContent="space-between">
-                <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
-              </Stack>
-            );
-          }
-          return o.label || '';
-        }}
       />
     </div>
   );
