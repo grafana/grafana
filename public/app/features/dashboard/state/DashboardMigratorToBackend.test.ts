@@ -144,7 +144,7 @@ describe('Backend / Frontend result comparison', () => {
       */
       if (jsonInput.schemaVersion <= 27) {
         for (const panel of frontendModel.panels) {
-          if (panel.type === 'stat') {
+          if (panel.type === 'stat' && panel.autoMigrateFrom) {
             // Set the plugin version if it doesn't exist
             if (!statPanelPlugin.meta.info) {
               statPanelPlugin.meta.info = {
