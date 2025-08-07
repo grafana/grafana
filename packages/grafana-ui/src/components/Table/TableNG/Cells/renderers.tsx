@@ -7,7 +7,7 @@ import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '
 import { TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
 
 import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';
-import { AutoCell, getStyles as getAutoCellStyles, getColorCellStyles, getJsonCellStyles } from './AutoCell';
+import { AutoCell, getStyles as getAutoCellStyles, getJsonCellStyles } from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell, getStyles as getDataLinksStyles } from './DataLinksCell';
 import { GeoCell, getStyles as getGeoCellStyles } from './GeoCell';
@@ -92,11 +92,11 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], { renderer: TableCellRend
   },
   [TableCellDisplayMode.ColorBackground]: {
     renderer: AUTO_RENDERER,
-    getStyles: mixinAutoCellStyles(getColorCellStyles),
+    getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.ColorText]: {
     renderer: AUTO_RENDERER,
-    getStyles: mixinAutoCellStyles(getColorCellStyles),
+    getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.Custom]: {
     renderer: CUSTOM_RENDERER,

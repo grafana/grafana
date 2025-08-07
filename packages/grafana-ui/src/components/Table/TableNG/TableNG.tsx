@@ -344,7 +344,7 @@ export function TableNG(props: TableNGProps) {
         const justifyContent = getJustifyContent(textAlign);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
-        const headerCellClass = getHeaderCellStyles(theme, justifyContent);
+        const headerCellClass = getHeaderCellStyles(theme, justifyContent, transparent);
         const renderFieldCell = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
@@ -365,7 +365,9 @@ export function TableNG(props: TableNGProps) {
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
-          cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
+          cellType === TableCellDisplayMode.ColorBackground ||
+          cellType === TableCellDisplayMode.ColorText ||
+          Boolean(applyToRowBgFn);
         const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
 
         result.colsWithTooltip[displayName] = withTooltip;
@@ -627,6 +629,7 @@ export function TableNG(props: TableNGProps) {
     sortColumns,
     styles,
     theme,
+    transparent,
     visibleFields,
     widths,
     getCellActions,
