@@ -1,11 +1,5 @@
-import {
-  Field,
-  FieldType,
-  getFieldDisplayName,
-  PanelOptionsEditorBuilder,
-  PanelPlugin,
-  SelectableValue,
-} from '@grafana/data';
+import { Field, FieldType, getFieldDisplayName, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { GraphFieldConfig } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
@@ -13,32 +7,17 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { CandlestickPanel } from './CandlestickPanel';
-import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
+import { CandlestickData, getCandlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
 import { CandlestickSuggestionsSupplier } from './suggestions';
 import { defaultCandlestickColors, defaultOptions, Options, VizDisplayMode, ColorStrategy, CandleStyle } from './types';
-
-const modeOptions: Array<SelectableValue<VizDisplayMode>> = [
-  { label: 'Candles', value: VizDisplayMode.Candles },
-  { label: 'Volume', value: VizDisplayMode.Volume },
-  { label: 'Both', value: VizDisplayMode.CandlesVolume },
-];
-
-const candleStyles: Array<SelectableValue<CandleStyle>> = [
-  { label: 'Candles', value: CandleStyle.Candles },
-  { label: 'OHLC Bars', value: CandleStyle.OHLCBars },
-];
-
-const colorStrategies: Array<SelectableValue<ColorStrategy>> = [
-  { label: 'Since Open', value: ColorStrategy.OpenClose },
-  { label: 'Since Prior Close', value: ColorStrategy.CloseClose },
-];
 
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
 function addFieldPicker(
   builder: PanelOptionsEditorBuilder<Options>,
   info: FieldPickerInfo,
-  data: CandlestickData | null
+  data: CandlestickData | null,
+  category?: string[]
 ) {
   let placeholderText = 'Auto ';
 
@@ -60,6 +39,7 @@ function addFieldPicker(
     path: `fields.${info.key}`,
     name: info.name,
     description: info.description,
+    category,
     settings: {
       filter: numericFieldFilter,
       placeholderText,
@@ -70,68 +50,95 @@ function addFieldPicker(
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder, context) => {
+    const category = [t('candlestick.category-candlestick', 'Candlestick')];
     const opts = context.options ?? defaultOptions;
     const info = prepareCandlestickFields(context.data, opts, config.theme2);
     builder
       .addRadio({
         path: 'mode',
-        name: 'Mode',
+        name: t('candlestick.name-mode', 'Mode'),
+        category,
         description: '',
         defaultValue: defaultOptions.mode,
         settings: {
-          options: modeOptions,
+          options: [
+            { label: t('candlestick.mode-options.label-candles', 'Candles'), value: VizDisplayMode.Candles },
+            { label: t('candlestick.mode-options.label-volume', 'Volume'), value: VizDisplayMode.Volume },
+            { label: t('candlestick.mode-options.label-both', 'Both'), value: VizDisplayMode.CandlesVolume },
+          ],
         },
       })
       .addRadio({
         path: 'candleStyle',
-        name: 'Candle style',
+        name: t('candlestick.name-candle-style', 'Candle style'),
+        category,
         description: '',
         defaultValue: defaultOptions.candleStyle,
         settings: {
-          options: candleStyles,
+          options: [
+            { label: t('candlestick.candle-style-options.label-candles', 'Candles'), value: CandleStyle.Candles },
+            { label: t('candlestick.candle-style-options.label-ohlc-bars', 'OHLC Bars'), value: CandleStyle.OHLCBars },
+          ],
         },
         showIf: (opts) => opts.mode !== VizDisplayMode.Volume,
       })
       .addRadio({
         path: 'colorStrategy',
-        name: 'Color strategy',
+        name: t('candlestick.name-color-strategy', 'Color strategy'),
+        category,
         description: '',
         defaultValue: defaultOptions.colorStrategy,
         settings: {
-          options: colorStrategies,
+          options: [
+            {
+              label: t('candlestick.color-strategy-options.label-since-open', 'Since Open'),
+              value: ColorStrategy.OpenClose,
+            },
+            {
+              label: t('candlestick.color-strategy-options.label-since-prior-close', 'Since Prior Close'),
+              value: ColorStrategy.CloseClose,
+            },
+          ],
         },
       })
       .addColorPicker({
         path: 'colors.up',
-        name: 'Up color',
+        name: t('candlestick.name-up-color', 'Up color'),
+        category,
         defaultValue: defaultCandlestickColors.up,
       })
       .addColorPicker({
         path: 'colors.down',
-        name: 'Down color',
+        name: t('candlestick.name-down-color', 'Down color'),
+        category,
         defaultValue: defaultCandlestickColors.down,
       });
 
-    addFieldPicker(builder, candlestickFieldsInfo.open, info);
+    const candlestickFieldsInfo = getCandlestickFieldsInfo();
+    addFieldPicker(builder, candlestickFieldsInfo.open, info, category);
     if (opts.mode !== VizDisplayMode.Volume) {
-      addFieldPicker(builder, candlestickFieldsInfo.high, info);
-      addFieldPicker(builder, candlestickFieldsInfo.low, info);
+      addFieldPicker(builder, candlestickFieldsInfo.high, info, category);
+      addFieldPicker(builder, candlestickFieldsInfo.low, info, category);
     }
-    addFieldPicker(builder, candlestickFieldsInfo.close, info);
+    addFieldPicker(builder, candlestickFieldsInfo.close, info, category);
 
     if (opts.mode !== VizDisplayMode.Candles) {
-      addFieldPicker(builder, candlestickFieldsInfo.volume, info);
+      addFieldPicker(builder, candlestickFieldsInfo.volume, info, category);
     }
 
     builder.addRadio({
       path: 'includeAllFields',
-      name: 'Additional fields',
-      description: 'Use standard timeseries options to configure any fields not mapped above',
+      name: t('candlestick.name-additional-fields', 'Additional fields'),
+      category,
+      description: t(
+        'candlestick.description-additional-fields',
+        'Use standard timeseries options to configure any fields not mapped above'
+      ),
       defaultValue: defaultOptions.includeAllFields,
       settings: {
         options: [
-          { label: 'Ignore', value: false },
-          { label: 'Include', value: true },
+          { label: t('candlestick.additional-fields-options.label-ignore', 'Ignore'), value: false },
+          { label: t('candlestick.additional-fields-options.label-include', 'Include'), value: true },
         ],
       },
     });

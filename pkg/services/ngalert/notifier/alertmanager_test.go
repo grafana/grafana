@@ -58,12 +58,15 @@ func setupAMTest(t *testing.T) *alertmanager {
 	stateStore := NewFileStore(int64(orgID), kvStore)
 	crypto := NewCrypto(secretsService, s, l)
 
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto)
+	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto, nil)
 	require.NoError(t, err)
 	return am
 }
 
-func TestAlertmanager_newAlertmanager(t *testing.T) {
+func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	am := setupAMTest(t)
 	require.False(t, am.Ready())
 }

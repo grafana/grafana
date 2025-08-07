@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useState } from 'react';
 import { useDebounce } from 'react-use';
@@ -56,7 +56,7 @@ export function TextPanel(props: Props) {
         <DangerouslySetHtmlContent
           allowRerender
           html={processed.content}
-          className="markdown-html"
+          className={cx('markdown-html', styles.markdownHtml)}
           data-testid="TextPanel-converted-content"
         />
       </ScrollContainer>
@@ -102,6 +102,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   containStrict: css({
     contain: 'strict',
+    height: '100%',
+    display: 'flex',
+  }),
+  markdownHtml: css({
     height: '100%',
   }),
 });

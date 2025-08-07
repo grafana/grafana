@@ -102,6 +102,7 @@ func SetDualWritingMode(
 	ctx context.Context,
 	kvs NamespacedKVStore,
 	cfg *SyncerConfig,
+	metrics *DualWriterMetrics,
 ) (DualWriterMode, error) {
 	if cfg == nil {
 		return Mode0, errors.New("syncer config is nil")
@@ -167,7 +168,7 @@ func SetDualWritingMode(
 	// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
 	// once in the current active mode before we can upgrade.
 	cfg.Mode = currentMode
-	syncOk, err := runDataSyncer(ctx, cfg)
+	syncOk, err := runDataSyncer(ctx, cfg, metrics)
 	// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
 	cfg.Mode = cfgModeTmp
 	if err != nil {

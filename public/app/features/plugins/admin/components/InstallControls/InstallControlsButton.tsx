@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
-import { isDisabledAngularPlugin } from '../../helpers';
+import { getExternalManageLink, isDisabledAngularPlugin } from '../../helpers';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -138,8 +139,11 @@ export function InstallControlsButton({
         title={t('plugins.install-controls-button.title-uninstall-modal', 'Uninstall {{plugin}}', {
           plugin: plugin.name,
         })}
-        body="Are you sure you want to uninstall this plugin?"
-        confirmText="Confirm"
+        body={t(
+          'plugins.install-controls-button.uninstall-controls.body-uninstall-plugin',
+          'Are you sure you want to uninstall this plugin?'
+        )}
+        confirmText={t('plugins.install-controls-button.uninstall-controls.confirmText-confirm', 'Confirm')}
         icon="exclamation-triangle"
         onConfirm={onUninstall}
         onDismiss={hideConfirmModal}
@@ -161,6 +165,22 @@ export function InstallControlsButton({
       <Stack alignItems="flex-start" width="auto" height="auto">
         {uninstallControls}
       </Stack>
+    );
+  }
+
+  const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
+
+  // Show learn more button for an enterprise plugin if your on OSS
+  if (plugin.isEnterprise && isOpenSource) {
+    return (
+      <LinkButton
+        href={`${getExternalManageLink(plugin.id)}?utm_source=grafana_catalog_learn_more`}
+        target="_blank"
+        rel="noopener noreferrer"
+        icon="external-link-alt"
+      >
+        <Trans i18nKey="plugins.install-controls-warning.learn-more">Learn more</Trans>
+      </LinkButton>
     );
   }
 

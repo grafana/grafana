@@ -14,7 +14,7 @@
 
 import ease from 'tween-functions';
 
-import { TNil } from './types';
+import TNil from './types/TNil';
 
 export interface TweenState {
   done: boolean;

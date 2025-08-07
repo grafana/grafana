@@ -500,23 +500,24 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 
 	// save snapshot to the db
 	snapshot := cloudmigration.CloudMigrationSnapshot{
-		UID:            util.GenerateShortUID(),
-		SessionUID:     cmd.SessionUID,
-		Status:         cloudmigration.SnapshotStatusCreating,
-		EncryptionKey:  initResp.EncryptionKey,
-		GMSSnapshotUID: initResp.SnapshotID,
-		LocalDir:       filepath.Join(s.cfg.CloudMigration.SnapshotFolder, "grafana", "snapshots", initResp.SnapshotID),
+		UID:                 util.GenerateShortUID(),
+		SessionUID:          cmd.SessionUID,
+		Status:              cloudmigration.SnapshotStatusCreating,
+		GMSPublicKey:        initResp.GMSPublicKey,
+		GMSSnapshotUID:      initResp.SnapshotID,
+		Metadata:            initResp.Metadata,
+		EncryptionAlgo:      initResp.Algo,
+		LocalDir:            filepath.Join(s.cfg.CloudMigration.SnapshotFolder, "grafana", "snapshots", initResp.SnapshotID),
+		ResourceStorageType: s.cfg.CloudMigration.ResourceStorageType,
 	}
 
-	uid, err := s.store.CreateSnapshot(ctx, snapshot)
-	if err != nil {
+	if err := s.store.CreateSnapshot(ctx, snapshot); err != nil {
 		return nil, fmt.Errorf("saving snapshot: %w", err)
 	}
-	snapshot.UID = uid
 
 	// Update status to "creating" to ensure the frontend polls from now on
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:       uid,
+		UID:       snapshot.UID,
 		SessionID: cmd.SessionUID,
 		Status:    cloudmigration.SnapshotStatusCreating,
 	}); err != nil {
@@ -542,6 +543,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		s.report(asyncCtx, session, gmsclient.EventStartBuildingSnapshot, 0, nil, signedInUser.UserUID)
 
 		start := time.Now()
+
 		err := s.buildSnapshot(asyncCtx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot, cmd.ResourceTypes)
 		if err != nil {
 			asyncSpan.SetStatus(codes.Error, "error building snapshot")
@@ -901,10 +903,12 @@ func (s *Service) deleteLocalFiles(snapshots []cloudmigration.CloudMigrationSnap
 
 	var err error
 	for _, snapshot := range snapshots {
-		err = os.RemoveAll(snapshot.LocalDir)
-		if err != nil {
-			// in this case we only log the error, don't return it to continue with the process
-			s.log.Error("deleting migration snapshot files", "err", err)
+		if snapshot.LocalDir != "" {
+			err = os.RemoveAll(snapshot.LocalDir)
+			if err != nil {
+				// in this case we only log the error, don't return it to continue with the process
+				s.log.Error("deleting migration snapshot files", "err", err)
+			}
 		}
 	}
 	return err

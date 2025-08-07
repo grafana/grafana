@@ -32,23 +32,30 @@ export function usePluginLinks({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
-    // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
-    const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
+    const isInsidePlugin = Boolean(pluginContext);
     const pluginId = pluginContext?.meta.id ?? '';
+    const isCoreGrafanaPlugin = pluginContext?.meta.module.startsWith('core:') ?? false;
     const pointLog = log.child({
       pluginId,
       extensionPointId,
     });
 
-    if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-      pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
+    if (
+      isGrafanaDevMode() &&
+      !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, isCoreGrafanaPlugin, log: pointLog })
+    ) {
       return {
         isLoading: false,
         links: [],
       };
     }
 
-    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+    if (
+      isGrafanaDevMode() &&
+      !isCoreGrafanaPlugin &&
+      pluginContext &&
+      isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)
+    ) {
       pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
         isLoading: false,

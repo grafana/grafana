@@ -23,9 +23,11 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { importDataSourcePlugin } from 'app/features/plugins/pluginLoader';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
-import { AccessControlAction, DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { DataSourcePluginCategory } from 'app/types/datasources';
+import { ThunkDispatch, ThunkResult } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';

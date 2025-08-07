@@ -62,6 +62,18 @@ describe('prepare timeline graph', () => {
     expect(info.warn).toEqual('No graphable fields');
   });
 
+  it('errors with no frame', () => {
+    const info = prepareTimelineFields(undefined, true, timeRange, theme);
+    expect(info.frames).toBeUndefined();
+    expect(info.warn).toBe('');
+  });
+
+  it('errors with empty frame', () => {
+    const info = prepareTimelineFields([], true, timeRange, theme);
+    expect(info.frames).toBeUndefined();
+    expect(info.warn).toBe('');
+  });
+
   it('will merge duplicate values', () => {
     const frames = [
       toDataFrame({

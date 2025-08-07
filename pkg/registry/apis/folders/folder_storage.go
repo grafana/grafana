@@ -11,6 +11,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -79,7 +80,8 @@ func (s *folderStorage) Create(ctx context.Context,
 ) (runtime.Object, error) {
 	obj, err := s.store.Create(ctx, obj, createValidation, options)
 	if err != nil {
-		return nil, err
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
 	}
 
 	info, err := request.NamespaceInfoFrom(ctx, true)
@@ -151,7 +153,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 		})
 	}
 	isNested := parentUID != ""
-	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},

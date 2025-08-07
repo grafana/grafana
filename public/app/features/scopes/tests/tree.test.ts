@@ -1,3 +1,5 @@
+import { screen } from '@testing-library/react';
+
 import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
@@ -71,6 +73,14 @@ describe('Tree', () => {
     await resetScenes([fetchNodesSpy, fetchScopeSpy]);
   });
 
+  it('Gives autofocus to search field when node is expanded', async () => {
+    await openSelector();
+    expect(screen.getByRole('textbox', { name: 'Search' })).not.toHaveFocus();
+
+    await expandResultApplications();
+    expect(screen.getByRole('textbox', { name: 'Search Applications' })).toHaveFocus();
+  });
+
   it('Fetches scope details on select', async () => {
     await openSelector();
     await expandResultApplications();
@@ -93,7 +103,7 @@ describe('Tree', () => {
     await selectResultApplicationsMimir();
     await selectResultApplicationsCloud();
     await applyScopes();
-    expectScopesSelectorValue('Grafana, Mimir, Cloud');
+    expectScopesSelectorValue('Grafana + Mimir + Cloud');
   });
 
   it('Can select a node from an inner level', async () => {
@@ -215,7 +225,7 @@ describe('Tree', () => {
 
     await selectResultApplicationsGrafana();
     await applyScopes();
-    expectScopesSelectorValue('Mimir, Grafana');
+    expectScopesSelectorValue('Mimir + Grafana');
   });
 
   it('Deselects a persisted scope', async () => {
@@ -227,7 +237,7 @@ describe('Tree', () => {
 
     await selectResultApplicationsGrafana();
     await applyScopes();
-    expectScopesSelectorValue('Mimir, Grafana');
+    expectScopesSelectorValue('Mimir + Grafana');
 
     await openSelector();
     await selectPersistedApplicationsMimir();

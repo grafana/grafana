@@ -1,37 +1,51 @@
 package setting
 
 import (
-	"regexp"
-	"time"
-
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
-	"github.com/grafana/grafana/pkg/services/kmsproviders"
+	"strings"
 )
 
-type EncryptionSettings struct {
-	DataKeysCacheTTL        time.Duration
-	DataKeysCleanupInterval time.Duration
-	Algorithm               string
-}
+const (
+	ProviderPrefix        = "secrets_manager.encryption."
+	MisconfiguredProvider = "misconfigured"
+)
 
 type SecretsManagerSettings struct {
-	SecretKey          string
-	EncryptionProvider string
-	AvailableProviders []string
+	CurrentEncryptionProvider string
 
-	Encryption EncryptionSettings
+	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
+	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
+	ConfiguredKMSProviders map[string]map[string]string
+
+	GrpcClientEnable        bool   // Whether to enable the gRPC client. If disabled, it will use the in-process services implementations.
+	GrpcServerUseTLS        bool   // Whether to use TLS when communicating with the gRPC server
+	GrpcServerTLSSkipVerify bool   // Whether to skip TLS verification when communicating with the gRPC server
+	GrpcServerTLSServerName string // Server name to use for TLS verification
+	GrpcServerAddress       string // Address for gRPC secrets server
+	GrpcGrafanaServiceName  string // Service name to use for background grafana decryption/inline
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
 	secretsMgmt := cfg.Raw.Section("secrets_manager")
-	cfg.SecretsManagement.EncryptionProvider = secretsMgmt.Key("encryption_provider").MustString(kmsproviders.Default)
+	cfg.SecretsManagement.CurrentEncryptionProvider = secretsMgmt.Key("encryption_provider").MustString(MisconfiguredProvider)
 
-	// TODO: These are not used yet by the secrets manager because we need to distentagle the dependencies with OSS.
-	cfg.SecretsManagement.SecretKey = secretsMgmt.Key("secret_key").MustString("")
-	cfg.SecretsManagement.AvailableProviders = regexp.MustCompile(`\s*,\s*`).Split(secretsMgmt.Key("available_encryption_providers").MustString(""), -1) // parse comma separated list
+	cfg.SecretsManagement.GrpcClientEnable = secretsMgmt.Key("grpc_client_enable").MustBool(false)
+	cfg.SecretsManagement.GrpcServerUseTLS = secretsMgmt.Key("grpc_server_use_tls").MustBool(false)
+	cfg.SecretsManagement.GrpcServerTLSSkipVerify = secretsMgmt.Key("grpc_server_tls_skip_verify").MustBool(false)
+	cfg.SecretsManagement.GrpcServerTLSServerName = valueAsString(secretsMgmt, "grpc_server_tls_server_name", "")
+	cfg.SecretsManagement.GrpcServerAddress = valueAsString(secretsMgmt, "grpc_server_address", "")
+	cfg.SecretsManagement.GrpcGrafanaServiceName = valueAsString(secretsMgmt, "grpc_grafana_service_name", "")
 
-	encryption := cfg.Raw.Section("secrets_manager.encryption")
-	cfg.SecretsManagement.Encryption.DataKeysCacheTTL = encryption.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
-	cfg.SecretsManagement.Encryption.DataKeysCleanupInterval = encryption.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
-	cfg.SecretsManagement.Encryption.Algorithm = encryption.Key("algorithm").MustString(cipher.AesGcm)
+	// Extract available KMS providers from configuration sections
+	providers := make(map[string]map[string]string)
+	for _, section := range cfg.Raw.Sections() {
+		sectionName := section.Name()
+		if strings.HasPrefix(sectionName, ProviderPrefix) {
+			// Extract the provider name (everything after the prefix)
+			providerName := strings.TrimPrefix(sectionName, ProviderPrefix)
+			if providerName != "" {
+				providers[providerName] = section.KeysHash()
+			}
+		}
+	}
+	cfg.SecretsManagement.ConfiguredKMSProviders = providers
 }

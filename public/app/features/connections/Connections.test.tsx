@@ -2,16 +2,18 @@ import { RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
+import { GrafanaEdition } from '@grafana/data/internal';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getMockDataSources } from 'app/features/datasources/__mocks__';
 import * as api from 'app/features/datasources/api';
+import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
 import { configureStore } from 'app/store/configureStore';
 
-import { getPluginsStateMock } from '../plugins/admin/__mocks__';
+import { getPluginsStateMock } from '../plugins/admin/mocks/mockHelpers';
 
 import Connections from './Connections';
-import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTES } from './constants';
+import { navIndex } from './mocks/store.navIndex.mock';
 
 jest.mock('app/core/services/context_srv');
 jest.mock('app/features/datasources/api');
@@ -43,15 +45,41 @@ describe('Connections', () => {
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
 
-  test('shows the "Add new connection" page by default', async () => {
+  test('shows the "Connections Homepage" page by default when edition is Cloud', async () => {
+    config.buildInfo.edition = GrafanaEdition.Enterprise;
     renderPage();
 
-    // Data sources group
+    // Add new connection card
+    expect(await screen.findByText('Add new connection')).toBeVisible();
+    expect(await screen.findByText('Collector:')).toBeVisible();
     expect(await screen.findByText('Data sources')).toBeVisible();
+    expect(await screen.findByText('Integrations')).toBeVisible();
+    expect(await screen.findByText('Private data source connect')).toBeVisible();
 
     // Heading
+    expect(await screen.findByText('Welcome to Connections')).toBeVisible();
+    expect(
+      await screen.findByText(
+        'Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines.'
+      )
+    ).toBeVisible();
+  });
+
+  test('shows the OSS "Connections Homepage" page by default when edition is OpenSource', async () => {
+    config.buildInfo.edition = GrafanaEdition.OpenSource;
+    renderPage();
+
+    // Add new connection card
     expect(await screen.findByText('Add new connection')).toBeVisible();
-    expect(await screen.findByText('Browse and create new connections')).toBeVisible();
+    expect(await screen.findByText('View configured data sources')).toBeVisible();
+
+    // Heading
+    expect(await screen.findByText('Welcome to Connections')).toBeVisible();
+    expect(
+      await screen.findByText(
+        'Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections.'
+      )
+    ).toBeVisible();
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {

@@ -1,5 +1,5 @@
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { LayoutRegistryItem } from './LayoutRegistryItem';
@@ -81,6 +81,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Paste a panel from the clipboard
    */
   pastePanel?(): void;
+
+  /**
+   * Get children for outline
+   */
+  getOutlineChildren(): SceneObject[];
 }
 
 export interface LayoutManagerSerializer {

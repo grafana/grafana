@@ -26,7 +26,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
@@ -431,7 +431,7 @@ export function QueryGroupTopSection({
                 <Button
                   variant="secondary"
                   icon="question-circle"
-                  title={t(
+                  tooltip={t(
                     'query.query-group-top-section.query-tab-help-button-title-open-data-source-help',
                     'Open data source help'
                   )}

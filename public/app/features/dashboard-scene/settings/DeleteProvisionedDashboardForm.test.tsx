@@ -34,8 +34,8 @@ jest.mock('react-router-dom-v5-compat', () => ({
 const mockNavigate = jest.fn();
 
 // Mock shared form components
-jest.mock('../components/Provisioned/DashboardEditFormSharedFields', () => ({
-  DashboardEditFormSharedFields: ({ disabled }: { disabled: boolean }) => (
+jest.mock('../components/Provisioned/ResourceEditFormSharedFields', () => ({
+  ResourceEditFormSharedFields: ({ disabled }: { disabled: boolean }) => (
     <textarea data-testid="shared-fields" disabled={disabled} />
   ),
 }));
@@ -107,7 +107,6 @@ function setup(options: SetupOptions = {}) {
     },
     loadedFromRef: 'main',
     readOnly: false,
-    isGitHub: true,
     workflowOptions: [
       { label: 'Branch', value: 'branch' },
       { label: 'Write', value: 'write' },

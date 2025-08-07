@@ -1,13 +1,10 @@
-import { useState } from 'react';
-
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
-import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
+import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
 import { BarGaugeCellProps } from '../types';
-import { extractPixelValue, getCellOptions, getAlignmentFactor, getCellLinks } from '../utils';
+import { extractPixelValue, getCellOptions, getAlignmentFactor } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -23,7 +20,7 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
-export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx, actions }: BarGaugeCellProps) => {
+export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
   const heightOffset = extractPixelValue(theme.spacing(1));
@@ -48,14 +45,9 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx, actio
   }
 
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
-  const links = getCellLinks(field, rowIdx) || [];
 
-  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
-  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
-  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
-
-  const renderComponent = () => {
-    return (
+  return (
+    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
       <BarGauge
         width={width}
         height={height - heightOffset}
@@ -71,28 +63,6 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx, actio
         displayMode={barGaugeMode}
         valueDisplayMode={valueDisplayMode}
       />
-    );
-  };
-
-  return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-    <div
-      style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
-      onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
-    >
-      {shouldShowLink ? (
-        renderSingleLink(links[0], renderComponent())
-      ) : shouldShowTooltip ? (
-        <DataLinksActionsTooltip
-          links={links}
-          actions={actions}
-          value={renderComponent()}
-          coords={tooltipCoords}
-          onTooltipClose={() => setTooltipCoords(undefined)}
-        />
-      ) : (
-        renderComponent()
-      )}
-    </div>
+    </MaybeWrapWithLink>
   );
 };

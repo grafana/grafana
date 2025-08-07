@@ -144,6 +144,22 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:      "rule group with empty name",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name: "",
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "rule group name must not be empty",
+		},
+		{
 			name:      "recording rule",
 			orgID:     1,
 			namespace: "namespaceUID",
@@ -342,7 +358,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 				require.Equal(t, models.Duration(evalOffset), grafanaRule.Data[0].RelativeTimeRange.To)
 				require.Equal(t, models.Duration(10*time.Minute+evalOffset), grafanaRule.Data[0].RelativeTimeRange.From)
-				require.Equal(t, util.Pointer(1), grafanaRule.MissingSeriesEvalsToResolve)
+				require.Equal(t, util.Pointer(int64(1)), grafanaRule.MissingSeriesEvalsToResolve)
 
 				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
 				require.Equal(t, models.OK, grafanaRule.NoDataState)
@@ -640,6 +656,73 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, grafanaGroup.Rules, 1)
 		require.Equal(t, withInternalLabel(map[string]string{}), grafanaGroup.Rules[0].Labels)
+	})
+}
+
+func TestPrometheusRulesToGrafana_ExtraLabels(t *testing.T) {
+	cfg := Config{
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
+		ExtraLabels: map[string]string{
+			"extra_label":  "extra_value",
+			"common_label": "extra_value",
+			"rule_label":   "value_from_extra_labels",
+		},
+	}
+	converter, err := NewConverter(cfg)
+	require.NoError(t, err)
+
+	t.Run("extra labels are merged with group and rule labels", func(t *testing.T) {
+		promGroup := PrometheusRuleGroup{
+			Name:     "test-group-1",
+			Interval: prommodel.Duration(10 * time.Second),
+			Labels: map[string]string{
+				"group_label":  "group_value",
+				"common_label": "group_value",
+			},
+			Rules: []PrometheusRule{
+				{
+					Alert: "alert-1",
+					Expr:  "cpu_usage > 80",
+					Labels: map[string]string{
+						"rule_label": "rule_value",
+					},
+				},
+			},
+		}
+
+		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
+		require.NoError(t, err)
+		require.Len(t, grafanaGroup.Rules, 1)
+
+		expectedLabels := withInternalLabel(map[string]string{
+			"extra_label":  "extra_value",
+			"common_label": "group_value",
+			"group_label":  "group_value",
+			"rule_label":   "rule_value",
+		})
+		require.Equal(t, expectedLabels, grafanaGroup.Rules[0].Labels)
+	})
+
+	t.Run("extra labels are applied to recording rules", func(t *testing.T) {
+		promGroup := PrometheusRuleGroup{
+			Name:     "test-group-2",
+			Interval: prommodel.Duration(10 * time.Second),
+			Rules: []PrometheusRule{
+				{
+					Record: "http_requests_total:rate5m",
+					Expr:   "rate(http_requests_total[5m])",
+				},
+			},
+		}
+
+		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
+		require.NoError(t, err)
+		require.Len(t, grafanaGroup.Rules, 1)
+
+		expectedLabels := withInternalLabel(cfg.ExtraLabels)
+		require.Equal(t, expectedLabels, grafanaGroup.Rules[0].Labels)
 	})
 }
 

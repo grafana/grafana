@@ -14,12 +14,6 @@ import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 
 import { TextDimensionOptions } from '../types';
 
-const textOptions = [
-  { label: 'Fixed', value: TextDimensionMode.Fixed, description: 'Fixed value' },
-  { label: 'Field', value: TextDimensionMode.Field, description: 'Display field value' },
-  //  { label: 'Template', value: TextDimensionMode.Template, description: 'use template text' },
-];
-
 const dummyFieldSettings = {
   settings: {},
 } as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
@@ -31,6 +25,19 @@ const dummyStringSettings = {
 type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions>;
 
 export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
+  const textOptions = [
+    {
+      label: t('dimensions.text-dimension-editor.label-fixed', 'Fixed'),
+      value: TextDimensionMode.Fixed,
+      description: t('dimensions.text-dimension-editor.description-fixed', 'Fixed value'),
+    },
+    {
+      label: t('dimensions.text-dimension-editor.label-field', 'Field'),
+      value: TextDimensionMode.Field,
+      description: t('dimensions.text-dimension-editor.description-field', 'Display field value'),
+    },
+    //  { label: 'Template', value: TextDimensionMode.Template, description: 'use template text' },
+  ];
   const labelWidth = 9;
 
   const onModeChange = useCallback(
@@ -108,7 +115,16 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
               onChange={onFixedChange}
               item={dummyStringSettings}
               suffix={
-                value?.fixed && <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixed} />
+                value?.fixed && (
+                  <Button
+                    aria-label={t('dimensions.text-dimension-editor.aria-label-clear-value', 'Clear value')}
+                    icon="times"
+                    variant="secondary"
+                    fill="text"
+                    size="sm"
+                    onClick={onClearFixed}
+                  />
+                )
               }
             />
           </InlineField>

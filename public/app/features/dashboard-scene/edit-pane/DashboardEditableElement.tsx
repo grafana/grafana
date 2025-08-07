@@ -1,6 +1,7 @@
 import { ReactNode, useMemo, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { SceneObject } from '@grafana/scenes';
 import { Button, Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -22,8 +23,12 @@ export class DashboardEditableElement implements EditableDashboardElement {
       typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
       icon: 'apps',
       instanceName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    const { $variables, body } = this.dashboard.state;
+    return [$variables!, ...body.getOutlineChildren()];
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -103,8 +108,8 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
 
         dashboardEditActions.changeTitle({
           source: dashboard,
-          oldTitle: valueBeforeEdit.current,
-          newTitle: e.currentTarget.value,
+          oldValue: valueBeforeEdit.current,
+          newValue: e.currentTarget.value,
         });
       }}
     />
@@ -134,8 +139,8 @@ export function DashboardDescriptionInput({ dashboard, id }: { dashboard: Dashbo
 
         dashboardEditActions.changeDescription({
           source: dashboard,
-          oldDescription: valueBeforeEdit.current,
-          newDescription: e.currentTarget.value,
+          oldValue: valueBeforeEdit.current,
+          newValue: e.currentTarget.value,
         });
       }}
     />

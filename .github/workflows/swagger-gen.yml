@@ -17,7 +17,7 @@ jobs:
   verify:
     name: Verify committed API specs match
     runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.repository == 'grafana/grafana' }}
+    if: ${{ github.repository == 'grafana/grafana' }}
     permissions:
       contents: read # clone the repository
       id-token: write # required for Vault access
@@ -28,18 +28,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
       - name: Setup Enterprise
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
         uses: ./.github/actions/setup-enterprise
         with:
           github-app-name: 'grafana-ci-bot'
-
-      - name: Set go version
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
 
       - name: Generate Swagger specs
         run: make swagger-clean && make openapi3-gen

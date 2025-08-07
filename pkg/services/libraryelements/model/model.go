@@ -128,6 +128,7 @@ type LibraryElementConnectionWithMeta struct {
 
 // LibraryElementConnectionDTO is the frontend DTO for element connections.
 type LibraryElementConnectionDTO struct {
+	// Deprecated: this field will be removed in the future
 	ID            int64                                  `json:"id"`
 	Kind          int64                                  `json:"kind"`
 	ElementID     int64                                  `json:"elementId"`
@@ -263,4 +264,5 @@ const (
 	PanelElement LibraryElementKind = iota + 1
 )
 
+const LibraryElementTableName = "library_element"
 const LibraryElementConnectionTableName = "library_element_connection"

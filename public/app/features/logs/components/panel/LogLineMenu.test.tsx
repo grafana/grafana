@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
 import { getStyles } from './LogLine';
 import { LogLineMenu, LogLineMenuCustomItem } from './LogLineMenu';
@@ -12,6 +12,16 @@ import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 
 jest.mock('./LogListContext');
+
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn(() => [true, jest.fn()]),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  isAssistantAvailable: true,
+}));
 
 const theme = createTheme();
 const styles = getStyles(theme);

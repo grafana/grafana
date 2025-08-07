@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,6 +83,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
+	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
+	require.NoError(t, err)
 	env, err := server.InitializeForTest(t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
@@ -477,6 +480,17 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
 		require.NoError(t, err)
 	}
+
+	if opts.RemoteAlertmanagerURL != "" {
+		remoteAlertmanagerSection, err := getOrCreateSection("remote.alertmanager")
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("url", opts.RemoteAlertmanagerURL)
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("tenant", "1")
+		require.NoError(t, err)
+	}
 	if opts.GrafanaComSSOAPIToken != "" {
 		grafanaComSection, err := getOrCreateSection("grafana_com")
 		require.NoError(t, err)
@@ -511,6 +525,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.APIServerRuntimeConfig != "" {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("runtime_config", opts.APIServerRuntimeConfig)
+		require.NoError(t, err)
+	}
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
@@ -568,9 +588,13 @@ type GrafanaOpts struct {
 	LicensePath                           string
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
+	APIServerRuntimeConfig                string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
+
+	// Remote alertmanager configuration
+	RemoteAlertmanagerURL string
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

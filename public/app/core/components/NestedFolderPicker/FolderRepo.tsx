@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { NestedFolderDTO } from 'app/features/search/service/types';
-import { FolderDTO, FolderListItemDTO } from 'app/types';
+import { FolderDTO, FolderListItemDTO } from 'app/types/folders';
 
 export interface Props {
   folder?: FolderListItemDTO | NestedFolderDTO | FolderDTO;
@@ -15,5 +15,5 @@ export function FolderRepo({ folder }: Props) {
     return null;
   }
 
-  return <Badge text={t('folder-repo.badge-text', 'Provisioned')} color={'darkgrey'} />;
+  return <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.badge-tooltip', 'Provisioned')} />;
 }

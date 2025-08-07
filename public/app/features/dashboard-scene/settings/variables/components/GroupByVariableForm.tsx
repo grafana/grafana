@@ -119,7 +119,7 @@ export function GroupByVariableForm({
       {datasourceSupported && !inline && onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue}
-          name="Allow custom values"
+          name={t('dashboard-scene.group-by-variable-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.group-by-variable-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'

@@ -3,11 +3,12 @@ import {
   sceneGraph,
   SceneGridItemLike,
   SceneGridRow,
+  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
@@ -24,7 +25,6 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { RowItem } from './RowItem';
-import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
 
 interface RowsLayoutManagerState extends SceneObjectState {
@@ -33,7 +33,6 @@ interface RowsLayoutManagerState extends SceneObjectState {
 
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
   public static Component = RowLayoutManagerRenderer;
-
   public readonly isDashboardLayoutManager = true;
 
   public static readonly descriptor: LayoutRegistryItem = {
@@ -120,24 +119,24 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     this.addNewRow(row);
   }
 
-  public activateRepeaters() {
-    this.state.rows.forEach((row) => {
-      if (!row.isActive) {
-        row.activate();
-      }
-
-      const behavior = (row.state.$behaviors ?? []).find((b) => b instanceof RowItemRepeaterBehavior);
-
-      if (!behavior?.isActive) {
-        behavior?.activate();
-      }
-
-      row.getLayout().activateRepeaters?.();
-    });
-  }
-
   public shouldUngroup(): boolean {
     return this.state.rows.length === 1;
+  }
+
+  public getOutlineChildren() {
+    const outlineChildren: SceneObject[] = [];
+
+    for (const row of this.state.rows) {
+      outlineChildren.push(row);
+
+      if (row.state.repeatedRows) {
+        for (const clone of row.state.repeatedRows!) {
+          outlineChildren.push(clone);
+        }
+      }
+    }
+
+    return outlineChildren;
   }
 
   public removeRow(row: RowItem) {
@@ -198,12 +197,14 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         conditionalRendering?.clearParent();
 
         const behavior = tab.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
-        const $behaviors = !behavior
-          ? undefined
-          : [new RowItemRepeaterBehavior({ variableName: behavior.state.variableName })];
 
         rows.push(
-          new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title, conditionalRendering, $behaviors })
+          new RowItem({
+            layout: tab.state.layout.clone(),
+            title: tab.state.title,
+            conditionalRendering,
+            repeatByVariable: behavior?.state.variableName,
+          })
         );
       }
     } else if (layout instanceof DefaultGridLayoutManager) {
@@ -253,12 +254,13 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
           new RowItem({
             title: rowConfig.title,
             collapse: !!rowConfig.isCollapsed,
+            repeatByVariable: rowConfig.repeat,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
-              rowConfig.isResizable ?? layout.state.grid.state.isResizable
+              rowConfig.isResizable ?? layout.state.grid.state.isResizable,
+              layout.state.grid.state.isLazy
             ),
-            $behaviors: rowConfig.repeat ? [new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })] : [],
           })
       );
     } else {

@@ -12,13 +12,13 @@ labels:
     - enterprise
     - oss
 title: Stale alert instances
-weight: 110
+weight: 120
 refs:
   no-data-state:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#no-data-state
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-state
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#no-data-state
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-state
   no-data-and-error-handling:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
@@ -29,6 +29,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/missing-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/missing-data/
+  grafana-state-reason-annotation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#grafana_state_reason-for-troubleshooting
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#grafana_state_reason-for-troubleshooting
 ---
 
 # Stale alert instances
@@ -60,7 +65,7 @@ The process for handling stale alert instances is as follows:
 
 1. Grafana keeps the previous state of the alert instance for the number of evaluation intervals specified in [Missing series evaluations to resolve](#configure-missing-series-evaluations-to-resolve).
 
-1. If it remains missing after the specified number of evaluation intervals (2 by default), it transitions to the **Normal** state and sets **MissingSeries** in the `grafana_state_reason` annotation.
+1. If it remains missing after the specified number of evaluation intervals (2 by default), it transitions to the **Normal** state and sets **MissingSeries** in the [`grafana_state_reason` annotation](ref:grafana-state-reason-annotation).
 
    Stale alert instances in the **Alerting**, **No Data**, or **Error** states transition to the **Normal** state as **Resolved**, and are routed for notifications like other resolved alerts.
 
