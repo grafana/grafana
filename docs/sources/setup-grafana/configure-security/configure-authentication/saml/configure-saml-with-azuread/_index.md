@@ -136,4 +136,4 @@ The following table shows what the permissions look like from the Entra ID porta
 
 {{< figure src="/media/docs/grafana/saml/graph-api-app-permissions.png" caption="Screen shot of the permissions listed in Entra ID for the App registration" >}}
 
-To test the Graph API is has the correct permissions, refer to the [Troubleshoot Graph API calls](../troubleshoot-saml/#troubleshoot-graph-api-calls) section.
+To test that Graph API has the correct permissions, refer to the [Troubleshoot Graph API calls](../troubleshoot-saml/#troubleshoot-graph-api-calls) section.
