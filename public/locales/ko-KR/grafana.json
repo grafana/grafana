@@ -3476,7 +3476,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "취소",
-      "cannot-move-folders": "폴더는 이동할 수 없습니다.",
       "confirmation-text": "삭제",
       "delete-button": "삭제",
       "delete-modal-invalid-text": "하나 이상의 폴더에 라이브러리 패널 또는 경고 규칙이 포함되어 있습니다. 계속하려면 먼저 이 항목들을 삭제하세요.",
@@ -3569,6 +3568,7 @@
     },
     "folder-actions-button": {
       "delete": "삭제",
+      "delete-folder-error": "",
       "folder-actions": "폴더 작업",
       "manage-permissions": "권한 관리",
       "move": "이동"
@@ -4299,7 +4299,7 @@
       "source-label": "소스",
       "sub-text": "<0>상관 관계를 표시할 데이터 소스와 이전에 정의된 변수를 대체할 데이터를 정의합니다.</0>"
     },
-    "sub-title": "다른 데이터 소스에 있는 데이터가 서로 어떻게 관련되는지 정의합니다. <2>문서<1></1></2>에서 더 자세히 알아보기",
+    "sub-title": "",
     "target-form": {
       "control-rules": "이 필드는 필수 입력 항목입니다.",
       "sub-text": "<0>상관 관계가 연결될 대상을 정의합니다. 쿼리 유형을 사용하면 상관 관계가 클릭될 때 쿼리가 실행됩니다. 외부 유형의 경우 상관 관계를 클릭하면 URL이 열립니다.</0>",
@@ -4702,7 +4702,7 @@
       "add-visualization-body": "데이터 소스를 선택한 다음 차트, 통계, 표를 사용하여 데이터를 쿼리하고 시각화하거나 목록, 마크다운 및 기타 위젯을 생성합니다.",
       "add-visualization-button": "시각화 추가",
       "add-visualization-header": "시각화 추가하여 새 대시보드 시작하기",
-      "import-a-dashboard-body": "파일 또는 <1>grafana.com</1>에서 대시보드를 가져옵니다.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "대시보드 가져오기",
       "import-dashboard-button": "대시보드 가져오기"
     },
@@ -7474,6 +7474,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10282,7 +10285,7 @@
     },
     "invite-user": {
       "invite-button": "초대",
-      "invite-new-member-button": "새 멤버 초대",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11061,6 +11064,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11271,6 +11282,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11477,6 +11496,14 @@
     },
     "token-permissions-info": {
       "and-click": "및 클릭",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "다음으로 이동",
       "make-sure": "반드시 이러한 권한을 포함하세요"
     },

@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "启用基本日志"
     },
     "config-editor": {
-      "description-additional-settings": "附加设置是可选设置，可通过配置对数据源进行更多控制。其中包括安全 Socks 代理。",
-      "description-request-timeout": "以秒为单位设置请求超时。默认为 30 秒。",
-      "title-additional-settings": "附加设置",
-      "title-request-timeout": "请求超时"
+      "description-additional-settings": "",
+      "title-additional-settings": "附加设置"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "后备凭证已禁用。由于基于用户的身份验证本质上只支持用户范围内的请求，因此提醒、记录查询或报告等功能将无法按预期运行。请查看<2>文档</2>，了解更多详情。",

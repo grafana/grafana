@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "기본 로그 활성화"
     },
     "config-editor": {
-      "description-additional-settings": "추가 설정은 데이터 소스를 보다 세부적으로 제어하기 위해 구성할 수 있는 선택적 설정입니다. 여기에는 보안 SOCKS 프록시가 포함됩니다.",
-      "description-request-timeout": "요청 타임아웃을 초 단위로 설정합니다. 기본값은 30초입니다.",
-      "title-additional-settings": "추가 설정",
-      "title-request-timeout": "요청 타임아웃"
+      "description-additional-settings": "",
+      "title-additional-settings": "추가 설정"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "예비 자격 증명이 비활성화되었습니다. 사용자 기반 인증은 본질적으로 적용 범위 내의 사용자가 있는 요청만 지원하므로 알림, 기록된 쿼리 또는 보고와 같은 기능은 예상대로 작동하지 않습니다. 자세한 내용은 <2>문서</2>를 참고하세요.",

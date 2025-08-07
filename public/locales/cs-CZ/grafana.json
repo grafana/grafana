@@ -3515,7 +3515,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Zrušit",
-      "cannot-move-folders": "Složky nelze přesunout",
       "confirmation-text": "Odstranit",
       "delete-button": "Odstranit",
       "delete-modal-invalid-text": "Jedna nebo více složek obsahuje panely knihovny nebo pravidla výstrah. Chcete-li pokračovat, nejprve je odstraňte.",
@@ -3626,6 +3625,7 @@
     },
     "folder-actions-button": {
       "delete": "Odstranit",
+      "delete-folder-error": "",
       "folder-actions": "Akce složky",
       "manage-permissions": "Spravovat oprávnění",
       "move": "Přesunout"
@@ -4356,7 +4356,7 @@
       "source-label": "Zdroj",
       "sub-text": "<0>Definujte, jaký zdroj dat bude zobrazovat korelaci a jaká data nahradí dříve definované proměnné.</0>"
     },
-    "sub-title": "Definujte, jak spolu souvisí data uložená v různých zdrojích dat. Další informace najdete v <2>dokumentaci<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Toto pole je povinné.",
       "sub-text": "<0>Definujte, na co bude korelace odkazovat. S typem dotazu se dotaz spustí po kliknutí na korelaci. U externího typu se kliknutím na korelaci otevře adresa URL.</0>",
@@ -4759,7 +4759,7 @@
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
-      "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku"
     },
@@ -7540,6 +7540,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10372,7 +10375,7 @@
     },
     "invite-user": {
       "invite-button": "Pozvat",
-      "invite-new-member-button": "Pozvat nového člena",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11160,6 +11163,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11379,6 +11390,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11585,6 +11604,14 @@
     },
     "token-permissions-info": {
       "and-click": "a klikněte",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Přejít na",
       "make-sure": "Nezapomeňte zahrnout tato oprávnění"
     },

@@ -3489,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Annulla",
-      "cannot-move-folders": "Non è possibile spostare le cartelle",
       "confirmation-text": "Elimina",
       "delete-button": "Elimina",
       "delete-modal-invalid-text": "Una o più cartelle contengono pannelli della libreria o regole di avviso. Eliminarli prima di procedere.",
@@ -3588,6 +3587,7 @@
     },
     "folder-actions-button": {
       "delete": "Elimina",
+      "delete-folder-error": "",
       "folder-actions": "Azioni cartella",
       "manage-permissions": "Gestisci autorizzazioni",
       "move": "Sposta"
@@ -4318,7 +4318,7 @@
       "source-label": "Origine",
       "sub-text": "<0>Definisci quale origine dati visualizzerà la correlazione e quali dati sostituiranno le variabili precedentemente definite.</0>"
     },
-    "sub-title": "Definisci il modo in cui i dati che risiedono in diverse origini dati sono correlati tra loro. Scopri di più nella <2>documentazione<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Questo campo è obbligatorio.",
       "sub-text": "<0>Definisci a cosa si collegherà la correlazione. Con il tipo di query, quando si fa clic sulla correlazione verrà eseguita una query. Con il tipo esterno, facendo clic sulla correlazione si aprirà un URL.</0>",
@@ -4721,7 +4721,7 @@
       "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
       "add-visualization-button": "Aggiungi visualizzazione",
       "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
-      "import-a-dashboard-body": "Importa dashboard da file o <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard"
     },
@@ -7496,6 +7496,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10312,7 +10315,7 @@
     },
     "invite-user": {
       "invite-button": "Invito",
-      "invite-new-member-button": "Invita un nuovo membro",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11094,6 +11097,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11307,6 +11318,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11513,6 +11532,14 @@
     },
     "token-permissions-info": {
       "and-click": "e fare clic",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Vai a",
       "make-sure": "Assicurati di includere queste autorizzazioni"
     },

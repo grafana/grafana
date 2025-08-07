@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "基本ログを有効にする"
     },
     "config-editor": {
-      "description-additional-settings": "追加設定は、データソースをよりきめ細かく制御するために設定できるオプション設定です。これには、Socket Secureプロキシ（SOCKS）が含まれます。",
-      "description-request-timeout": "リクエストタイムアウトを秒単位で設定します。デフォルトは30秒です。",
-      "title-additional-settings": "追加設定",
-      "title-request-timeout": "リクエストタイムアウト"
+      "description-additional-settings": "",
+      "title-additional-settings": "追加設定"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "フォールバック認証情報が無効になっています。ユーザーベース認証は、本質的にスコープ内のユーザーのリクエストのみをサポートするため、アラート、記録クエリ、レポートなどの機能は想定どおりに機能しません。詳細については、<2>ドキュメント</2>をご覧ください。",

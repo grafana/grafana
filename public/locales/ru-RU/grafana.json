@@ -3515,7 +3515,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Отмена",
-      "cannot-move-folders": "Папки нельзя перемещать",
       "confirmation-text": "Удалить",
       "delete-button": "Удалить",
       "delete-modal-invalid-text": "Одна или несколько папок содержат панели библиотеки или правила оповещения. Чтобы продолжить, сначала удалите их.",
@@ -3626,6 +3625,7 @@
     },
     "folder-actions-button": {
       "delete": "Удалить",
+      "delete-folder-error": "",
       "folder-actions": "Действия с папками",
       "manage-permissions": "Управление разрешениями",
       "move": "Переместить"
@@ -4356,7 +4356,7 @@
       "source-label": "Источник",
       "sub-text": "<0>Определите, какой источник данных будет отображать корреляцию и какие данные заменят ранее заданные переменные.</0>"
     },
-    "sub-title": "Определение соотношения данных, хранящихся в разных источниках Подробнее в <2>документации<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Поле является обязательным.",
       "sub-text": "<0>Задайте, к чему будет привязана корреляция. Если выбран тип запроса, при нажатии на корреляцию будет выполняться запрос. Если выбрать внешний тип, при нажатии на корреляцию откроется URL-адрес.</0>",
@@ -4759,7 +4759,7 @@
       "add-visualization-body": "Выберите источник данных, а затем запрашивайте и визуализируйте свои данные с помощью диаграмм, статистики и таблиц или создавайте списки, разметки и другие виджеты.",
       "add-visualization-button": "Добавить визуализацию",
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
-      "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда"
     },
@@ -7540,6 +7540,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10372,7 +10375,7 @@
     },
     "invite-user": {
       "invite-button": "Пригласить",
-      "invite-new-member-button": "Пригласить нового члена",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11160,6 +11163,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11379,6 +11390,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11585,6 +11604,14 @@
     },
     "token-permissions-info": {
       "and-click": "и нажать",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Перейти к",
       "make-sure": "Обязательно включите эти разрешения"
     },

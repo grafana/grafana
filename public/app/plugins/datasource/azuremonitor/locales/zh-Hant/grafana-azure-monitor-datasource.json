@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "啟用基本紀錄"
     },
     "config-editor": {
-      "description-additional-settings": "附加設定為可選設定，可進行設定以便更妥善掌控您的資料來源，其中包括安全 Socks 代理。",
-      "description-request-timeout": "設定請求逾時時間（秒）。預設為 30 秒。",
-      "title-additional-settings": "附加設定",
-      "title-request-timeout": "請求逾時"
+      "description-additional-settings": "",
+      "title-additional-settings": "附加設定"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "備用憑證已停用。由於使用者型驗證本質上僅支援範圍內的使用者請求，因此警報、已記錄查詢或報告等功能將無法按預期運作。請查看<2>文件</2>，了解更多詳細資訊。",

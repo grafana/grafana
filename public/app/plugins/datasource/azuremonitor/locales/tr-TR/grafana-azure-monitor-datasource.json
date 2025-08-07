@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Temel Günlükleri Etkinleştir"
     },
     "config-editor": {
-      "description-additional-settings": "Ek ayarlar, veri kaynağınız üzerinde daha fazla kontrol sağlamak için yapılandırılabilen isteğe bağlı ayarlardır. Buna Güvenli Socks Proxy de dâhildir.",
-      "description-request-timeout": "İstek zaman aşımı süresini saniye cinsinden ayarlayın. Varsayılan 30 saniye.",
-      "title-additional-settings": "Ek ayarlar",
-      "title-request-timeout": "İstek Zaman Aşımı"
+      "description-additional-settings": "",
+      "title-additional-settings": "Ek ayarlar"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Yedek kimlik bilgileri devre dışı bırakıldı. Kullanıcı tabanlı kimlik doğrulama doğası gereği yalnızca bir kullanıcının dâhil olduğu istekleri desteklediğinden uyarı, kayıtlı sorgular veya raporlama gibi özellikler beklendiği gibi çalışmayabilir. Daha fazla ayrıntı için lütfen <2>belgeleri</2> inceleyin.",
