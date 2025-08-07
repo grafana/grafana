@@ -66,11 +66,8 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     }
   };
 
-  const handleFinish = () => {
-    onDismiss?.();
-  };
-
-  const disableBtn = isCreatingJob || job?.status?.state === 'working' || job?.status?.state === 'pending';
+  const disableBtn =
+    isCreatingJob || job?.status?.state === 'working' || job?.status?.state === 'pending' || hasSubmitted;
 
   return (
     <FormProvider {...methods}>
@@ -84,35 +81,27 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           </Box>
 
           {hasSubmitted && job ? (
-            <>
-              <JobStatus watch={job} jobType="delete" />
-              <Button onClick={handleFinish}>
-                <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-done">Done</Trans>
-              </Button>
-            </>
+            <JobStatus watch={job} jobType="delete" />
           ) : (
-            <>
-              <ResourceEditFormSharedFields
-                resourceType="folder"
-                isNew={false}
-                workflow={workflow}
-                workflowOptions={workflowOptions}
-                repository={repository}
-                hidePath
-              />
-
-              <Stack gap={2}>
-                <Button type="submit" disabled={disableBtn} variant="destructive">
-                  {job?.status?.state === 'working' || job?.status?.state === 'pending'
-                    ? t('browse-dashboards.bulk-delete-resources-form.button-deleting', 'Deleting...')
-                    : t('browse-dashboards.bulk-delete-resources-form.button-delete', 'Delete')}
-                </Button>
-                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={disableBtn}>
-                  <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
-                </Button>
-              </Stack>
-            </>
+            <ResourceEditFormSharedFields
+              resourceType="folder"
+              isNew={false}
+              workflow={workflow}
+              workflowOptions={workflowOptions}
+              repository={repository}
+              hidePath
+            />
           )}
+          <Stack gap={2}>
+            <Button type="submit" disabled={disableBtn} variant="destructive">
+              {job?.status?.state === 'working' || job?.status?.state === 'pending'
+                ? t('browse-dashboards.bulk-delete-resources-form.button-deleting', 'Deleting...')
+                : t('browse-dashboards.bulk-delete-resources-form.button-delete', 'Delete')}
+            </Button>
+            <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
+              <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
+            </Button>
+          </Stack>
         </Stack>
       </form>
     </FormProvider>
