@@ -263,6 +263,7 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	}
 
 	if ks.bearerTokenPath != "" {
+		// Token should always be read before fetching the JWKS as it may rotate in place (e.g. shortlived kubernetes serviceaccount tokens)
 		token, err := getBearerToken(ks.bearerTokenPath)
 		if err != nil {
 			return jwks, err
