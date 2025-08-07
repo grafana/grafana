@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -47,7 +48,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				},
 			},
 		}
-		quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+		quotaService := quotaimpl.ProvideService(sqlStore, configprovider.ProvideService(cfg))
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
@@ -453,7 +454,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
-				quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+				quotaService := quotaimpl.ProvideService(sqlStore, configprovider.ProvideService(cfg))
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
@@ -609,7 +610,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), &team2Cmd)
 		require.NoError(t, errCreateTeam)
 
-		quotaService := quotaimpl.ProvideService(store, cfg)
+		quotaService := quotaimpl.ProvideService(store, configprovider.ProvideService(cfg))
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
@@ -682,7 +683,6 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			expectedNumUsers: 0,
 		},
 		{
-
 			desc: "should return some team members",
 			query: &team.GetTeamMembersQuery{
 				OrgID: testOrgID,

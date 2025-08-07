@@ -29,6 +29,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -95,7 +96,7 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 		Namespacer: request.GetNamespaceMapper(nil),
 	}
 
-	quotaService := quotaimpl.ProvideService(c.env.SQLStore, c.env.Cfg)
+	quotaService := quotaimpl.ProvideService(c.env.SQLStore, configprovider.ProvideService(c.env.Cfg))
 	orgSvc, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
@@ -375,8 +376,10 @@ type K8sResponse[T any] struct {
 	Status   *metav1.Status
 }
 
-type AnyResourceResponse = K8sResponse[AnyResource]
-type AnyResourceListResponse = K8sResponse[AnyResourceList]
+type (
+	AnyResourceResponse     = K8sResponse[AnyResource]
+	AnyResourceListResponse = K8sResponse[AnyResourceList]
+)
 
 func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
@@ -799,7 +802,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}
 
 		if write {
-			e2 := os.WriteFile(fpath, []byte(pretty), 0644)
+			e2 := os.WriteFile(fpath, []byte(pretty), 0o644)
 			if e2 != nil {
 				t.Errorf("error writing file: %s", e2.Error())
 			}

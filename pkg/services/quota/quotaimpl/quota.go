@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // tracer is the global tracer for the quota service. Tracer pulls the globally
@@ -47,7 +46,7 @@ func (s *serviceDisabled) RegisterQuotaReporter(e *quota.NewUsageReporter) error
 
 type service struct {
 	store  store
-	cfg    *setting.Cfg
+	cfg    configprovider.ConfigProvider
 	logger log.Logger
 
 	mutex     sync.RWMutex
@@ -62,7 +61,7 @@ func ProvideService(db db.DB, configProvider configprovider.ConfigProvider) quot
 	logger := log.New("quota_service")
 	s := service{
 		store:         &sqlStore{db: db, logger: logger},
-		cfg:           configProvider.Get(context.Background()),
+		cfg:           configProvider,
 		logger:        logger,
 		reporters:     make(map[quota.TargetSrv]quota.UsageReporterFunc),
 		defaultLimits: &quota.Map{},
@@ -77,7 +76,7 @@ func ProvideService(db db.DB, configProvider configprovider.ConfigProvider) quot
 }
 
 func (s *service) IsDisabled() bool {
-	return !s.cfg.Quota.Enabled
+	return !s.cfg.Get(context.Background()).Quota.Enabled
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context

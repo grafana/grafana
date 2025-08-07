@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-openapi-client-go/models"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -32,7 +33,7 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	quotaService := quotaimpl.ProvideService(env.SQLStore, env.Cfg)
+	quotaService := quotaimpl.ProvideService(env.SQLStore, configprovider.ProvideService(env.Cfg))
 	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
 	require.NoError(t, err)
 
@@ -138,7 +139,7 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	quotaService := quotaimpl.ProvideService(env.SQLStore, env.Cfg)
+	quotaService := quotaimpl.ProvideService(env.SQLStore, configprovider.ProvideService(env.Cfg))
 	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
 	require.NoError(t, err)
 
@@ -357,7 +358,7 @@ func createUserInOrg(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUs
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
+	quotaService := quotaimpl.ProvideService(db, configprovider.ProvideService(cfg))
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

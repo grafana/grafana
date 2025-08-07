@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -105,7 +106,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	}
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	quotaService := ProvideService(sqlStore, cfg)
+	quotaService := ProvideService(sqlStore, configprovider.ProvideService(cfg))
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
@@ -247,7 +248,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			}()
 			cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{Enabled: util.Pointer(false)}
 
-			quotaSrv := ProvideService(sqlStore, cfg)
+			quotaSrv := ProvideService(sqlStore, configprovider.ProvideService(cfg))
 			q, err := getQuotaBySrvTargetScope(t, quotaSrv, ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, quota.OrgScope, &quota.ScopeParameters{OrgID: o.ID})
 
 			require.NoError(t, err)

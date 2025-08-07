@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,8 +11,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"bytes"
-
+	"github.com/grafana/grafana/pkg/configprovider"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -180,7 +180,7 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 	})
 
 	t.Run("org separation", func(t *testing.T) {
-		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(store, cfg))
+		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(store, configprovider.ProvideService(cfg)))
 		require.NoError(t, err)
 		newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "Test Org 2"})
 		require.NoError(t, err)
@@ -386,7 +386,7 @@ func TestIntegration_NamespacingForPrometheusRules(t *testing.T) {
 	})
 
 	t.Run("should maintain org separation for Prometheus rules", func(t *testing.T) {
-		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(store, cfg))
+		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(store, configprovider.ProvideService(cfg)))
 		require.NoError(t, err)
 		newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "Prometheus Test Org 2"})
 		require.NoError(t, err)

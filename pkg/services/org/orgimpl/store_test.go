@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -108,7 +109,8 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 				City:     "city",
 				ZipCode:  "zip",
 				State:    "state",
-				Country:  "country"},
+				Country:  "country",
+			},
 		})
 		require.NoError(t, err)
 		orga, err := orgStore.Get(context.Background(), ac2.ID)
@@ -1039,7 +1041,7 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
+	quotaService := quotaimpl.ProvideService(store, configprovider.ProvideService(cfg))
 	orgService, err := ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
