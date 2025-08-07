@@ -1652,6 +1652,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:        "postgresDSUsePGX",
