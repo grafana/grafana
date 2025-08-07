@@ -7,14 +7,40 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/nanogit"
+)
+
+// ErrNothingToPush indicates that there are no changes to push to the remote repository
+var ErrNothingToPush = errors.New("nothing to push")
+
+// ErrNothingToCommit indicates that there are no changes to commit
+var ErrNothingToCommit = errors.New("nothing to commit")
+
+//go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
+type WrapWithStageFn func(ctx context.Context, repo Repository, stageOptions StageOptions, fn func(repo Repository, staged bool) error) error
+
+// StageMode defines the staging and commit behavior
+type StageMode int
+
+const (
+	// StageModeCommitOnEach commits each file operation individually (default)
+	StageModeCommitOnEach StageMode = iota
+	// StageModeCommitOnlyOnce stages all changes and commits them all at once on push
+	StageModeCommitOnlyOnce
+	// StageModeCommitAndPushOnEach commits and pushes each file operation individually
+	StageModeCommitAndPushOnEach
 )
 
 type StageOptions struct {
+	// Ref custom ref
+	Ref string
 	// Push on every write
 	PushOnWrites bool
+	// Mode defines the staging and commit behavior
+	Mode StageMode
 	// Maximum time allowed for clone operation in seconds (0 means no limit)
 	Timeout time.Duration
+	// Commit message to use when Mode is StageModeCommitOnlyOnce
+	CommitOnlyOnceMessage string
 }
 
 //go:generate mockery --name StageableRepository --structname MockStageableRepository --inpackage --filename stageable_repository_mock.go --with-expecter
@@ -62,7 +88,7 @@ func WrapWithStageAndPushIfPossible(
 	}
 
 	if err = staged.Push(ctx); err != nil {
-		if errors.Is(err, nanogit.ErrNothingToPush) {
+		if errors.Is(err, ErrNothingToPush) || errors.Is(err, ErrNothingToCommit) {
 			return nil // OK, already pushed
 		}
 		return fmt.Errorf("wrapped push error: %w", err)

@@ -18,6 +18,7 @@ interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   marginRight?: string;
   isPinned: boolean;
   showValueScroll?: boolean;
+  isHiddenFromViz?: boolean;
 }
 
 enum LabelValueTypes {
@@ -41,6 +42,7 @@ export const VizTooltipRow = ({
   isPinned,
   lineStyle,
   showValueScroll,
+  isHiddenFromViz,
 }: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
@@ -132,7 +134,12 @@ export const VizTooltipRow = ({
       {(color || label) && (
         <div className={styles.valueWrapper}>
           {color && colorPlacement === ColorPlacement.first && (
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} lineStyle={lineStyle} />
+            <VizTooltipColorIndicator
+              color={color}
+              colorIndicator={colorIndicator}
+              lineStyle={lineStyle}
+              isHollow={isHiddenFromViz}
+            />
           )}
           {!isPinned ? (
             <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>

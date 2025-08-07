@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
@@ -8,17 +9,20 @@ import { useHasClonedParents } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { getIsLazy } from '../layouts-shared/utils';
 
 import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
-  const { children, isHidden, isLazy } = model.useState();
+  const { children, isHidden } = model.useState();
   const hasClonedParents = useHasClonedParents(model);
   const styles = useStyles2(getStyles, model.state);
-  const { layoutOrchestrator, isEditing } = useDashboardState(model);
+  const { layoutOrchestrator, isEditing, preload } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen } = layoutManager.useState();
+
+  const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
   if (isHidden || !layoutOrchestrator) {
     return null;

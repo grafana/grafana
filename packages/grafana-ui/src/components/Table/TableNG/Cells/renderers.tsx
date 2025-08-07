@@ -11,7 +11,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
-import { JSONCell } from './JSONCell';
+import { MarkdownCell } from './MarkdownCell';
 import { PillCell } from './PillCell';
 import { SparklineCell } from './SparklineCell';
 
@@ -42,10 +42,6 @@ const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
     theme={props.theme}
     width={props.width}
   />
-);
-
-const JSON_RENDERER: TableCellRenderer = (props) => (
-  <JSONCell justifyContent={props.justifyContent} value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
 const GEO_RENDERER: TableCellRenderer = (props) => (
@@ -83,10 +79,14 @@ const CUSTOM_RENDERER: TableCellRenderer = (props) => {
   return <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />;
 };
 
+const MARKDOWN_RENDERER: TableCellRenderer = (props) => (
+  <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
+);
+
 const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.Sparkline]: SPARKLINE_RENDERER,
   [TableCellDisplayMode.Gauge]: GAUGE_RENDERER,
-  [TableCellDisplayMode.JSONView]: JSON_RENDERER,
+  [TableCellDisplayMode.JSONView]: AUTO_RENDERER,
   [TableCellDisplayMode.Image]: IMAGE_RENDERER,
   [TableCellDisplayMode.DataLinks]: DATA_LINKS_RENDERER,
   [TableCellDisplayMode.Actions]: ACTIONS_RENDERER,
@@ -94,8 +94,15 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.ColorText]: AUTO_RENDERER,
   [TableCellDisplayMode.ColorBackground]: AUTO_RENDERER,
   [TableCellDisplayMode.Auto]: AUTO_RENDERER,
+  [TableCellDisplayMode.Markdown]: MARKDOWN_RENDERER,
   [TableCellDisplayMode.Pill]: PILL_RENDERER,
 };
+
+// TODO: come up with a more elegant way to handle this.
+const STRING_ONLY_RENDERERS = new Set<TableCellOptions['type']>([
+  TableCellDisplayMode.Markdown,
+  TableCellDisplayMode.Pill,
+]);
 
 /** @internal */
 export function getCellRenderer(field: Field, cellOptions: TableCellOptions): TableCellRenderer {
@@ -104,8 +111,7 @@ export function getCellRenderer(field: Field, cellOptions: TableCellOptions): Ta
     return getAutoRendererResult(field);
   }
 
-  // TODO: add support boolean, enum, (maybe int). but for now just string fields
-  if (cellType === TableCellDisplayMode.Pill && field.type !== FieldType.string) {
+  if (STRING_ONLY_RENDERERS.has(cellType) && field.type !== FieldType.string) {
     return AUTO_RENDERER;
   }
 
@@ -121,12 +127,7 @@ export function getAutoRendererResult(field: Field): TableCellRenderer {
     const firstValue = field.values[0];
     if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
       return SPARKLINE_RENDERER;
-    } else {
-      return JSON_RENDERER;
     }
-  }
-  if (field.type === FieldType.other) {
-    return JSON_RENDERER;
   }
   return AUTO_RENDERER;
 }

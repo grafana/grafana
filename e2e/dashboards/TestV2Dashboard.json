@@ -1,22 +1,12 @@
 {
-  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
   "kind": "Dashboard",
   "metadata": {
-    "name": "admjzp8",
-    "namespace": "default",
-    "uid": "hrbekBWXeM7nC7GtouIbcngFyuqt8Xx7KlE4AnTwV7AX",
-    "resourceVersion": "1",
+    "name": "fa400625-2a44-4add-a369-e6c972eb4bd6",
     "generation": 1,
-    "creationTimestamp": "2025-05-16T09:41:56Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "182"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:cejvsh18uudxcf",
-      "grafana.app/updatedBy": "user:cejvsh18uudxcf",
-      "grafana.app/updatedTimestamp": "2025-05-16T09:41:56Z",
-      "grafana.app/folder": ""
-    }
+    "creationTimestamp": "2025-05-27T11:40:22Z",
+    "labels": {},
+    "annotations": {}
   },
   "spec": {
     "annotations": [
@@ -24,19 +14,20 @@
         "kind": "AnnotationQuery",
         "spec": {
           "builtIn": true,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
           "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts"
+          "name": "Annotations & Alerts",
+          "query": {
+            "group": "grafana",
+            "kind": "DataQuery",
+            "spec": {},
+            "version": "v0"
+          }
         }
       }
     ],
     "cursorSync": "Off",
-    "description": "",
     "editable": true,
     "elements": {
       "panel-1": {
@@ -49,14 +40,12 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "datasource": {
-                      "type": "grafana-testdata-datasource",
-                      "uid": "PD8C576611E62080A"
-                    },
                     "hidden": false,
                     "query": {
-                      "kind": "grafana-testdata-datasource",
-                      "spec": {}
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {},
+                      "version": "v0"
                     },
                     "refId": "A"
                   }
@@ -155,14 +144,12 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "datasource": {
-                      "type": "grafana-testdata-datasource",
-                      "uid": "PD8C576611E62080A"
-                    },
                     "hidden": false,
                     "query": {
-                      "kind": "grafana-testdata-datasource",
-                      "spec": {}
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {},
+                      "version": "v0"
                     },
                     "refId": "A"
                   }
@@ -261,14 +248,12 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "datasource": {
-                      "type": "grafana-testdata-datasource",
-                      "uid": "PD8C576611E62080A"
-                    },
                     "hidden": false,
                     "query": {
-                      "kind": "grafana-testdata-datasource",
-                      "spec": {}
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {},
+                      "version": "v0"
                     },
                     "refId": "A"
                   }
@@ -380,7 +365,7 @@
             "spec": {
               "element": {
                 "kind": "ElementReference",
-                "name": "panel-2"
+                "name": "panel-3"
               },
               "height": 8,
               "width": 12,
@@ -393,7 +378,7 @@
             "spec": {
               "element": {
                 "kind": "ElementReference",
-                "name": "panel-3"
+                "name": "panel-2"
               },
               "height": 8,
               "width": 12,
@@ -417,7 +402,7 @@
       "timezone": "browser",
       "to": "now"
     },
-    "title": "New Test V2 Dashboard",
+    "title": "Test V2 Dashboard",
     "variables": []
   },
   "status": {}

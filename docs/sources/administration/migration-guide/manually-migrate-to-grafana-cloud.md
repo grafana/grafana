@@ -84,7 +84,6 @@ Migration of plugins is the first step when transitioning from Grafana OSS/Enter
    ```
 
    The command provided above will carry out an HTTP request to this endpoint and accomplish several tasks:
-
    - It issues a GET request to the `/api/plugins` endpoint of your Grafana OSS/Enterprise instance to retrieve a list of installed plugins.
    - It filters out the list to only include community plugins and those signed by external parties.
    - It extracts the plugin ID and version before storing them in a `plugins.json` file.
@@ -111,7 +110,6 @@ Migration of plugins is the first step when transitioning from Grafana OSS/Enter
    Replace `<GRAFANA_CLOUD_ACCESS_TOKEN>` with your Grafana Cloud Access Policy Token. To create a new one, refer to Grafana Cloud [access policies documentation](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/)
 
    This script iterates through each plugin listed in the `plugins.json` file:
-
    - It constructs a POST request for each plugin to add it to the specified Grafana Cloud instance.
    - It reports back the response for each POST request to give you confirmation or information about any issues that occurred.
 
@@ -260,7 +258,6 @@ Grizzly does not currently support Reports and Playlists as a resource, so you c
    ```
 
    The command provided above will carry out an HTTP request to this endpoint and accomplish several tasks:
-
    - It fetches an array of all the playlists available in the Grafana OSS/Enterprise instance.
    - It then iterates through each playlist to obtain the complete set of details.
    - Finally, it stores each playlist's specification as separate JSON files within a directory named `playlists`
@@ -293,7 +290,7 @@ The following customizations are available via support:
 - Enabling [feature toggles](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles).
 - [Single sign-on and team sync using SAML, LDAP, or OAuth](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication).
 - Enable [embedding Grafana dashboards in other applications](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#allow_embedding) for Grafana Cloud contracted customers.
-- [Audit logging](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/audit-grafana/) ([Usage insights logs and dashboards](https://grafana.com/docs/grafana-cloud/account-management/usage-insights/) are available in Grafana Cloud Pro and Advanced by default).
+- [Audit logging](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/audit-grafana/) ([Usage insights logs and dashboards](https://grafana.com/docs/grafana-cloud/account-management/usage-insights/) are available in select Grafana Cloud paid accounts).
 
 Note that the following custom configurations are not supported in Grafana Cloud:
 

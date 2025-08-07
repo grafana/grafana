@@ -5,6 +5,7 @@ import { PromRuleType, RulerRuleDTO, RulesSourceApplication } from 'app/types/un
 
 import { createReturnTo } from '../hooks/useReturnTo';
 import { Annotation } from '../utils/constants';
+import { groups } from '../utils/navigation';
 import { fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRuleName, getRulePluginOrigin, rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
@@ -46,11 +47,14 @@ export function DataSourceRuleListItem({
   const ruleName = rulerRule ? getRuleName(rulerRule) : rule.name;
   const labels = rulerRule ? rulerRule.labels : rule.labels;
 
+  const groupUrl = groups.detailsPageLink(rulesSource.uid, namespace.name, groupName);
+
   const commonProps: RuleListItemCommonProps = {
     name: ruleName,
     rulesSource: rulesSource,
     application: application,
     group: groupName,
+    groupUrl,
     namespace: namespace.name,
     href,
     health: rule.health,

@@ -4,15 +4,14 @@ import { memo, useMemo } from 'react';
 import { useStyles2 } from '@grafana/ui';
 
 import { getStyles } from './LogLine';
-import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface Props {
   log: LogListModel;
+  syntaxHighlighting: boolean;
 }
 
-export const LogLineDetailsLog = memo(({ log: originalLog }: Props) => {
-  const { syntaxHighlighting } = useLogListContext();
+export const LogLineDetailsLog = memo(({ log: originalLog, syntaxHighlighting }: Props) => {
   const logStyles = useStyles2(getStyles);
   const log = useMemo(() => {
     const log = originalLog.clone();

@@ -12,7 +12,7 @@ import { SegmentSection } from './SegmentSection';
 
 const AddButton = (
   <span className="gf-form-label query-part">
-    <Icon name="plus-circle" />
+    <Icon aria-label="Add" name="plus-circle" />
   </span>
 );
 

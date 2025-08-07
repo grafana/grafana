@@ -187,6 +187,19 @@ func TestJaegerClient_Search(t *testing.T) {
 		expectedError  error
 	}{
 		{
+			name: "Preserves base path in Jaeger URL",
+			query: &JaegerQuery{
+				Service: "test-service",
+			},
+			start:          1735689600000000,
+			end:            1738368000000000,
+			mockResponse:   `{"data":[{"traceID":"test-trace-id"}]}`,
+			mockStatusCode: http.StatusOK,
+			expectedURL:    "/abc/api/traces?end=1738368000000000&service=test-service&start=1735689600000000",
+			expectError:    false,
+			expectedError:  nil,
+		},
+		{
 			name: "Successful search with all parameters",
 			query: &JaegerQuery{
 				Service:     "test-service",
@@ -245,6 +258,11 @@ func TestJaegerClient_Search(t *testing.T) {
 			settings := backend.DataSourceInstanceSettings{
 				URL: server.URL,
 			}
+
+			if tt.name == "Preserves base path in Jaeger URL" {
+				settings.URL = server.URL + "/abc"
+			}
+
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 			traces, err := client.Search(tt.query, tt.start, tt.end)

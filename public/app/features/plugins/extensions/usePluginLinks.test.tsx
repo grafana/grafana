@@ -1,6 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { PluginContextProvider, PluginExtensionPoints, PluginMeta, PluginType } from '@grafana/data';
+import {
+  PluginContextProvider,
+  PluginExtensionPoints,
+  PluginLoadingStrategy,
+  PluginMeta,
+  PluginType,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
@@ -95,6 +102,32 @@ describe('usePluginLinks()', () => {
         extensions: {
           exposedComponents: [],
         },
+      },
+    };
+
+    config.apps[pluginId] = {
+      id: pluginId,
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        addedFunctions: [],
+        exposedComponents: [],
+        extensionPoints: [],
       },
     };
 
@@ -214,6 +247,49 @@ describe('usePluginLinks()', () => {
 
     // Trying to render an extension point that is not defined in the plugin meta
     // (No restrictions due to isGrafanaDevMode() = false)
+    let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
+    expect(result.current.links.length).toBe(1);
+    expect(log.warning).not.toHaveBeenCalled();
+  });
+
+  // It can happen that core Grafana plugins (e.g. traces) reuse core components which implement extension points.
+  it('should not validate the extension point meta-info for core plugins', () => {
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const linkConfig = {
+      targets: extensionPointId,
+      title: '1',
+      description: '1',
+      path: `/a/${pluginId}/2`,
+    };
+
+    // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (config.apps).
+    config.apps[pluginId].extensions.addedLinks = [linkConfig];
+
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PluginContextProvider
+        meta={{
+          ...pluginMeta,
+          // The module tells if it is a core plugin
+          module: 'core:plugin/traces',
+          extensions: {
+            ...pluginMeta.extensions!,
+            // Empty list of extension points in the plugin meta (from plugin.json)
+            extensionPoints: [],
+          },
+        }}
+      >
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      </PluginContextProvider>
+    );
+
+    registries.addedLinksRegistry.register({
+      pluginId,
+      configs: [linkConfig],
+    });
+
+    // Trying to render an extension point that is not defined in the plugin meta
+    // (No restrictions due to being a core plugin)
     let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
     expect(result.current.links.length).toBe(1);
     expect(log.warning).not.toHaveBeenCalled();

@@ -64,6 +64,7 @@ const preview: Preview = {
     docs: {
       container: ThemedDocsContainer,
     },
+    a11y: { test: 'error' },
     knobs: {
       disable: true,
     },

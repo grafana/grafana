@@ -27,7 +27,7 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
     text = 'Automatic pulling disabled';
     icon = 'info-circle';
   } else if (!repo.status?.sync?.state?.length) {
-    color = 'orange';
+    color = 'darkgrey';
     text = 'Pending';
     icon = 'spinner';
     tooltip = 'Waiting for health check to run';
@@ -40,8 +40,13 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
         color = 'green';
         break;
       case 'working':
-      case 'pending':
+      case 'warning':
         color = 'orange';
+        text = 'warning';
+        icon = 'exclamation-triangle';
+        break;
+      case 'pending':
+        color = 'darkgrey';
         text = 'Pulling';
         icon = 'spinner';
         break;

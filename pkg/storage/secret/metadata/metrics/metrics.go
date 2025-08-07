@@ -25,17 +25,12 @@ type StorageMetrics struct {
 	KeeperMetadataListCount               prometheus.Counter
 	KeeperMetadataGetKeeperConfigDuration prometheus.Histogram
 
-	SecureValueMetadataCreateDuration prometheus.Histogram
-	SecureValueMetadataCreateCount    prometheus.Counter
-	SecureValueMetadataUpdateDuration prometheus.Histogram
-	SecureValueMetadataUpdateCount    prometheus.Counter
-	SecureValueMetadataDeleteDuration prometheus.Histogram
-	SecureValueMetadataDeleteCount    prometheus.Counter
+	SecureValueMetadataCreateDuration *prometheus.HistogramVec
+	SecureValueMetadataCreateCount    *prometheus.CounterVec
 	SecureValueMetadataGetDuration    prometheus.Histogram
 	SecureValueMetadataGetCount       prometheus.Counter
 	SecureValueMetadataListDuration   prometheus.Histogram
 	SecureValueMetadataListCount      prometheus.Counter
-	SecureValueGetForDecryptDuration  prometheus.Histogram
 	SecureValueSetExternalIDDuration  prometheus.Histogram
 	SecureValueSetStatusDuration      prometheus.Histogram
 
@@ -120,45 +115,19 @@ func newStorageMetrics() *StorageMetrics {
 		}),
 
 		// Secure value metrics
-		SecureValueMetadataCreateDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		SecureValueMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_create_duration_seconds",
 			Help:      "Duration of secure value metadata create operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueMetadataCreateCount: prometheus.NewCounter(prometheus.CounterOpts{
+		}, []string{"successful"}),
+		SecureValueMetadataCreateCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_create_count",
 			Help:      "Count of secure value metadata create operations",
-		}),
-		SecureValueMetadataUpdateDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_update_duration_seconds",
-			Help:      "Duration of secure value metadata update operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueMetadataUpdateCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_update_count",
-			Help:      "Count of secure value metadata update operations",
-		}),
-		SecureValueMetadataDeleteDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_delete_duration_seconds",
-			Help:      "Duration of secure value metadata delete operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueMetadataDeleteCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_delete_count",
-			Help:      "Count of secure value metadata delete operations",
-		}),
+		}, []string{"successful"}),
 		SecureValueMetadataGetDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
@@ -184,13 +153,6 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_list_count",
 			Help:      "Count of secure value metadata list operations",
-		}),
-		SecureValueGetForDecryptDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_get_for_decrypt_duration_seconds",
-			Help:      "Duration of secure value get for decrypt operations",
-			Buckets:   prometheus.DefBuckets,
 		}),
 		SecureValueSetExternalIDDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
@@ -249,15 +211,10 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.KeeperMetadataGetKeeperConfigDuration,
 				m.SecureValueMetadataCreateDuration,
 				m.SecureValueMetadataCreateCount,
-				m.SecureValueMetadataUpdateDuration,
-				m.SecureValueMetadataUpdateCount,
-				m.SecureValueMetadataDeleteDuration,
-				m.SecureValueMetadataDeleteCount,
 				m.SecureValueMetadataGetDuration,
 				m.SecureValueMetadataGetCount,
 				m.SecureValueMetadataListDuration,
 				m.SecureValueMetadataListCount,
-				m.SecureValueGetForDecryptDuration,
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
 				m.DecryptDuration,

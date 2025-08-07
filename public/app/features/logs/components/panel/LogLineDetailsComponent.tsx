@@ -25,7 +25,8 @@ interface LogLineDetailsComponentProps {
 }
 
 export const LogLineDetailsComponent = memo(({ focusLogLine, log, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
+  const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
+    useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -111,7 +112,7 @@ export const LogLineDetailsComponent = memo(({ focusLogLine, log, logs }: LogLin
           isOpen={logLineOpen}
           onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
         >
-          <LogLineDetailsLog log={log} />
+          <LogLineDetailsLog log={log} syntaxHighlighting={syntaxHighlighting ?? true} />
         </ControlledCollapse>
         {displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse

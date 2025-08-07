@@ -64,6 +64,9 @@ func setupAMTest(t *testing.T) *alertmanager {
 }
 
 func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	am := setupAMTest(t)
 	require.False(t, am.Ready())
 }

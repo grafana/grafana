@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -31,10 +33,12 @@ func TestMain(m *testing.M) {
 func TestShortURL(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
+		DisableAnonymous:  true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
+	// Test that the endpoint is accessible with authentication.
 	username, password := "viewer", "viewer"
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
@@ -50,7 +54,7 @@ func TestShortURL(t *testing.T) {
 	defer func() {
 		_ = res.Body.Close()
 	}()
-	require.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
@@ -67,8 +71,8 @@ func TestShortURL(t *testing.T) {
 	defer func() {
 		_ = res.Body.Close()
 	}()
-	require.Equal(t, "http://localhost:3000/explore", res.Header.Get("Location"))
-	require.Equal(t, http.StatusFound, res.StatusCode)
+	assert.Equal(t, "http://localhost:3000/explore", res.Header.Get("Location"))
+	assert.Equal(t, http.StatusFound, res.StatusCode)
 
 	// If the go-to does not exist, it should redirect to the home page and return 308.
 	res, err = c.get("/goto/DoesNotExist")
@@ -76,8 +80,28 @@ func TestShortURL(t *testing.T) {
 	defer func() {
 		_ = res.Body.Close()
 	}()
-	require.Equal(t, "http://localhost:3000/", res.Header.Get("Location"))
-	require.Equal(t, http.StatusPermanentRedirect, res.StatusCode)
+	assert.Equal(t, "http://localhost:3000/", res.Header.Get("Location"))
+	assert.Equal(t, http.StatusPermanentRedirect, res.StatusCode)
+
+	// Create a client that does not have authentication.
+	notLoggedInClient := client(grafanaListedAddr, "", "")
+	// Test that the short-urls endpoint is not accessible without authentication.
+	res, err = notLoggedInClient.post("/api/short-urls", bytes.NewReader([]byte(`{"path":"explore"}`)))
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	defer func() {
+		_ = res.Body.Close()
+	}()
+
+	// If the user is not logged in, it should redirect to the login page and return 302.
+	res, err = notLoggedInClient.get(fmt.Sprintf("/goto/%s", resParsed.UID))
+	require.NoError(t, err)
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	expectedRedirect := "/login?redirectTo=" + url.QueryEscape("/goto/"+resParsed.UID)
+	assert.Equal(t, expectedRedirect, res.Header.Get("Location"))
+	assert.Equal(t, http.StatusFound, res.StatusCode)
 }
 
 func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {

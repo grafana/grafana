@@ -31,6 +31,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))

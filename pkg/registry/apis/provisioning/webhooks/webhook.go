@@ -14,8 +14,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"

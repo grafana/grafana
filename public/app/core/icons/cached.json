@@ -74,6 +74,8 @@
   "unicons/file-alt",
   "unicons/file-blank",
   "unicons/filter",
+  "unicons/filter-plus",
+  "unicons/filter-minus",
   "unicons/folder",
   "unicons/folder-open",
   "unicons/folder-plus",
@@ -180,5 +182,7 @@
   "unicons/ai-sparkle",
   "unicons/dollar-alt",
   "unicons/window-grid",
-  "unicons/ban"
+  "unicons/ban",
+  "unicons/git",
+  "unicons/bitbucket"
 ]

@@ -161,12 +161,8 @@ func NewMultiOrgAlertmanager(
 		peer:                        &NilPeer{},
 	}
 
-	if cfg.UnifiedAlerting.SkipClustering {
-		l.Info("Skipping setting up clustering for MOA")
-	} else {
-		if err := moa.setupClustering(cfg); err != nil {
-			return nil, err
-		}
+	if err := moa.setupClustering(cfg); err != nil {
+		return nil, err
 	}
 
 	// Set up the default per tenant Alertmanager factory.

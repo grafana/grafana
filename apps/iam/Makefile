@@ -10,12 +10,12 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 		--grouping=group \
 		--defencoding=none \
 		--noschemasinmanifest \
-		--postprocess \
+		--postprocess
 
 .PHONY: deps
 deps:
 	@go mod tidy
-	@go work vendor
+	@GOWORK=off go mod vendor
 
 .PHONY: build
 build: build/operator
@@ -25,8 +25,8 @@ build/operator:
 	docker build -t $(OPERATOR_DOCKERIMAGE) -f cmd/operator/Dockerfile .
 
 .PHONY: local/up
-local/up: 
-	@./local/scripts/cluster.sh create "local/generated/k3d-config.json"
+local/up:
+	@./local/scripts/cluster.sh create "local/k3d-config.json"
 	@cd local && tilt up
 
 .PHONY: local/generate
@@ -44,7 +44,7 @@ local/deploy_plugin:
 	-tilt enable grafana
 
 .PHONY: local/push_operator
-local/push_operator:
+local/push_operator: build/operator
 	# Tag the docker image as part of localhost, which is what the generated k8s uses to avoid confusion with the real operator image
 	@docker tag "$(OPERATOR_DOCKERIMAGE):latest" "localhost/$(OPERATOR_DOCKERIMAGE):latest"
 	@./local/scripts/push_image.sh "localhost/$(OPERATOR_DOCKERIMAGE):latest"

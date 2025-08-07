@@ -492,16 +492,16 @@ export class PrometheusDatasource
       return this.directAccessError();
     }
 
-    let fullOrPartialRequest: DataQueryRequest<PromQuery>;
-    let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
-    const hasInstantQuery = request.targets.some((target) => target.instant);
+    // Use incremental query only if enabled and no instant queries or no $__range variables
+    const shouldUseIncrementalQuery =
+      this.hasIncrementalQuery && !request.targets.some((target) => target.instant || target.expr.includes('$__range'));
 
-    // Don't cache instant queries
-    if (this.hasIncrementalQuery && !hasInstantQuery) {
+    let fullOrPartialRequest: DataQueryRequest<PromQuery> = request;
+    let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
+
+    if (shouldUseIncrementalQuery) {
       requestInfo = this.cache.requestInfo(request);
       fullOrPartialRequest = requestInfo.requests[0];
-    } else {
-      fullOrPartialRequest = request;
     }
 
     const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));

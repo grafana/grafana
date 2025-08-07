@@ -10,9 +10,16 @@ export default [
     input: entryPoint,
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-alerting')],
+    treeshake: false,
   },
   {
     input: 'src/unstable.ts',
+    plugins,
+    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-alerting')],
+    treeshake: false,
+  },
+  {
+    input: 'src/testing.ts',
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-alerting')],
   },

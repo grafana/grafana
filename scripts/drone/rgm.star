@@ -378,6 +378,5 @@ def rgm():
         rgm_main_pipeline() +
         rgm_tag_pipeline() +
         rgm_version_branch_pipeline() +
-        rgm_nightly_pipeline() +
         rgm_promotion_pipeline()
     )

@@ -29,7 +29,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Pin Go version to mod file
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -51,7 +51,7 @@ jobs:
         run: yarn install --immutable
       - name: Install Cypress dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
+        uses: cypress-io/github-action@b8ba51a856ba5f4c15cf39007636d4ab04f23e3c
         with:
           runTests: false
       - name: Cache Grafana Build and Dependencies

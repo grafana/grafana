@@ -249,6 +249,9 @@ func TestIntegrationKVStore(t *testing.T) {
 }
 
 func TestIntegrationGetItems(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	kv := createTestableKVStore(t)
 
 	ctx := context.Background()

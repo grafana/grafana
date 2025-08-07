@@ -42,16 +42,12 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 1. Note the **Application ID**. This is the OAuth client ID.
 
 1. Click **Endpoints** from the top menu.
-
    - Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
    - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
 1. Click **Certificates & secrets** in the side menu, then add a new entry under the supported client authentication option you want to use. The following are the supported client authentication options with their respective configuration steps.
-
    - **Client secrets**
-
      1. Add a new entry under **Client secrets** with the following configuration.
-
         - Description: Grafana OAuth 2.0
         - Expires: Select an expiration period
 
@@ -60,16 +56,12 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
      {{< admonition type="note" >}}
      Make sure that you copy the string in the **Value** field, rather than the one in the **Secret ID** field.
      {{< /admonition >}}
-
      1. You must have set `client_authentication` under `[auth.azuread]` to `client_secret_post` in the Grafana server configuration for this to work.
 
    - **Federated credentials**
-
      - **_Managed Identity_**
-
        1. Refer to [Configure an application to trust a managed identity (preview)](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-config-app-trust-managed-identity?tabs=microsoft-entra-admin-center) for a complete guide on setting up a managed identity as a federated credential.
           Add a new entry under Federated credentials with the following configuration.
-
           - Federated credential scenario: Select **Other issuer**.
           - Issuer: The OAuth 2.0 / OIDC issuer URL of the Microsoft Entra ID authority. For example: `https://login.microsoftonline.com/{tenantID}/v2.0`.
           - Subject identifier: The Object (Principal) ID GUID of the Managed Identity.
@@ -88,10 +80,8 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
        {{< /admonition >}}
 
      - **_Workload Identity (K8s/AKS)_**
-
        1. Refer to [Federated identity credential for an Azure AD application](https://azure.github.io/azure-workload-identity/docs/topics/federated-identity-credential.html#azure-portal-ui) for a complete guide on setting up a federated credential for workload identity.
           Add a new entry under Federated credentials with the following configuration.
-
           - Federated credential scenario: Select **Kubernetes accessing Azure resources**.
           - [Cluster issuer URL](https://learn.microsoft.com/en-us/azure/aks/use-oidc-issuer#get-the-oidc-issuer-url): The OIDC issuer URL that your cluster is integrated with. For example: `https://{region}.oic.prod-aks.azure.com/{tenant_id}/{uuid}`.
           - Namespace: Namespace of your Grafana deployment. For example: `grafana`.
@@ -141,7 +131,6 @@ This section describes setting up basic application roles for Grafana within the
 1. Click **App roles** and then **Create app role**.
 
 1. Define a role corresponding to each Grafana role: Viewer, Editor, and Admin.
-
    1. Choose a **Display name** for the role. For example, "Grafana Editor".
 
    1. Set the **Allowed member types** to **Users/Groups**.
@@ -425,7 +414,7 @@ auto_login = true
 ### Team Sync
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 With Team Sync you can map your Entra ID groups to teams in Grafana so that your users will automatically be added to

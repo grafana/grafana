@@ -4,12 +4,18 @@ package common
 // in the table such as colored text, JSON, gauge, etc.
 // The color-background-solid, gradient-gauge, and lcd-gauge
 // modes are deprecated in favor of new cell subOptions
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "data-links" | "custom" | "actions" | "pill" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|DataLinks|Custom|Actions|Pill")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "data-links" | "custom" | "actions" | "pill" | "markdown" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|DataLinks|Custom|Actions|Pill|Markdown")
 
 // Display mode to the "Colored Background" display
 // mode for table cells. Either displays a solid color (basic mode)
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
+
+// Whenever we add text wrapping, we should add all text wrapping options at once
+TableWrapTextOptions: {
+  // if true, wrap the text content of the cell
+  wrapText?: bool
+} @cuetsy(kind="interface")
 
 // Sort by field state
 TableSortByFieldState: {
@@ -31,14 +37,12 @@ TableFooterOptions: {
 // Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
-	wrapText?: bool
-} @cuetsy(kind="interface")
+} & TableWrapTextOptions @cuetsy(kind="interface")
 
 // Colored text cell options
 TableColorTextCellOptions: {
 	type: TableCellDisplayMode & "color-text"
-	wrapText?: bool
-} @cuetsy(kind="interface")
+} & TableWrapTextOptions @cuetsy(kind="interface")
 
 // Json view cell options
 TableJsonViewCellOptions: {
@@ -55,7 +59,7 @@ TableImageCellOptions: {
 // Show data links in the cell
 TableDataLinksCellOptions: {
 	type: TableCellDisplayMode & "data-links"
-} @cuetsy(kind="interface")
+} & TableWrapTextOptions @cuetsy(kind="interface")
 
 // Show actions in the cell
 TableActionsCellOptions: {
@@ -81,7 +85,15 @@ TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
 	mode?: TableCellBackgroundDisplayMode
 	applyToRow?: bool
-	wrapText?: bool
+} & TableWrapTextOptions @cuetsy(kind="interface")
+
+TablePillCellOptions: {
+  type: TableCellDisplayMode & "pill"
+} & TableWrapTextOptions @cuetsy(kind="interface")
+
+TableMarkdownCellOptions: {
+	type: TableCellDisplayMode & "markdown"
+  dynamicHeight?: bool
 } @cuetsy(kind="interface")
 
 // Height of a table cell
@@ -89,7 +101,7 @@ TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
-TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions @cuetsy(kind="type")
+TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions @cuetsy(kind="type")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.
@@ -107,8 +119,4 @@ TableFieldOptions: {
 	hideHeader?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
-} @cuetsy(kind="interface")
-
-TablePillCellOptions: {
-  type: TableCellDisplayMode & "pill"
 } @cuetsy(kind="interface")

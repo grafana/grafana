@@ -19,7 +19,6 @@ if ! tilt version &> /dev/null; then
     IS_OKAY=false
 fi
 
-
 if [ "$IS_OKAY" = false ]; then
     echo "Please fix the above errors before continuing"
     exit 1

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/plugin/kubeconfig"
 	"github.com/grafana/grafana-app-sdk/simple"
 )
 
@@ -17,12 +18,18 @@ const (
 type Config struct {
 	OTelConfig    simple.OpenTelemetryConfig
 	WebhookServer WebhookServerConfig
+	KubeConfig    *kubeconfig.NamespacedConfig
+	ZanzanaClient ZanzanaClientConfig
 }
 
 type WebhookServerConfig struct {
 	Port        int
 	TLSCertPath string
 	TLSKeyPath  string
+}
+
+type ZanzanaClientConfig struct {
+	Addr string
 }
 
 func LoadConfigFromEnv() (*Config, error) {
@@ -70,6 +77,37 @@ func LoadConfigFromEnv() (*Config, error) {
 
 	cfg.WebhookServer.TLSCertPath = os.Getenv("WEBHOOK_CERT_PATH")
 	cfg.WebhookServer.TLSKeyPath = os.Getenv("WEBHOOK_KEY_PATH")
+
+	// Load the kube config
+	kubeConfigFile := os.Getenv("KUBE_CONFIG_FILE")
+	if kubeConfigFile != "" {
+		kubeConfig, err := LoadKubeConfigFromFile(kubeConfigFile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to load kubernetes configuration from file '%s': %w", kubeConfigFile, err)
+		}
+		cfg.KubeConfig = kubeConfig
+	} else if folderAppURL := os.Getenv("FOLDER_APP_URL"); folderAppURL != "" {
+		exchangeUrl := os.Getenv("AUTH_TOKEN_EXCHANGE_URL")
+		authToken := os.Getenv("AUTH_TOKEN")
+		namespace := os.Getenv("FOLDER_APP_NAMESPACE")
+		if exchangeUrl == "" || authToken == "" {
+			return nil, fmt.Errorf("AUTH_TOKEN_EXCHANGE_URL and AUTH_TOKEN must be set when FOLDER_APP_URL is set")
+		}
+
+		kubeConfig, err := LoadKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken, namespace)
+		if err != nil {
+			return nil, fmt.Errorf("unable to load kubernetes configuration from folder app URL '%s': %w", folderAppURL, err)
+		}
+		cfg.KubeConfig = kubeConfig
+	} else {
+		kubeConfig, err := LoadInClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to load in-cluster kubernetes configuration: %w", err)
+		}
+		cfg.KubeConfig = kubeConfig
+	}
+
+	cfg.ZanzanaClient.Addr = os.Getenv("ZANZANA_ADDR")
 
 	return &cfg, nil
 }

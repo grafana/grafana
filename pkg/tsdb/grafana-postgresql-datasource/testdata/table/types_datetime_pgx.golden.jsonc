@@ -1,0 +1,214 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "executedQueryString": "SELECT * FROM tbl"
+//  }
+//  Name: 
+//  Dimensions: 12 Fields by 2 Rows
+//  +--------------------------------------+--------------------------------------+----------------------------------------+----------------------------------------+-------------------------------+-------------------------------+-----------------+-----------------+--------------------+--------------------+-----------------+-----------------+
+//  | Name: ts                             | Name: tsnn                           | Name: tsz                              | Name: tsznn                            | Name: d                       | Name: dnn                     | Name: t         | Name: tnn       | Name: tz           | Name: tznn         | Name: i         | Name: inn       |
+//  | Labels:                              | Labels:                              | Labels:                                | Labels:                                | Labels:                       | Labels:                       | Labels:         | Labels:         | Labels:            | Labels:            | Labels:         | Labels:         |
+//  | Type: []*time.Time                   | Type: []*time.Time                   | Type: []*time.Time                     | Type: []*time.Time                     | Type: []*time.Time            | Type: []*time.Time            | Type: []*string | Type: []*string | Type: []*string    | Type: []*string    | Type: []*string | Type: []*string |
+//  +--------------------------------------+--------------------------------------+----------------------------------------+----------------------------------------+-------------------------------+-------------------------------+-----------------+-----------------+--------------------+--------------------+-----------------+-----------------+
+//  | 2023-11-15 05:06:07.123456 +0000 UTC | 2023-11-15 05:06:08.123456 +0000 UTC | 2021-07-22 11:22:33.654321 +0000 +0000 | 2021-07-22 11:22:34.654321 +0000 +0000 | 2023-12-20 00:00:00 +0000 UTC | 2023-12-21 00:00:00 +0000 UTC | 12:34:56.234567 | 12:34:57.234567 | 23:12:36.765432+01 | 23:12:37.765432+01 | 00:00:00.987654 | 00:00:00.887654 |
+//  | null                                 | 2023-11-15 05:06:09.123456 +0000 UTC | null                                   | 2021-07-22 11:22:35.654321 +0000 +0000 | null                          | 2023-12-22 00:00:00 +0000 UTC | null            | 12:34:58.234567 | null               | 23:12:38.765432+01 | null            | 00:00:00.787654 |
+//  +--------------------------------------+--------------------------------------+----------------------------------------+----------------------------------------+-------------------------------+-------------------------------+-----------------+-----------------+--------------------+--------------------+-----------------+-----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "executedQueryString": "SELECT * FROM tbl"
+        },
+        "fields": [
+          {
+            "name": "ts",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "tsnn",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "tsz",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "tsznn",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "d",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "dnn",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "t",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "tnn",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "tz",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "tznn",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "i",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "inn",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1700024767123,
+            null
+          ],
+          [
+            1700024768123,
+            1700024769123
+          ],
+          [
+            1626952953654,
+            null
+          ],
+          [
+            1626952954654,
+            1626952955654
+          ],
+          [
+            1703030400000,
+            null
+          ],
+          [
+            1703116800000,
+            1703203200000
+          ],
+          [
+            "12:34:56.234567",
+            null
+          ],
+          [
+            "12:34:57.234567",
+            "12:34:58.234567"
+          ],
+          [
+            "23:12:36.765432+01",
+            null
+          ],
+          [
+            "23:12:37.765432+01",
+            "23:12:38.765432+01"
+          ],
+          [
+            "00:00:00.987654",
+            null
+          ],
+          [
+            "00:00:00.887654",
+            "00:00:00.787654"
+          ]
+        ],
+        "nanos": [
+          [
+            456000,
+            0
+          ],
+          [
+            456000,
+            456000
+          ],
+          [
+            321000,
+            0
+          ],
+          [
+            321000,
+            321000
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    }
+  ]
+}

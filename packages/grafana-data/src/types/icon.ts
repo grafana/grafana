@@ -120,6 +120,8 @@ export const availableIconsIndex = {
   'file-export': true,
   'file-landscape-alt': true,
   filter: true,
+  'filter-plus': true,
+  'filter-minus': true,
   flip: true,
   folder: true,
   font: true,
@@ -274,6 +276,8 @@ export const availableIconsIndex = {
   attach: true,
   'dollar-alt': true,
   'ai-sparkle': true,
+  bitbucket: true,
+  git: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

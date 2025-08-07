@@ -584,7 +584,7 @@
     "name": "area/public-dashboards",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/482"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {
@@ -696,7 +696,7 @@
     "name": "area/navigation",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -704,7 +704,7 @@
     "name": "area/search",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -752,7 +752,7 @@
     "name": "area/image-rendering",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/482"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {
@@ -1000,7 +1000,7 @@
     "name": "area/frontend/login",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -1032,7 +1032,7 @@
     "name": "area/panel/dashboard-list",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {

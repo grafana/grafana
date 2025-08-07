@@ -281,14 +281,14 @@ describe('v1 dashboard API', () => {
   });
 
   describe('version error handling', () => {
-    it('should throw DashboardVersionError for v2alpha1 conversion error', async () => {
+    it('should throw DashboardVersionError for v2beta1 conversion error', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
           conversion: {
             failed: true,
             error: 'backend conversion not yet implemented',
-            storedVersion: 'v2alpha1',
+            storedVersion: 'v2beta1',
           },
         },
       };

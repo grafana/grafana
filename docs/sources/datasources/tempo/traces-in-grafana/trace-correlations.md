@@ -45,7 +45,6 @@ To use trace correlations, you need:
 1. On step 1, provide a **label** for the correlation, and an optional **description**.
 
 1. On step 2, configure the correlation **target**.
-
    - Select the **Type** drop-down list and choose **Query** to link to another data source or choose **External** for a custom URL.
 
    - For a query **Target**, select the target drop-down list and select the data source that should be queried when the link is clicked. Define the target query.
@@ -68,7 +67,6 @@ To use trace correlations, you need:
    {{< figure src="/media/docs/tempo/screenshot-grafana-trace-correlations-loki-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki target using trace variables" >}}
 
 1. On step 3, configure the correlation data source:
-
    - Select your Tempo data source in the **Source** drop-down list.
 
    - Enter the trace data variable you use for the correlation in the **Results field**.
@@ -104,7 +102,6 @@ In this example, you configure trace to logs by service name and a trace identif
    {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations-example-1-step-1.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 
 1. On step 2, configure the correlation target:
-
    - Select the target type **Query** and select your Loki data source as **Target**.
 
    - Define the Loki query, using `serviceName` and `traceID` as variables derived from the span data:
@@ -116,7 +113,6 @@ In this example, you configure trace to logs by service name and a trace identif
      {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations-example-1-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 
 1. On step 3, configure the correlation source:
-
    - Select your Tempo data source as **Source**.
 
    - Use `traceID` as **Results field**.
@@ -138,7 +134,6 @@ In this example, you configure trace corrections with a custom URL.
 1. On step 1, add a new correlation with the label **Open custom URL** and an optional description.
 
 1. On step 2, configure the correlation target:
-
    - Select the target type **External**.
 
    - Define your target URL, using variables derived from the span data. In this example, we are using `serviceName` and `traceID`.
@@ -148,7 +143,6 @@ In this example, you configure trace corrections with a custom URL.
      ```
 
 1. On step 3, configure the correlation source:
-
    - Select your Tempo data source as **Source**.
 
    - Use `traceID` as **Results field**.

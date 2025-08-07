@@ -17,6 +17,7 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightDrilldown
+	WeightAssistant
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightAIAndML

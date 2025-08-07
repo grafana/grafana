@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 // FIXME: the name of the mock is different because there is another generated mock for Repository
@@ -114,6 +114,9 @@ type Writer interface {
 
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
+
+	// Move a file from one path to another in the remote repository
+	Move(ctx context.Context, oldPath, newPath, ref, message string) error
 }
 
 type ReaderWriter interface {

@@ -26,7 +26,6 @@ import (
 var (
 	_ appsdkapiserver.AppInstaller       = (*PlaylistAppInstaller)(nil)
 	_ appinstaller.LegacyStorageProvider = (*PlaylistAppInstaller)(nil)
-	_ appinstaller.APIEnablementProvider = (*PlaylistAppInstaller)(nil)
 )
 
 type PlaylistAppInstaller struct {
@@ -101,11 +100,4 @@ func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 		},
 	)
 	return legacyStore
-}
-
-// GetAllowedV0Alpha1Resources returns the list of resources that are allowed to be accessed in v0alpha1.
-func (p *PlaylistAppInstaller) GetAllowedV0Alpha1Resources() []string {
-	return []string{
-		playlistv0alpha1.PlaylistKind().Plural(),
-	}
 }

@@ -61,7 +61,9 @@ export function RowItemRepeater({
   return (
     <>
       <row.Component model={row} key={row.state.key!} />
-      {repeatedRows?.map((rowClone) => <rowClone.Component model={rowClone} key={rowClone.state.key!} />)}
+      {repeatedRows?.map((rowClone) => (
+        <rowClone.Component model={rowClone} key={rowClone.state.key!} />
+      ))}
     </>
   );
 }

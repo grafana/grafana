@@ -57,7 +57,7 @@ export const getTestQueryList = () => ({
       kind: 'QueryTemplate',
       apiVersion: 'querylibrary.grafana.app/v0alpha1',
       metadata: {
-        name: 'ALoki296tj',
+        name: 'ALoki296ta',
         generateName: 'ALoki',
         namespace: 'default',
         uid: '3e71de65-efa7-40e3-8f23-124212cca455',

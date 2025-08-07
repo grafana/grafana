@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +30,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 					},
 				})
 				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
 				}), pr).Return(errors.New("export failed"))
@@ -46,6 +47,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 					},
 				})
 				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
 				}), pr).Return(nil)
@@ -67,6 +69,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 					},
 				})
 				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
 				nc.On("Clean", mock.Anything, "test-namespace", pr).Return(errors.New("clean failed"))
 
 				// Export and sync jobs succeed
@@ -92,6 +95,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 					},
 				})
 				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
 				// Export job succeeds
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil

@@ -12,7 +12,7 @@ import (
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashv2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
 func TestLargeDashboardSupportV1(t *testing.T) {
@@ -174,47 +174,47 @@ func TestLargeDashboardSupportV2alpha1(t *testing.T) {
 	require.True(t, exists)
 }
 
-func TestLargeDashboardSupportV2alpha2(t *testing.T) {
+func TestLargeDashboardSupportV2beta1(t *testing.T) {
 	// Test RebuildSpec functionality specifically for v2 dashboards
 	// This tests the json.Unmarshal(blob, &dash.Spec) path for structured specs
 	// unlike v0/v1 which use the UnmarshalJSON path for unstructured specs
 
 	// Create a v2 dashboard with structured spec
-	originalV2Dash := &dashv2alpha2.Dashboard{
+	originalV2Dash := &dashv2beta1.Dashboard{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-v2",
 			Namespace: "test",
 		},
-		Spec: dashv2alpha2.DashboardSpec{
+		Spec: dashv2beta1.DashboardSpec{
 			Title:       "Test V2 Dashboard",
 			Description: stringPtr("A test dashboard for v2 large object support"),
 			Tags:        []string{"test", "v2", "large-object"},
 			Editable:    boolPtr(true),
 			LiveNow:     boolPtr(false),
 			Preload:     false,
-			Annotations: []dashv2alpha2.DashboardAnnotationQueryKind{
+			Annotations: []dashv2beta1.DashboardAnnotationQueryKind{
 				{
 					Kind: "AnnotationQuery",
-					Spec: dashv2alpha2.DashboardAnnotationQuerySpec{
+					Spec: dashv2beta1.DashboardAnnotationQuerySpec{
 						Name: "Test Annotation",
 					},
 				},
 			},
-			Elements: map[string]dashv2alpha2.DashboardElement{
+			Elements: map[string]dashv2beta1.DashboardElement{
 				"panel-1": {
-					PanelKind: &dashv2alpha2.DashboardPanelKind{},
+					PanelKind: &dashv2beta1.DashboardPanelKind{},
 				},
 			},
-			Layout:       dashv2alpha2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{},
-			TimeSettings: dashv2alpha2.DashboardTimeSettingsSpec{},
-			CursorSync:   dashv2alpha2.DashboardDashboardCursorSyncOff,
-			Variables:    []dashv2alpha2.DashboardVariableKind{},
-			Links:        []dashv2alpha2.DashboardDashboardLink{},
+			Layout:       dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{},
+			TimeSettings: dashv2beta1.DashboardTimeSettingsSpec{},
+			CursorSync:   dashv2beta1.DashboardDashboardCursorSyncOff,
+			Variables:    []dashv2beta1.DashboardVariableKind{},
+			Links:        []dashv2beta1.DashboardDashboardLink{},
 		},
 	}
 
 	scheme := runtime.NewScheme()
-	err := dashv2alpha2.AddToScheme(scheme)
+	err := dashv2beta1.AddToScheme(scheme)
 	require.NoError(t, err)
 
 	largeObject := NewDashboardLargeObjectSupport(scheme, 0)
@@ -243,7 +243,7 @@ func TestLargeDashboardSupportV2alpha2(t *testing.T) {
 	require.Empty(t, dashToReduce.Spec.Links)
 
 	// Now test RebuildSpec - this is the key test for v2!
-	rehydratedDash := &dashv2alpha2.Dashboard{
+	rehydratedDash := &dashv2beta1.Dashboard{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-v2-rehydrated",
 			Namespace: "test",

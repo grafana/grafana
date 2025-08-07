@@ -108,8 +108,8 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
 
         dashboardEditActions.changeTitle({
           source: dashboard,
-          oldTitle: valueBeforeEdit.current,
-          newTitle: e.currentTarget.value,
+          oldValue: valueBeforeEdit.current,
+          newValue: e.currentTarget.value,
         });
       }}
     />
@@ -139,8 +139,8 @@ export function DashboardDescriptionInput({ dashboard, id }: { dashboard: Dashbo
 
         dashboardEditActions.changeDescription({
           source: dashboard,
-          oldDescription: valueBeforeEdit.current,
-          newDescription: e.currentTarget.value,
+          oldValue: valueBeforeEdit.current,
+          newValue: e.currentTarget.value,
         });
       }}
     />

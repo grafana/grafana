@@ -234,3 +234,8 @@ Live currently does not support Redis Sentinel. We recommend using a Redis Clust
 ```
 
 {{< /admonition >}}
+
+{{< admonition type="note" >}}
+The Redis Live HA engine does not currently support TLS.
+
+{{< /admonition >}}

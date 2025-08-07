@@ -58,7 +58,6 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 
 1. On the **Settings** page, scroll down to the **Time Options** section of the **General** tab.
 1. Specify time settings as follows.
-
    - **Time zone:** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
      - **Default:** Grafana uses the default selected time zone for the user profile, team, or organization. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses the local browser time.
      - **Browser time:** The time zone configured for the viewing user browser is used. This is usually the same time zone as set on the computer.

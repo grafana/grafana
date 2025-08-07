@@ -12,6 +12,9 @@ import (
 )
 
 func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	user := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
@@ -74,6 +77,9 @@ func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
 }
 
 func TestIntegration_Store_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, saToCreate)
@@ -94,6 +100,9 @@ func TestIntegration_Store_AddServiceAccountToken_WrongServiceAccount(t *testing
 }
 
 func TestIntegration_Store_RevokeServiceAccountToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
@@ -134,6 +143,9 @@ func TestIntegration_Store_RevokeServiceAccountToken(t *testing.T) {
 }
 
 func TestIntegration_Store_DeleteServiceAccountToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)

@@ -3,9 +3,11 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Field, TextArea, Input, RadioButtonGroup } from '@grafana/ui';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
+import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: 'dashboard' | 'folder';
@@ -13,12 +15,12 @@ interface DashboardEditFormSharedFieldsProps {
   isNew?: boolean;
   readOnly?: boolean;
   workflow?: WorkflowOption;
-  isGitHub?: boolean;
+  repository?: RepositoryView;
   hidePath?: boolean;
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType, hidePath = false }) => {
+  ({ readOnly = false, workflow, workflowOptions, repository, isNew, resourceType, hidePath = false }) => {
     const {
       control,
       register,
@@ -64,7 +66,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         </Field>
 
         {/* Workflow */}
-        {isGitHub && !readOnly && (
+        {repository?.type && isGitProvider(repository.type) && !readOnly && (
           <>
             <Field
               noMargin

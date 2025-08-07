@@ -99,14 +99,8 @@ export function prepSeries(
       // only grabbing number fields (exclude time, string, enum, other)
       let onlyNumFields = onlyNumTimeFields.filter((field) => field.type === FieldType.number);
 
-      let color =
-        colorMatcher != null
-          ? onlyNumFields.find((field) => field !== x && colorMatcher!(field, frame, frames))
-          : undefined;
-      let size =
-        sizeMatcher != null
-          ? onlyNumFields.find((field) => field !== x && field !== color && sizeMatcher!(field, frame, frames))
-          : undefined;
+      let color = colorMatcher != null ? onlyNumFields.find((field) => colorMatcher(field, frame, frames)) : undefined;
+      let size = sizeMatcher != null ? onlyNumFields.find((field) => sizeMatcher(field, frame, frames)) : undefined;
 
       // x field is required
       if (x != null) {

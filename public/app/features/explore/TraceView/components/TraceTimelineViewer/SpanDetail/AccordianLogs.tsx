@@ -32,14 +32,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     AccordianLogs: css({
       label: 'AccordianLogs',
       position: 'relative',
-      marginBottom: '0.25rem',
     }),
     AccordianLogsHeader: css({
       label: 'AccordianLogsHeader',
       color: 'inherit',
       display: 'flex',
       alignItems: 'center',
-      padding: '0.25rem 0.1em',
       '&:hover': {
         background: autoColor(theme, '#e8e8e8'),
       },

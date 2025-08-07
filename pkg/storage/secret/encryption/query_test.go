@@ -10,6 +10,7 @@ import (
 )
 
 func TestEncryptedValueQueries(t *testing.T) {
+	untilTime := int64(1234)
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
@@ -61,6 +62,63 @@ func TestEncryptedValueQueries(t *testing.T) {
 						Namespace:   "ns",
 						Name:        "n1",
 						Version:     1,
+					},
+				},
+			},
+			sqlEncryptedValueListAll: {
+				{
+					Name: "list_limit_10_offset_0",
+					Data: &listAllEncryptedValues{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						Limit:        10,
+						Offset:       0,
+						HasUntilTime: false,
+					},
+				},
+				{
+					Name: "list_limit_10_offset_2",
+					Data: &listAllEncryptedValues{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						Limit:        10,
+						Offset:       2,
+						HasUntilTime: false,
+					},
+				},
+				{
+					Name: "list_all",
+					Data: &listAllEncryptedValues{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						Limit:        0,
+						Offset:       0,
+						HasUntilTime: false,
+					},
+				},
+				{
+					Name: "list_all_until_time",
+					Data: &listAllEncryptedValues{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						Limit:        0,
+						Offset:       0,
+						HasUntilTime: true,
+						UntilTime:    untilTime,
+					},
+				},
+			},
+			sqlEncryptedValueCountAll: {
+				{
+					Name: "count_all",
+					Data: &countAllEncryptedValues{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						HasUntilTime: false,
+						UntilTime:    0,
+					},
+				},
+				{
+					Name: "count_all_until_time",
+					Data: &countAllEncryptedValues{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						HasUntilTime: true,
+						UntilTime:    untilTime,
 					},
 				},
 			},
@@ -156,6 +214,15 @@ func TestDataKeyQueries(t *testing.T) {
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "ns",
 						UID:         "",
+					},
+				},
+			},
+			sqlDataKeyDisableAll: {
+				{
+					Name: "disable",
+					Data: &disableAllDataKeys{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Updated:     time.Unix(1735689600, 0).UTC(),
 					},
 				},
 			},

@@ -19,7 +19,7 @@ weight: 320
 # Configure SCIM with Okta
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 {{< admonition type="warning" >}}
@@ -39,7 +39,7 @@ For more information, refer to the [feature toggles documentation](/docs/grafana
 
 Before configuring SCIM with Okta, ensure you have:
 
-- Grafana Enterprise or Grafana Cloud Advanced
+- Grafana Enterprise or a paid Grafana Cloud account with SCIM provisioning enabled.
 - Admin access to both Grafana and Okta
 - [SAML authentication configured with Okta](../../configure-authentication/saml/configure-saml-with-okta/)
 - SCIM feature enabled in Grafana

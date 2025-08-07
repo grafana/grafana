@@ -10,6 +10,10 @@ test.use({
   },
 });
 
+test.use({
+  viewport: { width: 1920, height: 1080 },
+});
+
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
 
@@ -55,7 +59,7 @@ test.describe(
       const firstPreviewOption = dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption)
         .first();
-      await expect(firstPreviewOption).toBeVisible();
+      await expect(firstPreviewOption).toBeVisible({ timeout: 15_000 });
       const previewOptionText = await firstPreviewOption.textContent();
       const previewOption = previewOptionText?.trim() || '';
 

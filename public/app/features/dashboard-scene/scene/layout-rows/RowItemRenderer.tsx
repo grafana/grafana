@@ -83,6 +83,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
             setTimeout(() => onSelect?.(evt));
           }}
+          data-testid={selectors.components.DashboardRow.wrapper(title!)}
           {...dragProvided.draggableProps}
         >
           {(!isHeaderHidden || isEditing) && (

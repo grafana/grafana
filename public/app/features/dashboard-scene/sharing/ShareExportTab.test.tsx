@@ -5,7 +5,7 @@ import {
   Spec as DashboardV2Spec,
   defaultQueryGroupKind,
   defaultVizConfigSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
@@ -180,7 +180,7 @@ describe('ShareExportTab', () => {
 
       // Should use V2 API version
       expect(result.json).toMatchObject({
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
+        apiVersion: 'dashboard.grafana.app/v2beta1',
         kind: 'Dashboard',
         status: {},
       });
@@ -394,7 +394,9 @@ describe('ShareExportTab', () => {
                 links: [],
                 data: defaultQueryGroupKind(),
                 vizConfig: {
-                  kind: 'stat',
+                  kind: 'VizConfig',
+                  group: '',
+                  version: '1.0.0',
                   spec: defaultVizConfigSpec(),
                 },
               },
@@ -443,7 +445,7 @@ describe('ShareExportTab', () => {
     // Set up the scene based on current version
     const currentDashboard = version === 'v1' ? mockV1Dashboard : mockV2Dashboard;
     const initialSaveModel = initialSaveModelVersion === 'v1' ? mockV1Dashboard : mockV2Dashboard;
-    const apiVersion = version === 'v1' ? 'dashboard.grafana.app/v1beta1' : 'dashboard.grafana.app/v2alpha1';
+    const apiVersion = version === 'v1' ? 'dashboard.grafana.app/v1beta1' : 'dashboard.grafana.app/v2beta1';
 
     scene.serializer.getSaveModel = jest.fn(() => currentDashboard);
     scene.serializer.makeExportableExternally = jest.fn(() =>

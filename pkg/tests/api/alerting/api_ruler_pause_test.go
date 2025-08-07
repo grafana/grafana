@@ -15,9 +15,13 @@ import (
 )
 
 func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

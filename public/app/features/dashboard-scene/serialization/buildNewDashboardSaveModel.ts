@@ -9,7 +9,7 @@ import {
   defaultTimeSettingsSpec,
   GroupByVariableKind,
   Spec as DashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -92,14 +92,21 @@ export async function buildNewDashboardSaveModelV2(
 
       const filterVariable: AdhocVariableKind = {
         kind: 'AdhocVariable',
-        spec: { ...defaultAdhocVariableSpec(), name: 'Filter', datasource: datasourceRef },
+        group: datasourceRef.type,
+        datasource: {
+          name: datasourceRef.uid,
+        },
+        spec: { ...defaultAdhocVariableSpec(), name: 'Filter' },
       };
 
       const groupByVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
+        group: datasourceRef.type,
+        datasource: {
+          name: datasourceRef.uid,
+        },
         spec: {
           ...defaultGroupByVariableSpec(),
-          datasource: datasourceRef,
           name: 'Group by',
         },
       };
@@ -109,7 +116,7 @@ export async function buildNewDashboardSaveModelV2(
   }
 
   const data: DashboardWithAccessInfo<DashboardV2Spec> = {
-    apiVersion: 'v2alpha1',
+    apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
     spec: {
       ...defaultDashboardV2Spec(),

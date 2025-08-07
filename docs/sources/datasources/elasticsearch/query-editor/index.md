@@ -61,7 +61,6 @@ Metrics queries aggregate data and produce a variety of calculations such as cou
 - **Alias** - Aliasing only applies to **time series queries**, where the last group is `date histogram`. This is ignored for any other type of query.
 
 - **Metric** - Metrics aggregations include:
-
   - count - see [Value count aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-valuecount-aggregation.html)
   - average - see [Avg aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-rate-aggregation.html)
   - sum - see [Sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-sum-aggregation.html)
@@ -78,7 +77,6 @@ You can select multiple metrics and group by multiple terms or filters when usin
 Use the **+ sign** to the right to add multiple metrics to your query. Click on the **eye icon** next to **Metric** to hide metrics, and the **garbage can icon** to remove metrics.
 
 - **Group by options** - Create multiple group by options when constructing your Elasticsearch query. Date histogram is the default option. Below is a list of options in the dropdown menu.
-
   - terms - see [Terms aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html).
   - filter - see [Filter aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filter-aggregation.html).
   - geo hash grid - see [Geohash grid aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).

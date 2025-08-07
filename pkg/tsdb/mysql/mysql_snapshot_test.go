@@ -33,6 +33,10 @@ var updateGoldenFiles = false
 // preconfigured MySQL server suitable for running these tests.
 func TestIntegrationMySQLSnapshots(t *testing.T) {
 	// the logic in this function is copied from mysql_tests.go
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	shouldRunTest := func() bool {
 		if testing.Short() {
 			return false

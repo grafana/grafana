@@ -50,10 +50,6 @@ type Mimir struct {
 	promoteConfig bool
 	externalURL   string
 	smtpConfig    SmtpConfig
-
-	// TODO: Remove once everything can be sent in the 'smtp' field.
-	smtpFrom      string
-	staticHeaders map[string]string
 }
 
 type SmtpConfig struct {
@@ -77,10 +73,6 @@ type Config struct {
 	PromoteConfig bool
 	ExternalURL   string
 	Smtp          SmtpConfig
-
-	// TODO: Remove once everything can be sent in the 'smtp_config' field.
-	SmtpFrom      string
-	StaticHeaders map[string]string
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -125,10 +117,6 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 		promoteConfig: cfg.PromoteConfig,
 		externalURL:   cfg.ExternalURL,
 		smtpConfig:    cfg.Smtp,
-
-		// TODO: Remove once everything can be sent in the 'smtp_config' field.
-		smtpFrom:      cfg.SmtpFrom,
-		staticHeaders: cfg.StaticHeaders,
 	}, nil
 }
 

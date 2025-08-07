@@ -45,7 +45,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 
 	tables := []migrator.Table{}
 
-	tables = append(tables, migrator.Table{
+	secureValueTable := migrator.Table{
 		Name: TableNameSecureValue,
 		Columns: []*migrator.Column{
 			// Kubernetes Metadata
@@ -74,7 +74,8 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Cols: []string{"namespace", "name", "version", "active"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex},
 		},
-	})
+	}
+	tables = append(tables, secureValueTable)
 
 	tables = append(tables, migrator.Table{
 		Name: TableNameKeeper,
@@ -101,22 +102,21 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		},
 	})
 
-	// TODO -- document how the seemingly arbitrary column lengths were chosen
-	// The answer for now is that they come from the legacy secrets service, but it would be good to know that they will still work in the new service
-	tables = append(tables, migrator.Table{
+	dataKeyTable := migrator.Table{
 		Name: TableNameDataKey,
 		Columns: []*migrator.Column{
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},    // Arbitrarily chosen.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "label", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: false},
+			{Name: "label", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: false}, // Arbitrarily chosen.
 			{Name: "active", Type: migrator.DB_Bool, Nullable: false},
-			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false}, // Arbitrarily chosen.
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
-		Indices: []*migrator.Index{}, // TODO: add indexes based on the queries we make.
-	})
+		Indices: []*migrator.Index{},
+	}
+	tables = append(tables, dataKeyTable)
 
 	encryptedValueTable := migrator.Table{
 		Name: TableNameEncryptedValue,
@@ -142,4 +142,43 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
+
+	mg.AddMigration("create index for list on "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Cols: []string{"namespace", "active", "updated"},
+		Type: migrator.IndexType,
+	}))
+
+	mg.AddMigration("create index for list and read current on "+TableNameDataKey, migrator.NewAddIndexMigration(dataKeyTable, &migrator.Index{
+		Cols: []string{"namespace", "label", "active"},
+		Type: migrator.IndexType,
+	}))
+
+	// Owner Reference columns
+	mg.AddMigration("add owner_reference_api_group column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_api_group",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_api_version column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_api_version",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_kind column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_kind",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_name column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_name",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
 }

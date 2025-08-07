@@ -14,6 +14,7 @@ type DiscoveryClient interface {
 	GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
 	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
 	GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
+	GetPreferredVersionForKind(gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error)
 }
 
 type DiscoveryClientImpl struct {
@@ -91,4 +92,45 @@ func (d *DiscoveryClientImpl) GetPreferredVesion(gr schema.GroupResource) (schem
 		}
 	}
 	return schema.GroupVersionResource{}, schema.GroupVersionKind{}, fmt.Errorf("preferred version not found for %s", gr.String())
+}
+
+func (d *DiscoveryClientImpl) GetPreferredVersionForKind(gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error) {
+	apiList, err := d.ServerPreferredResources()
+	if err != nil {
+		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, err
+	}
+	for _, apis := range apiList {
+		// Check if this API group matches our target group
+		if !strings.HasPrefix(apis.GroupVersion, gk.Group) {
+			continue
+		}
+
+		// Parse the group/version
+		var group, version string
+		if strings.Contains(apis.GroupVersion, "/") {
+			parts := strings.Split(apis.GroupVersion, "/")
+			group = parts[0]
+			version = parts[1]
+		} else {
+			// Core API group (e.g., "v1")
+			group = ""
+			version = apis.GroupVersion
+		}
+
+		// Look for our target kind in this API group version
+		for _, resource := range apis.APIResources {
+			if resource.Kind == gk.Kind {
+				return schema.GroupVersionResource{
+						Group:    group,
+						Version:  version,
+						Resource: resource.Name,
+					}, schema.GroupVersionKind{
+						Group:   group,
+						Version: version,
+						Kind:    resource.Kind,
+					}, nil
+			}
+		}
+	}
+	return schema.GroupVersionResource{}, schema.GroupVersionKind{}, fmt.Errorf("preferred version not found for kind %s in group %s", gk.Kind, gk.Group)
 }

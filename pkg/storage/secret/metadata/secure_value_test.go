@@ -7,7 +7,6 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/mitchellh/copystructure"
@@ -111,24 +110,24 @@ func (m *model) list(namespace string) (*secretv1beta1.SecureValueList, error) {
 	return &secretv1beta1.SecureValueList{Items: out}, nil
 }
 
-func (m *model) decrypt(decrypter, namespace, name string) (map[string]service.DecryptResult, error) {
+func (m *model) decrypt(decrypter, namespace, name string) (map[string]contracts.DecryptResult, error) {
 	for _, v := range m.secureValues {
 		if v.Namespace == namespace &&
 			v.Name == name &&
 			v.active {
 			if slices.ContainsFunc(v.Spec.Decrypters, func(d string) bool { return d == decrypter }) {
-				return map[string]service.DecryptResult{
-					name: service.NewDecryptResultValue(deepCopy(v).Spec.Value),
+				return map[string]contracts.DecryptResult{
+					name: contracts.NewDecryptResultValue(deepCopy(v).Spec.Value),
 				}, nil
 			}
 
-			return map[string]service.DecryptResult{
-				name: service.NewDecryptResultErr(contracts.ErrDecryptNotAuthorized),
+			return map[string]contracts.DecryptResult{
+				name: contracts.NewDecryptResultErr(contracts.ErrDecryptNotAuthorized),
 			}, nil
 		}
 	}
-	return map[string]service.DecryptResult{
-		name: service.NewDecryptResultErr(contracts.ErrDecryptNotFound),
+	return map[string]contracts.DecryptResult{
+		name: contracts.NewDecryptResultErr(contracts.ErrDecryptNotFound),
 	}, nil
 }
 
@@ -404,7 +403,7 @@ func TestStateMachine(t *testing.T) {
 			},
 			"decrypt": func(t *rapid.T) {
 				input := decryptGen.Draw(t, "decryptInput")
-				authCtx := testutils.CreateServiceAuthContext(t.Context(), input.decrypter, []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", input.name)})
+				authCtx := testutils.CreateServiceAuthContext(t.Context(), input.decrypter, input.namespace, []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", input.name)})
 				modelResult, modelErr := model.decrypt(input.decrypter, input.namespace, input.name)
 				result, err := sut.DecryptService.Decrypt(authCtx, input.namespace, input.name)
 				if err != nil || modelErr != nil {
@@ -441,7 +440,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sv.Status.Version, deletedSv.Status.Version)
 
-		authCtx := testutils.CreateServiceAuthContext(t.Context(), sv.Spec.Decrypters[0], []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", sv.Name)})
+		authCtx := testutils.CreateServiceAuthContext(t.Context(), sv.Spec.Decrypters[0], sv.Namespace, []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", sv.Name)})
 		result, err := sut.DecryptService.Decrypt(authCtx, sv.Namespace, sv.Name)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(result))

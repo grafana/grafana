@@ -1,12 +1,18 @@
+import { css } from '@emotion/css';
+import { useMemo } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert } from '@grafana/ui';
+import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { prometheusApi } from '../api/prometheusApi';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
+import { useContinuousPagination } from '../hooks/usePagination';
+import { DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP, RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
+import { LoadMoreButton } from './components/LoadMoreButton';
 
 const { useGetGrafanaGroupsQuery } = prometheusApi;
 
@@ -31,6 +37,8 @@ export function GrafanaGroupLoader({
   namespaceName,
   expectedRulesCount = 3, // 3 is a random number. Usually we get the number of rules from Prometheus response
 }: GrafanaGroupLoaderProps) {
+  const styles = useStyles2(getStyles);
+
   const { data: promResponse, isLoading: isPromResponseLoading } = useGetGrafanaGroupsQuery(
     {
       folderUid: groupIdentifier.namespace.uid,
@@ -39,6 +47,12 @@ export function GrafanaGroupLoader({
     },
     { pollingInterval: RULE_LIST_POLL_INTERVAL_MS }
   );
+
+  const rules = useMemo(() => {
+    return promResponse?.data.groups.at(0)?.rules ?? [];
+  }, [promResponse]);
+
+  const { pageItems, hasMore, loadMore } = useContinuousPagination(rules, DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP);
 
   if (isPromResponseLoading) {
     return (
@@ -63,9 +77,14 @@ export function GrafanaGroupLoader({
     );
   }
 
+  // If no rules found, return early without pagination
+  if (rules.length === 0) {
+    return <Alert title={t('alerting.group-loader.no-rules', 'No rules found in this group')} severity="info" />;
+  }
+
   return (
-    <>
-      {promResponse.data.groups.at(0)?.rules.map((promRule) => {
+    <Stack direction="column" gap={0}>
+      {pageItems.map((promRule) => {
         return (
           <GrafanaRuleListItem
             key={promRule.uid}
@@ -77,6 +96,18 @@ export function GrafanaGroupLoader({
           />
         );
       })}
-    </>
+      {hasMore && (
+        <li aria-selected="false" role="treeitem" className={styles.loadMoreWrapper}>
+          <LoadMoreButton onClick={loadMore} />
+        </li>
+      )}
+    </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  loadMoreWrapper: css({
+    listStyle: 'none',
+    paddingTop: theme.spacing(1),
+  }),
+});

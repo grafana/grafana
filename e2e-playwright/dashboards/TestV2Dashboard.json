@@ -1,40 +1,26 @@
 {
-  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
   "kind": "Dashboard",
   "metadata": {
-    "name": "admjzp8",
+    "name": "addfpww",
     "namespace": "default",
-    "uid": "hrbekBWXeM7nC7GtouIbcngFyuqt8Xx7KlE4AnTwV7AX",
+    "uid": "AvXN09JdxuVNDqODs5IYU2iStlk5ntizuPGIfY1ywZgX",
     "resourceVersion": "1",
-    "generation": 1,
-    "creationTimestamp": "2025-05-16T09:41:56Z",
+    "generation": 2,
+    "creationTimestamp": "2025-07-31T13:37:11Z",
     "labels": {
-      "grafana.app/deprecatedInternalID": "182"
+      "grafana.app/deprecatedInternalID": "6844"
     },
     "annotations": {
       "grafana.app/createdBy": "user:cejvsh18uudxcf",
       "grafana.app/updatedBy": "user:cejvsh18uudxcf",
-      "grafana.app/updatedTimestamp": "2025-05-16T09:41:56Z",
-      "grafana.app/folder": ""
+      "grafana.app/updatedTimestamp": "2025-07-31T13:37:11Z",
+      "grafana.app/folder": "",
+      "grafana.app/saved-from-ui": "Grafana v12.2.0-pre (69d1226c9a)"
     }
   },
   "spec": {
-    "annotations": [
-      {
-        "kind": "AnnotationQuery",
-        "spec": {
-          "builtIn": true,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts"
-        }
-      }
-    ],
+    "annotations": [],
     "cursorSync": "Off",
     "description": "",
     "editable": true,
@@ -49,14 +35,15 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "datasource": {
-                      "type": "grafana-testdata-datasource",
-                      "uid": "PD8C576611E62080A"
-                    },
                     "hidden": false,
                     "query": {
-                      "kind": "grafana-testdata-datasource",
-                      "spec": {}
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {},
+                      "version": "v0"
                     },
                     "refId": "A"
                   }
@@ -71,7 +58,8 @@
           "links": [],
           "title": "New panel",
           "vizConfig": {
-            "kind": "timeseries",
+            "group": "timeseries",
+            "kind": "VizConfig",
             "spec": {
               "fieldConfig": {
                 "defaults": {
@@ -139,9 +127,9 @@
                   "mode": "single",
                   "sort": "none"
                 }
-              },
-              "pluginVersion": "12.1.0-pre"
-            }
+              }
+            },
+            "version": "12.2.0-pre"
           }
         }
       },
@@ -155,14 +143,18 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "datasource": {
-                      "type": "grafana-testdata-datasource",
-                      "uid": "PD8C576611E62080A"
-                    },
                     "hidden": false,
                     "query": {
-                      "kind": "grafana-testdata-datasource",
-                      "spec": {}
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1
+                      },
+                      "version": "v0"
                     },
                     "refId": "A"
                   }
@@ -177,7 +169,8 @@
           "links": [],
           "title": "New panel",
           "vizConfig": {
-            "kind": "timeseries",
+            "group": "timeseries",
+            "kind": "VizConfig",
             "spec": {
               "fieldConfig": {
                 "defaults": {
@@ -245,9 +238,9 @@
                   "mode": "single",
                   "sort": "none"
                 }
-              },
-              "pluginVersion": "12.1.0-pre"
-            }
+              }
+            },
+            "version": "12.2.0-pre"
           }
         }
       },
@@ -261,14 +254,15 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "datasource": {
-                      "type": "grafana-testdata-datasource",
-                      "uid": "PD8C576611E62080A"
-                    },
                     "hidden": false,
                     "query": {
-                      "kind": "grafana-testdata-datasource",
-                      "spec": {}
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "group": "grafana-testdata-datasource",
+                      "kind": "DataQuery",
+                      "spec": {},
+                      "version": "v0"
                     },
                     "refId": "A"
                   }
@@ -283,7 +277,8 @@
           "links": [],
           "title": "New panel",
           "vizConfig": {
-            "kind": "timeseries",
+            "group": "timeseries",
+            "kind": "VizConfig",
             "spec": {
               "fieldConfig": {
                 "defaults": {
@@ -351,9 +346,9 @@
                   "mode": "single",
                   "sort": "none"
                 }
-              },
-              "pluginVersion": "12.1.0-pre"
-            }
+              }
+            },
+            "version": "12.2.0-pre"
           }
         }
       }
@@ -380,7 +375,7 @@
             "spec": {
               "element": {
                 "kind": "ElementReference",
-                "name": "panel-2"
+                "name": "panel-3"
               },
               "height": 8,
               "width": 12,
@@ -393,7 +388,7 @@
             "spec": {
               "element": {
                 "kind": "ElementReference",
-                "name": "panel-3"
+                "name": "panel-2"
               },
               "height": 8,
               "width": 12,
@@ -417,7 +412,7 @@
       "timezone": "browser",
       "to": "now"
     },
-    "title": "New Test V2 Dashboard",
+    "title": "TEST!!!!",
     "variables": []
   },
   "status": {}

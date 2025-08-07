@@ -220,14 +220,14 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
 
    For example:
 
-   ```bash
+   ```yaml
    services:
      grafana:
        image: grafana/grafana-enterprise
        container_name: grafana
        restart: unless-stopped
        ports:
-        - '3000:3000'
+         - '3000:3000'
    ```
 
 1. To run `docker-compose.yaml`, run the following command:
@@ -347,19 +347,19 @@ To use bind mounts, complete the following steps:
 
 The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the `grafana-storage` docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel/) plugin installed.
 
-```bash
+```yaml
 services:
   grafana:
     image: grafana/grafana-enterprise
     container_name: grafana
     restart: unless-stopped
     environment:
-     - GF_SERVER_ROOT_URL=http://my.grafana.server/
-     - GF_PLUGINS_PREINSTALL=grafana-clock-panel
+      - GF_SERVER_ROOT_URL=http://my.grafana.server/
+      - GF_PLUGINS_PREINSTALL=grafana-clock-panel
     ports:
-     - '3000:3000'
+      - '3000:3000'
     volumes:
-     - 'grafana_storage:/var/lib/grafana'
+      - 'grafana_storage:/var/lib/grafana'
 volumes:
   grafana_storage: {}
 ```

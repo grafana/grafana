@@ -51,6 +51,9 @@ func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 }
 
 func TestIntegration_Store_CreateServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
 		_, store := setupTestDatabase(t)
