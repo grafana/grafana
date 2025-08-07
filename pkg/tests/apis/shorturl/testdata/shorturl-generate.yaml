@@ -1,6 +1,0 @@
-apiVersion: shorturl.grafana.app/v1alpha1
-kind: ShortURL
-metadata:
-  generateName: newshorturl # anything is ok here... except yes or true -- they become boolean!
-spec:
-  path: "d/test-dashboard"

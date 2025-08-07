@@ -1,6 +1,0 @@
-apiVersion: shorturl.grafana.app/v1alpha1
-kind: ShortURL
-metadata:
-  generateName: invalid-absolute-
-spec:
-  path: "https://example.com/absolute/path"

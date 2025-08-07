@@ -406,9 +406,9 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 					Body:   []byte(invalidBody),
 				}, (*unstructured.Unstructured)(nil))
 
-				// Should get a validation error, ideally it should be 400 Bad Request
+				// Should get a validation error, it should be 400 Bad Request but the validation hook returns 403 Forbidden
 				assert.Equal(t, http.StatusForbidden, response.Response.StatusCode,
-					"Expected 403 Bad Request for invalid path: %s", tc.path)
+					"Expected 403 for invalid path: %s", tc.path)
 
 				// Check that the error message contains expected validation error
 				assert.Contains(t, string(response.Body), tc.expectedError,
