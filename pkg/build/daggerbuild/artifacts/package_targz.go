@@ -55,9 +55,7 @@ type Tarball struct {
 	// Dependent artifacts
 	Backend        *pipeline.Artifact
 	Frontend       *pipeline.Artifact
-	NPMPackages    *pipeline.Artifact
 	BundledPlugins *pipeline.Artifact
-	Storybook      *pipeline.Artifact
 }
 
 func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
@@ -174,15 +172,6 @@ func NewTarball(
 		return nil, err
 	}
 
-	npmArtifact, err := NewNPMPackages(ctx, log, artifact, src, version, cache)
-	if err != nil {
-		return nil, err
-	}
-
-	storybookArtifact, err := NewStorybook(ctx, log, artifact, src, version, cache)
-	if err != nil {
-		return nil, err
-	}
 	tarball := &Tarball{
 		Name:         name,
 		Distribution: distro,
@@ -195,9 +184,7 @@ func NewTarball(
 
 		Backend:        backendArtifact,
 		Frontend:       frontendArtifact,
-		NPMPackages:    npmArtifact,
 		BundledPlugins: bundledPluginsArtifact,
-		Storybook:      storybookArtifact,
 	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
@@ -239,16 +226,6 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		return nil, err
 	}
 
-	npmDir, err := opts.Store.Directory(ctx, t.NPMPackages)
-	if err != nil {
-		return nil, err
-	}
-
-	storybookDir, err := opts.Store.Directory(ctx, t.Storybook)
-	if err != nil {
-		return nil, err
-	}
-
 	pluginsDir, err := opts.Store.Directory(ctx, t.BundledPlugins)
 	if err != nil {
 		return nil, err
@@ -277,8 +254,6 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		targz.NewMappedDir("packaging/wrappers", grafanaDir.Directory("packaging/wrappers")),
 		targz.NewMappedDir("bin", backendDir),
 		targz.NewMappedDir("public", frontendDir),
-		targz.NewMappedDir("npm-artifacts", npmDir),
-		targz.NewMappedDir("storybook", storybookDir),
 		targz.NewMappedDir("plugins-bundled", pluginsDir),
 	}
 
@@ -329,9 +304,7 @@ func (t *Tarball) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error
 	return []*pipeline.Artifact{
 		t.Backend,
 		t.Frontend,
-		t.NPMPackages,
 		t.BundledPlugins,
-		t.Storybook,
 	}, nil
 }
 
