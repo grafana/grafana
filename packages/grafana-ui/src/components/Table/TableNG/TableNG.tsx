@@ -51,7 +51,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
-import { getDefaultCellStyles, getFooterStyles, getGridStyles, getHeaderCellStyles } from './styles';
+import { getDefaultCellStyles, getFooterStyles, getGridStyles, getHeaderCellStyles, getLinkStyles } from './styles';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps, TableCellStyleOptions } from './types';
 import {
   applySort,
@@ -372,6 +372,7 @@ export function TableNG(props: TableNGProps) {
 
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
+        const linkStyles = getLinkStyles(theme, canBeColorized);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -414,7 +415,7 @@ export function TableNG(props: TableNGProps) {
             <Cell
               key={key}
               {...props}
-              className={clsx(props.className, defaultCellStyles, cellSpecificStyles)}
+              className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
               style={style}
             />
           );

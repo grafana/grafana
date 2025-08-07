@@ -48,15 +48,6 @@ export const getGridStyles = (
       // selected cells should appear below hovered cells.
       '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
       '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
-
-      // create a default anchor style way up here so that cells can
-      // override it as needed with higher specificity below.
-      a: {
-        cursor: 'pointer',
-        color: theme.colors.text.link,
-        textDecoration: 'none',
-        '&:hover': { textDecoration: 'underline' },
-      },
     },
 
     '.rdg-header-row, .rdg-summary-row': {
@@ -131,7 +122,7 @@ export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Proper
     '&:last-child': { borderInlineEnd: 'none' },
   });
 
-export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, textWrap, shouldOverflow }) =>
+export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow }) =>
   css({
     display: 'flex',
     alignItems: 'center',
@@ -145,5 +136,22 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, textWr
         height: 'fit-content',
         minWidth: 'fit-content',
       }),
+    },
+  });
+
+export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
+  css({
+    a: {
+      cursor: 'pointer',
+      ...(canBeColorized
+        ? {
+            color: 'inherit',
+            textDecoration: 'underline',
+          }
+        : {
+            color: theme.colors.text.link,
+            textDecoration: 'none',
+            '&:hover': { textDecoration: 'underline' },
+          }),
     },
   });
