@@ -25,7 +25,24 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 	if err := migration.Migrate(out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = err.Error()
+
+		logger.Error("Dashboard conversion failed",
+			"sourceVersionAPI", dashv0.APIVERSION,
+			"targetVersionAPI", dashv1.APIVERSION,
+			"dashboardUID", in.ObjectMeta.UID,
+			"sourceSchemaVersion", in.Spec.Object["schemaVersion"],
+			"targetSchemaVersion", schemaversion.LATEST_VERSION,
+			"error", err)
+
+		return nil
 	}
+
+	logger.Info("Dashboard conversion completed successfully",
+		"sourceVersionAPI", dashv0.APIVERSION,
+		"targetVersionAPI", dashv1.APIVERSION,
+		"dashboardUID", in.ObjectMeta.UID,
+		"sourceSchemaVersion", in.Spec.Object["schemaVersion"],
+		"targetSchemaVersion", schemaversion.LATEST_VERSION)
 
 	return nil
 }
