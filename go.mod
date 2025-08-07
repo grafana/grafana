@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.24.5
+go 1.24.6
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
