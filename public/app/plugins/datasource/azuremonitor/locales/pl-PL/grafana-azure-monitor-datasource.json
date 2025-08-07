@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Włącz podstawowe dzienniki"
     },
     "config-editor": {
-      "description-additional-settings": "Dodatkowe ustawienia to opcje, które można skonfigurować, aby uzyskać większą kontrolę nad źródłem danych. Obejmuje to bezpieczny serwer proxy SOCKS.",
-      "description-request-timeout": "Ustaw limit czasu żądania w sekundach. Domyślnie jest to 30 sekund.",
-      "title-additional-settings": "Ustawienia dodatkowe",
-      "title-request-timeout": "Limit czasu żądania"
+      "description-additional-settings": "",
+      "title-additional-settings": "Ustawienia dodatkowe"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Zastępcze dane uwierzytelniające zostały wyłączone. Ponieważ uwierzytelnianie oparte na użytkowniku z natury rzeczy obsługuje tylko żądania z użytkownikiem w zakresie, funkcje takie jak alerty, zarejestrowane zapytania lub raportowanie nie będą działać zgodnie z oczekiwaniami. Więcej szczegółów znajdziesz w <2>dokumentacji</2>.",
