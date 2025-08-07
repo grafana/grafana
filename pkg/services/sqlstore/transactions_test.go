@@ -13,6 +13,7 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 	ss := NewTestStore(t)
 
 	t.Run("top level transaction", func(t *testing.T) {
@@ -72,6 +73,7 @@ func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	ss := NewTestStore(t)
 	ctx := t.Context()

@@ -20,6 +20,7 @@ func TestIntegrationTempDatabaseConnect(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithoutMigrator())
 	err := sqlStore.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
@@ -36,6 +37,7 @@ func TestIntegrationTempDatabaseOSSMigrate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	_ = sqlstore.NewTestStore(t, sqlstore.WithOSSMigrations())
 }
@@ -44,6 +46,7 @@ func TestIntegrationUniqueConstraintViolation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	testCases := []struct {
 		desc string
@@ -81,6 +84,7 @@ func TestIntegrationUniqueConstraintViolation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
 			store := sqlstore.NewTestStore(t)
 			err := store.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
 				return tc.f(t, sess, store.GetDialect())
@@ -95,6 +99,7 @@ func TestIntegrationTruncateDatabase(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	migrator := &truncateDatabaseSetup{}
 	store := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator), sqlstore.WithTruncation())

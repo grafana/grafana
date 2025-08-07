@@ -13,6 +13,7 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
+	t.Parallel()
 	ss := NewTestStore(t)
 
 	err := ss.WithDbSession(t.Context(), func(sess *DBSession) error {
