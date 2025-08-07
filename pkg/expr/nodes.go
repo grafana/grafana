@@ -407,23 +407,11 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 		}
 	} else {
-		// transform request from backend.QueryDataRequest to k8s request
-		k8sReq := &data.QueryDataRequest{
-			TimeRange: data.TimeRange{
-				From: req.Queries[0].TimeRange.From.Format(time.RFC3339),
-				To:   req.Queries[0].TimeRange.To.Format(time.RFC3339),
-			},
+		k8sReq, err := ConvertBackendRequestToDataRequest(req)
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 		}
-		for _, q := range req.Queries {
-			var dataQuery data.DataQuery
-			err := json.Unmarshal(q.JSON, &dataQuery)
-			if err != nil {
-				return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
-			}
 
-			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
-		}
-		var err error
 		// make the query with a mt client
 		resp, err = mtDSClient.QueryData(ctx, *k8sReq)
 
