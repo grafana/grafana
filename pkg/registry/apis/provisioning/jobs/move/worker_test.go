@@ -202,7 +202,7 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
 		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute &&
 			opts.Mode == repository.StageModeCommitOnlyOnce &&
-			opts.CommitOnlyOnceMessage != ""
+			opts.CommitOnlyOnceMessage != "" && opts.Ref == "main"
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
 	})

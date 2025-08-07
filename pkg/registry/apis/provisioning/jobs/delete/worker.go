@@ -70,6 +70,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		CommitOnlyOnceMessage: msg,
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
+		Ref:                   opts.Ref,
 	}
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
