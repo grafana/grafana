@@ -82,6 +82,7 @@ jest.mock('../../hooks', () => {
   return {
     ...actual,
     useRecentlyUsedDataSources: () => [[mockDS2.name], pushRecentlyUsedDataSourceMock],
+    useDatasources: () => mockDSList,
   };
 });
 
