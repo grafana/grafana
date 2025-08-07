@@ -89,7 +89,10 @@ const getStyles = (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
     whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
     '&:hover': {
       textDecoration: 'underline',
-      color: theme.colors.text.link,
+    },
+    '&::selection': {
+      backgroundColor: 'var(--rdg-background-color)',
+      color: theme.colors.text.secondary,
     },
   }),
   headerCellIcon: css({
