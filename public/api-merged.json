@@ -8031,7 +8031,7 @@
         "description": "Get annotations for a public dashboard",
         "tags": [
           "dashboards",
-          "annonations",
+          "annotations",
           "dashboard_public"
         ],
         "operationId": "getPublicAnnotations",
