@@ -401,7 +401,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 			},
 			"timeRange": {
 				"from": "1753944618000",
-				"not_to": "1753944619000"
+				"to": 1753944619000
 			}
 		}`)
 		mr.From = ""
@@ -437,7 +437,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 				"type": "postgres"
 			},
 			"timeRange": {
-				"not_from": "1753944618000",
+				"from": 1753944618000,
 				"to": "1753944619000"
 			}
 		}`)
