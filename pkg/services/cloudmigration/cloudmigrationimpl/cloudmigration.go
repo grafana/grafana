@@ -80,6 +80,8 @@ type Service struct {
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
 	metrics *Metrics
+
+	grafanaVersion string
 }
 
 var LogPrefix = "cloudmigration.service"
@@ -195,6 +197,8 @@ func ProvideService(
 			return s, fmt.Errorf("registering cloud migration metrics: %w", err)
 		}
 	}
+
+	s.grafanaVersion = cfg.BuildVersion
 
 	return s, nil
 }
@@ -858,9 +862,10 @@ func (s *Service) report(
 	}
 
 	e := gmsclient.EventRequestDTO{
-		Event:   t,
-		LocalID: id,
-		UserUID: userUID,
+		Event:          t,
+		LocalID:        id,
+		UserUID:        userUID,
+		GrafanaVersion: s.grafanaVersion,
 	}
 
 	if d != 0 {
