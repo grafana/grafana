@@ -163,9 +163,9 @@ jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json
 # Cache duration for https endpoint response.
 cache_ttl = 60m
 
-# File containing one or more custom PEM Encoded CA Certificates
-# Used with jwk_set_url when the root CA is not trusted by the pre-packaged certifcates
-# Which is always true for selfsigned certificates.
+# Path to file containing one or more custom PEM-encoded CA certificates.
+# Used with jwk_set_url when the JWKS endpoint uses a certificate that is not
+# trusted by the default CA bundle (e.g. self-signed certificates).
 # tls_client_ca = /path/to/ca.crt
 
 # Skip CA Verification entirely
