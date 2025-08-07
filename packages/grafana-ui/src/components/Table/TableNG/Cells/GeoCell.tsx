@@ -2,13 +2,10 @@ import { css } from '@emotion/css';
 import WKT from 'ol/format/WKT';
 import { Geometry } from 'ol/geom';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
-import { GeoCellProps } from '../types';
+import { GeoCellProps, TableCellStyles } from '../types';
 
-export function GeoCell({ value, justifyContent, height }: GeoCellProps) {
-  const styles = useStyles2(getStyles);
-
-  let disp = '';
+export function GeoCell({ value }: GeoCellProps) {
+  let disp = null;
 
   if (value instanceof Geometry) {
     disp = new WKT().writeGeometry(value, {
@@ -19,25 +16,13 @@ export function GeoCell({ value, justifyContent, height }: GeoCellProps) {
     disp = `${value}`;
   }
 
-  return (
-    <div className={styles.cell} style={{ justifyContent, height }}>
-      <div className={styles.cellText} style={{ fontFamily: 'monospace' }}>
-        {disp}
-      </div>
-    </div>
-  );
+  return disp;
 }
 
-const getStyles = () => ({
-  cell: css({
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    padding: '0 8px',
-  }),
-  cellText: css({
+export const getStyles: TableCellStyles = () =>
+  css({
+    fontFamily: 'monospace',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-  }),
-});
+  });

@@ -1,4 +1,3 @@
-import { Property } from 'csstype';
 import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
@@ -18,6 +17,8 @@ import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
+
+import { TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -103,14 +104,6 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableFooterCalc {
-  show: boolean;
-  reducer?: string[];
-  fields?: string[];
-  enablePagination?: boolean;
-  countRows?: boolean;
-}
-
 export interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
@@ -126,7 +119,6 @@ export interface BaseTableProps {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
@@ -161,7 +153,6 @@ export interface TableCellRendererProps {
   theme: GrafanaTheme2;
   cellInspect: boolean;
   showFilters: boolean;
-  justifyContent: Property.JustifyContent;
   getActions?: GetActionsFunctionLocal;
   disableSanitizeHtml?: boolean;
 }
@@ -195,7 +186,6 @@ export interface RowExpanderNGProps {
 
 export interface SparklineCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -215,8 +205,6 @@ export interface BarGaugeCellProps {
 export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  height: number;
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
   rowIdx: number;
 }
@@ -228,7 +216,6 @@ export interface DataLinksCellProps {
 
 export interface GeoCellProps {
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   height: number;
 }
 
@@ -261,6 +248,14 @@ export interface PillCellProps {
   field: Field;
   rowIdx: number;
 }
+
+export interface TableCellStyleOptions {
+  textWrap: boolean;
+  textAlign: TextAlign;
+  shouldOverflow: boolean;
+}
+
+export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
