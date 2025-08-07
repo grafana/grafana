@@ -365,12 +365,7 @@
                     "confirmation": "",
                     "fetch": {
                       "body": "{}",
-                      "headers": [
-                        [
-                          "Content-Type",
-                          "application/json"
-                        ]
-                      ],
+                      "headers": [["Content-Type", "application/json"]],
                       "method": "GET",
                       "queryParams": [],
                       "url": "/api/health"
@@ -418,13 +413,8 @@
         "footer": {
           "countRows": false,
           "enablePagination": false,
-          "fields": [
-            "Min",
-            "Max"
-          ],
-          "reducer": [
-            "max"
-          ],
+          "fields": ["Min", "Max"],
+          "reducer": ["max"],
           "show": true
         },
         "frameIndex": 0,
@@ -576,9 +566,7 @@
           "countRows": false,
           "enablePagination": false,
           "fields": "",
-          "reducer": [
-            "max"
-          ],
+          "reducer": ["max"],
           "show": false
         },
         "showHeader": true,
@@ -799,9 +787,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -954,9 +940,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -1104,9 +1088,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -1254,9 +1236,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -1398,9 +1378,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -1588,9 +1566,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -1653,9 +1629,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
