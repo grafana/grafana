@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 138,
+  "id": 21409,
   "links": [],
   "panels": [
     {
@@ -365,7 +365,12 @@
                     "confirmation": "",
                     "fetch": {
                       "body": "{}",
-                      "headers": [["Content-Type", "application/json"]],
+                      "headers": [
+                        [
+                          "Content-Type",
+                          "application/json"
+                        ]
+                      ],
                       "method": "GET",
                       "queryParams": [],
                       "url": "/api/health"
@@ -402,8 +407,8 @@
         ]
       },
       "gridPos": {
-        "h": 15,
-        "w": 24,
+        "h": 12,
+        "w": 16,
         "x": 0,
         "y": 0
       },
@@ -413,8 +418,13 @@
         "footer": {
           "countRows": false,
           "enablePagination": false,
-          "fields": ["Min", "Max"],
-          "reducer": ["max"],
+          "fields": [
+            "Min",
+            "Max"
+          ],
+          "reducer": [
+            "max"
+          ],
           "show": true
         },
         "frameIndex": 0,
@@ -510,6 +520,115 @@
               "Time A": "Time",
               "img_url": "Cat"
             }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-background"
+            },
+            "filterable": true,
+            "inspect": true,
+            "wrapHeaderText": false
+          },
+          "fieldMinMax": true,
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 4,
+      "maxDataPoints": 100,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": false,
+          "fields": "",
+          "reducer": [
+            "max"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "State"
+          }
+        ]
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        }
+      ],
+      "title": "Nested tables",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 5,
+              "Info": 2,
+              "Max": 4,
+              "Min": 3,
+              "State": 1,
+              "Time": 0
+            },
+            "renameByName": {}
+          }
+        },
+        {
+          "id": "groupToNestedTable",
+          "options": {
+            "fields": {
+              "State": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            },
+            "showSubframeHeaders": true
           }
         }
       ],
@@ -669,10 +788,10 @@
         ]
       },
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 24,
         "x": 0,
-        "y": 15
+        "y": 12
       },
       "id": 2,
       "options": {
@@ -680,7 +799,9 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true,
@@ -717,6 +838,7 @@
             "inspect": false,
             "wrapHeaderText": false
           },
+          "fieldMinMax": true,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -752,6 +874,10 @@
                 "value": {
                   "mode": "continuous-greens"
                 }
+              },
+              {
+                "id": "custom.width",
+                "value": 50
               }
             ]
           },
@@ -782,24 +908,55 @@
                     "url": "https://google.com/search?q=${__value.raw}"
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 79
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 156
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 99
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 7,
+        "w": 4,
         "x": 0,
-        "y": 21
+        "y": 19
       },
       "id": 6,
+      "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true
@@ -807,8 +964,9 @@
       "pluginVersion": "12.2.0-pre",
       "targets": [
         {
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754578636810,\n          1754580436810,\n          1754582236810,\n          1754584036810,\n          1754585836810,\n          1754587636810,\n          1754589436810,\n          1754591236810,\n          1754593036810,\n          1754594836810\n        ],\n        [\n          68.67815082171406,\n          68.21038738705283,\n          67.85748579518524,\n          67.48088827530566,\n          67.36362085363314,\n          67.75399477824531,\n          67.9006935145112,\n          68.2893033558627,\n          68.20547872017494,\n          67.96251158324088\n        ],\n        [\n          67.52655915076163,\n          68.03367017865995,\n          65.44308825471086,\n          66.94142900198796,\n          66.33531057489242,\n          66.97007154625013,\n          67.88134129373145,\n          65.92102089546943,\n          65.7896781452792,\n          67.77680599320166\n        ],\n        [\n          68.78026730954913,\n          68.46495903270079,\n          68.29118217530531,\n          67.90561937677037,\n          68.05316512901861,\n          70.26033810424696,\n          68.05691975265877,\n          68.76874724839202,\n          70.02772232081647,\n          70.38628221361253\n        ],\n        [\n          \"up\",\n          \"down fast\",\n          \"down\",\n          \"down\",\n          \"down\",\n          \"up\",\n          \"up\",\n          \"up\",\n          \"down\",\n          \"down\"\n        ],\n        [\n          1,\n          2,\n          2,\n          2,\n          2,\n          1,\n          1,\n          1,\n          2,\n          2\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
-          "scenarioId": "random_walk_table"
+          "scenarioId": "raw_frame"
         }
       ],
       "title": "Apply to row - basic",
@@ -831,6 +989,7 @@
             "inspect": false,
             "wrapHeaderText": false
           },
+          "fieldMinMax": true,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -865,6 +1024,10 @@
                 "value": {
                   "mode": "continuous-blues"
                 }
+              },
+              {
+                "id": "custom.width",
+                "value": 50
               }
             ]
           },
@@ -895,24 +1058,55 @@
                     "url": "https://google.com/search?q=${__value.raw}"
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 59
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 161
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 114
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 21
+        "h": 7,
+        "w": 4,
+        "x": 4,
+        "y": 19
       },
       "id": 5,
+      "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true
@@ -920,8 +1114,9 @@
       "pluginVersion": "12.2.0-pre",
       "targets": [
         {
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754579008785,\n          1754580808785,\n          1754582608785,\n          1754584408785,\n          1754586208785,\n          1754588008785,\n          1754589808785,\n          1754591608785,\n          1754593408785,\n          1754595208785\n        ],\n        [\n          89.82213040422468,\n          89.53763263564208,\n          90.03103064454615,\n          90.51535567776907,\n          90.88960652895187,\n          91.30921636258488,\n          91.12427953645643,\n          91.1507153149385,\n          90.81021008780039,\n          91.11327042147582\n        ],\n        [\n          87.33191559754641,\n          88.46410173314496,\n          88.06920794235972,\n          88.98473401700574,\n          90.60349141857057,\n          90.5858441719162,\n          90.42154517148411,\n          90.32413455176213,\n          90.72055904641739,\n          88.74774424339796\n        ],\n        [\n          90.58845140604446,\n          90.08173133413374,\n          90.58230197880795,\n          92.55531809442493,\n          93.09165646181742,\n          93.38354884838586,\n          92.68544239576967,\n          92.15770413350477,\n          92.77335012158814,\n          92.52115072193222\n        ],\n        [\n          \"down\",\n          \"down\",\n          \"up fast\",\n          \"up fast\",\n          \"up\",\n          \"up fast\",\n          \"down\",\n          \"up\",\n          \"down\",\n          \"up\"\n        ],\n        [\n          2,\n          2,\n          1,\n          1,\n          1,\n          1,\n          2,\n          1,\n          2,\n          1\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
-          "scenarioId": "random_walk_table"
+          "scenarioId": "raw_frame"
         }
       ],
       "title": "Apply to row - gradient",
@@ -939,14 +1134,12 @@
           "custom": {
             "align": "auto",
             "cellOptions": {
-              "type": "color-background"
+              "type": "auto"
             },
-            "filterable": true,
-            "inspect": true,
+            "inspect": false,
             "wrapHeaderText": false
           },
           "fieldMinMax": true,
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -962,75 +1155,456 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 50
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/(Min|Max)/"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Info"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Google this term",
+                    "url": "https://google.com/search?q=${__value.raw}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 79
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 158
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 97
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 14,
-        "x": 0,
-        "y": 29
+        "h": 7,
+        "w": 4,
+        "x": 8,
+        "y": 19
       },
-      "id": 4,
+      "id": 7,
+      "maxDataPoints": 10,
       "options": {
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
-          "enablePagination": false,
           "fields": "",
-          "reducer": ["max"],
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754579078813,\n          1754580878813,\n          1754582678813,\n          1754584478813,\n          1754586278813,\n          1754588078813,\n          1754589878813,\n          1754591678813,\n          1754593478813,\n          1754595278813\n        ],\n        [\n          77.30289281564126,\n          87.14357945690202,\n          76.67466266903213,\n          76.27969352662608,\n          95.80292639037513,\n          75.68396049965999,\n          75.76117912054544,\n          76.05073308839697,\n          75.93744737071192,\n          75.82930696129104\n        ],\n        [\n          76.58900057075734,\n          76.01493865596112,\n          75.25501274661029,\n          75.52871130918913,\n          73.53324017648568,\n          74.74670600818675,\n          73.4627470190636,\n          75.38455781635166,\n          74.04318166296315,\n          74.79620005730261\n        ],\n        [\n          77.58417866514938,\n          77.9390885538468,\n          78.37258492198521,\n          76.82242506518101,\n          75.81423643776408,\n          75.86349731305505,\n          76.79031910137064,\n          77.71934637974913,\n          76.11981207380533,\n          77.29746416618009\n        ],\n        [\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"up\",\n          \"up\",\n          \"down\",\n          \"down\"\n        ],\n        [\n          2,\n          2,\n          2,\n          2,\n          2,\n          2,\n          1,\n          1,\n          2,\n          2\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Apply to row - thresholds",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "wrapHeaderText": false
+          },
+          "fieldMinMax": true,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 50
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/(Min|Max)/"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Info"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Google this term",
+                    "url": "https://google.com/search?q=${__value.raw}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 79
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 158
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 97
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 12,
+        "y": 19
+      },
+      "id": 8,
+      "maxDataPoints": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true,
         "sortBy": [
           {
-            "desc": true,
-            "displayName": "State"
+            "desc": false,
+            "displayName": "A"
           }
         ]
       },
       "pluginVersion": "12.2.0-pre",
       "targets": [
         {
-          "datasource": {
-            "type": "grafana-testdata-datasource"
-          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754579078813,\n          1754580878813,\n          1754582678813,\n          1754584478813,\n          1754586278813,\n          1754588078813,\n          1754589878813,\n          1754591678813,\n          1754593478813,\n          1754595278813\n        ],\n        [\n          77.30289281564126,\n          87.14357945690202,\n          76.67466266903213,\n          76.27969352662608,\n          95.80292639037513,\n          75.68396049965999,\n          75.76117912054544,\n          76.05073308839697,\n          75.93744737071192,\n          75.82930696129104\n        ],\n        [\n          76.58900057075734,\n          76.01493865596112,\n          75.25501274661029,\n          75.52871130918913,\n          73.53324017648568,\n          74.74670600818675,\n          73.4627470190636,\n          75.38455781635166,\n          74.04318166296315,\n          74.79620005730261\n        ],\n        [\n          77.58417866514938,\n          77.9390885538468,\n          78.37258492198521,\n          76.82242506518101,\n          75.81423643776408,\n          75.86349731305505,\n          76.79031910137064,\n          77.71934637974913,\n          76.11981207380533,\n          77.29746416618009\n        ],\n        [\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"up\",\n          \"up\",\n          \"down\",\n          \"down\"\n        ],\n        [\n          2,\n          2,\n          2,\n          2,\n          2,\n          2,\n          1,\n          1,\n          2,\n          2\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
-          "scenarioId": "random_walk_table"
+          "scenarioId": "raw_frame"
         }
       ],
-      "title": "Nested tables",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "A": false
+      "title": "Apply to row - enum",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
             },
-            "includeByName": {},
-            "indexByName": {
-              "A": 5,
-              "Info": 2,
-              "Max": 4,
-              "Min": 3,
-              "State": 1,
-              "Time": 0
-            },
-            "renameByName": {}
+            "inspect": false,
+            "wrapHeaderText": false
+          },
+          "fieldMinMax": true,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           }
         },
-        {
-          "id": "groupToNestedTable",
-          "options": {
-            "fields": {
-              "State": {
-                "aggregations": [],
-                "operation": "groupby"
-              }
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
             },
-            "showSubframeHeaders": true
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "palette-classic"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 50
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/(Min|Max)/"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Info"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Google this term",
+                    "url": "https://google.com/search?q=${__value.raw}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 79
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 158
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "from": 0,
+                      "result": {
+                        "color": "purple",
+                        "index": 0
+                      },
+                      "to": 76.999
+                    },
+                    "type": "range"
+                  },
+                  {
+                    "options": {
+                      "from": 77,
+                      "result": {
+                        "color": "orange",
+                        "index": 1
+                      }
+                    },
+                    "type": "range"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 97
+              }
+            ]
           }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 16,
+        "y": 19
+      },
+      "id": 9,
+      "maxDataPoints": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"State\",\n          \"type\": \"enum\",\n          \"typeInfo\": {\n            \"frame\": \"enum\"\n          },\n          \"config\": {\n            \"type\": {\n              \"enum\": {\n                \"text\": [\n                  \"Unknown\",\n                  \"Up\",\n                  \"Down\"\n                ]\n              }\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1754579078813,\n          1754580878813,\n          1754582678813,\n          1754584478813,\n          1754586278813,\n          1754588078813,\n          1754589878813,\n          1754591678813,\n          1754593478813,\n          1754595278813\n        ],\n        [\n          77.30289281564126,\n          87.14357945690202,\n          76.67466266903213,\n          76.27969352662608,\n          95.80292639037513,\n          75.68396049965999,\n          75.76117912054544,\n          76.05073308839697,\n          75.93744737071192,\n          75.82930696129104\n        ],\n        [\n          76.58900057075734,\n          76.01493865596112,\n          75.25501274661029,\n          75.52871130918913,\n          73.53324017648568,\n          74.74670600818675,\n          73.4627470190636,\n          75.38455781635166,\n          74.04318166296315,\n          74.79620005730261\n        ],\n        [\n          77.58417866514938,\n          77.9390885538468,\n          78.37258492198521,\n          76.82242506518101,\n          75.81423643776408,\n          75.86349731305505,\n          76.79031910137064,\n          77.71934637974913,\n          76.11981207380533,\n          77.29746416618009\n        ],\n        [\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"down fast\",\n          \"down\",\n          \"up\",\n          \"up\",\n          \"down\",\n          \"down\"\n        ],\n        [\n          2,\n          2,\n          2,\n          2,\n          2,\n          2,\n          1,\n          1,\n          2,\n          2\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
         }
       ],
+      "title": "Apply to row - mappings",
       "type": "table"
     },
     {
@@ -1068,10 +1642,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 10,
-        "x": 14,
-        "y": 29
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 19
       },
       "id": 3,
       "options": {
@@ -1079,7 +1653,9 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true
@@ -1120,5 +1696,5 @@
   "timezone": "",
   "title": "Panel Tests - Table - Kitchen Sink",
   "uid": "dcb9f5e9-8066-4397-889e-864b99555dbb",
-  "version": 3
+  "version": 7
 }
