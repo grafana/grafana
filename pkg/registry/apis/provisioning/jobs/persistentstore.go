@@ -87,28 +87,17 @@ type persistentStore struct {
 	// expiry is the time after which a job is considered abandoned.
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
-
-	// notifications has a signal sent to it when a new job is inserted. If a value already exists, nothing is sent.
-	//
-	// This is very similar to the concept of a Waker in Rust: <https://doc.rust-lang.org/std/task/struct.Waker.html>
-	notifications chan struct{}
 }
 
-func NewJobStore(
-	jobStore jobStorage,
-	expiry time.Duration,
-) (*persistentStore, error) {
+func NewJobStore(jobStore jobStorage, expiry time.Duration) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
 
 	return &persistentStore{
 		jobStore: jobStore,
-
-		clock:  time.Now,
-		expiry: expiry,
-
-		notifications: make(chan struct{}, 1),
+		clock:    time.Now,
+		expiry:   expiry,
 	}, nil
 }
 
@@ -446,17 +435,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, apifmt.Errorf("unexpected object type %T", obj)
 	}
 
-	select {
-	case s.notifications <- struct{}{}:
-	default:
-		// We don't want to block if there is already a notification waiting.
-	}
-
 	return created, nil
-}
-
-func (s *persistentStore) InsertNotifications() chan struct{} {
-	return s.notifications
 }
 
 // generateJobName creates and updates the job's name to one that fits it.
