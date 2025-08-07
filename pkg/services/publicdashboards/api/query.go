@@ -75,7 +75,7 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 	return toJsonStreamingResponse(c.Req.Context(), api.features, resp)
 }
 
-// swagger:route GET /public/dashboards/{accessToken}/annotations dashboards annonations dashboard_public getPublicAnnotations
+// swagger:route GET /public/dashboards/{accessToken}/annotations dashboards annotations dashboard_public getPublicAnnotations
 //
 //	Get annotations for a public dashboard
 //
