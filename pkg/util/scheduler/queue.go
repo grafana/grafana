@@ -162,7 +162,6 @@ func NewQueue(opts *QueueOptions) *Queue {
 		NativeHistogramBucketFactor:     1.1,
 		NativeHistogramMaxBucketNumber:  160,
 		NativeHistogramMinResetDuration: time.Hour,
-		NativeHistogramMaxZeroThreshold: 4,
 	}, []string{"tenant"})
 
 	q.Service = services.NewBasicService(nil, q.dispatcherLoop, q.stopping)
