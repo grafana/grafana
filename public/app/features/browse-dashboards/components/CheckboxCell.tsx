@@ -4,6 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, useStyles2 } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
@@ -16,6 +17,8 @@ export default function CheckboxCell({
   permissions,
 }: DashboardsTreeCellProps) {
   const item = row.item;
+
+  // We can remove the complex root folder conflict logic for now
 
   if (!isSelected) {
     return <CheckboxSpacer />;
@@ -33,10 +36,18 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
+  // We don't want to select root provisioned folder
+  const isRootProvisionedFolder = item.managedBy === ManagerKind.Repo && !item.parentUID;
+  if (isRootProvisionedFolder) {
+    return <CheckboxSpacer />;
+  }
+
   // Check if user can edit this specific item type
   if (permissions && !canEditItemType(item.kind, permissions)) {
     return <CheckboxSpacer />;
   }
+
+  // Simplified: removed complex root folder conflict logic
 
   const state = isSelected(item);
 
