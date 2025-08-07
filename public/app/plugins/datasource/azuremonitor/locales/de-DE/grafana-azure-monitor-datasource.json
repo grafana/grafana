@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Basis-Logs aktivieren"
     },
     "config-editor": {
-      "description-additional-settings": "Zusätzliche Einstellungen sind optionale Einstellungen, die für mehr Kontrolle über Ihre Datenquelle konfiguriert werden können. Dazu gehört auch der sichere SOCKS-Proxy.",
-      "description-request-timeout": "Legen Sie das Anfrage-Timeout in Sekunden fest. Der Standardwert ist 30 Sekunden.",
-      "title-additional-settings": "Zusätzliche Einstellungen",
-      "title-request-timeout": "Anfrage-Timeout"
+      "description-additional-settings": "",
+      "title-additional-settings": "Zusätzliche Einstellungen"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Fallback-Anmeldedaten wurden deaktiviert. Da die nutzerbasierte Authentifizierung grundsätzlich nur Anfragen mit einem Nutzer im Geltungsbereich unterstützt, funktionieren Funktionen wie Warnungen, aufgezeichnete Abfragen oder die Berichtserstellung nicht wie erwartet. Weitere Informationen finden Sie in der <2>Dokumentation</2>.",

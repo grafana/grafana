@@ -3489,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Annuler",
-      "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
       "confirmation-text": "Supprimer",
       "delete-button": "Supprimer",
       "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
@@ -3588,6 +3587,7 @@
     },
     "folder-actions-button": {
       "delete": "Supprimer",
+      "delete-folder-error": "",
       "folder-actions": "Actions sur le dossier",
       "manage-permissions": "Gérer les autorisations",
       "move": "Déplacer"
@@ -4318,7 +4318,7 @@
       "source-label": "Source",
       "sub-text": "<0>Définissez quelle source de données affichera la corrélation et quelles données remplaceront les variables précédemment définies.</0>"
     },
-    "sub-title": "Définissez comment les données provenant de différentes sources de données se rapportent l’une à l’autre. En savoir plus dans la <2>documentation<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Ce champ est obligatoire.",
       "sub-text": "<0>Définissez l'objet de la corrélation. Avec le type requête, une requête sera exécutée lorsque vous cliquerez sur la corrélation. Avec le type externe, un clic sur la corrélation ouvrira une URL.</0>",
@@ -4721,7 +4721,7 @@
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
       "add-visualization-button": "Ajouter une visualisation",
       "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation",
-      "import-a-dashboard-body": "Importez des tableaux de bord à partir de fichiers ou de <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord"
     },
@@ -7496,6 +7496,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10312,7 +10315,7 @@
     },
     "invite-user": {
       "invite-button": "Inviter",
-      "invite-new-member-button": "Inviter un nouveau membre",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11094,6 +11097,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11307,6 +11318,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11513,6 +11532,14 @@
     },
     "token-permissions-info": {
       "and-click": "et cliquez",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Accéder à",
       "make-sure": "Assurez-vous d’inclure ces autorisations"
     },
