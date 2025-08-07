@@ -39,16 +39,7 @@ type dualWriter struct {
 func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	// If we read from unified, we can just do that and return.
 	if d.readUnified {
-		unifiedGet, unifiedErr := d.unified.Get(ctx, name, options)
-		if apierrors.IsNotFound(unifiedErr) {
-			// If resource is not found in unified storage, fallback to legacy.
-			// This fixes cases in where records (stored in multiple tables, including permissions)
-			// are inserted first in legacy and then on Unified.
-			log := logging.FromContext(ctx).With("method", "Get")
-			log.Error("resource not found in Unified Storage, trying to GET from legacy", "err", unifiedErr)
-			return d.legacy.Get(ctx, name, options)
-		}
-		return unifiedGet, unifiedErr
+		return d.unified.Get(ctx, name, options)
 	}
 	// If legacy is still our main store, lets first read from it.
 	legacyGet, err := d.legacy.Get(ctx, name, options)
@@ -196,6 +187,21 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
+	mode3 := d.readUnified && d.legacy != nil && d.unified != nil
+	perm := ""
+	// this is Mode 3
+	if mode3 {
+		objIn, err := utils.MetaAccessor(in)
+		if err != nil {
+			return nil, err
+		}
+
+		perm = objIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
+		if perm != "" {
+			objIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
+		}
+	}
+
 	// create in legacy first, and then unistore. if unistore fails, but legacy succeeds,
 	// will try to cleanup the object in legacy.
 	createdFromLegacy, err := d.legacy.Create(ctx, in, createValidation, options)
@@ -211,6 +217,14 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
+
+	if mode3 {
+		objCopy, err := utils.MetaAccessor(createdCopy)
+		if err != nil {
+			return nil, err
+		}
+		objCopy.SetAnnotation(utils.AnnoKeyGrantPermissions, perm)
+	}
 
 	// If unified storage is the primary storage, let's just create it in the foreground and return it.
 	if d.readUnified {
