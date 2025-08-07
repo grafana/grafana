@@ -718,12 +718,11 @@ When a data point represents more than one row&mdash;that is, different rows but
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-multiple-row-marker-v12.1.png" max-width="750px" alt="A data point with mulitple rows of associated data" >}}
 
-Clicking these rows expands it and shows the grid with the row details.
+The name of each top-level row of the tooltip reflects the first field value in the data row and clicking each of these rows expands it to show the grid with the row details.
 
-The name of each top-level row of the tooltip is determined by [exact language from engineering would be great here...].
-
-The data appearing in each detail row can only be controlled through the underlying query and transformations applied to the query's results.
-You can't directly control what's displayed in the tooltip using the tooltip options.
+{{< admonition type="note" >}}
+The data appearing in each detail row is determined by the underlying query and transformations applied to the query's results, and can't be directly controlled using tooltip options.
+{{< /admonition >}}
 
 ### Standard options
 
