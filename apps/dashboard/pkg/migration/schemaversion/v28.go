@@ -258,6 +258,24 @@ func (m *v28Migrator) migratetSinglestat(panel map[string]interface{}, defaults 
 	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
 	m.migrateThresholds(angularOpts, defaults)
 
+	// If no thresholds were set from angular migration, add default stat panel thresholds
+	// This matches the behavior of frontend pluginLoaded which adds default thresholds
+	if _, hasThresholds := defaults["thresholds"]; !hasThresholds {
+		defaults["thresholds"] = map[string]interface{}{
+			"mode": "absolute",
+			"steps": []interface{}{
+				map[string]interface{}{
+					"color": "green",
+					"value": nil,
+				},
+				map[string]interface{}{
+					"color": "red",
+					"value": 80,
+				},
+			},
+		}
+	}
+
 	// Apply common angular option migrations (value mappings can now use threshold colors)
 	m.applyCommonAngularMigration(panel, defaults, options, angularOpts)
 
@@ -297,6 +315,24 @@ func (m *v28Migrator) migrateGrafanaSinglestatPanel(panel map[string]interface{}
 
 	// Migrate thresholds FIRST (consolidated: both panel types create DEFAULT_THRESHOLDS for empty strings)
 	m.migrateThresholds(angularOpts, defaults)
+
+	// If no thresholds were set from angular migration, add default stat panel thresholds
+	// This matches the behavior of frontend pluginLoaded which adds default thresholds
+	if _, hasThresholds := defaults["thresholds"]; !hasThresholds {
+		defaults["thresholds"] = map[string]interface{}{
+			"mode": "absolute",
+			"steps": []interface{}{
+				map[string]interface{}{
+					"color": "green",
+					"value": nil,
+				},
+				map[string]interface{}{
+					"color": "red",
+					"value": 80,
+				},
+			},
+		}
+	}
 
 	// Apply common angular option migrations (value mappings can now use threshold colors)
 	m.applyCommonAngularMigration(panel, defaults, options, angularOpts)

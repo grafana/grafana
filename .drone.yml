@@ -50,7 +50,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: verify-gen-cue
 trigger:
   branch: main
@@ -117,7 +117,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -127,7 +127,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -136,7 +136,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: verify-gen-jsonnet
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -186,7 +186,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: rgm-package
   pull: always
   volumes:
@@ -664,7 +664,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -794,7 +794,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -935,7 +935,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --artifacts-editions=oss --tag $${DRONE_TAG} --src-bucket
@@ -1027,7 +1027,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: compile-build-cmd
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -1127,7 +1127,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -1224,7 +1224,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
@@ -1298,7 +1298,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -1375,7 +1375,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -1494,7 +1494,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -1619,7 +1619,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.5-alpine
+  image: golang:1.24.6-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -1873,3 +1873,8 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
+---
+kind: signature
+hmac: 70171a24c7e9ab7af105bd39d02f9aa6d28a4505963dfc9140f53cdfe4965ef8
+
+...
