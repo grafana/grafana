@@ -14,8 +14,9 @@ runs:
         restore-keys: |
           node_modules-${{ runner.os }}
     - name: Yarn install
-      run: yarn install --immutable
       if: steps.cache.outputs.cache-hit != 'true' # run yarn install if an exact cache was not found
+      run: yarn install --immutable
+      shell: bash
       env:
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0

@@ -16,7 +16,9 @@ runs:
         # causes issues we might want to remove this.
         restore-keys: |
           node_modules-${{ runner.os }}
-    - run: yarn install --immutable
+    - name: Yarn install
+      run: yarn install --immutable
+      shell: bash
       env:
         # Skip downloading/installing bigger dependencies that we're not going to use
         # If we need these, add an input to this action to allow them to be installed
