@@ -52,10 +52,23 @@ jobs:
   mysql:
     strategy:
       matrix:
-        shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
-        ]
+        include:
+          - shard: 1/8
+            idx: 1
+          - shard: 2/8
+            idx: 2
+          - shard: 3/8
+            idx: 3
+          - shard: 4/8
+            idx: 4
+          - shard: 5/8
+            idx: 5
+          - shard: 6/8
+            idx: 6
+          - shard: 7/8
+            idx: 7
+          - shard: 8/8
+            idx: 8
       fail-fast: false
 
     name: MySQL (${{ matrix.shard }})
@@ -100,16 +113,29 @@ jobs:
         if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: mysql-trace-${{ matrix.shard }}
+          name: mysql-trace-${{ matrix.idx }}
           path: mysql-trace.json
 
   postgres:
     strategy:
       matrix:
-        shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
-        ]
+        include:
+          - shard: 1/8
+            idx: 1
+          - shard: 2/8
+            idx: 2
+          - shard: 3/8
+            idx: 3
+          - shard: 4/8
+            idx: 4
+          - shard: 5/8
+            idx: 5
+          - shard: 6/8
+            idx: 6
+          - shard: 7/8
+            idx: 7
+          - shard: 8/8
+            idx: 8
       fail-fast: false
 
     name: Postgres (${{ matrix.shard }})
@@ -153,7 +179,7 @@ jobs:
         if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: postgres-trace-${{ matrix.shard }}
+          name: postgres-trace-${{ matrix.idx }}
           path: postgres-trace.json
 
   # This is the job that is actually required by rulesets.
