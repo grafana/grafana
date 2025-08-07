@@ -167,6 +167,9 @@ jobs:
     name: All frontend unit tests complete
     runs-on: ubuntu-x64-small
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Check test suites
         uses: ./.github/actions/check-jobs
         with:
