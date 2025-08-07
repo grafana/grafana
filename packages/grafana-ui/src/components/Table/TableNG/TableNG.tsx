@@ -344,7 +344,7 @@ export function TableNG(props: TableNGProps) {
         const justifyContent = getJustifyContent(textAlign);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
-        const headerCellClass = getHeaderCellStyles(theme, justifyContent, transparent);
+        const headerCellClass = getHeaderCellStyles(theme, justifyContent);
         const renderFieldCell = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);

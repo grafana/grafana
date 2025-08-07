@@ -111,11 +111,7 @@ export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
   footerCell: css({ display: 'flex', justifyContent: justifyContent || 'space-between' }),
 });
 
-export const getHeaderCellStyles = (
-  theme: GrafanaTheme2,
-  justifyContent: Property.JustifyContent,
-  transparent?: boolean
-) =>
+export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
   css({
     display: 'flex',
     gap: theme.spacing(0.5),
@@ -124,11 +120,6 @@ export const getHeaderCellStyles = (
     paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
     '&:last-child': { borderInlineEnd: 'none' },
-    // make header text selection invisible so that accidental selection during sorting is not distracting
-    '&::selection': {
-      backgroundColor: transparent ? theme.colors.background.canvas : theme.colors.background.primary,
-      color: theme.colors.text.primary,
-    },
   });
 
 export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow }) =>
