@@ -75,11 +75,11 @@ func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 		// we would try to redirect again.
 		if shorturls.ErrShortURLNotFound.Is(err) {
 			hs.log.Debug("Not redirecting short URL since not found", "uid", shortURLUID)
-			c.Redirect(hs.Cfg.AppURL, http.StatusFound)
+			c.Redirect(hs.Cfg.AppURL, http.StatusPermanentRedirect)
 			return
 		}
 		hs.log.Error("Short URL redirection error", "err", err)
-		c.Redirect(hs.Cfg.AppURL, http.StatusFound)
+		c.Redirect(hs.Cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 

@@ -81,7 +81,7 @@ func TestShortURL(t *testing.T) {
 		_ = res.Body.Close()
 	}()
 	assert.Equal(t, "http://localhost:3000/", res.Header.Get("Location"))
-	assert.Equal(t, http.StatusFound, res.StatusCode)
+	assert.Equal(t, http.StatusPermanentRedirect, res.StatusCode)
 
 	// Create a client that does not have authentication.
 	notLoggedInClient := client(grafanaListedAddr, "", "")
