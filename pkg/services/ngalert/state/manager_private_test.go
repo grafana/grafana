@@ -39,7 +39,7 @@ func TestStateIsStale(t *testing.T) {
 		name                        string
 		lastEvaluation              time.Time
 		expectedResult              bool
-		missingSeriesEvalsToResolve int
+		missingSeriesEvalsToResolve int64
 	}{
 		{
 			name:                        "false if last evaluation is now",

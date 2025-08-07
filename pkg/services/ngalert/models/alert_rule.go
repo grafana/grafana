@@ -304,7 +304,7 @@ type AlertRule struct {
 	// required before resolving an alert state (a dimension) when data is missing.
 	// If nil, alerts resolve after 2 missing evaluation intervals
 	// (i.e., resolution occurs during the second evaluation where data is absent).
-	MissingSeriesEvalsToResolve *int
+	MissingSeriesEvalsToResolve *int64
 }
 
 type AlertRuleMetadata struct {
@@ -598,7 +598,7 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 // to wait before resolving an alert rule instance when its data is missing.
 // If not configured, it returns the default value (2), which means the alert
 // resolves after missing for two evaluation intervals.
-func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int {
+func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int64 {
 	if alertRule.MissingSeriesEvalsToResolve == nil {
 		return 2 // default value
 	}

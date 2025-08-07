@@ -128,7 +128,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Labels:                      labels,
 		NotificationSettings:        ns,
 		Metadata:                    GenerateMetadata(),
-		MissingSeriesEvalsToResolve: util.Pointer(2),
+		MissingSeriesEvalsToResolve: util.Pointer[int64](2),
 	}
 
 	for _, mutator := range g.mutators {
@@ -514,12 +514,12 @@ func (a *AlertRuleMutators) WithSameGroup() AlertRuleMutator {
 	}
 }
 
-func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int) AlertRuleMutator {
+func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int64) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		if timesOfInterval <= 0 {
 			panic("timesOfInterval must be greater than 0")
 		}
-		rule.MissingSeriesEvalsToResolve = util.Pointer(timesOfInterval)
+		rule.MissingSeriesEvalsToResolve = util.Pointer[int64](timesOfInterval)
 	}
 }
 

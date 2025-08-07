@@ -661,7 +661,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
 						},
 					},
-					MissingSeriesEvalsToResolve: util.Pointer(3),
+					MissingSeriesEvalsToResolve: util.Pointer[int64](3),
 				},
 			},
 		}
@@ -676,7 +676,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 			for _, rule := range result.Rules {
 				require.NotEmpty(t, rule.UID)
 				if rule.UID == "rule3" {
-					require.Equal(t, 3, *rule.MissingSeriesEvalsToResolve)
+					require.Equal(t, int64(3), *rule.MissingSeriesEvalsToResolve)
 				}
 			}
 		})
