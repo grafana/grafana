@@ -70,6 +70,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		CommitOnlyOnceMessage: msg,
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
+		Ref:                   opts.Ref,
 	}
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
@@ -106,7 +107,9 @@ func (w *Worker) deleteFiles(ctx context.Context, rw repository.ReaderWriter, pr
 		}
 
 		progress.SetMessage(ctx, "Deleting "+path)
-		result.Error = rw.Delete(ctx, path, opts.Ref, "Delete "+path)
+		if err := rw.Delete(ctx, path, opts.Ref, "Delete "+path); err != nil {
+			result.Error = fmt.Errorf("deleting file %s: %w", path, err)
+		}
 		progress.Record(ctx, result)
 		if err := progress.TooManyErrors(); err != nil {
 			return err

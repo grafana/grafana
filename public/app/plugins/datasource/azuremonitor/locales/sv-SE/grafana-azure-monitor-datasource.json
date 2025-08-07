@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Aktivera basloggar"
     },
     "config-editor": {
-      "description-additional-settings": "Ytterligare inställningar är valfria inställningar som kan konfigureras för ökad kontroll över din datakälla. Detta inkluderar Säker SOCKS-proxy.",
-      "description-request-timeout": "Ställ in timeout för begäran i sekunder. Standard är 30 sekunder.",
-      "title-additional-settings": "Ytterligare inställningar",
-      "title-request-timeout": "Timeout för begäran"
+      "description-additional-settings": "",
+      "title-additional-settings": "Ytterligare inställningar"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Reservautentiseringsuppgifter har inaktiverats. Eftersom användarbaserad autentisering i grunden endast stöder förfrågningar som är kopplade till en enskild användare kommer funktioner som aviseringar, registrerade frågor eller rapportering inte att fungera som förväntat. Läs <2>dokumentationen</2> för mer information.",

@@ -15,7 +15,9 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { DescendantCount } from '../BrowseActions/DescendantCount';
 import { collectSelectedItems } from '../utils';
 
+import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
+import { useFolderNameFromSelection } from './useFolderNameFromSelection';
 import { BulkActionFormData, BulkActionProvisionResourceProps } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
@@ -113,7 +115,8 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkActionProvisionResourceProps) {
-  const { repository } = useGetResourceRepositoryView({ folderName: folderUid });
+  const folderName = useFolderNameFromSelection({ folderUid, selectedItems });
+  const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName });
 
   const workflowOptions = getWorkflowOptions(repository);
   const timestamp = generateTimestamp();
@@ -124,8 +127,8 @@ export function BulkDeleteProvisionedResource({
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository) {
-    return null;
+  if (!repository || isReadOnlyRepo) {
+    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
   }
 
   return (

@@ -234,4 +234,10 @@ describe('BulkDeleteProvisionedResource', () => {
       })
     );
   });
+
+  it('returns null when repository is not available', () => {
+    setup(null);
+
+    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
+  });
 });

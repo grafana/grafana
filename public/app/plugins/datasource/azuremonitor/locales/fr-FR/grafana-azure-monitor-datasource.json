@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Activer les journaux de base"
     },
     "config-editor": {
-      "description-additional-settings": "Les paramètres supplémentaires sont des paramètres facultatifs qui peuvent être configurés pour un meilleur contrôle de votre source de données. Cela inclut le proxy Socks sécurisé.",
-      "description-request-timeout": "Définissez le délai d’expiration de la demande en secondes. La valeur par défaut est de 30 secondes.",
-      "title-additional-settings": "Paramètres supplémentaires",
-      "title-request-timeout": "Délai d’expiration de la demande"
+      "description-additional-settings": "",
+      "title-additional-settings": "Paramètres supplémentaires"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Les identifiants de secours ont été désactivés. Étant donné que l’authentification basée sur l’utilisateur ne prend en charge que les demandes avec un utilisateur dans la portée, les fonctionnalités telles que les alertes, les requêtes enregistrées ou les rapports ne fonctionneront pas comme prévu. Veuillez consulter la <2>documentation</2> pour en savoir plus.",

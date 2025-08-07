@@ -18,7 +18,9 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { DescendantCount } from '../BrowseActions/DescendantCount';
 import { collectSelectedItems } from '../utils';
 
+import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
+import { useFolderNameFromSelection } from './useFolderNameFromSelection';
 import { BulkActionFormData, BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
@@ -146,7 +148,8 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 }
 
 export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
+  const folderName = useFolderNameFromSelection({ folderUid, selectedItems });
+  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
@@ -158,8 +161,8 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository) {
-    return null;
+  if (!repository || isReadOnlyRepo) {
+    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
   }
 
   return (
