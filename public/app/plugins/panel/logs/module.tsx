@@ -7,7 +7,7 @@ import { Options } from './panelcfg.gen';
 import { LogsPanelSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(LogsPanel)
-  .setPanelOptions((builder) => {
+  .setPanelOptions((builder, context) => {
     const category = [t('logs.category-logs', 'Logs')];
     builder.addBooleanSwitch({
       path: 'showTime',
@@ -33,7 +33,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
           description: '',
           defaultValue: false,
         });
-    } else {
+    } else if (context.options?.showTime) {
       builder.addRadio({
         path: 'timestampResolution',
         name: t('logs.timestamp-format', 'Timestamp resolution'),
@@ -80,24 +80,42 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       });
     }
 
-    builder
-      .addBooleanSwitch({
-        path: 'enableLogDetails',
-        name: t('logs.name-enable-log-details', 'Enable log details'),
+    builder.addBooleanSwitch({
+      path: 'enableLogDetails',
+      name: t('logs.name-enable-log-details', 'Enable log details'),
+      category,
+      description: '',
+      defaultValue: true,
+    });
+
+    if (config.featureToggles.newLogsPanel && context.options?.enableLogDetails) {
+      builder.addRadio({
+        path: 'detailsMode',
+        name: t('logs.name-details-mode', 'Log Details panel mode'),
         category,
         description: '',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        path: 'enableInfiniteScrolling',
-        name: t('logs.name-enable-infinite-scrolling', 'Enable infinite scrolling'),
-        category,
-        description: t(
-          'logs.description-enable-infinite-scrolling',
-          'Experimental. Request more results by scrolling to the bottom of the logs list.'
-        ),
-        defaultValue: false,
+        settings: {
+          options: [
+            { value: 'inline', label: t('logs.name-details-options.label-inline', 'Inline') },
+            {
+              value: 'sidebar',
+              label: t('logs.name-details-options.label-sidebar', 'Sidebar'),
+            },
+          ],
+        },
       });
+    }
+
+    builder.addBooleanSwitch({
+      path: 'enableInfiniteScrolling',
+      name: t('logs.name-enable-infinite-scrolling', 'Enable infinite scrolling'),
+      category,
+      description: t(
+        'logs.description-enable-infinite-scrolling',
+        'Experimental. Request more results by scrolling to the bottom of the logs list.'
+      ),
+      defaultValue: false,
+    });
 
     if (config.featureToggles.newLogsPanel) {
       builder
@@ -122,21 +140,6 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
               {
                 value: 'small',
                 label: t('logs.font-size-options.label-small', 'Small'),
-              },
-            ],
-          },
-        })
-        .addRadio({
-          path: 'detailsMode',
-          name: t('logs.name-details-mode', 'Log Details panel mode'),
-          category,
-          description: '',
-          settings: {
-            options: [
-              { value: 'inline', label: t('logs.name-details-options.label-inline', 'Inline') },
-              {
-                value: 'sidebar',
-                label: t('logs.name-details-options.label-sidebar', 'Sidebar'),
               },
             ],
           },
