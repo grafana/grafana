@@ -3523,7 +3523,6 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "button-done": "Done",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
       "error-deleting-resources": "Error deleting resources"
     },
