@@ -32,7 +32,7 @@ jobs:
   yarn-install:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     name: Warm up yarn cache
     steps:
     - name: Checkout repo
