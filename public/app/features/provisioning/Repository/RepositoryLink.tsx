@@ -23,12 +23,11 @@ export function RepositoryLink({ name, jobType }: RepositoryLinkProps) {
 
   return (
     <Stack direction="column" gap={1}>
-
-      {jobType === 'delete' && (
+      {jobType === 'sync' && (
         <Text>
           <Trans i18nKey="provisioning.repository-link.grafana-repository-synced">
-            Your resources are now in your external storage and provisioned into your instance. From now on, your instance
-            and the external storage will be synchronized.
+            Your resources are now in your external storage and provisioned into your instance. From now on, your
+            instance and the external storage will be synchronized.
           </Trans>
         </Text>
       )}

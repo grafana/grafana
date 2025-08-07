@@ -6,29 +6,25 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { useSelector } from 'app/types/store';
 
-import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
 import { collectSelectedItems } from '../utils';
 
-import { DeleteJobSpec, ResourceRef, useBulkActionJob } from './useBulkActionJob';
+import { DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { BulkActionFormData, BulkActionProvisionResourceProps } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
   repository: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
-  folderPath?: string;
 }
 
-function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -36,20 +32,14 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
-  const childrenByParentUID = useChildrenByParentUIDState();
-  const rootItems = useSelector(rootItemsSelector);
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setHasSubmitted(true);
 
-    const targets = collectSelectedItems(selectedItems, childrenByParentUID, rootItems?.items || []);
-    const resources: ResourceRef[] = targets.map(({ uid, isFolder }) => ({
-      name: uid,
-      group: isFolder ? 'folder.grafana.app' : 'dashboard.grafana.app',
-      kind: isFolder ? 'Folder' : 'Dashboard',
-    }));
+    const resources = collectSelectedItems(selectedItems);
+
     // Create the delete job spec
     const jobSpec: DeleteJobSpec = {
       action: 'delete',
@@ -134,10 +124,9 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkActionProvisionResourceProps) {
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
+  const { repository } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
-  const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();
 
   const initialValues = {
@@ -157,7 +146,6 @@ export function BulkDeleteProvisionedResource({
       initialValues={initialValues}
       repository={repository}
       workflowOptions={workflowOptions}
-      folderPath={folderPath}
     />
   );
 }

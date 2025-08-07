@@ -1,16 +1,10 @@
 import { screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
-
-// Set up backendSrv as recommended in the PR comment
-setBackendSrv(backendSrv);
-setupMockServer();
+import { ResponseType } from './useBulkActionJob';
 
 jest.mock('../BrowseActions/DescendantCount', () => ({
   DescendantCount: jest.fn(({ selectedItems }) => (
@@ -44,92 +38,79 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
-// Get references to mocked functions after module loading
 const mockUseGetResourceRepositoryView = jest.mocked(
   require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
 );
 const mockUseBulkActionJob = jest.mocked(require('./useBulkActionJob').useBulkActionJob);
 const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
 
-describe('BulkDeleteProvisionedResource', () => {
+function setup(
+  repository: RepositoryView | null,
+  mockJobResult: ResponseType = {
+    success: true,
+    job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
+  },
+  isLoading = false
+) {
+  const selectedItems = {
+    folder: { 'folder-1': true },
+    dashboard: { 'dashboard-1': true },
+  };
+
   const defaultRepository: RepositoryView = {
-    name: 'test-folder', // This must match the folderUid passed to the component
+    name: 'test-folder',
     type: 'github',
     title: 'Test Repository',
     target: 'folder',
     workflows: ['branch', 'write'],
   };
 
-  const selectedItems = {
-    folder: { 'folder-1': true },
-    dashboard: { 'dashboard-1': true },
-  };
+  const onDismiss = jest.fn();
+  const mockCreateBulkJob = jest.fn().mockResolvedValue(mockJobResult);
 
+  mockUseGetResourceRepositoryView.mockReturnValue({
+    repository: repository ?? defaultRepository,
+    folder: repository
+      ? {
+          metadata: {
+            annotations: {
+              'grafana.app/file-path': '/test/folder',
+            },
+          },
+        }
+      : null,
+    isInstanceManaged: false,
+  });
+
+  mockUseBulkActionJob.mockReturnValue({
+    createBulkJob: mockCreateBulkJob,
+    isLoading,
+  });
+
+  const renderResult = render(
+    <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
+  );
+
+  return {
+    onDismiss,
+    mockCreateBulkJob,
+    selectedItems,
+    defaultRepository,
+    ...renderResult,
+  };
+}
+
+describe('BulkDeleteProvisionedResource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      repository: defaultRepository,
-      folder: {
-        metadata: {
-          annotations: {
-            'grafana.app/file-path': '/test/folder',
-          },
-        },
-      },
-      isInstanceManaged: false,
-    });
-
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: jest.fn(),
-      isLoading: false,
-    });
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  function setup(
-    repository: RepositoryView | null = defaultRepository,
-    mockJobResult = { success: true, job: { metadata: { name: 'test-job' }, status: { state: 'success' } } },
-    isLoading = false
-  ) {
-    const onDismiss = jest.fn();
-    const mockCreateBulkJob = jest.fn().mockResolvedValue(mockJobResult);
-
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      repository,
-      folder: repository
-        ? {
-            metadata: {
-              annotations: {
-                'grafana.app/file-path': '/test/folder',
-              },
-            },
-          }
-        : null,
-      isInstanceManaged: false,
-    });
-
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: mockCreateBulkJob,
-      isLoading,
-    });
-
-    const renderResult = render(
-      <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
-    );
-
-    return {
-      onDismiss,
-      mockCreateBulkJob,
-      ...renderResult,
-    };
-  }
-
   it('renders the delete warning and form', async () => {
-    setup();
+    setup(null);
 
     expect(await screen.findByText(/This will delete selected folders and their descendants/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();
@@ -137,7 +118,7 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('calls onDismiss when Cancel is clicked', async () => {
-    const { onDismiss, user } = setup();
+    const { onDismiss, user } = setup(null);
 
     await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
@@ -145,12 +126,12 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('handles successful deletion', async () => {
-    const { user, mockCreateBulkJob } = setup();
+    const { user, mockCreateBulkJob, defaultRepository } = setup(null);
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
     expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'test-folder' }),
+      defaultRepository,
       expect.objectContaining({
         action: 'delete',
         delete: expect.objectContaining({
@@ -169,45 +150,18 @@ describe('BulkDeleteProvisionedResource', () => {
 
   it('handles deletion errors', async () => {
     const mockPublish = jest.fn();
-    const mockCreateBulkJob = jest.fn().mockResolvedValue({ success: false, error: 'Network error' });
-
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      repository: defaultRepository,
-      folder: {
-        metadata: {
-          annotations: {
-            'grafana.app/file-path': '/test/folder',
-          },
-        },
-      },
-      isInstanceManaged: false,
-    });
-
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: mockCreateBulkJob,
-      isLoading: false,
-    });
+    const { user } = setup(null, { success: false, error: 'Network error' });
 
     mockGetAppEvents.mockReturnValue({
       publish: mockPublish,
     });
 
-    const { user } = render(
-      <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={jest.fn()} />
-    );
-
     await user.click(screen.getByRole('button', { name: /Delete/i }));
-
-    // Wait for the async function to complete
-    await waitFor(() => {
-      expect(mockCreateBulkJob).toHaveBeenCalled();
-    });
 
     // Should remain on form (not show JobStatus) when there's an error
     expect(screen.queryByTestId('job-status')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();
 
-    // Verify that getAppEvents().publish was called for error notification
     expect(mockPublish).toHaveBeenCalledWith({
       type: 'alert-error',
       payload: ['Error deleting resources', 'Network error'],
@@ -215,31 +169,8 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('shows loading state during deletion', async () => {
-    // Setup with a pending job that will resolve to working state
-    const workingJob = { metadata: { name: 'test-job' }, status: { state: 'working' } };
-    const mockCreateBulkJob = jest.fn().mockResolvedValue({ success: true, job: workingJob });
-
-    // Override mocks for this specific test
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      repository: defaultRepository,
-      folder: {
-        metadata: {
-          annotations: {
-            'grafana.app/file-path': '/test/folder',
-          },
-        },
-      },
-      isInstanceManaged: false,
-    });
-
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: mockCreateBulkJob,
-      isLoading: false,
-    });
-
-    const { user } = render(
-      <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={jest.fn()} />
-    );
+    const workingJob: Job = { metadata: { name: 'test-job' }, status: { state: 'working' } };
+    const { user } = setup(null, { success: true, job: workingJob });
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
@@ -249,5 +180,58 @@ describe('BulkDeleteProvisionedResource', () => {
     });
 
     expect(screen.getByText(/Job Status - delete - working/)).toBeInTheDocument();
+  });
+
+  it('disables buttons when job is in working state', async () => {
+    const workingJob: Job = { metadata: { name: 'test-job' }, status: { state: 'working' } };
+    const { user } = setup(null, { success: true, job: workingJob });
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }));
+
+    // Should show JobStatus after submission
+    expect(await screen.findByTestId('job-status')).toBeInTheDocument();
+
+    // Done button should not be disabled
+    const doneButton = screen.getByRole('button', { name: /Done/i });
+    expect(doneButton).not.toBeDisabled();
+  });
+
+  it('calls createBulkJob with branch workflow parameters when branch is selected', async () => {
+    const { user, mockCreateBulkJob, defaultRepository } = setup(null);
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }));
+
+    expect(mockCreateBulkJob).toHaveBeenCalledWith(
+      defaultRepository,
+      expect.objectContaining({
+        action: 'delete',
+        delete: expect.objectContaining({
+          ref: expect.stringContaining('bulk-delete/'),
+        }),
+      })
+    );
+  });
+
+  it('calls createBulkJob with write workflow parameters when write is selected', async () => {
+    const { user, mockCreateBulkJob, defaultRepository } = setup(null);
+
+    // Switch to write workflow
+    const writeRadio = screen.getByRole('radio', { name: /Save/i });
+    await user.click(writeRadio);
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }));
+
+    expect(mockCreateBulkJob).toHaveBeenCalledWith(
+      defaultRepository,
+      expect.objectContaining({
+        action: 'delete',
+        delete: expect.objectContaining({
+          resources: expect.arrayContaining([
+            expect.objectContaining({ name: 'folder-1', kind: 'Folder' }),
+            expect.objectContaining({ name: 'dashboard-1', kind: 'Dashboard' }),
+          ]),
+        }),
+      })
+    );
   });
 });

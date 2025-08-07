@@ -39,13 +39,13 @@ interface UseBulkActionJobResult {
   isLoading: boolean;
 }
 
+export type ResponseType = { success: boolean; jobId?: string; job?: Job; error?: string };
+
+// This hook is used to create bulk action (delete, move) jobs for provisioning resources
 export function useBulkActionJob(): UseBulkActionJobResult {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
 
-  const createBulkJob = async (
-    repository: RepositoryView,
-    jobSpec: BulkJobSpec
-  ): Promise<{ success: boolean; jobId?: string; job?: Job; error?: string }> => {
+  const createBulkJob = async (repository: RepositoryView, jobSpec: BulkJobSpec): Promise<ResponseType> => {
     try {
       const response = await createJob({
         name: repository.name,

@@ -14,13 +14,11 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-s
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { useSelector } from 'app/types/store';
 
-import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
 import { collectSelectedItems } from '../utils';
 
-import { MoveJobSpec, ResourceRef, useBulkActionJob } from './useBulkActionJob';
+import { MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { BulkActionFormData, BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
@@ -39,8 +37,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
-  const childrenByParentUID = useChildrenByParentUIDState();
-  const rootItems = useSelector(rootItemsSelector);
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
 
@@ -49,16 +45,16 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
   const setupMoveOperation = () => {
     const targetFolderPathInRepo = getTargetFolderPathInRepo({ targetFolder });
-    const targets = collectSelectedItems(selectedItems, childrenByParentUID, rootItems?.items || []);
+    const resources = collectSelectedItems(selectedItems);
 
-    return { targetFolderPathInRepo, targets };
+    return { targetFolderPathInRepo, resources };
   };
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setHasSubmitted(true);
 
     // 1. Setup
-    const { targetFolderPathInRepo, targets } = setupMoveOperation();
+    const { targetFolderPathInRepo, resources } = setupMoveOperation();
 
     if (!targetFolderPathInRepo) {
       throw new Error(
@@ -68,12 +64,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
         )
       );
     }
-
-    const resources: ResourceRef[] = targets.map(({ uid, isFolder }) => ({
-      name: uid,
-      group: isFolder ? 'folder.grafana.app' : 'dashboard.grafana.app',
-      kind: isFolder ? 'Folder' : 'Dashboard',
-    }));
 
     // Create the move job spec
     const jobSpec: MoveJobSpec = {
@@ -90,7 +80,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     if (result.success && result.job) {
       setJob(result.job); // Store the job for tracking
     } else if (!result.success && result.error) {
-      // Handle error case - show error alert
       getAppEvents().publish({
         type: AppEvents.alertError.name,
         payload: [
