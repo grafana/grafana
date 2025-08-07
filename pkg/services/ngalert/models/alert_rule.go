@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -303,7 +304,7 @@ type AlertRule struct {
 	// required before resolving an alert state (a dimension) when data is missing.
 	// If nil, alerts resolve after 2 missing evaluation intervals
 	// (i.e., resolution occurs during the second evaluation where data is absent).
-	MissingSeriesEvalsToResolve *int
+	MissingSeriesEvalsToResolve *int64
 }
 
 type AlertRuleMetadata struct {
@@ -597,7 +598,7 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 // to wait before resolving an alert rule instance when its data is missing.
 // If not configured, it returns the default value (2), which means the alert
 // resolves after missing for two evaluation intervals.
-func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int {
+func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int64 {
 	if alertRule.MissingSeriesEvalsToResolve == nil {
 		return 2 // default value
 	}
@@ -846,6 +847,61 @@ type GetAlertRuleByIDQuery struct {
 type GetAlertRulesGroupByRuleUIDQuery struct {
 	UID   string
 	OrgID int64
+}
+
+type RuleTypeFilter int
+
+const (
+	RuleTypeFilterAll RuleTypeFilter = iota
+	RuleTypeFilterAlerting
+	RuleTypeFilterRecording
+)
+
+type ListAlertRulesByGroupQuery struct {
+	OrgID         int64
+	RuleUIDs      []string
+	NamespaceUIDs []string
+	ExcludeOrgs   []int64
+	RuleGroups    []string
+
+	// DashboardUID and PanelID are optional and allow filtering rules
+	// to return just those for a dashboard and panel.
+	DashboardUID string
+	PanelID      int64
+
+	ReceiverName     string
+	TimeIntervalName string
+
+	HasPrometheusRuleDefinition *bool
+
+	RuleType RuleTypeFilter
+
+	GroupLimit         int64  // Number of groups to fetch
+	GroupContinueToken string // Token for per-group pagination
+}
+
+type GroupCursor struct {
+	NamespaceUID string `json:"n"`
+	RuleGroup    string `json:"g"`
+}
+
+func EncodeGroupCursor(c GroupCursor) string {
+	data, _ := json.Marshal(c)
+	return base64.URLEncoding.EncodeToString(data)
+}
+
+func DecodeGroupCursor(token string) (GroupCursor, error) {
+	var c GroupCursor
+	data, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return c, fmt.Errorf("failed to decode group token: %w", err)
+	}
+
+	if err := json.Unmarshal(data, &c); err != nil {
+		return c, fmt.Errorf("failed to unmarshal group cursor: %w", err)
+	}
+
+	return c, nil
 }
 
 // ListAlertRulesQuery is the query for listing alert rules

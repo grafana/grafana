@@ -190,6 +190,7 @@ export enum PluginExtensionPoints {
   AlertingHomePage = 'grafana/alerting/home',
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
+  AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
@@ -250,6 +251,7 @@ export type PluginExtensionCommandPaletteContext = {};
 export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key
   attributes: Record<string, string[]>;
+  spanAttributes?: Record<string, string[]>;
   datasource: {
     type: string;
     uid: string;
