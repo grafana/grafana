@@ -256,14 +256,15 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionCreated,
-					Path:     "dashboards/test.json",
-					Name:     "test-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
-					Error:    fmt.Errorf("write error"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						result.Path == "dashboards/test.json" &&
+						result.Name == "test-dashboard" &&
+						result.Resource == "Dashboard" &&
+						result.Group == "dashboards" &&
+						result.Error != nil &&
+						result.Error.Error() == "writing resource from file dashboards/test.json: write error"
+				})).Return()
 			},
 		},
 		{
@@ -305,14 +306,15 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionUpdated,
-					Path:     "dashboards/test.json",
-					Name:     "test-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
-					Error:    fmt.Errorf("write error"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionUpdated &&
+						result.Path == "dashboards/test.json" &&
+						result.Name == "test-dashboard" &&
+						result.Resource == "Dashboard" &&
+						result.Group == "dashboards" &&
+						result.Error != nil &&
+						result.Error.Error() == "writing resource from file dashboards/test.json: write error"
+				})).Return()
 			},
 		},
 		{
@@ -355,15 +357,15 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					mock.Anything,
 					"one/two/three/",
 				).Return("some-folder", errors.New("folder creation error"))
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionCreated,
-					Path:   "one/two/three/",
-					Name:   "",
-					// FIXME: this is probably inconsistent across the codebase
-					Resource: "folders",
-					Group:    "folder.grafana.app",
-					Error:    errors.New("folder creation error"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						result.Path == "one/two/three/" &&
+						result.Name == "" &&
+						result.Resource == "folders" &&
+						result.Group == "folder.grafana.app" &&
+						result.Error != nil &&
+						result.Error.Error() == "ensuring folder exists at path one/two/three/: folder creation error"
+				})).Return()
 			},
 		},
 		{
@@ -474,14 +476,15 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					Version: "v1",
 				}, nil)
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionDeleted,
-					Path:     "dashboards/test.json",
-					Name:     "test-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
-					Error:    fmt.Errorf("delete failed"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionDeleted &&
+						result.Path == "dashboards/test.json" &&
+						result.Name == "test-dashboard" &&
+						result.Resource == "Dashboard" &&
+						result.Group == "dashboards" &&
+						result.Error != nil &&
+						result.Error.Error() == "deleting resource dashboards/Dashboard test-dashboard: delete failed"
+				})).Return()
 			},
 		},
 		{
@@ -496,11 +499,12 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionDeleted,
-					Path:   "dashboards/test.json",
-					Error:  fmt.Errorf("missing existing reference"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionDeleted &&
+						result.Path == "dashboards/test.json" &&
+						result.Error != nil &&
+						result.Error.Error() == "processing deletion for file dashboards/test.json: missing existing reference"
+				})).Return()
 			},
 		},
 		{
@@ -515,11 +519,12 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionDeleted,
-					Path:   "dashboards/test.json",
-					Error:  fmt.Errorf("missing existing reference"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionDeleted &&
+						result.Path == "dashboards/test.json" &&
+						result.Error != nil &&
+						result.Error.Error() == "processing deletion for file dashboards/test.json: missing existing reference"
+				})).Return()
 			},
 		},
 		{
@@ -662,14 +667,15 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					Version: "v1",
 				}, nil)
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionDeleted,
-					Path:     "to-be-deleted/",
-					Name:     "test-folder",
-					Resource: "Folder",
-					Group:    "folders",
-					Error:    fmt.Errorf("delete failed"),
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionDeleted &&
+						result.Path == "to-be-deleted/" &&
+						result.Name == "test-folder" &&
+						result.Resource == "Folder" &&
+						result.Group == "folders" &&
+						result.Error != nil &&
+						result.Error.Error() == "deleting resource folders/Folder test-folder: delete failed"
+				})).Return()
 			},
 		},
 	}
