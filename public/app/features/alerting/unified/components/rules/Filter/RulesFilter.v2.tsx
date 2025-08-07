@@ -3,7 +3,7 @@ import { pickBy } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
-import { ContactPoint, ContactPointSelector } from '@grafana/alerting/unstable';
+import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -600,7 +600,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
                       placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
                       value={field.value}
                       isClearable
-                      onChange={(contactPoint: ContactPoint | null) => {
+                      onChange={(contactPoint) => {
                         field.onChange(contactPoint?.spec.title || null);
                       }}
                       portalContainer={portalContainer}
