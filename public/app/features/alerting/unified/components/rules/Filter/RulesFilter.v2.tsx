@@ -78,12 +78,11 @@ export type AdvancedFilters = {
   groupName?: string | null;
   ruleName?: string;
   ruleType?: PromRuleType | '*';
-  ruleState: PromAlertingRuleState | '*'; // "*" means any state
+  ruleState: PromAlertingRuleState | '*';
   dataSourceNames: string[];
   labels: string[];
   ruleHealth?: RuleHealth | '*';
   dashboardUid?: string;
-  // @TODO add support to hide / show only certain plugins
   plugins?: 'show' | 'hide';
   contactPoint?: string | null;
 };
@@ -153,12 +152,16 @@ export default function RulesFilter() {
   // Handle outside clicks to close the popup
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isPopupOpen && popupRef.current && !popupRef.current.contains(event.target as Node)) {
+      if (isPopupOpen && popupRef.current && event.target instanceof Node && !popupRef.current.contains(event.target)) {
         // Check if click is on a portal element (combobox dropdown)
-        const target = event.target as Element;
-        const isPortalClick = target.closest('[data-popper-placement]') || target.closest('[role="listbox"]');
+        if (event.target instanceof Element) {
+          const isPortalClick =
+            event.target.closest('[data-popper-placement]') || event.target.closest('[role="listbox"]');
 
-        if (!isPortalClick) {
+          if (!isPortalClick) {
+            setIsPopupOpen(false);
+          }
+        } else {
           setIsPopupOpen(false);
         }
       }
@@ -201,6 +204,7 @@ export default function RulesFilter() {
           onClose={() => setIsPopupOpen(false)}
           onToggle={handleOnToggle}
           content={
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
             <div
               ref={popupRef}
               className={styles.content}
@@ -211,7 +215,7 @@ export default function RulesFilter() {
                 }
               }}
               role="dialog"
-              aria-label="Filter options"
+              aria-label={t('alerting.rules-filter.filter-options.aria-label', 'Filter options')}
               tabIndex={-1}
             >
               <FilterOptions
@@ -361,7 +365,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
       });
     });
 
-    // Sort alphabetically by label key, then by value
+    // eslint-disable-next-line no-restricted-syntax
     return options.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
   }, [grafanaLabels]);
 
