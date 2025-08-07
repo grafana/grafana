@@ -1,0 +1,25 @@
+name: Pre-install yarn dependencies
+description: Installs yarn dependencies and caches for subsequent steps.
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: cache-node-modules
+      with:
+        path: |
+          node_modules
+        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        # This will restore the node_modules from the main branch (if cache exists). 
+        # It should be fine (the next step does a yarn install anyway), but if it
+        # causes issues we might want to remove this.
+        restore-keys: |
+          node_modules-${{ runner.os }}
+    - run: yarn install --immutable
+      env:
+        # Skip downloading/installing bigger dependencies that we're not going to use
+        # If we need these, add an input to this action to allow them to be installed
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
+        YARN_ENABLE_HARDENED_MODE: 1 # Ensure hardened mode is always enabled

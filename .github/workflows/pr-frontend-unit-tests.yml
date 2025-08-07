@@ -11,7 +11,7 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
     outputs:
@@ -30,43 +30,29 @@ jobs:
   yarn-install:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ${{ matrix.runner }}
-    name: Yarn install - ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: [ubuntu-x64-small, ubuntu-x64, ubuntu-x64-large]
+    runs-on: ubuntu-x64
+    name: Yarn pre-install
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: ./.github/actions/setup-node
-    - name: Cache node_modules
-      uses: actions/cache@v4
-      with:
-        path: |
-          node_modules
-        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-        restore-keys: |
-          node_modules-${{ runner.os }}
-    - run: yarn install --immutable
-      env:
-        PUPPETEER_SKIP_DOWNLOAD: true
-        CYPRESS_INSTALL_BINARY: 0
-        YARN_ENABLE_HARDENED_MODE: 1 # Ensure hardened mode is always enabled
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      uses: ./.github/actions/yarn/pre-install
 
   frontend-unit-tests:
     permissions:
       contents: read
       id-token: write
-    # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
-    # the `frontend-unit-tests-enterprise` workflow will run instead
     needs:
       - detect-changes
       - yarn-install
+    # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
+    # the `frontend-unit-tests-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64
     name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
       fail-fast: false
@@ -77,22 +63,10 @@ jobs:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: ./.github/actions/setup-node
-    - name: Cache node_modules
-      uses: actions/cache/restore@v4
-      id: cache-node-modules
-      with:
-        path: |
-          node_modules
-        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-        restore-keys: |
-          node_modules-${{ runner.os }}
-    - run: yarn install --immutable
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
-      env:
-        PUPPETEER_SKIP_DOWNLOAD: true
-        CYPRESS_INSTALL_BINARY: 0
-        YARN_ENABLE_HARDENED_MODE: 0 # Disable hardened mode because it was already checked in the yarn-install step
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      uses: ./.github/actions/yarn/restore
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 4
@@ -103,12 +77,12 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     needs:
       - detect-changes
       - yarn-install
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64
     name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
       fail-fast: false
@@ -119,26 +93,14 @@ jobs:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: ./.github/actions/setup-node
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - name: Cache node_modules
-      uses: actions/cache/restore@v4
-      id: cache-node-modules
-      with:
-        path: |
-          node_modules
-        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-        restore-keys: |
-          node_modules-${{ runner.os }}
-    - run: yarn install --immutable
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
-      env:
-        PUPPETEER_SKIP_DOWNLOAD: true
-        CYPRESS_INSTALL_BINARY: 0
-        YARN_ENABLE_HARDENED_MODE: 0 # Disable hardened mode because it was already checked in the yarn-install step
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      uses: ./.github/actions/yarn/restore
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 4
@@ -150,14 +112,16 @@ jobs:
       - detect-changes
       - yarn-install
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64
     name: "Decoupled plugin tests"
     steps:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: ./.github/actions/setup-node
-    - run: yarn install --immutable
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      uses: ./.github/actions/yarn/restore
     - run: yarn run plugin:test:ci
 
   frontend-packages-unit-tests:
@@ -165,22 +129,24 @@ jobs:
       - detect-changes
       - yarn-install
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64
     name: "Packages unit tests"
     steps:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: ./.github/actions/setup-node
-    - run: yarn install --immutable
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      uses: ./.github/actions/yarn/restore
     - run: yarn run packages:test:ci
-
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.
   # However, if one is skipped, GitHub won't flat-map the shards,
   #   so they won't be accepted by a ruleset.
   required-frontend-unit-tests:
+    runs-on: ubuntu-x64-small
     needs:
       - frontend-unit-tests
       - frontend-unit-tests-enterprise
@@ -195,12 +161,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check test suites
-        env:
-          NEEDS: ${{ toJson(needs) }}
-        run: |
-          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
-          echo "$FAILURES"
-          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
-            exit 1
-          fi
-          echo "All OK!"
+        uses: ./.github/actions/check-jobs
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more unit test jobs have failed"
+          success-message: "All unit tests completed successfully"

@@ -1,0 +1,22 @@
+name: Restore yarn dependencies
+description: Restores yarn dependencies cached from a previous step
+
+runs:
+  using: "composite"
+  steps:
+    - name: Restore node_modules
+      uses: actions/cache/restore@v4
+      id: cache
+      with:
+        path: |
+          node_modules
+        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        restore-keys: |
+          node_modules-${{ runner.os }}
+    - name: Yarn install
+      run: yarn install --immutable
+      if: steps.cache.outputs.cache-hit != 'true' # run yarn install if an exact cache was not found
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
+        YARN_ENABLE_HARDENED_MODE: 0 # Disable hardened mode because it was already checked in the yarn-install step
