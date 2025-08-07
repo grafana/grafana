@@ -16,12 +16,10 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 )
 
 type testConnector struct {
-	getter     RepoGetter
-	decryptSvc secret.DecryptService
+	getter RepoGetter
 }
 
 func (*testConnector) New() runtime.Object {

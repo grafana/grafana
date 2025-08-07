@@ -360,6 +360,8 @@ func TestTestRepository(t *testing.T) {
 }
 
 func TestTester_TestRepository(t *testing.T) {
+	tester := &Tester{}
+
 	// Test that it properly delegates to TestRepository
 	repository := NewMockRepository(t)
 	repository.On("Config").Return(&provisioning.Repository{
@@ -373,7 +375,7 @@ func TestTester_TestRepository(t *testing.T) {
 		Success: true,
 	}, nil)
 
-	results, err := TestRepository(context.Background(), repository)
+	results, err := tester.TestRepository(context.Background(), repository)
 	require.NoError(t, err)
 	require.NotNil(t, results)
 	require.Equal(t, http.StatusOK, results.Code)
