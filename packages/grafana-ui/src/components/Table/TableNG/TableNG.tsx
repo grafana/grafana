@@ -629,7 +629,6 @@ export function TableNG(props: TableNGProps) {
     sortColumns,
     styles,
     theme,
-    transparent,
     visibleFields,
     widths,
     getCellActions,
