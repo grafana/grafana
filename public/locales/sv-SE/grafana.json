@@ -3489,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Avbryt",
-      "cannot-move-folders": "Mapparna kan inte flyttas",
       "confirmation-text": "Ta bort",
       "delete-button": "Ta bort",
       "delete-modal-invalid-text": "En eller flera mappar innehåller bibliotekspaneler eller varningsregler. Ta först bort dessa innan du fortsätter.",
@@ -3588,6 +3587,7 @@
     },
     "folder-actions-button": {
       "delete": "Ta bort",
+      "delete-folder-error": "",
       "folder-actions": "Mappåtgärder",
       "manage-permissions": "Hantera behörigheter",
       "move": "Flytta"
@@ -4318,7 +4318,7 @@
       "source-label": "Källa",
       "sub-text": "<0>Definiera vilken datakälla som visar korrelationen och vilka data som ersätter tidigare definierade variabler.</0>"
     },
-    "sub-title": "Definiera hur data som finns i olika datakällor relaterar till varandra. Läs mer i <2>dokumentationen<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Detta fält är obligatoriskt.",
       "sub-text": "<0>Definiera vad korrelationen länkar till. Med frågetypen körs en fråga när korrelationen klickas. Med den externa typen öppnas en URL genom att klicka på korrelationen.</0>",
@@ -4721,7 +4721,7 @@
       "add-visualization-body": "Välj en datakälla och sedan en fråga och visualisera dina data med diagram, statistik och tabeller eller skapa listor, markdown-dokument och andra widgetar.",
       "add-visualization-button": "Lägg till visualisering",
       "add-visualization-header": "Starta din nya instrumentpanel genom att lägga till en visualisering",
-      "import-a-dashboard-body": "Importera instrumentpaneler från filer på <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importera en instrumentpanel",
       "import-dashboard-button": "Importera instrumentpanel"
     },
@@ -7496,6 +7496,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10312,7 +10315,7 @@
     },
     "invite-user": {
       "invite-button": "Bjud in",
-      "invite-new-member-button": "Bjud in ny medlem",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11094,6 +11097,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11307,6 +11318,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11513,6 +11532,14 @@
     },
     "token-permissions-info": {
       "and-click": "och klicka på",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Gå till",
       "make-sure": "Se till att inkludera dessa behörigheter"
     },

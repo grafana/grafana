@@ -136,7 +136,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.decimals) {
+  if (style.decimals !== undefined) {
     override.properties.push({
       id: 'decimals',
       value: style.decimals,
@@ -216,7 +216,7 @@ const migrateDefaults = (prevDefaults: Style) => {
       isNil
     );
 
-    if (prevDefaults.thresholds.length) {
+    if (prevDefaults.thresholds && prevDefaults.thresholds.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
         steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),

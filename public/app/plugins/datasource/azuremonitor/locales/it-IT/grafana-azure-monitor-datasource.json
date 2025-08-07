@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Abilita registri di base"
     },
     "config-editor": {
-      "description-additional-settings": "Le impostazioni aggiuntive sono impostazioni facoltative che possono essere configurate per un maggiore controllo sull'origine dei dati. Ciò include il proxy Secure Socks.",
-      "description-request-timeout": "Imposta il timeout della richiesta in secondi. Il valore predefinito è 30 secondi.",
-      "title-additional-settings": "Impostazioni aggiuntive",
-      "title-request-timeout": "Timeout della richiesta"
+      "description-additional-settings": "",
+      "title-additional-settings": "Impostazioni aggiuntive"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Le credenziali di fallback sono state disabilitate. Poiché l'autenticazione basata sull'utente supporta solo richieste con un utente nell'ambito, funzionalità come avvisi, query registrate o report non funzioneranno come previsto. Consulta la <2>documentazione</2> per ulteriori dettagli.",
