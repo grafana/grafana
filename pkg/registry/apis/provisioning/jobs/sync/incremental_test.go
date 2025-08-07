@@ -311,7 +311,7 @@ func TestIncrementalSync(t *testing.T) {
 					Name:     "test-dashboard",
 					Resource: "Dashboard",
 					Group:    "dashboards",
-					Error:    fmt.Errorf("write failed"),
+					Error:    fmt.Errorf("writing resource from file dashboards/test.json: write failed"),
 				}).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -346,7 +346,7 @@ func TestIncrementalSync(t *testing.T) {
 					Name:     "old-dashboard",
 					Resource: "Dashboard",
 					Group:    "dashboards",
-					Error:    fmt.Errorf("delete failed"),
+					Error:    fmt.Errorf("removing resource from file dashboards/old.json: delete failed"),
 				}).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
