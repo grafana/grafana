@@ -351,7 +351,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '2' }),
+      queryParams: new URLSearchParams({ editPanel: '3' }),
     });
 
     await expect(
