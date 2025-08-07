@@ -33,9 +33,6 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-        
-      - name: Yarn install
-        uses: ./.github/actions/yarn/install
 
       - name: Install dependencies
         env:
