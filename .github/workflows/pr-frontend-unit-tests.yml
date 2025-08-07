@@ -146,7 +146,6 @@ jobs:
   # However, if one is skipped, GitHub won't flat-map the shards,
   #   so they won't be accepted by a ruleset.
   required-frontend-unit-tests:
-    runs-on: ubuntu-x64-small
     needs:
       - frontend-unit-tests
       - frontend-unit-tests-enterprise
@@ -158,7 +157,7 @@ jobs:
     if: always()
 
     name: All frontend unit tests complete
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     steps:
       - name: Check test suites
         uses: ./.github/actions/check-jobs
