@@ -26,8 +26,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
-
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -61,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -1229,15 +1228,12 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		}
 	}
 
-	// Check our secure values
-	secure, err := b.decryptSvc.Decrypt(ctx, provisioning.GROUP, r.Namespace,
-		r.Secure.Token.Name,
-		r.Secure.WebhookSecret.Name,
-	)
+	// Currently not used, but will error if they do not decrypt properly
+	// TODO, replace nested secure values
+	_, err := decrypt(ctx, r, b.decryptSvc)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("SECURE: %v\n", secure)
 
 	switch r.Spec.Type {
 	case provisioning.BitbucketRepositoryType:
