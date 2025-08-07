@@ -10,12 +10,12 @@ runs:
       with:
         path: |
           node_modules
-        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        key: node_modules-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('yarn.lock') }}
         # This will restore the node_modules from the main branch (if cache exists). 
         # It should be fine (the next step does a yarn install anyway), but if it
         # causes issues we might want to remove this.
         restore-keys: |
-          node_modules-${{ runner.os }}
+          node_modules-${{ runner.os }}-${{ runner.arch }}
     - name: Yarn install
       run: yarn install --immutable
       shell: bash
