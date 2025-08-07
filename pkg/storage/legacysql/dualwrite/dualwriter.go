@@ -187,18 +187,19 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
-	mode3 := d.readUnified && d.legacy != nil && d.unified != nil
-	perm := ""
-	// this is Mode 3
-	if mode3 {
+	readFromUnifiedWriteToBothStorages := d.readUnified && d.legacy != nil && d.unified != nil
+
+	permissions := ""
+	if readFromUnifiedWriteToBothStorages {
 		objIn, err := utils.MetaAccessor(in)
 		if err != nil {
 			return nil, err
 		}
 
-		perm = objIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
-		if perm != "" {
-			objIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
+		// keep permissions, we will set it back after the object is created
+		permissions = objIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
+		if permissions != "" {
+			objIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation for now
 		}
 	}
 
@@ -218,12 +219,15 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
 
-	if mode3 {
+	if readFromUnifiedWriteToBothStorages {
 		objCopy, err := utils.MetaAccessor(createdCopy)
 		if err != nil {
 			return nil, err
 		}
-		objCopy.SetAnnotation(utils.AnnoKeyGrantPermissions, perm)
+		// restore the permissions annotation, as we removed it before creating in legacy
+		if permissions != "" {
+			objCopy.SetAnnotation(utils.AnnoKeyGrantPermissions, permissions)
+		}
 	}
 
 	// If unified storage is the primary storage, let's just create it in the foreground and return it.
