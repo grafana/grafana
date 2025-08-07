@@ -13,11 +13,11 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	ss, _ := InitTestDB(t)
+	ss := NewTestStore(t)
 
 	t.Run("top level transaction", func(t *testing.T) {
 		var outerSession *DBSession
-		err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+		err := ss.InTransaction(t.Context(), func(ctx context.Context) error {
 			value := ctx.Value(ContextSessionKey{})
 			var ok bool
 			outerSession, ok = value.(*DBSession)
@@ -46,12 +46,12 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	})
 
 	t.Run("fails if reuses session without transaction", func(t *testing.T) {
-		require.NoError(t, ss.WithDbSession(context.Background(), func(outerSession *DBSession) error {
+		require.NoError(t, ss.WithDbSession(t.Context(), func(outerSession *DBSession) error {
 			require.NotNil(t, outerSession)
 			require.NotNil(t, outerSession.DB()) // init the session
 			require.False(t, outerSession.IsClosed(), "Session is closed but it should not be")
 
-			ctx := context.WithValue(context.Background(), ContextSessionKey{}, outerSession)
+			ctx := context.WithValue(t.Context(), ContextSessionKey{}, outerSession)
 
 			require.NoError(t, ss.WithDbSession(ctx, func(sess *DBSession) error {
 				require.Equal(t, outerSession, sess)
@@ -73,8 +73,8 @@ func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss, _ := InitTestDB(t)
-	ctx := context.Background()
+	ss := NewTestStore(t)
+	ctx := t.Context()
 
 	// On X success
 	var xHasSucceeded bool

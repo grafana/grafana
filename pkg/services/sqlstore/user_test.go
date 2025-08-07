@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,9 +13,9 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
-	ss, _ := InitTestDB(t)
+	ss := NewTestStore(t)
 
-	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
+	err := ss.WithDbSession(t.Context(), func(sess *DBSession) error {
 		// Create the org only:
 		ss.cfg.AutoAssignOrg = true
 		ss.cfg.DisableInitAdminCreation = true
@@ -28,7 +27,7 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = ss.WithDbSession(context.Background(), func(sess *DBSession) error {
+	err = ss.WithDbSession(t.Context(), func(sess *DBSession) error {
 		// Run it a second time and verify that it finds the org that was
 		// created above.
 		gotOrgId, err := ss.getOrCreateOrg(sess, mainOrgName)
