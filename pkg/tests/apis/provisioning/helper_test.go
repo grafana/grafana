@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"text/template"
@@ -94,11 +96,42 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 	h.AwaitJobSuccess(t, t.Context(), unstruct)
 }
 
+func (h *provisioningTestHelper) TriggerJobAndWait(t *testing.T, repo string, spec provisioning.JobSpec) {
+	t.Helper()
+
+	body := asJSON(spec)
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("jobs").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	if apierrors.IsAlreadyExists(result.Error()) {
+		// Wait for all jobs to finish as we don't have the name.
+		h.AwaitJobs(t, repo)
+		return
+	}
+
+	obj, err := result.Get()
+	require.NoError(t, err, "expecting to be able to sync repository")
+
+	unstruct, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expecting unstructured object, but got %T", obj)
+
+	name := unstruct.GetName()
+	require.NotEmpty(t, name, "expecting name to be set")
+	h.AwaitJobSuccess(t, t.Context(), unstruct)
+}
+
 func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
 	t.Helper()
 
 	repo := job.GetLabels()[jobs.LabelRepository]
 	require.NotEmpty(t, repo)
+	// TODO: simply this
 	if !assert.EventuallyWithT(t, func(collect *assert.CollectT) {
 		result, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(job.GetUID()))
@@ -432,4 +465,59 @@ func (h *provisioningTestHelper) postFilesRequest(t *testing.T, repo string, opt
 	require.NoError(t, err)
 
 	return resp
+}
+
+// printFileTree prints the directory structure as a tree for debugging purposes
+func printFileTree(t *testing.T, rootPath string) {
+	t.Helper()
+	t.Logf("File tree for %s:", rootPath)
+
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+
+		if relPath == "." {
+			return nil
+		}
+
+		depth := strings.Count(relPath, string(filepath.Separator))
+		indent := strings.Repeat("  ", depth)
+
+		if d.IsDir() {
+			t.Logf("%s├── %s/", indent, d.Name())
+		} else {
+			info, err := d.Info()
+			if err != nil {
+				t.Logf("%s├── %s (error reading info)", indent, d.Name())
+			} else {
+				t.Logf("%s├── %s (%d bytes)", indent, d.Name(), info.Size())
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Logf("Error walking directory: %v", err)
+	}
+}
+
+// Helper function to count files in a directory recursively
+func countFilesInDir(rootPath string) (int, error) {
+	count := 0
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			count++
+		}
+		return nil
+	})
+	return count, err
 }

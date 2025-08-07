@@ -46,7 +46,7 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 			}
 
 			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
-				result.Error = err
+				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", result.Group, result.Resource, result.Name, err)
 				progress.Record(ctx, result)
 				return fmt.Errorf("delete resource: %w", err)
 			}

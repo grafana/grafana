@@ -127,7 +127,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 			return result.Action == repository.FileActionDeleted &&
 				result.Name == "test-folder" &&
 				result.Error != nil &&
-				result.Error.Error() == "delete failed"
+				result.Error.Error() == "deleting resource folder.grafana.app/Folder test-folder: delete failed"
 		})).Return()
 
 		err := cleaner.Clean(context.Background(), "test-namespace", progress)

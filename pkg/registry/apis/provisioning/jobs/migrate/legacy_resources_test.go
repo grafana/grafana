@@ -424,7 +424,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			return result.Action == repository.FileActionCreated &&
 				result.Name == "test" &&
 				result.Error != nil &&
-				result.Error.Error() == "create file error"
+				result.Error.Error() == "writing resource test.grafana.app/tests test to file : create file error"
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 

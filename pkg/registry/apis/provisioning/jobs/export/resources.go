@@ -108,7 +108,7 @@ func exportResource(ctx context.Context,
 		meta, err := utils.MetaAccessor(item)
 		if err != nil {
 			result.Action = repository.FileActionIgnored
-			result.Error = fmt.Errorf("extract meta accessor: %w", err)
+			result.Error = fmt.Errorf("extracting meta accessor for resource %s: %w", result.Name, err)
 			progress.Record(ctx, result)
 			return nil
 		}
@@ -136,7 +136,7 @@ func exportResource(ctx context.Context,
 			result.Action = repository.FileActionIgnored
 		} else if err != nil {
 			result.Action = repository.FileActionIgnored
-			result.Error = err
+			result.Error = fmt.Errorf("writing resource file for %s: %w", result.Name, err)
 		}
 
 		progress.Record(ctx, result)

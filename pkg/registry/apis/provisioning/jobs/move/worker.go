@@ -121,7 +121,9 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		targetPath := w.constructTargetPath(opts.TargetPath, path)
 
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
-		result.Error = rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath)
+		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {
+			result.Error = fmt.Errorf("moving file %s to %s: %w", path, targetPath, err)
+		}
 		progress.Record(ctx, result)
 		if err := progress.TooManyErrors(); err != nil {
 			return err

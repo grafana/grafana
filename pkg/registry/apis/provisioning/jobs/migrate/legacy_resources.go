@@ -208,8 +208,11 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 		Resource: r.kind.Resource,
 		Group:    r.kind.Group,
 		Action:   repository.FileActionCreated,
-		Error:    err,
 		Path:     fileName,
+	}
+
+	if err != nil {
+		result.Error = fmt.Errorf("writing resource %s/%s %s to file %s: %w", r.kind.Group, r.kind.Resource, parsed.Meta.GetName(), fileName, err)
 	}
 
 	r.progress.Record(ctx, result)
