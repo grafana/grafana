@@ -279,7 +279,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   icons: css({
     display: 'flex',
-    gap: theme.spacing(0.75),
+    gap: theme.spacing(1),
+    paddingLeft: theme.spacing(1),
   }),
   copyLogButton: css({
     padding: 0,
