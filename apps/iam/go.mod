@@ -14,6 +14,7 @@ require (
 	github.com/grafana/grafana-app-sdk/plugin v0.40.3
 	github.com/grafana/grafana/apps/folder v0.0.0-20250802141302-8ac74e24df1f
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956
+	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369
 	google.golang.org/grpc v1.74.2
 	k8s.io/apimachinery v0.33.3
 	k8s.io/client-go v0.33.3
@@ -211,7 +212,6 @@ require (
 	github.com/open-feature/go-sdk v1.14.1 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
-	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250220223040-ed0cfba54336 // indirect
 	github.com/openfga/openfga v1.8.13 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect

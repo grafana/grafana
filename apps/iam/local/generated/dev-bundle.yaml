@@ -985,16 +985,18 @@ spec:
             - name: ZANZANA_ADDR
               value: zanzana.default.svc.cluster.local:10000
             # TODO: enable for Single Tenant Grafana as the source of folders
-            - name: KUBE_CONFIG_FILE
-              value: /etc/grafana-kubeconfig/grafana.kubeconfig
+            # - name: KUBE_CONFIG_FILE
+            #   value: /etc/grafana-kubeconfig/grafana.kubeconfig
             # The following three settings are if you want MT Folder App as the source of folders
             # Useful for testing auth for the deployments
-            # - name: FOLDER_APP_URL
-            #  value: http://host.docker.internal:6446
-            #- name: AUTH_TOKEN_EXCHANGE_URL
-            #  value: https://host.docker.internal:6481/sign/access-token
-            #- name: AUTH_TOKEN
-            #  value: "ThisIsMySecretToken"
+            - name: FOLDER_APP_URL
+              value: https://host.docker.internal:6446
+            - name: AUTH_TOKEN_EXCHANGE_URL
+              value: http://host.docker.internal:8080/v1/sign-access-token
+            - name: AUTH_TOKEN
+              value: "glc_dev_eyJvIjoiMCIsIm4iOiJpYW0tZ3JhZmFuYS1hcHAtbWFpbi1zeXN0ZW0td3h6NjctOHRsYnQiLCJrIjoidkY3TEp4eTE0eGJQODE3U081NjdpSlk4IiwibSI6eyJyIjoiZGV2LXVzLWNlbnRyYWwifX0="
+            - name: FOLDER_APP_NAMESPACE
+              value: "grafana-folder"
           ports:
             - containerPort: 9090
               name: metrics
