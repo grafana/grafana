@@ -3489,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
       "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
       "cancel-button": "Cancel",
-      "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
@@ -3540,6 +3539,13 @@
       "button-move": "Move",
       "button-moving": "Moving...",
       "deleting": "Deleting",
+      "error": {
+        "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
+        "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
+        "read-only-title": "This repository is read only",
+        "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
+        "repository-not-found-title": "Repository not found"
+      },
       "error-file-content-not-found": "File content not found",
       "error-path-not-found": "Path not found",
       "error-target-folder-path-missing": "Target folder path is missing",
@@ -3568,6 +3574,9 @@
       "select-all-header-checkbox": "Select all",
       "select-checkbox": "Select",
       "tags-column": "Tags"
+    },
+    "delete-folder": {
+      "read-only-message": "To delete this folder, please remove the folder from your repository."
     },
     "delete-provisioned-folder-form": {
       "api-error": "Failed to delete folder",
@@ -3611,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "No items"
+    },
+    "new-folder": {
+      "read-only-message": "To create this folder, please add the resource in your repository directly."
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
@@ -4319,7 +4331,7 @@
       "source-label": "Source",
       "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>"
     },
-    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation</2>",
     "target-form": {
       "control-rules": "This field is required.",
       "sub-text": "<0>Define what the correlation will link to. With the query type, a query will run when the correlation is clicked. With the external type, clicking the correlation will open a URL.</0>",
@@ -4722,7 +4734,7 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
@@ -5692,11 +5704,9 @@
       "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
-      "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
-      "success-message": "Dashboard deleted successfully",
-      "title-this-repository-is-read-only": "This repository is read only"
+      "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
       "description": "Description"
@@ -6068,7 +6078,6 @@
       "api-error": "Error saving dashboard",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
-      "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "file-path": "<0>File path:</0> {{filePath}}",
       "label-description": "Description",
@@ -6080,7 +6089,6 @@
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
-      "title-this-repository-is-read-only": "This repository is read only",
       "title-validation-failed": "Dashboard title validation failed."
     },
     "scenes-new-rule-from-panel-button": {
@@ -10318,7 +10326,7 @@
     },
     "invite-user": {
       "invite-button": "Invite",
-      "invite-new-member-button": "Invite new member",
+      "invite-new-user-button": "Invite new user",
       "invite-tooltip": "Invite user"
     },
     "item": {
@@ -11100,6 +11108,14 @@
       "branch-required": "Branch is required",
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
+      "permissions": {
+        "pull-requests-label": "Pull requests",
+        "pull-requests-read-write": "Read and write",
+        "repository-label": "Repositories",
+        "repository-read-write-admin": "Read, and write",
+        "webhooks-label": "Webhooks",
+        "webhooks-read-write": "Read and write"
+      },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
       "token-description": "Bitbucket App Password with repository permissions",
@@ -11313,6 +11329,14 @@
       "branch-required": "Branch is required",
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
+      "permissions": {
+        "api": "API",
+        "api-read-write": "Read and write",
+        "repository-label": "Repository",
+        "repository-read-write": "Read and write",
+        "user-label": "User",
+        "user-read": "Read only"
+      },
       "pr-workflow-description": "Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.",
       "pr-workflow-label": "Enable merge request option when saving",
       "token-description": "GitLab Project Access Token with repository permissions",
@@ -11519,6 +11543,14 @@
     },
     "token-permissions-info": {
       "and-click": "and click",
+      "bitbucket": {
+        "create-token-button": "Create App passwords",
+        "token-text": "Bitbucket Personal Access Token"
+      },
+      "gitlab": {
+        "create-token-button": "Add new token",
+        "token-text": "GitLab Personal Access Token"
+      },
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },

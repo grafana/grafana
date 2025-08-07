@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Alapvető naplók engedélyezése"
     },
     "config-editor": {
-      "description-additional-settings": "A további beállítások olyan opcionális beállítások, amelyek konfigurálhatók az adatforrás nagyobb mértékű ellenőrzése érdekében. Ez magában foglalja a Secure Socks Proxyt.",
-      "description-request-timeout": "Állítsa be a kérelem időtúllépési időtartamát másodpercben. Az alapértelmezés a 30 másodperc.",
-      "title-additional-settings": "További beállítások",
-      "title-request-timeout": "Kérelem időtúllépése"
+      "description-additional-settings": "",
+      "title-additional-settings": "További beállítások"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Az alapértelmezett hitelesítő adatok le lettek tiltva. Mivel a felhasználóalapú hitelesítés eredendően csak a hatókörben felhasználót tartalmazó kéréseket támogatja, az olyan funkciók, mint a riasztás, a rögzített lekérdezések vagy a jelentéskészítés, nem fognak az elvárt módon működni. További részletekért tekintse át a <2>dokumentációt</2>.",
