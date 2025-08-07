@@ -1,5 +1,4 @@
 import { LinkModel } from '@grafana/data';
-import { VizTooltipOptions } from '@grafana/schema/dist/esm/common/common.gen';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -14,7 +13,6 @@ import { DisplayValue } from './DataHoverView';
 export interface Props {
   displayValues: DisplayValue[];
   links?: LinkModel[];
-  tooltipOptions?: VizTooltipOptions;
   isPinned: boolean;
   headerLabel?: string;
   maxHeight?: number;
