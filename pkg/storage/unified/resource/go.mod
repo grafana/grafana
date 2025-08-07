@@ -131,7 +131,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/googleapis/go-sql-spanner v1.11.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250307175047-1d263576d356 // indirect
+	github.com/grafana/alerting v0.0.0-20250729190734-e16c6d051b80 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.30.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
