@@ -82,13 +82,13 @@ For details, see the [query editor documentation](query-editor/). -->
 
 When you enable [query and resource caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.
 
-## Use template variables
+<!-- ## Use template variables
 
 Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation](template-variables/).
+For details, see the [template variables documentation](template-variables/). -->
 
 ## Import pre-configured dashboards
 
@@ -100,7 +100,7 @@ The CloudWatch data source ships with curated and pre-configured dashboards for 
 - **Amazon CloudWatch Logs:** `Amazon CloudWatch Logs`
 - **Amazon Relational Database Service:** `Amazon RDS`
 
-**To import curated dashboards:**
+To import curated dashboards:
 
 1. Navigate to the data source's [configuration page](#configure-the-data-source).
 1. Select the **Dashboards** tab.
@@ -110,8 +110,6 @@ The CloudWatch data source ships with curated and pre-configured dashboards for 
 1. Select **Import** for the dashboard to import.
 
 {{< figure src="/static/img/docs/v65/cloudwatch-dashboard-import.png" caption="CloudWatch dashboard import" >}}
-
-**To customize an imported dashboard:**
 
 To customize one of these dashboards, we recommend that you save it under a different name.
 If you don't, upgrading Grafana can overwrite the customized dashboard with the new version.
