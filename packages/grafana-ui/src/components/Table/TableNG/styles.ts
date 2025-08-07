@@ -34,7 +34,13 @@ export const getGridStyles = (
 
     border: 'none',
 
-    '.rdg-cell': { padding: TABLE.CELL_PADDING, '&:last-child': { borderInlineEnd: 'none' } },
+    '.rdg-cell': {
+      padding: TABLE.CELL_PADDING,
+
+      '&:last-child': {
+        borderInlineEnd: 'none',
+      },
+    },
 
     // add a box shadow on hover and selection for all body cells
     '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
@@ -42,9 +48,20 @@ export const getGridStyles = (
       // selected cells should appear below hovered cells.
       '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
       '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
+
+      // create a default anchor style way up here so that cells can
+      // override it as needed with higher specificity below.
+      a: {
+        cursor: 'pointer',
+        color: theme.colors.text.link,
+        textDecoration: 'none',
+        '&:hover': { textDecoration: 'underline' },
+      },
     },
 
-    '.rdg-header-row, .rdg-summary-row': { '.rdg-cell': { zIndex: theme.zIndex.tooltip - 1 } },
+    '.rdg-header-row, .rdg-summary-row': {
+      '.rdg-cell': { zIndex: theme.zIndex.tooltip - 1 },
+    },
   }),
   gridNested: css({
     height: '100%',
@@ -128,11 +145,5 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, textWr
         height: 'fit-content',
         minWidth: 'fit-content',
       }),
-    },
-    a: {
-      cursor: 'pointer',
-      color: theme.colors.text.link,
-      textDecoration: 'none',
-      '&:hover': { textDecoration: 'underline' },
     },
   });

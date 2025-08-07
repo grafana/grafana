@@ -372,7 +372,7 @@
           "scenarioId": "random_walk_table"
         },
         {
-          "csvContent": "Info,Image,Pills,Data Link,Long Text\ndown,https://placecats.com/millie/200/400,hello,https://grafana.com,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec eu pretium tortor. Cras venenatis sapien sed mauris gravida, ut scelerisque est fringilla. Cras lorem diam, facilisis nec malesuada in, vulputate vel enim. Etiam fringilla nisi quis felis blandit tincidunt. Cras id lacus ornare, ullamcorper nisl eget, bibendum odio. Pellentesque imperdiet, leo a imperdiet venenatis, ligula risus venenatis quam, vel euismod magna nisi sit amet leo.\"\nup,https://placecats.com/neo/200/400,\"[1,2,3,\"\"foo\"\",\"\"bar\"\"]\",https://grafana.com/solutions/kubernetes/,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor. Aliquam ac tellus eget dui facilisis tempor eu id nulla. Maecenas ultrices turpis eu elementum imperdiet. Fusce eget rhoncus mi, et egestas lectus. Mauris facilisis auctor enim sed malesuada. Maecenas placerat ultricies metus vitae viverra. In hac habitasse platea dictumst. Mauris ipsum nisl, dictum eu aliquam eleifend, rutrum id orci. Nullam eget dui et odio eleifend porttitor.\"\nup fast,https://placecats.com/bella/200/400,\"foo,1,4,beep\",https://k6.io/,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum. Suspendisse vitae rutrum arcu. Donec sed tellus vel lectus bibendum vestibulum. Sed eu felis non velit dictum pulvinar eu et leo. Aenean et dignissim arcu. Nam luctus at neque quis efficitur. Fusce tempus at nibh a imperdiet. Nullam malesuada ac magna at facilisis. Duis pretium aliquam eros. Donec pharetra dignissim dolor non bibendum. Ut gravida mi id urna tempus, at ullamcorper felis vulputate. Duis congue augue ex, sed finibus leo ornare ut. Mauris non quam sodales, dignissim lorem eget, tincidunt mauris. Aliquam ut velit auctor, vestibulum metus sed, mollis massa.\"\ndown fast,https://placecats.com/neo_2/200/400,\"foo,bar,baz,a longer one,bim\",https://grafana.com/products/cloud/,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus. Fusce consectetur feugiat magna, eu tempor nibh vestibulum ac. Aliquam erat volutpat. Vivamus sit amet viverra enim. Quisque mollis odio nulla, nec vulputate sem placerat in. Etiam dolor sapien, pulvinar in accumsan at, consequat eget nisi. Nunc condimentum neque magna, congue consectetur dui efficitur interdum. Nam lobortis fringilla maximus. Vestibulum eu dui a velit condimentum eleifend consequat nec lectus.\"",
+          "csvContent": "Info,Image,Pills,Data Link,Long Text\ndown,https://grafana.com/media/menus/products/grafana-menu-icon.svg,hello,https://grafana.com,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec eu pretium tortor. Cras venenatis sapien sed mauris gravida, ut scelerisque est fringilla. Cras lorem diam, facilisis nec malesuada in, vulputate vel enim. Etiam fringilla nisi quis felis blandit tincidunt. Cras id lacus ornare, ullamcorper nisl eget, bibendum odio. Pellentesque imperdiet, leo a imperdiet venenatis, ligula risus venenatis quam, vel euismod magna nisi sit amet leo.\"\nup,https://grafana.com/media/menus/products/grafana-menu-icon-logs.svg,\"[1,2,3,\"\"foo\"\",\"\"bar\"\"]\",https://grafana.com/solutions/kubernetes/,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor. Aliquam ac tellus eget dui facilisis tempor eu id nulla. Maecenas ultrices turpis eu elementum imperdiet. Fusce eget rhoncus mi, et egestas lectus. Mauris facilisis auctor enim sed malesuada. Maecenas placerat ultricies metus vitae viverra. In hac habitasse platea dictumst. Mauris ipsum nisl, dictum eu aliquam eleifend, rutrum id orci. Nullam eget dui et odio eleifend porttitor.\"\nup fast,https://grafana.com/media/menus/products/grafana-menu-icon-traces.svg,\"foo,1,4,beep\",https://k6.io/,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum. Suspendisse vitae rutrum arcu. Donec sed tellus vel lectus bibendum vestibulum. Sed eu felis non velit dictum pulvinar eu et leo. Aenean et dignissim arcu. Nam luctus at neque quis efficitur. Fusce tempus at nibh a imperdiet. Nullam malesuada ac magna at facilisis. Duis pretium aliquam eros. Donec pharetra dignissim dolor non bibendum. Ut gravida mi id urna tempus, at ullamcorper felis vulputate. Duis congue augue ex, sed finibus leo ornare ut. Mauris non quam sodales, dignissim lorem eget, tincidunt mauris. Aliquam ut velit auctor, vestibulum metus sed, mollis massa.\"\ndown fast,https://grafana.com/media/menus/products/grafana-menu-icon-metrics.svg,\"foo,bar,baz,a longer one,bim\",https://grafana.com/products/cloud/,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus. Fusce consectetur feugiat magna, eu tempor nibh vestibulum ac. Aliquam erat volutpat. Vivamus sit amet viverra enim. Quisque mollis odio nulla, nec vulputate sem placerat in. Etiam dolor sapien, pulvinar in accumsan at, consequat eget nisi. Nunc condimentum neque magna, congue consectetur dui efficitur interdum. Nam lobortis fringilla maximus. Vestibulum eu dui a velit condimentum eleifend consequat nec lectus.\"",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -426,17 +426,199 @@
       "type": "table"
     },
     {
-      "id": 2,
-      "type": "table",
-      "title": "Empty Table Panel",
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "h": 6,
-        "w": 24
+      "datasource": {
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "minWidth": 50,
+            "wrapHeaderText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/\\b(bg|color)\\b/"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "a": {
+                        "color": "dark-red",
+                        "index": 0
+                      },
+                      "b": {
+                        "color": "super-light-orange",
+                        "index": 1
+                      },
+                      "c": {
+                        "color": "green",
+                        "index": 2
+                      },
+                      "d": {
+                        "color": "super-light-blue",
+                        "index": 3
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/\\bcolor\\b/"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/\\bbg\\b/"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/\\blink\\b/"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "goto foo",
+                    "url": "https://foo"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/\\blinks\\b/"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "goto foo",
+                    "url": "https://foo"
+                  },
+                  {
+                    "targetBlank": true,
+                    "title": "goto bar",
+                    "url": "https://bar"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "links-cellType"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "data-links"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "auto,link,links,bg,bg-link,bg-links,color,color-link,color-links,bg-row,bg-row-link,bg-row-links,color-row,color-row-link,color-row-links,links-cellType\na,a,a,a,a,a,a,a,a,1,1,1,1,1,1,1\nb,b,b,b,b,b,b,b,b,2,2,2,2,2,2,2\nc,c,c,c,c,c,c,c,c,3,3,3,3,3,3,3\nd,d,d,d,d,d,d,d,d,4,4,4,4,4,4,4",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Colors and Links",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "custom": {
             "align": "auto",
             "cellOptions": {
@@ -450,42 +632,45 @@
             "mode": "absolute",
             "steps": [
               {
-                "value": null,
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
-                "value": 80,
-                "color": "red"
+                "color": "red",
+                "value": 80
               }
             ]
-          },
-          "color": {
-            "mode": "thresholds"
           }
         },
         "overrides": []
       },
-      "pluginVersion": "12.1.0-pre",
-      "targets": [
-        {
-          "scenarioId": "csv_content",
-          "refId": "A",
-          "csvContent": "a,b,c"
-        }
-      ],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 23
       },
+      "id": 3,
       "options": {
-        "showHeader": true,
         "cellHeight": "sm",
         "footer": {
-          "show": false,
-          "reducer": ["sum"],
           "countRows": false,
-          "fields": ""
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "csvContent": "a,b,c",
+          "refId": "A",
+          "scenarioId": "csv_content"
         }
-      }
+      ],
+      "title": "Empty Table Panel",
+      "type": "table"
     }
   ],
   "preload": false,
@@ -512,5 +697,5 @@
   "timezone": "",
   "title": "Panel Tests - Table - Kitchen Sink",
   "uid": "dcb9f5e9-8066-4397-889e-864b99555dbb",
-  "version": 2
+  "version": 3
 }
