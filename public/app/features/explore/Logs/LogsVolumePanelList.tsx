@@ -218,7 +218,14 @@ export const LogsVolumePanelList = ({
             label={t('explore.logs-volume-panel-list.label-reload-log-volume', 'Reload log volume')}
             transparent
           >
-            <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
+            <Button
+              aria-label={t('explore.logs-volume-panel-list.aria-label-reload-log-volume', 'Reload log volume')}
+              size="xs"
+              icon="sync"
+              variant="secondary"
+              onClick={onLoadLogsVolume}
+              id="reload-volume"
+            />
           </InlineField>
         </div>
       )}

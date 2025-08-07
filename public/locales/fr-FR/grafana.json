@@ -1523,7 +1523,10 @@
       "group-loading-error": "Erreur lors du chargement du groupe",
       "interval": "Intervalle",
       "namespace": "Namespace",
-      "new": ""
+      "new": "",
+      "title": {
+        "back": ""
+      }
     },
     "group-edit": {
       "ds-error": "Erreur lors du chargement des détails de la source de données",
@@ -2240,6 +2243,9 @@
       "title-attention": "Attention",
       "title-manage-contact-point-permissions": "Gérer les autorisations de point de contact"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": ""
+    },
     "receivers-section": {
       "button-more": "Plus",
       "new-menu": {
@@ -2566,6 +2572,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "",
       "error-loading": "Une erreur s'est produite lors du chargement de la règle",
       "evaluation-interval": "Chaque {{interval}}",
       "prometheus-consistency-check": {
@@ -3482,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Annuler",
-      "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
       "confirmation-text": "Supprimer",
       "delete-button": "Supprimer",
       "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
@@ -3581,6 +3587,7 @@
     },
     "folder-actions-button": {
       "delete": "Supprimer",
+      "delete-folder-error": "",
       "folder-actions": "Actions sur le dossier",
       "manage-permissions": "Gérer les autorisations",
       "move": "Déplacer"
@@ -4127,11 +4134,39 @@
       "body": "Essayez le nouveau conseiller pour découvrir les problèmes potentiels concernant vos sources de données et plugins.",
       "go-to-advisor": "Accéder au conseiller"
     },
+    "cloud": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "collector": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "integrations": {
+          "subtitle": "",
+          "title": ""
+        },
+        "private-data-source-connections": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
+    },
     "connect-data": {
       "category-header-label": "Sources de données",
       "empty-message": "Aucun résultat correspondant à votre requête n'a été trouvé",
       "request-data-source": "Demander une nouvelle source de données",
       "roadmap": "Voir la feuille de route"
+    },
+    "connections-home-page": {
+      "welcome-to-connections": ""
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Lien vers Connexions",
@@ -4162,6 +4197,19 @@
     },
     "not-found-datasource": {
       "body": "Vous avez peut-être mal saisi l’URL ou le plugin avec l’identifiant <1></1> n’est pas disponible.<3></3>Pour afficher la liste des sources de données disponibles, veuillez <5>cliquer ici</5>."
+    },
+    "oss": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
     },
     "search": {
       "aria-label-search-all": "Rechercher tout",
@@ -4270,7 +4318,7 @@
       "source-label": "Source",
       "sub-text": "<0>Définissez quelle source de données affichera la corrélation et quelles données remplaceront les variables précédemment définies.</0>"
     },
-    "sub-title": "Définissez comment les données provenant de différentes sources de données se rapportent l’une à l’autre. En savoir plus dans la <2>documentation<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Ce champ est obligatoire.",
       "sub-text": "<0>Définissez l'objet de la corrélation. Avec le type requête, une requête sera exécutée lorsque vous cliquerez sur la corrélation. Avec le type externe, un clic sur la corrélation ouvrira une URL.</0>",
@@ -4673,7 +4721,7 @@
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
       "add-visualization-button": "Ajouter une visualisation",
       "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation",
-      "import-a-dashboard-body": "Importez des tableaux de bord à partir de fichiers ou de <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord"
     },
@@ -4943,6 +4991,10 @@
     "options": {
       "description": "Description",
       "title-option": "Titre"
+    },
+    "options-pane-category": {
+      "aria-label-collapse": "",
+      "aria-label-expand": ""
     },
     "options-pane-options": {
       "placeholder-search-options": "Options de recherche",
@@ -6598,6 +6650,7 @@
       "label-source": "Source"
     },
     "resource-picker": {
+      "aria-label-clear-value": "",
       "render-small-resource-picker": {
         "set-icon": "Définir l’icône"
       }
@@ -6634,6 +6687,7 @@
       "noOptionsMessage-no-fields-found": ""
     },
     "text-dimension-editor": {
+      "aria-label-clear-value": "",
       "description-field": "Afficher la valeur du champ",
       "description-fixed": "Valeur fixe",
       "label-field": "Champ",
@@ -6771,7 +6825,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Bouton de réduction de l’élément de présentation de contenu"
+        "aria-label-content-outline-item-collapse-button": "Bouton de réduction de l’élément de présentation de contenu",
+        "aria-label-content-outline-item-delete-button": ""
       }
     },
     "correlation-editor-mode-bar": {
@@ -6981,6 +7036,7 @@
       "content-streaming": "Diffusion"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "",
       "label-reload-log-volume": "Recharger le volume de journal",
       "loading": "Chargement en cours...",
       "title-failed-volume-query": "Échec du chargement du volume de journal pour cette requête",
@@ -7279,6 +7335,7 @@
       "split-widen": "Élargir le panneau"
     },
     "trace-page-header": {
+      "aria-label-share-dropdown": "",
       "duration": "",
       "export-started": "",
       "give-feedback": "",
@@ -7303,6 +7360,7 @@
       "label-show-paths": "Bouton Afficher uniquement le chemin critique"
     },
     "trace-view": {
+      "aria-label-copy": "",
       "no-data": "Aucune donnée",
       "tooltip-copy-icon": "Copié"
     },
@@ -7435,9 +7493,12 @@
     "loading": "Chargement des dossiers..."
   },
   "folder-repo": {
-    "badge-text": "Mis en service"
+    "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -7607,6 +7668,7 @@
       "title-symbol": "Symbole"
     },
     "measure-overlay": {
+      "aria-label-close": "",
       "tooltip-show-measure-tools": "Afficher les outils de mesure"
     },
     "name-initial-view": "",
@@ -8639,6 +8701,7 @@
       "csv-placeholder": "Saisir le CSV ici…",
       "filter-placeholder": "Filtrer les valeurs",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "",
       "filter-popup-cancel": "Annuler",
       "filter-popup-clear": "Effacer le filtre",
       "filter-popup-heading": "Filtrer par valeurs :",
@@ -10252,7 +10315,7 @@
     },
     "invite-user": {
       "invite-button": "Inviter",
-      "invite-new-member-button": "Inviter un nouveau membre",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11034,6 +11097,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11065,6 +11136,9 @@
     },
     "check-repository": {
       "check": "Vérifier"
+    },
+    "code-block": {
+      "aria-label-copy": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Paramètres du référentiel enregistrés",
@@ -11244,6 +11318,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11450,6 +11532,14 @@
     },
     "token-permissions-info": {
       "and-click": "et cliquez",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Accéder à",
       "make-sure": "Assurez-vous d’inclure ces autorisations"
     },
@@ -13121,6 +13211,7 @@
       }
     },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "",
       "label-field": "Champ",
       "label-match": "Correspondance",
       "label-value": "Valeur",
@@ -13308,22 +13399,6 @@
       "label-row": "Ligne",
       "name": {
         "grouping-to-matrix": ""
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Valeur booléenne fausse",
-          "boolean-true-value": "Valeur booléenne vraie",
-          "empty-string": "Chaîne vide",
-          "null-value": "Valeur nulle",
-          "number-value": "Valeur du nombre 0"
-        },
-        "label": {
-          "empty": "Vide",
-          "false": "Faux",
-          "null": "Nul",
-          "true": "Vrai",
-          "zero": "Zéro"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13676,6 +13751,22 @@
         "perform-spatial-operations": "",
         "reformat": "",
         "reorder-and-rename": ""
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "boolean-false": "",
+          "boolean-true": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        }
       }
     },
     "wide-info": {

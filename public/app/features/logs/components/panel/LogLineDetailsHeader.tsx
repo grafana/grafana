@@ -58,7 +58,8 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
 
   const scrollToLogLine = useCallback(() => {
     focusLogLine?.(log);
-  }, [focusLogLine, log]);
+    reportInteractionWrapper('logs_log_line_details_header_scroll_to_clicked');
+  }, [focusLogLine, log, reportInteractionWrapper]);
 
   const copyLogLine = useCallback(() => {
     copyText(log.entry, containerRef);
@@ -278,7 +279,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   icons: css({
     display: 'flex',
-    gap: theme.spacing(0.75),
+    gap: theme.spacing(1),
+    paddingLeft: theme.spacing(1),
   }),
   copyLogButton: css({
     padding: 0,
