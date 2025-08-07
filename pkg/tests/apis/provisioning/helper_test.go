@@ -163,8 +163,8 @@ func (h *provisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
 	t.Helper()
 	job = h.AwaitJob(t, ctx, job)
-
 	require.NotNil(t, job, "result is nil")
+
 	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
 	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	lastState := mustNestedString(job.Object, "status", "state")
@@ -184,6 +184,7 @@ func (h *provisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 			"jobs", string(job.GetUID()))
 
 		if apierrors.IsNotFound(err) {
+			collect.Errorf("job '%s' not found, still waiting for it to complete", job.GetName())
 			return // continue trying
 		}
 
