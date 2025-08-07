@@ -916,9 +916,7 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 		return vals, nil
 	}
 
-	fmt.Printf("TODO PROPERTY: (%T) %+v\n", property, property)
-
-	return nil, fmt.Errorf("support: %t", property)
+	return nil, fmt.Errorf("secure value saved in unsupported type: %T", property)
 }
 
 // SetSecureValues implements GrafanaMetaAccessor.

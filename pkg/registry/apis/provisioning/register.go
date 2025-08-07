@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -50,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -77,6 +79,11 @@ var (
 	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
+
+// JobHistoryConfig holds configuration for job history backends
+type JobHistoryConfig struct {
+	Loki *loki.Config `json:"loki,omitempty"`
+}
 
 type APIBuilder struct {
 	features   featuremgmt.FeatureToggles
@@ -130,6 +137,7 @@ func NewAPIBuilder(
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	jobHistoryConfig *JobHistoryConfig,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
@@ -138,6 +146,12 @@ func NewAPIBuilder(
 	mutators := []controller.Mutator{
 		git.Mutator(repositorySecrets),
 		github.Mutator(repositorySecrets),
+	}
+	// Create job history based on configuration
+	// Default to in-memory cache if no config provided
+	jobHistory := jobs.NewJobHistoryCache()
+	if jobHistoryConfig != nil && jobHistoryConfig.Loki != nil {
+		jobHistory = jobs.NewLokiJobHistory(*jobHistoryConfig.Loki)
 	}
 
 	b := &APIBuilder{
@@ -158,7 +172,7 @@ func NewAPIBuilder(
 		decryptSvc:          decryptSvc,
 		repositorySecrets:   repositorySecrets,
 		access:              access,
-		jobHistory:          jobs.NewJobHistoryCache(),
+		jobHistory:          jobHistory,
 		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
 			provisioning.LocalRepositoryType:  true,
 			provisioning.GitHubRepositoryType: true,
@@ -179,6 +193,38 @@ func NewAPIBuilder(
 	}
 
 	return b
+}
+
+// createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
+func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
+	// If LokiURL is defined, use Loki
+	if cfg.ProvisioningLokiURL != "" {
+		parsedURL, err := url.Parse(cfg.ProvisioningLokiURL)
+		if err != nil {
+			logging.DefaultLogger.Error("Invalid Loki URL in provisioning config", "url", cfg.ProvisioningLokiURL, "error", err)
+			return &JobHistoryConfig{}
+		}
+
+		lokiCfg := &loki.Config{
+			ReadPathURL:       parsedURL,
+			WritePathURL:      parsedURL,
+			BasicAuthUser:     cfg.ProvisioningLokiUser,
+			BasicAuthPassword: cfg.ProvisioningLokiPassword,
+			TenantID:          cfg.ProvisioningLokiTenantID,
+			ExternalLabels: map[string]string{
+				"source":       "grafana-provisioning",
+				"service_name": "grafana-provisioning",
+			},
+			MaxQuerySize: 5000, // Default query size
+		}
+
+		return &JobHistoryConfig{
+			Loki: lokiCfg,
+		}
+	}
+
+	// Default to memory backend
+	return &JobHistoryConfig{}
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -220,6 +266,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
+		createJobHistoryConfigFromSettings(cfg),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -645,8 +692,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
 				20*time.Minute, // Max time for each job
-				22*time.Minute, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
+				30*time.Second, // Lease renewal interval
 				b.jobs, b, b.jobHistory,
 				workers...,
 			)

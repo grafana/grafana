@@ -3027,7 +3027,6 @@ __metadata:
   dependencies:
     "@faker-js/faker": "npm:^9.8.0"
     "@grafana/test-utils": "workspace:*"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.3.0"
@@ -3056,9 +3055,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.0.13":
-  version: 0.0.13
-  resolution: "@grafana/assistant@npm:0.0.13"
+"@grafana/assistant@npm:0.0.14":
+  version: 0.0.14
+  resolution: "@grafana/assistant@npm:0.0.14"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3066,7 +3065,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/a0e62fe4f7ec84f8954c1e154763ca3248348442daeb2a938f9e473e339438f1c32abaf648f2a10710e4336786a11d96084a079068785a886440172dc4b4b5e8
+  checksum: 10/3e85effd69494b023d395940f5f926da1d2868850db613581d7b2f398e8f00fe07339fdb6fa12b3029603cd394d012104f187f2fd2fcb85196dac72cd6e072df
   languageName: node
   linkType: hard
 
@@ -3107,7 +3106,6 @@ __metadata:
     "@braintree/sanitize-url": "npm:7.0.1"
     "@grafana/i18n": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.18"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@types/d3-interpolate": "npm:^3.0.0"
@@ -3158,7 +3156,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@types/node": "npm:22.17.0"
     "@types/semver": "npm:7.7.0"
@@ -3256,7 +3253,6 @@ __metadata:
     "@babel/preset-react": "npm:7.27.1"
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.2.0-pre"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.2.0-pre"
     "@leeoniya/ufuzzy": "npm:1.0.18"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
@@ -3311,7 +3307,6 @@ __metadata:
   resolution: "@grafana/i18n@workspace:packages/grafana-i18n"
   dependencies:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@types/react": "npm:18.3.18"
     "@typescript-eslint/utils": "npm:^8.33.1"
     fast-deep-equal: "npm:^3.1.3"
@@ -3382,7 +3377,6 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.2.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:^6.1.2"
@@ -3490,7 +3484,6 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.2.0-pre"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.18"
@@ -3558,7 +3551,6 @@ __metadata:
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.13.2"
     "@grafana/schema": "npm:12.2.0-pre"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.2.0-pre"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@rollup/plugin-terser": "npm:0.4.4"
@@ -3642,7 +3634,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     esbuild: "npm:0.25.8"
     glob: "npm:^11.0.0"
@@ -3665,7 +3656,6 @@ __metadata:
     "@grafana/i18n": "npm:12.2.0-pre"
     "@grafana/plugin-ui": "npm:0.10.8"
     "@grafana/runtime": "npm:12.2.0-pre"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.2.0-pre"
     "@react-awesome-query-builder/ui": "npm:6.6.15"
     "@testing-library/dom": "npm:10.4.1"
@@ -3705,7 +3695,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/test-utils@workspace:packages/grafana-test-utils"
   dependencies:
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@swc/core": "npm:1.13.3"
     "@swc/jest": "npm:^0.2.26"
     "@types/jest": "npm:29.5.14"
@@ -3738,7 +3727,6 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^1.13.2"
     "@grafana/i18n": "npm:12.2.0-pre"
     "@grafana/schema": "npm:12.2.0-pre"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
@@ -18209,7 +18197,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/assistant": "npm:0.0.13"
+    "@grafana/assistant": "npm:0.0.14"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
@@ -18235,7 +18223,6 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
-    "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "workspace:*"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@kusto/monaco-kusto": "npm:^10.0.0"
@@ -18540,7 +18527,7 @@ __metadata:
     whatwg-fetch: "npm:3.6.20"
     yaml: "npm:^2.0.0"
     yargs: "npm:^18.0.0"
-    zod: "npm:^3.25.55"
+    zod: "npm:^4.0.0"
   dependenciesMeta:
     prettier@3.6.2:
       unplugged: true
@@ -33220,10 +33207,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.23.8, zod@npm:^3.24.1, zod@npm:^3.25.3, zod@npm:^3.25.55":
+"zod@npm:^3.23.8, zod@npm:^3.24.1, zod@npm:^3.25.3":
   version: 3.25.76
   resolution: "zod@npm:3.25.76"
   checksum: 10/f0c963ec40cd96858451d1690404d603d36507c1fc9682f2dae59ab38b578687d542708a7fdbf645f77926f78c9ed558f57c3d3aa226c285f798df0c4da16995
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.0.0":
+  version: 4.0.15
+  resolution: "zod@npm:4.0.15"
+  checksum: 10/a91e998d519b697a82e0f5ceea8b9c1e3a2ebc80ef6a275fc71b7f7b052cd4ab45140525c4ba93ad60fa28e0c72dc6f6c326be954aa3f621699b9a2d05fbdf1c
   languageName: node
   linkType: hard
 
