@@ -111,7 +111,6 @@ export default function RulesFilter() {
   });
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
-
     const parsedFilter = getSearchFilterFromQuery(values.query);
     updateFilters(parsedFilter);
   };
@@ -143,6 +142,7 @@ export default function RulesFilter() {
 
   const handleClearFilters = () => {
     updateFilters(formAdvancedFiltersToRuleFilter(emptyAdvancedFilters));
+    setValue('query', '');
   };
 
   const handleOnToggle = () => {
@@ -157,7 +157,7 @@ export default function RulesFilter() {
         // Check if click is on a portal element (combobox dropdown)
         const target = event.target as Element;
         const isPortalClick = target.closest('[data-popper-placement]') || target.closest('[role="listbox"]');
-        
+
         if (!isPortalClick) {
           setIsPopupOpen(false);
         }
@@ -343,12 +343,13 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
     return Array.from(groupSet).sort();
   }, [grafanaPromRules, externalPromRulesQueries]);
 
-  const { labels: grafanaLabels, isLoading: isLoadingGrafanaLabels } = useGetLabelsFromDataSourceName(GRAFANA_RULES_SOURCE_NAME);
+  const { labels: grafanaLabels, isLoading: isLoadingGrafanaLabels } =
+    useGetLabelsFromDataSourceName(GRAFANA_RULES_SOURCE_NAME);
 
   // Create label options for the multi-select dropdown
   const labelOptions = useMemo((): Array<ComboboxOption<string>> => {
     const options: Array<ComboboxOption<string>> = [];
-    
+
     grafanaLabels.forEach((values, key) => {
       values.forEach((value) => {
         const labelPair = `${key}=${value}`;
@@ -437,7 +438,11 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
                 options={labelOptions}
                 value={field.value}
                 onChange={(selections) => field.onChange(selections.map((s) => s.value))}
-                placeholder={isLoadingGrafanaLabels ? t('common.loading', 'Loading...') : t('alerting.rules-filter.placeholder-labels', 'Select labels')}
+                placeholder={
+                  isLoadingGrafanaLabels
+                    ? t('common.loading', 'Loading...')
+                    : t('alerting.rules-filter.placeholder-labels', 'Select labels')
+                }
                 loading={isLoadingGrafanaLabels}
                 disabled={isLoadingGrafanaLabels || labelOptions.length === 0}
                 portalContainer={portalContainer}
@@ -659,4 +664,3 @@ function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
-

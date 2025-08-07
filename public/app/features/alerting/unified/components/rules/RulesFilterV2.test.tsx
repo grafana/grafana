@@ -7,17 +7,18 @@ import { contextSrv } from 'app/core/core';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import * as analytics from '../../Analytics';
+import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 // Mock contextSrv before importing the component since permission check happens at module level
 jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
-let mockFilterState = { 
-  ruleName: '', 
-  ruleState: '*', 
-  dataSourceNames: [], 
-  freeFormWords: [], 
-  labels: [] 
+let mockFilterState = {
+  ruleName: '',
+  ruleState: '*',
+  dataSourceNames: [],
+  freeFormWords: [],
+  labels: [],
 };
 const mockUpdateFilters = jest.fn();
 
@@ -33,7 +34,6 @@ jest.mock('../../hooks/useFilteredRules', () => ({
 
 import RulesFilter from './Filter/RulesFilter';
 import RulesFilterV2 from './Filter/RulesFilter.v2';
-import { useRulesFilter } from '../../hooks/useFilteredRules';
 
 setupMswServer();
 
@@ -101,12 +101,12 @@ beforeEach(() => {
   locationService.replace({ search: '' });
   jest.clearAllMocks();
 
-  mockFilterState = { 
-    ruleName: '', 
-    ruleState: '*', 
-    dataSourceNames: [], 
-    freeFormWords: [], 
-    labels: [] 
+  mockFilterState = {
+    ruleName: '',
+    ruleState: '*',
+    dataSourceNames: [],
+    freeFormWords: [],
+    labels: [],
   };
   mockUpdateFilters.mockClear();
 
@@ -181,37 +181,38 @@ describe('RulesFilterV2', () => {
     expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeInTheDocument();
   });
 
-  it('Should clear filters when clicking clear button', async () => {
+  it('Should clear filters and search field when clicking clear button', async () => {
     const { user } = render(<RulesFilterV2 />);
     await user.type(ui.searchInput.get(), 'test');
     expect(ui.searchInput.get()).toHaveValue('test');
     await user.click(ui.filterButton.get());
     await user.click(ui.clearButton.get());
     expect(ui.ruleNameInput.get()).toHaveValue('');
+    expect(ui.searchInput.get()).toHaveValue('');
   });
 
   it('Should populate search field with query string when filters are applied via rule name', async () => {
     const { user } = render(<RulesFilterV2 />);
-    
+
     await user.click(ui.filterButton.get());
-    
+
     await user.type(ui.ruleNameInput.get(), 'test');
-    
+
     await user.click(ui.applyButton.get());
-    
+
     // Check that the search input contains the generated query string
     expect(ui.searchInput.get()).toHaveValue('rule:test');
   });
 
   it('Should parse search query and call updateFilters when user types directly in search field', async () => {
     const { user, rerender } = render(<RulesFilterV2 />);
-    
+
     // Type a search query directly into the search input
     await user.type(ui.searchInput.get(), 'rule:test state:firing');
-    
+
     // Trigger the onBlur handler by clicking elsewhere
     await user.click(document.body);
-    
+
     // Verify updateFilters was called with the parsed filter
     expect(mockUpdateFilters).toHaveBeenCalledWith({
       dataSourceNames: [],
@@ -220,7 +221,7 @@ describe('RulesFilterV2', () => {
       ruleName: 'test',
       ruleState: 'firing',
     });
-    
+
     // Simulate the filter state update by updating our mock
     mockFilterState = {
       dataSourceNames: [],
@@ -229,7 +230,7 @@ describe('RulesFilterV2', () => {
       ruleName: 'test',
       ruleState: 'firing',
     };
-    
+
     // Update the mock to return the new state
     (useRulesFilter as jest.Mock).mockReturnValue({
       searchQuery: '',
@@ -238,16 +239,14 @@ describe('RulesFilterV2', () => {
       hasActiveFilters: false,
       activeFilters: [],
     });
-    
+
     // Force a re-render to pick up the new filter state
     rerender(<RulesFilterV2 />);
-    
+
     // Open the filter popup
     await user.click(ui.filterButton.get());
-    
 
     expect(ui.ruleNameInput.get()).toHaveValue('test');
-    
 
     const firingRadio = screen.getByRole('radio', { name: 'Firing' });
     expect(firingRadio).toBeChecked();
@@ -255,13 +254,13 @@ describe('RulesFilterV2', () => {
 
   it('Should handle free-form rule name search in query string', async () => {
     const { user } = render(<RulesFilterV2 />);
-    
+
     // Type a free-form search (no filter prefix)
     await user.type(ui.searchInput.get(), 'test');
-    
+
     // Trigger the search by pressing Enter
     await user.keyboard('{Enter}');
-    
+
     // The search input should retain the value
     expect(ui.searchInput.get()).toHaveValue('test');
   });
