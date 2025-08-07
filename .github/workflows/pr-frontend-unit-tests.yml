@@ -6,8 +6,6 @@ on:
       - main
       - release-*.*.*
 
-# Trigger
-
 permissions: {}
 
 jobs:
