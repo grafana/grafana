@@ -48,6 +48,7 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+
   mysql:
     strategy:
       matrix:
@@ -90,10 +91,17 @@ jobs:
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: '0'
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -debug-trace=mysql-trace.json -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Upload trace
+        uses: actions/upload-artifact@v4
+        with:
+          name: mysql-trace-${{ matrix.shard }}
+          path: mysql-trace.json
+
   postgres:
     strategy:
       matrix:
@@ -135,10 +143,16 @@ jobs:
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: '0'
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -debug-trace=postgres-trace.json -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Upload trace
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-trace-${{ matrix.shard }}
+          path: postgres-trace.json
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests and shards.
