@@ -22,7 +22,7 @@ import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
  * @internal
  */
 export interface DataSourcePickerProps {
-  onChange?: (ds: DataSourceInstanceSettings) => void;
+  onChange: (ds: DataSourceInstanceSettings) => void;
   current?: DataSourceRef | string | null; // uid
   hideTextValue?: boolean;
   onBlur?: () => void;
@@ -54,7 +54,7 @@ export interface DataSourcePickerProps {
 /**
  * Component state description for the {@link DataSourcePicker}
  *
- * @deprecated. Not the real implementation used by core, left here for backwards compatibility.
+ * @deprecated. Not the real implementation used by the component, left here for backwards compatibility. Components should define their own state.
  * @internal
  */
 export interface DataSourcePickerState {
@@ -70,7 +70,7 @@ export interface DataSourcePickerState {
 export function DataSourcePicker(props: DataSourcePickerProps) {
   const {
     current = null,
-    onChange = () => {},
+    onChange,
     hideTextValue,
     onBlur,
     onClear,
