@@ -30,8 +30,12 @@ jobs:
   yarn-install:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64-large
-    name: Warm up yarn cache
+    runs-on: ${{ matrix.runner }}
+    name: Yarn install - ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-x64-small, ubuntu-x64, ubuntu-x64-large]
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
