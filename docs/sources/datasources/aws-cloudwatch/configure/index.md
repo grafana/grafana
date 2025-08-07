@@ -77,26 +77,29 @@ Complete the following steps to set up a new PostgreSQL data source:
 1. Select the **CloudWatch data source**.
 1. Click **Add new data source** in the upper right.
 
-Grafana takes you to the **Settings** tab, where you will set up your Microsoft SQL Server configuration.
+Grafana takes you to the **Settings** tab, where you will set up your CloudWatch configuration.
 
 ## Configure the data source in the UI
 
-The following are configuration options for the Microsoft SQL Server data source:
+The following are configuration options for the CloudWatch data source.
 
 | **Setting** | **Description**                                                                                                                            |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Name**    | The data source name. Sets the name you use to refer to the data source in panels and queries.                                             |
 | **Default** | Toggle to select as the default name in dashboard panels. When you go to a dashboard panel, this will be the default selected data source. |
 
-A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
+Grafana plugin requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
 The IAM user or IAM role must have the associated policies to perform certain API actions.
 
 For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
 
-**Authentication:** - Specify which AWS credentials chain to use. A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
-The IAM user or IAM role must have the associated policies to perform certain API actions.
+<!-- **Authentication:** - Specify which AWS credentials chain to use. A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
+The IAM user or IAM role must have the associated policies to perform certain API actions. -->
 
-For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
+| Setting         | Description                                                                                                                                     |
+|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Authentication** | Specify which AWS credentials chain to use. A Grafana plugin's requests to AWS are made on behalf of an IAM role or IAM user. The IAM user or IAM role must have the necessary policies to perform the required API actions. |
+
 
 **Access & secret key:**
 
@@ -107,7 +110,9 @@ You must use both an access key ID AND secret access key to authenticate.
 | **Access Key ID**     | Enter your key ID.           |
 | **Secret Access Key** | Enter the secret access key. |
 
-Assume Role
+
+<!-- For authentication options and configuration details, refer to [AWS authentication](aws-authentication/). -->
+**Assume Role**:
 
 | Setting             | Description                                                                                                                                          |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -369,7 +374,7 @@ The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` se
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `allowed_auth_providers`  | Specifies which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in open-source Grafana: `default` (AWS SDK default), keys (Access and secret key), credentials (Credentials file), ec2_IAM_role (EC2 IAM role).                                                                                                                                                             |
+| `allowed_auth_providers`  | Specifies which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in open-source Grafana: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_IAM_role` (EC2 IAM role).                                                                                                                                                             |
 | `assume_role_enabled`     | Allows you to disable `assume role (ARN)` in the CloudWatch data source. The assume role (ARN) is enabled by default in open-source Grafana.                                                                                                                                                                                                                                                                                                    |
 | `list_metrics_page_limit` | Sets the limit of List Metrics API pages. When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) populates the _Metrics_ field and _Dimension_ fields. The API is paginated and returns up to 500 results per page, and the data source also limits the number of pages to 500 by default. This setting customizes that limit. |
 
@@ -378,7 +383,7 @@ The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` se
 You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
 
-##### Using AWS SDK (default)
+**Using AWS SDK (default)**:
 
 ```yaml
 apiVersion: 1
@@ -390,7 +395,7 @@ datasources:
       defaultRegion: eu-west-2
 ```
 
-##### Using credentials' profile name (non-default)
+**Using credentials' profile name (non-default)**:
 
 ```yaml
 apiVersion: 1
@@ -405,7 +410,7 @@ datasources:
       profile: secondary
 ```
 
-##### Using accessKey and secretKey
+**Using `accessKey` and `secretKey`**:
 
 ```yaml
 apiVersion: 1
