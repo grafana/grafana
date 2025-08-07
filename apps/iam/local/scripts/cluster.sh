@@ -4,7 +4,7 @@ set -eufo pipefail
 CLUSTER_NAME="grafana-iam-operator"
 
 create_cluster() {
-  K3D_CONFIG="${1:-generated/k3d-config.json}"
+  K3D_CONFIG="${1:-k3d-config.json}"
 
   if ! k3d cluster list "${CLUSTER_NAME}" >/dev/null 2>&1; then
     # Array of extra options to add to the k3d cluster create command

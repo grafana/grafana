@@ -11,15 +11,6 @@
     "kubeconfig": {
       "switchCurrentContext": true,
       "updateDefaultKubeconfig": true
-    },
-    "k3s": {
-      "extraArgs": [{ "arg": "--kube-apiserver-arg=anonymous-auth=true", "nodeFilters": ["server:*"] }]
     }
-  },
-  "ports": [
-    {
-      "nodeFilters": ["server:*"],
-      "port": "9999:30443"
-    }
-  ]
+  }
 }
