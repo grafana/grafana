@@ -21,6 +21,8 @@ This section provides a set of guides and examples of best practices for Grafana
 
 Designing and configuring an alert management set up that works takes time. Here are some additional tips on how to create an effective alert management set up:
 
+{{< shared id="alert-planning-fundamentals" >}}
+
 **Which are the key metrics for your business that you want to monitor and alert on?**
 
 - Find events that are important to know about and not so trivial or frequent that recipients ignore them.
@@ -44,3 +46,5 @@ Designing and configuring an alert management set up that works takes time. Here
 - Avoid noisy, unnecessary alerts by using silences, mute timings, or pausing alert rule evaluation.
 - Continually tune your alert rules to review effectiveness. Remove alert rules to avoid duplication or ineffective alerts.
 - Continually review your thresholds and evaluation rules.
+
+{{< /shared >}}

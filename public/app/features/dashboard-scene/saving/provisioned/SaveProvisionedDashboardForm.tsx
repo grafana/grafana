@@ -6,11 +6,12 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
+import { RepoInvalidStateBanner } from 'app/features/browse-dashboards/components/BulkActions/RepoInvalidStateBanner';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
@@ -18,7 +19,7 @@ import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks
 import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
 import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
-import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { ProvisionedDashboardFormData } from '../shared';
 
@@ -67,18 +68,8 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
-  const onWriteSuccess = () => {
-    panelEditor?.onDiscard();
-    drawer.onClose();
-    locationService.partial({
-      viewPanel: null,
-      editPanel: null,
-    });
-  };
-
-  const onNewDashboardSuccess = (upsert: Resource<Dashboard>) => {
-    panelEditor?.onDiscard();
-    drawer.onClose();
+  const handleNewDashboard = (upsert: Resource<Dashboard>) => {
+    // Navigation for new dashboards
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: upsert.metadata.name,
@@ -86,34 +77,51 @@ export function SaveProvisionedDashboardForm({
         currentQueryParams: window.location.search,
       })
     );
-
     navigate(url);
   };
 
-  const onBranchSuccess = (ref: string, path: string) => {
+  const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    handleDismiss();
+    if (isNew && upsert?.metadata.name) {
+      handleNewDashboard(upsert);
+    } else {
+      locationService.partial({
+        viewPanel: null,
+        editPanel: null,
+      });
+    }
+  };
+
+  const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    handleDismiss();
+    if (isNew && upsert?.metadata?.name) {
+      handleNewDashboard(upsert);
+    } else {
+      const url = buildResourceBranchRedirectUrl({
+        baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        paramName: 'ref',
+        paramValue: ref,
+        repoType: info.repoType,
+      });
+      navigate(url);
+    }
+  };
+
+  const handleDismiss = () => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     drawer.onClose();
-
-    const url = buildResourceBranchRedirectUrl({
-      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
-      paramName: 'ref',
-      paramValue: ref,
-      repoType: request.data?.repository?.type,
-    });
-    navigate(url);
   };
 
-  useProvisionedRequestHandler({
-    dashboard,
+  useProvisionedRequestHandler<Dashboard>({
     request,
     workflow,
+    resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess: ({ ref, path }) => onBranchSuccess(ref, path),
+      onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      onNewDashboardSuccess,
       onError: onRequestError,
     },
-    isNew,
   });
 
   // Submit handler for saving the form data
@@ -151,16 +159,11 @@ export function SaveProvisionedDashboardForm({
       <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
         <Stack direction="column" gap={2}>
           {readOnly && (
-            <Alert
-              title={t(
-                'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
-                'This repository is read only'
-              )}
-            >
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
-                If you have direct access to the target, copy the JSON and paste it there.
-              </Trans>
-            </Alert>
+            <RepoInvalidStateBanner
+              noRepository={false}
+              isReadOnlyRepo={true}
+              readOnlyMessage="If you have direct access to the target, copy the JSON and paste it there."
+            />
           )}
 
           {isNew && (

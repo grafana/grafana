@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -43,6 +43,7 @@ export interface DataSourceListProps {
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
+  dataSources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -57,18 +58,20 @@ export function DataSourceList(props: DataSourceListProps) {
   const styles = getStyles(theme, selectedItemCssSelector);
 
   const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
-  const dataSources = useDatasources({
-    alerting: props.alerting,
-    annotations: props.annotations,
-    dashboard: props.dashboard,
-    logs: props.logs,
-    metrics: props.metrics,
-    mixed: props.mixed,
-    pluginId: props.pluginId,
-    tracing: props.tracing,
-    type: props.type,
-    variables: props.variables,
-  });
+  const dataSources =
+    props.dataSources ||
+    useDatasources({
+      alerting: props.alerting,
+      annotations: props.annotations,
+      dashboard: props.dashboard,
+      logs: props.logs,
+      metrics: props.metrics,
+      mixed: props.mixed,
+      pluginId: props.pluginId,
+      tracing: props.tracing,
+      type: props.type,
+      variables: props.variables,
+    });
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;

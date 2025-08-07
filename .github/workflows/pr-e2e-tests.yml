@@ -44,8 +44,6 @@ jobs:
     runs-on: ubuntu-latest-16-cores
     permissions:
       contents: read
-    outputs:
-      artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,7 +55,7 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx') }}"
+          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
           path: |
             build-dir
 
@@ -67,15 +65,16 @@ jobs:
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
+          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
       - name: Cat built artifact
         if: steps.cache.outputs.cache-hit != 'true'
         run: cat out.txt
-      - name: Move built artifact
+      - name: Move built artifacts
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p build-dir
-          mv "$(cat out.txt)" build-dir/grafana.tar.gz
+          mv "$(grep 'grafana_.*tar.gz$' out.txt | grep -Fv -m1 'docker')" build-dir/grafana.tar.gz
+          mv "$(grep 'grafana_.*docker.tar.gz$' out.txt)" build-dir/grafana.docker.tar.gz
 
       # If cache hit, validate the artifact is present
       - name: Validate artifact
@@ -90,13 +89,19 @@ jobs:
         run: echo "artifact=grafana-server-${{github.run_number}}" >> "$GITHUB_OUTPUT"
         id: artifact
 
-      - name: Upload artifact
+      - name: Upload grafana.tar.gz
         uses: actions/upload-artifact@v4
-        id: upload
         with:
           retention-days: 1
-          name: ${{ steps.artifact.outputs.artifact }}
+          name: grafana-tar-gz
           path: build-dir/grafana.tar.gz
+
+      - name: Upload grafana docker tarball
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: grafana-docker-tar-gz
+          path: build-dir/grafana.docker.tar.gz
 
   # TODO: we won't need this when we only have playwright
   build-e2e-runner:
@@ -113,7 +118,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
           cache: ${{ !github.event.pull_request.head.repo.fork }}
@@ -131,6 +136,66 @@ jobs:
           name: ${{ steps.artifact.outputs.artifact }}
           path: e2e-runner
 
+  push-docker-image:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    needs:
+      - build-grafana
+    steps:
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: '["grafana"]'
+          permissions: '{"checks": "write"}'
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        id: login-to-gar
+        with:
+          registry: 'us-docker.pkg.dev'
+          environment: 'dev'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: grafana-docker-tar-gz
+          path: .
+      - name: Load & Push Docker image
+        env:
+          BUILD_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          LOADED_IMAGE_NAME=$(docker load -i grafana.docker.tar.gz | sed 's/Loaded image: //g')
+          VERSION=$(echo "${LOADED_IMAGE_NAME}" | cut -d ':' -f 2 | cut -d '-' -f 1)
+          DOCKER_IMAGE="us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev/grafana:${VERSION}-${BUILD_ID}"
+          docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
+          docker push "${DOCKER_IMAGE}"
+          echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
+      - name: Add PR status check
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/grafana/grafana/check-runs \
+           -f "name=${IMAGE}" \
+           -f "head_sha=${SHA}" \
+           -f 'status=completed' \
+           -f 'conclusion=neutral' \
+           -f 'output[title]=Docker image' \
+           -f "output[summary]=${IMAGE}" \
+           -f "output[text]=${IMAGE}"
+
   run-e2e-tests:
     needs:
       - build-grafana
@@ -141,12 +206,6 @@ jobs:
         include:
           - suite: various-suite
             path: e2e/various-suite
-          - suite: dashboards-suite
-            path: e2e/dashboards-suite
-          - suite: smoke-tests-suite
-            path: e2e/smoke-tests-suite
-          - suite: panels-suite
-            path: e2e/panels-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
             flags: --flags="--env dashboardScene=false"
@@ -170,7 +229,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build-grafana.outputs.artifact }}
+          name: grafana-tar-gz
       - uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-e2e-runner.outputs.artifact }}
@@ -198,6 +257,34 @@ jobs:
           path: videos
           retention-days: 1
 
+  run-storybook-test:
+    name: Verify Storybook (Playwright)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Storybook and E2E tests
+        run: yarn e2e:playwright:storybook
+
   run-playwright-tests:
     needs:
       - build-grafana
@@ -218,7 +305,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build-grafana.outputs.artifact }}
+          name: grafana-tar-gz
       - name: Run E2E tests
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
@@ -234,6 +321,7 @@ jobs:
   required-playwright-tests:
     needs:
       - run-playwright-tests
+      - run-storybook-test
       - build-grafana
     if: ${{ !cancelled() }}
     name: All Playwright tests complete
@@ -329,7 +417,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build-grafana.outputs.artifact }}
+          name: grafana-tar-gz
       - name: Run PR a11y test
         if: github.event_name == 'pull_request'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e

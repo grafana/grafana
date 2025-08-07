@@ -15,8 +15,6 @@ import (
 	v1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
-var ()
-
 var appManifestData = app.ManifestData{
 	AppName: "folder",
 	Group:   "folder.grafana.app",

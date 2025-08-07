@@ -9,7 +9,7 @@ include .bingo/Variables.mk
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.5
+GO_VERSION = 1.24.6
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -276,7 +276,7 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
 .PHONY: run-bra
-run-air: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
+run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
 	$(bra) run
 
 .PHONY: frontend-service-check
@@ -483,7 +483,7 @@ protobuf: ## Compile protobuf definitions
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
-	buf generate apps/secret/decrypt/v1beta1 --template apps/secret/decrypt/v1beta1/buf.gen.yaml
+	buf generate apps/secret --template apps/secret/buf.gen.yaml
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml

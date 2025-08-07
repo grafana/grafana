@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Activer les journaux de base"
     },
     "config-editor": {
-      "description-additional-settings": "Les paramètres supplémentaires sont des paramètres facultatifs qui peuvent être configurés pour un meilleur contrôle de votre source de données. Cela inclut le proxy Socks sécurisé.",
-      "description-request-timeout": "Définissez le délai d’expiration de la demande en secondes. La valeur par défaut est de 30 secondes.",
-      "title-additional-settings": "Paramètres supplémentaires",
-      "title-request-timeout": "Délai d’expiration de la demande"
+      "description-additional-settings": "",
+      "title-additional-settings": "Paramètres supplémentaires"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Les identifiants de secours ont été désactivés. Étant donné que l’authentification basée sur l’utilisateur ne prend en charge que les demandes avec un utilisateur dans la portée, les fonctionnalités telles que les alertes, les requêtes enregistrées ou les rapports ne fonctionneront pas comme prévu. Veuillez consulter la <2>documentation</2> pour en savoir plus.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Colonne",
       "aria-label-column-value": "Valeur de la colonne",
       "aria-label-operator": "Opérateur",
+      "aria-label-remove-filter": "",
       "label-or": "OU"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Ajouter un groupe",
       "label-and": "ET",
       "label-filters": "Filtres",
@@ -130,6 +131,8 @@
       "label-format-as": "Formater en tant que"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Sélectionner une colonne",
       "label-fuzzy-search": "Recherche approximative",
       "placeholder-search-team": "Saisir le terme de recherche",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Supprimer"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Regrouper par",
       "tooltip-group-by": "Organisez les résultats en catégories en fonction des colonnes spécifiées. La fonction « Regrouper par » peut être utilisée de manière indépendante pour répertorier les valeurs uniques dans les colonnes sélectionnées, ou combinée avec des fonctions d’agrégation pour produire des statistiques récapitulatives pour chaque groupe. Lorsqu’elle est utilisée seule, elle renvoie des combinaisons distinctes des colonnes spécifiées."
     },
@@ -186,8 +190,10 @@
       "text-loading": "Chargement en cours..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Classer par colonne",
       "aria-label-order-direction": "Sens du classement",
+      "aria-label-remove-order-by": "",
       "label-by": "PAR",
       "label-order-by": "Classer par",
       "tooltip-order-by": "Triez les résultats en fonction d’une ou plusieurs colonne(s) par ordre croissant ou décroissant."
@@ -249,7 +255,8 @@
       "label-columns": "Colonnes",
       "label-table": "Tableau",
       "placeholder-select-columns": "Sélectionner les colonnes",
-      "placeholder-select-table": "Sélectionner un tableau"
+      "placeholder-select-table": "Sélectionner un tableau",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Fragment de temps"

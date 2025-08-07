@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Habilitar logs básicos"
     },
     "config-editor": {
-      "description-additional-settings": "Los ajustes adicionales son ajustes opcionales que se pueden configurar para tener un mayor control sobre su fuente de datos. Esto incluye el proxy SOCKS seguro.",
-      "description-request-timeout": "Establezca el tiempo de espera de la solicitud en segundos. El valor predeterminado es 30 segundos.",
-      "title-additional-settings": "Configuraciones adicionales",
-      "title-request-timeout": "Tiempo de espera de solicitud agotado"
+      "description-additional-settings": "",
+      "title-additional-settings": "Configuraciones adicionales"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Las credenciales de reserva se han desactivado. Puesto que la autenticación basada en el usuario solo puede admitir solicitudes con un usuario en alcance, las funciones como las alertas, las consultas registradas o los informes no funcionarán como se espera. Revise la <2>documentación</2> para obtener más información.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Columna",
       "aria-label-column-value": "Valor de la columna",
       "aria-label-operator": "Operador",
+      "aria-label-remove-filter": "",
       "label-or": "O BIEN"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Añadir grupo",
       "label-and": "Y",
       "label-filters": "Filtros",
@@ -130,6 +131,8 @@
       "label-format-as": "Formatear como"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Seleccionar columna",
       "label-fuzzy-search": "Búsqueda difusa",
       "placeholder-search-team": "Introducir un término de búsqueda",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Eliminar"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Agrupar por",
       "tooltip-group-by": "Organice los resultados en categorías en función de las columnas especificadas. «Agrupar por» se puede utilizar de forma independiente para enumerar valores únicos en las columnas seleccionadas, o combinarse con funciones de agregación para crear estadísticas resumidas para cada grupo. Cuando esta función se utiliza de forma independiente, devuelve combinaciones distintas de las columnas especificadas."
     },
@@ -186,8 +190,10 @@
       "text-loading": "Cargando..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Ordenar por columna",
       "aria-label-order-direction": "Sentido del orden",
+      "aria-label-remove-order-by": "",
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Ordena los resultados en función de una o más columnas en orden ascendente o descendente."
@@ -249,7 +255,8 @@
       "label-columns": "Columnas",
       "label-table": "Tabla",
       "placeholder-select-columns": "Seleccionar columnas",
-      "placeholder-select-table": "Seleccionar una tabla"
+      "placeholder-select-table": "Seleccionar una tabla",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Granularidad temporal"

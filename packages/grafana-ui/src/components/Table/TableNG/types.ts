@@ -141,6 +141,8 @@ export interface BaseTableProps {
   getActions?: GetActionsFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
+  // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
+  disableSanitizeHtml?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -161,6 +163,7 @@ export interface TableCellRendererProps {
   showFilters: boolean;
   justifyContent: Property.JustifyContent;
   getActions?: GetActionsFunctionLocal;
+  disableSanitizeHtml?: boolean;
 }
 
 export type ContextMenuProps = {
@@ -186,7 +189,6 @@ export interface TableCellActionsProps {
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
-  height: number;
   onCellExpand: (e: SyntheticEvent) => void;
   isExpanded?: boolean;
 }
@@ -242,10 +244,22 @@ export interface AutoCellProps {
   rowIdx: number;
 }
 
+export interface MarkdownCellProps {
+  field: Field;
+  rowIdx: number;
+  disableSanitizeHtml?: boolean;
+}
+
 export interface ActionCellProps {
   field: Field;
   rowIdx: number;
   getActions: GetActionsFunctionLocal;
+}
+
+export interface PillCellProps {
+  theme: GrafanaTheme2;
+  field: Field;
+  rowIdx: number;
 }
 
 // Comparator for sorting table values
@@ -260,4 +274,31 @@ export type ColumnTypes = Record<string, FieldType>;
 export interface ScrollPosition {
   x: number;
   y: number;
+}
+
+export interface TypographyCtx {
+  ctx: CanvasRenderingContext2D;
+  fontFamily: string;
+  letterSpacing: number;
+  avgCharWidth: number;
+  estimateLines: LineCounter;
+  wrappedCount: LineCounter;
+}
+
+export type LineCounter = (value: unknown, width: number, field: Field, rowIdx: number) => number;
+export interface LineCounterEntry {
+  /**
+   * given a values and the available width, returns the line count for that value
+   */
+  counter: LineCounter;
+  /**
+   * if getting an accurate line count is expensive, you can provide an estimate method
+   * which will be used when looping over the row. the counter method will only be invoked
+   * for the cell which is the maximum line count for the row.
+   */
+  estimate?: LineCounter;
+  /**
+   * indicates which field indexes of the visible fields this line counter applies to.
+   */
+  fieldIdxs: number[];
 }

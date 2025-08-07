@@ -7,6 +7,15 @@ import { DataProvider } from './data_provider';
 import { getSituation } from './situation';
 import { NeverCaseError } from './util';
 
+export type TriggerType = 'partial' | 'full';
+
+export type MonacoQueryFieldLocalState = {
+  isManualTriggerRequested: boolean;
+};
+
+const TRIGGER_CHARACTERS = ['{', ',', '[', '(', '=', '~', ' ', '"'];
+const MIN_WORD_LENGTH_FOR_FULL_COMPLETIONS = 3;
+
 export function getSuggestOptions(): monacoTypes.editor.ISuggestOptions {
   return {
     // monaco-editor sometimes provides suggestions automatically, i am not
@@ -47,11 +56,45 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   }
 }
 
+function getTriggerType(
+  word: monacoTypes.editor.IWordAtPosition | null,
+  model: monacoTypes.editor.ITextModel,
+  position: monacoTypes.Position,
+  state: MonacoQueryFieldLocalState
+): TriggerType {
+  // Manual trigger (Ctrl+Space) - always full completions
+  if (state.isManualTriggerRequested) {
+    return 'full';
+  }
+
+  const charBeforeCursor = model.getValueInRange({
+    startLineNumber: position.lineNumber,
+    endLineNumber: position.lineNumber,
+    startColumn: Math.max(1, position.column - 1),
+    endColumn: position.column,
+  });
+
+  if (TRIGGER_CHARACTERS.includes(charBeforeCursor)) {
+    return 'full';
+  }
+
+  // For typed words of sufficient length, use full completions
+  if (word && word.word.length >= MIN_WORD_LENGTH_FOR_FULL_COMPLETIONS) {
+    return 'full';
+  }
+
+  return 'partial';
+}
+
 export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider,
   timeRange: TimeRange
-): monacoTypes.languages.CompletionItemProvider {
+): { provider: monacoTypes.languages.CompletionItemProvider; state: MonacoQueryFieldLocalState } {
+  const state: MonacoQueryFieldLocalState = {
+    isManualTriggerRequested: false,
+  };
+
   const provideCompletionItems = (
     model: monacoTypes.editor.ITextModel,
     position: monacoTypes.Position
@@ -66,34 +109,26 @@ export function getCompletionProvider(
             endColumn: word.endColumn,
           })
         : monaco.Range.fromPositions(position);
-    // documentation says `position` will be "adjusted" in `getOffsetAt`
-    // i don't know what that means, to be sure i clone it
 
-    const positionClone = {
-      column: position.column,
-      lineNumber: position.lineNumber,
-    };
+    // Set input range for data provider
     dataProvider.monacoSettings.setInputInRange(model.getValueInRange(range));
 
-    // Check to see if the browser supports window.getSelection()
-    if (window.getSelection) {
-      const selectedText = window.getSelection()?.toString();
-      // If the user has selected text, adjust the cursor position to be at the start of the selection, instead of the end
-      if (selectedText && selectedText.length > 0) {
-        positionClone.column = positionClone.column - selectedText.length;
-      }
+    // Get adjusted position for cursor/selection handling
+    const adjustedPosition = getAdjustedPosition(position);
+    const offset = model.getOffsetAt(adjustedPosition);
+    const situation = getSituation(model.getValue(), offset);
+
+    // Early exit if no situation detected
+    if (situation === null) {
+      return Promise.resolve({ suggestions: [], incomplete: false });
     }
 
-    const offset = model.getOffsetAt(positionClone);
-    const situation = getSituation(model.getValue(), offset);
-    const completionsPromise =
-      situation != null ? getCompletions(situation, dataProvider, timeRange) : Promise.resolve([]);
+    const triggerType: TriggerType = getTriggerType(word, model, position, state);
 
-    return completionsPromise.then((items) => {
-      // monaco by-default alphabetically orders the items.
-      // to stop it, we use a number-as-string sortkey,
-      // so that monaco keeps the order we use
-      const maxIndexDigits = items.length.toString().length;
+    return getCompletions(situation, dataProvider, timeRange, word?.word, triggerType).then((items) => {
+      // Monaco by-default alphabetically orders the items.
+      // We use a number-as-string sortkey to maintain our custom order
+      const maxIndexDigits = items.length > 0 ? items.length.toString().length : 1;
       const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
         kind: getMonacoCompletionItemKind(item.type, monaco),
         label: item.label,
@@ -110,12 +145,35 @@ export function getCompletionProvider(
             }
           : undefined,
       }));
+
       return { suggestions, incomplete: dataProvider.monacoSettings.suggestionsIncomplete };
     });
   };
 
+  // Helper function to handle position adjustment for selection
+  function getAdjustedPosition(position: monacoTypes.Position): { column: number; lineNumber: number } {
+    let adjustedColumn = position.column;
+
+    // Check to see if the browser supports window.getSelection()
+    if (window.getSelection) {
+      const selectedText = window.getSelection()?.toString();
+      // If the user has selected text, adjust the cursor position to be at the start of the selection
+      if (selectedText && selectedText.length > 0) {
+        adjustedColumn = Math.max(1, adjustedColumn - selectedText.length);
+      }
+    }
+
+    return {
+      column: adjustedColumn,
+      lineNumber: position.lineNumber,
+    };
+  }
+
   return {
-    triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"'],
-    provideCompletionItems,
+    provider: {
+      triggerCharacters: TRIGGER_CHARACTERS,
+      provideCompletionItems,
+    },
+    state,
   };
 }
