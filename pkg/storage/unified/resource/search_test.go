@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"sync"
 	"testing"
 	"time"
@@ -385,6 +387,49 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
 	_, err = support.getOrCreateIndex(ctx, key, "test")
 	require.NoError(t, err)
+}
+
+func TestSearchWillUpdateIndexOnQueueProcessor(t *testing.T) {
+	// Regression test: Indexes were being closed when being rebuilt, but not updated on the queue processor. This was causing new events to
+	// be added to a closed index, resulting in an error and missing docs in the index.
+
+	// Create mock components
+	mockIndex1 := &MockResourceIndex{}
+	mockIndex2 := &MockResourceIndex{} // Different index to test replacement
+	mockBuilder := &MockDocumentBuilder{}
+
+	// Create searchSupport instance
+	s := &searchSupport{
+		log:                       slog.Default(),
+		indexQueueProcessors:      make(map[string]*indexQueueProcessor),
+		indexQueueProcessorsMutex: sync.Mutex{},
+		indexEventsChan:           make(chan *IndexEvent, 10),
+	}
+
+	nsr := NamespacedResource{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+	}
+
+	// Pre-populate the processor to avoid the builders.get() call
+	key := fmt.Sprintf("%s/%s/%s", nsr.Namespace, nsr.Group, nsr.Resource)
+	processor1 := newIndexQueueProcessor(mockIndex1, nsr, 10, mockBuilder, s.indexEventsChan)
+	s.indexQueueProcessors[key] = processor1
+
+	// Verify initial state
+	require.Same(t, mockIndex1, processor1.index)
+
+	// Call getOrCreateIndexQueueProcessor with a different index
+	// This should return the existing processor but update its index
+	processor2, err := s.getOrCreateIndexQueueProcessor(mockIndex2, nsr)
+	require.NoError(t, err)
+	require.NotNil(t, processor2)
+
+	// Same processor instance, but index was replaced
+	require.Same(t, processor1, processor2, "Should return the same processor instance")
+	require.Same(t, mockIndex2, processor2.index, "Index should be replaced with mockIndex2")
+	require.Same(t, mockIndex2, processor1.index, "Original processor should have updated index")
 }
 
 type slowSearchBackendWithCache struct {
