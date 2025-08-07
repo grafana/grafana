@@ -3476,7 +3476,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "取消",
-      "cannot-move-folders": "文件夹无法移动",
       "confirmation-text": "删除",
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
@@ -3569,6 +3568,7 @@
     },
     "folder-actions-button": {
       "delete": "删除",
+      "delete-folder-error": "",
       "folder-actions": "文件夹操作",
       "manage-permissions": "管理权限",
       "move": "移动"
@@ -4299,7 +4299,7 @@
       "source-label": "源",
       "sub-text": "<0>定义哪些数据源将显示关联，以及哪些数据将取代先前定义的变量。</0>"
     },
-    "sub-title": "定义不同数据源中存在的数据如何相互关联。详细信息请参阅<2>文档<1></1></2>。",
+    "sub-title": "",
     "target-form": {
       "control-rules": "此字段是必填字段。",
       "sub-text": "<0>定义相关性将链接到什么内容。使用查询类型时，点击相关性将运行查询。使用外部类型时，点击相关性将打开一个 URL。</0>",
@@ -4702,7 +4702,7 @@
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
-      "import-a-dashboard-body": "从文件或 <1>grafana.com</1> 导入数据面板。",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板"
     },
@@ -7474,6 +7474,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10282,7 +10285,7 @@
     },
     "invite-user": {
       "invite-button": "",
-      "invite-new-member-button": "邀请新成员",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11061,6 +11064,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11271,6 +11282,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11477,6 +11496,14 @@
     },
     "token-permissions-info": {
       "and-click": "并点击",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "前往",
       "make-sure": "务必包含以下权限"
     },

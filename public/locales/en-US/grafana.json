@@ -3489,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
       "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
       "cancel-button": "Cancel",
-      "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
@@ -10316,7 +10315,7 @@
     },
     "invite-user": {
       "invite-button": "Invite",
-      "invite-new-member-button": "Invite new member",
+      "invite-new-user-button": "Invite new user",
       "invite-tooltip": "Invite user"
     },
     "item": {
