@@ -534,16 +534,28 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {
     const el = ref.current?.element;
 
-    if (el) {
-      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    if (!el) {
+      return;
     }
-  }, [ref, height, renderedRows]);
+
+    const updateScrollbarDimensions = () => {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    };
+
+    updateScrollbarDimensions();
+
+    const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+    resizeObserver.observe(el);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref, height]);
 
   return scrollbarWidth;
 }
