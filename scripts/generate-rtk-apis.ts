@@ -30,8 +30,6 @@ const config: ConfigFile = {
 
         'getDashboardByUid',
         'getLibraryElementByUid',
-
-        'getResourceDependencies',
       ],
     },
     '../public/app/features/preferences/api/user/endpoints.gen.ts': {
@@ -41,45 +39,25 @@ const config: ConfigFile = {
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
-    '../public/app/api/clients/iam/v0alpha1/endpoints.gen.ts': {
+    '../public/app/features/iam/api/endpoints.gen.ts': {
       schemaFile: '../data/openapi/iam.grafana.app-v0alpha1.json',
-      apiFile: '../public/app/api/clients/iam/v0alpha1/baseAPI.ts',
+      apiFile: '../public/app/features/iam/api/api.ts',
+      apiImport: 'iamApi',
       filterEndpoints: ['getDisplayMapping'],
+      exportName: 'generatedIamApi',
+      flattenArg: false,
       tag: true,
     },
-    '../public/app/api/clients/provisioning/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../public/app/api/clients/provisioning/v0alpha1/baseAPI.ts',
+    '../public/app/features/provisioning/api/endpoints.gen.ts': {
+      apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
       schemaFile: '../data/openapi/provisioning.grafana.app-v0alpha1.json',
+      apiImport: 'baseAPI',
       filterEndpoints,
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
       tag: true,
       hooks: true,
     },
-    '../public/app/api/clients/folder/v1beta1/endpoints.gen.ts': {
-      apiFile: '../public/app/api/clients/folder/v1beta1/baseAPI.ts',
-      schemaFile: '../data/openapi/folder.grafana.app-v1beta1.json',
-      tag: true,
-    },
-    '../public/app/api/clients/advisor/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../public/app/api/clients/advisor/v0alpha1/baseAPI.ts',
-      schemaFile: '../data/openapi/advisor.grafana.app-v0alpha1.json',
-      filterEndpoints: [
-        'createCheck',
-        'getCheck',
-        'listCheck',
-        'deleteCheck',
-        'updateCheck',
-        'listCheckType',
-        'updateCheckType',
-      ],
-      tag: true,
-    },
-    '../public/app/api/clients/playlist/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../public/app/api/clients/playlist/v0alpha1/baseAPI.ts',
-      schemaFile: '../data/openapi/playlist.grafana.app-v0alpha1.json',
-      filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
-      tag: true,
-    },
-    // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
 
