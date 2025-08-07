@@ -174,7 +174,7 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 	require.Contains(t, err.Error(), "compare changes: compare error")
 }
 
-func TestFullSync_ApplyChanges(t *testing.T) {
+func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 	tests := []struct {
 		name          string
 		setupMocks    func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn)
