@@ -32,19 +32,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-          key: node_modules-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            node_modules-
+        uses: ./.github/actions/setup-node
+        
+      - name: Yarn install
+        uses: ./.github/actions/yarn/install
 
       - name: Install dependencies
         env:

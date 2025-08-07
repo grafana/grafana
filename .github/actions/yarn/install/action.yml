@@ -1,5 +1,11 @@
-name: Restore yarn dependencies
+name: Install yarn dependencies
 description: Restores yarn dependencies cached from a previous step
+
+inputs:
+  yarn-hardened-mode:
+    description: Whether to use yarn's hardened mode, defaults to true. Only disable this for non-forks, or a hardened run was run before.
+    required: false
+    default: 'true'
 
 runs:
   using: "composite"
@@ -10,9 +16,9 @@ runs:
       with:
         path: |
           node_modules
-        key: node_modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        key: node_modules-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('yarn.lock') }}
         restore-keys: |
-          node_modules-${{ runner.os }}
+          node_modules-${{ runner.os }}-${{ runner.arch }}
     - name: Yarn install
       if: steps.cache.outputs.cache-hit != 'true' # run yarn install if an exact cache was not found
       run: yarn install --immutable
@@ -20,4 +26,4 @@ runs:
       env:
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
-        YARN_ENABLE_HARDENED_MODE: 0 # Disable hardened mode because it was already checked in the yarn-install step
+        YARN_ENABLE_HARDENED_MODE: ${{ inputs.yarn-hardened-mode == 'false' && '0' || '1' }} 
