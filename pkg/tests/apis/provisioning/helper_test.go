@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"text/template"
@@ -432,4 +434,59 @@ func (h *provisioningTestHelper) postFilesRequest(t *testing.T, repo string, opt
 	require.NoError(t, err)
 
 	return resp
+}
+
+// printFileTree prints the directory structure as a tree for debugging purposes
+func printFileTree(t *testing.T, rootPath string) {
+	t.Helper()
+	t.Logf("File tree for %s:", rootPath)
+
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+
+		if relPath == "." {
+			return nil
+		}
+
+		depth := strings.Count(relPath, string(filepath.Separator))
+		indent := strings.Repeat("  ", depth)
+
+		if d.IsDir() {
+			t.Logf("%s├── %s/", indent, d.Name())
+		} else {
+			info, err := d.Info()
+			if err != nil {
+				t.Logf("%s├── %s (error reading info)", indent, d.Name())
+			} else {
+				t.Logf("%s├── %s (%d bytes)", indent, d.Name(), info.Size())
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Logf("Error walking directory: %v", err)
+	}
+}
+
+// Helper function to count files in a directory recursively
+func countFilesInDir(rootPath string) (int, error) {
+	count := 0
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			count++
+		}
+		return nil
+	})
+	return count, err
 }
