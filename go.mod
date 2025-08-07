@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.24.5
+go 1.24.6
 
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1 // @grafana/observability-traces-and-profiling
