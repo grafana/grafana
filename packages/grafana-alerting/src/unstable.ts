@@ -11,7 +11,8 @@ export { getContactPointDescription } from './grafana/contactPoints/utils';
 // Notification Policies
 export {
   useMatchAlertInstancesToNotificationPolicies,
-  type MatchResult,
+  type RouteMatch,
+  type InstanceMatchResult,
 } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export {
   type TreeMatch,
