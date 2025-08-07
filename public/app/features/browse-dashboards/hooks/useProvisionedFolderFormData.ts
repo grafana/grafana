@@ -20,6 +20,7 @@ export interface ProvisionedFolderFormDataResult {
   folder?: Folder;
   workflowOptions: Array<{ label: string; value: string }>;
   initialValues?: BaseProvisionedFormData;
+  isReadOnlyRepo: boolean;
 }
 
 /**
@@ -30,7 +31,7 @@ export function useProvisionedFolderFormData({
   action,
   title,
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
-  const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: folderUid });
+  const { repository, folder, isLoading, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
   const timestamp = generateTimestamp();
@@ -56,5 +57,6 @@ export function useProvisionedFolderFormData({
     folder,
     workflowOptions,
     initialValues,
+    isReadOnlyRepo,
   };
 }

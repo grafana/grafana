@@ -194,8 +194,8 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('returns null when repository is not available', () => {
-    const { container } = setup(null);
+    setup(null);
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
   });
 });

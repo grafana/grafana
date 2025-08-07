@@ -134,6 +134,7 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   repository: mockRepository,
   folder: mockFolder,
   initialValues: mockFormData,
+  isReadOnlyRepo: false,
 };
 
 function setup(

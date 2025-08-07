@@ -6,11 +6,12 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
+import { RepoInvalidStateBanner } from 'app/features/browse-dashboards/components/BulkActions/RepoInvalidStateBanner';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
@@ -60,7 +61,7 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onRequestError = (error: unknown, info: ProvisionedOperationInfo) => {
+  const onRequestError = (error: unknown) => {
     appEvents.publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'), error],
@@ -80,6 +81,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    handleDismiss();
     if (isNew && upsert?.metadata.name) {
       handleNewDashboard(upsert);
     } else {
@@ -91,6 +93,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    handleDismiss();
     if (isNew && upsert?.metadata?.name) {
       handleNewDashboard(upsert);
     } else {
@@ -104,7 +107,7 @@ export function SaveProvisionedDashboardForm({
     }
   };
 
-  const onDismiss = () => {
+  const handleDismiss = () => {
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     drawer.onClose();
@@ -118,7 +121,6 @@ export function SaveProvisionedDashboardForm({
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
       onError: onRequestError,
-      onDismiss,
     },
   });
 
@@ -157,16 +159,11 @@ export function SaveProvisionedDashboardForm({
       <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
         <Stack direction="column" gap={2}>
           {readOnly && (
-            <Alert
-              title={t(
-                'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
-                'This repository is read only'
-              )}
-            >
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
-                If you have direct access to the target, copy the JSON and paste it there.
-              </Trans>
-            </Alert>
+            <RepoInvalidStateBanner
+              noRepository={false}
+              isReadOnlyRepo={true}
+              readOnlyMessage="If you have direct access to the target, copy the JSON and paste it there."
+            />
           )}
 
           {isNew && (
