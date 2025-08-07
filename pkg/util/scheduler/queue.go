@@ -114,7 +114,6 @@ type Queue struct {
 	// Metrics
 	queueLength       *prometheus.GaugeVec
 	discardedRequests *prometheus.CounterVec
-	enqueueDuration   prometheus.Histogram
 	queueWaitDuration *prometheus.HistogramVec
 }
 
@@ -157,11 +156,6 @@ func NewQueue(opts *QueueOptions) *Queue {
 		Name: "discarded_requests_total",
 		Help: "Total number of discarded requests",
 	}, []string{"tenant", "reason"})
-	q.enqueueDuration = promauto.With(opts.Registerer).NewHistogram(prometheus.HistogramOpts{
-		Name:    "enqueue_duration_seconds",
-		Help:    "Duration of enqueue operation in seconds",
-		Buckets: prometheus.DefBuckets,
-	})
 	q.queueWaitDuration = promauto.With(opts.Registerer).NewHistogramVec(prometheus.HistogramOpts{
 		Name:                        "queue_wait_duration_seconds",
 		Help:                        "Time items spend waiting in the queue before being dequeued, in seconds",
@@ -292,8 +286,6 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) e
 		return ErrQueueClosed
 	}
 
-	start := time.Now()
-
 	respChan := make(chan error, 1)
 	req := enqueueRequest{
 		tenantID: tenantID,
@@ -312,7 +304,6 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) e
 		q.discardedRequests.WithLabelValues(tenantID, "context_canceled").Inc()
 		err = ctx.Err()
 	}
-	q.enqueueDuration.Observe(time.Since(start).Seconds())
 
 	return err
 }
