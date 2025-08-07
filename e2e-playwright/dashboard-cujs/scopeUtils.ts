@@ -1,7 +1,5 @@
 import { Page, Response } from '@playwright/test';
 
-const USE_LIVE_DATA = process.env.USE_LIVE_DATA;
-
 export type TestScope = {
   name: string;
   title: string;
@@ -54,10 +52,10 @@ export async function scopeNodeChildrenRequest(
   return page.waitForResponse((response) => response.url().includes(`/find/scope_node_children`));
 }
 
-export async function openScopesSelector(page: Page, scopes: TestScope[]) {
+export async function openScopesSelector(page: Page, scopes?: TestScope[]) {
   const click = async () => await page.getByTestId('scopes-selector-input').click();
 
-  if (USE_LIVE_DATA) {
+  if (!scopes) {
     await click();
     return;
   }
@@ -68,10 +66,10 @@ export async function openScopesSelector(page: Page, scopes: TestScope[]) {
   await responsePromise;
 }
 
-export async function expandScopesSelection(page: Page, scopes: TestScope[], parentScope: string) {
+export async function expandScopesSelection(page: Page, parentScope: string, scopes?: TestScope[]) {
   const click = async () => await page.getByTestId(`scopes-tree-${parentScope}-expand`).click();
 
-  if (USE_LIVE_DATA) {
+  if (!scopes) {
     await click();
     return;
   }
@@ -109,16 +107,16 @@ export async function scopeSelectRequest(page: Page, selectedScope: TestScope): 
   return page.waitForResponse((response) => response.url().includes(`/scopes/scope-${selectedScope.name}`));
 }
 
-export async function selectScope(page: Page, selectedScope: TestScope) {
+export async function selectScope(page: Page, scopeName: string, selectedScope?: TestScope) {
   const click = async () => {
     const element = page.locator(
-      `[data-testid="scopes-tree-${selectedScope.name}-checkbox"], [data-testid="scopes-tree-${selectedScope.name}-radio"]`
+      `[data-testid="scopes-tree-${scopeName}-checkbox"], [data-testid="scopes-tree-${scopeName}-radio"]`
     );
     await element.scrollIntoViewIfNeeded();
     await element.click({ force: true });
   };
 
-  if (USE_LIVE_DATA) {
+  if (!selectedScope) {
     await click();
     return;
   }
@@ -129,13 +127,13 @@ export async function selectScope(page: Page, selectedScope: TestScope) {
   await responsePromise;
 }
 
-export async function applyScopes(page: Page, scopes: TestScope[]) {
+export async function applyScopes(page: Page, scopes?: TestScope[]) {
   const click = async () => {
     await page.getByTestId('scopes-selector-apply').scrollIntoViewIfNeeded();
     await page.getByTestId('scopes-selector-apply').click({ force: true });
   };
 
-  if (USE_LIVE_DATA) {
+  if (!scopes) {
     await click();
     return;
   }
@@ -193,4 +191,39 @@ export async function searchScopes(page: Page, resultScopes: TestScope[], value:
 
   await click();
   await responsePromise;
+}
+
+export async function getScopeTreeName(page: Page, nth: number): Promise<string> {
+  const locator = page.getByTestId(/^scopes-tree-.*-expand/).nth(nth);
+  const fullTestId = await locator.getAttribute('data-testid');
+  const scopeName = fullTestId?.replace(/^scopes-tree-/, '').replace(/-expand$/, '');
+
+  if (!scopeName) {
+    throw new Error('There are no scopes in the selector');
+  }
+
+  return scopeName;
+}
+
+export async function getScopeLeafName(page: Page, nth: number): Promise<string> {
+  const locator = page.getByTestId(/^scopes-tree-.*-(checkbox|radio)/).nth(nth);
+  const fullTestId = await locator.getAttribute('data-testid');
+  const scopeName = fullTestId?.replace(/^scopes-tree-/, '').replace(/-(checkbox|radio)/, '');
+
+  if (!scopeName) {
+    throw new Error('There are no scopes in the selector');
+  }
+
+  return scopeName;
+}
+
+export async function getScopeLeafTitle(page: Page, nth: number): Promise<string> {
+  const locator = page.getByTestId(/^scopes-tree-.*-(checkbox|radio)/).nth(nth);
+  const scopeTitle = await locator.locator('../..').textContent();
+
+  if (!scopeTitle) {
+    throw new Error('There are no scopes in the selector');
+  }
+
+  return scopeTitle;
 }
