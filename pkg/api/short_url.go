@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
@@ -141,7 +139,7 @@ func (sk8s *shortURLK8sHandler) getKubernetesShortURLsHandler(c *contextmodel.Re
 
 	shortURLUID := web.Params(c.Req)[":uid"]
 	if !util.IsValidShortUID(shortURLUID) {
-		c.JsonApiErr(http.StatusBadRequest, "Invalid short URL UID format", fmt.Errorf("invalid short URL UID", "uid", shortURLUID))
+		c.JsonApiErr(http.StatusBadRequest, "Invalid short URL UID format", fmt.Errorf("invalid short URL UID: %s", shortURLUID))
 		return
 	}
 
@@ -168,43 +166,33 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		return
 	}
 
-	out, err := client.Get(c.Req.Context(), shortURLUID, v1.GetOptions{})
-	// If we didn't get the URL for whatever reason, we redirect to the
-	// main page, otherwise we get into an endless loops of redirects, as
-	// we would try to redirect again.
+	// Get Object
+	obj, err := client.Get(c.Req.Context(), shortURLUID, v1.GetOptions{})
 	if err != nil {
-		c.Logger.Error("Failed to get short URL", "uid", shortURLUID, "error", err)
-		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
+		sk8s.writeError(c, err)
 		return
 	}
 
-	// Update lastSeenAt with current Unix timestamp
-	now := time.Now().Unix()
-	patchData := []map[string]interface{}{
-		{
-			"op":    "replace",
-			"path":  "/status/lastSeenAt",
-			"value": now,
-		},
-	}
-	patchBytes, err := json.Marshal(patchData)
+	// Modify status
+	status := obj.Object["status"].(map[string]interface{})
+	newTimestamp := time.Now().Unix()
+	status["lastSeenAt"] = newTimestamp
+
+	// Try status subresource first (works in Mode 5), fallback to main resource (works in Mode 0)
+	out, err := client.Update(c.Req.Context(), obj, v1.UpdateOptions{}, "status")
 	if err != nil {
-		// Log error but continue with redirect to avoid endless loops
-		c.Logger.Error("Failed to marshal patch data for lastSeenAt update", "uid", shortURLUID, "error", err)
-	} else {
-		// Attempt to patch the status subresource
-		_, err = client.Patch(c.Req.Context(), shortURLUID, types.JSONPatchType, patchBytes, v1.PatchOptions{}, "status")
+		c.Logger.Debug("Status subresource update failed, trying main resource", "error", err)
+		// Fallback to main resource update (for Mode 0)
+		out, err = client.Update(c.Req.Context(), obj, v1.UpdateOptions{})
 		if err != nil {
-			// Log error but continue with redirect to avoid endless loops
-			c.Logger.Error("Failed to update lastSeenAt", "uid", shortURLUID, "error", err)
-		} else {
-			c.Logger.Debug("Successfully updated lastSeenAt", "uid", shortURLUID, "timestamp", now)
+			c.Logger.Error("Both status and main resource updates failed", "error", err)
+			sk8s.writeError(c, err)
+			return
 		}
 	}
 
 	spec := out.Object["spec"].(map[string]any)
 	path := spec["path"].(string)
-
 	c.Logger.Debug("Redirecting short URL", "uid", shortURLUID, "path", path)
 	c.Redirect(setting.ToAbsUrl(path), http.StatusFound)
 }

@@ -141,7 +141,44 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("Update for shorturl not implemented")
+	// For other updates, use the original logic
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Convert identity.Requester to *user.SignedInUser
+	var signedInUser *user.SignedInUser
+	if authnIdentity, ok := requester.(*authn.Identity); ok {
+		signedInUser = authnIdentity.SignedInUser()
+	} else if userIdentity, ok := requester.(*user.SignedInUser); ok {
+		signedInUser = userIdentity
+	} else {
+		return nil, false, fmt.Errorf("unsupported identity type")
+	}
+
+	shortURL, err := s.service.GetShortURLByUID(ctx, signedInUser, name)
+	if err != nil || shortURL == nil {
+		if errors.Is(err, shorturls.ErrShortURLNotFound) || err == nil {
+			err = k8serrors.NewNotFound(schema.GroupResource{
+				Group:    shorturl.ShortURLKind().Group(),
+				Resource: shorturl.ShortURLKind().Plural(),
+			}, name)
+		}
+		return nil, false, err
+	}
+
+	err = s.service.UpdateLastSeenAt(ctx, shortURL)
+	if err != nil {
+		return nil, false, err
+	}
+	// Fetch the updated short URL to return
+	updatedLegacyShortURL, err := s.service.GetShortURLByUID(ctx, signedInUser, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return convertToK8sResource(updatedLegacyShortURL, s.namespacer), true, nil
 }
 
 // GracefulDeleter

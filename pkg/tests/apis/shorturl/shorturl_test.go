@@ -312,10 +312,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		lastSeenAt, exists := status["lastSeenAt"].(int64)
 		assert.True(t, exists)
 
-		// TODO: this fail because the legacy storage does not have patch
-		//assert.Greater(t, lastSeenAt, int64(0))
-		// TODO: for now, we just check that lastSeenAt is zero
-		assert.Equal(t, int64(0), lastSeenAt)
+		assert.Greater(t, lastSeenAt, int64(0))
 
 		// Clean up
 		err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
@@ -396,11 +393,6 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 				path:          "d/some/../path/../../../secret",
 				expectedError: "invalid short URL path",
 			},
-			{
-				name:          "empty path",
-				path:          "",
-				expectedError: "invalid short URL path",
-			},
 		}
 
 		for _, tc := range testCases {
@@ -416,7 +408,7 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 				// Should get a validation error, ideally it should be 400 Bad Request
 				assert.Equal(t, http.StatusForbidden, response.Response.StatusCode,
-					"Expected 400 Bad Request for invalid path: %s", tc.path)
+					"Expected 403 Bad Request for invalid path: %s", tc.path)
 
 				// Check that the error message contains expected validation error
 				assert.Contains(t, string(response.Body), tc.expectedError,

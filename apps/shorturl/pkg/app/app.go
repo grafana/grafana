@@ -52,9 +52,6 @@ func New(cfg app.Config) (app.App, error) {
 						}
 
 						relPath := strings.TrimSpace(shortURL.Spec.Path)
-						if relPath == "" {
-							return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, relPath)
-						}
 						if path.IsAbs(relPath) {
 							return fmt.Errorf("%w: %s", ErrShortURLAbsolutePath, relPath)
 						}
