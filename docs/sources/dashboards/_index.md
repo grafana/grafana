@@ -1,6 +1,7 @@
 ---
 aliases:
   - features/dashboard/dashboards/
+  - dashboards/previews/
 labels:
   products:
     - cloud
