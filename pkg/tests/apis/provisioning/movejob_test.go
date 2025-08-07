@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -74,23 +73,19 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.NoError(t, err, "nested files should still exist")
 
 		// Verify dashboard still exists in Grafana after sync
-		// Use eventually to let unified storage reflect the changes in dashboards.
-		// FIXME: investigate this
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-			assert.NoError(collect, err)
-			assert.Len(collect, dashboards.Items, 3, "should still have 3 dashboards after move")
-			// Verify that dashboards have the correct source paths
-			foundPaths := make(map[string]bool)
-			for _, dashboard := range dashboards.Items {
-				sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
-				foundPaths[sourcePath] = true
-			}
+		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
+		// Verify that dashboards have the correct source paths
+		foundPaths := make(map[string]bool)
+		for _, dashboard := range dashboards.Items {
+			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
+			foundPaths[sourcePath] = true
+		}
 
-			assert.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
-			assert.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
-			assert.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
-		}, time.Second*10, time.Millisecond*100, "Expected to eventually have 3 dashboards after move")
+		require.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
+		require.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
+		require.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
 	})
 
 	t.Run("move multiple files and folder", func(t *testing.T) {
