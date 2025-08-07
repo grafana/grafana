@@ -1,9 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
-import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
-import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setupMockServer } from '@grafana/test-utils/server';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -12,34 +11,6 @@ import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 // Set up backendSrv as recommended in the PR comment
 setBackendSrv(backendSrv);
 setupMockServer();
-
-jest.mock('../utils', () => ({
-  collectSelectedItems: jest.fn().mockReturnValue([
-    { uid: 'folder-1', isFolder: true, displayName: 'Test Folder' },
-    { uid: 'dashboard-1', isFolder: false, displayName: 'Test Dashboard' },
-  ]),
-  fetchProvisionedDashboardPath: jest.fn().mockResolvedValue('/test/dashboard.json'),
-}));
-
-jest.mock('../../state/hooks', () => ({
-  useChildrenByParentUIDState: jest.fn().mockReturnValue({}),
-  rootItemsSelector: jest.fn().mockReturnValue({
-    items: [
-      { uid: 'folder-1', title: 'Test Folder', kind: 'folder' },
-      { uid: 'dashboard-1', title: 'Test Dashboard', kind: 'dashboard' },
-    ],
-  }),
-}));
-
-jest.mock('../../state/utils', () => ({
-  findItem: jest.fn().mockImplementation((rootItems: unknown[], childrenByUID: unknown, uid: string) => {
-    const mockRootItems = [
-      { uid: 'folder-1', title: 'Test Folder', kind: 'folder' },
-      { uid: 'dashboard-1', title: 'Test Dashboard', kind: 'dashboard' },
-    ];
-    return mockRootItems.find((item) => item.uid === uid);
-  }),
-}));
 
 jest.mock('../BrowseActions/DescendantCount', () => ({
   DescendantCount: jest.fn(({ selectedItems }) => (
@@ -53,6 +24,32 @@ jest.mock('../BrowseActions/DescendantCount', () => ({
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
   useGetResourceRepositoryView: jest.fn(),
 }));
+
+jest.mock('./useBulkActionJob', () => ({
+  useBulkActionJob: jest.fn(),
+}));
+
+jest.mock('app/features/provisioning/Job/JobStatus', () => ({
+  JobStatus: jest.fn(({ watch, jobType }) => (
+    <div data-testid="job-status">
+      Job Status - {jobType} - {watch?.status?.state || 'pending'}
+    </div>
+  )),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: jest.fn(() => ({
+    publish: jest.fn(),
+  })),
+}));
+
+// Get references to mocked functions after module loading
+const mockUseGetResourceRepositoryView = jest.mocked(
+  require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
+);
+const mockUseBulkActionJob = jest.mocked(require('./useBulkActionJob').useBulkActionJob);
+const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
 
 describe('BulkDeleteProvisionedResource', () => {
   const defaultRepository: RepositoryView = {
@@ -69,19 +66,9 @@ describe('BulkDeleteProvisionedResource', () => {
   };
 
   beforeEach(() => {
-    server.use(
-      http.delete('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/:name/files/*', () => {
-        return HttpResponse.json({
-          urls: { repositoryURL: 'https://github.com/test/repo' },
-        });
-      })
-    );
     jest.clearAllMocks();
 
-    const { useGetResourceRepositoryView } = jest.requireMock(
-      'app/features/provisioning/hooks/useGetResourceRepositoryView'
-    );
-    useGetResourceRepositoryView.mockReturnValue({
+    mockUseGetResourceRepositoryView.mockReturnValue({
       repository: defaultRepository,
       folder: {
         metadata: {
@@ -92,19 +79,26 @@ describe('BulkDeleteProvisionedResource', () => {
       },
       isInstanceManaged: false,
     });
+
+    mockUseBulkActionJob.mockReturnValue({
+      createBulkJob: jest.fn(),
+      isLoading: false,
+    });
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  function setup(repository: RepositoryView | null = defaultRepository) {
+  function setup(
+    repository: RepositoryView | null = defaultRepository,
+    mockJobResult = { success: true, job: { metadata: { name: 'test-job' }, status: { state: 'success' } } },
+    isLoading = false
+  ) {
     const onDismiss = jest.fn();
+    const mockCreateBulkJob = jest.fn().mockResolvedValue(mockJobResult);
 
-    const { useGetResourceRepositoryView } = jest.requireMock(
-      'app/features/provisioning/hooks/useGetResourceRepositoryView'
-    );
-    useGetResourceRepositoryView.mockReturnValue({
+    mockUseGetResourceRepositoryView.mockReturnValue({
       repository,
       folder: repository
         ? {
@@ -118,12 +112,18 @@ describe('BulkDeleteProvisionedResource', () => {
       isInstanceManaged: false,
     });
 
+    mockUseBulkActionJob.mockReturnValue({
+      createBulkJob: mockCreateBulkJob,
+      isLoading,
+    });
+
     const renderResult = render(
       <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
     );
 
     return {
       onDismiss,
+      mockCreateBulkJob,
       ...renderResult,
     };
   }
@@ -145,57 +145,109 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('handles successful deletion', async () => {
-    const { user } = setup();
+    const { user, mockCreateBulkJob } = setup();
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-    expect(await screen.findByText(/All resources have been deleted successfully/)).toBeInTheDocument();
+    expect(mockCreateBulkJob).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'test-folder' }),
+      expect.objectContaining({
+        action: 'delete',
+        delete: expect.objectContaining({
+          resources: expect.arrayContaining([
+            expect.objectContaining({ name: 'folder-1', kind: 'Folder' }),
+            expect.objectContaining({ name: 'dashboard-1', kind: 'Dashboard' }),
+          ]),
+        }),
+      })
+    );
+
+    // Should show JobStatus component
+    expect(await screen.findByTestId('job-status')).toBeInTheDocument();
+    expect(screen.getByText(/Job Status - delete - success/)).toBeInTheDocument();
   });
 
   it('handles deletion errors', async () => {
-    const { user } = setup();
+    const mockPublish = jest.fn();
+    const mockCreateBulkJob = jest.fn().mockResolvedValue({ success: false, error: 'Network error' });
 
-    // Mock API to return error for this test
-    server.use(
-      http.delete('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/:name/files/*', () => {
-        return HttpResponse.json({ message: 'Network error' }, { status: 500 });
-      })
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      repository: defaultRepository,
+      folder: {
+        metadata: {
+          annotations: {
+            'grafana.app/file-path': '/test/folder',
+          },
+        },
+      },
+      isInstanceManaged: false,
+    });
+
+    mockUseBulkActionJob.mockReturnValue({
+      createBulkJob: mockCreateBulkJob,
+      isLoading: false,
+    });
+
+    mockGetAppEvents.mockReturnValue({
+      publish: mockPublish,
+    });
+
+    const { user } = render(
+      <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={jest.fn()} />
     );
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
+    // Wait for the async function to complete
     await waitFor(() => {
-      // Should show error alert with failed items
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(screen.getByLabelText(/items failed/)).toBeInTheDocument();
+      expect(mockCreateBulkJob).toHaveBeenCalled();
+    });
 
-      // Should have error list items for both folder and dashboard
-      const errorItems = screen.getAllByRole('listitem');
-      expect(errorItems).toHaveLength(2); // One for folder, one for dashboard
+    // Should remain on form (not show JobStatus) when there's an error
+    expect(screen.queryByTestId('job-status')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();
+
+    // Verify that getAppEvents().publish was called for error notification
+    expect(mockPublish).toHaveBeenCalledWith({
+      type: 'alert-error',
+      payload: ['Error deleting resources', 'Network error'],
     });
   });
 
   it('shows loading state during deletion', async () => {
-    const { user } = setup();
+    // Setup with a pending job that will resolve to working state
+    const workingJob = { metadata: { name: 'test-job' }, status: { state: 'working' } };
+    const mockCreateBulkJob = jest.fn().mockResolvedValue({ success: true, job: workingJob });
 
-    // Mock slow API response
-    server.use(
-      http.delete('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/:name/files/*', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        return HttpResponse.json({
-          urls: { repositoryURL: 'https://github.com/test/repo' },
-        });
-      })
+    // Override mocks for this specific test
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      repository: defaultRepository,
+      folder: {
+        metadata: {
+          annotations: {
+            'grafana.app/file-path': '/test/folder',
+          },
+        },
+      },
+      isInstanceManaged: false,
+    });
+
+    mockUseBulkActionJob.mockReturnValue({
+      createBulkJob: mockCreateBulkJob,
+      isLoading: false,
+    });
+
+    const { user } = render(
+      <BulkDeleteProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={jest.fn()} />
     );
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-    expect(screen.getByText(/Deleting.../)).toBeInTheDocument();
-  });
+    // After click, should show JobStatus
+    await waitFor(() => {
+      expect(screen.getByTestId('job-status')).toBeInTheDocument();
+    });
 
-  it('returns null when repository is not available', () => {
-    const { container } = setup(null);
-
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByText(/Job Status - delete - working/)).toBeInTheDocument();
   });
 });

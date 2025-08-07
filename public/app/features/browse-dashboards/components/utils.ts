@@ -1,7 +1,5 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { useChildrenByParentUIDState } from '../state/hooks';
