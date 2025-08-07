@@ -53,7 +53,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 			Path:   "", // no prefix necessary for testing
 		},
 	}
-	helper.TriggerJobAndWait(t, repo, spec)
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 	type props struct {
 		title      string
@@ -140,7 +140,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		},
 	}
 
-	helper.TriggerJobAndWait(t, repo1, spec)
+	helper.TriggerJobAndWaitForSuccess(t, repo1, spec)
 	helper.SyncAndWait(t, repo1, nil)
 
 	printFileTree(t, helper.ProvisioningPath)
@@ -215,7 +215,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 			Path:   "", // no prefix necessary for testing
 		},
 	}
-	helper.TriggerJobAndWait(t, repo2, spec)
+	helper.TriggerJobAndWaitForSuccess(t, repo2, spec)
 
 	// Wait for both repositories to sync
 	helper.SyncAndWait(t, repo1, nil)

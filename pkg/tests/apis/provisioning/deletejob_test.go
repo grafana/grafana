@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,7 +57,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			},
 		}
 		// Create delete job for single file
-		helper.TriggerJobAndWait(t, repo, spec)
+		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		// Verify file is deleted from repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
@@ -84,7 +83,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Paths: []string{"dashboard2.json", "folder/dashboard3.json"},
 			},
 		}
-		helper.TriggerJobAndWait(t, repo, spec)
+		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		// Verify files are deleted from repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
@@ -155,7 +154,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				},
 			}
 
-			helper.TriggerJobAndWait(t, repo, spec)
+			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 			// Verify corresponding file is deleted from repository
 			_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "resource-test-1.json")
@@ -192,7 +191,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					},
 				},
 			}
-			helper.TriggerJobAndWait(t, repo, spec)
+			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 			// Verify both dashboards are removed from Grafana
 			_, err = helper.DashboardsV1.Resource.Get(ctx, "resourceref2", metav1.GetOptions{})
@@ -246,7 +245,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				},
 			}
 
-			helper.TriggerJobAndWait(t, repo, spec)
+			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 			// Verify both targeted resources are deleted from Grafana
 			_, err = helper.DashboardsV1.Resource.Get(ctx, "resourceref1", metav1.GetOptions{})
@@ -316,7 +315,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					},
 				},
 			}
-			helper.TriggerJobAndWait(t, repo, spec)
+			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 			// Verify folder is deleted from Grafana
 			_, err = helper.Folders.Resource.Get(ctx, testFolderName, metav1.GetOptions{})
@@ -331,114 +330,37 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 		t.Run("delete non-existent resource by reference", func(t *testing.T) {
 			// Create delete job for non-existent resource
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Body(asJSON(&provisioning.JobSpec{
-					Action: provisioning.JobActionDelete,
-					Delete: &provisioning.DeleteJobOptions{
-						Resources: []provisioning.ResourceRef{
-							{
-								Name:  "non-existent-uid",
-								Kind:  "Dashboard",
-								Group: "dashboard.grafana.app",
-							},
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "non-existent-uid",
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
 						},
 					},
-				})).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "should be able to create delete job")
+				},
+			}
 
-			// TODO: Simply all this
-			// Wait for job to complete - should record error but continue
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				list := &unstructured.UnstructuredList{}
-				err := helper.AdminREST.Get().
-					Namespace("default").
-					Resource("repositories").
-					Name(repo).
-					SubResource("jobs").
-					Do(ctx).Into(list)
-				assert.NoError(collect, err, "should be able to list jobs")
-				assert.NotEmpty(collect, list.Items, "expect at least one job")
-
-				// Find the most recent delete job
-				var deleteJob *unstructured.Unstructured
-				for _, elem := range list.Items {
-					assert.Equal(collect, repo, elem.GetLabels()["provisioning.grafana.app/repository"], "should have repo label")
-
-					action := mustNestedString(elem.Object, "spec", "action")
-					if action == "delete" {
-						// Get the most recent one (they should be ordered by creation time)
-						deleteJob = &elem
-					}
-				}
-				if !assert.NotNil(collect, deleteJob, "should find a delete job") {
-					return
-				}
-
-				state := mustNestedString(deleteJob.Object, "status", "state")
-				// The job should complete but record errors for individual resource resolution failures
-				if state == "error" || state == "completed" || state == "success" {
-					// Any of these states is acceptable - the key is that resource resolution errors are recorded
-					// and don't fail the entire job due to error-tolerant implementation
-					return
-				}
-				assert.Fail(collect, "job should complete or error, but got state: %s", state)
-			}, time.Second*10, time.Millisecond*100, "Expected delete job to handle non-existent resource")
+			job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+			require.NotNil(t, job, "should find a delete job")
+			state := mustNestedString(job.Object, "status", "state")
+			assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
 		})
-
-		// Repository cleanup is handled by the main test function
 	})
 
 	t.Run("delete non-existent file", func(t *testing.T) {
-		// Create delete job for non-existent file
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{
-					Paths: []string{"non-existent.json"},
-				},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "should be able to create delete job")
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"non-existent.json"},
+			},
+		}
 
-		// TODO: Simplify this
-		// Wait for job to complete - should fail due to strict error handling
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			list := &unstructured.UnstructuredList{}
-			err := helper.AdminREST.Get().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Do(ctx).Into(list)
-			assert.NoError(collect, err, "should be able to list jobs")
-			assert.NotEmpty(collect, list.Items, "expect at least one job")
-
-			// Find the delete job specifically
-			var deleteJob *unstructured.Unstructured
-			for _, elem := range list.Items {
-				assert.Equal(collect, repo, elem.GetLabels()["provisioning.grafana.app/repository"], "should have repo label")
-
-				action := mustNestedString(elem.Object, "spec", "action")
-				if action == "delete" {
-					deleteJob = &elem
-					break
-				}
-			}
-			assert.NotNil(collect, deleteJob, "should find a delete job")
-
-			state := mustNestedString(deleteJob.Object, "status", "state")
-			assert.Equal(collect, "error", state, "delete job should have failed due to non-existent file")
-		}, time.Second*10, time.Millisecond*100, "Expected delete job to fail with error state")
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		require.NotNil(t, job, "should find a delete job")
+		state := mustNestedString(job.Object, "status", "state")
+		assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
 	})
 }
