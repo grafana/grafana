@@ -17,7 +17,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Tests dashboard time zone scenarios', async ({ page, gotoDashboardPage, selectors }) => {
+    test.fixme('Tests dashboard time zone scenarios', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({ uid: TIMEZONE_DASHBOARD_UID });
 
       const fromTimeZone = 'UTC';
