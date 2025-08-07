@@ -17,9 +17,10 @@ export interface Props {
   tooltipOptions?: VizTooltipOptions;
   isPinned: boolean;
   headerLabel?: string;
+  maxHeight?: number;
 }
 
-export const ExemplarTooltip = ({ displayValues, links, isPinned, headerLabel = 'Exemplar' }: Props) => {
+export const ExemplarTooltip = ({ displayValues, links, isPinned, headerLabel = 'Exemplar', maxHeight }: Props) => {
   const time = displayValues.find((val) => val.name === 'Time');
 
   const headerItem: VizTooltipItem = {
@@ -39,7 +40,7 @@ export const ExemplarTooltip = ({ displayValues, links, isPinned, headerLabel = 
   return (
     <VizTooltipWrapper>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned} maxHeight={maxHeight} scrollable={!!maxHeight} />
       <VizTooltipFooter dataLinks={links || []} />
     </VizTooltipWrapper>
   );

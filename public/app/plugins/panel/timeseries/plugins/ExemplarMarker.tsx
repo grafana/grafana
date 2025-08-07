@@ -43,7 +43,7 @@ export const ExemplarMarker = ({
   maxHeight,
   maxWidth,
 }: ExemplarMarkerProps) => {
-  const styles = useStyles2(getExemplarMarkerStyles, maxHeight, maxWidth);
+  const styles = useStyles2(getExemplarMarkerStyles, maxWidth);
   const [isOpen, setIsOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
 
@@ -164,7 +164,7 @@ export const ExemplarMarker = ({
         {...getFloatingProps()}
       >
         {isLocked && <CloseButton onClick={onClose} />}
-        <ExemplarTooltip displayValues={displayValues} links={links} isPinned={isLocked} />
+        <ExemplarTooltip displayValues={displayValues} links={links} isPinned={isLocked} maxHeight={maxHeight} />
       </div>
     );
   }, [
@@ -176,6 +176,7 @@ export const ExemplarMarker = ({
     floatingStyles,
     getFloatingProps,
     refs.setFloating,
+    maxHeight,
   ]);
 
   const seriesColor = config
@@ -218,8 +219,7 @@ export const ExemplarMarker = ({
   );
 };
 
-const getExemplarMarkerStyles = (theme: GrafanaTheme2, maxHeight: number | undefined, maxWidth: number | undefined) => {
-  console.log('maxHeight', maxHeight, 'maxWidth', maxWidth);
+const getExemplarMarkerStyles = (theme: GrafanaTheme2, maxWidth: number | undefined) => {
   return {
     markerWrapper: css({
       padding: '0 4px 4px 4px',
@@ -257,8 +257,6 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2, maxHeight: number | undef
     }),
     tooltipWrapper: css({
       background: theme.colors.background.elevated,
-      maxHeight: maxHeight ?? 'none',
-      overflowY: 'auto',
       maxWidth: maxWidth ?? 'none',
       whiteSpace: 'pre',
       borderRadius: theme.shape.radius.default,

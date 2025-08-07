@@ -14,7 +14,7 @@ import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
-import { ExemplarHoverView } from './ExemplarHoverView';
+import { ExemplarTooltip } from './ExemplarTooltip';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -119,7 +119,15 @@ export const DataHoverView = ({
   const { displayValues, links } = dispValuesAndLinks;
 
   if (header === 'Exemplar') {
-    return <ExemplarHoverView displayValues={displayValues} links={links} header={header} maxHeight={maxHeight} />;
+    return (
+      <ExemplarTooltip
+        displayValues={displayValues}
+        links={links}
+        headerLabel={header}
+        maxHeight={maxHeight}
+        isPinned={false}
+      />
+    );
   }
 
   return (
