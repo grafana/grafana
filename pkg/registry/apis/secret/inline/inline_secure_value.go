@@ -159,6 +159,7 @@ func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.C
 }
 
 func (s *LocalInlineSecureValueService) verifyOwnerAndAuth(ctx context.Context, owner common.ObjectReference) (authlib.AuthInfo, error) {
+	// Any valid identity can create inline secure values
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -199,11 +200,11 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	secret := secretv1beta1.ExposedSecureValue(value)
 
 	// The owner group can always decrypt
-	decrypters := []string{owner.APIGroup, "??? UNIFIED STORAGE IDENTITY ???"}
+	decrypters := []string{owner.APIGroup}
 
 	serviceIdentity, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
-	if ok {
-		decrypters = append(decrypters, serviceIdentity...)
+	if ok && len(serviceIdentity) > 0 && serviceIdentity[0] != owner.APIGroup {
+		decrypters = append(decrypters, serviceIdentity[0])
 	}
 
 	obj := &secretv1beta1.SecureValue{

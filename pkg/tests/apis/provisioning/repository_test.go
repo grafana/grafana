@@ -38,9 +38,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 	for _, inputFilePath := range inputFiles {
 		t.Run(inputFilePath, func(t *testing.T) {
-			input := helper.RenderObject(t, inputFilePath, map[string]any{
-				"InlineCreateToken": "XXX", // Added to everything, but not used yet
-			})
+			input := helper.RenderObject(t, inputFilePath, nil)
 
 			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
 			require.NoError(t, err, "failed to create resource")
@@ -60,8 +58,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 			// Apply inline secure value mutations
 			token, found, err = unstructured.NestedString(output.Object, "secure", "token", "name")
-			require.NoError(t, err, "encryptedToken is not a string")
-			require.True(t, found, "secure value should exist")
+			require.NoError(t, err, "secure token is not a string")
 			if found {
 				err = unstructured.SetNestedField(input.Object, map[string]any{"name": token}, "secure", "token")
 				require.NoError(t, err, "unable to replace secure value with name")
@@ -170,6 +167,27 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			"stats.repository.github.count": 1.0,
 			"stats.repository.local.count":  1.0,
 		}, stats)
+	})
+
+	t.Run("check inline secret", func(t *testing.T) {
+		input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":              "github-with-inline-secure-value",
+			"InlineCreateToken": "XXX",
+		})
+		obj, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
+		require.NoError(t, err, "failed to create resource")
+
+		token, found, err := unstructured.NestedString(obj.Object, "secure", "token", "name")
+		require.NoError(t, err, "encryptedToken is not a string")
+		require.True(t, found, "secure value should exist")
+		require.True(t, strings.HasPrefix(token, "inline-"), "inline name")
+
+		rsp := helper.AdminREST.Delete().
+			Namespace("default").
+			Resource("repositories").
+			Name("github-with-inline-secure-value").
+			Do(context.Background())
+		require.NoError(t, rsp.Error())
 	})
 }
 
