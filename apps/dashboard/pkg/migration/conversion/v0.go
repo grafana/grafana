@@ -1,6 +1,8 @@
 package conversion
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/conversion"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -26,6 +28,14 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = err.Error()
 
+		migration.MDashboardConversionFailureTotal.WithLabelValues(
+			dashv0.APIVERSION,
+			dashv1.APIVERSION,
+			fmt.Sprintf("%v", in.Spec.Object["schemaVersion"]),
+			fmt.Sprintf("%d", schemaversion.LATEST_VERSION),
+			"migration_error",
+		).Inc()
+
 		logger.Error("Dashboard conversion failed",
 			"sourceVersionAPI", dashv0.APIVERSION,
 			"targetVersionAPI", dashv1.APIVERSION,
@@ -37,12 +47,12 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 		return nil
 	}
 
-	logger.Info("Dashboard conversion completed successfully",
-		"sourceVersionAPI", dashv0.APIVERSION,
-		"targetVersionAPI", dashv1.APIVERSION,
-		"dashboardUID", in.ObjectMeta.UID,
-		"sourceSchemaVersion", in.Spec.Object["schemaVersion"],
-		"targetSchemaVersion", schemaversion.LATEST_VERSION)
+	migration.MDashboardConversionSuccessTotal.WithLabelValues(
+		dashv0.APIVERSION,
+		dashv1.APIVERSION,
+		fmt.Sprintf("%v", in.Spec.Object["schemaVersion"]),
+		fmt.Sprintf("%d", schemaversion.LATEST_VERSION),
+	).Inc()
 
 	return nil
 }
