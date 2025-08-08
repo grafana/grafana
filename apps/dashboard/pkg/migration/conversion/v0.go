@@ -1,6 +1,7 @@
 package conversion
 
 import (
+	"errors"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/conversion"
@@ -30,9 +31,11 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 
 		// Classify error type for metrics
 		errorType := "conversion_error"
-		if _, ok := err.(*schemaversion.MigrationError); ok {
+		var migrationErr *schemaversion.MigrationError
+		var minVersionErr *schemaversion.MinimumVersionError
+		if errors.As(err, &migrationErr) {
 			errorType = "schema_version_migration_error"
-		} else if _, ok := err.(*schemaversion.MinimumVersionError); ok {
+		} else if errors.As(err, &minVersionErr) {
 			errorType = "schema_minimum_version_error"
 		}
 
