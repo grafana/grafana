@@ -186,11 +186,7 @@ You might need to reload the dashboard for this feature to work.
 
 #### No map repeating
 
-The **No map repeating** option prevents the base map tiles from repeating horizontally when you pan across the world. This constrains the view to a single instance of the world map and avoids visual confusion when displaying global datasets.
-
-{{< admonition type="note" >}}
-Enabling this option requires the map to reinitialize.
-{{< /admonition >}}
+The **No map repeating** option prevents the base map tiles from repeating horizontally when you pan across the world. This constrains the view to a single instance of the world map and avoids visual confusion when displaying global datasets. Enabling this option requires the map to reinitialize.
 
 ### Map layers options
 
