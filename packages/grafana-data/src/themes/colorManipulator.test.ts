@@ -11,6 +11,7 @@ import {
   getLuminance,
   lighten,
   asRgbString,
+  onBackground,
 } from './colorManipulator';
 
 describe('utils/colorManipulator', () => {
@@ -421,6 +422,18 @@ describe('utils/colorManipulator', () => {
     it('should convert hex color to rgb', () => {
       expect(asRgbString('#FFFFFF')).toEqual('rgb(255, 255, 255)');
       expect(asRgbString('#000000')).toEqual('rgb(0, 0, 0)');
+    });
+  });
+
+  describe('onBackground', () => {
+    it('should calculate the foreground color given a background color', () => {
+      expect(onBackground('#ffffff', '#000')).toBe('#ffffff');
+      expect(onBackground('#ffffff00', '#000')).toBe('#000000');
+      expect(onBackground('#ffffff77', '#000')).toBe('#777777');
+      expect(onBackground('#262a6d82', '#644242')).toBe('#443658');
+      expect(onBackground('rgba(255,0,0,0.5)', 'rgba(0,255,0,0.5)').toRgbString()).toBe('rgba(170, 85, 0, 0.75)');
+      expect(onBackground('rgba(255,0,0,0.5)', 'rgba(0,0,255,1)').toRgbString()).toBe('rgb(128, 0, 128)');
+      expect(onBackground('rgba(0,0,255,1)', 'rgba(0,0,0,0.5)').toRgbString()).toBe('rgb(0, 0, 255)');
     });
   });
 });

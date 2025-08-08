@@ -1,26 +1,11 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
 import { getJustifyContent } from './utils';
-
-// adapted from https://github.com/scttcper/tinycolor/blob/2927a9d2aa03e037486a79a295542a7848621691/src/index.ts#L583-L594
-const onBackground = (fgRaw: string, bgRaw: string) => {
-  const fg = tinycolor(fgRaw).toRgb();
-  const bg = tinycolor(bgRaw).toRgb();
-  const alpha = fg.a + bg.a * (1 - fg.a);
-
-  return tinycolor({
-    r: (fg.r * fg.a + bg.r * bg.a * (1 - fg.a)) / alpha,
-    g: (fg.g * fg.a + bg.g * bg.a * (1 - fg.a)) / alpha,
-    b: (fg.b * fg.a + bg.b * bg.a * (1 - fg.a)) / alpha,
-    a: alpha,
-  });
-};
 
 export const getGridStyles = (
   theme: GrafanaTheme2,
@@ -29,7 +14,7 @@ export const getGridStyles = (
   const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
-  const borderColor = onBackground(theme.colors.border.weak, bgColor).toHexString();
+  const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
 
   return {
     grid: css({
