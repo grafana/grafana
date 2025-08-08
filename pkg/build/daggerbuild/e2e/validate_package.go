@@ -6,12 +6,14 @@ import (
 )
 
 func CypressImage(version string) string {
-	return "cypress/included:13.1.0"
+	return "cypress/included:13.10.0"
 }
 
 // CypressContainer returns a docker container with everything set up that is needed to build or run e2e tests.
 func CypressContainer(d *dagger.Client, base string) *dagger.Container {
-	container := d.Container().From(base).WithEntrypoint([]string{})
+	container := d.Container().From(base).WithEntrypoint([]string{}).
+		WithExec([]string{"apt-get", "update", "-yq"}).
+		WithExec([]string{"apt-get", "install", "-yq", "make", "gcc", "g++"})
 
 	return container
 }

@@ -30,6 +30,8 @@ func Builder(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, 
 				},
 			},
 		).
+		WithEnvVariable("NX_ISOLATE_PLUGINS", "false").
+		WithEnvVariable("NX_DAEMON", "false").
 		WithWorkdir("/src")
 
 	// TODO: Should figure out exactly what we can include without all the extras so we can take advantage of caching better.
