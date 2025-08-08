@@ -311,16 +311,21 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 	}
 }
 
-func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) gtime.TimeRange {
-	from := query.Get("timeRange").Get("from").MustString("")
-	to := query.Get("timeRange").Get("to").MustString("")
-
-	if (from == "") && (to == "") {
-		from = globalFrom
-		to = globalTo
+func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) (string, string, error) {
+	tr, ok := query.CheckGet("timeRange")
+	if !ok { // timeRange json node does not exist, use global from/to
+		return globalFrom, globalTo, nil
+	}
+	from, err := tr.Get("from").String()
+	if err != nil {
+		return "", "", errors.New("time range: field 'from' is missing or invalid")
+	}
+	to, err := tr.Get("to").String()
+	if err != nil {
+		return "", "", errors.New("time range: field 'to' is missing or invalid")
 	}
 
-	return gtime.NewTimeRange(from, to)
+	return from, to, nil
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
@@ -359,7 +364,11 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 
 		var timeRange gtime.TimeRange
 		if supportLocalTimeRange {
-			timeRange = getTimeRange(query, reqDTO.From, reqDTO.To)
+			from, to, err := getTimeRange(query, reqDTO.From, reqDTO.To)
+			if err != nil {
+				return nil, err
+			}
+			timeRange = gtime.NewTimeRange(from, to)
 		} else {
 			timeRange = gtime.NewTimeRange(reqDTO.From, reqDTO.To)
 		}

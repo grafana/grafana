@@ -3489,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "İptal",
-      "cannot-move-folders": "Klasörler taşınamaz",
       "confirmation-text": "Sil",
       "delete-button": "Sil",
       "delete-modal-invalid-text": "Bir veya daha fazla klasör, kütüphane panelleri veya uyarı kuralları içeriyor. Devam etmek için öncelikle bunları silin.",
@@ -3540,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3569,6 +3575,9 @@
       "select-checkbox": "Seçin",
       "tags-column": "Etiketler"
     },
+    "delete-folder": {
+      "read-only-message": ""
+    },
     "delete-provisioned-folder-form": {
       "api-error": "",
       "button-cancel": "",
@@ -3588,6 +3597,7 @@
     },
     "folder-actions-button": {
       "delete": "Sil",
+      "delete-folder-error": "",
       "folder-actions": "Klasör işlemleri",
       "manage-permissions": "İzinleri yönet",
       "move": "Taşı"
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Öge yok"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "İptal",
@@ -4318,7 +4331,7 @@
       "source-label": "Kaynak",
       "sub-text": "<0>Korelasyonun hangi veri kaynağında görüntüleneceğini ve hangi verilerin önceden tanımlanmış değişkenlerin yerini alacağını tanımlayın.</0>"
     },
-    "sub-title": "Farklı veri kaynaklarındaki verilerin birbiriyle ilişkisini tanımlayın. Daha fazla bilgi için <2>belgelere<1></1></2> bakın.",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Bu alan gereklidir.",
       "sub-text": "<0>Korelasyonun neyle bağlantı kuracağını tanımlayın. Sorgu türü ile korelasyona tıklandığında bir sorgu çalıştırılır. Haricî tür ile korelasyona tıklandığında bir URL açılır.</0>",
@@ -4721,7 +4734,7 @@
       "add-visualization-body": "Bir veri kaynağı seçin ve ardından grafikler, istatistikler ve tablolarla verilerinizi sorgulayın ve görselleştirin veya listeler, markdown'lar ve diğer widget'lar oluşturun.",
       "add-visualization-button": "Görselleştirme ekle",
       "add-visualization-header": "Bir görselleştirme ekleyerek yeni panonuzu başlatın",
-      "import-a-dashboard-body": "Panoları dosyalardan veya <1>grafana.com </1>'dan içe aktarın.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Bir panoyu içe aktar",
       "import-dashboard-button": "Panoyu içe aktar"
     },
@@ -5691,11 +5704,9 @@
       "api-error": "",
       "cancel-action": "İptal et",
       "delete-action": "Panoyu sil",
-      "delete-read-only-file-message": "",
       "deleting": "Siliniyor...",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Bu depo salt okunur"
+      "success-message": ""
     },
     "description-label": {
       "description": "Açıklama"
@@ -6067,7 +6078,6 @@
       "api-error": "Pano kaydedilirken hata oluştu",
       "cancel": "İptal",
       "cannot-be-saved": "Bu pano başka bir kaynaktan sağlandığı için Grafana kullanıcı arayüzünden kaydedilemez. JSON'u kopyalayın veya aşağıdan bir dosyaya kaydedin, ardından sağlama kaynağındaki panonuzu güncelleyebilirsiniz.",
-      "copy-json-message": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın.",
       "copy-json-to-clipboard": "JSON'u panoya kopyala",
       "file-path": "<0>Dosya yolu:</0> {{filePath}} ",
       "label-description": "Açıklama",
@@ -6079,7 +6089,6 @@
       "see-docs": "Sağlama hakkında daha fazla bilgi için <2>belgelere</2> bakın. ",
       "title-required": "Pano başlığı gereklidir",
       "title-same-as-folder": "Pano adı klasör adı ile aynı olamaz",
-      "title-this-repository-is-read-only": "Bu depo salt okunur",
       "title-validation-failed": "Pano başlığı doğrulanamadı."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Bu hata hakkında daha fazla bilgi edinmek için <2>buraya</2> tıklayın.",
-    "success-more-details-links": "Ardından, bir <2>pano oluşturarak</2> veya <5>Keşfet görünümünde</5> verileri sorgulayarak verileri görselleştirmeye başlayabilirsiniz."
+    "success-more-details-links": "Ardından, bir <2>pano oluşturarak</2> veya <5>Keşfet görünümünde</5> verileri sorgulayarak verileri görselleştirmeye başlayabilirsiniz.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Pano oluştur",
-      "explore-data": "Verileri keşfedin"
+      "explore-data": "Verileri keşfedin",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Hata hakkında daha fazla bilgi"
@@ -7496,6 +7507,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10312,7 +10326,7 @@
     },
     "invite-user": {
       "invite-button": "Davet et",
-      "invite-new-member-button": "Yeni üye davet edin",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11094,6 +11108,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11307,6 +11329,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11513,6 +11543,14 @@
     },
     "token-permissions-info": {
       "and-click": "ve şuna tıklayın:",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Şuraya git:",
       "make-sure": "Bu izinleri eklediğinizden emin olun"
     },

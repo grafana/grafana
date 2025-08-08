@@ -190,10 +190,13 @@ export enum PluginExtensionPoints {
   AlertingHomePage = 'grafana/alerting/home',
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
+  AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
+  DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
+  DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
@@ -268,6 +271,30 @@ export type DataSourceConfigErrorStatusContext = {
     status?: string | null;
     details?: Record<string, unknown>;
   };
+};
+
+export type PluginExtensionDataSourceConfigActionsContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+};
+
+export type PluginExtensionDataSourceConfigStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+  testingStatus?: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+  severity: 'success' | 'error' | 'warning' | 'info';
 };
 
 type Dashboard = {

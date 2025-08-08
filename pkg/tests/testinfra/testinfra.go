@@ -542,6 +542,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.APIServerRuntimeConfig != "" {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("runtime_config", opts.APIServerRuntimeConfig)
+		require.NoError(t, err)
+	}
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
@@ -599,6 +605,7 @@ type GrafanaOpts struct {
 	LicensePath                           string
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
+	APIServerRuntimeConfig                string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
