@@ -1,0 +1,14 @@
+{
+  "title": "V22 Table Panel Styles Test",
+  "schemaVersion": 21,
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "styles": [
+        { "type": "number", "pattern": "Time", "align": "left" },
+        { "type": "string", "pattern": "Value", "align": "right" }
+      ]
+    }
+  ]
+} 
