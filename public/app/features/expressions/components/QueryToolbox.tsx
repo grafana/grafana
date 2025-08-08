@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, useStyles2, Stack, InlineToast } from '@grafana/ui';
+import { IconButton, useStyles2, Stack, InlineToast, Tooltip, Icon } from '@grafana/ui';
 
 import { SqlExpressionQuery } from '../types';
 
@@ -81,6 +81,9 @@ export const QueryToolbox = ({ onFormatCode, onExpand, isExpanded, query }: Quer
           tooltip={t('expressions.query-toolbox.tooltip-copy-query', 'Copy query')}
           variant={showCopySuccess ? 'primary' : 'secondary'}
         />
+        <Tooltip content={t('expressions.query-toolbox.tooltip-run-query', 'Hit ctrl/cmd+enter to run query')}>
+          <Icon name="keyboard" />
+        </Tooltip>
       </Stack>
     </div>
   );
