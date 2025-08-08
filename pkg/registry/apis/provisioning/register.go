@@ -742,7 +742,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
 
 			// If Loki not used, start the controller for history jobs
-			if b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil {
+			if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
 				historyJobExpiration := 5 * time.Minute
