@@ -427,10 +427,10 @@ describe('utils/colorManipulator', () => {
 
   describe('onBackground', () => {
     it('should calculate the foreground color given a background color', () => {
-      expect(onBackground('#ffffff', '#000')).toBe('#ffffff');
-      expect(onBackground('#ffffff00', '#000')).toBe('#000000');
-      expect(onBackground('#ffffff77', '#000')).toBe('#777777');
-      expect(onBackground('#262a6d82', '#644242')).toBe('#443658');
+      expect(onBackground('#ffffff', '#000').toHexString()).toBe('#ffffff');
+      expect(onBackground('#ffffff00', '#000').toHexString()).toBe('#000000');
+      expect(onBackground('#ffffff77', '#000').toHexString()).toBe('#777777');
+      expect(onBackground('#262a6d82', '#644242').toHexString()).toBe('#443658');
       expect(onBackground('rgba(255,0,0,0.5)', 'rgba(0,255,0,0.5)').toRgbString()).toBe('rgba(170, 85, 0, 0.75)');
       expect(onBackground('rgba(255,0,0,0.5)', 'rgba(0,0,255,1)').toRgbString()).toBe('rgb(128, 0, 128)');
       expect(onBackground('rgba(0,0,255,1)', 'rgba(0,0,0,0.5)').toRgbString()).toBe('rgb(0, 0, 255)');
