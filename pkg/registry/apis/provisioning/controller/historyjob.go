@@ -65,15 +65,15 @@ func (c *HistoryJobController) cleanupJob(obj interface{}) {
 		ctx := context.Background()
 		err := c.client.HistoricJobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
-			c.logger.Error("Failed to delete expired HistoryJob", 
-				"namespace", job.Namespace, 
-				"name", job.Name, 
+			c.logger.Error("Failed to delete expired HistoryJob",
+				"namespace", job.Namespace,
+				"name", job.Name,
 				"age", age,
 				"error", err)
 		} else {
-			c.logger.Debug("Deleted expired HistoryJob", 
-				"namespace", job.Namespace, 
-				"name", job.Name, 
+			c.logger.Debug("Deleted expired HistoryJob",
+				"namespace", job.Namespace,
+				"name", job.Name,
 				"age", age)
 		}
 	}
