@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Välj alla",
       "select-checkbox": "Välj",
       "tags-column": "Taggar"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Inga objekt"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Avbryt",
@@ -5691,11 +5704,9 @@
       "api-error": "",
       "cancel-action": "Avbryt",
       "delete-action": "Ta bort instrumentpanel",
-      "delete-read-only-file-message": "",
       "deleting": "Tar bort ...",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Den här databasen är skrivskyddad"
+      "success-message": ""
     },
     "description-label": {
       "description": "Beskrivning"
@@ -6067,7 +6078,6 @@
       "api-error": "Fel när instrumentpanel skulle sparas",
       "cancel": "Avbryt",
       "cannot-be-saved": "Denna instrumentpanel kan inte sparas från Grafanas användargränssnitt eftersom det har provisionerats från en annan källa. Kopiera JSON eller spara den till en fil nedan, så du kan uppdatera instrumentpanelen i provisioneringskällan.",
-      "copy-json-message": "Om du har direkt åtkomst till målet kopierar du JSON och klistrar in den där.",
       "copy-json-to-clipboard": "Kopiera JSON till urklippet",
       "file-path": "<0>Filsökväg:</0> {{filePath}}",
       "label-description": "Beskrivning",
@@ -6079,7 +6089,6 @@
       "see-docs": "Se <2>dokumentationen</2> för mer information om provisionering.",
       "title-required": "Instrumentpanelens titel är obligatorisk",
       "title-same-as-folder": "Panelenamnet kan inte vara detsamma som mappnamnet",
-      "title-this-repository-is-read-only": "Den här databasen är skrivskyddad",
       "title-validation-failed": "Valideringen av instrumentpanelens titel misslyckades."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicka <2>här</2> för att läsa mer om detta fel.",
-    "success-more-details-links": "Därefter kan du börja visualisera data genom att <2>bygga en instrumentpanel</2> eller genom att fråga efter data i <5>Utforska vy</5>."
+    "success-more-details-links": "Därefter kan du börja visualisera data genom att <2>bygga en instrumentpanel</2> eller genom att fråga efter data i <5>Utforska vy</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Bygg en instrumentpanel",
-      "explore-data": "Utforska data"
+      "explore-data": "Utforska data",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mer information om felet"

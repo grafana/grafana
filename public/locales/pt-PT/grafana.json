@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Selecionar tudo",
       "select-checkbox": "Selecionar",
       "tags-column": "Etiquetas"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Sem artigos "
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Cancelar",
@@ -5691,11 +5704,9 @@
       "api-error": "",
       "cancel-action": "Cancelar",
       "delete-action": "Eliminar painel de controlo",
-      "delete-read-only-file-message": "",
       "deleting": "A eliminar...",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
+      "success-message": ""
     },
     "description-label": {
       "description": "Descrição"
@@ -6067,7 +6078,6 @@
       "api-error": "Erro ao guardar o painel de controlo",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este painel de controlo não pode ser guardado a partir da interface do utilizador da Grafana porque foi aprovisionado a partir de outra fonte. Copie o JSON ou guarde-o num ficheiro abaixo. Posteriormente, poderá atualizar o seu painel de controlo na fonte de aprovisionamento.",
-      "copy-json-message": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá.",
       "copy-json-to-clipboard": "Copiar JSON para a área de transferência",
       "file-path": "<0>Caminho do ficheiro:</0> {{filePath}}",
       "label-description": "Descrição",
@@ -6079,7 +6089,6 @@
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre aprovisionamento.",
       "title-required": "O título do painel de controlo é obrigatório",
       "title-same-as-folder": "O nome do painel de controlo não pode ser igual ao nome da pasta",
-      "title-this-repository-is-read-only": "Este repositório é apenas de leitura",
       "title-validation-failed": "A validação do título do painel de controlo falhou."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Clique <2>aqui</2> para saber mais sobre este erro.",
-    "success-more-details-links": "Em seguida, pode começar a visualizar os dados <2>criando um painel de controlo</2> ou consultando os dados na <5>vista Explorar</5>."
+    "success-more-details-links": "Em seguida, pode começar a visualizar os dados <2>criando um painel de controlo</2> ou consultando os dados na <5>vista Explorar</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Criar um painel de controlo",
-      "explore-data": "Explorar dados"
+      "explore-data": "Explorar dados",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mais detalhes sobre o erro"

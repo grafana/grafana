@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Összes kijelölése",
       "select-checkbox": "Kijelölés",
       "tags-column": "Címkék"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "A mappa törlése nem sikerült",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Nincsenek elemek"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Mégse",
@@ -5691,11 +5704,9 @@
       "api-error": "Az irányítópult törlése nem sikerült",
       "cancel-action": "Mégse",
       "delete-action": "Irányítópult törlése",
-      "delete-read-only-file-message": "Ez az irányítópult nem törölhető közvetlenül a Grafanából, mert az adattár csak olvasható. Az irányítópult törléséhez távolítsa el a fájlt a Git-tárból.",
       "deleting": "Törlés...",
       "drawer-title": "Kiépített irányítópult törlése",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
+      "success-message": ""
     },
     "description-label": {
       "description": "Leírás"
@@ -6067,7 +6078,6 @@
       "api-error": "Hiba történt az irányítópult mentésekor",
       "cancel": "Mégse",
       "cannot-be-saved": "Ez az irányítópult nem menthető a Grafana kezelőfelületéből, mert egy másik forrásból van kiépítve. Másolja a JSON-t, vagy mentse fájlba az alábbiakban, majd frissítheti az irányítópultot a kiépítési forrásban.",
-      "copy-json-message": "Ha közvetlen hozzáférése van a célhoz, másolja ki a JSON-kódot, és illessze be oda.",
       "copy-json-to-clipboard": "JSON másolása a vágólapra",
       "file-path": "<0>Fájl útvonala:</0> {{filePath}}",
       "label-description": "Leírás",
@@ -6079,7 +6089,6 @@
       "see-docs": "A kiépítéssel kapcsolatos további információkért tekintse meg a <2>dokumentációt</2>.",
       "title-required": "Az irányítópult címének megadása kötelező",
       "title-same-as-folder": "Az irányítópult neve nem lehet ugyanaz, mint a mappa neve",
-      "title-this-repository-is-read-only": "Ez az adattár csak olvasható",
       "title-validation-failed": "Az irányítópult címének ellenőrzése sikertelen."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Ha többet szeretne megtudni erről a hibáról, kattintson <2>ide</2>.",
-    "success-more-details-links": "Ezután < 2 >létrehozhat egy irányítópultot</2>, vagy lekérdezheti az adatokat az <5>Explore nézetben</5>."
+    "success-more-details-links": "Ezután < 2 >létrehozhat egy irányítópultot</2>, vagy lekérdezheti az adatokat az <5>Explore nézetben</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Irányítópult létrehozása",
-      "explore-data": "Adatok felfedezése"
+      "explore-data": "Adatok felfedezése",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "További részletek a hibáról"
