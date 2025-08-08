@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
+	"reflect"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,8 +24,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/ring"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -208,6 +211,9 @@ type ResourceServerOptions struct {
 	// Link RBAC
 	AccessClient claims.AccessClient
 
+	// Manage secure values
+	SecureValues secrets.InlineSecureValueSupport
+
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
 
@@ -297,6 +303,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		blob:             blobstore,
 		diagnostics:      opts.Diagnostics,
 		access:           opts.AccessClient,
+		secure:           opts.SecureValues,
 		writeHooks:       opts.WriteHooks,
 		lifecycle:        opts.Lifecycle,
 		now:              opts.Now,
@@ -333,6 +340,7 @@ type server struct {
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
+	secure         secrets.InlineSecureValueSupport
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient
@@ -444,16 +452,6 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
-	// Verify that this resource can reference secure values
-	secure, err := obj.GetSecureValues()
-	if err != nil {
-		return nil, AsErrorResult(err)
-	}
-	if len(secure) > 0 {
-		// See: https://github.com/grafana/grafana/pull/107803
-		return nil, NewBadRequestError("Saving secure values is not yet supported")
-	}
-
 	event := &WriteEvent{
 		Value:  value,
 		Key:    key,
@@ -474,6 +472,46 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		event.ObjectOld, err = utils.MetaAccessor(temp)
 		if err != nil {
 			return nil, AsErrorResult(err)
+		}
+	}
+
+	// Verify that this resource can reference secure values
+	secure, err := obj.GetSecureValues()
+	if err != nil {
+		return nil, AsErrorResult(err)
+	}
+	if len(secure) > 0 {
+		found := make(map[string]bool, len(secure))
+
+		// Make sure the secure values are safe to save (just in case)
+		for _, v := range secure {
+			if !v.Create.IsZero() {
+				return nil, NewBadRequestError("unable to create values in unified storage")
+			}
+			if v.Remove {
+				return nil, NewBadRequestError("unable to save remove command")
+			}
+			if v.Name == "" {
+				return nil, NewBadRequestError("secure value requires name")
+			}
+			found[v.Name] = true
+		}
+		if s.secure == nil {
+			return nil, AsErrorResult(fmt.Errorf("secure value store not configured"))
+		}
+
+		// The "CanReference" check exists to avoid writing references to secrets
+		// the user should not allow granting access.  We only check it when the value changes
+		secureValuesChanged := event.ObjectOld == nil
+		if event.ObjectOld != nil {
+			oldSecureValues, _ := obj.GetSecureValues()
+			secureValuesChanged = reflect.DeepEqual(secure, oldSecureValues)
+		}
+		if secureValuesChanged {
+			names := slices.Collect(maps.Keys(found))
+			if err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), names...); err != nil {
+				return nil, AsErrorResult(err)
+			}
 		}
 	}
 
