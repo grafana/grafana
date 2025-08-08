@@ -202,7 +202,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
           </Label>
           <RadioButtonGroup
             options={RuleStateOptions}
-            value={filterState.ruleState}
+            value={filterState.ruleState === '*' ? undefined : filterState.ruleState}
             onChange={handleAlertStateChange}
           />
         </div>
