@@ -478,6 +478,7 @@ const TimestampResolutionButton = () => {
   return (
     <Tooltip content={getTimestampTooltip(showTime, timestampResolution)}>
       <button
+        aria-label={getTimestampTooltip(showTime, timestampResolution)}
         aria-pressed={showTime}
         className={`${styles.timestampResolutionButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
         type="button"
