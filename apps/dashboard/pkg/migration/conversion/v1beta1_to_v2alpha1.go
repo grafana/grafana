@@ -600,10 +600,11 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 		}
 
 		if repeatDirection := getStringField(panelMap, "repeatDirection", ""); repeatDirection != "" {
-			if repeatDirection == "h" {
+			switch repeatDirection {
+			case "h":
 				direction := dashv2alpha1.DashboardRepeatOptionsDirectionH
 				repeatOptions.Direction = &direction
-			} else if repeatDirection == "v" {
+			case "v":
 				direction := dashv2alpha1.DashboardRepeatOptionsDirectionV
 				repeatOptions.Direction = &direction
 			}

@@ -114,6 +114,17 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			require.Equal(t, 2, len(parts), "apiVersion should be in format 'group/version'")
 			sourceVersion := parts[1]
 
+			// Validate that the input file starts with the apiVersion declared in the object
+			expectedPrefix := fmt.Sprintf("%s.", sourceVersion)
+			if !strings.HasPrefix(file.Name(), expectedPrefix) {
+				t.Fatalf(
+					"Input file %s does not match its declared apiVersion %s. "+
+						"Expected filename to start with \"%s\". "+
+						"Example: if apiVersion is \"dashboard.grafana.app/v1beta1\", "+
+						"filename should start with \"v1beta1.<descriptive-name>.json\"",
+					file.Name(), apiVersion, expectedPrefix)
+			}
+
 			// Create source object based on version
 			var sourceDash v1.Object
 			switch sourceVersion {

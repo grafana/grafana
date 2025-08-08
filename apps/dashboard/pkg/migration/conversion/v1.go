@@ -24,7 +24,6 @@ func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope co
 }
 
 func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
-
 	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, out, scope); err != nil {
 		out.Status = dashv2alpha1.DashboardStatus{
 			Conversion: &dashv2alpha1.DashboardConversionStatus{
