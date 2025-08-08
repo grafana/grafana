@@ -15,11 +15,6 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
-  // store the metrics explorer additional settings
-  useBackend?: boolean;
-  disableTextWrap?: boolean;
-  fullMetaSearch?: boolean;
-  includeNullMetadata?: boolean;
   fromExploreMetrics?: boolean;
 }
 

@@ -27,7 +27,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           # Explicitly set Go version to 1.24.1 to ensure consistent OpenAPI spec generation
           # The crypto/x509 package has additional fields in Go 1.24.1 that affect the generated specs
@@ -39,7 +39,7 @@ jobs:
         run: |
           CODEGEN_VERIFY=1 make gen-cue
           CODEGEN_VERIFY=1 make gen-jsonnet
-      
+
       - name: Validate go.mod
         run: go run scripts/modowners/modowners.go check go.mod
 
@@ -48,7 +48,7 @@ jobs:
       - name: Setup Grafana Enterprise
         if: github.event.pull_request.head.repo.fork == false
         uses: ./.github/actions/setup-enterprise
-        
+
       - name: Generate and Validate OpenAPI Specs
         run: |
           # For PRs from forks, we'll just run the basic swagger-gen without validation
@@ -57,10 +57,10 @@ jobs:
             make swagger-gen
             exit 0
           fi
-          
+
           # Clean and regenerate OpenAPI specs
           make swagger-clean && make openapi3-gen
-          
+
           # Check if the generated specs differ from what's in the repository
           for f in public/api-merged.json public/openapi3.json; do git add $f; done
           if [ -z "$(git diff --name-only --cached)" ]; then

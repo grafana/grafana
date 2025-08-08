@@ -11,6 +11,7 @@ import { Button } from '../Button/Button';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
+import { TextLink } from '../Link/TextLink';
 import { Menu } from '../Menu/Menu';
 
 import { PanelChromeProps } from './PanelChrome';
@@ -252,10 +253,9 @@ export const Examples = () => {
           {renderPanel('Panel with action link', {
             title: 'Panel with action link',
             actions: (
-              <a className="external-link" href="/some/page">
+              <TextLink external href="http://www.example.com/some/page">
                 Error details
-                <Icon name="arrow-right" />
-              </a>
+              </TextLink>
             ),
           })}
           {renderPanel('Action and menu (should be rare)', {
@@ -322,10 +322,9 @@ export const ExamplesHoverHeader = () => {
             title: 'With link in hover header',
             hoverHeader: true,
             actions: (
-              <a className="external-link" href="/some/page">
+              <TextLink external href="http://www.example.com/some/page">
                 Error details
-                <Icon name="arrow-right" />
-              </a>
+              </TextLink>
             ),
           })}
         </Stack>

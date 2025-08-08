@@ -160,6 +160,19 @@ func TestV28(t *testing.T) {
 									"fixedColor": "#ff0000",
 								},
 								"mappings": []interface{}{},
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
 							},
 							"overrides": []interface{}{},
 						},
@@ -209,7 +222,7 @@ func TestV28(t *testing.T) {
 								"fields": "",
 								"values": false,
 							},
-							"orientation":            "horizontal",
+							"orientation":            "auto",
 							"colorMode":              "background",
 							"graphMode":              "area",
 							"justifyMode":            "auto",
@@ -226,6 +239,383 @@ func TestV28(t *testing.T) {
 								"color": map[string]interface{}{
 									"mode":       "fixed",
 									"fixedColor": "#ff0000",
+								},
+								"mappings": []interface{}{},
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
+							},
+							"overrides": []interface{}{},
+						},
+						"pluginVersion": "1.0.0",
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "migrate singlestat with empty thresholds to stat panel",
+			input: map[string]interface{}{
+				"schemaVersion": 27,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":         1,
+						"type":       "singlestat",
+						"valueName":  "min",
+						"format":     "bytes",
+						"thresholds": "",
+						"colors":     []interface{}{"green", "red"},
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 28,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "stat",
+						"options": map[string]interface{}{
+							"reduceOptions": map[string]interface{}{
+								"calcs":  []string{"min"},
+								"fields": "",
+								"values": false,
+							},
+							"orientation":            "horizontal",
+							"colorMode":              "none",
+							"graphMode":              "none",
+							"justifyMode":            "auto",
+							"percentChangeColorMode": "standard",
+							"showPercentChange":      false,
+							"textMode":               "auto",
+							"wideLayout":             true,
+						},
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"unit": "bytes",
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
+								"mappings": []interface{}{},
+							},
+							"overrides": []interface{}{},
+						},
+						"pluginVersion": "1.0.0",
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "migrate grafana-singlestat-panel with empty thresholds to stat panel",
+			input: map[string]interface{}{
+				"schemaVersion": 27,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":         1,
+						"type":       "grafana-singlestat-panel",
+						"valueName":  "max",
+						"format":     "short",
+						"thresholds": "",
+						"colors":     []interface{}{"green", "red"},
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 28,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "stat",
+						"options": map[string]interface{}{
+							"reduceOptions": map[string]interface{}{
+								"calcs":  []string{"max"},
+								"fields": "",
+								"values": false,
+							},
+							"orientation":            "auto",
+							"colorMode":              "none",
+							"graphMode":              "none",
+							"justifyMode":            "auto",
+							"percentChangeColorMode": "standard",
+							"showPercentChange":      false,
+							"textMode":               "auto",
+							"wideLayout":             true,
+						},
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"unit": "short",
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
+								"mappings": []interface{}{},
+							},
+							"overrides": []interface{}{},
+						},
+						"pluginVersion": "1.0.0",
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "migrate singlestat with value mappings and threshold colors",
+			input: map[string]interface{}{
+				"schemaVersion": 27,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":         1,
+						"type":       "singlestat",
+						"valueName":  "current",
+						"format":     "short",
+						"thresholds": "50,80",
+						"colors":     []interface{}{"green", "orange", "red"},
+						"valueMaps": []interface{}{
+							map[string]interface{}{
+								"value": "40",
+								"text":  "Warning",
+							},
+							map[string]interface{}{
+								"value": "90",
+								"text":  "Critical",
+							},
+						},
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 28,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "stat",
+						"options": map[string]interface{}{
+							"reduceOptions": map[string]interface{}{
+								"calcs":  []string{"lastNotNull"},
+								"fields": "",
+								"values": false,
+							},
+							"orientation":            "horizontal",
+							"colorMode":              "none",
+							"graphMode":              "none",
+							"justifyMode":            "auto",
+							"percentChangeColorMode": "standard",
+							"showPercentChange":      false,
+							"textMode":               "auto",
+							"wideLayout":             true,
+						},
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"unit": "short",
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "orange",
+											"value": 50.0,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80.0,
+										},
+									},
+								},
+								"mappings": []interface{}{
+									map[string]interface{}{
+										"type": "value",
+										"options": map[string]interface{}{
+											"40": map[string]interface{}{
+												"text":  "Warning",
+												"color": "green",
+											},
+										},
+									},
+									map[string]interface{}{
+										"type": "value",
+										"options": map[string]interface{}{
+											"90": map[string]interface{}{
+												"text":  "Critical",
+												"color": "red",
+											},
+										},
+									},
+								},
+							},
+							"overrides": []interface{}{},
+						},
+						"pluginVersion": "1.0.0",
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "migrate singlestat with invalid valueName fallback to mean",
+			input: map[string]interface{}{
+				"schemaVersion": 27,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":        1,
+						"type":      "singlestat",
+						"valueName": "invalid_reducer",
+						"format":    "short",
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 28,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "stat",
+						"options": map[string]interface{}{
+							"reduceOptions": map[string]interface{}{
+								"calcs":  []string{"mean"},
+								"fields": "",
+								"values": false,
+							},
+							"orientation":            "horizontal",
+							"colorMode":              "none",
+							"graphMode":              "none",
+							"justifyMode":            "auto",
+							"percentChangeColorMode": "standard",
+							"showPercentChange":      false,
+							"textMode":               "auto",
+							"wideLayout":             true,
+						},
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"unit": "short",
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
+								"mappings": []interface{}{},
+							},
+							"overrides": []interface{}{},
+						},
+						"pluginVersion": "1.0.0",
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "migrate grafana-singlestat-panel with invalid valueName keeps lastNotNull",
+			input: map[string]interface{}{
+				"schemaVersion": 27,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":        1,
+						"type":      "grafana-singlestat-panel",
+						"valueName": "invalid_reducer",
+						"format":    "short",
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 28,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "stat",
+						"options": map[string]interface{}{
+							"reduceOptions": map[string]interface{}{
+								"calcs":  []string{"lastNotNull"},
+								"fields": "",
+								"values": false,
+							},
+							"orientation":            "auto",
+							"colorMode":              "none",
+							"graphMode":              "none",
+							"justifyMode":            "auto",
+							"percentChangeColorMode": "standard",
+							"showPercentChange":      false,
+							"textMode":               "auto",
+							"wideLayout":             true,
+						},
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"unit": "short",
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
 								},
 								"mappings": []interface{}{},
 							},
@@ -288,7 +678,20 @@ func TestV28(t *testing.T) {
 								},
 								"fieldConfig": map[string]interface{}{
 									"defaults": map[string]interface{}{
-										"unit":     "bytes",
+										"unit": "bytes",
+										"thresholds": map[string]interface{}{
+											"mode": "absolute",
+											"steps": []interface{}{
+												map[string]interface{}{
+													"color": "green",
+													"value": nil,
+												},
+												map[string]interface{}{
+													"color": "red",
+													"value": 80,
+												},
+											},
+										},
 										"mappings": []interface{}{},
 									},
 									"overrides": []interface{}{},

@@ -8,7 +8,14 @@
       },
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": []
         },
         "overrides": [
           {
@@ -38,6 +45,18 @@
         ]
       },
       "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
       "pluginVersion": "1.0.0",
       "targets": [
         {

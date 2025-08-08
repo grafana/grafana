@@ -18,11 +18,12 @@ func TestService_Validate(t *testing.T) {
 	const maxInvalidLoginAttempts = 5
 
 	testCases := []struct {
-		name          string
-		loginAttempts int64
-		disabled      bool
-		expected      bool
-		expectedErr   error
+		name                      string
+		loginAttempts             int64
+		disableProtection         bool
+		disableUsernameProtection bool
+		expected                  bool
+		expectedErr               error
 	}{
 		{
 			name:          "Should be valid when brute force protection enabled and user login attempt count is less than max",
@@ -44,25 +45,70 @@ func TestService_Validate(t *testing.T) {
 		},
 
 		{
-			name:          "Should be valid when brute force protection disabled and user login attempt count is less than max",
-			loginAttempts: maxInvalidLoginAttempts - 1,
-			disabled:      true,
-			expected:      true,
-			expectedErr:   nil,
+			name:              "Should be valid when brute force protection disabled and user login attempt count is less than max",
+			loginAttempts:     maxInvalidLoginAttempts - 1,
+			disableProtection: true,
+			expected:          true,
+			expectedErr:       nil,
 		},
 		{
-			name:          "Should be valid when brute force protection disabled and user login attempt count equals max",
-			loginAttempts: maxInvalidLoginAttempts,
-			disabled:      true,
-			expected:      true,
-			expectedErr:   nil,
+			name:              "Should be valid when brute force protection disabled and user login attempt count equals max",
+			loginAttempts:     maxInvalidLoginAttempts,
+			disableProtection: true,
+			expected:          true,
+			expectedErr:       nil,
 		},
 		{
-			name:          "Should be valid when brute force protection disabled and user login attempt count is greater than max",
-			loginAttempts: maxInvalidLoginAttempts + 1,
-			disabled:      true,
-			expected:      true,
-			expectedErr:   nil,
+			name:              "Should be valid when brute force protection disabled and user login attempt count is greater than max",
+			loginAttempts:     maxInvalidLoginAttempts + 1,
+			disableProtection: true,
+			expected:          true,
+			expectedErr:       nil,
+		},
+		{
+			name:                      "Should be valid when brute force username protection disabled and user login attempt count is less than max",
+			loginAttempts:             maxInvalidLoginAttempts - 1,
+			disableUsernameProtection: true,
+			expected:                  true,
+			expectedErr:               nil,
+		},
+		{
+			name:                      "Should be valid when brute force username protection disabled and user login attempt count equals max",
+			loginAttempts:             maxInvalidLoginAttempts,
+			disableUsernameProtection: true,
+			expected:                  true,
+			expectedErr:               nil,
+		},
+		{
+			name:                      "Should be valid when brute force username protection disabled and user login attempt count is greater than max",
+			loginAttempts:             maxInvalidLoginAttempts + 1,
+			disableUsernameProtection: true,
+			expected:                  true,
+			expectedErr:               nil,
+		},
+		{
+			name:                      "Should be valid when both brute force protections disabled and user login attempt count is less than max",
+			loginAttempts:             maxInvalidLoginAttempts - 1,
+			disableProtection:         true,
+			disableUsernameProtection: true,
+			expected:                  true,
+			expectedErr:               nil,
+		},
+		{
+			name:                      "Should be valid when both brute force protections disabled and user login attempt count equals max",
+			loginAttempts:             maxInvalidLoginAttempts,
+			disableProtection:         true,
+			disableUsernameProtection: true,
+			expected:                  true,
+			expectedErr:               nil,
+		},
+		{
+			name:                      "Should be valid when both brute force protections disabled and user login attempt count is greater than max",
+			loginAttempts:             maxInvalidLoginAttempts + 1,
+			disableProtection:         true,
+			disableUsernameProtection: true,
+			expected:                  true,
+			expectedErr:               nil,
 		},
 	}
 
@@ -70,7 +116,8 @@ func TestService_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.BruteForceLoginProtectionMaxAttempts = maxInvalidLoginAttempts
-			cfg.DisableBruteForceLoginProtection = tt.disabled
+			cfg.DisableBruteForceLoginProtection = tt.disableProtection
+			cfg.DisableUsernameLoginProtection = tt.disableUsernameProtection
 			service := &Service{
 				store: fakeStore{
 					ExpectedCount: tt.loginAttempts,
@@ -93,6 +140,7 @@ func TestIntegrationUserLoginAttempts(t *testing.T) {
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
+	cfg.DisableUsernameLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 5
 	db := db.InitTestDB(t)
 	service := ProvideService(db, cfg, nil)
@@ -119,11 +167,12 @@ func TestService_ValidateIPAddress(t *testing.T) {
 	const maxInvalidLoginAttempts = 5
 
 	testCases := []struct {
-		name          string
-		loginAttempts int64
-		disabled      bool
-		expected      bool
-		expectedErr   error
+		name                string
+		loginAttempts       int64
+		disableProtection   bool
+		disableIPProtection bool
+		expected            bool
+		expectedErr         error
 	}{
 		{
 			name:          "Should be valid when brute force protection enabled and IP address login attempt count is less than max",
@@ -143,27 +192,71 @@ func TestService_ValidateIPAddress(t *testing.T) {
 			expected:      false,
 			expectedErr:   nil,
 		},
-
 		{
-			name:          "Should be valid when brute force protection disabled and IP address login attempt count is less than max",
-			loginAttempts: maxInvalidLoginAttempts - 1,
-			disabled:      true,
-			expected:      true,
-			expectedErr:   nil,
+			name:              "Should be valid when brute force protection disabled and IP address login attempt count is less than max",
+			loginAttempts:     maxInvalidLoginAttempts - 1,
+			disableProtection: true,
+			expected:          true,
+			expectedErr:       nil,
 		},
 		{
-			name:          "Should be valid when brute force protection disabled and IP address login attempt count equals max",
-			loginAttempts: maxInvalidLoginAttempts,
-			disabled:      true,
-			expected:      true,
-			expectedErr:   nil,
+			name:              "Should be valid when brute force protection disabled and IP address login attempt count equals max",
+			loginAttempts:     maxInvalidLoginAttempts,
+			disableProtection: true,
+			expected:          true,
+			expectedErr:       nil,
 		},
 		{
-			name:          "Should be valid when brute force protection disabled and IP address login attempt count is greater than max",
-			loginAttempts: maxInvalidLoginAttempts + 1,
-			disabled:      true,
-			expected:      true,
-			expectedErr:   nil,
+			name:              "Should be valid when brute force protection disabled and IP address login attempt count is greater than max",
+			loginAttempts:     maxInvalidLoginAttempts + 1,
+			disableProtection: true,
+			expected:          true,
+			expectedErr:       nil,
+		},
+		{
+			name:                "Should be valid when IP brute force protection disabled and IP address login attempt count is less than max",
+			loginAttempts:       maxInvalidLoginAttempts - 1,
+			disableIPProtection: true,
+			expected:            true,
+			expectedErr:         nil,
+		},
+		{
+			name:                "Should be valid when IP brute force protection disabled and IP address login attempt count equals max",
+			loginAttempts:       maxInvalidLoginAttempts,
+			disableIPProtection: true,
+			expected:            true,
+			expectedErr:         nil,
+		},
+		{
+			name:                "Should be valid when IP brute force protection disabled and IP address login attempt count is greater than max",
+			loginAttempts:       maxInvalidLoginAttempts + 1,
+			disableIPProtection: true,
+			expected:            true,
+			expectedErr:         nil,
+		},
+		{
+			name:                "Should be valid when both brute force protections disabled and IP address login attempt count is less than max",
+			loginAttempts:       maxInvalidLoginAttempts - 1,
+			disableProtection:   true,
+			disableIPProtection: true,
+			expected:            true,
+			expectedErr:         nil,
+		},
+		{
+			name:                "Should be valid when both brute force protections disabled and IP address login attempt count equals max",
+			loginAttempts:       maxInvalidLoginAttempts,
+			disableProtection:   true,
+			disableIPProtection: true,
+			expected:            true,
+			expectedErr:         nil,
+		},
+		{
+			name:                "Should be valid when both brute force protections disabled and IP address login attempt count is greater than max",
+			loginAttempts:       maxInvalidLoginAttempts + 1,
+			disableProtection:   true,
+			disableIPProtection: true,
+			expected:            true,
+			expectedErr:         nil,
 		},
 	}
 
@@ -171,7 +264,8 @@ func TestService_ValidateIPAddress(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.BruteForceLoginProtectionMaxAttempts = maxInvalidLoginAttempts
-			cfg.DisableIPAddressLoginProtection = tt.disabled
+			cfg.DisableBruteForceLoginProtection = tt.disableProtection
+			cfg.DisableIPAddressLoginProtection = tt.disableIPProtection
 			service := &Service{
 				store: fakeStore{
 					ExpectedCount: tt.loginAttempts,
@@ -193,6 +287,7 @@ func TestIntegrationIPLoginAttempts(t *testing.T) {
 	}
 	ctx := context.Background()
 	cfg := setting.NewCfg()
+	cfg.DisableBruteForceLoginProtection = false
 	cfg.DisableIPAddressLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 3
 	db := db.InitTestDB(t)
@@ -224,6 +319,7 @@ func TestIntegrationIPv6AddressSupport(t *testing.T) {
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
+	cfg.DisableIPAddressLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 5
 
 	// Use controlled time like other tests to avoid timestamp conversion issues

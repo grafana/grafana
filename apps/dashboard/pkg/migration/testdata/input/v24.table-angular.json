@@ -4,16 +4,342 @@
         {
             "id": 1,
             "type": "table",
-            "title": "Table Panel",
+            "title": "Basic Angular Table with Defaults",
+            "description": "Tests basic migration with default style pattern (/.*/) containing thresholds and colors. Should convert styles to fieldConfig.defaults with threshold steps.",
             "legend": true, 
             "styles": [
                 { 
-                "thresholds": ["10", "20", "30"] , 
-                "colors": ["red", "yellow", "green"] ,
-                "pattern": "/.*/" 
+                    "thresholds": ["10", "20", "30"],
+                    "colors": ["red", "yellow", "green"],
+                    "pattern": "/.*/" 
                 }
             ],
             "targets": [{ "refId": "A" }, {}]
+        },
+        {
+            "id": 2,
+            "type": "table",
+            "title": "Complex Table with All Style Features",
+            "description": "Tests comprehensive migration including: default style with thresholds/colors/unit/decimals/align/colorMode, column overrides with exact name and regex patterns, date formatting, hidden columns, and links with tooltips.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "thresholds": ["100", "500"],
+                    "colors": ["green", "yellow", "red"],
+                    "unit": "bytes",
+                    "decimals": 2,
+                    "align": "center",
+                    "colorMode": "cell"
+                },
+                {
+                    "pattern": "Status",
+                    "alias": "Current Status",
+                    "unit": "short",
+                    "decimals": 0,
+                    "colorMode": "value",
+                    "align": "left"
+                },
+                {
+                    "pattern": "/Error.*/",
+                    "link": true,
+                    "linkUrl": "http://example.com/errors",
+                    "linkTooltip": "View error details",
+                    "linkTargetBlank": true,
+                    "colorMode": "row"
+                },
+                {
+                    "pattern": "Time",
+                    "type": "date",
+                    "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                    "alias": "Timestamp"
+                },
+                {
+                    "pattern": "Hidden",
+                    "type": "hidden"
+                }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 3,
+            "type": "table",
+            "title": "Table with Timeseries Aggregations Transform",
+            "description": "Tests migration of timeseries_aggregations transform to reduce transformation with column mappings (avg->mean, max->max, min->min, total->sum, current->lastNotNull, count->count).",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "unit": "percent",
+                    "decimals": 1
+                }
+            ],
+            "transform": "timeseries_aggregations",
+            "columns": [
+                { "value": "avg", "text": "Average" },
+                { "value": "max", "text": "Maximum" },
+                { "value": "min", "text": "Minimum" },
+                { "value": "total", "text": "Total" },
+                { "value": "current", "text": "Current" },
+                { "value": "count", "text": "Count" }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 4,
+            "type": "table",
+            "title": "Table with Timeseries to Rows Transform",
+            "description": "Tests migration of timeseries_to_rows transform to seriesToRows transformation.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "unit": "short"
+                }
+            ],
+            "transform": "timeseries_to_rows",
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 5,
+            "type": "table",
+            "title": "Table with Timeseries to Columns Transform",
+            "description": "Tests migration of timeseries_to_columns transform to seriesToColumns transformation.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "unit": "bytes"
+                }
+            ],
+            "transform": "timeseries_to_columns",
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 6,
+            "type": "table",
+            "title": "Table with Merge Transform",
+            "description": "Tests migration of table transform to merge transformation. Also tests auto alignment conversion to empty string.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "align": "auto"
+                }
+            ],
+            "transform": "table",
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 7,
+            "type": "table",
+            "title": "Table with Existing Transformations",
+            "description": "Tests that existing transformations are preserved and new transformation from old format is appended to the list.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "unit": "short"
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "filterFieldsByName",
+                    "options": {
+                        "include": {
+                            "names": ["field1", "field2"]
+                        }
+                    }
+                }
+            ],
+            "transform": "timeseries_to_rows",
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 8,
+            "type": "table",
+            "title": "Mixed Threshold Types",
+            "description": "Tests handling of mixed numeric and string threshold values (int, string, float) with proper type conversion.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "thresholds": [10, "20", 30.5],
+                    "colors": ["green", "yellow", "orange", "red"]
+                }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 9,
+            "type": "table",
+            "title": "All Color Modes Test",
+            "description": "Tests all color mode mappings: cell->color-background, row->color-background, value->color-text.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "colorMode": "cell"
+                },
+                {
+                    "pattern": "CellColumn",
+                    "colorMode": "cell"
+                },
+                {
+                    "pattern": "RowColumn", 
+                    "colorMode": "row"
+                },
+                {
+                    "pattern": "ValueColumn",
+                    "colorMode": "value"
+                }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 10,
+            "type": "table",
+            "title": "All Alignment Options",
+            "description": "Tests all alignment options: left, center, right, and auto (should convert to empty string).",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "align": "center"
+                },
+                {
+                    "pattern": "LeftColumn",
+                    "align": "left"
+                },
+                {
+                    "pattern": "RightColumn",
+                    "align": "right"
+                },
+                {
+                    "pattern": "AutoColumn",
+                    "align": "auto"
+                }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 11,
+            "type": "table",
+            "title": "Field Matcher Types Test",
+            "description": "Tests both field matcher types: byName for exact matches and byRegexp for regex patterns.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "unit": "short"
+                },
+                {
+                    "pattern": "ExactColumnName",
+                    "alias": "Exact Match"
+                },
+                {
+                    "pattern": "/Regex.*Pattern/",
+                    "alias": "Regex Match"
+                },
+                {
+                    "pattern": "/^Start/",
+                    "alias": "Start Pattern"
+                },
+                {
+                    "pattern": "/End$/",
+                    "alias": "End Pattern"
+                }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 12,
+            "type": "table",
+            "title": "Link Configuration Test",
+            "description": "Tests various link configurations: with and without tooltip, with and without target blank.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "unit": "short"
+                },
+                {
+                    "pattern": "LinkWithTooltip",
+                    "link": true,
+                    "linkUrl": "http://example.com/with-tooltip",
+                    "linkTooltip": "Click to view details",
+                    "linkTargetBlank": true
+                },
+                {
+                    "pattern": "LinkWithoutTooltip",
+                    "link": true,
+                    "linkUrl": "http://example.com/no-tooltip",
+                    "linkTargetBlank": false
+                },
+                {
+                    "pattern": "LinkMinimal",
+                    "link": true,
+                    "linkUrl": "http://example.com/minimal"
+                }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 13,
+            "type": "table",
+            "title": "Date Format Variations",
+            "description": "Tests various date format patterns and aliases.",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "unit": "short"
+                },
+                {
+                    "pattern": "DateISO",
+                    "type": "date",
+                    "dateFormat": "YYYY-MM-DD",
+                    "alias": "ISO Date"
+                },
+                {
+                    "pattern": "DateTime",
+                    "type": "date", 
+                    "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                    "alias": "Full DateTime"
+                },
+                {
+                    "pattern": "TimeOnly",
+                    "type": "date",
+                    "dateFormat": "HH:mm:ss",
+                    "alias": "Time Only"
+                }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 14,
+            "type": "table",
+            "title": "React Table - Should NOT Migrate",
+            "description": "React table (table2) should not be migrated. Properties should remain unchanged.",
+            "table": "table2",
+            "styles": [
+                {
+                    "pattern": "/.*/",
+                    "unit": "short",
+                    "thresholds": ["10", "20"],
+                    "colors": ["red", "yellow", "green"]
+                }
+            ],
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 15,
+            "type": "table",
+            "title": "Angular Table without Styles - Should NOT Migrate",
+            "description": "Angular table without styles property should not be migrated.",
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 16,
+            "type": "graph",
+            "title": "Non-Table Panel - Should NOT Migrate",
+            "description": "Non-table panels should remain completely unchanged.",
+            "targets": [{ "refId": "A" }]
+        },
+        {
+            "id": 17,
+            "type": "singlestat",
+            "title": "Singlestat Panel - Should NOT Migrate",
+            "description": "Other panel types should not be affected by table migration.",
+            "targets": [{ "refId": "A" }]
         }
     ]
 }

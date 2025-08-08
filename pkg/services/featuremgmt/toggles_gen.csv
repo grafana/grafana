@@ -13,7 +13,6 @@ grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
-nestedFolders,GA,@grafana/search-and-storage,false,false,false
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
@@ -61,6 +60,7 @@ formatString,GA,@grafana/dataviz-squad,false,false,true
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
+kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -101,6 +101,7 @@ secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-s
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
+useScopeSingleNodeEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 promQLScope,GA,@grafana/oss-big-tent,false,false,false
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
 sqlExpressions,privatePreview,@grafana/grafana-datasources-core-services,false,false,false
@@ -151,7 +152,6 @@ useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,fal
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
-unifiedStorageSearchPermissionFiltering,GA,@grafana/search-and-storage,false,false,false
 managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
@@ -182,7 +182,6 @@ investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,fal
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
-teamHttpHeadersMimir,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
@@ -240,5 +239,8 @@ alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,fal
 pluginAssetProvider,experimental,@grafana/plugins-platform-backend,false,true,false
 unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
 dashboardDsAdHocFiltering,experimental,@grafana/datapro,false,false,true
+dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 adhocFiltersInTooltips,experimental,@grafana/datapro,false,false,true
+newLogContext,experimental,@grafana/observability-logs,false,false,true
+newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false

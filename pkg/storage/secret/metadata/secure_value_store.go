@@ -243,7 +243,9 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 		&secureValue.Annotations, &secureValue.Labels,
 		&secureValue.Created, &secureValue.CreatedBy,
 		&secureValue.Updated, &secureValue.UpdatedBy,
-		&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID, &secureValue.Active, &secureValue.Version); err != nil {
+		&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID, &secureValue.Active, &secureValue.Version,
+		&secureValue.OwnerReferenceAPIGroup, &secureValue.OwnerReferenceAPIVersion, &secureValue.OwnerReferenceKind, &secureValue.OwnerReferenceName,
+	); err != nil {
 		return secureValueDB{}, fmt.Errorf("failed to scan secure value row: %w", err)
 	}
 
@@ -263,7 +265,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	defer span.End()
 
 	defer func() {
-		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", "namespace", namespace, "name", name, "success", readErr != nil, "error", readErr)
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", "namespace", namespace, "name", name, "success", readErr == nil, "error", readErr)
 
 		s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
 		s.metrics.SecureValueMetadataGetCount.Inc()
@@ -320,6 +322,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 			&row.Updated, &row.UpdatedBy,
 			&row.Description, &row.Keeper, &row.Decrypters,
 			&row.Ref, &row.ExternalID, &row.Version, &row.Active,
+			&row.OwnerReferenceAPIGroup, &row.OwnerReferenceAPIVersion, &row.OwnerReferenceKind, &row.OwnerReferenceName,
 		)
 
 		if err != nil {
