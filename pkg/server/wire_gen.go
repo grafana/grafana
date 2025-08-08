@@ -389,8 +389,11 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
-	ossConfigProvider := configprovider.ProvideService(cfg)
-	quotaService := quotaimpl.ProvideService(sqlStore, ossConfigProvider)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	quotaService := quotaimpl.ProvideService(sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -958,8 +961,11 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
-	ossConfigProvider := configprovider.ProvideService(cfg)
-	quotaService := quotaimpl.ProvideService(sqlStore, ossConfigProvider)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	quotaService := quotaimpl.ProvideService(sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -1464,8 +1470,11 @@ func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	secretsMigrator := migrator.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	ossConfigProvider := configprovider.ProvideService(cfg)
-	quotaService := quotaimpl.ProvideService(sqlStore, ossConfigProvider)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return Runner{}, err
+	}
+	quotaService := quotaimpl.ProvideService(sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return Runner{}, err

@@ -74,7 +74,6 @@ var provisioningExtras = wire.NewSet(
 
 var configProviderExtras = wire.NewSet(
 	configprovider.ProvideService,
-	wire.Bind(new(configprovider.ConfigProvider), new(*configprovider.OSSConfigProvider)),
 )
 
 var wireExtsBasicSet = wire.NewSet(
