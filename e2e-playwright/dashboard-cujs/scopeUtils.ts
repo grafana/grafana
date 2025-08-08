@@ -8,6 +8,8 @@ export type TestScope = {
   dashboardUid?: string;
   dashboardTitle?: string;
   disableMultiSelect?: boolean;
+  type?: string;
+  category?: string;
   addLinks?: boolean;
 };
 
@@ -98,6 +100,8 @@ export async function scopeSelectRequest(page: Page, selectedScope: TestScope): 
             title: selectedScope.title,
             description: '',
             filters: selectedScope.filters,
+            category: selectedScope.category,
+            type: selectedScope.type,
           },
         }),
       });
@@ -179,10 +183,10 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
   await Promise.all(x);
 }
 
-export async function searchScopes(page: Page, resultScopes: TestScope[], value: string) {
+export async function searchScopes(page: Page, value: string, resultScopes: TestScope[]) {
   const click = async () => await page.getByTestId('scopes-tree-search').fill(value);
 
-  if (USE_LIVE_DATA) {
+  if (!resultScopes) {
     await click();
     return;
   }
