@@ -722,11 +722,11 @@ When a data point on the geomap represents one row&mdash;that is, only a single 
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-single-row-marker-v12.1.png" max-width="750px" alt="A data point with one row of associated data" >}}
 
-When a data point represents more than one row&mdash;that is, different rows but with the same geographical information&mdash;then each row appears as a single entry, containing the name and value of the first column of the respective row:
+When a data point represents more than one row&mdash;that is, different rows but with the same geographical information&mdash;then each row appears as a single entry:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-multiple-row-marker-v12.1.png" max-width="750px" alt="A data point with mulitple rows of associated data" >}}
 
-The name of each top-level row of the tooltip reflects the first field value in the data row and clicking each of these rows expands it to show the grid with the row details.
+The name of each top-level row of the tooltip is associated with the first field value in the data row and clicking each of these rows expands it to show the grid with the row details.
 
 {{< admonition type="note" >}}
 The data appearing in each detail row is determined by the underlying query and transformations applied to the query's results, and can't be directly controlled using tooltip options.
