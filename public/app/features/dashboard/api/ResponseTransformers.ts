@@ -160,9 +160,9 @@ export function ensureV2Response(
     tags: dashboard.tags ?? [],
     cursorSync: transformCursorSynctoEnum(dashboard.graphTooltip),
     preload: dashboard.preload || dashboardDefaults.preload,
-    liveNow: dashboard.liveNow,
-    editable: dashboard.editable,
-    revision: dashboard.revision,
+    ...(dashboard.liveNow !== undefined && { liveNow: dashboard.liveNow }),
+    ...(dashboard.editable !== undefined && { editable: dashboard.editable }),
+    ...(dashboard.revision !== undefined && { revision: dashboard.revision }),
     timeSettings: {
       from: dashboard.time?.from || timeSettingsDefaults.from,
       to: dashboard.time?.to || timeSettingsDefaults.to,
@@ -171,11 +171,24 @@ export function ensureV2Response(
       autoRefreshIntervals: dashboard.timepicker?.refresh_intervals || timeSettingsDefaults.autoRefreshIntervals,
       fiscalYearStartMonth: dashboard.fiscalYearStartMonth || timeSettingsDefaults.fiscalYearStartMonth,
       hideTimepicker: dashboard.timepicker?.hidden || timeSettingsDefaults.hideTimepicker,
-      quickRanges: dashboard.timepicker?.quick_ranges,
-      weekStart: getWeekStart(dashboard.weekStart, timeSettingsDefaults.weekStart),
-      nowDelay: dashboard.timepicker?.nowDelay || timeSettingsDefaults.nowDelay,
+      ...(dashboard.timepicker?.quick_ranges !== undefined && { quickRanges: dashboard.timepicker.quick_ranges }),
+      ...(dashboard.weekStart !== undefined && {
+        weekStart: getWeekStart(dashboard.weekStart, timeSettingsDefaults.weekStart),
+      }),
+      ...(dashboard.timepicker?.nowDelay !== undefined && { nowDelay: dashboard.timepicker.nowDelay }),
     },
-    links: dashboard.links || [],
+    links: (dashboard.links || []).map((link) => ({
+      title: link.title || '',
+      url: link.url || '',
+      ...(link.targetBlank && { targetBlank: link.targetBlank }),
+      icon: link.icon || '',
+      includeVars: link.includeVars || false,
+      keepTime: link.keepTime || false,
+      tags: link.tags || [],
+      tooltip: link.tooltip || '',
+      type: link.type || 'link',
+      asDropdown: link.asDropdown || false,
+    })),
     annotations,
     variables,
     elements,
@@ -463,9 +476,11 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
           group: t.datasource?.type || panelDatasource.type!,
-          datasource: {
-            name: t.datasource?.uid || panelDatasource.uid!,
-          },
+          ...((t.datasource?.uid || panelDatasource.uid) && {
+            datasource: {
+              name: t.datasource?.uid || panelDatasource.uid,
+            },
+          }),
           spec: {
             ...query,
           },
@@ -489,9 +504,9 @@ export function buildPanelKind(p: Panel): PanelKind {
       vizConfig: {
         kind: 'VizConfig',
         group: p.type,
-        version: p.pluginVersion!,
+        ...(p.pluginVersion && { version: p.pluginVersion }),
         spec: {
-          fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+          fieldConfig: (p.fieldConfig as any) || { defaults: {}, overrides: [] },
           options: p.options as any,
         },
       },
@@ -508,13 +523,13 @@ export function buildPanelKind(p: Panel): PanelKind {
           queries,
           transformations,
           queryOptions: {
-            cacheTimeout: p.cacheTimeout,
-            maxDataPoints: p.maxDataPoints,
-            interval: p.interval,
-            hideTimeOverride: p.hideTimeOverride,
-            queryCachingTTL: p.queryCachingTTL,
-            timeFrom: p.timeFrom,
-            timeShift: p.timeShift,
+            ...(p.cacheTimeout !== undefined && { cacheTimeout: p.cacheTimeout }),
+            ...(p.maxDataPoints !== undefined && { maxDataPoints: p.maxDataPoints }),
+            ...(p.interval !== undefined && { interval: p.interval }),
+            ...(p.hideTimeOverride !== undefined && { hideTimeOverride: p.hideTimeOverride }),
+            ...(p.queryCachingTTL !== undefined && { queryCachingTTL: p.queryCachingTTL }),
+            ...(p.timeFrom !== undefined && { timeFrom: p.timeFrom }),
+            ...(p.timeShift !== undefined && { timeShift: p.timeShift }),
           },
         },
       },
@@ -525,10 +540,16 @@ export function buildPanelKind(p: Panel): PanelKind {
 
 function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {
   return transformations.map((t) => {
+    const { id, ...specWithoutId } = t;
+    // Remove any nested id field from options if it exists
+    if (specWithoutId.options && typeof specWithoutId.options === 'object' && 'id' in specWithoutId.options) {
+      const { id: optionsId, ...optionsWithoutId } = specWithoutId.options as any;
+      specWithoutId.options = optionsWithoutId;
+    }
     return {
-      kind: t.id,
+      kind: id,
       spec: {
-        ...t,
+        ...specWithoutId,
         topic: transformDataTopic(t.topic),
       },
     };
@@ -566,28 +587,34 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           kind: 'QueryVariable',
           spec: {
             ...commonProperties,
-            multi: Boolean(v.multi),
-            includeAll: Boolean(v.includeAll),
+            ...(v.multi !== undefined && { multi: Boolean(v.multi) }),
+            ...(v.includeAll !== undefined && { includeAll: Boolean(v.includeAll) }),
             ...(v.allValue && { allValue: v.allValue }),
             current: {
               value: v.current?.value,
               text: v.current?.text,
             },
-            options: v.options || [],
+            ...(v.options !== undefined && { options: v.options }),
             refresh: transformVariableRefreshToEnum(v.refresh),
-            ...(v.datasource && { datasource: v.datasource }),
-            regex: v.regex || '',
-            sort: transformSortVariableToEnum(v.sort),
+            ...(v.datasource?.uid && {
+              datasource: {
+                name: v.datasource.uid,
+              },
+            }),
+            ...(v.regex !== undefined && { regex: v.regex }),
+            ...(v.sort !== undefined && { sort: transformSortVariableToEnum(v.sort) }),
             query: {
               kind: 'DataQuery',
               version: defaultDataQueryKind().version,
               group: v.datasource?.type ?? getDefaultDatasourceType(),
-              datasource: {
-                name: v.datasource?.uid,
-              },
+              ...(v.datasource?.uid && {
+                datasource: {
+                  name: v.datasource.uid,
+                },
+              }),
               spec: query,
             },
-            allowCustomValue: v.allowCustomValue ?? true,
+            ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
           },
         };
         variables.push(qv);
@@ -603,18 +630,18 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           kind: 'DatasourceVariable',
           spec: {
             ...commonProperties,
-            multi: Boolean(v.multi),
-            includeAll: Boolean(v.includeAll),
+            ...(v.multi !== undefined && { multi: Boolean(v.multi) }),
+            ...(v.includeAll !== undefined && { includeAll: Boolean(v.includeAll) }),
             ...(v.allValue && { allValue: v.allValue }),
             current: {
               value: v.current.value,
               text: v.current.text,
             },
-            options: v.options || [],
+            ...(v.options !== undefined && { options: v.options }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
-            regex: v.regex || '',
-            allowCustomValue: v.allowCustomValue ?? true,
+            ...(v.regex !== undefined && { regex: v.regex }),
+            ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
           },
         };
         variables.push(dv);
@@ -629,11 +656,11 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               value: v.current.value,
               text: v.current.text,
             },
-            options: v.options,
-            multi: v.multi,
-            includeAll: v.includeAll,
+            ...(v.options !== undefined && { options: v.options }),
+            ...(v.multi !== undefined && { multi: v.multi }),
+            ...(v.includeAll !== undefined && { includeAll: v.includeAll }),
             ...(v.allValue && { allValue: v.allValue }),
-            allowCustomValue: v.allowCustomValue ?? true,
+            ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
           },
         };
         variables.push(cv);
@@ -645,20 +672,19 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         const av: AdhocVariableKind = {
           kind: 'AdhocVariable',
           group: dsType,
+          ...(ds.uid && {
+            datasource: {
+              name: ds.uid,
+            },
+          }),
           spec: {
             ...commonProperties,
-            baseFilters: validateFiltersOrigin(v.baseFilters) || [],
-            filters: validateFiltersOrigin(v.filters) || [],
-            defaultKeys: v.defaultKeys || [],
-            allowCustomValue: v.allowCustomValue ?? true,
+            ...(v.baseFilters !== undefined && { baseFilters: validateFiltersOrigin(v.baseFilters) }),
+            ...(v.filters !== undefined && { filters: validateFiltersOrigin(v.filters) }),
+            ...(v.defaultKeys !== undefined && { defaultKeys: v.defaultKeys }),
+            ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
           },
         };
-
-        if (ds.uid) {
-          av.datasource = {
-            name: ds.uid,
-          };
-        }
 
         variables.push(av);
         break;
@@ -719,6 +745,11 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         const gb: GroupByVariableKind = {
           kind: 'GroupByVariable',
           group: dsType,
+          ...(ds.uid && {
+            datasource: {
+              name: ds.uid,
+            },
+          }),
           spec: {
             ...commonProperties,
             options: v.options,
@@ -729,12 +760,6 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
           },
         };
-
-        if (ds.uid) {
-          gb.datasource = {
-            name: ds.uid,
-          };
-        }
 
         variables.push(gb);
         break;
@@ -752,7 +777,6 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
       kind: 'AnnotationQuery',
       spec: {
         name: a.name,
-        ...(a.datasource && { datasource: a.datasource }),
         enable: a.enable,
         hide: Boolean(a.hide),
         iconColor: a.iconColor,
@@ -761,14 +785,16 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
           group: a.datasource?.type || getDefaultDatasourceType(),
-          datasource: {
-            name: a.datasource?.uid,
-          },
+          ...(a.datasource?.uid && {
+            datasource: {
+              name: a.datasource.uid,
+            },
+          }),
           spec: {
             ...a.target,
           },
         },
-        filter: a.filter,
+        ...(a.filter !== undefined && { filter: a.filter }),
       },
     };
     return aq;

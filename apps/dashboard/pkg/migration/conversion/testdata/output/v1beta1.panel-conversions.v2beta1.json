@@ -496,7 +496,9 @@
       }
     },
     "links": [],
+    "liveNow": false,
     "preload": false,
+    "revision": 0,
     "tags": [
       "test",
       "panels"

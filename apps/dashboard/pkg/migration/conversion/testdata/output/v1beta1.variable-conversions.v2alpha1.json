@@ -12,6 +12,7 @@
     "annotations": [],
     "cursorSync": "Off",
     "description": "Testing all variable types and transformations",
+    "editable": false,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -20,7 +21,9 @@
       }
     },
     "links": [],
+    "liveNow": false,
     "preload": false,
+    "revision": 0,
     "tags": [
       "test",
       "variables"
@@ -67,6 +70,7 @@
               "value": "prometheus-uid"
             },
             {
+              "selected": false,
               "text": "InfluxDB",
               "value": "influx-uid"
             }
@@ -113,6 +117,7 @@
           "sort": "alphabeticalAsc",
           "options": [
             {
+              "selected": false,
               "text": "All",
               "value": "$__all"
             },
@@ -122,6 +127,7 @@
               "value": "localhost:9090"
             },
             {
+              "selected": false,
               "text": "localhost:9091",
               "value": "localhost:9091"
             }
@@ -148,10 +154,12 @@
               "value": "prod"
             },
             {
+              "selected": false,
               "text": "staging",
               "value": "staging"
             },
             {
+              "selected": false,
               "text": "dev",
               "value": "dev"
             }
@@ -194,6 +202,7 @@
           },
           "options": [
             {
+              "selected": false,
               "text": "1m",
               "value": "1m"
             },
@@ -203,6 +212,7 @@
               "value": "5m"
             },
             {
+              "selected": false,
               "text": "10m",
               "value": "10m"
             }
@@ -262,6 +272,7 @@
               "value": "instance"
             },
             {
+              "selected": false,
               "text": "region",
               "value": "region"
             }
@@ -279,7 +290,7 @@
           "name": "legacy_string_var",
           "current": {
             "text": "legacy_value",
-            "value": ""
+            "value": "legacy_string_content"
           },
           "label": "Legacy Variable",
           "hide": "dontHide",

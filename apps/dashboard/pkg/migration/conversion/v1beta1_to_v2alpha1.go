@@ -48,9 +48,14 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.Tags = getStringSlice(dashboard, "tags")
 	out.CursorSync = transformCursorSyncToEnum(getIntField(dashboard, "graphTooltip", 0))
 	out.Preload = getBoolField(dashboard, "preload", dashboardDefaults.Preload)
-	out.LiveNow = getBoolPtr(dashboard, "liveNow")
-	out.Editable = getBoolPtr(dashboard, "editable")
-	out.Revision = getUInt16Ptr(dashboard, "revision")
+
+	// Always include these fields to match frontend behavior
+	liveNow := getBoolField(dashboard, "liveNow", false)
+	out.LiveNow = &liveNow
+	editable := getBoolField(dashboard, "editable", false)
+	out.Editable = &editable
+	revision := getUInt16Field(dashboard, "revision", 0)
+	out.Revision = &revision
 
 	// Transform time settings
 	out.TimeSettings = transformTimeSettings(dashboard, timeSettingsDefaults)
@@ -172,6 +177,26 @@ func getUInt16Ptr(m map[string]interface{}, key string) *uint16 {
 		}
 	}
 	return nil
+}
+
+func getUInt16Field(m map[string]interface{}, key string, defaultValue uint16) uint16 {
+	if val, ok := m[key]; ok {
+		switch v := val.(type) {
+		case int:
+			if v >= 0 && v <= 65535 {
+				return uint16(v)
+			}
+		case float64:
+			if v >= 0 && v <= 65535 {
+				return uint16(v)
+			}
+		case string:
+			if i, err := strconv.Atoi(v); err == nil && i >= 0 && i <= 65535 {
+				return uint16(i)
+			}
+		}
+	}
+	return defaultValue
 }
 
 // Enum transformation functions
@@ -878,12 +903,11 @@ func buildVariableOptions(options interface{}) []dashv2alpha1.DashboardVariableO
 	result := make([]dashv2alpha1.DashboardVariableOption, 0, len(optionsSlice))
 	for _, opt := range optionsSlice {
 		if optMap, ok := opt.(map[string]interface{}); ok {
+			selected := getBoolField(optMap, "selected", false)
 			option := dashv2alpha1.DashboardVariableOption{
-				Text:  buildStringOrArrayOfString(optMap["text"]),
-				Value: buildStringOrArrayOfString(optMap["value"]),
-			}
-			if selected := getBoolField(optMap, "selected", false); selected {
-				option.Selected = &selected
+				Text:     buildStringOrArrayOfString(optMap["text"]),
+				Value:    buildStringOrArrayOfString(optMap["value"]),
+				Selected: &selected,
 			}
 			result = append(result, option)
 		}
@@ -907,6 +931,18 @@ func buildStringOrArrayOfString(value interface{}) dashv2alpha1.DashboardStringO
 		}
 		return dashv2alpha1.DashboardStringOrArrayOfString{
 			ArrayOfString: stringArray,
+		}
+	case map[string]interface{}:
+		// Handle legacy string value format
+		if legacyValue, ok := v[LEGACY_STRING_VALUE_KEY].(string); ok {
+			return dashv2alpha1.DashboardStringOrArrayOfString{
+				String: &legacyValue,
+			}
+		}
+		// Fallback for other map types
+		empty := ""
+		return dashv2alpha1.DashboardStringOrArrayOfString{
+			String: &empty,
 		}
 	default:
 		empty := ""

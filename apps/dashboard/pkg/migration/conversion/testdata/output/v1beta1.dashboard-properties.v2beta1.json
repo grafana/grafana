@@ -154,6 +154,7 @@
     ],
     "liveNow": true,
     "preload": true,
+    "revision": 0,
     "tags": [
       "test",
       "properties",

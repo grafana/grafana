@@ -288,6 +288,7 @@
     ],
     "cursorSync": "Off",
     "description": "Testing annotation transformations",
+    "editable": false,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -296,7 +297,9 @@
       }
     },
     "links": [],
+    "liveNow": false,
     "preload": false,
+    "revision": 0,
     "tags": [
       "test",
       "annotations"
