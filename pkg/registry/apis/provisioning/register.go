@@ -99,6 +99,7 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
+	jobHistoryConfig  *JobHistoryConfig
 	jobHistory        jobs.History
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
@@ -143,12 +144,6 @@ func NewAPIBuilder(
 		git.Mutator(repositorySecrets),
 		github.Mutator(repositorySecrets),
 	}
-	// Create job history based on configuration
-	// Default to in-memory cache if no config provided
-	jobHistory := jobs.NewJobHistoryCache()
-	if jobHistoryConfig != nil && jobHistoryConfig.Loki != nil {
-		jobHistory = jobs.NewLokiJobHistory(*jobHistoryConfig.Loki)
-	}
 
 	b := &APIBuilder{
 		mutators:            mutators,
@@ -167,7 +162,7 @@ func NewAPIBuilder(
 		unified:             unified,
 		repositorySecrets:   repositorySecrets,
 		access:              access,
-		jobHistory:          jobHistory,
+		jobHistoryConfig:    jobHistoryConfig,
 		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
 			provisioning.LocalRepositoryType:  true,
 			provisioning.GitHubRepositoryType: true,
@@ -418,6 +413,25 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	if err != nil {
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
+
+	// Create job history based on configuration
+	// Default to in-memory cache if no config provided
+	var jobHistory jobs.History
+	if b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil {
+		jobHistory = jobs.NewLokiJobHistory(*b.jobHistoryConfig.Loki)
+	} else {
+		historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return fmt.Errorf("failed to create historic job storage: %w", err)
+		}
+
+		jobHistory, err = jobs.NewStorageBackedHistory(historicJobStore)
+		if err != nil {
+			return fmt.Errorf("failed to create historic job wrapper: %w", err)
+		}
+	}
+
+	b.jobHistory = jobHistory
 
 	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
