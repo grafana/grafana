@@ -80,11 +80,6 @@ export interface FeatureToggles {
   */
   mysqlAnsiQuotes?: boolean;
   /**
-  * Enable folder nesting
-  * @default true
-  */
-  nestedFolders?: boolean;
-  /**
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
@@ -684,11 +679,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
-  * Enable permission filtering on unified storage search
-  * @default true
-  */
-  unifiedStorageSearchPermissionFiltering?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -824,11 +814,6 @@ export interface FeatureToggles {
   * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
-  /**
-  * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
-  * @default true
-  */
-  teamHttpHeadersMimir?: boolean;
   /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
@@ -1099,4 +1084,9 @@ export interface FeatureToggles {
   * New Log Context component
   */
   newLogContext?: boolean;
+  /**
+  * Enables new design for the Clickhouse data source configuration page
+  * @default false
+  */
+  newClickhouseConfigPageDesign?: boolean;
 }

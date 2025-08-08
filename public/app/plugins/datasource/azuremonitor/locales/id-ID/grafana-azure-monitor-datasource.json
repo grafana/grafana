@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Aktifkan Log Dasar"
     },
     "config-editor": {
-      "description-additional-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda. Ini mencakup Secure Socks Proxy.",
-      "description-request-timeout": "Atur batas waktu permintaan dalam hitungan detik. Default-nya 30 detik.",
-      "title-additional-settings": "Pengaturan tambahan",
-      "title-request-timeout": "Batas Waktu Permintaan"
+      "description-additional-settings": "",
+      "title-additional-settings": "Pengaturan tambahan"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Kredensial fallback telah dinonaktifkan. Karena autentikasi berbasis pengguna hanya mendukung permintaan dengan pengguna dalam cakupannya, fitur seperti peringatan, kueri yang direkam, atau pelaporan tidak akan berfungsi seperti yang diharapkan. Silakan tinjau <2>dokumentasi</2> untuk detail selengkapnya.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Kolom",
       "aria-label-column-value": "Nilai kolom",
       "aria-label-operator": "Operator",
+      "aria-label-remove-filter": "",
       "label-or": "ATAU"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Tambah grup",
       "label-and": "DAN",
       "label-filters": "Filter",
@@ -130,6 +131,8 @@
       "label-format-as": "Format sebagai"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Pilih Kolom",
       "label-fuzzy-search": "Pencarian Fuzzy",
       "placeholder-search-team": "Masukkan kata kunci",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Hapus"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Kelompokkan berdasarkan",
       "tooltip-group-by": "Atur hasil ke dalam kategori berdasarkan kolom yang ditentukan. \"Kelompokkan berdasarkan\" dapat digunakan secara mandiri untuk membuat daftar nilai unik di kolom-kolom yang dipilih, atau digabungkan dengan fungsi agregat untuk menghasilkan statistik ringkasan untuk setiap kelompok. Saat digunakan sendiri, fungsi ini menghasilkan kombinasi yang berbeda dari kolom yang ditentukan."
     },
@@ -186,8 +190,10 @@
       "text-loading": "Memuat..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Urutkan berdasarkan kolom",
       "aria-label-order-direction": "Arah Urutan",
+      "aria-label-remove-order-by": "",
       "label-by": "BERDASARKAN",
       "label-order-by": "Urutkan Berdasarkan",
       "tooltip-order-by": "Urutkan hasil berdasarkan satu atau beberapa kolom dalam urutan naik atau turun."
@@ -249,7 +255,8 @@
       "label-columns": "Kolom",
       "label-table": "Tabel",
       "placeholder-select-columns": "Pilih kolom",
-      "placeholder-select-table": "Pilih tabel"
+      "placeholder-select-table": "Pilih tabel",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Interval waktu"
