@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
     "config-editor": {
-      "description-additional-settings": "Aanvullende instellingen zijn optionele instellingen die kunnen worden geconfigureerd voor meer controle over je gegevensbron. Dit omvat Secure Socks Proxy.",
-      "description-request-timeout": "Stel de time-out van het verzoek in seconden in. Standaard is 30 seconden.",
-      "title-additional-settings": "Aanvullende instellingen",
-      "title-request-timeout": "Time-out verzoek"
+      "description-additional-settings": "",
+      "title-additional-settings": "Aanvullende instellingen"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Fallback-inloggegevens zijn uitgeschakeld. Omdat op gebruikers gebaseerde authenticatie alleen inherent verzoeken met een gebruiker in het bereik ondersteunt, werken functies zoals waarschuwingen, opgenomen query's of rapportage niet zoals verwacht. Bekijk de <2>documentatie</2> voor meer informatie.",

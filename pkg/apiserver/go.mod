@@ -1,13 +1,13 @@
 module github.com/grafana/grafana/pkg/apiserver
 
-go 1.24.5
+go 1.24.6
 
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43
-	github.com/grafana/grafana-app-sdk/logging v0.40.1
+	github.com/grafana/grafana-app-sdk/logging v0.40.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
-	github.com/prometheus/client_golang v1.22.0
+	github.com/prometheus/client_golang v1.23.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.36.0
 	go.opentelemetry.io/otel v1.37.0

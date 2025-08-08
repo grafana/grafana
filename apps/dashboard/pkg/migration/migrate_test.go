@@ -74,9 +74,11 @@ func testMigration(t *testing.T, dash map[string]interface{}, inputFileName stri
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 
-	// Overwrite the output file with the new output
-	err = os.WriteFile(outPath, outBytes, 0644)
-	require.NoError(t, err, "failed to write output file", outPath)
+	if _, err := os.Stat(outPath); os.IsNotExist(err) {
+		err = os.WriteFile(outPath, outBytes, 0644)
+		require.NoError(t, err, "failed to write new output file", outPath)
+		return
+	}
 
 	// We can ignore gosec G304 here since it's a test
 	// nolint:gosec

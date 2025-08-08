@@ -3515,7 +3515,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Zrušit",
-      "cannot-move-folders": "Složky nelze přesunout",
       "confirmation-text": "Odstranit",
       "delete-button": "Odstranit",
       "delete-modal-invalid-text": "Jedna nebo více složek obsahuje panely knihovny nebo pravidla výstrah. Chcete-li pokračovat, nejprve je odstraňte.",
@@ -3568,6 +3567,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3607,6 +3613,9 @@
       "select-checkbox": "Vybrat",
       "tags-column": "Tagy"
     },
+    "delete-folder": {
+      "read-only-message": ""
+    },
     "delete-provisioned-folder-form": {
       "api-error": "Složku se nepodařilo odstranit",
       "button-cancel": "Zrušit",
@@ -3626,6 +3635,7 @@
     },
     "folder-actions-button": {
       "delete": "Odstranit",
+      "delete-folder-error": "",
       "folder-actions": "Akce složky",
       "manage-permissions": "Spravovat oprávnění",
       "move": "Přesunout"
@@ -3648,6 +3658,9 @@
     },
     "name-cell": {
       "no-items": "Žádné položky"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Zrušit",
@@ -4356,7 +4369,7 @@
       "source-label": "Zdroj",
       "sub-text": "<0>Definujte, jaký zdroj dat bude zobrazovat korelaci a jaká data nahradí dříve definované proměnné.</0>"
     },
-    "sub-title": "Definujte, jak spolu souvisí data uložená v různých zdrojích dat. Další informace najdete v <2>dokumentaci<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Toto pole je povinné.",
       "sub-text": "<0>Definujte, na co bude korelace odkazovat. S typem dotazu se dotaz spustí po kliknutí na korelaci. U externího typu se kliknutím na korelaci otevře adresa URL.</0>",
@@ -4759,7 +4772,7 @@
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
-      "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku"
     },
@@ -5731,11 +5744,9 @@
       "api-error": "Nástěnku se nepodařilo odstranit",
       "cancel-action": "Zrušit",
       "delete-action": "Odstranit nástěnku",
-      "delete-read-only-file-message": "Tuto nástěnku nelze odstranit přímo z Grafany, protože úložiště je pouze pro čtení. Chcete-li tuto nástěnku odstranit, odeberte soubor z úložiště Git.",
       "deleting": "Probíhá odstranění…",
       "drawer-title": "Odstranit zajištěnou nástěnku",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
+      "success-message": ""
     },
     "description-label": {
       "description": "Popis"
@@ -6111,7 +6122,6 @@
       "api-error": "Chyba při ukládání nástěnky",
       "cancel": "Zrušit",
       "cannot-be-saved": "Tuto nástěnku nelze uložit z uživatelského rozhraní Grafana, protože byla zajištěna z jiného zdroje. Zkopírujte JSON nebo ho uložte do souboru níže a následně aktualizujte nástěnku ve zdroji zajištění.",
-      "copy-json-message": "Pokud máte přímý přístup k cíli, zkopírujte JSON a vložte ho tam.",
       "copy-json-to-clipboard": "Kopírovat JSON do schránky",
       "file-path": "<0>Cesta k souboru:</0> {{filePath}}",
       "label-description": "Popis",
@@ -6123,7 +6133,6 @@
       "see-docs": "Další informace o zajištění najdete v <2>dokumentaci</2>.",
       "title-required": "Název nástěnky je povinný",
       "title-same-as-folder": "Název nástěnky nemůže být stejný jako název složky",
-      "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení",
       "title-validation-failed": "Ověření názvu nástěnky selhalo."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6429,7 +6438,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klikněte <2>tady</2> a zjistěte víc o této chybě.",
-    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>."
+    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6568,7 +6578,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Vytvořit nástěnku",
-      "explore-data": "Prozkoumat data"
+      "explore-data": "Prozkoumat data",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Další podrobnosti o chybě"
@@ -7540,6 +7551,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10372,7 +10386,7 @@
     },
     "invite-user": {
       "invite-button": "Pozvat",
-      "invite-new-member-button": "Pozvat nového člena",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11160,6 +11174,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11379,6 +11401,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11585,6 +11615,14 @@
     },
     "token-permissions-info": {
       "and-click": "a klikněte",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Přejít na",
       "make-sure": "Nezapomeňte zahrnout tato oprávnění"
     },
