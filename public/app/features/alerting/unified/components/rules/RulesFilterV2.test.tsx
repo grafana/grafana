@@ -5,30 +5,35 @@ import { ComponentTypeWithExtensionMeta, PluginExtensionComponentMeta, PluginExt
 import { config, locationService, setPluginComponentsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 // Mock contextSrv before importing the component since permission check happens at module level
 jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
-let mockFilterState = {
+let mockFilterState: RulesFilterType = {
   ruleName: '',
-  ruleState: '*',
+  ruleState: undefined,
   dataSourceNames: [],
   freeFormWords: [],
   labels: [],
 };
+let mockSearchQuery = '';
 const mockUpdateFilters = jest.fn();
 const mockSetSearchQuery = jest.fn();
+const mockClearAll = jest.fn();
 
 jest.mock('../../hooks/useFilteredRules', () => ({
   useRulesFilter: jest.fn(() => ({
-    searchQuery: '',
+    searchQuery: mockSearchQuery,
     filterState: mockFilterState,
     updateFilters: mockUpdateFilters,
     setSearchQuery: mockSetSearchQuery,
+    clearAll: mockClearAll,
     hasActiveFilters: false,
     activeFilters: [],
   })),
@@ -36,6 +41,8 @@ jest.mock('../../hooks/useFilteredRules', () => ({
 
 import RulesFilter from './Filter/RulesFilter';
 import RulesFilterV2 from './Filter/RulesFilter.v2';
+
+const useRulesFilterMock = useRulesFilter as jest.MockedFunction<typeof useRulesFilter>;
 
 setupMswServer();
 
@@ -105,13 +112,16 @@ beforeEach(() => {
 
   mockFilterState = {
     ruleName: '',
-    ruleState: '*',
+    ruleState: undefined,
     dataSourceNames: [],
     freeFormWords: [],
     labels: [],
   };
+  mockSearchQuery = '';
   mockUpdateFilters.mockClear();
   mockSetSearchQuery.mockClear();
+  mockClearAll.mockClear();
+  mockSetSearchQuery.mockImplementation(() => {});
 
   // Reset plugin components hook to default (no plugins)
   setPluginComponentsHook(() => ({
@@ -189,9 +199,12 @@ describe('RulesFilterV2', () => {
     await user.type(ui.searchInput.get(), 'test');
     expect(ui.searchInput.get()).toHaveValue('test');
     await user.click(ui.filterButton.get());
+
     await user.click(ui.clearButton.get());
     expect(ui.ruleNameInput.get()).toHaveValue('');
-    expect(ui.searchInput.get()).toHaveValue('');
+
+    // Check that setSearchQuery was called with undefined to clear the search
+    expect(mockSetSearchQuery).toHaveBeenCalledWith(undefined);
   });
 
   it('Should populate search field with query string when filters are applied via rule name', async () => {
@@ -201,10 +214,15 @@ describe('RulesFilterV2', () => {
 
     await user.type(ui.ruleNameInput.get(), 'test');
 
+    // Mock the setSearchQuery to update mockSearchQuery
+    mockSetSearchQuery.mockImplementation((newQuery: string | undefined) => {
+      mockSearchQuery = newQuery ?? '';
+    });
+
     await user.click(ui.applyButton.get());
 
-    // Check that the search input contains the generated query string
-    expect(ui.searchInput.get()).toHaveValue('rule:test');
+    // Check that setSearchQuery was called with the expected query
+    expect(mockSetSearchQuery).toHaveBeenCalledWith('rule:test');
   });
 
   it('Should parse search query and call updateFilters when user types directly in search field', async () => {
@@ -231,15 +249,16 @@ describe('RulesFilterV2', () => {
       freeFormWords: [],
       labels: [],
       ruleName: 'test',
-      ruleState: 'firing',
+      ruleState: PromAlertingRuleState.Firing,
     };
 
     // Update the mock to return the new state
-    (useRulesFilter as jest.Mock).mockReturnValue({
-      searchQuery: '',
+    useRulesFilterMock.mockReturnValue({
+      searchQuery: mockSearchQuery,
       filterState: mockFilterState,
       updateFilters: mockUpdateFilters,
       setSearchQuery: mockSetSearchQuery,
+      clearAll: mockClearAll,
       hasActiveFilters: false,
       activeFilters: [],
     });

@@ -110,6 +110,10 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     },
   });
 
+  useEffect(() => {
+    setValue('query', searchQuery);
+  }, [searchQuery, setValue]);
+
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);
     updateFilters(parsedFilter);
