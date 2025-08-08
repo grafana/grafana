@@ -46,16 +46,19 @@ export const getGridStyles = (
     '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
       '&:hover, &[aria-selected=true]': { boxShadow: theme.shadows.z2 },
       // selected cells should appear below hovered cells.
-      '&:hover': { zIndex: theme.zIndex.tooltip - 4 },
-      '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 5 },
+      '&:hover': { zIndex: theme.zIndex.tooltip - 7 },
+      '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
     },
 
-    '.rdg-cell.rdg-cell-frozen': { zIndex: theme.zIndex.tooltip - 2 },
+    '.rdg-cell.rdg-cell-frozen': {
+      zIndex: theme.zIndex.tooltip - 4,
+      '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
+      '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
+    },
 
     '.rdg-header-row, .rdg-summary-row': {
       '.rdg-cell': {
-        zIndex: theme.zIndex.tooltip - 3,
-
+        zIndex: theme.zIndex.tooltip - 5,
         '&.rdg-cell-frozen': {
           zIndex: theme.zIndex.tooltip - 1,
         },
