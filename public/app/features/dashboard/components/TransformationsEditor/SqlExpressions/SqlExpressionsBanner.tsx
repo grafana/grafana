@@ -1,6 +1,6 @@
+import { LocalStorageValueProvider } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, TextLink } from '@grafana/ui';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 const LOCAL_STORAGE_KEY = 'dashboard.sql-expressions-banner.dismissed';
 
