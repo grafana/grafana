@@ -312,6 +312,46 @@ func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+type TestRepo struct {
+	Name               string
+	Target             string
+	Values             map[string]any
+	Copies             map[string]string
+	ExpectedDashboards int
+	ExpectedFolders    int
+}
+
+func (h *provisioningTestHelper) TestRepo(t *testing.T, repo TestRepo) {
+	if repo.Target == "" {
+		repo.Target = "instance"
+	}
+
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo.Name,
+		"SyncEnabled": true,
+		"SyncTarget":  repo.Target,
+	})
+
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	for from, to := range repo.Copies {
+		helper.CopyToProvisioningPath(t, from, to)
+	}
+
+	// Trigger and wait for initial sync to populate resources
+	helper.SyncAndWait(t, repo, nil)
+
+	// Verify initial state
+	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
+
+	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+}
+
 type grafanaOption func(opts *testinfra.GrafanaOpts)
 
 // Useful for debugging a test in development.

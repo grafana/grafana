@@ -25,31 +25,19 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "delete-job-test-repo"
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo,
-		"SyncEnabled": true,
-		"SyncTarget":  "instance",
-	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
-	require.NoError(t, err)
-	// Copy multiple test files to the repository
-	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
-	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "dashboard2.json")
-	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/dashboard3.json")
-
-	// Trigger and wait for initial sync to populate resources
-	helper.SyncAndWait(t, repo, nil)
-
-	// Verify initial state - should have 3 dashboards and 1 folder
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 3, len(dashboards.Items), "should have 3 dashboards after sync")
-
-	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 1, len(folders.Items), "should have 1 folder after sync")
+	testRepo := TestRepo{
+		Name: repo,
+		Copies: map[string]string{
+			"testdata/all-panels.json":    "dashboard1.json",
+			"testdata/text-options.json":  "dashboard2.json",
+			"testdata/timeline-demo.json": "folder/dashboard3.json",
+		},
+		ExpectedDashboards: 3,
+		ExpectedFolders:    1,
+	}
 
 	t.Run("delete single file", func(t *testing.T) {
+		// FIXME: make the tests in a way that we can simply have a spec and some expectations per scenario.
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
@@ -59,11 +47,14 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		// Create delete job for single file
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
+		// FIXME: create a helper to verify repository files
+
 		// Verify file is deleted from repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
 		require.Error(t, err, "file should be deleted from repository")
 		require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
+		// FIXME: create a helper to verify grafana resources
 		// Verify dashboard is removed from Grafana after sync
 		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
@@ -85,6 +76,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		}
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
+		// FIXME: use helper
 		// Verify files are deleted from repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
 		require.Error(t, err, "dashboard2.json should be deleted")
@@ -101,12 +93,14 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	})
 
 	t.Run("delete by resource reference", func(t *testing.T) {
+		// FIXME: do not create this on top of the other one. Isolate the cases
 		// Create modified test files with unique UIDs for ResourceRef testing
 		// Read and modify the testdata files to have unique UIDs that don't conflict with existing resources
 		allPanelsContent := helper.LoadFile("testdata/all-panels.json")
 		textOptionsContent := helper.LoadFile("testdata/text-options.json")
 		timelineDemoContent := helper.LoadFile("testdata/timeline-demo.json")
 
+		// FIXME: use generic objects
 		// Modify UIDs to be unique for ResourceRef tests
 		allPanelsModified := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "resourceref1"`, 1)
 		textOptionsModified := strings.Replace(string(textOptionsContent), `"uid": "WZ7AhQiVz"`, `"uid": "resourceref2"`, 1)
@@ -156,6 +150,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
+			// FIXME: use helpers
 			// Verify corresponding file is deleted from repository
 			_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "resource-test-1.json")
 			require.Error(t, err, "file should be deleted from repository")
@@ -193,6 +188,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			}
 			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
+			// FIXME: use helpers
 			// Verify both dashboards are removed from Grafana
 			_, err = helper.DashboardsV1.Resource.Get(ctx, "resourceref2", metav1.GetOptions{})
 			require.Error(t, err, "text-options dashboard should be deleted")
@@ -216,6 +212,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		})
 
 		t.Run("mixed deletion - paths and resources", func(t *testing.T) {
+			// FIXME: do not build this case on top of the other one. Isolate the cases
 			// Setup fresh resources for mixed test - reuse the modified content with unique UIDs
 			tmpMixed1 := filepath.Join(tmpDir, "mixed-test-1.json")
 			tmpMixed2 := filepath.Join(tmpDir, "mixed-test-2.json")
@@ -247,6 +244,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
+			// FIXME: use the helpers
 			// Verify both targeted resources are deleted from Grafana
 			_, err = helper.DashboardsV1.Resource.Get(ctx, "resourceref1", metav1.GetOptions{})
 			require.Error(t, err, "dashboard deleted by path should be removed")
@@ -270,6 +268,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		})
 
 		t.Run("delete folder by resource reference", func(t *testing.T) {
+			// FIXME: do not build this case on top of the previous one. Isolate them
 			// Create a dashboard inside a folder to automatically create the folder structure
 			// This follows the same pattern as other tests in this file
 			testDashboard := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "folder-dash"`, 1)
@@ -317,6 +316,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			}
 			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
+			// FIXME: use helpers
 			// Verify folder is deleted from Grafana
 			_, err = helper.Folders.Resource.Get(ctx, testFolderName, metav1.GetOptions{})
 			require.Error(t, err, "folder should be deleted from Grafana")

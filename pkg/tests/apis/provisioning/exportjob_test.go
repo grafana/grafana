@@ -28,6 +28,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	_, err := helper.DashboardsV0.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v0 dashboard")
 
+	// FIXME: add helper and template for dashboards in different versions
 	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
 	_, err = helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
@@ -42,6 +43,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 	// Now for the repository.
 	const repo = "local-repository"
+	// FIXME: use the same helper to create the repository
 	createBody := helper.RenderObject(t, "exportunifiedtorepository/repository.json.tmpl", map[string]any{"Name": repo})
 	_, err = helper.Repositories.Resource.Create(ctx, createBody, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create repository")
@@ -103,6 +105,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	helper := runGrafana(t)
 	ctx := context.Background()
 
+	// FIXME: helper to create dashboards.
 	// Create some unmanaged dashboards directly in Grafana first
 	dashboard1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
 	dashboard1Obj, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
@@ -114,6 +117,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err, "should be able to create second dashboard")
 	dashboard2Name := dashboard2Obj.GetName()
 
+	// FIXME: use same helper to create repository
 	// Create the first repository with sync enabled
 	const repo1 = "first-repository"
 	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
@@ -153,8 +157,8 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err)
 	require.Equal(t, repo1, managedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard2 should be managed by first repo")
 
+	// FIXME: use helper to create repository
 	// Create second repository - enable sync and set different target
-
 	const repo2 = "second-repository"
 	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
 	err = os.MkdirAll(repo2Path, 0750)
@@ -175,6 +179,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	// Wait for second repository to sync
 	helper.SyncAndWait(t, repo2, nil)
 
+	// FIXME: use helpers to check status
 	// Validate that folders for both repositories exist
 	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "should be able to list folders")
