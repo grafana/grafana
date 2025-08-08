@@ -364,9 +364,10 @@ However, you can switch back and forth between tabs.
 
 #### Pill
 
-The cell displays each item in a comma-separated string in a colored block.
+The **Pill** cell type displays each item in a comma-separated string in a colored block.
 
 ![Table using the pill cell type](screenshot-table-pills-v12.1.png)
+<!--placeholder image; we should get something that shows off the features a bit better -->
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
@@ -374,11 +375,15 @@ Pill cells also support text wrapping.
 
 The following data formats are supported for the pill cell type:
 
-TBA
+[TBA]
 
 #### Markdown + HTML
 
+The **Markdown + HTML** cell type displays rich markdown or HTML content.
+This is useful if you need to display, for example, a service status along with some rich data.
 
+For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize dynamically based on the cell content.
+If you use dynamic height, we strongly recommend that you also toggle on **Pagination** to avoid performance issues in larger tables.
 
 #### Image
 
