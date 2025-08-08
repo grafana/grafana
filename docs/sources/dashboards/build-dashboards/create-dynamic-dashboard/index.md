@@ -104,11 +104,13 @@ To create a dashboard, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
 
 1. Under **Panel layout**, choose one of the following options:
+
    - **Custom** - Position and size panels manually. The default selection.
    - **Auto grid** - Panels are automatically resized to create a uniform grid based on the column and row settings.
 
 1. Click **+ Add visualization**.
 1. In the dialog box that opens, do one of the following:
+
    - Select one of your existing data sources.
    - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
    - Click **Configure a new data source** to set up a new one (Admins only).
@@ -134,6 +136,7 @@ To create a dashboard, follow these steps:
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
+
    - [Configure value mappings](ref:configure-value-mappings)
    - [Visualization-specific options](ref:visualization-specific-options)
    - [Override field values](ref:override-field-values)
@@ -231,7 +234,9 @@ To configure repeats, follow these steps:
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
 1. For panels only, set the following options:
+
    - Under **Repeat direction**, choose one of the following:
+
      - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can’t mix other panels on a row with a repeated panel.
      - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
@@ -278,12 +283,14 @@ To configure show/hide rules, follow these steps:
 1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
 1. Click **+ Add rule**.
 1. Select a rule type:
+
    - **Query result** - Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
    - **Template variable** - Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
    - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time frame. Select or enter a time range.
 
 1. Configure the rule.
 1. Under **Match rules**, select one of the following:
+
    - **Match all** - The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
    - **Match any** - The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
 
@@ -323,6 +330,7 @@ To edit dashboards, follow these steps:
 
 1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane.
 1. Do one of the following:
+
    - For rows or tabs, make the required changes using the edit pane.
    - For panels, update the panel title, description, repeat options or show/hide rules in the edit pane. For more changes, click **Configure** and continue in **Edit panel** view.
    - For dashboards, update the dashboard title, description, grouping or panel layout. For more changes, click the settings (gear) icon in the top-right corner.
@@ -362,6 +370,7 @@ To move or resize, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 1. Do one of the following:
+
    - Click the panel title and drag the panel to the new location.
    - Click and drag the lower-right corner of the panel to change the size of the panel.
 
