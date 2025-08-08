@@ -129,7 +129,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         defaultValue: defaultOptions.showHeader,
       })
       .addNumberInput({
-        path: 'frozenColumns',
+        path: 'frozenColumns.left',
         name: t('table-new.name-frozen-columns', 'Frozen columns'),
         description: t('table-new.description-frozen-columns', 'Columns are frozen from the left side of the table'),
         settings: {

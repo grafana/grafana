@@ -26,7 +26,9 @@ export interface Options {
   /**
    * number of columns on the left side of the table that should be frozen
    */
-  frozenColumns?: number;
+  frozenColumns?: {
+    left?: number;
+  };
   /**
    * Controls whether the panel should show the header
    */
