@@ -203,7 +203,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	decrypters := []string{owner.APIGroup, "??? UNIFIED STORAGE IDENTITY ???"}
 
 	serviceIdentity, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
-	if ok {
+	if ok && len(serviceIdentity) > 0 && serviceIdentity[0] != owner.APIGroup {
 		decrypters = append(decrypters, serviceIdentity...)
 	}
 
