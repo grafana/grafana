@@ -21,12 +21,14 @@ let mockFilterState = {
   labels: [],
 };
 const mockUpdateFilters = jest.fn();
+const mockSetSearchQuery = jest.fn();
 
 jest.mock('../../hooks/useFilteredRules', () => ({
   useRulesFilter: jest.fn(() => ({
     searchQuery: '',
     filterState: mockFilterState,
     updateFilters: mockUpdateFilters,
+    setSearchQuery: mockSetSearchQuery,
     hasActiveFilters: false,
     activeFilters: [],
   })),
@@ -109,6 +111,7 @@ beforeEach(() => {
     labels: [],
   };
   mockUpdateFilters.mockClear();
+  mockSetSearchQuery.mockClear();
 
   // Reset plugin components hook to default (no plugins)
   setPluginComponentsHook(() => ({
@@ -236,6 +239,7 @@ describe('RulesFilterV2', () => {
       searchQuery: '',
       filterState: mockFilterState,
       updateFilters: mockUpdateFilters,
+      setSearchQuery: mockSetSearchQuery,
       hasActiveFilters: false,
       activeFilters: [],
     });
