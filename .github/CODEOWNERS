@@ -43,8 +43,8 @@
 /docs/sources/datasources/                                                        @lwandz13
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @irenerl24 @GrafanaWriter
-/docs/sources/upgrade-guide/                                                      @imatwawana
-/docs/sources/whatsnew/                                                           @imatwawana
+/docs/sources/upgrade-guide/                                                      @jtvdez
+/docs/sources/whatsnew/                                                           @jtvdez
 
 /docs/sources/developers/plugins/                                                 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 
