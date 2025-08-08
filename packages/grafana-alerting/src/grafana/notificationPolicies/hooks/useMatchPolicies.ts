@@ -8,6 +8,7 @@ import { RouteMatchResult, RouteWithID, matchAlertInstancesToPolicyTree } from '
 export type RouteMatch = {
   policy: Route;
   policyTree: {
+    /* add some metadata about the tree that is useful for displaying diagnostics */
     metadata: Pick<RoutingTree['metadata'], 'name'>;
     /* we'll include the entire expanded policy tree for diagnostics */
     expandedSpec: RouteWithID;
@@ -16,6 +17,7 @@ export type RouteMatch = {
 };
 
 export type InstanceMatchResult = {
+  /* the labels we used to match to our policies */
   labels: Label[];
   /* the routes that matched the labels where the key is a route and the value is an array of instances that match that route */
   matchedPolicies: RouteMatch[];
@@ -41,7 +43,6 @@ export function useMatchAlertInstancesToNotificationPolicies() {
     }
   );
 
-  // @TODO do we really need this to be a separate function?
   const matchInstancesToPolicies = useCallback(
     (instances: Label[][]): InstanceMatchResult[] => {
       if (!data) {
@@ -60,6 +61,7 @@ export function useMatchAlertInstancesToNotificationPolicies() {
           const treeName = tree.metadata.name ?? 'user-defined';
 
           // construct a pseudo-route from the route tree we get from the API
+          // @TODO maybe a function to convert RoutingTree to a Route?
           const rootPolicy = {
             ...tree.spec.defaults,
             routes: tree.spec.routes as Route[],

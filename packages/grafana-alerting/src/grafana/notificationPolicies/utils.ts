@@ -74,15 +74,16 @@ export function getInheritedProperties(
   const inheritableProperties: InheritableProperties = {
     ...propsFromParent,
     ...propertiesParentInherited,
-  };
+  } as const;
 
+  // @ts-expect-error we're using "keyof" for the property so the type checker can help us out but this makes the
+  // reduce function signature unhappy
   const inherited = reduce(
     inheritableProperties,
-    (inheritedProperties: InheritableProperties, parentValue, property) => {
+    (inheritedProperties: InheritableProperties, parentValue, property: keyof InheritableProperties) => {
       const parentHasValue = parentValue != null;
 
       const inheritableValues = [undefined, '', null];
-      // @ts-ignore
       const childIsInheriting = inheritableValues.some((value) => childRoute[property] === value);
       const inheritFromValue = childIsInheriting && parentHasValue;
 
