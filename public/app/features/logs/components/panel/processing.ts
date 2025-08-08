@@ -2,7 +2,16 @@ import ansicolor from 'ansicolor';
 import { parse, stringify } from 'lossless-json';
 import Prism, { Grammar } from 'prismjs';
 
-import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
+import {
+  DataFrame,
+  dateTimeFormat,
+  Labels,
+  LogLevel,
+  LogRowModel,
+  LogsSortOrder,
+  systemDateFormats,
+  textUtil,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
@@ -90,7 +99,8 @@ export class LogListModel implements LogRowModel {
     this._grammar = grammar;
     this.timestamp = dateTimeFormat(log.timeEpochMs, {
       timeZone,
-      defaultWithMS: true,
+      // YYYY-MM-DD HH:mm:ss.SSS
+      format: systemDateFormats.fullDateMS,
     });
     this._virtualization = virtualization;
     this._wrapLogMessage = wrapLogMessage;
@@ -156,6 +166,11 @@ export class LogListModel implements LogRowModel {
 
   get sampledMessage(): string | undefined {
     return checkLogsSampled(this);
+  }
+
+  get timestampNs(): string {
+    let suffix = this.timeEpochNs.substring(this.timeEpochMs.toString().length);
+    return this.timestamp + suffix;
   }
 
   getDisplayedFieldValue(fieldName: string, stripAnsi = false): string {
@@ -234,7 +249,14 @@ export const preProcessLogs = (
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
   return orderedLogs.map((log) =>
-    preProcessLog(log, { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage })
+    preProcessLog(log, {
+      escape,
+      getFieldLinks,
+      grammar,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    })
   );
 };
 

@@ -282,7 +282,7 @@ describe('Virtualization', () => {
 
   describe('calculateFieldDimensions', () => {
     test('Measures displayed fields including the log line body', () => {
-      expect(virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME])).toEqual([
+      expect(virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME], 'ms')).toEqual([
         {
           field: 'timestamp',
           width: 23,
@@ -298,6 +298,19 @@ describe('Virtualization', () => {
         {
           field: '___LOG_LINE_BODY___',
           width: 13,
+        },
+      ]);
+    });
+
+    test('Measures nanosecond timestamps', () => {
+      expect(virtualization.calculateFieldDimensions([log], [], 'ns')).toEqual([
+        {
+          field: 'timestamp',
+          width: 29,
+        },
+        {
+          field: 'level',
+          width: 4,
         },
       ]);
     });
