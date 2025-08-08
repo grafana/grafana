@@ -29,12 +29,12 @@ type InstanceConfigurationSettings struct {
 }
 
 type Instance interface {
-	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string) (QueryDataClient, error)
+	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef) (QueryDataClient, error)
 	// fetch information on the grafana instance (e.g. feature toggles)
 	GetSettings() InstanceConfigurationSettings
 	GetLogger(parent log.Logger) log.Logger
 }
 
 type InstanceProvider interface {
-	GetInstance(ctx context.Context) (Instance, error)
+	GetInstance(ctx context.Context, headers map[string]string) (Instance, error)
 }

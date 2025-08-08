@@ -250,7 +250,7 @@ type mockClient struct {
 	stubbedFrame *data.Frame
 }
 
-func (m mockClient) GetInstance(ctx context.Context) (clientapi.Instance, error) {
+func (m mockClient) GetInstance(ctx context.Context, headers map[string]string) (clientapi.Instance, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
 	}
@@ -261,7 +261,7 @@ func (m mockClient) GetLogger(parent log.Logger) log.Logger {
 	return parent.New()
 }
 
-func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef, headers map[string]string) (clientapi.QueryDataClient, error) {
+func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef) (clientapi.QueryDataClient, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
 	}
