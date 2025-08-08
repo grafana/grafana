@@ -242,6 +242,8 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
+| [Pill](#pill)                             | Displays each item in a comma-separated string in a colored block. |
+| [Markdown + HTML](#markdown--html)        | Displays rich markdown or HTML content. |
 | [Image](#image)                           | Displays an image when the value is a URL or a base64 encoded image. |
 | [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
 <!-- prettier-ignore-end -->
@@ -358,7 +360,25 @@ This enables value inspection from table cells.
 When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.
 
 Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
-However, you can switch back and forth between tabs
+However, you can switch back and forth between tabs.
+
+#### Pill
+
+The cell displays each item in a comma-separated string in a colored block.
+
+![Table using the pill cell type](screenshot-table-pills-v12.1.png)
+
+The colors applied to each piece of text are maintained throughout the table.
+For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
+Pill cells also support text wrapping.
+
+The following data formats are supported for the pill cell type:
+
+TBA
+
+#### Markdown + HTML
+
+
 
 #### Image
 
