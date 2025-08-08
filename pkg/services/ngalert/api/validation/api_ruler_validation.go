@@ -329,7 +329,9 @@ func ValidateRuleGroup(
 		return nil, errors.New("rule group name cannot be empty")
 	}
 
-	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength {
+	isNoGroupRuleGroup := ngmodels.IsNoGroupRuleGroup(ruleGroupConfig.Name)
+
+	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength && !isNoGroupRuleGroup {
 		return nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
 	}
 
@@ -344,6 +346,11 @@ func ValidateRuleGroup(
 	}
 
 	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
+
+	// If the rule group is reserved for no-group rules, we cannot have multiple rules in it.
+	if isNoGroupRuleGroup && len(ruleGroupConfig.Rules) > 1 {
+		return nil, fmt.Errorf("rule group %s is reserved for no-group rules and cannot be used for rule groups with multiple rules", ruleGroupConfig.Name)
+	}
 
 	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))

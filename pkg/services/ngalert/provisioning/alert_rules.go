@@ -80,6 +80,61 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
+type ListAlertRulesOptions struct {
+	RuleType      models.RuleTypeFilter
+	Limit         int64
+	ContinueToken string
+	// TODO: plumb more options
+}
+
+func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
+	q := models.ListAlertRulesExtendedQuery{
+		ListAlertRulesQuery: models.ListAlertRulesQuery{
+			OrgID: user.GetOrgID(),
+		},
+		RuleType:      opts.RuleType,
+		Limit:         opts.Limit,
+		ContinueToken: opts.ContinueToken,
+	}
+	rules, nextToken, err = service.ruleStore.ListAlertRulesPaginated(ctx, &q)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	provenances = make(map[string]models.Provenance)
+	if len(rules) > 0 {
+		resourceType := rules[0].ResourceType()
+		provenances, err = service.provenanceStore.GetProvenances(ctx, user.GetOrgID(), resourceType)
+		if err != nil {
+			return nil, nil, "", err
+		}
+	}
+
+	can, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	if can {
+		return rules, provenances, nextToken, nil
+	}
+	// If user does not have blanket privilege to read rules, remove all rules that are not allowed to the user.
+	groups := models.GroupByAlertRuleGroupKey(rules)
+	result := make([]*models.AlertRule, 0, len(rules))
+	for _, group := range groups {
+		if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
+			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
+				// remove provenances for rules that will not be added to the output
+				for _, rule := range group {
+					delete(provenances, rule.ResourceID())
+				}
+				continue
+			}
+			return nil, nil, "", err
+		}
+		result = append(result, group...)
+	}
+	return result, provenances, nextToken, nil
+}
+
 func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, map[string]models.Provenance, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: user.GetOrgID(),
@@ -181,10 +236,13 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 	}, nil
 }
 
-// CreateAlertRule creates a new alert rule. This function will ignore any
-// interval that is set in the rule struct and use the already existing group
-// interval or the default one.
+// CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
+// interval that is set in the rule struct and use the already existing group interval or the default one.
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
+	if models.IsNoGroupRuleGroup(rule.RuleGroup) {
+		return models.AlertRule{}, fmt.Errorf("%w: rules must have a valid group", models.ErrAlertRuleFailedValidation)
+	}
+
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	} else if err := util.ValidateUID(rule.UID); err != nil {
@@ -401,6 +459,11 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
+	}
+
+	// If the rule group is reserved for no-group rules, we cannot have multiple rules in it.
+	if models.IsNoGroupRuleGroup(group.Title) && len(group.Rules) > 1 {
+		return fmt.Errorf("rule group %s is reserved for no-group rules and cannot be used for rule groups with multiple rules", group.Title)
 	}
 
 	for _, rule := range group.Rules {
