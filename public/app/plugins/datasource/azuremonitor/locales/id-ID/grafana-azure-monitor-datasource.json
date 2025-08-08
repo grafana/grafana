@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Aktifkan Log Dasar"
     },
     "config-editor": {
-      "description-additional-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda. Ini mencakup Secure Socks Proxy.",
-      "description-request-timeout": "Atur batas waktu permintaan dalam hitungan detik. Default-nya 30 detik.",
-      "title-additional-settings": "Pengaturan tambahan",
-      "title-request-timeout": "Batas Waktu Permintaan"
+      "description-additional-settings": "",
+      "title-additional-settings": "Pengaturan tambahan"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Kredensial fallback telah dinonaktifkan. Karena autentikasi berbasis pengguna hanya mendukung permintaan dengan pengguna dalam cakupannya, fitur seperti peringatan, kueri yang direkam, atau pelaporan tidak akan berfungsi seperti yang diharapkan. Silakan tinjau <2>dokumentasi</2> untuk detail selengkapnya.",

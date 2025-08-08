@@ -1396,15 +1396,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:           "teamHttpHeadersMimir",
-			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   false,
-			AllowSelfServe: true,
-			Owner:          identityAccessTeam,
-			Expression:     "true",
-		},
-		{
 			Name:         "teamHttpHeadersTempo",
 			Description:  "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
 			Stage:        FeatureStageExperimental,
@@ -1879,6 +1870,13 @@ var (
 			Description:  "Enable adhoc filter buttons in visualization tooltips",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "favoriteDatasources",
+			Description:  "Enable favorite datasources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 		},
 		{

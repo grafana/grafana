@@ -3476,7 +3476,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "キャンセル",
-      "cannot-move-folders": "フォルダは移動できません",
       "confirmation-text": "削除",
       "delete-button": "削除",
       "delete-modal-invalid-text": "1つ以上のフォルダにライブラリパネルまたはアラートルールが含まれています。続行するには、まずこれらを削除してください。",
@@ -3526,6 +3525,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3550,6 +3556,9 @@
       "select-checkbox": "選択",
       "tags-column": "タグ"
     },
+    "delete-folder": {
+      "read-only-message": ""
+    },
     "delete-provisioned-folder-form": {
       "api-error": "フォルダの削除に失敗しました",
       "button-cancel": "キャンセル",
@@ -3569,6 +3578,7 @@
     },
     "folder-actions-button": {
       "delete": "削除",
+      "delete-folder-error": "",
       "folder-actions": "フォルダの操作",
       "manage-permissions": "権限を管理する",
       "move": "移動"
@@ -3591,6 +3601,9 @@
     },
     "name-cell": {
       "no-items": "項目がありません"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "キャンセル",
@@ -4299,7 +4312,7 @@
       "source-label": "送信元",
       "sub-text": "<0>どのデータソースが相関を表示するか、どのデータが以前に定義された変数を置き換えるかを定義します。</0>"
     },
-    "sub-title": "異なるデータソースに存在するデータがどのように相互に関連しているかを定義します。詳細については、<2>ドキュメント<1></1></2>をご覧ください",
+    "sub-title": "",
     "target-form": {
       "control-rules": "このフィールドは必須です。",
       "sub-text": "<0>相関がリンクするものを定義します。クエリタイプを使用すると、相関がクリックされたときにクエリが実行されます。外部タイプでは、相関をクリックするとURLが開きます。</0>",
@@ -4702,7 +4715,7 @@
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
-      "import-a-dashboard-body": "ファイルまたは<1>grafana.com</1>からダッシュボードをインポートします。",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート"
     },
@@ -5671,11 +5684,9 @@
       "api-error": "ダッシュボードの削除に失敗しました",
       "cancel-action": "キャンセル",
       "delete-action": "ダッシュボードを削除する",
-      "delete-read-only-file-message": "リポジトリが読み取り専用のため、このダッシュボードをGrafanaから直接削除することはできません。このダッシュボードを削除するには、Gitリポジトリからファイルを削除してください。",
       "deleting": "削除中…",
       "drawer-title": "プロビジョニングされたダッシュボードを削除",
-      "success-message": "",
-      "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
+      "success-message": ""
     },
     "description-label": {
       "description": "説明"
@@ -6045,7 +6056,6 @@
       "api-error": "ダッシュボードの保存中にエラーが発生しました",
       "cancel": "キャンセル",
       "cannot-be-saved": "このダッシュボードは別のソースからプロビジョニングされているため、Grafana UIからは保存できません。JSONをコピーするか下記のファイルに保存した上で、プロビジョニング元でダッシュボードを更新できます。",
-      "copy-json-message": "ターゲットに直接アクセスできる場合は、JSONをコピーしてそこに貼り付けます。",
       "copy-json-to-clipboard": "JSONをクリップボードにコピー",
       "file-path": "<0>ファイルパス：</0> {{filePath}}",
       "label-description": "説明",
@@ -6057,7 +6067,6 @@
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。",
       "title-required": "ダッシュボードのタイトルが必要です",
       "title-same-as-folder": "ダッシュボード名をフォルダ名と同じにすることはできません",
-      "title-this-repository-is-read-only": "このリポジトリは読み取り専用です",
       "title-validation-failed": "ダッシュボードのタイトルの検証に失敗しました。"
     },
     "scenes-new-rule-from-panel-button": {
@@ -6363,7 +6372,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "このエラーの詳細については、<2>こちら</2>をクリックしてください。",
-    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。"
+    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6502,7 +6512,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "ダッシュボードを作成",
-      "explore-data": "データを調査"
+      "explore-data": "データを調査",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "エラーの詳細"
@@ -7474,6 +7485,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10282,7 +10296,7 @@
     },
     "invite-user": {
       "invite-button": "招待",
-      "invite-new-member-button": "新しいメンバーの招待",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11061,6 +11075,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11271,6 +11293,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11477,6 +11507,14 @@
     },
     "token-permissions-info": {
       "and-click": "そしてクリック",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "進む",
       "make-sure": "これらの権限を必ず含めてください"
     },

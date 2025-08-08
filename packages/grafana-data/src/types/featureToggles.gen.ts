@@ -815,11 +815,6 @@ export interface FeatureToggles {
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
-  * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
-  * @default true
-  */
-  teamHttpHeadersMimir?: boolean;
-  /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
   teamHttpHeadersTempo?: boolean;
@@ -1085,6 +1080,10 @@ export interface FeatureToggles {
   * Enable adhoc filter buttons in visualization tooltips
   */
   adhocFiltersInTooltips?: boolean;
+  /**
+  * Enable favorite datasources
+  */
+  favoriteDatasources?: boolean;
   /**
   * New Log Context component
   */

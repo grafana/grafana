@@ -43,6 +43,7 @@ export interface Options {
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   syntaxHighlighting?: boolean;
+  timestampResolution?: ('ms' | 'ns');
   wrapLogMessage: boolean;
 }
 

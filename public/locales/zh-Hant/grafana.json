@@ -3476,7 +3476,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "取消",
-      "cannot-move-folders": "資料夾無法移動",
       "confirmation-text": "刪除",
       "delete-button": "刪除",
       "delete-modal-invalid-text": "一個或多個資料夾包含資料庫面板或警報規則。請先刪除這些資料，然後再繼續。",
@@ -3526,6 +3525,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3550,6 +3556,9 @@
       "select-checkbox": "選取",
       "tags-column": "標籤"
     },
+    "delete-folder": {
+      "read-only-message": ""
+    },
     "delete-provisioned-folder-form": {
       "api-error": "無法刪除資料夾",
       "button-cancel": "取消",
@@ -3569,6 +3578,7 @@
     },
     "folder-actions-button": {
       "delete": "刪除",
+      "delete-folder-error": "",
       "folder-actions": "資料夾動作",
       "manage-permissions": "管理權限",
       "move": "移動"
@@ -3591,6 +3601,9 @@
     },
     "name-cell": {
       "no-items": "無項目"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "取消",
@@ -4299,7 +4312,7 @@
       "source-label": "來源",
       "sub-text": "<0>定義哪個資料來源將顯示相關性，以及哪些資料將取代先前定義的變數。</0>"
     },
-    "sub-title": "定義位於不同資料來源中的資料彼此之間的關係。請至<2>文件</1></1></2>中閱讀更多資訊",
+    "sub-title": "",
     "target-form": {
       "control-rules": "此為必填欄位。",
       "sub-text": "<0>定義相關性將連結的目標。使用查詢類型，點選相關性時將執行查詢。使用外部類型時，點選相關性將開啟一個網址。</0>",
@@ -4702,7 +4715,7 @@
       "add-visualization-body": "選取資料來源，然後使用圖表、統計資料及表格查詢並將資料可視化，或建立清單、標記及其他小工具。",
       "add-visualization-button": "新增可視化",
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
-      "import-a-dashboard-body": "從檔案或 <1>grafana.com</1> 匯入儀表板。",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板"
     },
@@ -5671,11 +5684,9 @@
       "api-error": "無法刪除儀表板",
       "cancel-action": "取消",
       "delete-action": "刪除儀表板",
-      "delete-read-only-file-message": "由於儲存庫為唯讀，因此無法直接從 Grafana 刪除此儀表板。若要刪除此儀表板，請從您的 Git 儲存庫中移除該檔案。",
       "deleting": "正在刪除…",
       "drawer-title": "刪除已佈建的儀表板",
-      "success-message": "",
-      "title-this-repository-is-read-only": "此存放庫為唯讀"
+      "success-message": ""
     },
     "description-label": {
       "description": "說明"
@@ -6045,7 +6056,6 @@
       "api-error": "儲存儀表板時發生錯誤",
       "cancel": "取消",
       "cannot-be-saved": "此儀表板無法從 Grafana UI 儲存，因為其已從其他來源設定。複製 JSON 或將其儲存到下方的檔案中，然後您可以在佈建來源中更新您的儀表板。",
-      "copy-json-message": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。",
       "copy-json-to-clipboard": "複製 JSON 到剪貼簿",
       "file-path": "<0>檔案路徑：</0>{{filePath}}",
       "label-description": "說明",
@@ -6057,7 +6067,6 @@
       "see-docs": "有關佈建的更多資訊，請參閱<2>文件</2>。",
       "title-required": "儀表板標題為必填",
       "title-same-as-folder": "儀表板名稱不能與資料夾名稱相同",
-      "title-this-repository-is-read-only": "此存放庫為唯讀",
       "title-validation-failed": "儀表板標題驗證失敗。"
     },
     "scenes-new-rule-from-panel-button": {
@@ -6363,7 +6372,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "點選<2>此處</2>，了解更多關於此錯誤的資訊。",
-    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。"
+    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6502,7 +6512,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "建立儀表板",
-      "explore-data": "探索資料"
+      "explore-data": "探索資料",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有關錯誤的更多詳細資料"
@@ -7474,6 +7485,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10282,7 +10296,7 @@
     },
     "invite-user": {
       "invite-button": "邀請",
-      "invite-new-member-button": "邀請新成員",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11061,6 +11075,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11271,6 +11293,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11477,6 +11507,14 @@
     },
     "token-permissions-info": {
       "and-click": "然後按一下",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "前往",
       "make-sure": "請務必包含以下權限"
     },

@@ -3489,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Cancelar",
-      "cannot-move-folders": "Las carpetas no se pueden mover",
       "confirmation-text": "Eliminar",
       "delete-button": "Eliminar",
       "delete-modal-invalid-text": "Una o más carpetas contienen paneles de biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
@@ -3540,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3569,6 +3575,9 @@
       "select-checkbox": "Seleccionar",
       "tags-column": "Etiquetas"
     },
+    "delete-folder": {
+      "read-only-message": ""
+    },
     "delete-provisioned-folder-form": {
       "api-error": "",
       "button-cancel": "",
@@ -3588,6 +3597,7 @@
     },
     "folder-actions-button": {
       "delete": "Eliminar",
+      "delete-folder-error": "",
       "folder-actions": "Acciones de la carpeta",
       "manage-permissions": "Gestionar permisos",
       "move": "Mover"
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Sin elementos "
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Cancelar",
@@ -4318,7 +4331,7 @@
       "source-label": "Fuente",
       "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>"
     },
-    "sub-title": "Defina cómo se relacionan los datos que se encuentran en diferentes fuentes de datos. Más información en la <2>documentación<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Este campo es obligatorio.",
       "sub-text": "<0>Define a qué elemento se vinculará la correlación. Con el tipo de consulta, se ejecutará una consulta cuando se haga clic en la correlación. Con el tipo externo, al hacer clic en la correlación se abrirá una URL.</0>",
@@ -4721,7 +4734,7 @@
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
-      "import-a-dashboard-body": "Importa paneles de control desde archivos o <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control"
     },
@@ -5691,11 +5704,9 @@
       "api-error": "",
       "cancel-action": "Cancelar",
       "delete-action": "Eliminar panel de control",
-      "delete-read-only-file-message": "",
       "deleting": "Eliminando...",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
+      "success-message": ""
     },
     "description-label": {
       "description": "Descripción"
@@ -6067,7 +6078,6 @@
       "api-error": "Error al guardar el panel de control",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este dashboard no se puede guardar desde la interfaz de usuario de Grafana porque se ha aprovisionado desde otra fuente. Copia el JSON o guárdalo en un archivo a continuación; luego puedes actualizar el dashboard en la fuente de aprovisionamiento.",
-      "copy-json-message": "Si tienes acceso directo al destino, copia el JSON y pégalo allí.",
       "copy-json-to-clipboard": "Copiar JSON al portapapeles",
       "file-path": "<0>Ruta del archivo:</0> {{filePath}}",
       "label-description": "Descripción",
@@ -6079,7 +6089,6 @@
       "see-docs": "Consulta la <2>documentación</2> para obtener más información sobre el aprovisionamiento.",
       "title-required": "El título del panel de control es obligatorio",
       "title-same-as-folder": "El nombre del panel de control no puede ser el mismo que el nombre de la carpeta",
-      "title-this-repository-is-read-only": "Este repositorio es de solo lectura",
       "title-validation-failed": "Error en la validación del título del panel de control."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Haz clic <2>aquí</2> para obtener más información sobre este error.",
-    "success-more-details-links": "A continuación, puedes empezar a visualizar los datos <2>creando un panel de control</2> o consultando los datos en la <5>vista Explorar</5>."
+    "success-more-details-links": "A continuación, puedes empezar a visualizar los datos <2>creando un panel de control</2> o consultando los datos en la <5>vista Explorar</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Crear un dashboard",
-      "explore-data": "Explorar datos"
+      "explore-data": "Explorar datos",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Más detalles sobre el error"
@@ -7496,6 +7507,9 @@
     "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -10312,7 +10326,7 @@
     },
     "invite-user": {
       "invite-button": "",
-      "invite-new-member-button": "Invitar a un nuevo miembro",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11094,6 +11108,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11307,6 +11329,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11513,6 +11543,14 @@
     },
     "token-permissions-info": {
       "and-click": "y haz clic en",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Ir a",
       "make-sure": "Asegúrate de incluir estos permisos"
     },
