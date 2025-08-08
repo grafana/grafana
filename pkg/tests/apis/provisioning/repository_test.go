@@ -143,22 +143,24 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
-		report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
-			Method: http.MethodGet,
-			Path:   "/api/admin/usage-report-preview",
-			User:   helper.Org1.Admin,
-		}, &usagestats.Report{})
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
+				Method: http.MethodGet,
+				Path:   "/api/admin/usage-report-preview",
+				User:   helper.Org1.Admin,
+			}, &usagestats.Report{})
 
-		stats := map[string]any{}
-		for k, v := range report.Result.Metrics {
-			if strings.HasPrefix(k, "stats.repository.") {
-				stats[k] = v
+			stats := map[string]any{}
+			for k, v := range report.Result.Metrics {
+				if strings.HasPrefix(k, "stats.repository.") {
+					stats[k] = v
+				}
 			}
-		}
-		require.Equal(t, map[string]any{
-			"stats.repository.github.count": 1.0,
-			"stats.repository.local.count":  1.0,
-		}, stats)
+			assert.Equal(collect, map[string]any{
+				"stats.repository.github.count": 1.0,
+				"stats.repository.local.count":  1.0,
+			}, stats)
+		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
 }
 
