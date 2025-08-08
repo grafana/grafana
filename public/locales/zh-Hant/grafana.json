@@ -3525,6 +3525,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3548,6 +3555,9 @@
       "select-all-header-checkbox": "選擇全部",
       "select-checkbox": "選取",
       "tags-column": "標籤"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "無法刪除資料夾",
@@ -3591,6 +3601,9 @@
     },
     "name-cell": {
       "no-items": "無項目"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "取消",
@@ -5671,11 +5684,9 @@
       "api-error": "無法刪除儀表板",
       "cancel-action": "取消",
       "delete-action": "刪除儀表板",
-      "delete-read-only-file-message": "由於儲存庫為唯讀，因此無法直接從 Grafana 刪除此儀表板。若要刪除此儀表板，請從您的 Git 儲存庫中移除該檔案。",
       "deleting": "正在刪除…",
       "drawer-title": "刪除已佈建的儀表板",
-      "success-message": "",
-      "title-this-repository-is-read-only": "此存放庫為唯讀"
+      "success-message": ""
     },
     "description-label": {
       "description": "說明"
@@ -6045,7 +6056,6 @@
       "api-error": "儲存儀表板時發生錯誤",
       "cancel": "取消",
       "cannot-be-saved": "此儀表板無法從 Grafana UI 儲存，因為其已從其他來源設定。複製 JSON 或將其儲存到下方的檔案中，然後您可以在佈建來源中更新您的儀表板。",
-      "copy-json-message": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。",
       "copy-json-to-clipboard": "複製 JSON 到剪貼簿",
       "file-path": "<0>檔案路徑：</0>{{filePath}}",
       "label-description": "說明",
@@ -6057,7 +6067,6 @@
       "see-docs": "有關佈建的更多資訊，請參閱<2>文件</2>。",
       "title-required": "儀表板標題為必填",
       "title-same-as-folder": "儀表板名稱不能與資料夾名稱相同",
-      "title-this-repository-is-read-only": "此存放庫為唯讀",
       "title-validation-failed": "儀表板標題驗證失敗。"
     },
     "scenes-new-rule-from-panel-button": {
@@ -6363,7 +6372,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "點選<2>此處</2>，了解更多關於此錯誤的資訊。",
-    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。"
+    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6502,7 +6512,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "建立儀表板",
-      "explore-data": "探索資料"
+      "explore-data": "探索資料",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有關錯誤的更多詳細資料"
