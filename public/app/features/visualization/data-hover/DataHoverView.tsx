@@ -121,7 +121,11 @@ export const DataHoverView = ({
   if (header === 'Exemplar') {
     return (
       <ExemplarTooltip
-        displayValues={displayValues}
+        items={displayValues.map((dispVal) => ({
+          label: dispVal.name,
+          value: dispVal.valueString,
+          isActive: dispVal.highlight,
+        }))}
         links={links}
         headerLabel={header}
         maxHeight={maxHeight}

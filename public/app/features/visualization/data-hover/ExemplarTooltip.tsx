@@ -6,40 +6,34 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
 } from '@grafana/ui/internal';
-import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
-
-import { DisplayValue } from './DataHoverView';
 
 export interface Props {
-  displayValues: DisplayValue[];
+  items: VizTooltipItem[];
   links?: LinkModel[];
   isPinned: boolean;
   headerLabel?: string;
   maxHeight?: number;
 }
 
-export const ExemplarTooltip = ({ displayValues, links, isPinned, headerLabel = 'Exemplar', maxHeight }: Props) => {
-  const time = displayValues.find((val) => val.name === 'Time');
-
-  const headerItem: VizTooltipItem = {
-    label: headerLabel,
-    value: time ? time.valueString : '',
-  };
-
-  let contentItems: VizTooltipItem[] = [];
-  displayValues.forEach((displayValue) => {
-    contentItems.push({
-      label: displayValue.name,
-      value: renderValue(displayValue.valueString),
-      isActive: displayValue.highlight,
-    });
-  });
+export const ExemplarTooltip = ({ items, links, isPinned, headerLabel = 'Exemplar', maxHeight }: Props) => {
+  const timeItem = items.find((val) => val.label === 'Time');
 
   return (
     <VizTooltipWrapper>
-      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} maxHeight={maxHeight} scrollable={!!maxHeight} />
-      <VizTooltipFooter dataLinks={links || []} />
+      <VizTooltipHeader
+        item={{
+          label: headerLabel,
+          value: timeItem?.label ?? '',
+        }}
+        isPinned={isPinned}
+      />
+      <VizTooltipContent
+        items={items.filter((item) => item !== timeItem)}
+        isPinned={isPinned}
+        maxHeight={maxHeight}
+        scrollable={maxHeight != null}
+      />
+      <VizTooltipFooter dataLinks={links ?? []} />
     </VizTooltipWrapper>
   );
 };
