@@ -65,8 +65,9 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueSuppo
 				if err != nil {
 					return err
 				}
-				secure[k] = v0alpha1.InlineSecureValue{Name: n}
+				v.createdSecureValues = append(v.createdSecureValues, n)
 				v.hasChanged = true
+				secure[k] = v0alpha1.InlineSecureValue{Name: n}
 				continue
 			}
 			return fmt.Errorf("invalid state: %v", v)

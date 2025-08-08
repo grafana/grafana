@@ -38,7 +38,9 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 	for _, inputFilePath := range inputFiles {
 		t.Run(inputFilePath, func(t *testing.T) {
-			input := helper.RenderObject(t, inputFilePath, nil)
+			input := helper.RenderObject(t, inputFilePath, map[string]any{
+				"InlineCreateToken": "XXX", // Added to everything, but not used yet
+			})
 
 			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
 			require.NoError(t, err, "failed to create resource")
@@ -47,13 +49,22 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
 
-			// Move encrypted token mutation
+			// Move encrypted token mutation (legacy)
 			token, found, err := unstructured.NestedString(output.Object, "spec", "github", "encryptedToken")
 			require.NoError(t, err, "encryptedToken is not a string")
 			if found {
 				unstructured.RemoveNestedField(input.Object, "spec", "github", "token")
 				err = unstructured.SetNestedField(input.Object, token, "spec", "github", "encryptedToken")
 				require.NoError(t, err, "unable to copy encrypted token")
+			}
+
+			// Apply inline secure value mutations
+			token, found, err = unstructured.NestedString(output.Object, "secure", "token", "name")
+			require.NoError(t, err, "encryptedToken is not a string")
+			require.True(t, found, "secure value should exist")
+			if found {
+				err = unstructured.SetNestedField(input.Object, map[string]any{"name": token}, "secure", "token")
+				require.NoError(t, err, "unable to replace secure value with name")
 			}
 
 			// Marshal as real objects to ",omitempty" values are tested properly

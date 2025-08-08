@@ -836,7 +836,7 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("error reading spec")
+			err = fmt.Errorf("error reading secure values")
 		}
 	}()
 
@@ -888,7 +888,7 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 	if f.Kind() == reflect.Struct {
 		num := f.NumField()
 		vals = make(common.InlineSecureValues, num)
-		for i := 0; i < f.NumField(); i++ {
+		for i := range num {
 			val := f.Field(i)
 			if val.IsValid() && val.CanInterface() {
 				property = val.Interface()
@@ -901,14 +901,7 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 					continue // nothing
 				}
 
-				field := f.Type().Field(i)
-				fname := field.Tag.Get("json")
-				if fname == "" {
-					fname = field.Name
-				} else {
-					fname, _ = strings.CutSuffix(fname, ",omitempty")
-				}
-				vals[fname] = inline
+				vals[getJSONFieldName(f, i)] = inline
 				continue
 			}
 			return nil, fmt.Errorf("value not an interface")
@@ -923,12 +916,28 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("error setting spec")
+			fmt.Printf("ERR: %v", r)
+			err = fmt.Errorf("error writing secure values")
 		}
 	}()
 
 	f := m.r.FieldByName("Secure")
 	if f.IsValid() && f.CanSet() {
+		if f.Kind() == reflect.Struct {
+			// TODO! error if you write an unknown field
+			for i := 0; i < f.NumField(); i++ {
+				val := f.Field(i)
+				if val.IsValid() && val.CanInterface() && val.CanSet() {
+					sv := vals[getJSONFieldName(f, i)]
+					val.Set(reflect.ValueOf(sv))
+				} else {
+					return fmt.Errorf("Invalid secure value: %v", val)
+				}
+			}
+			return
+		}
+
+		// It should be a generic map
 		f.Set(reflect.ValueOf(vals))
 		return
 	}
@@ -941,6 +950,16 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 	}
 
 	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
+}
+
+func getJSONFieldName(f reflect.Value, idx int) string {
+	field := f.Type().Field(idx)
+	fname := field.Tag.Get("json")
+	if fname == "" {
+		return field.Name
+	}
+	fname, _ = strings.CutSuffix(fname, ",omitempty")
+	return fname
 }
 
 func ToObjectReference(obj GrafanaMetaAccessor) common.ObjectReference {

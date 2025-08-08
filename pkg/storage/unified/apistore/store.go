@@ -597,8 +597,9 @@ func (s *Storage) GuaranteedUpdate(
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
 
-	var rv uint64
 	// Only update (for real) if the bytes have changed
+	var rv uint64
+	req.Value = v.raw.Bytes()
 	if !bytes.Equal(req.Value, existingBytes) {
 		updateResponse, err := s.store.Update(ctx, req)
 		if err != nil {
