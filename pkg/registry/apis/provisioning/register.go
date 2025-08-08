@@ -622,6 +622,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
+			// Separate informer factory for HistoryJob cleanup with 5-minute resync interval
+			historyJobInformerFactory := informers.NewSharedInformerFactory(c, 5*time.Minute)
+			historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
+			go historyJobInformer.Informer().Run(postStartHookCtx.Done())
+
 			b.client = c.ProvisioningV0alpha1()
 
 			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
@@ -740,6 +745,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+
+			// Create HistoryJobController for cleanup of old job history entries
+			_, err = controller.NewHistoryJobController(
+				b.GetClient(),
+				historyJobInformer,
+				5*time.Minute, // Clean up HistoryJobs older than 5 minutes
+			)
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 	}
