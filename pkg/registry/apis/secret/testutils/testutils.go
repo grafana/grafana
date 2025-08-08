@@ -20,8 +20,10 @@ import (
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -123,7 +125,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		keeperService = setupCfg.KeeperService
 	}
 
-	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService, nil)
+	secureValueValidator := validator.ProvideSecureValueValidator()
+	secureValueMutator := mutator.ProvideSecureValueMutator()
+
+	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, keeperService, nil)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 

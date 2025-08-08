@@ -5,6 +5,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 type SecureValueValidator interface {
@@ -13,4 +14,22 @@ type SecureValueValidator interface {
 
 type KeeperValidator interface {
 	Validate(keeper *secretv1beta1.Keeper, oldKeeper *secretv1beta1.Keeper, operation admission.Operation) field.ErrorList
+}
+
+type ErrValidateSecureValue struct {
+	list field.ErrorList
+}
+
+var _ xkube.ErrorLister = (*ErrValidateSecureValue)(nil)
+
+func NewErrValidateSecureValue(list field.ErrorList) *ErrValidateSecureValue {
+	return &ErrValidateSecureValue{list: list}
+}
+
+func (e *ErrValidateSecureValue) Error() string {
+	return e.list.ToAggregate().Error()
+}
+
+func (e *ErrValidateSecureValue) ErrorList() field.ErrorList {
+	return e.list
 }
