@@ -23,26 +23,17 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 	const repo = "move-test-repo"
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo,
-		"SyncEnabled": true,
-		"SyncTarget":  "instance",
-	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
-	require.NoError(t, err)
-	// Copy multiple test files to the repository
-	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
-	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "dashboard2.json")
-	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/dashboard3.json")
-	// Trigger and wait for initial sync to populate resources
-	helper.SyncAndWait(t, repo, nil)
-	// Verify initial state - should have 3 dashboards and 1 folder
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 3, len(dashboards.Items), "should have 3 dashboards after sync")
-	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 1, len(folders.Items), "should have 1 folder after sync")
+	testRepo := TestRepo{
+		Name: repo,
+		Copies: map[string]string{
+			"testdata/all-panels.json":    "dashboard1.json",
+			"testdata/text-options.json":  "dashboard2.json",
+			"testdata/timeline-demo.json": "folder/dashboard3.json",
+		},
+		ExpectedDashboards: 3,
+		ExpectedFolders:    1,
+	}
+	helper.CreateRepo(t, testRepo)
 
 	t.Run("move single file", func(t *testing.T) {
 		spec := provisioning.JobSpec{
@@ -53,12 +44,12 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			},
 		}
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
-
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
+		// FIXME: use the helpers for assertions
 		// Verify file is moved in repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "dashboard1.json")
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "dashboard1.json")
 		require.NoError(t, err, "file should exist at new location in repository")
 
 		// Verify original file is gone from repository
@@ -102,7 +93,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify files are moved in repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "dashboard2.json")
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "dashboard2.json")
 		require.NoError(t, err, "dashboard2.json should exist at new location")
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "folder", "dashboard3.json")
 		require.NoError(t, err, "folder/dashboard3.json should exist at new nested location")

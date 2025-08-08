@@ -36,6 +36,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		ExpectedFolders:    1,
 	}
 
+	helper.CreateRepo(t, testRepo)
+
 	t.Run("delete single file", func(t *testing.T) {
 		// FIXME: make the tests in a way that we can simply have a spec and some expectations per scenario.
 		spec := provisioning.JobSpec{
@@ -50,13 +52,13 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		// FIXME: create a helper to verify repository files
 
 		// Verify file is deleted from repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
 		require.Error(t, err, "file should be deleted from repository")
 		require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
 		// FIXME: create a helper to verify grafana resources
 		// Verify dashboard is removed from Grafana after sync
-		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, 2, len(dashboards.Items), "should have 2 dashboards after delete")
 
@@ -78,7 +80,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 		// FIXME: use helper
 		// Verify files are deleted from repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
 		require.Error(t, err, "dashboard2.json should be deleted")
 		require.True(t, apierrors.IsNotFound(err))
 
@@ -87,7 +89,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(err))
 
 		// Verify all dashboards are removed from Grafana after sync
-		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, 0, len(dashboards.Items), "should have 0 dashboards after deleting all")
 	})

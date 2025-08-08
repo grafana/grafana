@@ -321,33 +321,33 @@ type TestRepo struct {
 	ExpectedFolders    int
 }
 
-func (h *provisioningTestHelper) TestRepo(t *testing.T, repo TestRepo) {
+func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	if repo.Target == "" {
 		repo.Target = "instance"
 	}
 
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo.Name,
 		"SyncEnabled": true,
 		"SyncTarget":  repo.Target,
 	})
 
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	for from, to := range repo.Copies {
-		helper.CopyToProvisioningPath(t, from, to)
+		h.CopyToProvisioningPath(t, from, to)
 	}
 
 	// Trigger and wait for initial sync to populate resources
-	helper.SyncAndWait(t, repo, nil)
+	h.SyncAndWait(t, repo.Name, nil)
 
 	// Verify initial state
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
 
-	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
 }
