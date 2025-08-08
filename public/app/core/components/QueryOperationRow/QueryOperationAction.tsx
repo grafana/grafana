@@ -16,7 +16,7 @@ interface BaseQueryOperationActionProps {
 }
 
 function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperationToggleActionProps) {
-  const styles = useStyles2(getStyles, Boolean(props.isHighlighted));
+  const styles = useStyles2(getStyles);
 
   return (
     <div
@@ -29,7 +29,7 @@ function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperat
       <IconButton
         name={props.icon}
         tooltip={props.title}
-        className={styles.icon}
+        className={cx(styles.icon, props.isHighlighted && styles.highlighted)}
         disabled={!!props.disabled}
         onClick={props.onClick}
         type="button"
@@ -52,12 +52,15 @@ export const QueryOperationToggleAction = (props: QueryOperationToggleActionProp
   return <BaseQueryOperationAction {...props} />;
 };
 
-const getStyles = (theme: GrafanaTheme2, isHighlighted: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css({
       display: 'flex',
       position: 'relative',
-      color: isHighlighted ? theme.colors.primary.main : theme.colors.text.secondary,
+      color: theme.colors.text.secondary,
+    }),
+    highlighted: css({
+      color: theme.colors.primary.main,
     }),
 
     iconGroupEnd: css({
