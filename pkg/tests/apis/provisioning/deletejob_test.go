@@ -344,7 +344,6 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			}
 
 			job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-			require.NotNil(t, job, "should find a delete job")
 			state := mustNestedString(job.Object, "status", "state")
 			assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
 		})
@@ -359,7 +358,6 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		require.NotNil(t, job, "should find a delete job")
 		state := mustNestedString(job.Object, "status", "state")
 		assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
 	})

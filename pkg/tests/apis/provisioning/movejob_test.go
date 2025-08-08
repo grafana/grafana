@@ -145,7 +145,6 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		require.NotNil(t, job, "should find a move job for non-existent file")
 		state := mustNestedString(job.Object, "status", "state")
 		require.Equal(t, "error", state, "move job should have failed due to non-existent file")
 	})
@@ -166,7 +165,6 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		require.NotNil(t, job, "should find a move job for non-existent file")
 		state := mustNestedString(job.Object, "status", "state")
 		require.Equal(t, "error", state, "move job should have failed due to non-existent uid")
 	})
@@ -182,7 +180,6 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		require.NotNil(t, job, "should find a move job without target path")
 		state := mustNestedString(job.Object, "status", "state")
 		assert.Equal(t, "error", state, "move job should have failed due to missing target path")
 	})
