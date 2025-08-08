@@ -200,11 +200,11 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	secret := secretv1beta1.ExposedSecureValue(value)
 
 	// The owner group can always decrypt
-	decrypters := []string{owner.APIGroup, "??? UNIFIED STORAGE IDENTITY ???"}
+	decrypters := []string{owner.APIGroup}
 
 	serviceIdentity, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
 	if ok && len(serviceIdentity) > 0 && serviceIdentity[0] != owner.APIGroup {
-		decrypters = append(decrypters, serviceIdentity...)
+		decrypters = append(decrypters, serviceIdentity[0])
 	}
 
 	obj := &secretv1beta1.SecureValue{
