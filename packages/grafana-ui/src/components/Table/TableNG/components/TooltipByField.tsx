@@ -43,7 +43,7 @@ export function TooltipByField({
   const popoverRef = useRef<HTMLElement | null>(null);
   const rawValue = field.values[rowIdx];
   const height = _height ?? TABLE.MAX_CELL_HEIGHT;
-  const wrapperClass = useStyles2(getStyles, width, height);
+  const styles = useStyles2(getStyles, width, height);
   const theme = useTheme2();
   const rendererProps = useMemo(
     () =>
@@ -75,7 +75,7 @@ export function TooltipByField({
           {popoverRef.current && (
             <Popover
               {...popperProps}
-              wrapperClassName={clsx(className, wrapperClass)}
+              wrapperClassName={clsx(className, styles.wrapper)}
               style={style}
               referenceElement={popoverRef.current}
               onMouseLeave={hidePopper}
@@ -94,8 +94,8 @@ export function TooltipByField({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, width: number, height: number) =>
-  css({
+const getStyles = (theme: GrafanaTheme2, width: number, height: number) => ({
+  wrapper: css({
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
@@ -104,4 +104,5 @@ const getStyles = (theme: GrafanaTheme2, width: number, height: number) =>
     padding: theme.spacing(1),
     height,
     width,
-  });
+  }),
+});
