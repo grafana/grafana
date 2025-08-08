@@ -246,7 +246,7 @@ func (b *bleveBackend) BuildIndex(
 		}
 	}
 
-	resourceDir := filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
+	resourceDir := b.getResourceDir(key)
 
 	var index bleve.Index
 	cachedIndex := b.getCachedIndex(key)
@@ -385,6 +385,10 @@ func (b *bleveBackend) BuildIndex(
 	b.cleanOldIndexes(resourceDir, fileIndexName)
 
 	return idx, nil
+}
+
+func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {
+	return filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 }
 
 func cleanFileSegment(input string) string {
