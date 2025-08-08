@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Tümünü seç",
       "select-checkbox": "Seçin",
       "tags-column": "Etiketler"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Öge yok"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "İptal",
@@ -5691,11 +5704,9 @@
       "api-error": "",
       "cancel-action": "İptal et",
       "delete-action": "Panoyu sil",
-      "delete-read-only-file-message": "",
       "deleting": "Siliniyor...",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Bu depo salt okunur"
+      "success-message": ""
     },
     "description-label": {
       "description": "Açıklama"
@@ -6067,7 +6078,6 @@
       "api-error": "Pano kaydedilirken hata oluştu",
       "cancel": "İptal",
       "cannot-be-saved": "Bu pano başka bir kaynaktan sağlandığı için Grafana kullanıcı arayüzünden kaydedilemez. JSON'u kopyalayın veya aşağıdan bir dosyaya kaydedin, ardından sağlama kaynağındaki panonuzu güncelleyebilirsiniz.",
-      "copy-json-message": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın.",
       "copy-json-to-clipboard": "JSON'u panoya kopyala",
       "file-path": "<0>Dosya yolu:</0> {{filePath}} ",
       "label-description": "Açıklama",
@@ -6079,7 +6089,6 @@
       "see-docs": "Sağlama hakkında daha fazla bilgi için <2>belgelere</2> bakın. ",
       "title-required": "Pano başlığı gereklidir",
       "title-same-as-folder": "Pano adı klasör adı ile aynı olamaz",
-      "title-this-repository-is-read-only": "Bu depo salt okunur",
       "title-validation-failed": "Pano başlığı doğrulanamadı."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Bu hata hakkında daha fazla bilgi edinmek için <2>buraya</2> tıklayın.",
-    "success-more-details-links": "Ardından, bir <2>pano oluşturarak</2> veya <5>Keşfet görünümünde</5> verileri sorgulayarak verileri görselleştirmeye başlayabilirsiniz."
+    "success-more-details-links": "Ardından, bir <2>pano oluşturarak</2> veya <5>Keşfet görünümünde</5> verileri sorgulayarak verileri görselleştirmeye başlayabilirsiniz.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Pano oluştur",
-      "explore-data": "Verileri keşfedin"
+      "explore-data": "Verileri keşfedin",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Hata hakkında daha fazla bilgi"

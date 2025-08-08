@@ -3567,6 +3567,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3605,6 +3612,9 @@
       "select-all-header-checkbox": "Wybierz wszystko",
       "select-checkbox": "Wybierz",
       "tags-column": "Znaczniki"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "",
@@ -3648,6 +3658,9 @@
     },
     "name-cell": {
       "no-items": "Brak elementów"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Anuluj",
@@ -5731,11 +5744,9 @@
       "api-error": "",
       "cancel-action": "Anuluj",
       "delete-action": "Usuń pulpit",
-      "delete-read-only-file-message": "",
       "deleting": "Usuwanie…",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
+      "success-message": ""
     },
     "description-label": {
       "description": "Opis"
@@ -6111,7 +6122,6 @@
       "api-error": "Błąd podczas zapisywania pulpitu",
       "cancel": "Anuluj",
       "cannot-be-saved": "Nie można zapisać tego pulpitu z poziomu interfejsu Grafany, ponieważ został on skonfigurowany z innego źródła. Skopiuj treść JSON lub zapisz ją w poniższym pliku, a następnie zaktualizuj pulpit w źródle aprowizacji.",
-      "copy-json-message": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam.",
       "copy-json-to-clipboard": "Kopiuj JSON do schowka",
       "file-path": "<0>Ścieżka do pliku:</0> {{filePath}}",
       "label-description": "Opis",
@@ -6123,7 +6133,6 @@
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>.",
       "title-required": "Wymagany tytuł pulpitu",
       "title-same-as-folder": "Nazwa pulpitu nie może być taka sama jak nazwa folderu",
-      "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu",
       "title-validation-failed": "Walidacja tytułu pulpitu się nie powiodła."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6429,7 +6438,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Kliknij <2>tutaj</2>, aby dowiedzieć się więcej o tym błędzie.",
-    "success-more-details-links": "Następnie możesz rozpocząć wizualizację danych, <2>tworząc pulpit</2> lub tworząc zapytanie dotyczące danych w widoku <5>Eksploruj</5>."
+    "success-more-details-links": "Następnie możesz rozpocząć wizualizację danych, <2>tworząc pulpit</2> lub tworząc zapytanie dotyczące danych w widoku <5>Eksploruj</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6568,7 +6578,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Utwórz pulpit",
-      "explore-data": "Przeglądaj dane"
+      "explore-data": "Przeglądaj dane",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Więcej informacji o błędzie"

@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Seleziona tutto",
       "select-checkbox": "Seleziona",
       "tags-column": "Tag"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Nessun elemento"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Annulla",
@@ -5691,11 +5704,9 @@
       "api-error": "",
       "cancel-action": "Annulla",
       "delete-action": "Elimina dashboard",
-      "delete-read-only-file-message": "",
       "deleting": "Eliminazione in corso...",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Questo repository è di sola lettura"
+      "success-message": ""
     },
     "description-label": {
       "description": "Descrizione"
@@ -6067,7 +6078,6 @@
       "api-error": "Errore durante il salvataggio del dashboard",
       "cancel": "Annulla",
       "cannot-be-saved": "Questa dashboard non può essere salvata dall'interfaccia utente di Grafana perché è stata fornita da un'altra fonte. Copia il JSON o salvalo in un file qui sotto, dopodiché potrai aggiornare la dashboard nella fonte di provisioning.",
-      "copy-json-message": "Se hai accesso diretto alla destinazione, copia il file JSON e incollalo lì.",
       "copy-json-to-clipboard": "Copia JSON negli appunti",
       "file-path": "<0>Percorso file:</0> {{filePath}}",
       "label-description": "Descrizione",
@@ -6079,7 +6089,6 @@
       "see-docs": "Consulta la <2>documentazione</2> per ulteriori informazioni sul provisioning.",
       "title-required": "Il titolo del dashboard è obbligatorio",
       "title-same-as-folder": "Il nome del dashboard non può essere uguale al nome della cartella",
-      "title-this-repository-is-read-only": "Questo repository è di sola lettura",
       "title-validation-failed": "Convalida del titolo del dashboard non riuscita."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Fai clic <2>qui</2> per saperne di più su questo errore.",
-    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>."
+    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Crea una dashboard",
-      "explore-data": "Esplora i dati"
+      "explore-data": "Esplora i dati",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Maggiori dettagli sull'errore"
