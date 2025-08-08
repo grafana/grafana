@@ -90,6 +90,8 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       color: theme.colors.text.secondary,
       width: '100%',
       overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -101,6 +103,8 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       minWidth: 0,
       flex: 1,
       justifyContent: 'flex-end',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     }),
     logo: css({
       width: '32px',

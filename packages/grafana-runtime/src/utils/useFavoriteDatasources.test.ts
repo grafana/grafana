@@ -55,8 +55,6 @@ describe('useFavoriteDatasources', () => {
   }
 
   const mockDS1 = createDataSource('prometheus', 1);
-  const mockDS2 = createDataSource('loki', 2);
-  const mockDS3 = createDataSource('elasticsearch', 3);
   const mockBuiltInDS = createDataSource('grafana', 4, true);
 
   beforeEach(() => {

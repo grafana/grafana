@@ -6425,6 +6425,10 @@
       }
     }
   },
+  "datasource-card": {
+    "add-favorite": "Add to favorites",
+    "remove-favorite": "Remove from favorites"
+  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "You do not have permission to configure new data sources"
