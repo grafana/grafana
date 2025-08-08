@@ -51,6 +51,7 @@ export const getGridStyles = (
     },
 
     '.rdg-cell.rdg-cell-frozen': {
+      backgroundColor: '--rdg-row-background-color',
       zIndex: theme.zIndex.tooltip - 4,
       '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
       '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
@@ -138,7 +139,6 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, should
     display: 'flex',
     alignItems: 'center',
     textAlign,
-    backgroundClip: 'padding-box !important', // helps when cells have a bg color
     justifyContent: getJustifyContent(textAlign),
     ...(shouldOverflow && { minHeight: '100%' }),
     '&:hover, &[aria-selected=true]': {
