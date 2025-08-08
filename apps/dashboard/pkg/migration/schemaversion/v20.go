@@ -144,7 +144,6 @@ var legacyVariableNamesRegex = regexp.MustCompile(`(__series_name)|(\$__series_n
 // updateVariablesSyntax updates legacy variable names to new dotted syntax
 // This function replicates the frontend updateVariablesSyntax behavior
 func updateVariablesSyntax(text string) string {
-
 	return legacyVariableNamesRegex.ReplaceAllStringFunc(text, func(match string) string {
 		switch match {
 		case "__series_name":
