@@ -1,16 +1,27 @@
 import { css, cx } from '@emotion/css';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Card, TagList, useTheme2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Card, TagList, useTheme2, IconButton } from '@grafana/ui';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
   onClick: () => void;
   selected: boolean;
   description?: string;
+  isFavorite?: boolean;
+  onToggleFavorite?: (ds: DataSourceInstanceSettings) => void;
 }
 
-export function DataSourceCard({ ds, onClick, selected, description, ...htmlProps }: DataSourceCardProps) {
+export function DataSourceCard({
+  ds,
+  onClick,
+  selected,
+  description,
+  isFavorite = false,
+  onToggleFavorite,
+  ...htmlProps
+}: DataSourceCardProps) {
   const theme = useTheme2();
   const styles = getStyles(theme, ds.meta.builtIn);
 
@@ -26,7 +37,24 @@ export function DataSourceCard({ ds, onClick, selected, description, ...htmlProp
           <span className={styles.name}>
             {ds.name} {ds.isDefault ? <TagList tags={['default']} /> : null}
           </span>
-          <small className={styles.type}>{description || ds.meta.name}</small>
+          <div className={styles.rightSection}>
+            <small className={styles.type}>{description || ds.meta.name}</small>
+            {onToggleFavorite && !ds.meta.builtIn && (
+              <IconButton
+                name={isFavorite ? 'favorite' : 'star'}
+                aria-label={
+                  isFavorite
+                    ? t('datasource-card.remove-favorite', 'Remove from favorites')
+                    : t('datasource-card.add-favorite', 'Add to favorites')
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(ds);
+                }}
+                className={styles.favoriteButton}
+              />
+            )}
+          </div>
         </div>
       </Card.Heading>
       <Card.Figure className={styles.logo}>
@@ -62,10 +90,17 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       color: theme.colors.text.secondary,
       width: '100%',
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
       display: 'flex',
       justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    rightSection: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      minWidth: 0,
+      flex: 1,
+      justifyContent: 'flex-end',
     }),
     logo: css({
       width: '32px',
@@ -91,6 +126,11 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       whiteSpace: 'nowrap',
       display: 'flex',
       alignItems: 'center',
+    }),
+    favoriteButton: css({
+      flexShrink: 0,
+      pointerEvents: 'auto',
+      zIndex: 1,
     }),
     separator: css({
       margin: theme.spacing(0, 1),

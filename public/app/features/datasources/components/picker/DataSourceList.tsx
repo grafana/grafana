@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { getTemplateSrv } from '@grafana/runtime';
+import { config, getTemplateSrv, useFavoriteDatasources } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
@@ -74,6 +74,17 @@ export function DataSourceList(props: DataSourceListProps) {
     });
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
+
+  const favoriteDataSourcesHook = config.featureToggles.favoriteDatasources ? useFavoriteDatasources() : null;
+  const { storedFavoriteDataSources, toggleFavoriteDatasource, isFavoriteDatasource } = useMemo(
+    () => ({
+      storedFavoriteDataSources: favoriteDataSourcesHook?.initialFavoriteDataSources,
+      toggleFavoriteDatasource: favoriteDataSourcesHook?.toggleFavoriteDatasource,
+      isFavoriteDatasource: favoriteDataSourcesHook?.isFavoriteDatasource,
+    }),
+    [favoriteDataSourcesHook]
+  );
+
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   return (
@@ -86,7 +97,14 @@ export function DataSourceList(props: DataSourceListProps) {
         <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
       )}
       {filteredDataSources
-        .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
+        .sort(
+          getDataSourceCompareFn(
+            current,
+            recentlyUsedDataSources,
+            getDataSourceVariableIDs(),
+            storedFavoriteDataSources
+          )
+        )
         .map((ds) => (
           <DataSourceCard
             data-testid="data-source-card"
@@ -97,6 +115,8 @@ export function DataSourceList(props: DataSourceListProps) {
               onChange(ds);
             }}
             selected={isDataSourceMatch(ds, current)}
+            isFavorite={isFavoriteDatasource ? isFavoriteDatasource(ds.uid) : undefined}
+            onToggleFavorite={toggleFavoriteDatasource}
             {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
