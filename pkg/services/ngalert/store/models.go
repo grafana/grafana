@@ -30,7 +30,7 @@ type alertRule struct {
 	IsPaused                    bool
 	NotificationSettings        string `xorm:"notification_settings"`
 	Metadata                    string `xorm:"metadata"`
-	MissingSeriesEvalsToResolve *int   `xorm:"missing_series_evals_to_resolve"`
+	MissingSeriesEvalsToResolve *int64 `xorm:"missing_series_evals_to_resolve"`
 }
 
 func (a alertRule) TableName() string {
@@ -68,7 +68,7 @@ type alertRuleVersion struct {
 	IsPaused                    bool
 	NotificationSettings        string `xorm:"notification_settings"`
 	Metadata                    string `xorm:"metadata"`
-	MissingSeriesEvalsToResolve *int   `xorm:"missing_series_evals_to_resolve"`
+	MissingSeriesEvalsToResolve *int64 `xorm:"missing_series_evals_to_resolve"`
 }
 
 // EqualSpec compares two alertRuleVersion objects for equality based on their specifications and returns true if they match.

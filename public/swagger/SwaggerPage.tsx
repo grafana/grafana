@@ -125,6 +125,7 @@ export const Page = () => {
               tryItOutEnabled={true}
               queryConfigEnabled={false}
               persistAuthorization={false}
+              displayOperationId
             />
           )}
           {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
