@@ -39,8 +39,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "gdev-prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -121,10 +121,10 @@
       "targets": [
         {
           "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
           },
-          "queryType": "randomWalk",
+          "expr": "test()",
           "refId": "A"
         }
       ],
@@ -139,26 +139,27 @@
       {
         "baseFilters": [],
         "datasource": {
-          "type": "datasource",
-          "uid": "grafana"
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
         },
         "filters": [
           {
             "condition": "",
             "key": "environment",
             "keyLabel": "environment",
+            "matchAllFilter": false,
             "operator": "=",
-            "value": "dev",
-            "valueLabels": ["dev"],
-            "values": ["dev"]
+            "origin": "dashboard",
+            "restorable": false,
+            "value": "prod",
+            "valueLabels": ["prod"],
+            "values": ["prod"]
           },
           {
             "condition": "",
             "key": "container",
             "keyLabel": "container",
             "operator": "=",
-            "origin": "dashboard",
-            "restorable": false,
             "value": "test",
             "valueLabels": ["test"]
           }
@@ -167,14 +168,17 @@
         "type": "adhoc"
       },
       {
-        "current": {},
+        "current": {
+          "text": ["job"],
+          "value": ["job"]
+        },
         "datasource": {
-          "type": "datasource",
-          "uid": "grafana"
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
         },
         "defaultValue": {
-          "text": ["job", "version", "cpu"],
-          "value": ["job", "version", "cpu"]
+          "text": ["job"],
+          "value": ["job"]
         },
         "name": "groupBy",
         "type": "groupby"
@@ -187,8 +191,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Scopes Dashboard 2",
-  "uid": "scopes-dashboard-2",
+  "title": "Scopes Dashboard 1",
+  "uid": "scopes-dashboard-1",
   "version": 3,
   "weekStart": ""
 }

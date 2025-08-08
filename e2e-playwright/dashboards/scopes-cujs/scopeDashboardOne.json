@@ -39,8 +39,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "gdev-prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -121,10 +121,10 @@
       "targets": [
         {
           "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
           },
-          "queryType": "randomWalk",
+          "expr": "test()",
           "refId": "A"
         }
       ],
@@ -139,8 +139,8 @@
       {
         "baseFilters": [],
         "datasource": {
-          "type": "datasource",
-          "uid": "grafana"
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
         },
         "filters": [
           {
@@ -173,8 +173,8 @@
           "value": ["job"]
         },
         "datasource": {
-          "type": "datasource",
-          "uid": "grafana"
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
         },
         "defaultValue": {
           "text": ["job"],

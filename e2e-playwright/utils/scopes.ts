@@ -1,5 +1,6 @@
-import { SECOND_DASHBOARD } from './dashboard-navigation.spec';
-import { TestScope } from './scopeUtils';
+import { SECOND_DASHBOARD } from '../dashboard-cujs/scope-cujs.spec';
+
+import { TestScope } from './scope-helpers';
 
 export const testScopes: TestScope[] = [
   {
@@ -79,22 +80,22 @@ export const testScopes: TestScope[] = [
     ],
   },
   {
-    name: 'sn-test',
-    title: 'Test Multi Select',
+    name: 'sn-other-teams',
+    title: 'Other teams',
     children: [
       {
-        name: 'sn-test-c',
-        title: 'Cluster',
+        name: 'sn-other-teams-t',
+        title: 'Test',
         disableMultiSelect: true,
         children: [
           {
-            name: 'sn-test-c-multi',
+            name: 'sn-other-teams-t-multi',
             title: 'Multi group',
             children: [],
             addLinks: true,
           },
           {
-            name: 'sn-test-c-another',
+            name: 'sn-other-teams-t-another',
             title: 'Another group',
             addLinks: true,
             filters: [],

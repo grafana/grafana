@@ -17,9 +17,9 @@ const LIVE_DASHBOARD_UID = process.env.LIVE_DASHBOARD_UID;
 export const FIRST_DASHBOARD = USE_LIVE_DATA && LIVE_DASHBOARD_UID ? LIVE_DASHBOARD_UID : 'scopes-dashboard-1';
 
 test.describe(
-  'Dashboard navigation CUJs',
+  'AdHoc Filters CUJs',
   {
-    tag: ['@dashnav-cujs'],
+    tag: ['@adhocs-cujs'],
   },
   () => {
     //todo
