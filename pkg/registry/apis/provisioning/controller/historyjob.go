@@ -71,7 +71,7 @@ func (c *HistoryJobController) cleanupJob(obj interface{}) {
 				"age", age,
 				"error", err)
 		} else {
-			c.logger.Debug("Deleted expired HistoryJob",
+			c.logger.Info("Deleted expired HistoryJob",
 				"namespace", job.Namespace,
 				"name", job.Name,
 				"age", age)
