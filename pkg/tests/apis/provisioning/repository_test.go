@@ -115,50 +115,61 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 	// Viewer can see settings listing
 	t.Run("viewer has access to list", func(t *testing.T) {
-		settings := &provisioning.RepositoryViewList{}
-		rsp := helper.ViewerREST.Get().
-			Namespace("default").
-			Suffix("settings").
-			Do(context.Background())
-		require.NoError(t, rsp.Error())
-		err := rsp.Into(settings)
-		require.NoError(t, err)
-		require.Len(t, settings.Items, len(inputFiles))
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			settings := &provisioning.RepositoryViewList{}
+			rsp := helper.ViewerREST.Get().
+				Namespace("default").
+				Suffix("settings").
+				Do(context.Background())
+			if !assert.NoError(collect, rsp.Error()) {
+				return
+			}
 
-		// FIXME: this should be an enterprise integration test
-		if extensions.IsEnterprise {
-			require.ElementsMatch(t, []provisioning.RepositoryType{
-				provisioning.LocalRepositoryType,
-				provisioning.GitHubRepositoryType,
-				provisioning.GitRepositoryType,
-				provisioning.BitbucketRepositoryType,
-				provisioning.GitLabRepositoryType,
-			}, settings.AvailableRepositoryTypes)
-		} else {
-			require.ElementsMatch(t, []provisioning.RepositoryType{
-				provisioning.LocalRepositoryType,
-				provisioning.GitHubRepositoryType,
-			}, settings.AvailableRepositoryTypes)
-		}
+			err := rsp.Into(settings)
+			if !assert.NoError(collect, err) {
+				return
+			}
+			if !assert.Len(collect, settings.Items, len(inputFiles)) {
+				return
+			}
+
+			// FIXME: this should be an enterprise integration test
+			if extensions.IsEnterprise {
+				assert.ElementsMatch(collect, []provisioning.RepositoryType{
+					provisioning.LocalRepositoryType,
+					provisioning.GitHubRepositoryType,
+					provisioning.GitRepositoryType,
+					provisioning.BitbucketRepositoryType,
+					provisioning.GitLabRepositoryType,
+				}, settings.AvailableRepositoryTypes)
+			} else {
+				assert.ElementsMatch(collect, []provisioning.RepositoryType{
+					provisioning.LocalRepositoryType,
+					provisioning.GitHubRepositoryType,
+				}, settings.AvailableRepositoryTypes)
+			}
+		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
-		report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
-			Method: http.MethodGet,
-			Path:   "/api/admin/usage-report-preview",
-			User:   helper.Org1.Admin,
-		}, &usagestats.Report{})
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
+				Method: http.MethodGet,
+				Path:   "/api/admin/usage-report-preview",
+				User:   helper.Org1.Admin,
+			}, &usagestats.Report{})
 
-		stats := map[string]any{}
-		for k, v := range report.Result.Metrics {
-			if strings.HasPrefix(k, "stats.repository.") {
-				stats[k] = v
+			stats := map[string]any{}
+			for k, v := range report.Result.Metrics {
+				if strings.HasPrefix(k, "stats.repository.") {
+					stats[k] = v
+				}
 			}
-		}
-		require.Equal(t, map[string]any{
-			"stats.repository.github.count": 1.0,
-			"stats.repository.local.count":  1.0,
-		}, stats)
+			assert.Equal(collect, map[string]any{
+				"stats.repository.github.count": 1.0,
+				"stats.repository.local.count":  1.0,
+			}, stats)
+		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
 }
 
