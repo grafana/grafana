@@ -788,7 +788,7 @@
       },
       "filterBy": "Filter by:",
       "too-many-events": {
-        "text": "The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.",
+        "text": "The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.",
         "title": "Unable to display all events"
       }
     },
@@ -5233,6 +5233,7 @@
         "new": "New tab",
         "repeat": {
           "learn-more": "Learn more",
+          "loading": "Loading tab repeats",
           "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
         }
       },
