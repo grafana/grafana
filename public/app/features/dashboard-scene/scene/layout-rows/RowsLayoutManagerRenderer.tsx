@@ -7,6 +7,7 @@ import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
+import { isInCloneChain } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
@@ -19,6 +20,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
   const { hasCopiedRow } = useClipboardState();
+
+  const isClone = isInCloneChain(rows[0]?.state.key || '');
 
   return (
     <DragDropContext
@@ -42,7 +45,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
               <RowWrapper row={row} manager={model} key={row.state.key!} />
             ))}
             {dropProvided.placeholder}
-            {isEditing && (
+            {isEditing && !isClone && (
               <div className="dashboard-canvas-add-button">
                 <Button
                   icon="plus"
