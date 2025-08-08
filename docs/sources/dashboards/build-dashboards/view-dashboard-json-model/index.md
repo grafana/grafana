@@ -70,7 +70,7 @@ In the following JSON, id is shown as null which is the default value assigned t
   "schemaVersion": 17,
   "version": 0,
   "links": [],
-  "liveNow": fasle,
+  "liveNow": false,
   "panels": []
 }
 ```
