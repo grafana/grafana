@@ -33,7 +33,7 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 		if _, ok := err.(*schemaversion.MigrationError); ok {
 			errorType = "schema_version_migration_error"
 		} else if _, ok := err.(*schemaversion.MinimumVersionError); ok {
-			errorType = "minimum_version_error"
+			errorType = "schema_minimum_version_error"
 		}
 
 		// Record failure metrics
@@ -48,7 +48,7 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 		logger.Error("Dashboard conversion failed",
 			"sourceVersionAPI", dashv0.APIVERSION,
 			"targetVersionAPI", dashv1.APIVERSION,
-			"dashboardUID", in.ObjectMeta.UID,
+			"dashboardUID", in.UID,
 			"sourceSchemaVersion", in.Spec.Object["schemaVersion"],
 			"targetSchemaVersion", schemaversion.LATEST_VERSION,
 			"errorType", errorType,

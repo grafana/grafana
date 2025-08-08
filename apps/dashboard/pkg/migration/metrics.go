@@ -31,7 +31,6 @@ func init() {
 		Name:      "conversion_failure_total",
 		Help:      "Total number of failed dashboard conversions",
 	}, []string{"source_version_api", "target_version_api", "source_schema_version", "target_schema_version", "error_type"})
-
 }
 
 // RegisterMetrics registers all migration metrics with the provided Prometheus registerer
