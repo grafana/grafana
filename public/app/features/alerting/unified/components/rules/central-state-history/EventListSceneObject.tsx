@@ -29,6 +29,7 @@ import { AITriageButtonComponent } from '../../../enterprise-components/AI/AIGen
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { createRelativeUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
@@ -65,6 +66,17 @@ export const HistoryEventsList = ({
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
+  const labelMatchers = parsePromQLStyleMatcherLooseSafe(valueInLabelFilter.toString());
+
+  // Prepare labels for filtering on the backend side.
+  // Backend supports only exact matchers.
+  const labelFilters: Record<string, string> = {};
+  labelMatchers.forEach((matcher) => {
+    if (!matcher.isRegex && matcher.isEqual) {
+      labelFilters[matcher.name] = matcher.value;
+    }
+  });
+
   const {
     data: stateHistory,
     isLoading,
@@ -74,6 +86,7 @@ export const HistoryEventsList = ({
     from: from,
     to: to,
     limit: LIMIT_EVENTS,
+    labels: Object.keys(labelFilters).length > 0 ? labelFilters : undefined,
   });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
@@ -102,7 +115,7 @@ export const HistoryEventsList = ({
         >
           {t(
             'alerting.central-alert-history.too-many-events.text',
-            'The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.'
+            'The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.'
           )}
         </Alert>
       )}
