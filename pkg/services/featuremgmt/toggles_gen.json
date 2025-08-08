@@ -2950,17 +2950,17 @@
     {
       "metadata": {
         "name": "tabularNumbers",
-        "resourceVersion": "1750754828442",
+        "resourceVersion": "1752078306230",
         "creationTimestamp": "2025-06-24T11:52:03Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-06-24 08:47:08.442537461 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-07-09 16:25:06.230922635 +0000 UTC"
         }
       },
       "spec": {
         "description": "Use fixed-width numbers globally in the UI",
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
