@@ -88,7 +88,7 @@ jobs:
     - name: Yarn install
       run: yarn install --immutable
       env:
-        # If the PR isn't from a fork then don't use the slower yarn checks
+        # Switch from default hardened mode to faster mode for internal PRs
         YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
@@ -113,7 +113,7 @@ jobs:
     - name: Yarn install
       run: yarn install --immutable
       env:
-        # If the PR isn't from a fork then don't use the slower yarn checks
+        # Switch from default hardened mode to faster mode for internal PRs
         YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
@@ -134,7 +134,7 @@ jobs:
     - name: Yarn install
       run: yarn install --immutable
       env:
-        # If the PR isn't from a fork then don't use the slower yarn checks
+        # Switch from default hardened mode to faster mode for internal PRs
         YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
