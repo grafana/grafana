@@ -261,6 +261,7 @@ export const LogListContextProvider = ({
             datasourceUid: datasource.uid,
             datasourceName: datasource.name,
             datasourceType: datasource.type,
+            img: datasource.meta?.info?.logos?.small,
           })
         );
       }

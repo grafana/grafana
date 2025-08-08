@@ -87,28 +87,17 @@ type persistentStore struct {
 	// expiry is the time after which a job is considered abandoned.
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
-
-	// notifications has a signal sent to it when a new job is inserted. If a value already exists, nothing is sent.
-	//
-	// This is very similar to the concept of a Waker in Rust: <https://doc.rust-lang.org/std/task/struct.Waker.html>
-	notifications chan struct{}
 }
 
-func NewJobStore(
-	jobStore jobStorage,
-	expiry time.Duration,
-) (*persistentStore, error) {
+func NewJobStore(jobStore jobStorage, expiry time.Duration) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
 
 	return &persistentStore{
 		jobStore: jobStore,
-
-		clock:  time.Now,
-		expiry: expiry,
-
-		notifications: make(chan struct{}, 1),
+		clock:    time.Now,
+		expiry:   expiry,
 	}, nil
 }
 
@@ -253,6 +242,24 @@ func (s *persistentStore) Update(ctx context.Context, job *provisioning.Job) (*p
 	return updatedJob, nil
 }
 
+// Get retrieves a job by name for conflict resolution.
+func (s *persistentStore) Get(ctx context.Context, name string) (*provisioning.Job, error) {
+	obj, err := s.jobStore.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, apifmt.Errorf("job '%s' not found", name)
+		}
+		return nil, apifmt.Errorf("failed to get job '%s': %w", name, err)
+	}
+
+	job, ok := obj.(*provisioning.Job)
+	if !ok {
+		return nil, apifmt.Errorf("unexpected object type %T", obj)
+	}
+
+	return job, nil
+}
+
 // Complete marks a job as completed and moves it to the historic job store.
 // When in the historic store, there is no more claim on the job.
 func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) error {
@@ -279,24 +286,71 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	return nil
 }
 
-// Cleanup should be called periodically to clean up abandoned jobs.
-// An abandoned job is one that has been claimed by a worker, but the worker has not updated the job in a while.
-func (s *persistentStore) Cleanup(ctx context.Context) error {
-	if err := s.cleanupClaims(ctx); err != nil {
-		return apifmt.Errorf("failed to clean up claims: %w", err)
+// RenewLease renews the lease for a claimed job, extending its expiry time.
+// Returns an error if the lease cannot be renewed (e.g., job was completed or lease expired).
+func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job) error {
+	if job.Labels == nil || job.Labels[LabelJobClaim] == "" {
+		return apifmt.Errorf("job '%s' in '%s' is not claimed", job.GetName(), job.GetNamespace())
 	}
 
+	// Fetch the latest version to avoid conflicts
+	latestObj, err := s.jobStore.Get(ctx, job.GetName(), &metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
+		}
+		return apifmt.Errorf("failed to fetch job for lease renewal '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	}
+
+	latestJob, ok := latestObj.(*provisioning.Job)
+	if !ok {
+		return apifmt.Errorf("unexpected object type %T", latestObj)
+	}
+
+	// Verify we still own the lease
+	if latestJob.Labels == nil || latestJob.Labels[LabelJobClaim] == "" {
+		return apifmt.Errorf("lease lost for job '%s' in '%s': no longer claimed", job.GetName(), job.GetNamespace())
+	}
+
+	// Update the claim timestamp to current time
+	updatedJob := latestJob.DeepCopy()
+	updatedJob.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
+
+	// Update the job in storage with the latest resource version
+	_, _, err = s.jobStore.Update(ctx,
+		updatedJob.GetName(),                      // name
+		rest.DefaultUpdatedObjectInfo(updatedJob), // objInfo
+		failCreation,                              // createValidation
+		nil,                                       // updateValidation
+		false,                                     // forceAllowCreate
+		&metav1.UpdateOptions{},                   // options
+	)
+	if apierrors.IsConflict(err) {
+		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': lease conflict", job.GetName(), job.GetNamespace())
+	}
+	if apierrors.IsNotFound(err) || errors.Is(err, errWouldCreate) {
+		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
+	}
+	if err != nil {
+		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	}
+
+	// Update the job's claim timestamp and resource version in memory
+	job.Labels[LabelJobClaim] = updatedJob.Labels[LabelJobClaim]
+	job.ResourceVersion = updatedJob.ResourceVersion
 	return nil
 }
 
-// cleanupClaims will clean up abandoned claims.
-// Any claim that is older than the expiry time will have their claims removed.
-//
-// This is only necessary because Kubernetes does not support logical OR in label selectors.
-func (s *persistentStore) cleanupClaims(ctx context.Context) error {
-	// We will list all jobs that have been claimed but not updated in a while.
-	// We will then remove the claim from them.
-	// We will not care about the result of the update, as the job may have been completed in the meantime.
+// Cleanup finds jobs with expired leases and marks them as failed.
+// This replaces the old cleanup mechanism and should be called more frequently.
+func (s *persistentStore) Cleanup(ctx context.Context) error {
+	// Set up provisioning identity to access jobs across all namespaces
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants access to all namespaces
+	if err != nil {
+		return apifmt.Errorf("failed to grant provisioning identity for cleanup: %w", err)
+	}
+
+	// Find jobs with expired leases (older than expiry time)
 	expiry := s.clock().Add(-s.expiry).UnixMilli()
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.LessThan, []string{strconv.FormatInt(expiry, 10)})
 	if err != nil {
@@ -306,49 +360,42 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	jobsObj, err := s.jobStore.List(timeoutCtx, &internalversion.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*requirement),
-		// We don't need to clean up everything all the time. Just do enough such that we have a fair amount of work.
-		Limit: 100,
+		Limit:         100, // Process in batches
 	})
-	cancel() // by the time we have the list, there is no response body to read, so just cancel immediately
+	cancel()
 	if err != nil {
-		return apifmt.Errorf("failed to list jobs: %w", err)
+		return apifmt.Errorf("failed to list jobs with expired leases: %w", err)
 	}
 	jobs, ok := jobsObj.(*provisioning.JobList)
 	if !ok {
 		return apifmt.Errorf("unexpected object type %T", jobsObj)
 	}
 
-	for _, job := range jobs.Items {
-		if job.Labels == nil {
-			job.Labels = make(map[string]string)
-		}
-		delete(job.Labels, LabelJobClaim)
-		job.Status.State = provisioning.JobStatePending
+	// If no jobs found, cleanup is complete
+	if len(jobs.Items) == 0 {
+		return nil
+	}
 
-		// We list jobs from all namespaces. So when we want to update a specific job, we also need its namespace in the context.
+	for _, job := range jobs.Items {
+		// Mark job as failed due to lease expiry and archive it
+		job := job.DeepCopy()
+		job.Status.State = provisioning.JobStateError
+		job.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
+
+		// Set namespace context for the completion
 		ctx := request.WithNamespace(ctx, job.GetNamespace())
-		// Likewise, we should use the provisioning identity now that we have the namespace we are operating within.
 		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 		if err != nil {
-			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
 			return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 		}
 
-		timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		_, _, err := s.jobStore.Update(timeoutCtx,
-			job.GetName(),                       // name
-			rest.DefaultUpdatedObjectInfo(&job), // objInfo
-			failCreation,                        // createValidation
-			nil,                                 // updateValidation
-			false,                               // forceAllowCreate
-			&metav1.UpdateOptions{},             // options
-		)
-		cancel() // we have no response body to read, so just cancel immediately
-		if apierrors.IsConflict(err) || errors.Is(err, errWouldCreate) {
-			continue
-		}
-		if err != nil {
-			return apifmt.Errorf("failed to unclaim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+		// Use Complete to properly archive the failed job
+		if err := s.Complete(ctx, job); err != nil {
+			if apierrors.IsNotFound(err) {
+				// Job was already completed/deleted by another process
+				continue
+			}
+			return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 		}
 	}
 
@@ -388,17 +435,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, apifmt.Errorf("unexpected object type %T", obj)
 	}
 
-	select {
-	case s.notifications <- struct{}{}:
-	default:
-		// We don't want to block if there is already a notification waiting.
-	}
-
 	return created, nil
-}
-
-func (s *persistentStore) InsertNotifications() chan struct{} {
-	return s.notifications
 }
 
 // generateJobName creates and updates the job's name to one that fits it.

@@ -25,6 +25,13 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       maxHeight: '80%',
       display: 'flex',
       flexDirection: 'column',
+      // Centre the modal vertically on smaller height screens
+      // this allows us to fill the full height for maximum usability
+      ['@media (max-height: 750px)']: {
+        maxHeight: '100%',
+        top: '50%',
+        transform: 'translateY(-50%)',
+      },
     }),
     modalBackdrop: css({
       position: 'fixed',

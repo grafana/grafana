@@ -196,9 +196,7 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
       </Text>
       <div className={styles.desc}>{description}</div>
       <div className={styles.actionRow}>
-        <TextLink href={href} inline={false}>
-          {hrefText}
-        </TextLink>
+        <TextLink href={href}>{hrefText}</TextLink>
       </div>
     </div>
   );

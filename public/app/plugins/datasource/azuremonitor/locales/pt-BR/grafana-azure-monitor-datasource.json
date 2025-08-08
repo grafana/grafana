@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Ativar logs básicos"
     },
     "config-editor": {
-      "description-additional-settings": "As configurações adicionais são opcionais, e você pode defini-las para ter mais controle sobre sua fonte de dados. Isso inclui o proxy SOCKS seguro.",
-      "description-request-timeout": "Defina o tempo limite de solicitação em segundos. O tempo limite padrão é de 30 segundos.",
-      "title-additional-settings": "Configurações adicionais",
-      "title-request-timeout": "Tempo limite de solicitação"
+      "description-additional-settings": "",
+      "title-additional-settings": "Configurações adicionais"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "As credenciais de fallback foram desativadas. Como a autenticação baseada no usuário é compatível apenas com solicitações que apresentem um usuário no escopo, recursos como alertas, consultas gravadas ou relatórios não funcionarão como esperado. Consulte a <2>documentação</2> para saber mais.",
