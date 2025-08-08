@@ -1990,7 +1990,6 @@
       "label-time-intervals": "Time intervals"
     },
     "notification-policy-matchers": {
-      "default-policy": "Default policy",
       "no-matchers": "No matchers"
     },
     "notification-preview": {
@@ -2009,20 +2008,10 @@
       "no-labels": "No labels",
       "no-matching-labels": "No matching labels"
     },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Your alert instances are routed as follows.",
-      "close": "Close",
-      "contact-point": "Contact point",
-      "default-policy": "Default policy",
-      "notification-policy-path": "Notification policy path",
-      "see-details-link": "See details",
-      "title-routing-details": "Routing details"
-    },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Expand policy route",
-      "delivered-to": "@ Delivered to",
-      "notification-policy": "Notification policy",
-      "see-details": "View policy"
+      "delivered-to": "Delivered to",
+      "instances": "instances"
     },
     "notification-templates": {
       "duplicate": {
@@ -2151,10 +2140,6 @@
       "label-new-child-policy": "New child policy",
       "label-new-sibling-above": "New sibling above",
       "label-new-sibling-below": "New sibling below"
-    },
-    "policy-path": {
-      "default-policy": "Default policy",
-      "no-matchers": "No matchers"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Cannot display the query preview. Some of the data sources used in the queries are not available.",

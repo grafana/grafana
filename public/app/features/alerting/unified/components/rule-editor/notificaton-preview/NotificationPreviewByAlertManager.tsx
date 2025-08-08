@@ -5,14 +5,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { AlertManagerDataSource } from '../../../utils/datasource';
 
 import { ExternalContactPointGroup } from './ContactPointGroup';
-import { NotificationRoute } from './NotificationRoute';
+import { InstanceMatch } from './NotificationRoute';
 import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
 
 const UNKNOWN_RECEIVER = 'unknown';
@@ -55,18 +54,16 @@ function NotificationPreviewByAlertManager({
     );
   }
 
-  const matchingPoliciesFound = treeMatchingResults?.some((result) => result.matchedPolicies.size > 0);
+  const matchingPoliciesFound = treeMatchingResults?.some((result) => result.matchedPolicies.length > 0);
 
   // Group results by receiver name
   // We need to flatten the structure first to group by receiver
-  const flattenedResults = treeMatchingResults?.flatMap((result) => {
-    const entries = Array.from(result.matchedPolicies.entries());
-    return entries.map(([policy, instances]) => ({
-      treeMetadata: result.treeMetadata,
-      expandedTree: result.expandedTree,
-      policy,
-      instances,
-      receiver: policy.receiver ?? UNKNOWN_RECEIVER,
+  const flattenedResults = treeMatchingResults?.flatMap(({ labels, matchedPolicies }) => {
+    return Array.from(matchedPolicies).map(({ policy, policyTree, matchDetails }) => ({
+      labels,
+      receiver: policy.receiver || UNKNOWN_RECEIVER,
+      policyTree,
+      matchDetails,
     }));
   });
 
@@ -86,29 +83,21 @@ function NotificationPreviewByAlertManager({
         </Stack>
       )}
       <Stack gap={1} direction="column">
-        {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) =>
-          resultsForReceiver.map(({ treeMetadata, expandedTree, policy, instances }) => {
-            const matchers =
-              policy.matchers?.map<ObjectMatcher>(
-                (matcher) => [matcher.label, matcher.type, matcher.value] as ObjectMatcher
-              ) ?? [];
-
-            return (
-              <Stack direction="column" key={`${treeMetadata.name}-${policy.id}`}>
-                <ExternalContactPointGroup name={receiver} alertmanagerSourceName={alertManagerSource.name}>
-                  <NotificationRoute
-                    key={policy.id}
-                    // every instance has the same route that matched so it's fine to grab the first one
-                    isRootRoute={policy.id === expandedTree.id}
-                    matchers={matchers}
-                    matchedInstances={instances}
-                    alertManagerSourceName={alertManagerSource.name}
-                  />
-                </ExternalContactPointGroup>
+        {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) => (
+          <Stack direction="column" key={receiver}>
+            <ExternalContactPointGroup
+              name={receiver}
+              matchedInstancesCount={resultsForReceiver.length}
+              alertmanagerSourceName={alertManagerSource.name}
+            >
+              <Stack direction="column" gap={0}>
+                {resultsForReceiver.map(({ policyTree, matchDetails }) => (
+                  <InstanceMatch key={matchDetails.labels.join(',')} matchedInstance={matchDetails} />
+                ))}
               </Stack>
-            );
-          })
-        )}
+            </ExternalContactPointGroup>
+          </Stack>
+        ))}
       </Stack>
     </div>
   ) : null;

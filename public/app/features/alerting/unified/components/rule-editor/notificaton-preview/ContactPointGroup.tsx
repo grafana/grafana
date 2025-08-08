@@ -11,15 +11,17 @@ import { Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { createFieldSelector } from '../../../utils/k8s/utils';
 import { createContactPointLink } from '../../../utils/misc';
 import { CollapseToggle } from '../../CollapseToggle';
+import { MetaText } from '../../MetaText';
 import { ContactPointLink } from '../../rule-viewer/ContactPointLink';
 
 import UnknownContactPointDetails from './UnknownContactPointDetails';
 
 interface ContactPointGroupProps extends PropsWithChildren {
   name: string;
+  matchedInstancesCount: number;
 }
 
-export function GrafanaContactPointGroup({ name, children }: ContactPointGroupProps) {
+export function GrafanaContactPointGroup({ name, matchedInstancesCount, children }: ContactPointGroupProps) {
   // find receiver by name – since this is what we store in the alert rule definition
   const { data, isLoading } = alertingAPI.endpoints.listReceiver.useQuery({
     fieldSelector: createFieldSelector([['spec.title', name]]),
@@ -31,9 +33,10 @@ export function GrafanaContactPointGroup({ name, children }: ContactPointGroupPr
   return (
     <ContactPointGroup
       isLoading={isLoading}
+      matchedInstancesCount={matchedInstancesCount}
       name={
         contactPoint ? (
-          <ContactPointLink name={name} external color="primary" />
+          <ContactPointLink name={name} external color="primary" variant="bodySmall" />
         ) : (
           <UnknownContactPointDetails receiverName={name ?? 'unknown'} />
         )
@@ -58,19 +61,22 @@ export function ExternalContactPointGroup({
   return <ContactPointGroup name={link}>{children}</ContactPointGroup>;
 }
 
-export function ContactPointGroup({
-  name,
-  description,
-  isLoading = false,
-  children,
-}: {
+interface ContactPointGroupInnerProps extends ContactPointGroupProps {
   name: ReactNode;
   description?: ReactNode;
   isLoading?: boolean;
   children: ReactNode;
-}) {
+}
+
+export function ContactPointGroup({
+  name,
+  description,
+  matchedInstancesCount,
+  isLoading = false,
+  children,
+}: ContactPointGroupInnerProps) {
   const styles = useStyles2(getStyles);
-  const [isExpanded, toggleExpanded] = useToggle(true);
+  const [isExpanded, toggleExpanded] = useToggle(false);
 
   return (
     <Stack direction="column">
@@ -82,15 +88,26 @@ export function ContactPointGroup({
             aria-label={t('alerting.notification-route-header.aria-label-expand-policy-route', 'Expand policy route')}
           />
           {isLoading && loader}
-          {name && (
+          {!isLoading && (
             <>
-              <Text color="secondary">
-                <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans> {name}
-              </Text>
-              {description && (
-                <Text variant="bodySmall" color="secondary">
-                  ⋅ {description}
-                </Text>
+              {matchedInstancesCount && (
+                <MetaText icon="layers-alt">
+                  {/* @TODO pluralization */}
+                  {matchedInstancesCount}{' '}
+                  <Trans i18nKey="alerting.notification-route-header.instances">instances</Trans>
+                </MetaText>
+              )}
+              {name && (
+                <>
+                  <MetaText icon="at">
+                    <Trans i18nKey="alerting.notification-route-header.delivered-to">Delivered to</Trans> {name}
+                  </MetaText>
+                  {description && (
+                    <Text variant="bodySmall" color="secondary">
+                      ⋅ {description}
+                    </Text>
+                  )}
+                </>
               )}
             </>
           )}
@@ -111,6 +128,7 @@ const loader = (
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointRow: css({
     padding: theme.spacing(0.5),
+
     ':hover': {
       background: theme.components.table.rowHoverBackground,
     },
