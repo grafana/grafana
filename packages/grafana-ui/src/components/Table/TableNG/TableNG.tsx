@@ -56,6 +56,7 @@ import { getDefaultCellStyles, getFooterStyles, getGridStyles, getHeaderCellStyl
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps, TableCellStyleOptions } from './types';
 import {
   applySort,
+  canFieldBeColorized,
   computeColWidths,
   createTypographyContext,
   displayJsonValue,
@@ -379,10 +380,7 @@ export function TableNG(props: TableNGProps) {
         const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
-        const canBeColorized =
-          cellType === TableCellDisplayMode.ColorBackground ||
-          cellType === TableCellDisplayMode.ColorText ||
-          Boolean(applyToRowBgFn);
+        const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
         const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
 
         result.colsWithTooltip[displayName] = withTooltip;
@@ -447,28 +445,39 @@ export function TableNG(props: TableNGProps) {
             if (tooltipField) {
               _height ??= rowHeightFn(props.row);
 
-              const tooltipFieldCellOptions = getCellOptions(tooltipField);
-              const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipFieldCellOptions);
-              const cellStyleOptions: TableCellStyleOptions = {
+              const tooltipCellOptions = getCellOptions(tooltipField);
+              const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
+              const tooltipCellStyleOptions = {
                 textAlign: getAlignment(tooltipField),
                 textWrap: shouldTextWrap(tooltipField),
                 shouldOverflow: false,
-              };
-              const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
-              const targetFieldCellSpecificStyles = getCellSpecificStyles(
-                tooltipFieldCellOptions.type,
+              } satisfies TableCellStyleOptions;
+              const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
+              const defaultTooltipStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
+              const tooltipSpecificStyles = getCellSpecificStyles(
+                tooltipCellOptions.type,
                 tooltipField,
                 theme,
-                cellStyleOptions
+                tooltipCellStyleOptions
               );
+              const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
 
-              // TODO colorization of tooltips if people want that eventually.
+              let tooltipStyle: CSSProperties | undefined;
+              if (tooltipCanBeColorized) {
+                const displayName = getDisplayName(tooltipField);
+                const tooltipDisplayValue = tooltipField.display!(props.row[displayName]); // this is yet another call to field.display() for the tooltip field
+                let { textColor, bgColor } = getCellColors(theme, tooltipCellOptions, tooltipDisplayValue);
+                tooltipStyle = {
+                  color: textColor,
+                  background: bgColor,
+                };
+              }
 
               cellContent = (
                 <TooltipByField
                   key={key}
-                  cellOptions={tooltipFieldCellOptions}
-                  className={clsx(targetFieldCellSpecificStyles, defaultCellStyles)}
+                  cellOptions={tooltipCellOptions}
+                  className={clsx(defaultTooltipStyles, tooltipSpecificStyles, tooltipLinkStyles)}
                   data={data}
                   disableSanitizeHtml={disableSanitizeHtml}
                   field={tooltipField}
@@ -476,6 +485,7 @@ export function TableNG(props: TableNGProps) {
                   height={_height}
                   renderer={tooltipFieldRenderer}
                   rowIdx={rowIdx}
+                  style={tooltipStyle}
                   width={tooltipField.config.custom?.width}
                 >
                   {cellContent}

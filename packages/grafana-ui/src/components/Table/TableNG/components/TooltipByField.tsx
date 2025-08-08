@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { clsx } from 'clsx';
-import { ReactElement, cloneElement, useMemo, useRef } from 'react';
+import { CSSProperties, ReactElement, cloneElement, useMemo, useRef } from 'react';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 
@@ -22,6 +22,7 @@ export interface Props {
   height?: number;
   renderer: TableCellRenderer;
   rowIdx: number;
+  style?: CSSProperties;
   width?: number;
 }
 
@@ -36,12 +37,13 @@ export function TooltipByField({
   height: _height,
   renderer,
   rowIdx,
+  style,
   width = 300,
 }: Props) {
   const popoverRef = useRef<HTMLElement | null>(null);
   const rawValue = field.values[rowIdx];
   const height = _height ?? TABLE.MAX_CELL_HEIGHT;
-  const styles = useStyles2(getStyles, width, height);
+  const wrapperClass = useStyles2(getStyles, width, height);
   const theme = useTheme2();
   const rendererProps = useMemo(
     () =>
@@ -73,7 +75,8 @@ export function TooltipByField({
           {popoverRef.current && (
             <Popover
               {...popperProps}
-              wrapperClassName={clsx(className, styles)}
+              wrapperClassName={clsx(className, wrapperClass)}
+              style={style}
               referenceElement={popoverRef.current}
               onMouseLeave={hidePopper}
               onMouseEnter={showPopper}

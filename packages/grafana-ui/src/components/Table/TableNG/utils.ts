@@ -897,6 +897,15 @@ export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDis
   );
 }
 
+/** @internal */
+export function canFieldBeColorized(cellType: TableCellDisplayMode, applyToRowBgFn?: (rowIndex: number) => CellColors) {
+  return (
+    cellType === TableCellDisplayMode.ColorBackground ||
+    cellType === TableCellDisplayMode.ColorText ||
+    Boolean(applyToRowBgFn)
+  );
+}
+
 export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue => {
   let displayValue: string;
 
