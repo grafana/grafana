@@ -13,7 +13,7 @@ func CypressImage(version string) string {
 func CypressContainer(d *dagger.Client, base string) *dagger.Container {
 	container := d.Container().From(base).WithEntrypoint([]string{}).
 		WithExec([]string{"apt-get", "update", "-yq"}).
-		WithExec([]string{"apt-get", "install", "-yq", "make"})
+		WithExec([]string{"apt-get", "install", "-yq", "make", "gcc"})
 
 	return container
 }
