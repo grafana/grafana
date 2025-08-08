@@ -1041,7 +1041,9 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
-	quotaService := quotaimpl.ProvideService(store, configprovider.ProvideService(cfg))
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(store, cfgProvider)
 	orgService, err := ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

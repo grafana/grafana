@@ -44,7 +44,9 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 		role = testUser.Role
 	}
 
-	quotaService := quotaimpl.ProvideService(db, configprovider.ProvideService(cfg))
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(db, cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
@@ -123,7 +125,9 @@ func SetupApiKeys(t *testing.T, store db.DB, cfg *setting.Cfg, testKeys []TestAp
 func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, testUsers []TestUser) (users []user.User, orgID int64) {
 	role := string(org.RoleNone)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, configprovider.ProvideService(cfg))
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

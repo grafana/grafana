@@ -106,7 +106,9 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	}
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	quotaService := ProvideService(sqlStore, configprovider.ProvideService(cfg))
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := ProvideService(sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
@@ -248,7 +250,9 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			}()
 			cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{Enabled: util.Pointer(false)}
 
-			quotaSrv := ProvideService(sqlStore, configprovider.ProvideService(cfg))
+			cfgProvider, err := configprovider.ProvideService(cfg)
+			require.NoError(t, err)
+			quotaSrv := ProvideService(sqlStore, cfgProvider)
 			q, err := getQuotaBySrvTargetScope(t, quotaSrv, ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, quota.OrgScope, &quota.ScopeParameters{OrgID: o.ID})
 
 			require.NoError(t, err)

@@ -44,7 +44,9 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(testOrgID)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, configprovider.ProvideService(cfg))
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

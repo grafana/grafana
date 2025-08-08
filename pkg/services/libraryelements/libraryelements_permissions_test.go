@@ -33,7 +33,9 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	quotaService := quotaimpl.ProvideService(env.SQLStore, configprovider.ProvideService(env.Cfg))
+	cfgProvider, err := configprovider.ProvideService(env.Cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(env.SQLStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
 	require.NoError(t, err)
 
@@ -139,7 +141,9 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	quotaService := quotaimpl.ProvideService(env.SQLStore, configprovider.ProvideService(env.Cfg))
+	cfgProvider, err := configprovider.ProvideService(env.Cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(env.SQLStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
 	require.NoError(t, err)
 
@@ -358,7 +362,9 @@ func createUserInOrg(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUs
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, configprovider.ProvideService(cfg))
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(db, cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

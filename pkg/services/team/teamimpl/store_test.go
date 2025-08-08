@@ -48,7 +48,9 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				},
 			},
 		}
-		quotaService := quotaimpl.ProvideService(sqlStore, configprovider.ProvideService(cfg))
+		cfgProvider, err := configprovider.ProvideService(cfg)
+		require.NoError(t, err)
+		quotaService := quotaimpl.ProvideService(sqlStore, cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
@@ -454,7 +456,9 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
-				quotaService := quotaimpl.ProvideService(sqlStore, configprovider.ProvideService(cfg))
+				cfgProvider, err := configprovider.ProvideService(cfg)
+				require.NoError(t, err)
+				quotaService := quotaimpl.ProvideService(sqlStore, cfgProvider)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
@@ -610,7 +614,9 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), &team2Cmd)
 		require.NoError(t, errCreateTeam)
 
-		quotaService := quotaimpl.ProvideService(store, configprovider.ProvideService(cfg))
+		cfgProvider, err := configprovider.ProvideService(cfg)
+		require.NoError(t, err)
+		quotaService := quotaimpl.ProvideService(store, cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
