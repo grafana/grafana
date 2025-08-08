@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/rand"
 	"slices"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -186,88 +185,6 @@ func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.Get
 	return ruleList, nil
 }
 
-func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlertRulesByGroupQuery) (models.RulesGroup, string, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-
-	if err := f.Hook(*q); err != nil {
-		return nil, "", err
-	}
-
-	query := &models.ListAlertRulesQuery{
-		OrgID:                       q.OrgID,
-		NamespaceUIDs:               q.NamespaceUIDs,
-		DashboardUID:                q.DashboardUID,
-		PanelID:                     q.PanelID,
-		RuleGroups:                  q.RuleGroups,
-		RuleUIDs:                    q.RuleUIDs,
-		ReceiverName:                q.ReceiverName,
-		HasPrometheusRuleDefinition: q.HasPrometheusRuleDefinition,
-	}
-
-	ruleList, err := f.listAlertRules(query)
-	if err != nil {
-		return nil, "", err
-	}
-
-	// < group limit logic >
-
-	// sort rules to ensure order is consistent, pagination depends on this
-	slices.SortFunc(ruleList, func(a, b *models.AlertRule) int {
-		nsCmp := strings.Compare(a.NamespaceUID, b.NamespaceUID)
-		if nsCmp != 0 {
-			return nsCmp
-		}
-		rgCmp := strings.Compare(a.RuleGroup, b.RuleGroup)
-		if rgCmp != 0 {
-			return rgCmp
-		}
-		return models.RulesGroupComparer(a, b)
-	})
-
-	var nextToken string
-	var cursor models.GroupCursor
-	if q.GroupContinueToken != "" {
-		if cur, err := models.DecodeGroupCursor(q.GroupContinueToken); err == nil {
-			cursor = cur
-		}
-	}
-
-	if q.GroupLimit < 0 {
-		return ruleList, "", nil
-	}
-
-	outputRules := make([]*models.AlertRule, 0, len(ruleList))
-	var groupsFetched int64
-	initialCursor := cursor
-	for _, r := range ruleList {
-		// skip rules before the initial cursor
-		if initialCursor.NamespaceUID != "" &&
-			(strings.Compare(r.NamespaceUID, initialCursor.NamespaceUID) < 0 ||
-				(strings.Compare(r.NamespaceUID, initialCursor.NamespaceUID) == 0 && strings.Compare(r.RuleGroup, initialCursor.RuleGroup) <= 0)) {
-			continue
-		}
-
-		key := models.GroupCursor{
-			NamespaceUID: r.NamespaceUID,
-			RuleGroup:    r.RuleGroup,
-		}
-		if key != cursor {
-			if q.GroupLimit > 0 && groupsFetched == q.GroupLimit {
-				nextToken = models.EncodeGroupCursor(cursor)
-				break
-			}
-			cursor = key
-			groupsFetched++
-		}
-
-		outputRules = append(outputRules, r)
-	}
-
-	return outputRules, nextToken, nil
-}
-
 func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -277,10 +194,6 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		return nil, err
 	}
 
-	return f.listAlertRules(q)
-}
-
-func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
 	hasDashboard := func(r *models.AlertRule, dashboardUID string, panelID int64) bool {
 		if dashboardUID != "" {
 			if r.DashboardUID == nil || *r.DashboardUID != dashboardUID {
