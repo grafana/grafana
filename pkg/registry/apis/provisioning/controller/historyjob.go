@@ -6,12 +6,14 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 const (
@@ -62,8 +64,15 @@ func (c *HistoryJobController) cleanupJob(obj interface{}) {
 
 	age := time.Since(job.CreationTimestamp.Time)
 	if age > c.expirationTime {
-		ctx := context.Background()
-		err := c.client.HistoricJobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
+		namespace := job.Namespace
+		ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+		if err != nil {
+			c.logger.Error("Failed to set provisioning identity for cleanup", "error", err)
+			return
+		}
+
+		ctx = request.WithNamespace(ctx, namespace)
+		err = c.client.HistoricJobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			c.logger.Error("Failed to delete expired HistoryJob",
 				"namespace", job.Namespace,
