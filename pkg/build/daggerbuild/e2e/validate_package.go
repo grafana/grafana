@@ -6,7 +6,7 @@ import (
 )
 
 func CypressImage(version string) string {
-	return "cypress/included:13.1.0"
+	return "cypress/included:13.10.0"
 }
 
 // CypressContainer returns a docker container with everything set up that is needed to build or run e2e tests.
