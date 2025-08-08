@@ -2897,7 +2897,8 @@
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-06T16:28:52Z"
+        "creationTimestamp": "2023-06-06T16:28:52Z",
+        "deletionTimestamp": "2025-08-08T12:18:29Z"
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
