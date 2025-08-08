@@ -70,7 +70,12 @@
             ],
             "title": "Series: __series.name, Field: ${__field.name}, Time: __value.time"
           }
-        }
+        },
+        "justifyMode": "auto",
+        "percentChangeColorMode": "standard",
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "targets": [
         {
