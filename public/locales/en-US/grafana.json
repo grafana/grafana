@@ -5233,6 +5233,7 @@
         "new": "New tab",
         "repeat": {
           "learn-more": "Learn more",
+          "loading": "Loading tab repeats",
           "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
         }
       },
