@@ -16,8 +16,8 @@ import { DataFrame, DataFrameFieldIndex, Field, formattedValueToString, GrafanaT
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { VizTooltipItem } from '@grafana/ui/internal';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { DisplayValue } from 'app/features/visualization/data-hover/DataHoverView';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
 interface ExemplarMarkerProps {
@@ -137,8 +137,9 @@ export const ExemplarMarker = ({
       setClickedExemplarFieldIndex(undefined);
     };
 
-    let displayValues: DisplayValue[] = [];
+    let displayValues: VizTooltipItem[] = [];
     let links: LinkModel[] | undefined = [];
+
     orderedDataFrameFields.map((field: Field, i) => {
       const value = field.values[dataFrameFieldIndex.fieldIndex];
 
@@ -149,10 +150,9 @@ export const ExemplarMarker = ({
       const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
 
       displayValues.push({
-        name: field.name,
-        value,
-        valueString: formattedValueToString(fieldDisplay),
-        highlight: false,
+        label: field.state?.displayName ?? field.name,
+        value: formattedValueToString(fieldDisplay),
+        isActive: false,
       });
     });
 
@@ -164,7 +164,7 @@ export const ExemplarMarker = ({
         {...getFloatingProps()}
       >
         {isLocked && <CloseButton onClick={onClose} />}
-        <ExemplarTooltip displayValues={displayValues} links={links} isPinned={isLocked} maxHeight={maxHeight} />
+        <ExemplarTooltip items={displayValues} links={links} isPinned={isLocked} maxHeight={maxHeight} />
       </div>
     );
   }, [
