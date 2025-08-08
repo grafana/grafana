@@ -6,16 +6,12 @@ import (
 	"io"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
@@ -392,67 +388,5 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 				Do(ctx)
 			require.Error(t, result.Error(), "should fail when source file doesn't exist")
 		})
-	})
-
-	t.Run("move non-existent resource by reference", func(t *testing.T) {
-		// Create move job for non-existent resource
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
-					TargetPath: "moved-nonexistent/",
-					Resources: []provisioning.ResourceRef{
-						{
-							Name:  "non-existent-move-uid",
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
-						},
-					},
-				},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "should be able to create move job")
-
-		// Wait for job to complete - should record error but continue
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			list := &unstructured.UnstructuredList{}
-			err := helper.AdminREST.Get().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Do(ctx).Into(list)
-			assert.NoError(collect, err, "should be able to list jobs")
-			assert.NotEmpty(collect, list.Items, "expect at least one job")
-
-			// Find the most recent move job
-			var moveJob *unstructured.Unstructured
-			for _, elem := range list.Items {
-				assert.Equal(collect, repo, elem.GetLabels()["provisioning.grafana.app/repository"], "should have repo label")
-
-				action := mustNestedString(elem.Object, "spec", "action")
-				if action == "move" {
-					// Get the most recent one (they should be ordered by creation time)
-					moveJob = &elem
-				}
-			}
-			if !assert.NotNil(collect, moveJob, "should find a move job") {
-				return
-			}
-
-			state := mustNestedString(moveJob.Object, "status", "state")
-			// The job should complete but record errors for individual resource resolution failures
-			if state == "error" || state == "completed" || state == "success" {
-				// Any of these states is acceptable - the key is that resource resolution errors are recorded
-				// and don't fail the entire job due to error-tolerant implementation
-				return
-			}
-			assert.Fail(collect, "job should complete or error, but got state: %s", state)
-		}, time.Second*10, time.Millisecond*100, "Expected move job to handle non-existent resource")
 	})
 }

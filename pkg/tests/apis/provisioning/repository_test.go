@@ -192,49 +192,19 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	require.Error(t, err, "invalid dashboard shouldn't exist")
 	require.True(t, apierrors.IsNotFound(err))
 
-	var jobObj *unstructured.Unstructured
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionPull,
-				Pull:   &provisioning.SyncJobOptions{},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(t.Context())
-		require.NoError(collect, result.Error())
-		job, err := result.Get()
-		require.NoError(collect, err)
-		var ok bool
-		jobObj, ok = job.(*unstructured.Unstructured)
-		assert.True(collect, ok, "expecting unstructured object, but got %T", job)
-	}, time.Second*10, time.Millisecond*10, "Expected to be able to start a sync job")
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	}
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		// helper.TriggerJobProcessing(t)
-		result, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
-			"jobs", string(jobObj.GetUID()))
+	result := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+	job := &provisioning.Job{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job)
+	require.NoError(t, err, "should convert to Job object")
 
-		if apierrors.IsNotFound(err) {
-			assert.Fail(collect, "job '%s' not found yet yet", jobObj.GetName())
-			return // continue trying
-		}
-
-		// Can fail fast here -- the jobs are immutable
-		require.NoError(t, err)
-		require.NotNil(t, result)
-
-		job := &provisioning.Job{}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job)
-		require.NoError(t, err, "should convert to Job object")
-
-		assert.Equal(t, provisioning.JobStateError, job.Status.State)
-		assert.Equal(t, job.Status.Message, "completed with errors")
-		assert.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
-	}, time.Second*10, time.Millisecond*10, "Expected provisioning job to conclude with the status failed")
+	assert.Equal(t, provisioning.JobStateError, job.Status.State)
+	assert.Equal(t, job.Status.Message, "completed with errors")
+	assert.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 
 	_, err = helper.DashboardsV1.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
 	require.Error(t, err, "invalid dashboard shouldn't have been created")

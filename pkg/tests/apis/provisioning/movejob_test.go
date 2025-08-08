@@ -2,18 +2,15 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -26,26 +23,17 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 	const repo = "move-test-repo"
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo,
-		"SyncEnabled": true,
-		"SyncTarget":  "instance",
-	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
-	require.NoError(t, err)
-	// Copy multiple test files to the repository
-	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
-	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "dashboard2.json")
-	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/dashboard3.json")
-	// Trigger and wait for initial sync to populate resources
-	helper.SyncAndWait(t, repo, nil)
-	// Verify initial state - should have 3 dashboards and 1 folder
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 3, len(dashboards.Items), "should have 3 dashboards after sync")
-	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 1, len(folders.Items), "should have 1 folder after sync")
+	testRepo := TestRepo{
+		Name: repo,
+		Copies: map[string]string{
+			"testdata/all-panels.json":    "dashboard1.json",
+			"testdata/text-options.json":  "dashboard2.json",
+			"testdata/timeline-demo.json": "folder/dashboard3.json",
+		},
+		ExpectedDashboards: 3,
+		ExpectedFolders:    1,
+	}
+	helper.CreateRepo(t, testRepo)
 
 	t.Run("move single file", func(t *testing.T) {
 		spec := provisioning.JobSpec{
@@ -55,13 +43,13 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				TargetPath: "moved/",
 			},
 		}
-		helper.TriggerJobAndWait(t, repo, spec)
-
+		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
+		// FIXME: use the helpers for assertions
 		// Verify file is moved in repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "dashboard1.json")
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "dashboard1.json")
 		require.NoError(t, err, "file should exist at new location in repository")
 
 		// Verify original file is gone from repository
@@ -76,57 +64,36 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.NoError(t, err, "nested files should still exist")
 
 		// Verify dashboard still exists in Grafana after sync
-		// Use eventually to let unified storage reflect the changes in dashboards.
-		// FIXME: investigate this
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-			assert.NoError(collect, err)
-			assert.Len(collect, dashboards.Items, 3, "should still have 3 dashboards after move")
-			// Verify that dashboards have the correct source paths
-			foundPaths := make(map[string]bool)
-			for _, dashboard := range dashboards.Items {
-				sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
-				foundPaths[sourcePath] = true
-			}
+		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
+		// Verify that dashboards have the correct source paths
+		foundPaths := make(map[string]bool)
+		for _, dashboard := range dashboards.Items {
+			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
+			foundPaths[sourcePath] = true
+		}
 
-			assert.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
-			assert.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
-			assert.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
-		}, time.Second*10, time.Millisecond*100, "Expected to eventually have 3 dashboards after move")
+		require.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
+		require.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
+		require.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
 	})
 
 	t.Run("move multiple files and folder", func(t *testing.T) {
 		// Create move job for multiple files including a folder
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
-					Paths:      []string{"dashboard2.json", "folder/"},
-					TargetPath: "archived/",
-				},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "should be able to create move job")
-
-		raw, err := result.Raw()
-		require.NoError(t, err)
-		obj := &unstructured.Unstructured{}
-		err = json.Unmarshal(raw, obj)
-		require.NoError(t, err)
-
-		// Wait for job to complete
-		helper.AwaitJobSuccess(t, ctx, obj)
-
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"dashboard2.json", "folder/"},
+				TargetPath: "archived/",
+			},
+		}
+		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify files are moved in repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "dashboard2.json")
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "dashboard2.json")
 		require.NoError(t, err, "dashboard2.json should exist at new location")
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "folder", "dashboard3.json")
 		require.NoError(t, err, "folder/dashboard3.json should exist at new nested location")
@@ -160,107 +127,52 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	})
 
 	t.Run("move non-existent file", func(t *testing.T) {
-		// Create move job for non-existent file
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
-					Paths:      []string{"non-existent.json"},
-					TargetPath: "moved/",
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"non-existent.json"},
+				TargetPath: "moved/",
+			},
+		}
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		state := mustNestedString(job.Object, "status", "state")
+		require.Equal(t, "error", state, "move job should have failed due to non-existent file")
+	})
+
+	t.Run("move non-existent uid", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				TargetPath: "moved-nonexistent/",
+				Resources: []provisioning.ResourceRef{
+					{
+						Name:  "non-existent-move-uid",
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
 				},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "should be able to create move job")
+			},
+		}
 
-		// Wait for job to complete - should fail due to strict error handling
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			list := &unstructured.UnstructuredList{}
-			err := helper.AdminREST.Get().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Do(ctx).Into(list)
-			assert.NoError(collect, err, "should be able to list jobs")
-			assert.NotEmpty(collect, list.Items, "expect at least one job")
-
-			// Find the move job specifically
-			var moveJob *unstructured.Unstructured
-			for _, elem := range list.Items {
-				assert.Equal(collect, repo, elem.GetLabels()["provisioning.grafana.app/repository"], "should have repo label")
-
-				action := mustNestedString(elem.Object, "spec", "action")
-				if action == "move" {
-					// Check if this is the specific job we're looking for
-					paths, found, err := unstructured.NestedStringSlice(elem.Object, "spec", "move", "paths")
-					if err == nil && found && len(paths) > 0 && paths[0] == "non-existent.json" {
-						moveJob = &elem
-						break
-					}
-				}
-			}
-			assert.NotNil(collect, moveJob, "should find a move job for non-existent file")
-
-			state := mustNestedString(moveJob.Object, "status", "state")
-			assert.Equal(collect, "error", state, "move job should have failed due to non-existent file")
-		}, time.Second*10, time.Millisecond*100, "Expected move job to fail with error state")
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		state := mustNestedString(job.Object, "status", "state")
+		require.Equal(t, "error", state, "move job should have failed due to non-existent uid")
 	})
 
 	t.Run("move without target path", func(t *testing.T) {
 		// Create move job without target path (should fail)
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(asJSON(&provisioning.JobSpec{
-				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
-					Paths: []string{"moved/dashboard1.json"},
-					// TargetPath intentionally omitted
-				},
-			})).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "should be able to create move job")
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths: []string{"moved/dashboard1.json"},
+				// TargetPath intentionally omitted
+			},
+		}
 
-		// Wait for job to complete - should fail due to missing target path
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			list := &unstructured.UnstructuredList{}
-			err := helper.AdminREST.Get().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("jobs").
-				Do(ctx).Into(list)
-			assert.NoError(collect, err, "should be able to list jobs")
-			assert.NotEmpty(collect, list.Items, "expect at least one job")
-
-			// Find the move job specifically
-			var moveJob *unstructured.Unstructured
-			for _, elem := range list.Items {
-				assert.Equal(collect, repo, elem.GetLabels()["provisioning.grafana.app/repository"], "should have repo label")
-
-				action := mustNestedString(elem.Object, "spec", "action")
-				if action == "move" {
-					// Check if this is the job without target path
-					targetPath, found, _ := unstructured.NestedString(elem.Object, "spec", "move", "targetPath")
-					if !found || targetPath == "" {
-						moveJob = &elem
-						break
-					}
-				}
-			}
-			assert.NotNil(collect, moveJob, "should find a move job without target path")
-
-			state := mustNestedString(moveJob.Object, "status", "state")
-			assert.Equal(collect, "error", state, "move job should have failed due to missing target path")
-		}, time.Second*10, time.Millisecond*100, "Expected move job to fail with error state")
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		state := mustNestedString(job.Object, "status", "state")
+		assert.Equal(t, "error", state, "move job should have failed due to missing target path")
 	})
 
 	t.Run("move by resource reference", func(t *testing.T) {
@@ -317,7 +229,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				},
 			}
 
-			helper.TriggerJobAndWait(t, refRepo, spec)
+			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 			// Verify corresponding file is moved in repository
 			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "moved-by-ref", "move-source-1.json")
 			require.NoError(t, err, "file should be moved to new location in repository")
@@ -351,7 +263,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 					},
 				},
 			}
-			helper.TriggerJobAndWait(t, refRepo, spec)
+			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 
 			// Verify file is moved in repository
 			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "archived-by-ref", "move-source-2.json")
@@ -399,7 +311,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 					},
 				},
 			}
-			helper.TriggerJobAndWait(t, refRepo, spec)
+			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 
 			// Verify both targeted resources are moved in repository
 			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-target", "mixed-move-1.json")
