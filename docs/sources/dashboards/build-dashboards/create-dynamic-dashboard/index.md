@@ -2,6 +2,7 @@
 labels:
   products:
     - cloud
+    - oss
   stage:
     - experimental
 _build:
@@ -156,6 +157,14 @@ To create a dashboard, follow these steps:
 1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
 1. Toggle off the edit mode switch.
 
+{{< admonition type="caution" >}}
+
+Dynamic dashboards is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
+
 ## Group panels
 
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
@@ -285,6 +294,14 @@ To configure show/hide rules, follow these steps:
 1. Click **Save**.
 1. Toggle off the edit mode switch.
 
+{{< admonition type="caution" >}}
+
+Dynamic dashboards is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
+
 ## Edit dashboards
 
 When the dashboard is in edit mode, the edit pane that opens displays options associated with the part of the dashboard that it's in focus.
@@ -386,3 +403,11 @@ To make a copy of a dashboard, follow these steps:
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
 
 1. Click **Save**.
+
+{{< admonition type="caution" >}}
+
+Dynamic dashboards is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
