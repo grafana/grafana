@@ -3567,6 +3567,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3605,6 +3612,9 @@
       "select-all-header-checkbox": "Выбрать все",
       "select-checkbox": "Выбрать",
       "tags-column": "Теги"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "",
@@ -3648,6 +3658,9 @@
     },
     "name-cell": {
       "no-items": "Нет элементов"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Отмена",
@@ -5731,11 +5744,9 @@
       "api-error": "",
       "cancel-action": "Отмена",
       "delete-action": "Удалить дашборд",
-      "delete-read-only-file-message": "",
       "deleting": "Удаление...",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
+      "success-message": ""
     },
     "description-label": {
       "description": "Описание"
@@ -6111,7 +6122,6 @@
       "api-error": "Ошибка при сохранении дашборда",
       "cancel": "Отмена",
       "cannot-be-saved": "Дашборд невозможно сохранить из пользовательского интерфейса Grafana, поскольку он подготовлен в другом источнике. Скопируйте модель JSON или сохраните ее в файл ниже. Затем можно обновить свой дашборд в источнике подготовки.",
-      "copy-json-message": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
       "copy-json-to-clipboard": "Копировать JSON в буфер обмена",
       "file-path": "<0>Путь к файлу:</0> {{filePath}}",
       "label-description": "Описание",
@@ -6123,7 +6133,6 @@
       "see-docs": "Подробнее о подготовке см. в <2>документации</2>.",
       "title-required": "Требуется указать название дашборда",
       "title-same-as-folder": "Имя дашборда не может совпадать с именем папки",
-      "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения",
       "title-validation-failed": "Не удалось проверить название дашборда."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6429,7 +6438,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Чтобы узнать больше об этой ошибке, нажмите <2>здесь</2>.",
-    "success-more-details-links": "Затем вы можете начать визуализировать данные, <2>создав панель</2> или запросив данные в <5>представлении Explore</5>."
+    "success-more-details-links": "Затем вы можете начать визуализировать данные, <2>создав панель</2> или запросив данные в <5>представлении Explore</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6568,7 +6578,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Создать дашборд",
-      "explore-data": "Просмотреть данные"
+      "explore-data": "Просмотреть данные",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Подробнее об ошибке"
