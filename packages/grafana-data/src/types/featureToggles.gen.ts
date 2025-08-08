@@ -1081,6 +1081,10 @@ export interface FeatureToggles {
   */
   adhocFiltersInTooltips?: boolean;
   /**
+  * Enable favorite datasources
+  */
+  favoriteDatasources?: boolean;
+  /**
   * New Log Context component
   */
   newLogContext?: boolean;

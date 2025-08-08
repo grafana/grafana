@@ -1873,6 +1873,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "favoriteDatasources",
+			Description:  "Enable favorite datasources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "newLogContext",
 			Description:  "New Log Context component",
 			Stage:        FeatureStageExperimental,

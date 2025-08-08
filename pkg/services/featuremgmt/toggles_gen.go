@@ -979,6 +979,10 @@ const (
 	// Enable adhoc filter buttons in visualization tooltips
 	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
 
+	// FlagFavoriteDatasources
+	// Enable favorite datasources
+	FlagFavoriteDatasources = "favoriteDatasources"
+
 	// FlagNewLogContext
 	// New Log Context component
 	FlagNewLogContext = "newLogContext"
