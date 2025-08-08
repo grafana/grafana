@@ -6,67 +6,184 @@ import (
 
 // V24 migration migrates the angular table panel to the standard table panel
 // In the frontend, this is an auto-migration meaning that this angular panel is always migrated to table panel.
+// The backend replicates the complete frontend auto-migration logic since it cannot rely on frontend auto-migration.
+//
+// This migration performs:
+// 1. Converts 'styles' array to 'fieldConfig' with 'defaults' and 'overrides'
+// 2. Migrates thresholds and colors to new threshold format
+// 3. Converts column-specific styles to field overrides
+// 4. Migrates transformations from old format to new transformation system
+// 5. Handles various style properties: unit, decimals, alignment, color modes, links, date formatting, hidden columns
+// 6. Removes deprecated properties: styles, transform, columns
 
-// Example before migration:
+// Example 1: Basic table with defaults
+// Before migration:
 // {
 //     "panels": [
 //         {
 //             "id": 1,
 //             "type": "table",
-//             "title": "Table Panel",
-//             "legend": true,
+//             "title": "Basic Table",
 //             "styles": [
-//                 { "thresholds": ["10", "20", "30"] },
-//                 { "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"] },
-//                 { "pattern": "/.*/" }
+//                 {
+//                     "pattern": "/.*/",
+//                     "thresholds": ["10", "20", "30"],
+//                     "colors": ["green", "yellow", "red"],
+//                     "unit": "bytes",
+//                     "decimals": 2
+//                 }
 //             ],
-//             "targets": [{ "refId": "A" }, {}]
+//             "targets": [{ "refId": "A" }]
+//         }
+//     ]
+// }
+//
+// After migration:
+// {
+//     "panels": [
+//         {
+//             "id": 1,
+//             "type": "table",
+//             "title": "Basic Table",
+//             "fieldConfig": {
+//                 "defaults": {
+//                     "unit": "bytes",
+//                     "decimals": 2,
+//                     "custom": {},
+//                     "thresholds": {
+//                         "mode": "absolute",
+//                         "steps": [
+//                             { "color": "green", "value": null },
+//                             { "color": "green", "value": 10 },
+//                             { "color": "yellow", "value": 20 },
+//                             { "color": "red", "value": 30 }
+//                         ]
+//                     }
+//                 },
+//                 "overrides": []
+//             },
+//             "transformations": [],
+//             "targets": [{ "refId": "A" }],
+//             "pluginVersion": "1.0.0"
 //         }
 //     ]
 // }
 
-// Example after migration:
-// "panels": [
-//     {
-//       "fieldConfig": {
-//         "defaults": {
-//           "custom": {},
-//           "thresholds": {
-//             "mode": "absolute",
-//             "steps": [
-//               {
-//                 "color": "red",
-//                 "value": null
-//               },
-//               {
-//                 "color": "red",
-//                 "value": 10
-//               },
-//               {
-//                 "color": "yellow",
-//                 "value": 20
-//               },
-//               {
-//                 "color": "green",
-//                 "value": 30
-//               }
-//             ]
-//           }
-//         },
-//         "overrides": []
-//       },
-//       "id": 1,
-//       "legend": true,
-//       "pluginVersion": "1.0.0",
-//       "targets": [
+// Example 2: Complex table with overrides and transformations
+// Before migration:
+// {
+//     "panels": [
 //         {
-//           "refId": "A"
+//             "id": 2,
+//             "type": "table",
+//             "title": "Complex Table",
+//             "styles": [
+//                 {
+//                     "pattern": "/.*/",
+//                     "unit": "percent",
+//                     "align": "center",
+//                     "colorMode": "cell"
+//                 },
+//                 {
+//                     "pattern": "Status",
+//                     "alias": "Current Status",
+//                     "colorMode": "value",
+//                     "align": "left"
+//                 },
+//                 {
+//                     "pattern": "/Error.*/",
+//                     "link": true,
+//                     "linkUrl": "http://example.com/errors",
+//                     "linkTooltip": "View errors",
+//                     "linkTargetBlank": true
+//                 },
+//                 {
+//                     "pattern": "Time",
+//                     "type": "date",
+//                     "dateFormat": "YYYY-MM-DD HH:mm:ss",
+//                     "alias": "Timestamp"
+//                 },
+//                 {
+//                     "pattern": "Hidden",
+//                     "type": "hidden"
+//                 }
+//             ],
+//             "transform": "timeseries_aggregations",
+//             "columns": [
+//                 { "value": "avg", "text": "Average" },
+//                 { "value": "max", "text": "Maximum" }
+//             ],
+//             "targets": [{ "refId": "A" }]
 //         }
-//       ],
-//       "transformations": [],
-//       "type": "table"
-//     }
-//   ]
+//     ]
+// }
+//
+// After migration:
+// {
+//     "panels": [
+//         {
+//             "id": 2,
+//             "type": "table",
+//             "title": "Complex Table",
+//             "fieldConfig": {
+//                 "defaults": {
+//                     "unit": "percent",
+//                     "custom": {
+//                         "align": "center",
+//                         "cellOptions": { "type": "color-background" }
+//                     }
+//                 },
+//                 "overrides": [
+//                     {
+//                         "matcher": { "id": "byName", "options": "Status" },
+//                         "properties": [
+//                             { "id": "displayName", "value": "Current Status" },
+//                             { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+//                             { "id": "custom.align", "value": "left" }
+//                         ]
+//                     },
+//                     {
+//                         "matcher": { "id": "byRegexp", "options": "/Error.*/" },
+//                         "properties": [
+//                             {
+//                                 "id": "links",
+//                                 "value": [{
+//                                     "title": "View errors",
+//                                     "url": "http://example.com/errors",
+//                                     "targetBlank": true
+//                                 }]
+//                             }
+//                         ]
+//                     },
+//                     {
+//                         "matcher": { "id": "byName", "options": "Time" },
+//                         "properties": [
+//                             { "id": "displayName", "value": "Timestamp" },
+//                             { "id": "unit", "value": "time: YYYY-MM-DD HH:mm:ss" }
+//                         ]
+//                     },
+//                     {
+//                         "matcher": { "id": "byName", "options": "Hidden" },
+//                         "properties": [
+//                             { "id": "custom.hidden", "value": true }
+//                         ]
+//                     }
+//                 ]
+//             },
+//             "transformations": [
+//                 {
+//                     "id": "reduce",
+//                     "options": {
+//                         "reducers": ["mean", "max"],
+//                         "includeTimeField": false
+//                     }
+//                 }
+//             ],
+//             "targets": [{ "refId": "A" }],
+//             "pluginVersion": "1.0.0"
+//         }
+//     ]
+// }
 
 type v24Migrator struct {
 	panelProvider PanelPluginInfoProvider
@@ -142,8 +259,22 @@ func tablePanelChangedHandler(panel map[string]interface{}) error {
 		"overrides": overrides,
 	}
 
-	// Remove deprecated styles property
+	// Add default table panel options to match frontend behavior
+	panel["options"] = map[string]interface{}{
+		"cellHeight": "sm",
+		"footer": map[string]interface{}{
+			"countRows": false,
+			"fields":    "",
+			"reducer":   []interface{}{"sum"},
+			"show":      false,
+		},
+		"showHeader": true,
+	}
+
+	// Remove deprecated properties
 	delete(panel, "styles")
+	delete(panel, "transform")
+	delete(panel, "columns")
 
 	return nil
 }
@@ -285,6 +416,11 @@ func migrateTableStyleToOverride(style map[string]interface{}) map[string]interf
 			"id":    "decimals",
 			"value": int(decimals),
 		})
+	} else if decimals, ok := style["decimals"].(int); ok {
+		properties = append(properties, map[string]interface{}{
+			"id":    "decimals",
+			"value": decimals,
+		})
 	}
 
 	// Handle date type
@@ -368,7 +504,34 @@ func migrateTableStyleToOverride(style map[string]interface{}) map[string]interf
 // migrateDefaults converts default table styles to field config defaults
 func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{} {
 	defaults := map[string]interface{}{
-		"custom": map[string]interface{}{},
+		"custom": map[string]interface{}{
+			"align": "auto",
+			"cellOptions": map[string]interface{}{
+				"type": "auto",
+			},
+			"inspect": false,
+		},
+		"mappings": []interface{}{},
+	}
+
+	// Only add default thresholds if we have prevDefaults (meaning this is a table panel being migrated)
+	// and no specific thresholds exist in prevDefaults
+	hasThresholds := false
+	if prevDefaults != nil {
+		if thresholds, ok := prevDefaults["thresholds"].([]interface{}); ok && len(thresholds) > 0 {
+			hasThresholds = true
+		}
+
+		// Only add default thresholds for table panels (when prevDefaults exists) without existing thresholds
+		if !hasThresholds {
+			defaults["thresholds"] = map[string]interface{}{
+				"mode": "absolute",
+				"steps": []interface{}{
+					map[string]interface{}{"color": "green"},
+					map[string]interface{}{"color": "red", "value": 80},
+				},
+			}
+		}
 	}
 
 	if prevDefaults == nil {
@@ -417,18 +580,25 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 }
 
 func generateThresholds(thresholds []interface{}, colors []interface{}) []interface{} {
-	steps := []interface{}{
-		map[string]interface{}{
-			// -Infinity equivalent - assign a default color
-			"color": "red",
-			"value": nil,
-		},
+	steps := []interface{}{}
+
+	// Add the base step (equivalent to -Infinity)
+	var baseColor interface{} = "red" // default fallback
+	if len(colors) > 0 && colors[0] != nil {
+		baseColor = colors[0]
 	}
 
+	steps = append(steps, map[string]interface{}{
+		"color": baseColor,
+		"value": nil,
+	})
+
+	// Add threshold steps
 	for i, threshold := range thresholds {
 		var color interface{}
-		if i < len(colors) && colors[i] != nil {
-			color = colors[i]
+		// Use colors[i+1] for the i-th threshold (colors[0] was used for base step)
+		if i+1 < len(colors) && colors[i+1] != nil {
+			color = colors[i+1]
 		} else {
 			color = "red"
 		}

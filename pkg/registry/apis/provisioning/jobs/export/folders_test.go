@@ -189,7 +189,7 @@ func TestExportFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name == "folder-1-uid" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "didn't work"
+					return result.Name == "folder-1-uid" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "creating folder folder-1-uid at path grafana/folder-1: didn't work"
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Name == "folder-2-uid" && result.Action == repository.FileActionCreated
