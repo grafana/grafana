@@ -160,7 +160,6 @@ To filter column values, follow these steps:
 1. Click the checkbox next to the values that you want to display or click **Select all**.
 1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
 1. Choose from several operators to display column values:
-
    - **Contains** - Matches a regex pattern (operator by default).
    - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
    - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
@@ -375,15 +374,23 @@ Pill cells also support text wrapping.
 
 The following data formats are supported for the pill cell type:
 
-[TBA]
+- comma-separated values (`cows,chickens,goats`)
+- JSON arrays of uniform (`(["cows","chickens","goats"])`) or mixed (`[1,2,3,"foo",42,"bar"]`) types
 
 #### Markdown + HTML
 
-The **Markdown + HTML** cell type displays rich markdown or HTML content.
-This is useful if you need to display, for example, a service status along with some rich data.
+The **Markdown + HTML** cell type displays rich Markdown or HTML content, rendered using the
+[GitHub-Flavored Markdown](https://github.github.com/gfm/) spec. This is useful if you need to display
+customized, pre-formatted information alongside tabular data, such as formatted strings,
+lists of links, or other dynamic cases.
 
-For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize dynamically based on the cell content.
-If you use dynamic height, we strongly recommend that you also toggle on **Pagination** to avoid performance issues in larger tables.
+For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize
+dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
+also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
+Dynamic height disables table virtualization.
+
+By default, the HTML rendered in this cell is sanitized, and un-sanitized HTML can only be rendered
+in these cells if the [`disable_sanitize_html`](../../../setup-grafana/configure-grafana/_index.md#disable_sanitize_html) option is set to true for your Grafana instance.
 
 #### Image
 
