@@ -473,6 +473,9 @@ export function TableNG(props: TableNGProps) {
                 };
               }
 
+              // this placement will be configurable as an option
+              const placement = 'bottom';
+
               cellContent = (
                 <TooltipByField
                   key={key}
@@ -486,7 +489,7 @@ export function TableNG(props: TableNGProps) {
                   renderer={tooltipFieldRenderer}
                   rowIdx={rowIdx}
                   style={tooltipStyle}
-                  width={tooltipField.config.custom?.width}
+                  width={placement === 'left' || placement === 'right' ? tooltipField.config.custom?.width : width}
                 >
                   {cellContent}
                 </TooltipByField>
