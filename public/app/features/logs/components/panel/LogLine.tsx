@@ -99,6 +99,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      timestampResolution,
       onLogLineHover,
     } = useLogListContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
@@ -211,6 +212,7 @@ const LogLineComponent = memo(
               log={log}
               showTime={showTime}
               styles={styles}
+              timestampResolution={timestampResolution}
               wrapLogMessage={wrapLogMessage}
             />
           </div>
@@ -248,18 +250,25 @@ const LogLineComponent = memo(
 );
 LogLineComponent.displayName = 'LogLineComponent';
 
+export type LogLineTimestampResolution = 'ms' | 'ns';
+
 interface LogProps {
   displayedFields: string[];
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
+  timestampResolution: LogLineTimestampResolution;
   wrapLogMessage: boolean;
 }
 
-const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
+const Log = memo(({ displayedFields, log, showTime, styles, timestampResolution, wrapLogMessage }: LogProps) => {
   return (
     <>
-      {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
+      {showTime && (
+        <span className={`${styles.timestamp} level-${log.logLevel} field`}>
+          {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
+        </span>
+      )}
       {
         // When logs are unwrapped, we want an empty column space to align with other log lines.
       }
@@ -523,6 +532,14 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       background: 'transparent',
       border: 'none',
       display: 'inline',
+    }),
+    loadMoreTopContainer: css({
+      backgroundColor: tinycolor(theme.colors.background.primary).setAlpha(0.75).toString(),
+      left: 0,
+      position: 'absolute',
+      top: 0,
+      width: '100%',
+      zIndex: theme.zIndex.navbarFixed,
     }),
     overflows: css({
       outline: 'solid 1px red',

@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Temel Günlükleri Etkinleştir"
     },
     "config-editor": {
-      "description-additional-settings": "Ek ayarlar, veri kaynağınız üzerinde daha fazla kontrol sağlamak için yapılandırılabilen isteğe bağlı ayarlardır. Buna Güvenli Socks Proxy de dâhildir.",
-      "description-request-timeout": "İstek zaman aşımı süresini saniye cinsinden ayarlayın. Varsayılan 30 saniye.",
-      "title-additional-settings": "Ek ayarlar",
-      "title-request-timeout": "İstek Zaman Aşımı"
+      "description-additional-settings": "",
+      "title-additional-settings": "Ek ayarlar"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Yedek kimlik bilgileri devre dışı bırakıldı. Kullanıcı tabanlı kimlik doğrulama doğası gereği yalnızca bir kullanıcının dâhil olduğu istekleri desteklediğinden uyarı, kayıtlı sorgular veya raporlama gibi özellikler beklendiği gibi çalışmayabilir. Daha fazla ayrıntı için lütfen <2>belgeleri</2> inceleyin.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Sütun",
       "aria-label-column-value": "Sütun değeri",
       "aria-label-operator": "İşleç",
+      "aria-label-remove-filter": "",
       "label-or": "VEYA"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Grup ekle",
       "label-and": "VE",
       "label-filters": "Filtreler",
@@ -130,6 +131,8 @@
       "label-format-as": "Farklı biçimlendir"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Sütunu seçin",
       "label-fuzzy-search": "Benzer Öge Arama",
       "placeholder-search-team": "Arama terimi girin",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Kaldır"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Gruplama ölçütü",
       "tooltip-group-by": "Sonuçları belirtilen sütunlara göre kategorilere ayırın. Gruplandırma, seçilen sütunlardaki tekil değerleri listelemek için tek başına kullanılabileceği gibi, her grup için özet istatistikleri üretmek üzere toplama işlevleriyle birlikte de kullanılabilir. Tek başına kullanıldığında, belirtilen sütunların farklı kombinasyonlarını döndürür."
     },
@@ -186,8 +190,10 @@
       "text-loading": "Yükleniyor..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Sütuna göre sırala",
       "aria-label-order-direction": "Sıralama Yönü",
+      "aria-label-remove-order-by": "",
       "label-by": "ÖLÇÜT",
       "label-order-by": "Sıralama Ölçütü",
       "tooltip-order-by": "Sonuçları bir veya daha fazla sütuna göre artan veya azalan düzende sıralayın."
@@ -249,7 +255,8 @@
       "label-columns": "Sütunlar",
       "label-table": "Tablo",
       "placeholder-select-columns": "Sütunları seçin",
-      "placeholder-select-table": "Bir tablo seçin"
+      "placeholder-select-table": "Bir tablo seçin",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Zaman aralığı"

@@ -56,10 +56,10 @@ local_resource(
 # --- Docker Compose
 docker_compose("./docker-compose.yaml")
 dc_resource("proxy",
-  resource_deps=["backend", "frontend-service"],
+  resource_deps=["grafana-api", "frontend-service"],
   labels=["services"]
 )
-dc_resource("backend",
+dc_resource("grafana-api",
   resource_deps=["yarn start", "backend-build"],
   labels=["services"]
 )
@@ -67,6 +67,8 @@ dc_resource("frontend-service",
   resource_deps=["yarn start", "backend-build"],
   labels=["services"],
 )
+dc_resource("alloy", labels=["observability"])
+dc_resource("loki", labels=["observability"])
 
 # paths in tilt files are confusing....
 # - if tilt is dealing the the path, it is relative to the Tiltfile
@@ -79,6 +81,7 @@ docker_build('grafana-fs-dev',
   # Paths relative to the docker context (root of the repo)
   only=[
     'devenv/frontend-service/build/grafana',
+    'devenv/frontend-service/provisioning',
     'conf/defaults.ini',
     'public/emails',
     'public/views',
@@ -96,6 +99,7 @@ docker_build('grafana-fs-dev',
     sync('../../public/dashboards', '/grafana/public/dashboards'),
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     restart_container()
   ]
 )

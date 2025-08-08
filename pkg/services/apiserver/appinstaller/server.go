@@ -10,6 +10,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	genericrest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -35,6 +36,7 @@ type serverWrapper struct {
 	dualWriteService  dualwrite.Service
 	dualWriterMetrics *grafanarest.DualWriterMetrics
 	builderMetrics    *builder.BuilderMetrics
+	apiResourceConfig *serverstorage.ResourceConfig
 }
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
@@ -49,6 +51,12 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 			gr := schema.GroupResource{
 				Group:    s.installer.ManifestData().Group,
 				Resource: resource,
+			}
+			gvr := gr.WithVersion(v)
+			if s.apiResourceConfig != nil && !s.apiResourceConfig.ResourceEnabled(gvr) {
+				log.Debug("Skipping storage for disabled resource", "gvr", gvr.String(), "storagePath", storagePath)
+				delete(apiGroupInfo.VersionedResourcesStorageMap[v], storagePath)
+				continue
 			}
 			storage := s.configureStorage(gr, dualWriteSupported, restStorage)
 			if unifiedStorage, ok := storage.(grafanarest.Storage); ok && dualWriteSupported {

@@ -119,13 +119,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:        "nestedFolders",
-			Description: "Enable folder nesting",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -475,6 +468,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "kubernetesShortURLs",
+			Description:     "Routes short url requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:        "dashboardDisableSchemaValidationV1",
@@ -1170,15 +1170,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "unifiedStorageSearchPermissionFiltering",
-			Description:       "Enable permission filtering on unified storage search",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaSearchAndStorageSquad,
-			Expression:        "true",
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "managedDualWriter",
 			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
@@ -1403,15 +1394,6 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          identityAccessTeam,
 			AllowSelfServe: true,
-		},
-		{
-			Name:           "teamHttpHeadersMimir",
-			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   false,
-			AllowSelfServe: true,
-			Owner:          identityAccessTeam,
-			Expression:     "true",
 		},
 		{
 			Name:         "teamHttpHeadersTempo",
@@ -1889,6 +1871,28 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "favoriteDatasources",
+			Description:  "Enable favorite datasources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newLogContext",
+			Description:  "New Log Context component",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newClickhouseConfigPageDesign",
+			Description:  "Enables new design for the Clickhouse data source configuration page",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
 		},
 	}
 )

@@ -43,6 +43,7 @@ type DatabaseConfig struct {
 	MigrationLock               bool
 	MigrationLockAttemptTimeout int
 	LogQueries                  bool
+	DeleteAutoGenIDs            bool
 	// SQLite only
 	QueryRetries int
 	// SQLite only
@@ -93,6 +94,9 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	} else {
 		dbCfg.Type = sec.Key("type").String()
 		dbCfg.Host = sec.Key("host").String()
+		if port := sec.Key("port").String(); port != "" {
+			dbCfg.Host = dbCfg.Host + ":" + port
+		}
 		dbCfg.Name = sec.Key("name").String()
 		dbCfg.User = sec.Key("user").String()
 		dbCfg.ConnectionString = sec.Key("connection_string").String()
@@ -123,6 +127,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 
 	dbCfg.LogQueries = sec.Key("log_queries").MustBool(false)
+	dbCfg.DeleteAutoGenIDs = sec.Key("delete_auto_gen_ids").MustBool(false)
 
 	return nil
 }

@@ -9,7 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -81,6 +81,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		CommitOnlyOnceMessage: msg,
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
+		Ref:                   opts.Ref,
 	}
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
@@ -120,7 +121,9 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		targetPath := w.constructTargetPath(opts.TargetPath, path)
 
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
-		result.Error = rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath)
+		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {
+			result.Error = fmt.Errorf("moving file %s to %s: %w", path, targetPath, err)
+		}
 		progress.Record(ctx, result)
 		if err := progress.TooManyErrors(); err != nil {
 			return err

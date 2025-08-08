@@ -8,11 +8,36 @@ import {
   Field,
   getColorByStringHash,
   FALLBACK_COLOR,
+  fieldColorModeRegistry,
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
-import { TableCellRendererProps } from '../types';
+import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
+
+export function PillCell({ rowIdx, field, theme }: PillCellProps) {
+  const value = field.values[rowIdx];
+  const pills: Pill[] = useMemo(() => {
+    const pillValues = inferPills(value);
+    return pillValues.length > 0 ? createPills(pillValues, field, theme) : [];
+  }, [value, field, theme]);
+
+  if (pills.length === 0) {
+    return null;
+  }
+
+  return pills.map((pill) => (
+    <span
+      key={pill.key}
+      style={{
+        backgroundColor: pill.bgColor,
+        color: pill.color,
+        border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
+      }}
+    >
+      {pill.value}
+    </span>
+  ));
+}
 
 interface Pill {
   value: string;
@@ -20,6 +45,9 @@ interface Pill {
   bgColor: string;
   color: string;
 }
+
+const SPLIT_RE = /\s*,\s*/;
+const TRANSPARENT = 'rgba(0,0,0,0)';
 
 function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): Pill[] {
   return pillValues.map((pill, index) => {
@@ -34,37 +62,12 @@ function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): 
   });
 }
 
-export function PillCell({ value, field }: TableCellRendererProps) {
-  const styles = useStyles2(getStyles);
-  const theme = useTheme2();
-
-  const pills: Pill[] = useMemo(() => {
-    const pillValues = inferPills(String(value));
-    return createPills(pillValues, field, theme);
-  }, [value, field, theme]);
-
-  return pills.map((pill) => (
-    <span
-      key={pill.key}
-      className={styles.pill}
-      style={{
-        backgroundColor: pill.bgColor,
-        color: pill.color,
-        border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
-      }}
-    >
-      {pill.value}
-    </span>
-  ));
-}
-
-const SPLIT_RE = /\s*,\s*/;
-const TRANSPARENT = 'rgba(0,0,0,0)';
-
-export function inferPills(value: string): string[] {
-  if (value === '') {
+export function inferPills(rawValue: TableCellValue): string[] {
+  if (rawValue === '' || rawValue == null) {
     return [];
   }
+
+  const value = String(rawValue);
 
   if (value[0] === '[') {
     try {
@@ -77,6 +80,7 @@ export function inferPills(value: string): string[] {
   return value.trim().split(SPLIT_RE);
 }
 
+// FIXME: this does not yet support "shades of a color"
 function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string {
   const cfg = field.config;
 
@@ -88,19 +92,36 @@ function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string
     return theme.visualization.getColorByName(cfg.color?.fixedColor ?? FALLBACK_COLOR);
   }
 
-  // TODO: instead of classicColors we need to pull colors from theme, same way as FieldColorModeId.PaletteClassicByName (see fieldColor.ts)
-  return getColorByStringHash(classicColors, value);
+  let colors = classicColors;
+  const configuredColor = cfg.color;
+  if (configuredColor) {
+    const mode = fieldColorModeRegistry.get(configuredColor.mode);
+    if (typeof mode?.getColors === 'function') {
+      colors = mode.getColors(theme);
+    }
+  }
+
+  return getColorByStringHash(colors, value);
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
-  pill: css({
-    display: 'inline-block',
-    padding: theme.spacing(0.25, 0.75),
-    marginInlineEnd: theme.spacing(0.5),
-    marginBlock: theme.spacing(0.5),
-    borderRadius: theme.shape.radius.default,
-    fontSize: theme.typography.bodySmall.fontSize,
-    lineHeight: theme.typography.bodySmall.lineHeight,
-    whiteSpace: 'nowrap',
-  }),
-});
+export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow }) =>
+  css({
+    display: 'inline-flex',
+    gap: theme.spacing(0.5),
+    flexWrap: textWrap ? 'wrap' : 'nowrap',
+
+    ...(shouldOverflow && {
+      '&:hover, &[aria-selected=true]': {
+        flexWrap: 'wrap',
+      },
+    }),
+
+    '> span': {
+      display: 'flex',
+      padding: theme.spacing(0.25, 0.75),
+      borderRadius: theme.shape.radius.default,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      whiteSpace: 'nowrap',
+    },
+  });
