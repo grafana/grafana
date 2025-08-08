@@ -3313,6 +3313,20 @@
     },
     {
       "metadata": {
+        "name": "vizActionsAuth",
+        "resourceVersion": "1754679558247",
+        "creationTimestamp": "2025-08-08T18:59:18Z"
+      },
+      "spec": {
+        "description": "Allows authenticated API calls in actions",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "zanzana",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-19T13:59:47Z"
