@@ -257,6 +257,9 @@ func (m mockClient) GetInstance(ctx context.Context, headers map[string]string) 
 	return mclient, nil
 }
 
+func (m mockClient) ReportMetrics() {
+}
+
 func (m mockClient) GetLogger(parent log.Logger) log.Logger {
 	return parent.New()
 }

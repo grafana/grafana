@@ -59,3 +59,7 @@ func (s *singleTenantInstance) GetLogger(parent log.Logger) log.Logger {
 	// currently we do not add any extra info
 	return parent.New()
 }
+
+func (s *singleTenantInstance) ReportMetrics() {
+	// we do not report any metrics currently
+}

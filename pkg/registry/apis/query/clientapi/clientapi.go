@@ -33,6 +33,7 @@ type Instance interface {
 	// fetch information on the grafana instance (e.g. feature toggles)
 	GetSettings() InstanceConfigurationSettings
 	GetLogger(parent log.Logger) log.Logger
+	ReportMetrics() // some metrics are only reported at the end
 }
 
 type InstanceProvider interface {
