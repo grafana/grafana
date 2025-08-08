@@ -33,6 +33,12 @@ type IndexEvent struct {
 	Err               error
 }
 
+func (b *indexQueueProcessor) updateIndex(newIndex ResourceIndex) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.index = newIndex
+}
+
 // newIndexQueueProcessor creates a new IndexQueueProcessor for the given index
 func newIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource, batchSize int, builder DocumentBuilder, resChan chan *IndexEvent) *indexQueueProcessor {
 	return &indexQueueProcessor{
@@ -128,7 +134,10 @@ func (b *indexQueueProcessor) process(batch []*WrittenEvent) {
 		req.Items = append(req.Items, item)
 	}
 
+	b.mu.Lock()
 	err := b.index.BulkIndex(req)
+	b.mu.Unlock()
+
 	if err != nil {
 		for _, r := range resp {
 			r.Err = err
