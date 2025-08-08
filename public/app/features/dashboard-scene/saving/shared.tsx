@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { WorkflowOption } from 'app/features/provisioning/types';
 
@@ -23,13 +23,17 @@ export interface DashboardChangeInfo {
   hasFolderChanges?: boolean;
   hasMigratedToV2?: boolean;
 }
-export interface ProvisionedDashboardFormData {
-  ref?: string; // Branch or tag in the repository
-  path: string; // Path to the dashboard file in the repository
-  comment?: string; // Commit message for the change
-  repo: string; // Repository name
+
+export interface BaseProvisionedFormData {
+  ref?: string;
+  path: string;
+  comment?: string;
+  repo: string;
   workflow?: WorkflowOption;
-  title: string; // Title of the dashboard
+  title: string;
+}
+
+export interface ProvisionedDashboardFormData extends BaseProvisionedFormData {
   description: string;
   folder: {
     uid?: string;

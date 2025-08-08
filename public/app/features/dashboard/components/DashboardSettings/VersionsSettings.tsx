@@ -1,15 +1,11 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { config } from '@grafana/runtime';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import {
-  historySrv,
-  RevisionsModel,
-  VersionHistoryHeader,
-  VersionsHistoryButtons,
-} from 'app/features/dashboard-scene/settings/version-history';
+import { historySrv, RevisionsModel } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
+import { VersionsHistoryButtons } from 'app/features/dashboard-scene/settings/version-history/VersionHistoryButtons';
+import { VersionHistoryHeader } from 'app/features/dashboard-scene/settings/version-history/VersionHistoryHeader';
 
 import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
 import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
@@ -93,15 +89,9 @@ export class VersionsSettings extends PureComponent<Props, State> {
       isLoading: true,
     });
 
-    let lhs, rhs;
-    if (config.featureToggles.kubernetesClientDashboardsFolders) {
-      // the id here is the resource version in k8s, use this instead to get the specific version
-      lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.id);
-      rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.id);
-    } else {
-      lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.version);
-      rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.version);
-    }
+    // the id here is the resource version in k8s, use this instead to get the specific version
+    let lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.id);
+    let rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.id);
 
     this.setState({
       baseInfo,
@@ -125,14 +115,11 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }));
 
   isLastPage() {
-    if (config.featureToggles.kubernetesClientDashboardsFolders) {
-      return (
-        this.state.versions.find((rev) => rev.version === 1) ||
-        this.state.versions.length % this.limit !== 0 ||
-        this.continueToken === ''
-      );
-    }
-    return this.state.versions.find((rev) => rev.version === 1) || this.state.versions.length % this.limit !== 0;
+    return (
+      this.state.versions.find((rev) => rev.version === 1) ||
+      this.state.versions.length % this.limit !== 0 ||
+      this.continueToken === ''
+    );
   }
 
   onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {

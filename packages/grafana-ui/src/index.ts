@@ -341,7 +341,7 @@ const LegacyForms = {
 export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
-export { graphFieldOptions } from './components/uPlot/config';
+export { graphFieldOptions, getGraphFieldOptions } from './components/uPlot/config';
 export { UPlotConfigBuilder } from './components/uPlot/config/UPlotConfigBuilder';
 export { UPLOT_AXIS_FONT_SIZE } from './components/uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './components/uPlot/Plot';
@@ -358,6 +358,7 @@ export { type UPlotConfigPrepFn } from './components/uPlot/config/UPlotConfigBui
 export * from './components/PanelChrome/types';
 export { Label as BrowserLabel } from './components/BrowserLabel/Label';
 export { PanelContainer } from './components/PanelContainer/PanelContainer';
+export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 
 // -----------------------------------------------------
 // Graveyard: exported, but no longer used internally

@@ -100,7 +100,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	// This can happen, as unified storage iteration is doing paging not only based on the provided limit,
 	// but also based on the response size. This check prevents starting the new iteration again.
 	if options.Continue != "" && legacyToken == "" {
-		return nil, nil
+		return d.NewList(), nil
 	}
 
 	// In some cases, where the stores are not in sync yet, the unified storage continue token might already
@@ -187,6 +187,22 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
+	readFromUnifiedWriteToBothStorages := d.readUnified && d.legacy != nil && d.unified != nil
+
+	permissions := ""
+	if readFromUnifiedWriteToBothStorages {
+		objIn, err := utils.MetaAccessor(in)
+		if err != nil {
+			return nil, err
+		}
+
+		// keep permissions, we will set it back after the object is created
+		permissions = objIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
+		if permissions != "" {
+			objIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation for now
+		}
+	}
+
 	// create in legacy first, and then unistore. if unistore fails, but legacy succeeds,
 	// will try to cleanup the object in legacy.
 	createdFromLegacy, err := d.legacy.Create(ctx, in, createValidation, options)
@@ -202,6 +218,17 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
+
+	if readFromUnifiedWriteToBothStorages {
+		objCopy, err := utils.MetaAccessor(createdCopy)
+		if err != nil {
+			return nil, err
+		}
+		// restore the permissions annotation, as we removed it before creating in legacy
+		if permissions != "" {
+			objCopy.SetAnnotation(utils.AnnoKeyGrantPermissions, permissions)
+		}
+	}
 
 	// If unified storage is the primary storage, let's just create it in the foreground and return it.
 	if d.readUnified {

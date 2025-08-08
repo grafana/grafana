@@ -3,9 +3,19 @@ import { isFetchError } from '@grafana/runtime';
 
 import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
+import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
-import { generatedAPI, JobSpec, JobStatus, RepositorySpec, RepositoryStatus, ErrorDetails } from './endpoints.gen';
+import {
+  generatedAPI,
+  JobSpec,
+  JobStatus,
+  RepositorySpec,
+  RepositoryStatus,
+  ErrorDetails,
+  Status,
+} from './endpoints.gen';
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -51,6 +61,12 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Refetch dashboards and folders after deleting a provisioned repository.
+        // We need to add timeout to ensure that the deletion is processed before refetching since the deletion is done
+        // via a background job.
+        setTimeout(() => {
+          dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+        }, 1000);
       },
     },
     deletecollectionRepository: {
@@ -76,6 +92,9 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        setTimeout(() => {
+          dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+        }, 1000);
       },
     },
     createRepositoryTest: {
@@ -88,7 +107,20 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
           } else if (e instanceof Error) {
             dispatch(notifyApp(createErrorNotification('Error validating repository', e)));
           } else if (typeof e === 'object' && 'error' in e && isFetchError(e.error)) {
-            if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
+            // Handle Status error responses (Kubernetes style)
+            if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
+              const statusError: Status = e.error.data;
+              dispatch(
+                notifyApp(
+                  createErrorNotification(
+                    'Error validating repository',
+                    new Error(statusError.message || 'Unknown error')
+                  )
+                )
+              );
+            }
+            // Handle TestResults error responses with field errors
+            else if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
               const nonFieldErrors = e.error.data.errors.filter((err: ErrorDetails) => !err.field);
               // Only show notification if there are errors that don't have a field, field errors are handled by the form
               if (nonFieldErrors.length > 0) {
@@ -168,6 +200,8 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Refetch dashboards and folders after creating/updating a provisioned repository
+        dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
       },
     },
   },

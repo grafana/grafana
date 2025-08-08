@@ -1,4 +1,6 @@
 import { Preview } from '@storybook/react';
+import { initialize, mswLoader } from 'msw-storybook-addon';
+
 import 'jquery';
 import { getBuiltInThemes, getTimeZone, getTimeZones, GrafanaTheme2 } from '@grafana/data';
 
@@ -42,6 +44,19 @@ if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('tron');
 }
 
+/*
+ * Initializes MSW
+ * See https://github.com/mswjs/msw-storybook-addon#configuring-msw
+ * to learn how to customize it
+ */
+initialize({
+  onUnhandledRequest: 'bypass',
+  serviceWorker: {
+    // Important! The path must be relative to work when we deploy storybook to subpaths (e.g. /ui/canary)
+    url: 'mockServiceWorker.js',
+  },
+});
+
 const preview: Preview = {
   decorators: [withTheme(handleThemeChange), withTimeZone()],
   parameters: {
@@ -49,6 +64,7 @@ const preview: Preview = {
     docs: {
       container: ThemedDocsContainer,
     },
+    a11y: { test: 'error' },
     knobs: {
       disable: true,
     },
@@ -56,20 +72,84 @@ const preview: Preview = {
       // Sort stories first by Docs Overview, then alphabetically
       // We should be able to use the builtin alphabetical sort, but is broken in SB 7.0
       // https://github.com/storybookjs/storybook/issues/22470
+
+      // Story sorting is weird - All stories are sorted as a single 1D list, but then grouped in the UI.
+      // Story titles are generally in the format of [Category]/[Component]/[Story]. However, some categories
+      // will have an additional `Deprecated` sub folder before the [Component]
+      //
+      // We want to have multi-level sorting where:
+      // - The top level category has an explicit order
+      // - Components are sorted alphabetically within their category
+      //   - Except the Deprecated folder, which is sorted to the bottom
+      // - Stories per component use the default file sort order
       storySort: (a, b) => {
-        // Skip sorting for stories with nosort tag
-        if (a.tags.includes('nosort') || b.tags.includes('nosort')) {
-          return 0;
+        const CATEGORY_ORDER = [
+          // Should all be lowercase
+          'docs overview',
+          'foundations',
+          'iconography',
+          'layout',
+
+          'forms',
+          'inputs',
+          'pickers',
+          'date time pickers',
+
+          'information',
+          'overlays',
+          'utilities',
+          'navigation',
+
+          'plugins',
+          'alerting',
+          'developers',
+        ];
+
+        const aTitle = a.title.toLowerCase();
+        const bTitle = b.title.toLowerCase();
+        const [aCategory, aComponent] = aTitle.split('/');
+        const [bCategory, bComponent] = bTitle.split('/');
+
+        //
+        // Sort by category order first
+        const aCategoryIndex = CATEGORY_ORDER.indexOf(aCategory);
+        const bCategoryIndex = CATEGORY_ORDER.indexOf(bCategory);
+
+        if (aCategoryIndex === -1 || bCategoryIndex === -1) {
+          const category = aCategoryIndex === -1 ? aCategory : bCategory;
+          throw new Error(
+            `Category ${category} not found in CATEGORY_ORDER. Prefer reusing the existing categories, or add to CATEGORY_ORDER.`
+          );
         }
-        if (a.title.startsWith('Docs Overview')) {
-          if (b.title.startsWith('Docs Overview')) {
-            return 0;
-          }
+
+        if (aCategoryIndex !== bCategoryIndex) {
+          return aCategoryIndex - bCategoryIndex;
+        }
+
+        //
+        // Sort 'Deprecated' subfolders to the bottom
+        if (aTitle.includes('deprecated') && !bTitle.includes('deprecated')) {
+          return 1;
+        } else if (bTitle.includes('deprecated') && !aTitle.includes('deprecated')) {
           return -1;
-        } else if (b.title.startsWith('Docs Overview')) {
+        }
+
+        //
+        // Sort Docs to the top
+        if (a.type === 'docs' && b.type !== 'docs') {
+          return -1;
+        } else if (a.type !== 'docs' && b.type === 'docs') {
           return 1;
         }
-        return a.id === b.id ? 0 : a.id.localeCompare(b.id, undefined, { numeric: true });
+
+        //
+        // If sorting different components, sort alphabetically
+        if (aComponent !== bComponent) {
+          return aComponent.localeCompare(bComponent, undefined, { numeric: true });
+        }
+
+        // Otherwise, sort stories within componmments according to source order
+        return 0;
       },
     },
   },
@@ -102,6 +182,7 @@ const preview: Preview = {
     },
   },
   tags: ['autodocs'],
+  loaders: [mswLoader],
 };
 
 export default preview;

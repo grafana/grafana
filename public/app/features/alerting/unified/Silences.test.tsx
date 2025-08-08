@@ -15,7 +15,7 @@ import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/moc
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';

@@ -7,7 +7,7 @@ import { ClipboardButton as ClipboardButtonImpl, Props } from './ClipboardButton
 import mdx from './ClipboardButton.mdx';
 
 const meta: Meta = {
-  title: 'Buttons/ClipboardButton',
+  title: 'Inputs/ClipboardButton',
   component: ClipboardButtonImpl,
   parameters: {
     docs: {
@@ -19,10 +19,10 @@ const meta: Meta = {
   },
 };
 
-interface StoryProps extends Partial<Props> {
+type StoryProps = Partial<Props> & {
   inputText: string;
   buttonText: string;
-}
+};
 
 export const ClipboardButton: StoryFn<StoryProps> = (args) => {
   const shareUrl = 'https://grafana.com/d/abcDEF-34t';

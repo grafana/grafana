@@ -8,7 +8,7 @@ import { Button, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { Folder } from '../../types/rule-form';
 

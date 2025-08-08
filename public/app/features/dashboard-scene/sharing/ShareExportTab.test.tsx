@@ -1,7 +1,11 @@
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import {
+  Spec as DashboardV2Spec,
+  defaultQueryGroupKind,
+  defaultVizConfigSpec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
@@ -24,6 +28,7 @@ describe('ShareExportTab', () => {
 
   beforeEach(() => {
     config.featureToggles.kubernetesDashboards = true;
+    config.featureToggles.dashboardNewLayouts = false;
 
     // Set up spies on the functions we want to track
     transformV2ToV1Spy = jest.spyOn(ResponseTransformers, 'transformDashboardV2SpecToV1').mockReturnValue({
@@ -175,7 +180,7 @@ describe('ShareExportTab', () => {
 
       // Should use V2 API version
       expect(result.json).toMatchObject({
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
+        apiVersion: 'dashboard.grafana.app/v2beta1',
         kind: 'Dashboard',
         status: {},
       });
@@ -184,6 +189,88 @@ describe('ShareExportTab', () => {
       expect(transformV2ToV1Spy).not.toHaveBeenCalled();
 
       // Should report correct initial version
+      expect(result.initialSaveModelVersion).toBe('v2');
+    });
+
+    // If V1 dashboard → V2 Resource should detect library panels correctly
+    it('should detect library panels in V1 dashboard when exporting as V2 resource', async () => {
+      const tab = buildV1DashboardWithLibraryPanels();
+      tab.setState({ exportMode: ExportMode.V2Resource });
+
+      const result = await tab.getExportableDashboardJson();
+
+      // Should detect library panels from V1 dashboard
+      expect(result.hasLibraryPanels).toBe(true);
+      expect(result.initialSaveModelVersion).toBe('v1');
+    });
+
+    // If V1 dashboard with dashboardNewLayouts disabled → V2 Resource should detect library panels correctly
+    it('should detect library panels in V1 dashboard when user selects V2Resource export mode', async () => {
+      const tab = buildV1DashboardWithLibraryPanels();
+      tab.setState({ exportMode: ExportMode.V2Resource });
+
+      const result = await tab.getExportableDashboardJson();
+
+      // Should detect library panels from V1 dashboard (first branch of the logic)
+      expect(result.hasLibraryPanels).toBe(true);
+      expect(result.initialSaveModelVersion).toBe('v1');
+    });
+
+    // If V1 dashboard without library panels → V2 Resource should return false
+    it('should return false for hasLibraryPanels when V1 dashboard has no library panels', async () => {
+      const tab = buildV1DashboardScenario();
+      tab.setState({ exportMode: ExportMode.V2Resource });
+
+      const result = await tab.getExportableDashboardJson();
+
+      // Should not detect library panels
+      expect(result.hasLibraryPanels).toBe(false);
+      expect(result.initialSaveModelVersion).toBe('v1');
+    });
+  });
+
+  describe('V2Resource export mode with dashboardNewLayouts disabled', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardNewLayouts = false;
+    });
+
+    afterEach(() => {
+      config.featureToggles.dashboardNewLayouts = true;
+    });
+
+    // If V2 dashboard → V2 Resource should detect library panels correctly
+    it('should detect library panels in V2 dashboard when exporting as V2 resource', async () => {
+      const tab = buildV2DashboardWithLibraryPanels();
+      tab.setState({ exportMode: ExportMode.V2Resource });
+
+      const result = await tab.getExportableDashboardJson();
+
+      // Should detect library panels from V2 dashboard elements (second branch of the logic)
+      expect(result.hasLibraryPanels).toBe(true);
+      expect(result.initialSaveModelVersion).toBe('v2');
+    });
+
+    // Test the second branch: V2 dashboard with V1 initial save model
+    it('should detect library panels in V2 dashboard with V1 initial save model', async () => {
+      const tab = buildV2DashboardWithV1InitialSaveModel();
+      tab.setState({ exportMode: ExportMode.V2Resource });
+
+      const result = await tab.getExportableDashboardJson();
+
+      // Should detect library panels from V2 dashboard elements (second branch of the logic)
+      expect(result.hasLibraryPanels).toBe(true);
+      expect(result.initialSaveModelVersion).toBe('v1');
+    });
+
+    // If V2 dashboard without library panels → V2 Resource should return false
+    it('should return false for hasLibraryPanels when V2 dashboard has no library panels', async () => {
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportMode: ExportMode.V2Resource });
+
+      const result = await tab.getExportableDashboardJson();
+
+      // Should not detect library panels
+      expect(result.hasLibraryPanels).toBe(false);
       expect(result.initialSaveModelVersion).toBe('v2');
     });
   });
@@ -247,13 +334,37 @@ describe('ShareExportTab', () => {
     });
   });
 
-  // Helper functions to create test scenarios
-  function buildV1DashboardScenario(): ShareExportTab {
+  // Helper factory to create test scenarios
+  function createDashboardScenario(options: {
+    version: 'v1' | 'v2';
+    hasLibraryPanels?: boolean;
+    initialSaveModelVersion?: 'v1' | 'v2';
+  }): ShareExportTab {
+    const { version, hasLibraryPanels = false, initialSaveModelVersion = version } = options;
+
+    // Create V1 dashboard
     const mockV1Dashboard: DashboardDataDTO = {
-      title: 'Test Dashboard V1',
+      title: `Test Dashboard V1`,
       uid: 'test-uid-v1',
       version: 1,
-      panels: [],
+      panels: hasLibraryPanels
+        ? [
+            {
+              id: 1,
+              type: 'stat',
+              title: 'Regular Panel',
+              gridPos: { x: 0, y: 0, w: 12, h: 8 },
+              targets: [],
+              options: {},
+              fieldConfig: { defaults: {}, overrides: [] },
+            },
+            {
+              id: 2,
+              type: 'library-panel-ref',
+              libraryPanel: { uid: 'lib-panel-uid', name: 'My Library Panel' },
+            },
+          ]
+        : [],
       time: { from: 'now-6h', to: 'now' },
       timepicker: {},
       timezone: '',
@@ -265,36 +376,44 @@ describe('ShareExportTab', () => {
       templating: { list: [] },
     };
 
-    const tab = new ShareExportTab({});
-    const scene = new DashboardScene({
-      title: 'Test Dashboard V1',
-      uid: 'test-uid-v1',
-      meta: { canEdit: true },
-      $timeRange: new SceneTimeRange({}),
-      body: DefaultGridLayoutManager.fromVizPanels([]),
-      overlay: tab,
-    });
-
-    const mockExportableDashboard: DashboardJson = {
-      ...mockV1Dashboard,
-      panels: [],
-    } as DashboardJson;
-    scene.serializer.getSaveModel = jest.fn(() => mockV1Dashboard);
-    scene.serializer.makeExportableExternally = jest.fn(() => Promise.resolve(mockExportableDashboard));
-    scene.serializer.apiVersion = 'dashboard.grafana.app/v1beta1';
-    scene.getInitialSaveModel = jest.fn(() => mockV1Dashboard);
-
-    return tab;
-  }
-
-  function buildV2DashboardScenario(): ShareExportTab {
+    // Create V2 dashboard
     const mockV2Dashboard: DashboardV2Spec = {
-      title: 'Test Dashboard V2',
+      title: `Test Dashboard V2`,
       annotations: [],
       cursorSync: 'Off',
       description: 'Test V2 dashboard',
       editable: true,
-      elements: {},
+      elements: hasLibraryPanels
+        ? {
+            'element-1': {
+              kind: 'Panel',
+              spec: {
+                id: 1,
+                title: 'Regular Panel',
+                description: '',
+                links: [],
+                data: defaultQueryGroupKind(),
+                vizConfig: {
+                  kind: 'VizConfig',
+                  group: '',
+                  version: '1.0.0',
+                  spec: defaultVizConfigSpec(),
+                },
+              },
+            },
+            'element-2': {
+              kind: 'LibraryPanel',
+              spec: {
+                id: 2,
+                title: 'My Library Panel',
+                libraryPanel: {
+                  uid: 'lib-panel-uid',
+                  name: 'My Library Panel',
+                },
+              },
+            },
+          }
+        : {},
       layout: { kind: 'GridLayout', spec: { items: [] } },
       links: [],
       liveNow: false,
@@ -315,19 +434,40 @@ describe('ShareExportTab', () => {
 
     const tab = new ShareExportTab({});
     const scene = new DashboardScene({
-      title: 'Test Dashboard V2',
-      uid: 'test-uid-v2',
+      title: `Test Dashboard ${version.toUpperCase()}`,
+      uid: `test-uid-${version}`,
       meta: { canEdit: true },
       $timeRange: new SceneTimeRange({}),
       body: DefaultGridLayoutManager.fromVizPanels([]),
       overlay: tab,
     });
 
-    scene.serializer.getSaveModel = jest.fn(() => mockV2Dashboard);
-    scene.serializer.makeExportableExternally = jest.fn(() => Promise.resolve(mockV2Dashboard));
-    scene.serializer.apiVersion = 'dashboard.grafana.app/v2alpha1';
-    scene.getInitialSaveModel = jest.fn(() => mockV2Dashboard);
+    // Set up the scene based on current version
+    const currentDashboard = version === 'v1' ? mockV1Dashboard : mockV2Dashboard;
+    const initialSaveModel = initialSaveModelVersion === 'v1' ? mockV1Dashboard : mockV2Dashboard;
+    const apiVersion = version === 'v1' ? 'dashboard.grafana.app/v1beta1' : 'dashboard.grafana.app/v2beta1';
+
+    scene.serializer.getSaveModel = jest.fn(() => currentDashboard);
+    scene.serializer.makeExportableExternally = jest.fn(() =>
+      Promise.resolve(
+        version === 'v1' ? ({ ...mockV1Dashboard, panels: mockV1Dashboard.panels } as DashboardJson) : mockV2Dashboard
+      )
+    );
+    scene.serializer.apiVersion = apiVersion;
+    scene.getInitialSaveModel = jest.fn(() => initialSaveModel);
 
     return tab;
   }
+
+  // util functions for common scenarios
+  const buildV1DashboardScenario = () => createDashboardScenario({ version: 'v1' });
+  const buildV2DashboardScenario = () => createDashboardScenario({ version: 'v2' });
+  const buildV1DashboardWithLibraryPanels = () => createDashboardScenario({ version: 'v1', hasLibraryPanels: true });
+  const buildV2DashboardWithLibraryPanels = () => createDashboardScenario({ version: 'v2', hasLibraryPanels: true });
+  const buildV2DashboardWithV1InitialSaveModel = () =>
+    createDashboardScenario({
+      version: 'v2',
+      hasLibraryPanels: true,
+      initialSaveModelVersion: 'v1',
+    });
 });

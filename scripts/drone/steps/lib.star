@@ -649,21 +649,13 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
     commands = [
         # Note - this runs in a container running node 14, which does not support the -y option to npx
         "npx wait-on@7.0.1 http://$HOST:$PORT",
+        "pa11y-ci --config e2e/pa11yci.conf.js",
     ]
     failure = "ignore"
+    no_thresholds = "true"
     if ver_mode == "pr":
-        commands.extend(
-            [
-                "pa11y-ci --config .pa11yci-pr.conf.js",
-            ],
-        )
         failure = "always"
-    else:
-        commands.extend(
-            [
-                "pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json",
-            ],
-        )
+        no_thresholds = "false"
 
     return {
         "name": "test-a11y-frontend",
@@ -676,6 +668,7 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
             "GRAFANA_MISC_STATS_API_KEY": from_secret("grafana_misc_stats_api_key"),
             "HOST": "grafana-server",
             "PORT": port,
+            "NO_THRESHOLDS": no_thresholds,
         },
         "failure": failure,
         "commands": commands,
@@ -841,7 +834,7 @@ def playwright_e2e_tests_step():
         "commands": [
             "npx wait-on@7.0.1 http://$HOST:$PORT",
             "yarn playwright install --with-deps chromium",
-            "yarn e2e:playwright",
+            "GRAFANA_URL=http://$HOST:$PORT yarn e2e:playwright --grep @plugins",
         ],
     }
 

@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { UserDTO } from 'app/types';
+import { UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
 

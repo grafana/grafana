@@ -16,6 +16,7 @@ type BuildOpts struct {
 	ExperimentalFlags []string
 	Tags              []string
 	WireTag           string
+	GoCacheProg       string
 	Static            bool
 	Enterprise        bool
 }
@@ -68,7 +69,11 @@ func ViceroyContainer(
 	container := d.Container(containerOpts).From(fmt.Sprintf("rfratto/viceroy:%s", viceroyVersion))
 
 	// Install Go manually, and install make, git, and curl from the package manager.
-	container = container.WithExec([]string{"apt-get", "update"}).
+	container = container.
+		WithExec([]string{"dpkg", "--remove-architecture", "ppc64el"}).
+		WithExec([]string{"dpkg", "--remove-architecture", "s390x"}).
+		WithExec([]string{"dpkg", "--remove-architecture", "armel"}).
+		WithExec([]string{"apt-get", "update", "-yq"}).
 		WithExec([]string{"apt-get", "install", "-yq", "curl", "make", "git"}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)}).
 		WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
@@ -153,6 +158,10 @@ func Builder(
 	builder = builder.
 		WithMountedCache("/root/.cache/go", goBuildCache).
 		WithEnvVariable("GOCACHE", "/root/.cache/go")
+
+	if prog := opts.GoCacheProg; prog != "" {
+		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
+	}
 
 	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
 

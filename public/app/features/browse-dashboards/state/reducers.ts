@@ -2,7 +2,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
-import { ManagerKind } from '../../apiserver/types';
+import { GENERAL_FOLDER_UID } from '../../search/constants';
 import { isSharedWithMe } from '../components/utils';
 import { BrowseDashboardsState } from '../types';
 
@@ -24,7 +24,7 @@ export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: R
     isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
   };
 
-  if (parentUID) {
+  if (parentUID && parentUID !== GENERAL_FOLDER_UID) {
     state.childrenByParentUID[parentUID] = newCollection;
   } else {
     state.rootItems = newCollection;
@@ -92,7 +92,7 @@ export function setItemSelectionState(
   const { item, isSelected } = action.payload;
 
   // UI shouldn't allow it, but also prevent sharedwithme from being selected
-  if (isSharedWithMe(item.uid) || item.managedBy === ManagerKind.Repo) {
+  if (isSharedWithMe(item.uid)) {
     return;
   }
 
@@ -173,8 +173,8 @@ export function setAllSelection(
       }
 
       for (const child of collection.items) {
-        // Don't traverse into the sharedwithme/provisioned folders
-        if (isSharedWithMe(child.uid) || child.managedBy === ManagerKind.Repo) {
+        // Don't traverse into the sharedwithme folder
+        if (isSharedWithMe(child.uid)) {
           continue;
         }
 

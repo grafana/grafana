@@ -40,10 +40,10 @@ import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsisten
 import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
-import { ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
+import { getRulesSourceUid, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
-import { createListFilterLink } from '../../utils/navigation';
+import { createListFilterLink, groups } from '../../utils/navigation';
 import {
   RulePluginOrigin,
   getRulePluginOrigin,
@@ -301,7 +301,14 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
-      {returnToHref && <LinkButton variant="secondary" icon="angle-left" href={returnTo} />}
+      {returnToHref && (
+        <LinkButton
+          aria-label={t('alerting.rule-viewer.aria-label-return-to', 'Return to previous view')}
+          variant="secondary"
+          icon="angle-left"
+          href={returnTo}
+        />
+      )}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}
@@ -422,6 +429,11 @@ function usePageNav(rule: CombinedRule) {
   const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rulerRule);
   const isRecordingRuleType = prometheusRuleType.recordingRule(promRule);
 
+  const dataSourceUID = getRulesSourceUid(rule.namespace.rulesSource);
+  const namespaceString = getNamespaceString(rule);
+
+  const groupDetailsUrl = groups.detailsPageLink(dataSourceUID, namespaceString, groupName);
+
   const pageNav: NavModelItem = {
     ...defaultPageNav,
     text: rule.name,
@@ -470,10 +482,7 @@ function usePageNav(rule: CombinedRule) {
     ],
     parentItem: {
       text: groupName,
-      url: createListFilterLink([
-        ['namespace', namespaceName],
-        ['group', groupName],
-      ]),
+      url: groupDetailsUrl,
       // @TODO support nested folders here
       parentItem: {
         text: namespaceName,
@@ -521,6 +530,35 @@ function isValidRunbookURL(url: string) {
   }
 
   return isRelative || isAbsolute;
+}
+
+function getNamespaceString(rule: CombinedRule): string {
+  // try rule.namespace.uid
+  if (rule.namespace.uid) {
+    return rule.namespace.uid;
+  }
+
+  // if datasource managed, use rule.namespace.name;
+  const isDataSourceManagedRulerRule = rulerRuleType.dataSource.rule(rule.rulerRule);
+  const isDataSourceManagedPromRule =
+    prometheusRuleType.rule(rule.promRule) && !prometheusRuleType.grafana.rule(rule.promRule);
+
+  if (isDataSourceManagedRulerRule || isDataSourceManagedPromRule) {
+    return rule.namespace.name;
+  }
+
+  // try rulerRule definition if grafana ruler rule;
+  if (rulerRuleType.grafana.rule(rule.rulerRule)) {
+    return rule.rulerRule?.grafana_alert.namespace_uid;
+  }
+
+  // try promRule definition if grafana prom rule;
+  if (prometheusRuleType.grafana.rule(rule.promRule)) {
+    return rule.promRule.folderUid;
+  }
+
+  // fell back to whatever the name is of the namespace assigned to the combined rule
+  return rule.namespace.name;
 }
 
 export default RuleViewer;

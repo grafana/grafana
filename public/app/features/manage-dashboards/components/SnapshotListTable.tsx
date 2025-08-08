@@ -52,7 +52,7 @@ export const SnapshotListTable = () => {
           You can create a snapshot of any dashboard through the <b>Share</b> modal.{' '}
           <TextLink
             external
-            href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot"
+            href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#share-a-snapshot"
           >
             Learn more
           </TextLink>
@@ -104,8 +104,12 @@ export const SnapshotListTable = () => {
         isOpen={!!removeSnapshot}
         icon="trash-alt"
         title={t('manage-dashboards.snapshot-list-table.title-delete', 'Delete')}
-        body={`Are you sure you want to delete '${removeSnapshot?.name}'?`}
-        confirmText="Delete"
+        body={t(
+          'manage-dashboards.snapshot-list-table.body-delete',
+          "Are you sure you want to delete '{{snapshotToRemove}}'?",
+          { snapshotToRemove: removeSnapshot?.name }
+        )}
+        confirmText={t('manage-dashboards.snapshot-list-table.confirmText-delete', 'Delete')}
         onDismiss={() => setRemoveSnapshot(undefined)}
         onConfirm={() => {
           doRemoveSnapshot(removeSnapshot!);

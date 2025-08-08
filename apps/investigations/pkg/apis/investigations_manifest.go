@@ -7,8 +7,13 @@ package apis
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
+
+	v0alpha1 "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1"
 )
 
 var (
@@ -23,37 +28,29 @@ var (
 var appManifestData = app.ManifestData{
 	AppName: "investigations",
 	Group:   "investigations.grafana.app",
-	Kinds: []app.ManifestKind{
+	Versions: []app.ManifestVersion{
 		{
-			Kind:       "Investigation",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
+			Name:   "v0alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
 				{
-					Name:   "v0alpha1",
-					Schema: &versionSchemaInvestigationv0alpha1,
+					Kind:       "Investigation",
+					Plural:     "Investigations",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaInvestigationv0alpha1,
 				},
-			},
-		},
 
-		{
-			Kind:       "InvestigationIndex",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name:   "v0alpha1",
-					Schema: &versionSchemaInvestigationIndexv0alpha1,
+					Kind:       "InvestigationIndex",
+					Plural:     "InvestigationIndexes",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaInvestigationIndexv0alpha1,
 				},
 			},
 		},
 	},
-}
-
-func jsonToMap(j string) map[string]any {
-	m := make(map[string]any)
-	json.Unmarshal([]byte(j), &j)
-	return m
 }
 
 func LocalManifest() app.Manifest {
@@ -62,4 +59,29 @@ func LocalManifest() app.Manifest {
 
 func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("investigations")
+}
+
+var kindVersionToGoType = map[string]resource.Kind{
+	"Investigation/v0alpha1":      v0alpha1.InvestigationKind(),
+	"InvestigationIndex/v0alpha1": v0alpha1.InvestigationIndexKind(),
+}
+
+// ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
+// If there is no association for the provided Kind and Version, exists will return false.
+func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exists bool) {
+	goType, exists = kindVersionToGoType[fmt.Sprintf("%s/%s", kind, version)]
+	return goType, exists
+}
+
+var customRouteToGoResponseType = map[string]any{}
+
+// ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
+// kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
+// If there is no association for the provided kind, version, custom route path, and method, exists will return false.
+func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoResponseType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
 }

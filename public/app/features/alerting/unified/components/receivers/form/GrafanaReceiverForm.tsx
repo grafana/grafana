@@ -15,7 +15,7 @@ import {
   GrafanaManagedReceiverConfig,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction } from '../../../state/actions';
@@ -135,9 +135,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     }
   };
 
-  const isEditable = Boolean(
-    (!readOnly || (contactPoint && canEditEntity(contactPoint))) && !contactPoint?.provisioned
-  );
+  // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
+  const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
+  const isEditable = !readOnly && hasScopedEditPermissions && !contactPoint?.provisioned;
   const isTestable = !readOnly;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {

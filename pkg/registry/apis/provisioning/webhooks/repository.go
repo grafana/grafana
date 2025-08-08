@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-github/v70/github"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
@@ -20,31 +20,34 @@ import (
 
 var subscribedEvents = []string{"push", "pull_request"}
 
+//nolint:gosec // This is a constant for a secret suffix
+const webhookSecretSuffix = "-webhook-secret"
+
 type WebhookRepository interface {
 	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 }
 
 type GithubWebhookRepository interface {
-	repository.GithubRepository
+	pgh.GithubRepository
 	repository.Hooks
 
 	WebhookRepository
 }
 
 type githubWebhookRepository struct {
-	repository.GithubRepository
+	pgh.GithubRepository
 	config     *provisioning.Repository
 	owner      string
 	repo       string
-	secrets    secrets.Service
+	secrets    secrets.RepositorySecrets
 	gh         pgh.Client
 	webhookURL string
 }
 
 func NewGithubWebhookRepository(
-	basic repository.GithubRepository,
+	basic pgh.GithubRepository,
 	webhookURL string,
-	secrets secrets.Service,
+	secrets secrets.RepositorySecrets,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository: basic,
@@ -63,7 +66,7 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	secret, err := r.secrets.Decrypt(ctx, r.config.Status.Webhook.EncryptedSecret)
+	secret, err := r.secrets.Decrypt(ctx, r.config, string(r.config.Status.Webhook.EncryptedSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt secret: %w", err)
 	}
@@ -269,6 +272,7 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (pgh.Webhoo
 }
 
 func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
+	logger := logging.FromContext(ctx)
 	if r.config.Status.Webhook == nil {
 		return fmt.Errorf("webhook not found")
 	}
@@ -279,7 +283,7 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 
-	logging.FromContext(ctx).Info("webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
+	logger.Info("webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
 	return nil
 }
 
@@ -332,10 +336,22 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 }
 
 func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
-	if len(r.webhookURL) == 0 {
+	ctx, logger := r.logger(ctx, "")
+	if err := r.GithubRepository.OnDelete(ctx); err != nil {
+		return fmt.Errorf("on delete from basic github repository: %w", err)
+	}
+
+	if r.config.Status.Webhook == nil {
 		return nil
 	}
-	ctx, _ = r.logger(ctx, "")
+
+	secretName := r.config.Name + webhookSecretSuffix
+	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
+		return fmt.Errorf("delete webhook secret: %w", err)
+	}
+
+	logger.Info("Deleted webhook secret", "secretName", secretName)
+
 	return r.deleteWebhook(ctx)
 }
 

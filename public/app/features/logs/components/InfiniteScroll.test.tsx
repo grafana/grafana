@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
 
 import { InfiniteScroll, Props, SCROLLING_THRESHOLD } from './InfiniteScroll';
-import { createLogRow } from './__mocks__/logRow';
+import { createLogRow } from './mocks/logRow';
 
 const defaultTz = 'browser';
 
@@ -107,11 +107,12 @@ function setup(
   return { element, events, scrollTo, wheel };
 }
 
+const originalState = config.featureToggles.logsInfiniteScrolling;
 beforeAll(() => {
   config.featureToggles.logsInfiniteScrolling = true;
 });
 afterAll(() => {
-  config.featureToggles.logsInfiniteScrolling = false;
+  config.featureToggles.logsInfiniteScrolling = originalState;
 });
 
 describe('InfiniteScroll', () => {

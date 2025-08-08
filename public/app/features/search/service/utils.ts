@@ -1,9 +1,9 @@
-import { DataFrameView, IconName } from '@grafana/data';
+import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
 import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
-import { DashboardDataDTO } from '../../../types';
 import { AnnoKeyFolder, ResourceList } from '../../apiserver/types';
 import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem, DashboardViewItemKind } from '../types';
 
@@ -127,10 +127,10 @@ export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>)
     const hit = {
       resource: 'dashboards',
       name: item.metadata.name,
-      title: item.spec.title,
+      title: item.spec?.title,
       location: 'general',
       folder: item?.metadata?.annotations?.[AnnoKeyFolder] ?? 'general',
-      tags: item.spec.tags || [],
+      tags: item.spec?.tags || [],
       field: {},
       url: '',
     };
@@ -160,4 +160,35 @@ export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): Dashbo
 
     return dashboardHit;
   });
+}
+
+/**
+ * Filters search results based on query parameters
+ * This is used when backend filtering is not available (e.g., for deleted dashboards)
+ * Supports fuzzy search for tags and titles and alphabetical sorting
+ */
+export function filterSearchResults(
+  results: SearchHit[],
+  query: {
+    query?: string;
+    tag?: string[];
+    sort?: string;
+  }
+): SearchHit[] {
+  let filtered = results;
+
+  if ((query.query && query.query.trim() !== '' && query.query !== '*') || (query.tag && query.tag.length > 0)) {
+    const searchString = query.query || query.tag?.join(',') || '';
+    const haystack = results.map((hit) => `${hit.title},${hit.tags.join(',')}`);
+    const indices = fuzzySearch(haystack, searchString);
+    filtered = indices.map((index) => results[index]);
+  }
+
+  if (query.sort) {
+    const collator = new Intl.Collator();
+    const mult = query.sort === 'alpha-desc' ? -1 : 1;
+    filtered.sort((a, b) => mult * collator.compare(a.title, b.title));
+  }
+
+  return filtered;
 }

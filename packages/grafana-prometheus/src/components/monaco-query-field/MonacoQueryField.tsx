@@ -48,6 +48,7 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   suggest: getSuggestOptions(),
   suggestFontSize: 12,
   wordWrap: 'on',
+  quickSuggestionsDelay: 250,
 };
 
 // this number was chosen by testing various values. it might be necessary
@@ -155,7 +156,13 @@ const MonacoQueryField = (props: Props) => {
             historyProvider: historyRef.current,
             languageProvider: lpRef.current,
           });
-          const completionProvider = getCompletionProvider(monaco, dataProvider, timeRange);
+
+          // Create completion provider with state for Ctrl+Space detection
+          const { provider: completionProvider, state: completionState } = getCompletionProvider(
+            monaco,
+            dataProvider,
+            timeRange
+          );
 
           // completion-providers in monaco are not registered directly to editor-instances,
           // they are registered to languages. this makes it hard for us to have
@@ -182,7 +189,31 @@ const MonacoQueryField = (props: Props) => {
             filteringCompletionProvider
           );
 
-          autocompleteDisposeFun.current = dispose;
+          const handleKeyDown = (event: KeyboardEvent) => {
+            if ((event.ctrlKey || event.metaKey) && event.code === 'Space') {
+              // Only handle if this editor is focused
+              if (editor.hasTextFocus()) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                completionState.isManualTriggerRequested = true;
+                editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+                setTimeout(() => {
+                  completionState.isManualTriggerRequested = false;
+                }, 300);
+              }
+            }
+          };
+
+          // Add global listener
+          document.addEventListener('keydown', handleKeyDown, true);
+
+          // Combine cleanup functions
+          autocompleteDisposeFun.current = () => {
+            document.removeEventListener('keydown', handleKeyDown, true);
+            dispose();
+          };
+
           // this code makes the editor resize itself so that the content fits
           // (it will grow taller when necessary)
           // FIXME: maybe move this functionality into CodeEditor, like:
@@ -257,23 +288,30 @@ const MonacoQueryField = (props: Props) => {
                 return;
               }
               const query = model.getValue();
-              const errors =
-                validateQuery(
-                  query,
-                  datasource.interpolateString(query, placeHolderScopedVars),
-                  model.getLinesContent(),
-                  parser
-                ) || [];
+              const { errors, warnings } = validateQuery(
+                query,
+                datasource.interpolateString(query, placeHolderScopedVars),
+                model.getLinesContent(),
+                parser
+              );
 
-              const markers = errors.map(({ error, ...boundary }) => ({
-                message: `${
-                  error ? `Error parsing "${error}"` : 'Parse error'
-                }. The query appears to be incorrect and could fail to be executed.`,
-                severity: monaco.MarkerSeverity.Error,
-                ...boundary,
-              }));
+              const errorMarkers = errors.map(({ issue, ...boundary }) => {
+                return {
+                  message: `${issue ? `Error parsing "${issue}"` : 'Parse error'}. The query appears to be incorrect and could fail to be executed.`,
+                  severity: monaco.MarkerSeverity.Error,
+                  ...boundary,
+                };
+              });
 
-              monaco.editor.setModelMarkers(model, 'owner', markers);
+              const warningMarkers = warnings.map(({ issue, ...boundary }) => {
+                return {
+                  message: `Warning: ${issue}`,
+                  severity: monaco.MarkerSeverity.Warning,
+                  ...boundary,
+                };
+              });
+
+              monaco.editor.setModelMarkers(model, 'owner', [...errorMarkers, ...warningMarkers]);
             });
           }
         }}

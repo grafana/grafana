@@ -7,14 +7,13 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
-import { RowItemRepeaterBehavior } from '../layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -132,6 +131,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         });
       }),
     });
+  }
+
+  public getOutlineChildren() {
+    return this.state.tabs;
   }
 
   public addNewTab(tab?: TabItem) {
@@ -283,10 +286,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         const conditionalRendering = row.state.conditionalRendering;
         conditionalRendering?.clearParent();
 
-        const behavior = row.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
-        const $behaviors = !behavior
-          ? undefined
-          : [new TabItemRepeaterBehavior({ variableName: behavior.state.variableName })];
+        const $behaviors = row.state.repeatByVariable
+          ? [new TabItemRepeaterBehavior({ variableName: row.state.repeatByVariable })]
+          : undefined;
 
         tabs.push(
           new TabItem({ layout: row.state.layout.clone(), title: row.state.title, conditionalRendering, $behaviors })

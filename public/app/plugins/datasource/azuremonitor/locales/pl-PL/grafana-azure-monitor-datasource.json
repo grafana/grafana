@@ -52,6 +52,7 @@
       "button-use-query": "Użyj tego zapytania",
       "label-categories": "Kategorie",
       "label-query-results": "Wyniki zapytania: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Wszystkie kategorie",
       "placeholder-search-logs": "Wyszukaj zapytania dotyczące dzienników",
       "text-loading": "Ładowanie…"
@@ -71,10 +72,8 @@
       "label-enable-basic-logs": "Włącz podstawowe dzienniki"
     },
     "config-editor": {
-      "description-additional-settings": "Dodatkowe ustawienia to opcje, które można skonfigurować, aby uzyskać większą kontrolę nad źródłem danych. Obejmuje to bezpieczny serwer proxy SOCKS.",
-      "description-request-timeout": "Ustaw limit czasu żądania w sekundach. Domyślnie jest to 30 sekund.",
-      "title-additional-settings": "Ustawienia dodatkowe",
-      "title-request-timeout": "Limit czasu żądania"
+      "description-additional-settings": "",
+      "title-additional-settings": "Ustawienia dodatkowe"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Zastępcze dane uwierzytelniające zostały wyłączone. Ponieważ uwierzytelnianie oparte na użytkowniku z natury rzeczy obsługuje tylko żądania z użytkownikiem w zakresie, funkcje takie jak alerty, zarejestrowane zapytania lub raportowanie nie będą działać zgodnie z oczekiwaniami. Więcej szczegółów znajdziesz w <2>dokumentacji</2>.",
@@ -114,9 +113,12 @@
       "aria-label-column": "Kolumna",
       "aria-label-column-value": "Wartość kolumny",
       "aria-label-operator": "Operator",
+      "aria-label-remove-filter": "",
       "label-or": "LUB"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Dodaj grupę",
       "label-and": "ORAZ",
       "label-filters": "Filtry",
@@ -129,6 +131,8 @@
       "label-format-as": "Formatuj jako"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Wybierz kolumnę",
       "label-fuzzy-search": "Wyszukiwanie przybliżone",
       "placeholder-search-team": "Wpisz wyszukiwane hasło",
@@ -143,6 +147,7 @@
       "aria-label-remove": "Usuń"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Grupuj według",
       "tooltip-group-by": "Uporządkuj wyniki w kategoriach na podstawie określonych kolumn. Funkcja „Grupuj według” może być używana niezależnie do wyświetlania unikalnych wartości w wybranych kolumnach lub w połączeniu z funkcjami agregującymi do tworzenia statystyk podsumowujących dla każdej grupy. Funkcja użyta samodzielnie zwraca różne kombinacje określonych kolumn."
     },
@@ -161,6 +166,8 @@
       "tooltip-limit": "Ogranicz liczbę zwracanych wierszy (domyślnie 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników wiążą się z kosztami w zależności od ilości przeskanowanych danych.",
       "label-logs": "Logi",
       "title-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników",
@@ -183,8 +190,10 @@
       "text-loading": "Ładowanie…"
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Sortuj według kolumny",
       "aria-label-order-direction": "Kierunek sortowania",
+      "aria-label-remove-order-by": "",
       "label-by": "WEDŁUG",
       "label-order-by": "Sortuj według",
       "tooltip-order-by": "Sortuj wyniki na podstawie jednej lub kilku kolumn w kolejności rosnącej lub malejącej."
@@ -194,8 +203,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Przycisk Uruchom zapytanie dotyczący dzienników Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Uruchom zapytanie",
       "button-run-query": "Uruchom zapytanie",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Usługa",
       "placeholder-service": "Usługa…",
       "title-switch-mode": "Przełączyć tryb edytora?"
@@ -222,6 +238,9 @@
       "text-no-resources": "Nie znaleziono zasobów",
       "title-error-occurred": "Podczas wysyłania żądania zasobów do narzędzia Azure Monitor wystąpił błąd"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Wyszukiwanie zasobów",
       "placeholder-resource-search": "Szukaj zasobu"
@@ -236,7 +255,8 @@
       "label-columns": "Kolumny",
       "label-table": "Tabela",
       "placeholder-select-columns": "Wybierz kolumny",
-      "placeholder-select-table": "Wybierz tabelę"
+      "placeholder-select-table": "Wybierz tabelę",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Rozdzielczość czasu"

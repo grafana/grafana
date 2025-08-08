@@ -830,16 +830,16 @@ export class DashboardMigrator {
 
     if (oldVersion < 37) {
       panelUpgrades.push((panel: PanelModel) => {
-        if (
-          panel.options?.legend &&
+        if (panel.options?.legend && typeof panel.options.legend === 'object') {
           // There were two ways to hide the legend, this normalizes to `legend.showLegend`
-          (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false)
-        ) {
-          panel.options.legend.displayMode = 'list';
-          panel.options.legend.showLegend = false;
-        } else if (panel.options?.legend) {
-          panel.options.legend = { ...panel.options?.legend, showLegend: true };
+          if (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false) {
+            panel.options.legend.displayMode = 'list';
+            panel.options.legend.showLegend = false;
+          } else {
+            panel.options.legend = { ...panel.options.legend, showLegend: true };
+          }
         }
+
         return panel;
       });
     }
@@ -925,6 +925,10 @@ export class DashboardMigrator {
       if ('time_options' in this.dashboard.timepicker) {
         delete this.dashboard.timepicker.time_options;
       }
+    }
+
+    if (oldVersion < 42) {
+      panelUpgrades.push(migrateHideFromFunctionality);
     }
 
     /**
@@ -1476,6 +1480,26 @@ function ensureXAxisVisibility(panel: PanelModel) {
         ],
       };
     }
+  }
+
+  return panel;
+}
+
+function migrateHideFromFunctionality(panel: PanelModel) {
+  // migrate overrides with hideFrom.viz = true to also set tooltip = true
+  // this includes the __systemRef override
+  if (panel.fieldConfig && panel.fieldConfig.overrides) {
+    panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+      if (override.properties) {
+        override.properties = override.properties.map((property) => {
+          if (property.id === 'custom.hideFrom' && property.value?.viz === true) {
+            property.value.tooltip = true;
+          }
+          return property;
+        });
+      }
+      return override;
+    });
   }
 
   return panel;

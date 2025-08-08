@@ -12,8 +12,8 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { selectExploreDSMaps } from '../state/selectors';
 

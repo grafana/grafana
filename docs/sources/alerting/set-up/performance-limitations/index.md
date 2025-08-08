@@ -59,18 +59,22 @@ For more information, refer to [this GitHub issue](https://github.com/grafana/gr
 ## High load on database caused by a high number of alert instances
 
 If you have a high number of alert instances, it can happen that the load on the database gets very high, as each state
-transition of an alert instance is saved in the database.
+transition of an alert instance is saved in the database after every evaluation.
 
 ### Compressed alert state
 
-When the `alertingSaveStateCompressed` feature toggle is enabled, Grafana saves the alert rule state in a compressed form, reducing database overhead for alerts with many instances.
+When the `alertingSaveStateCompressed` feature toggle is enabled, Grafana saves the alert rule state in a compressed form. Instead of performing an individual SQL update for each alert instance, Grafana performs a single SQL update per alert rule, updating all alert instances belonging to that rule.
+
+This can significantly reduce database overhead for alert rules with many alert instances.
 
 ### Save state periodically
 
-High load can be also prevented by writing to the database periodically. For this the feature flag `alertingSaveStatePeriodic` needs
-to be enabled. By default, it saves the states every 5 minutes to the database and on each shutdown. The periodic interval
-can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the
-database and then writes the entire current set of instances back in batches in a single transacton.
+High load can be also prevented by writing to the database periodically, instead of after every evaluation.
+
+To save state periodically, enable the `alertingSaveStatePeriodic` feature toggle.
+
+By default, it saves the states every 5 minutes to the database and on each shutdown. The periodic interval
+can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the database and then writes the entire current set of instances back in batches in a single transaction.
 Configure the size of each batch using the `state_periodic_save_batch_size` configuration option.
 
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric

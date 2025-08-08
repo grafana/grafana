@@ -42,6 +42,7 @@ export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData 
 
   enableSecureSocksProxy?: boolean;
   timeout?: number;
+  keepCookies?: string[];
 }
 
 export interface AzureMonitorDataSourceSecureJsonData extends AzureDataSourceSecureJsonData {

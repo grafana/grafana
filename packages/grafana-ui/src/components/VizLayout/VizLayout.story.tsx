@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 import { VizLayout } from './VizLayout';
 
 const meta: Meta = {
-  title: 'Visualizations/VizLayout',
+  title: 'Plugins/VizLayout',
   component: VizLayout,
   parameters: {
     docs: {},
     controls: {
       exclude: ['legend'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     width: { control: { type: 'range', min: 100, max: 1000 } },

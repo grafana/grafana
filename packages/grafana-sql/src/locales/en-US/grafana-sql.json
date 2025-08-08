@@ -55,6 +55,10 @@
       },
       "query-header": {
         "content-invalid-query": "Your query is invalid. Check below for details. <1></1>However, you can still run this query.",
+        "editor-modes": {
+          "label-builder": "Builder",
+          "label-code": "Code"
+        },
         "label-dataset": "Dataset",
         "label-filter": "Filter",
         "label-format": "Format",

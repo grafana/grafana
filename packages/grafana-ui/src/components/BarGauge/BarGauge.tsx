@@ -688,7 +688,7 @@ function getValueStyles(
   const styles: CSSProperties = {
     color,
     height: `${height}px`,
-    width: `${width}px`,
+    maxWidth: `${width}px`,
     display: 'flex',
     alignItems: 'center',
     textWrap: 'nowrap',

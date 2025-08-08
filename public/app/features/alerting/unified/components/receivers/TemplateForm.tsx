@@ -29,6 +29,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -106,6 +107,9 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
+  // AI feedback state
+  const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
+
   const { isProvisioned } = useNotificationTemplateMetadata(originalTemplate);
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
@@ -162,6 +166,11 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     const content = getValues('content'),
       newValue = !content ? example : `${content}\n${example}`;
     setValue('content', newValue);
+  };
+
+  const handleTemplateGenerated = (template: string) => {
+    setValue('content', template);
+    setAiGeneratedTemplate(true);
   };
 
   return (
@@ -275,6 +284,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                     </Button>
                                   </Dropdown>
                                 )}
+                                {/* GenAI button – only available for Grafana Alertmanager and enterprise */}
+                                {isGrafanaAlertManager && (
+                                  <AITemplateButtonComponent
+                                    onTemplateGenerated={handleTemplateGenerated}
+                                    disabled={isProvisioned}
+                                  />
+                                )}
                                 <Button
                                   icon="question-circle"
                                   size="sm"
@@ -340,6 +356,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}
+                      aiGeneratedTemplate={aiGeneratedTemplate}
+                      setAiGeneratedTemplate={setAiGeneratedTemplate}
                     />
                   </div>
                 )}

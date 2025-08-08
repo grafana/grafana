@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/core';
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue, isSelectableValueArray } from './utils/guards';
-import { isUrlValid } from './utils/url';
+import { isUrlValid, isValidDomain } from './utils/url';
 
 type Section = Record<
   SSOProvider['provider'],
@@ -44,6 +44,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'loginPrompt',
         ],
       },
       {
@@ -59,6 +60,7 @@ export const getSectionFields = (): Section => {
           'allowedDomains',
           'allowedGroups',
           'forceUseGraphApi',
+          'domainHint',
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -86,6 +88,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'loginPrompt',
         ],
       },
       {
@@ -131,7 +134,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -165,7 +177,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -198,7 +219,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -871,6 +901,39 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'custom',
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
+    },
+    domainHint: {
+      label: t('auth-config.fields.domain-hint-label', 'Domain hint'),
+      description: t(
+        'auth-config.fields.domain-hint-description',
+        'Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.'
+      ),
+      type: 'text',
+      validation: {
+        validate: (value) => {
+          if (typeof value === 'string' && value.length) {
+            return isValidDomain(value);
+          }
+          return true;
+        },
+        message: t('auth-config.fields.domain-hint-valid-domain', 'This field must be a valid domain.'),
+      },
+    },
+    loginPrompt: {
+      label: t('auth-config.fields.login-prompt-label', 'Login prompt'),
+      type: 'select',
+      description: t(
+        'auth-config.fields.login-prompt-description',
+        'Indicates the type of user interaction when the user logs in with the IdP.'
+      ),
+      multi: false,
+      options: [
+        { value: '', label: '' },
+        { value: 'login', label: t('auth-config.fields.login-prompt-login', 'Login') },
+        { value: 'consent', label: t('auth-config.fields.login-prompt-consent', 'Consent') },
+        { value: 'select_account', label: t('auth-config.fields.login-prompt-select-account', 'Select account') },
+      ],
+      defaultValue: { value: '', label: '' },
     },
   };
 }

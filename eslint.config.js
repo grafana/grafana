@@ -43,7 +43,7 @@ module.exports = [
       'data/',
       'deployment_tools_config.json',
       'devenv',
-      'e2e/test-plugins',
+      'e2e-playwright/test-plugins',
       'e2e/tmp',
       'packages/grafana-ui/src/components/Icon/iconBundle.ts',
       'pkg',
@@ -157,6 +157,14 @@ module.exports = [
       '@typescript-eslint/no-redeclare': ['error'],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          // value regex is to filter out whitespace-only text nodes (e.g. new lines and spaces in the JSX)
+          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
+          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
+        },
+      ],
     },
   },
   {
@@ -174,6 +182,13 @@ module.exports = [
       '@emotion/jsx-import': 'off',
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
+    },
+  },
+  {
+    name: 'grafana/story-rules',
+    files: ['packages/grafana-ui/src/**/*.story.tsx'],
+    rules: {
+      '@grafana/consistent-story-titles': 'error',
     },
   },
   {
@@ -304,6 +319,7 @@ module.exports = [
     files: [
       'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-data/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-sql/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-prometheus/**/*.{ts,tsx,js,jsx}',
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
@@ -396,6 +412,24 @@ module.exports = [
               from: './public',
               except: ['./app/plugins'],
               message: 'Core plugins are not allowed to depend on Grafana core packages',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    name: 'grafana/no-extensions-imports',
+    files: ['**/*.{ts,tsx,js}'],
+    ignores: ['public/app/extensions/**/*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['app/extensions', 'app/extensions/*'],
+              message: 'Importing from app/extensions is not allowed',
             },
           ],
         },

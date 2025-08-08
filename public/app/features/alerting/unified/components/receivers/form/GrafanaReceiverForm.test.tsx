@@ -13,7 +13,7 @@ import {
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';

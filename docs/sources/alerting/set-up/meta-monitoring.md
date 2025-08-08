@@ -56,14 +56,16 @@ This `GRAFANA_ALERTS` metric is compatible with the `ALERTS` metric used by Prom
 1. A new `grafana_rule_uid` label for the UID of the Grafana rule.
 2. A new `grafana_alertstate` label for the Grafana alert state, which differs slightly from the equivalent Prometheus state included in the `alertstate` label.
 
-   | Grafana state  | `alertstate`          | `grafana_alertstate`  |
-   | -------------- | --------------------- | --------------------- |
-   | **Alerting**   | `firing`              | `alerting`            |
-   | **Recovering** | `firing`              | `recovering`          |
-   | **Pending**    | `pending`             | `pending`             |
-   | **Error**      | `firing`              | `error`               |
-   | **NoData**     | `firing`              | `nodata`              |
-   | **Normal**     | _(no metric emitted)_ | _(no metric emitted)_ |
+Alert labels are automatically converted before being written to Prometheus to ensure compatibility. Prometheus requires label names to start with a letter or underscore (`_`), followed only by letters, numbers, or additional underscores. Invalid characters are replaced during conversion. For example, `1my-label` becomes `_my_label`.
+
+| Grafana state  | `alertstate`          | `grafana_alertstate`  |
+| -------------- | --------------------- | --------------------- |
+| **Alerting**   | `firing`              | `alerting`            |
+| **Recovering** | `firing`              | `recovering`          |
+| **Pending**    | `pending`             | `pending`             |
+| **Error**      | `firing`              | `error`               |
+| **NoData**     | `firing`              | `nodata`              |
+| **Normal**     | _(no metric emitted)_ | _(no metric emitted)_ |
 
 You can then query this metric like any other Prometheus metric:
 
@@ -125,6 +127,12 @@ This metric is a gauge that shows you the number of seconds that the scheduler i
 #### grafana_alerting_notification_latency_seconds_bucket
 
 This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric lets you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
+
+#### grafana_alerting_state_history_writes_failed_total
+
+This metric is a counter that shows you the number of failed writes to the configured alert state history backend. It includes a `backend` label to distinguish between different backends (such as `loki` or `prometheus`).
+
+For example, you might want to create an alert that fires when `grafana_alerting_state_history_writes_failed_total{backend="prometheus"}` is greater than 0 to detect when Prometheus remote write is failing.
 
 ## Logs for Grafana-managed alerts
 

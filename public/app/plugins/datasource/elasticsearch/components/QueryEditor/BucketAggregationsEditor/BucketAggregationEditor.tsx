@@ -1,11 +1,11 @@
 import { SelectableValue } from '@grafana/data';
 import { InlineSegmentGroup, Segment, SegmentAsync } from '@grafana/ui';
 
+import { BucketAggregationType, BucketAggregation } from '../../../dataquery.gen';
 import { useFields } from '../../../hooks/useFields';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { segmentStyles } from '../styles';
 
-import { BucketAggregation, BucketAggregationType } from './../../../types';
 import { SettingsEditor } from './SettingsEditor';
 import { isBucketAggregationWithField } from './aggregations';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';

@@ -11,6 +11,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
+  DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateTime,
@@ -21,6 +22,7 @@ import {
   ScopedVars,
   SelectableValue,
   TestDataSourceResponse,
+  TimeRange,
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
@@ -134,6 +136,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     metrics?: boolean;
   };
 
+  timeRangeForTags?: number;
+
   // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
   tempoVersion?: string | null;
 
@@ -149,7 +153,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
     this.streamingEnabled = instanceSettings.jsonData.streamingEnabled;
-
+    this.timeRangeForTags = instanceSettings.jsonData.timeRangeForTags;
     this.languageProvider = new TempoLanguageProvider(this);
 
     if (!this.search?.filters) {
@@ -170,7 +174,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.variables = new TempoVariableSupport(this);
   }
 
-  async executeVariableQuery(query: TempoVariableQuery) {
+  async executeVariableQuery(query: TempoVariableQuery, range?: TimeRange) {
     // Avoid failing if the user did not select the query type (label names, label values, etc.)
     if (query.type === undefined) {
       return new Promise<Array<{ text: string }>>(() => []);
@@ -178,10 +182,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     switch (query.type) {
       case TempoVariableQueryType.LabelNames: {
-        return await this.labelNamesQuery();
+        return await this.labelNamesQuery(range);
       }
       case TempoVariableQueryType.LabelValues: {
-        return this.labelValuesQuery(query.label);
+        return this.labelValuesQuery(query.label, range);
       }
       default: {
         throw Error('Invalid query type: ' + query.type);
@@ -189,16 +193,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   }
 
-  async labelNamesQuery(): Promise<Array<{ text: string }>> {
-    await this.languageProvider.fetchTags();
+  async labelNamesQuery(range?: TimeRange): Promise<Array<{ text: string }>> {
+    await this.languageProvider.start(range, this.timeRangeForTags);
     const tags = this.languageProvider.getAutocompleteTags();
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
-  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
+  async labelValuesQuery(labelName?: string, range?: TimeRange): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
+
+    await this.languageProvider.start(range, this.timeRangeForTags);
 
     let options;
     try {
@@ -217,7 +223,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2(scopeAndTag);
+      options = await this.languageProvider.getOptionsV2({
+        tag: scopeAndTag,
+        timeRangeForTags: this.timeRangeForTags,
+        range,
+      });
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
@@ -229,8 +239,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   // Allows to retrieve the list of tags for ad-hoc filters
-  async getTagKeys(): Promise<Array<{ text: string }>> {
-    await this.languageProvider.fetchTags();
+  async getTagKeys(options: DataSourceGetTagKeysOptions<TempoQuery>): Promise<Array<{ text: string }>> {
+    await this.languageProvider.fetchTags(this.timeRangeForTags, options?.timeRange ?? undefined);
     const tags = this.languageProvider.tagsV2 || [];
     return tags
       .map(({ name, tags }) =>
@@ -243,15 +253,20 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
     const query = this.languageProvider.generateQueryFromFilters({ adhocFilters: options.filters });
-    return this.tagValuesQuery(options.key, query);
+    return this.tagValuesQuery(options.key, query, options?.timeRange ?? undefined);
   }
 
-  async tagValuesQuery(tag: string, query: string): Promise<Array<{ text: string }>> {
+  async tagValuesQuery(tag: string, query: string, range?: TimeRange): Promise<Array<{ text: string }>> {
     let options;
     try {
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
-      options = await this.languageProvider.getOptionsV2(tag, query);
+      options = await this.languageProvider.getOptionsV2({
+        tag,
+        query,
+        timeRangeForTags: this.timeRangeForTags,
+        range,
+      });
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(getTagWithoutScope(tag));
@@ -362,6 +377,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // TraceQL
     if (targets.traceql?.length) {
       try {
         const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
@@ -378,14 +394,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           subQueries.push(this.handleTraceIdQuery(options, targets.traceql, queryValue));
         } else {
           if (this.isTraceQlMetricsQuery(queryValue)) {
+            const useStreaming =
+              this.isStreamingMetricsEnabled() &&
+              options.app !== CoreApp.CloudAlerting &&
+              options.app !== CoreApp.UnifiedAlerting;
+
             reportInteraction('grafana_traces_traceql_metrics_queried', {
               datasourceType: 'tempo',
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: this.isStreamingMetricsEnabled(),
+              streaming: useStreaming,
             });
-            if (this.isStreamingMetricsEnabled()) {
+            if (useStreaming) {
               subQueries.push(this.handleMetricsStreamingQuery(options, targets.traceql, queryValue));
             } else {
               subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql, queryValue));
@@ -406,6 +427,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // Search
     if (targets.traceqlSearch?.length) {
       if (targets.traceqlSearch[0].groupBy) {
         return of({
@@ -482,6 +504,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // Upload
     if (targets.upload?.length) {
       if (this.uploadedJson) {
         reportInteraction('grafana_traces_json_file_uploaded', {
@@ -507,6 +530,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // Service Map
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
       reportInteraction('grafana_traces_service_graph_queried', {
         datasourceType: 'tempo',
@@ -782,6 +806,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         )
       )
     ).pipe(
+      map((response) => {
+        return enhanceTraceQlMetricsResponse(response, this.instanceSettings);
+      }),
       catchError((error) => {
         reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
           success: false,
@@ -1081,7 +1108,7 @@ function errorAndDurationQuery(
       }
     });
   }
-  const spanNames = getEscapedSpanNames(labels);
+  const spanNames = getEscapedRegexValues(getEscapedValues(labels));
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
@@ -1151,8 +1178,12 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
 
 // TODO: this is basically the same as prometheus/datasource.ts#prometheusSpecialRegexEscape which is used to escape
 //  template variable values. It would be best to move it to some common place.
-export function getEscapedSpanNames(values: string[]) {
-  return values.map((value: string) => value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'));
+export function getEscapedRegexValues(values: string[]) {
+  return values.map((value: string) => value.replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'));
+}
+
+export function getEscapedValues(values: string[]) {
+  return values.map((value: string) => value.replace(/["\\]/g, '\\$&'));
 }
 
 export function getFieldConfig(

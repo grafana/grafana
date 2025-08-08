@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, useStyles2, Stack } from '@grafana/ui';
 
-export interface Props {
+interface Props {
   feedbackUrl?: string;
 }
 

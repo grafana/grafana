@@ -7,7 +7,7 @@ import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorResource } from '../../types';
+import { AzureMonitorResource } from '../../types/query';
 
 export interface ResourcePickerProps<T> {
   resources: T[];

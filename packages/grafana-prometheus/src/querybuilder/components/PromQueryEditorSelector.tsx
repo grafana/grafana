@@ -98,8 +98,11 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
           'grafana-prometheus.querybuilder.prom-query-editor-selector.title-parsing-error-switch-builder',
           'Parsing error: Switch to the builder mode?'
         )}
-        body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost. "
-        confirmText="Continue"
+        body={t(
+          'grafana-prometheus.querybuilder.prom-query-editor-selector.body-syntax-error',
+          'There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost.'
+        )}
+        confirmText={t('grafana-prometheus.querybuilder.prom-query-editor-selector.confirmText-continue', 'Continue')}
         onConfirm={() => {
           changeEditorMode(query, QueryEditorMode.Builder, onChange);
           setParseModalOpen(false);

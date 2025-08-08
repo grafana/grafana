@@ -1,4 +1,4 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { Repository, RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryFormData } from '../types';
 
@@ -15,22 +15,52 @@ const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => 
   return [...workflows, 'branch'];
 };
 
-export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
+export const dataToSpec = (data: RepositoryFormData, existingRepository?: Repository): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
     sync: data.sync,
     title: data.title || '',
     workflows: getWorkflows(data),
   };
+
+  const baseConfig = {
+    url: data.url || '',
+    branch: data.branch,
+    token: data.token,
+    path: data.path,
+    encryptedToken: data.encryptedToken,
+  };
+
   switch (data.type) {
     case 'github':
       spec.github = {
+        ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
-        url: data.url || '',
-        branch: data.branch,
-        token: data.token,
-        path: data.path,
       };
+      // Handle token merging for existing repositories
+      if (existingRepository?.spec?.github) {
+        spec.github.token = data.token || existingRepository.spec.github.token;
+        spec.github.encryptedToken = existingRepository.spec.github.encryptedToken;
+      }
+      break;
+    case 'gitlab':
+      spec.gitlab = baseConfig;
+      // Handle token merging for existing repositories
+      if (existingRepository?.spec?.gitlab) {
+        spec.gitlab.token = data.token || existingRepository.spec.gitlab.token;
+        spec.gitlab.encryptedToken = existingRepository.spec.gitlab.encryptedToken;
+      }
+      break;
+    case 'bitbucket':
+      spec.bitbucket = baseConfig;
+      // Handle token merging for existing repositories
+      if (existingRepository?.spec?.bitbucket) {
+        spec.bitbucket.token = data.token || existingRepository.spec.bitbucket.token;
+        spec.bitbucket.encryptedToken = existingRepository.spec.bitbucket.encryptedToken;
+      }
+      break;
+    case 'git':
+      spec.git = baseConfig;
       break;
     case 'local':
       spec.local = {
@@ -45,14 +75,37 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
+  const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
+
   return structuredClone({
     ...spec,
-    ...spec.github,
+    ...remoteConfig,
     ...spec.local,
-    branch: spec.github?.branch || '',
-    url: spec.github?.url || '',
+    branch: remoteConfig?.branch || '',
+    url: remoteConfig?.url || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
-    prWorkflow: spec.workflows.includes('write'),
+    prWorkflow: spec.workflows.includes('branch'),
   });
+};
+
+export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
+  switch (repository.type) {
+    case 'github':
+      const name = repository.url ?? 'github';
+      return name.replace('https://github.com/', '');
+    case 'gitlab':
+      const gitlabName = repository.url ?? 'gitlab';
+      return gitlabName.replace('https://gitlab.com/', '');
+    case 'bitbucket':
+      const bitbucketName = repository.url ?? 'bitbucket';
+      return bitbucketName.replace('https://bitbucket.org/', '');
+    case 'git':
+      const gitName = repository.url ?? 'git';
+      return gitName.replace(/^https?:\/\/[^\/]+\//, '');
+    case 'local':
+      return repository.path ?? 'local';
+    default:
+      return '';
+  }
 };

@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
@@ -20,8 +20,6 @@ import {
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
-import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
@@ -231,29 +229,29 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
           />
         </div>
         {canRenderContactPointSelector && (
-          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
-            <Stack direction="column" gap={0}>
-              <Field
-                label={
-                  <Label htmlFor="contactPointFilter">
-                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                  </Label>
-                }
-              >
-                <ContactPointSelector
-                  selectedContactPointName={filterState.contactPoint}
-                  selectProps={{
-                    inputId: 'contactPointFilter',
-                    width: 40,
-                    onChange: (selectValue) => {
-                      handleContactPointChange(selectValue?.value?.name!);
-                    },
-                    isClearable: true,
-                  }}
-                />
-              </Field>
-            </Stack>
-          </AlertmanagerProvider>
+          <Stack direction="column" gap={0}>
+            <Field
+              label={
+                <Label htmlFor="contactPointFilter">
+                  <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                </Label>
+              }
+            >
+              <ContactPointSelector
+                id="contactPointFilter"
+                value={filterState.contactPoint ?? null}
+                width={40}
+                placeholder={t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                )}
+                isClearable
+                onChange={(contactPoint) => {
+                  handleContactPointChange(contactPoint?.spec.title ?? '');
+                }}
+              />
+            </Field>
+          </Stack>
         )}
         {pluginsFilterEnabled && (
           <div>
