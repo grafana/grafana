@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Tout sélectionner",
       "select-checkbox": "Sélectionner",
       "tags-column": "Balises"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "Échec de la suppression du dossier",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Aucun objet"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Annuler",
@@ -5691,11 +5704,9 @@
       "api-error": "Échec de la suppression du tableau de bord",
       "cancel-action": "Annuler",
       "delete-action": "Supprimer le tableau de bord",
-      "delete-read-only-file-message": "Ce tableau de bord ne peut pas être supprimé directement depuis Grafana, car le dépôt est en lecture seule. Pour le supprimer, veuillez retirer le fichier de votre dépôt Git.",
       "deleting": "Suppression…",
       "drawer-title": "Supprimer le tableau de bord provisionné",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
+      "success-message": ""
     },
     "description-label": {
       "description": "Description"
@@ -6067,7 +6078,6 @@
       "api-error": "Erreur d'enregistrement du tableau de bord",
       "cancel": "Annuler",
       "cannot-be-saved": "Ce tableau de bord ne peut pas être enregistré à partir de l’interface utilisateur Grafana, car il a été mis en service à partir d’une autre source. Copiez le JSON ou enregistrez-le dans un fichier ci-dessous, puis vous pourrez mettre à jour votre tableau de bord dans la source de mise en service.",
-      "copy-json-message": "Si vous avez un accès direct à la cible, copiez le JSON et collez-le à cet endroit.",
       "copy-json-to-clipboard": "Copier JSON dans le presse-papiers",
       "file-path": "<0>Chemin du fichier :</0> {{filePath}}",
       "label-description": "Description",
@@ -6079,7 +6089,6 @@
       "see-docs": "Consultez la <2>documentation</2> pour en savoir plus sur la mise en service.",
       "title-required": "Le titre du tableau de bord est requis",
       "title-same-as-folder": "Le nom du tableau de bord ne peut pas être le même que le nom du dossier",
-      "title-this-repository-is-read-only": "Ce référentiel est en lecture seule",
       "title-validation-failed": "La validation du titre du tableau de bord a échoué."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Cliquez <2>ici</2> pour en savoir plus sur cette erreur.",
-    "success-more-details-links": "Ensuite, vous pouvez commencer à visualiser les données en <2>créant un tableau de bord</2> ou en interrogeant les données dans la <5>vue Explorer</5>."
+    "success-more-details-links": "Ensuite, vous pouvez commencer à visualiser les données en <2>créant un tableau de bord</2> ou en interrogeant les données dans la <5>vue Explorer</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Créer un tableau de bord",
-      "explore-data": "Explorer les données"
+      "explore-data": "Explorer les données",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Plus de détails sur l’erreur"
