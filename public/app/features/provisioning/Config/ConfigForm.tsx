@@ -22,6 +22,7 @@ import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
+import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
@@ -62,6 +63,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   // Get field configurations based on provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
+  const hasTokenInstructions = getHasTokenInstructions(type);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -153,7 +155,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {type === 'github' && <TokenPermissionsInfo />}
+            {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
             <Field
               noMargin
               label={gitFields.urlConfig.label}

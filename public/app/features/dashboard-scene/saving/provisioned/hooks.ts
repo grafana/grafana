@@ -4,6 +4,7 @@ import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -110,8 +111,6 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
   const { values, isNew, repository } = defaultValuesResult;
   const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
 
-  const readOnly = !repository?.workflows?.length;
-
   return {
     isReady: true,
     defaultValues: values,
@@ -119,7 +118,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
     loadedFromRef,
     workflowOptions,
     isNew,
-    readOnly,
+    readOnly: getIsReadOnlyRepo(repository),
     isLoading,
     setIsLoading,
   };

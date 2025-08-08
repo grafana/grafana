@@ -23,7 +23,7 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(testutil.GetTestProvider())
+	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
 		err := migration.Migrate(map[string]interface{}{
@@ -61,12 +61,12 @@ func TestMigrate(t *testing.T) {
 
 		testName := fmt.Sprintf("%s v%d to v%d", f.Name(), inputVersion, schemaversion.LATEST_VERSION)
 		t.Run(testName, func(t *testing.T) {
-			testMigration(t, inputDash, f.Name(), inputVersion, schemaversion.LATEST_VERSION)
+			testMigration(t, inputDash, f.Name(), schemaversion.LATEST_VERSION)
 		})
 	}
 }
 
-func testMigration(t *testing.T, dash map[string]interface{}, inputFileName string, inputVersion, targetVersion int) {
+func testMigration(t *testing.T, dash map[string]interface{}, inputFileName string, targetVersion int) {
 	t.Helper()
 	require.NoError(t, migration.Migrate(dash, targetVersion), "%d migration failed", targetVersion)
 

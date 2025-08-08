@@ -1523,7 +1523,10 @@
       "group-loading-error": "Error loading the group",
       "interval": "Interval",
       "namespace": "Namespace",
-      "new": "New"
+      "new": "New",
+      "title": {
+        "back": "Back to alerting"
+      }
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -2240,6 +2243,9 @@
       "title-attention": "Attention",
       "title-manage-contact-point-permissions": "Manage contact point permissions"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": "Open external link"
+    },
     "receivers-section": {
       "button-more": "More",
       "new-menu": {
@@ -2566,6 +2572,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "Return to previous view",
       "error-loading": "Something went wrong loading the rule",
       "evaluation-interval": "Every {{interval}}",
       "prometheus-consistency-check": {
@@ -3482,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
       "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
       "cancel-button": "Cancel",
-      "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
@@ -3533,6 +3539,13 @@
       "button-move": "Move",
       "button-moving": "Moving...",
       "deleting": "Deleting",
+      "error": {
+        "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
+        "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
+        "read-only-title": "This repository is read only",
+        "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
+        "repository-not-found-title": "Repository not found"
+      },
       "error-file-content-not-found": "File content not found",
       "error-path-not-found": "Path not found",
       "error-target-folder-path-missing": "Target folder path is missing",
@@ -3562,6 +3575,9 @@
       "select-checkbox": "Select",
       "tags-column": "Tags"
     },
+    "delete-folder": {
+      "read-only-message": "To delete this folder, please remove the folder from your repository."
+    },
     "delete-provisioned-folder-form": {
       "api-error": "Failed to delete folder",
       "button-cancel": "Cancel",
@@ -3581,6 +3597,7 @@
     },
     "folder-actions-button": {
       "delete": "Delete",
+      "delete-folder-error": "Error deleting folder. Please try again later.",
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move"
@@ -3603,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "No items"
+    },
+    "new-folder": {
+      "read-only-message": "To create this folder, please add the resource in your repository directly."
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
@@ -4127,11 +4147,39 @@
       "body": "Try the new Advisor to uncover potential issues with your data sources and plugins.",
       "go-to-advisor": "Go to Advisor"
     },
+    "cloud": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "Connect data to Grafana through data sources, integrations and apps",
+          "title": "Add new connection"
+        },
+        "collector": {
+          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
+          "title": "Collector:"
+        },
+        "data-sources": {
+          "subtitle": "Manage your existing data source connections",
+          "title": "Data sources"
+        },
+        "integrations": {
+          "subtitle": "Manage your active integrations",
+          "title": "Integrations"
+        },
+        "private-data-source-connections": {
+          "subtitle": "Manage your private network connections for data sources",
+          "title": "Private data source connect"
+        },
+        "subtitle": "Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines."
+      }
+    },
     "connect-data": {
       "category-header-label": "Data sources",
       "empty-message": "No results matching your query were found",
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
+    },
+    "connections-home-page": {
+      "welcome-to-connections": "Welcome to Connections"
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link to Connections",
@@ -4162,6 +4210,19 @@
     },
     "not-found-datasource": {
       "body": "Maybe you mistyped the URL or the plugin with the id <1></1> is unavailable.<3></3>To see a list of available datasources please <5>click here</5>."
+    },
+    "oss": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "Connect to a new data source",
+          "title": "Add new connection"
+        },
+        "data-sources": {
+          "subtitle": "Manage your existing data source connections",
+          "title": "View configured data sources"
+        },
+        "subtitle": "Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections."
+      }
     },
     "search": {
       "aria-label-search-all": "Search all",
@@ -4270,7 +4331,7 @@
       "source-label": "Source",
       "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>"
     },
-    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation</2>",
     "target-form": {
       "control-rules": "This field is required.",
       "sub-text": "<0>Define what the correlation will link to. With the query type, a query will run when the correlation is clicked. With the external type, clicking the correlation will open a URL.</0>",
@@ -4673,7 +4734,7 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
@@ -4943,6 +5004,10 @@
     "options": {
       "description": "Description",
       "title-option": "Title"
+    },
+    "options-pane-category": {
+      "aria-label-collapse": "Collapse {{title}} category",
+      "aria-label-expand": "Expand {{title}} category"
     },
     "options-pane-options": {
       "placeholder-search-options": "Search options",
@@ -5639,11 +5704,9 @@
       "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
-      "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
-      "success-message": "Dashboard deleted successfully",
-      "title-this-repository-is-read-only": "This repository is read only"
+      "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
       "description": "Description"
@@ -6015,7 +6078,6 @@
       "api-error": "Error saving dashboard",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
-      "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "file-path": "<0>File path:</0> {{filePath}}",
       "label-description": "Description",
@@ -6027,7 +6089,6 @@
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
-      "title-this-repository-is-read-only": "This repository is read only",
       "title-validation-failed": "Dashboard title validation failed."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6333,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>.",
+    "success-more-details-links-extensions": "You can also explore data with the following extensions:"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6472,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Build a dashboard",
-      "explore-data": "Explore data"
+      "explore-data": "Explore data",
+      "open-in-explore": "Open in Explore View"
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
@@ -6598,6 +6661,7 @@
       "label-source": "Source"
     },
     "resource-picker": {
+      "aria-label-clear-value": "Clear value",
       "render-small-resource-picker": {
         "set-icon": "Set icon"
       }
@@ -6634,6 +6698,7 @@
       "noOptionsMessage-no-fields-found": "No fields found"
     },
     "text-dimension-editor": {
+      "aria-label-clear-value": "Clear value",
       "description-field": "Display field value",
       "description-fixed": "Fixed value",
       "label-field": "Field",
@@ -6771,7 +6836,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button"
+        "aria-label-content-outline-item-collapse-button": "Content outline item collapse button",
+        "aria-label-content-outline-item-delete-button": "Delete item"
       }
     },
     "correlation-editor-mode-bar": {
@@ -6981,6 +7047,7 @@
       "content-streaming": "Streaming"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "Reload log volume",
       "label-reload-log-volume": "Reload log volume",
       "loading": "Loading...",
       "title-failed-volume-query": "Failed to load log volume for this query",
@@ -7279,6 +7346,7 @@
       "split-widen": "Widen pane"
     },
     "trace-page-header": {
+      "aria-label-share-dropdown": "Open share trace options menu",
       "duration": "Duration",
       "export-started": "Export started",
       "give-feedback": "Feedback",
@@ -7303,6 +7371,7 @@
       "label-show-paths": "Show critical path only switch"
     },
     "trace-view": {
+      "aria-label-copy": "Copy to clipboard",
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },
@@ -7435,9 +7504,12 @@
     "loading": "Loading folders..."
   },
   "folder-repo": {
-    "badge-text": "Provisioned"
+    "badge-tooltip": "Provisioned"
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": "Folder deleted"
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -7607,6 +7679,7 @@
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
+      "aria-label-close": "Close measure tools",
       "tooltip-show-measure-tools": "Show measure tools"
     },
     "name-initial-view": "Initial view",
@@ -8639,6 +8712,7 @@
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "Match case",
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
@@ -9361,6 +9435,15 @@
       "show-less": "show less",
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
+    },
+    "log-line-context": {
+      "center-matched-line": "Center matched line",
+      "newer-logs": "newer",
+      "no-more-logs-available": "No more logs available.",
+      "older-logs": "older",
+      "open-in-split-view": "Open in split view",
+      "title-log-context": "Log context",
+      "title-log-line": "Referenced log line"
     },
     "log-line-details": {
       "clear-search": "Clear",
@@ -10243,7 +10326,7 @@
     },
     "invite-user": {
       "invite-button": "Invite",
-      "invite-new-member-button": "Invite new member",
+      "invite-new-user-button": "Invite new user",
       "invite-tooltip": "Invite user"
     },
     "item": {
@@ -11025,6 +11108,14 @@
       "branch-required": "Branch is required",
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
+      "permissions": {
+        "pull-requests-label": "Pull requests",
+        "pull-requests-read-write": "Read and write",
+        "repository-label": "Repositories",
+        "repository-read-write-admin": "Read, and write",
+        "webhooks-label": "Webhooks",
+        "webhooks-read-write": "Read and write"
+      },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
       "token-description": "Bitbucket App Password with repository permissions",
@@ -11056,6 +11147,9 @@
     },
     "check-repository": {
       "check": "Check"
+    },
+    "code-block": {
+      "aria-label-copy": "Copy code to clipboard"
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
@@ -11235,6 +11329,14 @@
       "branch-required": "Branch is required",
       "path-description": "Optional subdirectory path within the repository",
       "path-label": "Path",
+      "permissions": {
+        "api": "API",
+        "api-read-write": "Read and write",
+        "repository-label": "Repository",
+        "repository-read-write": "Read and write",
+        "user-label": "User",
+        "user-read": "Read only"
+      },
       "pr-workflow-description": "Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.",
       "pr-workflow-label": "Enable merge request option when saving",
       "token-description": "GitLab Project Access Token with repository permissions",
@@ -11441,6 +11543,14 @@
     },
     "token-permissions-info": {
       "and-click": "and click",
+      "bitbucket": {
+        "create-token-button": "Create App passwords",
+        "token-text": "Bitbucket Personal Access Token"
+      },
+      "gitlab": {
+        "create-token-button": "Add new token",
+        "token-text": "GitLab Personal Access Token"
+      },
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
@@ -12520,6 +12630,7 @@
       "gauge": "Gauge",
       "image": "Image",
       "json": "JSON View",
+      "markdown": "Markdown + HTML",
       "pill": "Pill",
       "sparkline": "Sparkline"
     },
@@ -12557,6 +12668,13 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
     },
+    "markdown-cell-options-editor": {
+      "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
+      "label": {
+        "text-alpha": "Alpha"
+      },
+      "label-dynamic-height": "Dynamic height"
+    },
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12573,7 +12691,10 @@
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "text-wrap-options": {
+      "label-wrap-text": "Wrap text"
+    }
   },
   "table-new": {
     "category-cell-options": "Cell options",
@@ -13101,6 +13222,7 @@
       }
     },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "Remove filter",
       "label-field": "Field",
       "label-match": "Match",
       "label-value": "Value",
@@ -13288,22 +13410,6 @@
       "label-row": "Row",
       "name": {
         "grouping-to-matrix": "Grouping to matrix"
-      },
-      "special-value-options": {
-        "description": {
-          "boolean-false-value": "Boolean false value",
-          "boolean-true-value": "Boolean true value",
-          "empty-string": "Empty string",
-          "null-value": "Null value",
-          "number-value": "Number 0 value"
-        },
-        "label": {
-          "empty": "Empty",
-          "false": "False",
-          "null": "Null",
-          "true": "True",
-          "zero": "Zero"
-        }
       }
     },
     "histogram-transformer-editor": {
@@ -13656,6 +13762,22 @@
         "perform-spatial-operations": "Perform spatial operations",
         "reformat": "Reformat",
         "reorder-and-rename": "Reorder and rename"
+      },
+      "special-value-options": {
+        "description": {
+          "boolean-false": "Boolean false value",
+          "boolean-true": "Boolean true value",
+          "empty-string": "Empty String",
+          "null-value": "Null value",
+          "number-value": "Number 0 value"
+        },
+        "label": {
+          "boolean-false": "False",
+          "boolean-true": "True",
+          "empty-string": "Empty",
+          "null-value": "Null",
+          "number-value": "Zero"
+        }
       }
     },
     "wide-info": {
