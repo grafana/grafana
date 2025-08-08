@@ -128,6 +128,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         category,
         defaultValue: defaultOptions.showHeader,
       })
+      .addNumberInput({
+        path: 'frozenColumns.left',
+        name: t('table-new.name-frozen-columns', 'Frozen columns'),
+        description: t('table-new.description-frozen-columns', 'Columns are frozen from the left side of the table'),
+        settings: {
+          placeholder: 'none',
+        },
+        category,
+      })
       .addRadio({
         path: 'cellHeight',
         name: t('table-new.name-cell-height', 'Cell height'),

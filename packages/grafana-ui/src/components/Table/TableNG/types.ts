@@ -129,6 +129,7 @@ export interface BaseTableProps {
   onCellFilterAdded?: TableFilterActionCallback;
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
+  frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
   structureRev?: number;

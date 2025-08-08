@@ -24,6 +24,12 @@ export interface Options {
    */
   frameIndex: number;
   /**
+   * number of columns on the left side of the table that should be frozen
+   */
+  frozenColumns?: {
+    left?: number;
+  };
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
