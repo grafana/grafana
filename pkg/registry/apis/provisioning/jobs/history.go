@@ -66,7 +66,7 @@ func (s *storageBackedHistory) WriteJob(ctx context.Context, job *provisioning.J
 	job.GenerateName = job.Name + "-"
 	job.Name = ""
 	// We also reset the UID as this is not the same object.
-	job.ObjectMeta.UID = ""
+	job.UID = ""
 	// We aren't allowed to write with ResourceVersion set.
 	job.ResourceVersion = ""
 
