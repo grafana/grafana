@@ -200,7 +200,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 }
 
 func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, error) {
-	defaultTemplate, err := templates.DefaultTemplate()
+	// Omit some templates that we do not want to use to see.
+	defaultTemplate, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
