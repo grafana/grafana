@@ -9,7 +9,7 @@ import {
   SceneObject,
   VizPanel,
 } from '@grafana/scenes';
-import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
@@ -32,7 +32,6 @@ import { LayoutParent } from '../types/LayoutParent';
 
 import { useEditOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
-import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
@@ -41,6 +40,8 @@ export interface TabItemState extends SceneObjectState {
   title?: string;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
+  repeatByVariable?: string;
+  repeatedTabs?: TabItem[];
 }
 
 export class TabItem
@@ -179,19 +180,10 @@ export class TabItem
   }
 
   public onChangeRepeat(repeat: string | undefined) {
-    let repeatBehavior = this._getRepeatBehavior();
-
     if (repeat) {
-      // Remove repeat behavior if it exists to trigger repeat when adding new one
-      if (repeatBehavior) {
-        repeatBehavior.removeBehavior();
-      }
-
-      repeatBehavior = new TabItemRepeaterBehavior({ variableName: repeat });
-      this.setState({ $behaviors: [...(this.state.$behaviors ?? []), repeatBehavior] });
-      repeatBehavior.activate();
+      this.setState({ repeatByVariable: repeat });
     } else {
-      repeatBehavior?.removeBehavior();
+      this.setState({ repeatedTabs: undefined, $variables: undefined, repeatByVariable: undefined });
     }
   }
 
@@ -218,10 +210,6 @@ export class TabItem
     }
   }
 
-  public getRepeatVariable(): string | undefined {
-    return this._getRepeatBehavior()?.state.variableName;
-  }
-
   public getParentLayout(): TabsLayoutManager {
     return sceneGraph.getAncestor(this, TabsLayoutManager);
   }
@@ -239,9 +227,5 @@ export class TabItem
     const parentLayout = this.getParentLayout();
     const duplicateTitles = parentLayout.duplicateTitles();
     return !duplicateTitles.has(this.state.title);
-  }
-
-  private _getRepeatBehavior(): TabItemRepeaterBehavior | undefined {
-    return this.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
   }
 }

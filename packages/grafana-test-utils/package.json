@@ -40,17 +40,27 @@
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
+    },
+    "./matchers": {
+      "types": "./src/matchers/index.ts",
+      "import": "./src/matchers/index.ts",
+      "require": "./src/matchers/index.ts"
     }
   },
   "scripts": {
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "test": "jest --watch --onlyChanged",
+    "test:ci": "jest --maxWorkers 4"
   },
   "dependencies": {
     "msw": "2.10.4"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^2.0.0",
-    "@types/node": "22.16.5",
-    "typescript": "5.8.3"
+    "@swc/core": "1.13.3",
+    "@swc/jest": "^0.2.26",
+    "@types/jest": "29.5.14",
+    "@types/node": "22.17.0",
+    "jest": "29.7.0",
+    "typescript": "5.9.2"
   }
 }

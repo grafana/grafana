@@ -86,7 +86,7 @@
         .fs-hidden {
           display: none;
         }
- 
+
         .fs-spinner {
           animation: spin 1500ms linear infinite;
           width: 32px;
@@ -100,7 +100,7 @@
         .fs-spinner-arc {
           stroke: #F55F3E;
         }
-        
+
         .fs-loader-text {
           opacity: 0;
           font-size: 16px;
@@ -199,7 +199,7 @@
         async function fetchBootData() {
           const resp = await fetch("/bootdata");
           const textResponse = await resp.text();
-          
+
           let rawBootData;
           try {
             rawBootData = JSON.parse(textResponse);
@@ -211,7 +211,7 @@
           if (resp.status === 503 && rawBootData.code === 'Loading') {
             return;
           }
-          
+
           if (!resp.ok) {
             throw new Error("Unexpected response body: " + textResponse);
           }
@@ -259,21 +259,20 @@
           const cssLink = document.createElement("link");
           cssLink.rel = 'stylesheet';
 
-          let theme = window.grafanaBootData.user.theme;
+          const theme = window.grafanaBootData.user.theme;
           if (theme === "system") {
             const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-            theme = darkQuery.matches ? 'dark' : 'light';
-          }
 
-          if (theme === "light") {
-            document.body.classList.add("theme-light");
-            cssLink.href = window.grafanaBootData.assets.light;
-            window.grafanaBootData.user.lightTheme = true;
-          } else if (theme === "dark") {
-            document.body.classList.add("theme-dark");
-            cssLink.href = window.grafanaBootData.assets.dark;
-            window.grafanaBootData.user.lightTheme = false;
+            if (darkQuery.matches) {
+              document.body.classList.add("theme-dark");
+              window.grafanaBootData.user.lightTheme = false;
+            } else {
+              document.body.classList.add("theme-light");
+              window.grafanaBootData.user.lightTheme = true;
+            }
           }
+          const isLightTheme = window.grafanaBootData.user.lightTheme;
+          cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
 
           document.head.appendChild(cssLink);
         }

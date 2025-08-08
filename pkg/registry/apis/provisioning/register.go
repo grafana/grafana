@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,15 +30,15 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
-	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -46,7 +47,9 @@ import (
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
+	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -74,6 +77,11 @@ var (
 	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
+
+// JobHistoryConfig holds configuration for job history backends
+type JobHistoryConfig struct {
+	Loki *loki.Config `json:"loki,omitempty"`
+}
 
 type APIBuilder struct {
 	features   featuremgmt.FeatureToggles
@@ -125,6 +133,7 @@ func NewAPIBuilder(
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	jobHistoryConfig *JobHistoryConfig,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
@@ -133,6 +142,12 @@ func NewAPIBuilder(
 	mutators := []controller.Mutator{
 		git.Mutator(repositorySecrets),
 		github.Mutator(repositorySecrets),
+	}
+	// Create job history based on configuration
+	// Default to in-memory cache if no config provided
+	jobHistory := jobs.NewJobHistoryCache()
+	if jobHistoryConfig != nil && jobHistoryConfig.Loki != nil {
+		jobHistory = jobs.NewLokiJobHistory(*jobHistoryConfig.Loki)
 	}
 
 	b := &APIBuilder{
@@ -152,7 +167,7 @@ func NewAPIBuilder(
 		unified:             unified,
 		repositorySecrets:   repositorySecrets,
 		access:              access,
-		jobHistory:          jobs.NewJobHistoryCache(),
+		jobHistory:          jobHistory,
 		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
 			provisioning.LocalRepositoryType:  true,
 			provisioning.GitHubRepositoryType: true,
@@ -173,6 +188,38 @@ func NewAPIBuilder(
 	}
 
 	return b
+}
+
+// createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
+func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
+	// If LokiURL is defined, use Loki
+	if cfg.ProvisioningLokiURL != "" {
+		parsedURL, err := url.Parse(cfg.ProvisioningLokiURL)
+		if err != nil {
+			logging.DefaultLogger.Error("Invalid Loki URL in provisioning config", "url", cfg.ProvisioningLokiURL, "error", err)
+			return &JobHistoryConfig{}
+		}
+
+		lokiCfg := &loki.Config{
+			ReadPathURL:       parsedURL,
+			WritePathURL:      parsedURL,
+			BasicAuthUser:     cfg.ProvisioningLokiUser,
+			BasicAuthPassword: cfg.ProvisioningLokiPassword,
+			TenantID:          cfg.ProvisioningLokiTenantID,
+			ExternalLabels: map[string]string{
+				"source":       "grafana-provisioning",
+				"service_name": "grafana-provisioning",
+			},
+			MaxQuerySize: 5000, // Default query size
+		}
+
+		return &JobHistoryConfig{
+			Loki: lokiCfg,
+		}
+	}
+
+	// Default to memory backend
+	return &JobHistoryConfig{}
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -212,6 +259,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
+		createJobHistoryConfigFromSettings(cfg),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -555,7 +603,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
+			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
 			b.client = c.ProvisioningV0alpha1()
 
@@ -617,12 +667,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible)
+			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
+			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
 			workers := []jobs.Worker{
 				deleteWorker,
 				exportWorker,
 				migrationWorker,
+				moveWorker,
 				syncWorker,
+			}
+
+			// Create JobController to handle job create notifications
+			jobController, err := controller.NewJobController(jobInformer)
+			if err != nil {
+				return err
 			}
 
 			// Add any extra workers
@@ -630,17 +688,26 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				workers = append(workers, extra.GetJobWorkers()...)
 			}
 
-			driver, err := jobs.NewJobDriver(
-				time.Minute*20, // Max time for each job
-				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
-				time.Second*30, // Periodically look for new jobs
+			// This is basically our own JobQueue system
+			driver, err := jobs.NewConcurrentJobDriver(
+				3,              // 3 drivers for now
+				20*time.Minute, // Max time for each job
+				time.Minute,    // Cleanup jobs
+				30*time.Second, // Periodically look for new jobs
+				30*time.Second, // Lease renewal interval
 				b.jobs, b, b.jobHistory,
+				jobController.InsertNotifications(),
 				workers...,
 			)
 			if err != nil {
 				return err
 			}
-			go driver.Run(postStartHookCtx.Context)
+
+			go func() {
+				if err := driver.Run(postStartHookCtx.Context); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("job driver failed", "error", err)
+				}
+			}()
 
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
@@ -677,7 +744,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
+	defsBase := "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1."
 	refsBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
 
 	sub := oas.Paths.Paths[repoprefix+"/test"]

@@ -41,6 +41,8 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
       onFocus={() => setIsMouseOver(true)}
       onMouseOver={() => setIsMouseOver(true)}
       onMouseOut={() => setIsMouseOver(false)}
+      // We set this to ensure if any long text wraps the container expands with it
+      style={{ height: '100%' }}
     >
       <Stack gap={0} alignItems={'baseline'}>
         <FunctionEditor

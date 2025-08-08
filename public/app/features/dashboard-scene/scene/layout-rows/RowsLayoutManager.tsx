@@ -8,7 +8,7 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
@@ -17,7 +17,6 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
-import { TabItemRepeaterBehavior } from '../layout-tabs/TabItemRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -196,14 +195,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         const conditionalRendering = tab.state.conditionalRendering;
         conditionalRendering?.clearParent();
 
-        const behavior = tab.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
-
         rows.push(
           new RowItem({
             layout: tab.state.layout.clone(),
             title: tab.state.title,
             conditionalRendering,
-            repeatByVariable: behavior?.state.variableName,
+            repeatByVariable: tab.state.repeatByVariable,
           })
         );
       }
@@ -258,7 +255,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
-              rowConfig.isResizable ?? layout.state.grid.state.isResizable
+              rowConfig.isResizable ?? layout.state.grid.state.isResizable,
+              layout.state.grid.state.isLazy
             ),
           })
       );

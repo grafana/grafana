@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -171,7 +171,8 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	}
 
 	if result.Error != nil {
-		summary.Errors = append(summary.Errors, result.Error.Error())
+		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error.Error(), result.Path, result.Name, result.Action)
+		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
 	} else {
 		switch result.Action {

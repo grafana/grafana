@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom';
 import { TextEncoder, TextDecoder } from 'util';
 
+import { matchers } from '@grafana/test-utils/matchers';
+
+expect.extend(matchers);
+
 Object.assign(global, { TextDecoder, TextEncoder });
 
 // https://jestjs.io/docs/manual-mocks#mocking-methods-which-are-not-implemented-in-jsdom
