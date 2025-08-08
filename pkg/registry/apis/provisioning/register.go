@@ -414,6 +414,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
 
+	storage := map[string]rest.Storage{}
 	// Create job history based on configuration
 	// Default to in-memory cache if no config provided
 	var jobHistory jobs.History
@@ -429,6 +430,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		if err != nil {
 			return fmt.Errorf("failed to create historic job wrapper: %w", err)
 		}
+		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = readonly.Wrap(historicJobStore)
 	}
 
 	b.jobHistory = jobHistory
@@ -438,7 +440,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
 
-	storage := map[string]rest.Storage{}
 
 	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
 	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
