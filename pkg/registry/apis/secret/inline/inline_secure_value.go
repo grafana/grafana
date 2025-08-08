@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type LocalInlineSecureValueService struct {
@@ -209,8 +208,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 
 	obj := &secretv1beta1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
-			//GenerateName:    "inline-",
-			Name:            "inline-" + util.GenerateShortUID(),
+			GenerateName:    "inline-",
 			Namespace:       owner.Namespace,
 			OwnerReferences: []metav1.OwnerReference{owner.ToOwnerReference()},
 		},
@@ -223,7 +221,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 
 	createdSv, err := s.secureValueService.Create(ctx, obj, authInfo.GetUID())
 	if err != nil {
-		return "", fmt.Errorf("error creating secure value %s for owner %v: %w", obj.Name, owner, err)
+		return "", fmt.Errorf("error creating secure value for owner %v: %w", owner, err)
 	}
 
 	return createdSv.GetName(), nil
