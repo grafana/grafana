@@ -788,7 +788,7 @@
       },
       "filterBy": "Filtrera efter: ",
       "too-many-events": {
-        "text": "Den valda tidsperioden har för många händelser att visa. Visar de senaste 5 000 händelserna. Prova att använda en kortare tidsperiod.",
+        "text": "",
         "title": "Det gick inte att visa alla händelser"
       }
     },
@@ -5233,6 +5233,7 @@
         "new": "Ny flik",
         "repeat": {
           "learn-more": "Läs mer",
+          "loading": "",
           "warning": "Paneler i denna flik använder datakällan {{SHARED_DASHBOARD_QUERY}}. Dessa paneler kommer att referera till panelen i den ursprungliga fliken, inte de i de upprepade flikerna."
         }
       },
@@ -9542,6 +9543,12 @@
         "total-bytes-processed": "Totalt antal byte som behandlats"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Avduplicering",
       "disable-highlighting": "Inaktivera markering",
@@ -9565,8 +9572,12 @@
       "oldest-first": "Sorterat efter äldsta loggar först – klicka om du vill visa nyaste först",
       "prettify-json": "Expandera JSON-loggar",
       "remove-escaping": "Ta bort undantagstecken",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Skrolla längst ner",
       "scroll-top": "Skrolla till toppen",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "",
       "show-timestamps": "Visa tidsstämplar",
       "show-unique-labels": "Visa unika etiketter",
@@ -9615,6 +9626,7 @@
       "line-contains": "Lägg till som rad innehåller filter",
       "line-contains-not": "Lägg till som rad innehåller inte filter"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Datalänkar",
       "aria-label-fields": "Fält",
@@ -12716,6 +12728,7 @@
     "description-column-filter": "",
     "description-count-rows": "",
     "description-fields": "",
+    "description-frozen-columns": "",
     "description-min-column-width": "",
     "name-calculation": "",
     "name-cell-height": "",
@@ -12727,6 +12740,7 @@
     "name-count-rows": "",
     "name-enable-pagination": "",
     "name-fields": "",
+    "name-frozen-columns": "",
     "name-hide-in-table": "",
     "name-min-column-width": "",
     "name-show-table-footer": "",

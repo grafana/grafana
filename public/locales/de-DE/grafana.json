@@ -788,7 +788,7 @@
       },
       "filterBy": "Filtern nach:",
       "too-many-events": {
-        "text": "Der ausgewählte Zeitraum enthält zu viele Ereignisse, die nicht alle angezeigt werden können. Es werden nur die letzten 5.000 Ereignisse angezeigt. Versuchen Sie es mit einem kürzeren Zeitraum.",
+        "text": "",
         "title": "Es können nicht alle Ereignisse angezeigt werden"
       }
     },
@@ -5233,6 +5233,7 @@
         "new": "Neues Tab",
         "repeat": {
           "learn-more": "Mehr erfahren",
+          "loading": "",
           "warning": "Die Panels in dieser Registerkarte verwenden {{SHARED_DASHBOARD_QUERY}} als Datenquelle. Diese Panels verweisen auf das Panel in der ursprünglichen Registerkarte, nicht auf die in den wiederholten Registerkarten."
         }
       },
@@ -9542,6 +9543,12 @@
         "total-bytes-processed": "Gesamte verarbeitete Bytes"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplizierung",
       "disable-highlighting": "Markierung deaktivieren",
@@ -9565,8 +9572,12 @@
       "oldest-first": "Sortiert nach ältesten Logs zuerst – klicken Sie, um die neuesten zuerst anzuzeigen",
       "prettify-json": "JSON-Logs ausklappen",
       "remove-escaping": "Escaping entfernen",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Nach unten scrollen",
       "scroll-top": "Nach oben scrollen",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Ergebnis der Suche in Logs",
       "show-timestamps": "Zeitstempel anzeigen",
       "show-unique-labels": "Eindeutige Labels anzeigen",
@@ -9599,7 +9610,7 @@
     "name-order": "Reihenfolge",
     "name-prettify-json": "JSON formatieren",
     "name-show-controls": "Steuerelemente anzeigen",
-    "name-time": "Zeit",
+    "name-time": "",
     "name-unique-labels": "Eindeutige Labels",
     "name-wrap-lines": "Zeilen umbrechen",
     "order-options": {
@@ -9615,6 +9626,7 @@
       "line-contains": "„Als Zeile hinzufügen“ enthält Filter",
       "line-contains-not": "„Als Zeile hinzufügen“ enthält keinen Filter"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Datenlinks",
       "aria-label-fields": "Felder",
@@ -12716,6 +12728,7 @@
     "description-column-filter": "Aktiviert/deaktiviert Feldfilter in der Tabelle",
     "description-count-rows": "Eine einzelne Anzahl für alle Datenzeilen anzeigen",
     "description-fields": "Wählen Sie die Felder aus, die berechnet werden sollen",
+    "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
     "name-calculation": "Berechnung",
     "name-cell-height": "Zellenhöhe",
@@ -12727,6 +12740,7 @@
     "name-count-rows": "Zeilen zählen",
     "name-enable-pagination": "Seitennummerierung aktivieren",
     "name-fields": "Felder",
+    "name-frozen-columns": "",
     "name-hide-in-table": "In Tabelle ausblenden",
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-show-table-footer": "Tabellenfußzeile anzeigen",

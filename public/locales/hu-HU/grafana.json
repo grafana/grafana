@@ -788,7 +788,7 @@
       },
       "filterBy": "Szűrési mód:",
       "too-many-events": {
-        "text": "A kijelölt időszakban túl sok esemény jeleníthető meg. A legutóbbi 5000 esemény megjelenítése. Próbálkozzon rövidebb időtartammal.",
+        "text": "",
         "title": "Nem lehet megjeleníteni az összes eseményt"
       }
     },
@@ -5233,6 +5233,7 @@
         "new": "Új lap",
         "repeat": {
           "learn-more": "További információk",
+          "loading": "",
           "warning": "Az ezen a lapon lévő panelek a(z) {{SHARED_DASHBOARD_QUERY}} adatforrást használják. Ezek a panelek az eredeti lapon lévő panelre hivatkoznak, nem az ismétlődő lapokon lévőkre."
         }
       },
@@ -9542,6 +9543,12 @@
         "total-bytes-processed": "Összes feldolgozott bájt"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Duplikálás megszüntetése",
       "disable-highlighting": "Kiemelés letiltása",
@@ -9565,8 +9572,12 @@
       "oldest-first": "Rendezés a legrégebbi naplók szerint – kattintson, hogy a legújabb naplók jelenjenek meg elsőként",
       "prettify-json": "JSON-naplók kibontása",
       "remove-escaping": "Módosított értelmezés eltávolítása",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Görgetés az aljára",
       "scroll-top": "Görgetés a tetejére",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Keresés a naplóeredményekben",
       "show-timestamps": "Időbélyegek megjelenítése",
       "show-unique-labels": "Egyedi címkék megjelenítése",
@@ -9599,7 +9610,7 @@
     "name-order": "Sorrend",
     "name-prettify-json": "JSON szépítése",
     "name-show-controls": "Vezérlőelemek megjelenítése",
-    "name-time": "Idő",
+    "name-time": "",
     "name-unique-labels": "Egyedi címkék",
     "name-wrap-lines": "Sortörés",
     "order-options": {
@@ -9615,6 +9626,7 @@
       "line-contains": "A hozzáadás sorként szűrőt tartalmaz",
       "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Adathivatkozások",
       "aria-label-fields": "Mezők",
@@ -12716,6 +12728,7 @@
     "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
     "description-count-rows": "Egyetlen szám megjelenítése az összes adatsorhoz",
     "description-fields": "Válassza ki a kiszámítandó mezőket",
+    "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
     "name-calculation": "Számítás",
     "name-cell-height": "Cellamagasság",
@@ -12727,6 +12740,7 @@
     "name-count-rows": "Sorok számlálása",
     "name-enable-pagination": "Oldalszámozás engedélyezése",
     "name-fields": "Mezők",
+    "name-frozen-columns": "",
     "name-hide-in-table": "Elrejtés a táblázatban",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-show-table-footer": "Táblázatlábléc megjelenítése",
