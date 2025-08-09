@@ -161,10 +161,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables previous SQL data source dataset dropdown behavior
-  */
-  sqlDatasourceDatabaseSelection?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
