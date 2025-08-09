@@ -16,17 +16,6 @@ export interface BulkActionProvisionResourceProps {
   onDismiss?: () => void;
 }
 
-export type BulkSuccessResponse<T, K> = Array<{
-  index: number;
-  item: T;
-  data: K;
-}>;
-
-export type MoveResultSuccessState = {
-  allSuccess: boolean;
-  repoUrl?: string;
-};
-
 export function getTargetFolderPathInRepo({ targetFolder }: { targetFolder?: Folder }): string | undefined {
   if (!targetFolder) {
     return undefined;

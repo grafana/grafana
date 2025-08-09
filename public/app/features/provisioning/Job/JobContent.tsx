@@ -6,17 +6,18 @@ import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
-import { useStepStatus } from '../Wizard/StepStatusContext';
+import { StepStatusInfo } from '../Wizard/types';
 
 import { JobSummary } from './JobSummary';
 
 export interface JobContentProps {
+  jobType: 'sync' | 'delete' | 'move';
   job?: Job;
   isFinishedJob?: boolean;
+  onStatusChange?: (statusInfo: StepStatusInfo) => void;
 }
 
-export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
-  const { setStepStatusInfo } = useStepStatus();
+export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange }: JobContentProps) {
   const errorSetRef = useRef(false);
 
   if (!job?.status) {
@@ -34,11 +35,11 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
 
     switch (state) {
       case 'success':
-        setStepStatusInfo({ status: 'success' });
+        onStatusChange?.({ status: 'success' });
         break;
       case 'warning':
         if (!errorSetRef.current) {
-          setStepStatusInfo({
+          onStatusChange?.({
             status: 'warning',
             warning: {
               title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
@@ -50,7 +51,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
         break;
       case 'error':
         if (!errorSetRef.current) {
-          setStepStatusInfo({
+          onStatusChange?.({
             status: 'error',
             error: {
               title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
@@ -62,12 +63,12 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
         break;
       case 'working':
       case 'pending':
-        setStepStatusInfo({ status: 'running' });
+        onStatusChange?.({ status: 'running' });
         break;
       default:
         break;
     }
-  }, [state, message, errors, setStepStatusInfo]);
+  }, [state, message, errors, onStatusChange]);
 
   return (
     <Stack direction="column" gap={2}>
@@ -75,7 +76,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
         {['working', 'pending'].includes(state ?? '') && (
           <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
             <Spinner size={24} />
-            <Text element="h4" color="secondary">
+            <Text element="h5" color="secondary">
               {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
             </Text>
           </Stack>
@@ -94,7 +95,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
           </Stack>
         )}
         {state === 'success' ? (
-          <RepositoryLink name={repoName} />
+          <RepositoryLink name={repoName} jobType={jobType} />
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
             <pre>{JSON.stringify(job, null, 2)}</pre>
