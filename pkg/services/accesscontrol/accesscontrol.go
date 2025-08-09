@@ -64,6 +64,7 @@ type Service interface {
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
 type Store interface {
+	registry.ProvidesUsageStats
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
 	GetBasicRolesPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
 	GetTeamsPermissions(ctx context.Context, query GetUserPermissionsQuery) (map[int64][]Permission, error)
