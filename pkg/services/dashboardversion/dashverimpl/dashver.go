@@ -159,23 +159,6 @@ func (s *Service) getDashUIDMaybeEmpty(ctx context.Context, id int64) (string, e
 	return result.UID, nil
 }
 
-// getDashIDMaybeEmpty is a helper function which takes a dashboardUID and
-// returns the ID. If the dashboard is not found, it will return -1.
-func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string, orgID int64) (int64, error) {
-	q := dashboards.GetDashboardQuery{UID: uid, OrgID: orgID}
-	result, err := s.dashSvc.GetDashboard(ctx, &q)
-	if err != nil {
-		if errors.Is(err, dashboards.ErrDashboardNotFound) {
-			s.log.Debug("dashboard not found")
-			return -1, nil
-		} else {
-			s.log.Error("error getting dashboard", err)
-			return -1, err
-		}
-	}
-	return result.ID, nil
-}
-
 func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, version int64) (*dashver.DashboardVersionDTO, error) {
 	// this is an unideal implementation - we have to list all versions and filter here, since there currently is no way to query for the
 	// generation id in unified storage, so we cannot query for the dashboard version directly, and we cannot use search as history is not indexed.
