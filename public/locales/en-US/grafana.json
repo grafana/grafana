@@ -7474,6 +7474,13 @@
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "Collapse editor",
+      "tooltip-copy-query": "Copy query",
+      "tooltip-expand-editor": "Expand editor",
+      "tooltip-format-query": "Format query",
+      "tooltip-run-query": "Hit ctrl/cmd+enter to run query"
+    },
     "reduce": {
       "label-function": "Function",
       "label-input": "Input",
@@ -7488,6 +7495,10 @@
       "label-resample-to": "Resample to",
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
+    },
+    "sql-expr": {
+      "button-run-query": "Run query",
+      "modal-title": "SQL Editor"
     },
     "threshold": {
       "label-input": "Input"
