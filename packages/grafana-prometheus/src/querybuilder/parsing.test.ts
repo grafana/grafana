@@ -207,9 +207,9 @@ describe('buildVisualQueryFromString', () => {
       ).toMatchObject({
         errors: [
           {
-            from: 8,
+            from: 4,
             text: 'Query parsing is ambiguous.',
-            to: 68,
+            to: 69,
           },
         ],
       });
@@ -217,13 +217,15 @@ describe('buildVisualQueryFromString', () => {
 
     it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
       expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
-        errors: [
-          {
-            from: 8,
-            text: 'Query parsing is ambiguous.',
-            to: 13,
-          },
-        ],
+        errors: [],
+        query: {
+          metric: '',
+          labels: [],
+          operations: [
+            { id: '__divide_by', params: [2] },
+            { id: 'topk', params: [5] },
+          ],
+        },
       });
     });
 
@@ -235,9 +237,9 @@ describe('buildVisualQueryFromString', () => {
       ).toMatchObject({
         errors: [
           {
-            from: 10,
+            from: 9,
             text: 'Query parsing is ambiguous.',
-            to: 87,
+            to: 95,
           },
         ],
       });
@@ -962,6 +964,37 @@ describe('buildVisualQueryFromString', () => {
           {
             id: 'topk',
             params: ['$custom'],
+          },
+        ],
+      })
+    );
+  });
+
+  it('parses aggregation binary expression', () => {
+    expect(
+      buildVisualQueryFromString(
+        'count_values("countGroups", count_values by(group) ("countReplicated", Foo{} == 0) == 8)'
+      )
+    ).toEqual(
+      noErrors({
+        metric: 'Foo',
+        labels: [],
+        operations: [
+          {
+            id: '__equal_to',
+            params: [0, false],
+          },
+          {
+            id: '__count_values_by',
+            params: ['countReplicated', 'group'],
+          },
+          {
+            id: '__equal_to',
+            params: [8, false],
+          },
+          {
+            id: 'count_values',
+            params: ['countGroups'],
           },
         ],
       })
