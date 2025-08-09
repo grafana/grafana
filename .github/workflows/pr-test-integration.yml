@@ -48,13 +48,27 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+
   mysql:
     strategy:
       matrix:
-        shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
-        ]
+        include:
+          - shard: 1/8
+            idx: 1
+          - shard: 2/8
+            idx: 2
+          - shard: 3/8
+            idx: 3
+          - shard: 4/8
+            idx: 4
+          - shard: 5/8
+            idx: 5
+          - shard: 6/8
+            idx: 6
+          - shard: 7/8
+            idx: 7
+          - shard: 8/8
+            idx: 8
       fail-fast: false
 
     name: MySQL (${{ matrix.shard }})
@@ -90,17 +104,38 @@ jobs:
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: '0'
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -debug-trace=mysql-trace.json -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Upload trace
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mysql-trace-${{ matrix.idx }}
+          path: mysql-trace.json
+
   postgres:
     strategy:
       matrix:
-        shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
-        ]
+        include:
+          - shard: 1/8
+            idx: 1
+          - shard: 2/8
+            idx: 2
+          - shard: 3/8
+            idx: 3
+          - shard: 4/8
+            idx: 4
+          - shard: 5/8
+            idx: 5
+          - shard: 6/8
+            idx: 6
+          - shard: 7/8
+            idx: 7
+          - shard: 8/8
+            idx: 8
       fail-fast: false
 
     name: Postgres (${{ matrix.shard }})
@@ -135,10 +170,17 @@ jobs:
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: '0'
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -debug-trace=postgres-trace.json -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Upload trace
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-trace-${{ matrix.idx }}
+          path: postgres-trace.json
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests and shards.
