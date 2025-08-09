@@ -95,6 +95,16 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	}
 	ruleAuthzService := accesscontrol.NewRuleService(api.AccessControl)
 
+	convertSrv := NewConvertPrometheusSrv(
+		&api.Cfg.UnifiedAlerting,
+		logger,
+		api.RuleStore,
+		api.DatasourceCache,
+		api.AlertRules,
+		api.FeatureManager,
+		api.MultiOrgAlertmanager,
+	)
+
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
 		api.DatasourceCache,
@@ -115,6 +125,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			),
 			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
 		},
+		convertSrv,
+		api.FeatureManager,
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
@@ -181,15 +193,5 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		hist:   api.Historian,
 	}), m)
 
-	api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
-		NewConvertPrometheusSrv(
-			&api.Cfg.UnifiedAlerting,
-			logger,
-			api.RuleStore,
-			api.DatasourceCache,
-			api.AlertRules,
-			api.FeatureManager,
-			api.MultiOrgAlertmanager,
-		),
-	), m)
+	api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(convertSrv), m)
 }
