@@ -1706,6 +1706,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzResourcePermissionApis",
+			Description:       "Registers AuthZ resource permission /apis endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthnMutation",
 			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
