@@ -8,12 +8,14 @@ import {
   AdHocVariableModel,
   TypedVariableModel,
   ScopedVar,
+  dateTimeForTimeZone,
 } from '@grafana/data';
 import {
   getDataSourceSrv,
   setTemplateSrv,
   TemplateSrv as BaseTemplateSrv,
   VariableInterpolation,
+  config,
 } from '@grafana/runtime';
 import { sceneGraph, VariableCustomFormatterFn, SceneObject } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
@@ -315,58 +317,34 @@ export class TemplateSrv implements BaseTemplateSrv {
     format: string | VariableCustomFormatterFn | undefined,
     scopedVars: ScopedVars | undefined
   ) {
-    const variable = this.getVariableAtIndex(variableName);
-    const scopedVar = scopedVars?.[variableName];
-
-    if (scopedVar) {
+    if (scopedVars && scopedVars[variableName]) {
+      const scopedVar = scopedVars[variableName];
       const value = this.getVariableValue(scopedVar, fieldPath);
       const text = this.getVariableText(scopedVar, value);
-
-      if (value !== null && value !== undefined) {
-        return formatVariableValue(value, format, variable, text);
-      }
+      return formatVariableValue(value, format, { name: variableName }, text);
     }
 
+    const variable = this.getVariableAtIndex(variableName);
     if (!variable) {
-      const macro = macroRegistry[variableName];
-      if (macro) {
-        return macro(match, fieldPath, scopedVars, format);
-      }
-
       return match;
     }
 
-    if (format === VariableFormatID.QueryParam || isAdHoc(variable)) {
-      const value = variableAdapters.get(variable.type).getValueForUrl(variable);
-      const text = isAdHoc(variable) ? variable.id : variable.current.text;
-
-      return formatVariableValue(value, format, variable, text);
-    }
-
-    const systemValue = this.grafanaVariables.get(variable.current.value);
-    if (systemValue) {
-      return formatVariableValue(systemValue, format, variable);
-    }
-
-    let value = variable.current.value;
-    let text = variable.current.text;
-
-    if (this.isAllValue(value)) {
-      value = this.getAllValue(variable);
-      text = ALL_VARIABLE_TEXT;
-      // skip formatting of custom all values unless format set to text or percentencode
-      if (variable.allValue && format !== VariableFormatID.Text && format !== VariableFormatID.PercentEncode) {
-        return this.replace(value);
+    // Handle time variables with timezone
+    if (variableName === '__from' || variableName === '__to') {
+      const timeRange = this.timeRange;
+      if (timeRange) {
+        const value = variableName === '__from' ? timeRange.from.valueOf() : timeRange.to.valueOf();
+        const dashboard = window.__grafanaSceneContext?.state?.dashboard;
+        const timezone = dashboard?.timezone || config.bootData.user.timezone;
+        
+        // Format the timestamp in the dashboard's timezone
+        const date = dateTimeForTimeZone(timezone, value);
+        return formatVariableValue(date.valueOf(), format, { name: variableName }, date.valueOf().toString());
       }
     }
 
-    if (fieldPath) {
-      const fieldValue = this.getVariableValue({ value, text }, fieldPath);
-      if (fieldValue !== null && fieldValue !== undefined) {
-        return formatVariableValue(fieldValue, format, variable, text);
-      }
-    }
-
+    const value = this.getVariableValue(variable.current, fieldPath);
+    const text = this.getVariableText(variable.current, value);
     return formatVariableValue(value, format, variable, text);
   }
 
