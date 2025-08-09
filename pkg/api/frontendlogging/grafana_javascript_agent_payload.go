@@ -196,7 +196,7 @@ func SpanToKeyVal(s ptrace.Span) *KeyVal {
 		KeyValAdd(kv, "timestamp", s.StartTimestamp().AsTime().String())
 	}
 	if s.EndTimestamp() > 0 {
-		KeyValAdd(kv, "end_timestamp", s.StartTimestamp().AsTime().String())
+		KeyValAdd(kv, "end_timestamp", s.EndTimestamp().AsTime().String())
 	}
 	KeyValAdd(kv, "kind", "span")
 	KeyValAdd(kv, "traceID", traceIDHex)
