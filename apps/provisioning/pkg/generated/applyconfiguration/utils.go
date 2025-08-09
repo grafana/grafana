@@ -32,6 +32,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.GitRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HealthStatus"):
 		return &provisioningv0alpha1.HealthStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("HistoricJob"):
+		return &provisioningv0alpha1.HistoricJobApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Job"):
 		return &provisioningv0alpha1.JobApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("JobResourceSummary"):

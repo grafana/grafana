@@ -24,3 +24,4 @@ API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ResourceWrapper,URLs
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,SyncStatus,JobID
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,WebhookResponse,Message
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,HistoricJobList,Items
