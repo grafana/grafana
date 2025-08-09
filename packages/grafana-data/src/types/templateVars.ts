@@ -186,6 +186,7 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
+  displayInDropdownMenu?: boolean;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {
