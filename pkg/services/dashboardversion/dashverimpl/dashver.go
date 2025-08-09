@@ -259,13 +259,29 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
+	// if k8s returns a continue token, we need to fetch the next page(s) until we either reach the limit or there are no more pages
+	continueToken = out.GetContinue()
+	for (len(out.Items) < int(limit)) && (continueToken != "") {
+		tempOut, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
+			LabelSelector: labelSelector,
+			FieldSelector: fieldSelector,
+			Continue:      continueToken,
+			Limit:         limit - int64(len(out.Items)),
+		})
+		if err != nil {
+			return nil, err
+		}
+		out.Items = append(out.Items, tempOut.Items...)
+		continueToken = tempOut.GetContinue()
+	}
+
 	dashboards, err := s.UnstructuredToLegacyDashboardVersionList(ctx, out.Items, orgID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dashver.DashboardVersionResponse{
-		ContinueToken: out.GetContinue(),
+		ContinueToken: continueToken,
 		Versions:      dashboards,
 	}, nil
 }

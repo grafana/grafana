@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -195,6 +196,72 @@ func TestListDashboardVersions(t *testing.T) {
 				DashboardUID:  "uid",
 				Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(5)}),
 			}}}, res)
+	})
+
+	t.Run("List returns correct continue token across multiple pages", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+		dashboardVersionService.features = featuremgmt.WithFeatures()
+
+		dashboardService.On("GetDashboardUIDByID", mock.Anything,
+			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
+			Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+		query := dashver.ListDashboardVersionsQuery{DashboardID: 42, Limit: 3}
+		mockCli.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
+		firstPage := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "11",
+						"generation":      int64(4),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+					},
+					"spec": map[string]any{},
+				}},
+				{Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "12",
+						"generation":      int64(5),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+					},
+					"spec": map[string]any{},
+				}},
+			},
+		}
+		firstMeta, err := meta.ListAccessor(firstPage)
+		require.NoError(t, err)
+		firstMeta.SetContinue("t1")
+		secondPage := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "13",
+						"generation":      int64(6),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+					},
+					"spec": map[string]any{},
+				}},
+			},
+		}
+		mockCli.On("List", mock.Anything, mock.Anything, mock.Anything).Return(firstPage, nil).Once()
+		mockCli.On("List", mock.Anything, mock.Anything, mock.Anything).Return(secondPage, nil).Once()
+
+		res, err := dashboardVersionService.List(context.Background(), &query)
+		require.Nil(t, err)
+		require.Equal(t, 3, len(res.Versions))
+		require.Equal(t, "", res.ContinueToken)
+		mockCli.AssertNumberOfCalls(t, "List", 2)
 	})
 
 	t.Run("should return dashboard not found error when k8s client says not found", func(t *testing.T) {
