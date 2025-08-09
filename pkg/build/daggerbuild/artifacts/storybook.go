@@ -25,14 +25,17 @@ var StorybookInitializer = Initializer{
 }
 
 type Storybook struct {
-	Src       *dagger.Directory
-	YarnCache *dagger.CacheVolume
-	Version   string
+	Src         *dagger.Directory
+	YarnCache   *dagger.CacheVolume
+	Version     string
+	NodeModules *pipeline.Artifact
 }
 
 // The frontend does not have any artifact dependencies.
 func (f *Storybook) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
-	return nil, nil
+	return []*pipeline.Artifact{
+		f.NodeModules,
+	}, nil
 }
 
 // Builder will return a node.js alpine container that matches the .nvmrc in the Grafana source repository
@@ -46,7 +49,11 @@ func (f *Storybook) BuildFile(ctx context.Context, builder *dagger.Container, op
 }
 
 func (f *Storybook) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	return frontend.Storybook(builder, f.Src, f.Version), nil
+	nodeModules, err := opts.Store.Directory(ctx, f.NodeModules)
+	if err != nil {
+		return nil, err
+	}
+	return frontend.Storybook(builder, f.Src, f.Version, nodeModules), nil
 }
 
 func (f *Storybook) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
@@ -82,6 +89,10 @@ func (f *Storybook) Filename(ctx context.Context) (string, error) {
 	return filepath.Join(f.Version, "storybook"), nil
 }
 
+func (f *Storybook) String() string {
+	return "storybook"
+}
+
 func NewStorybookFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	grafanaDir, err := GrafanaDir(ctx, state, false)
 	if err != nil {
@@ -100,14 +111,19 @@ func NewStorybookFromString(ctx context.Context, log *slog.Logger, artifact stri
 }
 
 func NewStorybook(ctx context.Context, log *slog.Logger, artifact string, src *dagger.Directory, version string, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
+	nodeModules, err := NewNodeModules(ctx, log, artifact, src, version, cache)
+	if err != nil {
+		return nil, err
+	}
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,
 		Flags:          StorybookFlags,
 		Handler: &Storybook{
-			Src:       src,
-			YarnCache: cache,
-			Version:   version,
+			Src:         src,
+			YarnCache:   cache,
+			Version:     version,
+			NodeModules: nodeModules,
 		},
 	})
 }

@@ -196,12 +196,9 @@ func NewTarball(
 }
 
 func (t *Tarball) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	version := t.Version
-
 	container := opts.Client.Container().
 		From("alpine:3.18.4").
-		WithExec([]string{"apk", "add", "--update", "tar"}).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo %s > VERSION", version)})
+		WithExec([]string{"apk", "add", "--update", "tar"})
 
 	return container, nil
 }
@@ -211,6 +208,9 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		state = opts.State
 		log   = opts.Log
 	)
+
+	b = b.
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo %s > VERSION", t.Version)})
 
 	log.Debug("Getting grafana dir from state...")
 	// The Grafana directory is used for other packaged data like Dockerfile, license.txt, etc.
@@ -310,6 +310,10 @@ func (t *Tarball) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error
 
 func (t *Tarball) Filename(ctx context.Context) (string, error) {
 	return packages.FileName(t.Name, t.Version, t.BuildID, t.Distribution, "tar.gz")
+}
+
+func (t *Tarball) String() string {
+	return "targz"
 }
 
 func verifyTarball(
