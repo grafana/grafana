@@ -4,19 +4,20 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/apps/plugins/pkg/apis"
-	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -27,14 +28,17 @@ var (
 type PluginsAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
+	reg registry.Service
 }
 
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	registry registry.Service,
 ) (*PluginsAppInstaller, error) {
 	installer := &PluginsAppInstaller{
 		cfg: cfg,
+		reg: registry,
 	}
 	specificConfig := any(nil)
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, pluginsapp.New)
@@ -60,9 +64,21 @@ func (p *PluginsAppInstaller) InstallAPIs(
 		Version:  pluginsv0alpha1.GroupVersion.Version,
 		Resource: pluginsv0alpha1.PluginMetaKind().Plural(),
 	}
+
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
 		pluginMetaGVR: pluginsapp.NewPluginMetaStorage(request.GetNamespaceMapper(p.cfg)),
 	}
+
+	if r, ok := p.reg.(*registry.InMemory); ok {
+		pluginInstallGVR := schema.GroupVersionResource{
+			Group:    pluginsv0alpha1.GroupVersion.Group,
+			Version:  pluginsv0alpha1.GroupVersion.Version,
+			Resource: pluginsv0alpha1.PluginInstallKind().Plural(),
+		}
+		registryAdapter := NewRegistryAdapter(r)
+		replacedStorage[pluginInstallGVR] = pluginsapp.NewPluginInstallStorage(request.GetNamespaceMapper(p.cfg), registryAdapter)
+	}
+
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,
 		replace: replacedStorage,

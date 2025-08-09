@@ -692,7 +692,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles)
+	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles, inMemory)
 	if err != nil {
 		return nil, err
 	}
@@ -1262,7 +1262,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles)
+	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles, inMemory)
 	if err != nil {
 		return nil, err
 	}
