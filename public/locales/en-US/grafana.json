@@ -493,6 +493,8 @@
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "External Alertmanagers",
+      "extra-config-badge": "Extra Config",
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {

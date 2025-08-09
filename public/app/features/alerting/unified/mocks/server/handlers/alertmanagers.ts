@@ -171,6 +171,12 @@ const getGroupsHandler = () =>
     HttpResponse.json([])
   );
 
+const getExtraAlertmanagerConfigsHandler = () =>
+  http.get('/api/alertmanager/grafana/config/api/v1/alerts', () =>
+    // Return alertmanager config with empty extra_config array by default for tests
+    HttpResponse.json({ extra_config: [] })
+  );
+
 const handlers = [
   alertmanagerAlertsListHandler(),
   grafanaAlertingConfigurationStatusHandler(),
@@ -181,5 +187,6 @@ const handlers = [
   testReceiversHandler(),
   getGroupsHandler(),
   getAlertmanagerStatusHandler(),
+  getExtraAlertmanagerConfigsHandler(),
 ];
 export default handlers;

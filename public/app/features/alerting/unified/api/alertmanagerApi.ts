@@ -37,6 +37,14 @@ export interface GrafanaAlertingConfigurationStatusResponse {
   numExternalAlertmanagers: number;
 }
 
+interface ExtraConfig {
+  identifier: string;
+}
+
+interface AlertingConfigResponse {
+  extra_config?: ExtraConfig[];
+}
+
 interface AlertmanagerAlertsFilter {
   active?: boolean;
   silenced?: boolean;
@@ -308,6 +316,18 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         }));
       },
       providesTags: ['ContactPointsStatus'],
+    }),
+
+    // Get extra Alertmanager configurations from the main config endpoint
+    getExtraAlertmanagerConfigs: build.query<ExtraConfig[], void>({
+      query: () => ({
+        url: `/api/alertmanager/grafana/config/api/v1/alerts`,
+      }),
+      transformResponse: (response: AlertingConfigResponse) => {
+        // Extract extra configs from the full configuration response
+        return response.extra_config || [];
+      },
+      providesTags: ['AlertmanagerConfiguration'],
     }),
   }),
 });
