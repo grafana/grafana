@@ -7,6 +7,11 @@ import { CollapsedMap } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import { ColorScheme, SelectedView } from './types';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(() => [false, null]), // [isAvailable, openAssistant]
+  createContext: jest.fn(),
+}));
+
 describe('FlameGraphHeader', () => {
   function setup(props: Partial<React.ComponentProps<typeof FlameGraphHeader>> = {}) {
     const setSearch = jest.fn();
