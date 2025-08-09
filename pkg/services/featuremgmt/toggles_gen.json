@@ -444,14 +444,17 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-27T17:47:33Z"
+        "resourceVersion": "1754657532777",
+        "creationTimestamp": "2025-01-27T17:47:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-08 12:52:12.777935 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
