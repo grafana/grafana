@@ -144,6 +144,8 @@ var wireExtsBasicSet = wire.NewSet(
 	gsmKMSProviders.ProvideOSSKMSProviders,
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
+	// Resource permissions store for IAM API
+	ProvideResourcePermissionsStore,
 )
 
 var wireExtsSet = wire.NewSet(
