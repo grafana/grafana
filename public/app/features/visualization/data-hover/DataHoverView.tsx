@@ -1,138 +1,67 @@
 import { css } from '@emotion/css';
 
-import {
-  arrayUtils,
-  DataFrame,
-  Field,
-  formattedValueToString,
-  getFieldDisplayName,
-  GrafanaTheme2,
-  LinkModel,
-} from '@grafana/data';
+import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
-
-import { ExemplarTooltip } from './ExemplarTooltip';
+import { getDataLinks } from 'app/plugins/panel/status-history/utils';
 
 export interface Props {
   data?: DataFrame; // source data
   rowIndex?: number | null; // the hover row
   columnIndex?: number | null; // the hover column
-  sortOrder?: SortOrder;
-  mode?: TooltipDisplayMode | null;
   header?: string;
   padding?: number;
-  maxHeight?: number;
 }
 
 export interface DisplayValue {
   name: string;
   value: unknown;
   valueString: string;
-  highlight: boolean;
 }
 
-export function getDisplayValuesAndLinks(
-  data: DataFrame,
-  rowIndex: number,
-  columnIndex?: number | null,
-  sortOrder?: SortOrder,
-  mode?: TooltipDisplayMode | null
-) {
-  const fields = data.fields;
-  const hoveredField = columnIndex != null ? fields[columnIndex] : null;
+export function getDisplayValuesAndLinks(data: DataFrame, rowIndex: number, columnIndex?: number) {
+  const visibleFields = data.fields.filter(
+    (f, i) => !Boolean(f.config.custom?.hideFrom?.tooltip) && (columnIndex == null || i === columnIndex)
+  );
 
-  const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-  const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
-  const orderedVisibleFields = [];
-  // Only include traceID if it's visible and put it in front.
-  if (visibleFields.filter((field) => traceIDField === field).length > 0) {
-    orderedVisibleFields.push(traceIDField);
-  }
-  orderedVisibleFields.push(...visibleFields.filter((field) => traceIDField !== field));
-
-  if (orderedVisibleFields.length === 0) {
+  if (visibleFields.length === 0) {
     return null;
   }
 
   const displayValues: DisplayValue[] = [];
   const links: Array<LinkModel<Field>> = [];
-  const linkLookup = new Set<string>();
 
-  for (const field of orderedVisibleFields) {
-    if (mode === TooltipDisplayMode.Single && field !== hoveredField) {
-      continue;
-    }
-
+  for (const field of visibleFields) {
     const value = field.values[rowIndex];
     const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
 
-    if (field.getLinks) {
-      field.getLinks({ calculatedValue: fieldDisplay, valueRowIndex: rowIndex }).forEach((link) => {
-        const key = `${link.title}/${link.href}`;
-        if (!linkLookup.has(key)) {
-          links.push(link);
-          linkLookup.add(key);
-        }
-      });
-    }
+    links.push(...getDataLinks(field, rowIndex));
 
     displayValues.push({
       name: getFieldDisplayName(field, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
-      highlight: field === hoveredField,
     });
-  }
-
-  if (sortOrder && sortOrder !== SortOrder.None) {
-    displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
   }
 
   return { displayValues, links };
 }
 
-export const DataHoverView = ({
-  data,
-  rowIndex,
-  columnIndex,
-  sortOrder,
-  mode,
-  header,
-  padding = 0,
-  maxHeight,
-}: Props) => {
+export const DataHoverView = ({ data, rowIndex, header, padding = 0 }: Props) => {
   const styles = useStyles2(getStyles, padding);
 
   if (!data || rowIndex == null) {
     return null;
   }
 
-  const dispValuesAndLinks = getDisplayValuesAndLinks(data, rowIndex, columnIndex, sortOrder, mode);
+  const dispValuesAndLinks = getDisplayValuesAndLinks(data, rowIndex);
 
   if (dispValuesAndLinks == null) {
     return null;
   }
 
   const { displayValues, links } = dispValuesAndLinks;
-
-  if (header === 'Exemplar') {
-    return (
-      <ExemplarTooltip
-        items={displayValues.map((dispVal) => ({
-          label: dispVal.name,
-          value: dispVal.valueString,
-          isActive: dispVal.highlight,
-        }))}
-        links={links}
-        headerLabel={header}
-        maxHeight={maxHeight}
-        isPinned={false}
-      />
-    );
-  }
 
   return (
     <div className={styles.wrapper}>
@@ -166,6 +95,7 @@ export const DataHoverView = ({
     </div>
   );
 };
+
 const getStyles = (theme: GrafanaTheme2, padding = 0) => {
   return {
     wrapper: css({

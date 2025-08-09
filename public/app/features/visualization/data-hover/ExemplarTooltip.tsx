@@ -1,4 +1,5 @@
 import { LinkModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -11,18 +12,17 @@ export interface Props {
   items: VizTooltipItem[];
   links?: LinkModel[];
   isPinned: boolean;
-  headerLabel?: string;
   maxHeight?: number;
 }
 
-export const ExemplarTooltip = ({ items, links, isPinned, headerLabel = 'Exemplar', maxHeight }: Props) => {
+export const ExemplarTooltip = ({ items, links, isPinned, maxHeight }: Props) => {
   const timeItem = items.find((val) => val.label === 'Time');
 
   return (
     <VizTooltipWrapper>
       <VizTooltipHeader
         item={{
-          label: headerLabel,
+          label: t('exemplar-tooltip-header', 'Exemplar'),
           value: timeItem?.label ?? '',
         }}
         isPinned={isPinned}
