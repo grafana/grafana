@@ -69,24 +69,12 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 }
 
 func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersionDTO, error) {
-	// Get the DashboardUID if not populated
 	if query.DashboardUID == "" {
 		u, err := s.getDashUIDMaybeEmpty(ctx, query.DashboardID)
 		if err != nil {
 			return nil, err
 		}
 		query.DashboardUID = u
-	}
-
-	// The store methods require the dashboard ID (uid is not in the dashboard
-	// versions table, at time of this writing), so get the DashboardID if it
-	// was not populated.
-	if query.DashboardID == 0 {
-		id, err := s.getDashIDMaybeEmpty(ctx, query.DashboardUID, query.OrgID)
-		if err != nil {
-			return nil, err
-		}
-		query.DashboardID = id
 	}
 
 	version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, query.Version)
@@ -128,7 +116,6 @@ func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredV
 
 // List all dashboard versions for the given dashboard ID.
 func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) (*dashver.DashboardVersionResponse, error) {
-	// Get the DashboardUID if not populated
 	if query.DashboardUID == "" {
 		u, err := s.getDashUIDMaybeEmpty(ctx, query.DashboardID)
 		if err != nil {
@@ -137,16 +124,6 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 		query.DashboardUID = u
 	}
 
-	// The store methods require the dashboard ID (uid is not in the dashboard
-	// versions table, at time of this writing), so get the DashboardID if it
-	// was not populated.
-	if query.DashboardID == 0 {
-		id, err := s.getDashIDMaybeEmpty(ctx, query.DashboardUID, query.OrgID)
-		if err != nil {
-			return nil, err
-		}
-		query.DashboardID = id
-	}
 	if query.Limit == 0 {
 		query.Limit = 1000
 	}
