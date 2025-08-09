@@ -119,6 +119,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.components.input.borderColor}`,
       borderRadius: theme.shape.radius.default,
       padding: RADIO_GROUP_PADDING,
+      maxWidth: '100%', 
       '&:hover': {
         borderColor: theme.components.input.borderHover,
       },
@@ -126,7 +127,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     fullWidth: css({
       display: 'flex',
       flexGrow: 1,
-    }),
+    }),  
     icon: css({
       marginRight: '6px',
     }),
