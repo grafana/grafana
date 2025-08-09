@@ -31,6 +31,8 @@ type DingdingIntegration struct {
 	MessageType *string `json:"msgType,omitempty" yaml:"msgType,omitempty" hcl:"message_type"`
 	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Message     *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type DiscordIntegration struct {
@@ -41,6 +43,8 @@ type DiscordIntegration struct {
 	Message            *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 	AvatarURL          *string `json:"avatar_url,omitempty" yaml:"avatar_url,omitempty" hcl:"avatar_url"`
 	UseDiscordUsername *bool   `json:"use_discord_username,omitempty" yaml:"use_discord_username,omitempty" hcl:"use_discord_username"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type EmailIntegration struct {
@@ -60,6 +64,8 @@ type GooglechatIntegration struct {
 
 	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type JiraIntegration struct {
@@ -86,6 +92,8 @@ type JiraIntegration struct {
 	User     *Secret `yaml:"user,omitempty" json:"user,omitempty" hcl:"user"`
 	Password *Secret `yaml:"password,omitempty" json:"password,omitempty" hcl:"password"`
 	Token    *Secret `yaml:"api_token,omitempty" json:"api_token,omitempty" hcl:"api_token"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type KafkaIntegration struct {
@@ -100,6 +108,8 @@ type KafkaIntegration struct {
 	Password       *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
 	APIVersion     *string `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty" hcl:"api_version"`
 	KafkaClusterID *string `json:"kafkaClusterId,omitempty" yaml:"kafkaClusterId,omitempty" hcl:"cluster_id"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type LineIntegration struct {
@@ -109,6 +119,8 @@ type LineIntegration struct {
 
 	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Description *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type TLSConfig struct {
@@ -146,6 +158,8 @@ type OnCallIntegration struct {
 	Password                 *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
 	Title                    *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Message                  *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type OpsgenieIntegrationResponder struct {
@@ -167,6 +181,8 @@ type OpsgenieIntegration struct {
 	OverridePriority *bool                          `json:"overridePriority,omitempty" yaml:"overridePriority,omitempty" hcl:"override_priority"`
 	SendTagsAs       *string                        `json:"sendTagsAs,omitempty" yaml:"sendTagsAs,omitempty" hcl:"send_tags_as"`
 	Responders       []OpsgenieIntegrationResponder `json:"responders,omitempty" yaml:"responders,omitempty" hcl:"responders,block"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type PagerdutyIntegration struct {
@@ -184,6 +200,8 @@ type PagerdutyIntegration struct {
 	ClientURL *string            `json:"client_url,omitempty" yaml:"client_url,omitempty" hcl:"client_url"`
 	Details   *map[string]string `json:"details,omitempty" yaml:"details,omitempty" hcl:"details"`
 	URL       *string            `json:"url,omitempty" yaml:"url,omitempty" hcl:"url"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type PushoverIntegration struct {
@@ -202,6 +220,8 @@ type PushoverIntegration struct {
 	Title            *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Message          *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 	UploadImage      *bool   `json:"uploadImage,omitempty" yaml:"uploadImage,omitempty" hcl:"upload_image"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type SensugoIntegration struct {
@@ -215,6 +235,8 @@ type SensugoIntegration struct {
 	Namespace *string `json:"namespace,omitempty" yaml:"namespace,omitempty" hcl:"namespace"`
 	Handler   *string `json:"handler,omitempty" yaml:"handler,omitempty" hcl:"handler"`
 	Message   *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type SigV4Config struct {
@@ -268,6 +290,8 @@ type TelegramIntegration struct {
 	DisableWebPagePreview *bool   `json:"disable_web_page_preview,omitempty" yaml:"disable_web_page_preview,omitempty" hcl:"disable_web_page_preview"`
 	ProtectContent        *bool   `json:"protect_content,omitempty" yaml:"protect_content,omitempty" hcl:"protect_content"`
 	DisableNotifications  *bool   `json:"disable_notifications,omitempty" yaml:"disable_notifications,omitempty" hcl:"disable_notifications"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type TeamsIntegration struct {
@@ -278,6 +302,8 @@ type TeamsIntegration struct {
 	Message      *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 	Title        *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	SectionTitle *string `json:"sectiontitle,omitempty" yaml:"sectiontitle,omitempty" hcl:"section_title"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type ThreemaIntegration struct {
@@ -289,6 +315,8 @@ type ThreemaIntegration struct {
 
 	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Description *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type VictoropsIntegration struct {
@@ -299,6 +327,8 @@ type VictoropsIntegration struct {
 	MessageType *string `json:"messageType,omitempty" yaml:"messageType,omitempty" hcl:"message_type"`
 	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Description *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type WebexIntegration struct {
@@ -309,6 +339,8 @@ type WebexIntegration struct {
 	APIURL  *string `json:"api_url,omitempty" yaml:"api_url,omitempty" hcl:"api_url"`
 	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 	RoomID  *string `json:"room_id,omitempty" yaml:"room_id,omitempty" hcl:"room_id"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type WebhookIntegration struct {
@@ -327,9 +359,9 @@ type WebhookIntegration struct {
 	Message                  *string            `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 	TLSConfig                *TLSConfig         `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tlsConfig,block"`
 	HMACConfig               *HMACConfig        `json:"hmacConfig,omitempty" yaml:"hmacConfig,omitempty" hcl:"hmacConfig,block"`
-	HTTPConfig               *HTTPClientConfig  `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
+	Payload                  *CustomPayload     `json:"payload,omitempty" yaml:"payload,omitempty" hcl:"payload,block"`
 
-	Payload *CustomPayload `json:"payload,omitempty" yaml:"payload,omitempty" hcl:"payload,block"`
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type CustomPayload struct {
@@ -393,6 +425,8 @@ type WecomIntegration struct {
 	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	MsgType *string `json:"msgtype,omitempty" yaml:"msgtype,omitempty" hcl:"msg_type"`
 	ToUser  *string `json:"touser,omitempty" yaml:"touser,omitempty" hcl:"to_user"`
+
+	HTTPConfig *HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 }
 
 type ContactPoint struct {
