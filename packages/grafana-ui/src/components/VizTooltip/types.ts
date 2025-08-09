@@ -21,7 +21,7 @@ export enum ColorPlacement {
 
 export interface VizTooltipItem {
   label: string;
-  value: string;
+  value: string | React.ReactNode;
   color?: string;
   colorIndicator?: ColorIndicator;
   colorPlacement?: ColorPlacement;
