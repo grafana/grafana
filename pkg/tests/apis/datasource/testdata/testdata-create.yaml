@@ -1,0 +1,17 @@
+apiVersion: testdata.datasource.grafana.app/v0alpha1
+kind: DataSource
+metadata:
+  name: sample-testdata
+spec:
+  title: Sample datasource
+  access: proxy
+  isDefault: true
+  jsonData: 
+    key: value
+    hello: 10
+    world: false
+secure:
+  sampleA:
+    create: secret value here # replaced with UID on write
+  sampleB:
+    name: XYZ # reference to a existing secret
