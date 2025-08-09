@@ -898,6 +898,7 @@
       "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
+      "aria-label-refresh-list": "Refresh list of contact points",
       "contact-point-picker-label-contact-point": "Contact point",
       "message": {
         "contact-point-is-required": "Contact point is required."
