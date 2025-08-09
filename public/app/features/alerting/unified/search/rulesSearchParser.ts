@@ -15,7 +15,7 @@ export interface RulesFilter {
   namespace?: string;
   groupName?: string;
   ruleName?: string;
-  ruleState?: PromAlertingRuleState;
+  ruleState?: PromAlertingRuleState | '*';
   ruleType?: PromRuleType;
   dataSourceNames: string[];
   labels: string[];

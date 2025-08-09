@@ -7,6 +7,7 @@ import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
+import { AdvancedFilters } from './components/rules/Filter/RulesFilter.v2';
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
@@ -328,6 +329,18 @@ export function trackFolderBulkActionsPauseFail() {
 
 export function trackFolderBulkActionsUnpauseFail() {
   reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
+}
+
+export function trackFilterButtonClick() {
+  reportInteraction('grafana_alerting_filter_button_click');
+}
+
+export function trackFilterButtonApplyClick(payload: Partial<AdvancedFilters>) {
+  reportInteraction('grafana_alerting_filter_button_apply_click', payload);
+}
+
+export function trackFilterButtonClearClick() {
+  reportInteraction('grafana_alerting_filter_button_clear_click');
 }
 
 export type AlertRuleTrackingProps = {

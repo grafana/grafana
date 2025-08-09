@@ -67,7 +67,7 @@ export function useFilteredRulesIteratorProvider() {
       grafanaGroupsGenerator(groupLimit, {
         contactPoint: filterState.contactPoint ?? undefined,
         health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
-        state: filterState.ruleState ? [filterState.ruleState] : [],
+        state: filterState.ruleState && filterState.ruleState !== '*' ? [filterState.ruleState] : [],
       })
     ).pipe(
       withAbort(abortController.signal),
