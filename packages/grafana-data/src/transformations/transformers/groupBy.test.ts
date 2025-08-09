@@ -8,6 +8,29 @@ import { transformDataFrame } from '../transformDataFrame';
 import { GroupByOperationID, groupByTransformer, GroupByTransformerOptions } from './groupBy';
 import { DataTransformerID } from './ids';
 
+// returns a simple group by / reducer pair
+const getSimpleGroupByConfig = (
+  groupName: string,
+  valuesName: string,
+  reducer: ReducerID
+): DataTransformerConfig<GroupByTransformerOptions> => {
+  return {
+    id: DataTransformerID.groupBy,
+    options: {
+      fields: {
+        [groupName]: {
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+        [valuesName]: {
+          operation: GroupByOperationID.aggregate,
+          aggregations: [reducer],
+        },
+      },
+    },
+  };
+};
+
 describe('GroupBy transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([groupByTransformer]);
@@ -88,21 +111,7 @@ describe('GroupBy transformer', () => {
       ],
     });
 
-    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
-      id: DataTransformerID.groupBy,
-      options: {
-        fields: {
-          message: {
-            operation: GroupByOperationID.groupBy,
-            aggregations: [],
-          },
-          values: {
-            operation: GroupByOperationID.aggregate,
-            aggregations: [ReducerID.sum],
-          },
-        },
-      },
-    };
+    const cfg = getSimpleGroupByConfig('message', 'values', ReducerID.sum);
 
     await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
@@ -208,21 +217,7 @@ describe('GroupBy transformer', () => {
       }),
     ];
 
-    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
-      id: DataTransformerID.groupBy,
-      options: {
-        fields: {
-          message: {
-            operation: GroupByOperationID.groupBy,
-            aggregations: [],
-          },
-          values: {
-            operation: GroupByOperationID.aggregate,
-            aggregations: [ReducerID.sum],
-          },
-        },
-      },
-    };
+    const cfg = getSimpleGroupByConfig('message', 'values', ReducerID.sum);
 
     await expect(transformDataFrame([cfg], testSeries)).toEmitValuesWith((received) => {
       const result = received[0];
@@ -270,21 +265,7 @@ describe('GroupBy transformer', () => {
       ],
     });
 
-    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
-      id: DataTransformerID.groupBy,
-      options: {
-        fields: {
-          message: {
-            operation: GroupByOperationID.groupBy,
-            aggregations: [],
-          },
-          values: {
-            operation: GroupByOperationID.aggregate,
-            aggregations: [ReducerID.sum],
-          },
-        },
-      },
-    };
+    const cfg = getSimpleGroupByConfig('message', 'values', ReducerID.sum);
 
     await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
@@ -378,21 +359,7 @@ describe('GroupBy transformer', () => {
       ],
     });
 
-    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
-      id: DataTransformerID.groupBy,
-      options: {
-        fields: {
-          user: {
-            operation: GroupByOperationID.groupBy,
-            aggregations: [],
-          },
-          time: {
-            operation: GroupByOperationID.aggregate,
-            aggregations: [ReducerID.max],
-          },
-        },
-      },
-    };
+    const cfg = getSimpleGroupByConfig('user', 'time', ReducerID.max);
 
     await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
@@ -425,21 +392,7 @@ describe('GroupBy transformer', () => {
       ],
     });
 
-    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
-      id: DataTransformerID.groupBy,
-      options: {
-        fields: {
-          user: {
-            operation: GroupByOperationID.groupBy,
-            aggregations: [],
-          },
-          time: {
-            operation: GroupByOperationID.aggregate,
-            aggregations: [ReducerID.max],
-          },
-        },
-      },
-    };
+    const cfg = getSimpleGroupByConfig('user', 'time', ReducerID.max);
 
     await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
@@ -477,21 +430,7 @@ describe('GroupBy transformer', () => {
       ],
     });
 
-    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
-      id: DataTransformerID.groupBy,
-      options: {
-        fields: {
-          message: {
-            operation: GroupByOperationID.groupBy,
-            aggregations: [],
-          },
-          values: {
-            operation: GroupByOperationID.aggregate,
-            aggregations: [ReducerID.sum],
-          },
-        },
-      },
-    };
+    const cfg = getSimpleGroupByConfig('message', 'values', ReducerID.sum);
 
     await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
@@ -510,6 +449,46 @@ describe('GroupBy transformer', () => {
         },
       ];
 
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
+
+  it('should not aggregate fields without an operation', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'category', type: FieldType.string, values: ['A', 'A', 'B', 'B'], config: {} },
+        { name: 'values', type: FieldType.number, values: [1, 2, 3, 4], config: {} },
+      ],
+    });
+
+    // when the operation field is cleared the aggregations are kept in state in case they are needed, but they should not be used by the transformation
+    let cfg = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          category: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          values: {
+            aggregations: [ReducerID.sum],
+            operation: null,
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'category',
+          type: FieldType.string,
+          values: ['A', 'B'],
+          config: {},
+        },
+      ];
       expect(result[0].fields).toEqual(expected);
     });
   });
