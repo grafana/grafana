@@ -14,10 +14,10 @@ keywords:
   - customize
   - configuration
   - grafana.ini
-weight: 100
+weight: 300
 ---
 
-# Customize navigation placement of app plugin pages
+# Customize navigation placement of plugin pages
 
 By default, Grafana app plugins and their pages appear under the "More apps" section in the navigation menu. However, as a Grafana administrator, you might want to improve user experience by relocating specific pages or entire app plugins to more relevant sections of the navigation hierarchy. This guide shows you how to customize the placement of app plugin pages across different parts of your Grafana navigation menu.
 
