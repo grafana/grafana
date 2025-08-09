@@ -344,32 +344,79 @@ export function prepareTimelineFields(
     // if we have a second time field, assume it is state end timestamps
     // and insert nulls into the data at the end timestamps
     if (endFieldIdx !== -1) {
-      let startFrame: DataFrame = {
-        ...frame,
-        fields: frame.fields.filter((f, i) => i !== endFieldIdx),
-      };
+      // split into frame-per-series, keeping only rows where state is defined
+      const frames: DataFrame[] = [];
 
-      let endFrame: DataFrame = {
-        length: frame.length,
-        fields: [frame.fields[endFieldIdx]],
-      };
+      frame.fields.forEach((f, i) => {
+        if (i !== startFieldIdx && i !== endFieldIdx) {
+          const startVals = frame.fields[startFieldIdx].values;
+          const startField: Field = {
+            ...frame.fields[startFieldIdx],
+            values: [],
+          };
+
+          const endVals = frame.fields[endFieldIdx].values;
+          const endField: Field = {
+            ...frame.fields[endFieldIdx],
+            values: [],
+          };
+
+          const stateVals = f.values;
+          const stateField: Field = {
+            ...f,
+            values: [],
+          };
+
+          for (let i = 0; i < f.values.length; i++) {
+            let v = stateVals[i];
+
+            if (v != null) {
+              stateField.values.push(v);
+
+              startField.values.push(startVals[i]);
+              endField.values.push(endVals[i]);
+            }
+          }
+
+          let length = stateField.values.length;
+
+          let startFrame: DataFrame = {
+            ...frame,
+            length,
+            fields: [startField, stateField],
+          };
+
+          let endFrame: DataFrame = {
+            length,
+            fields: [endField],
+          };
+
+          let joined = outerJoinDataFrames({
+            frames: [startFrame, endFrame],
+            keepDisplayNames: true,
+            nullMode: () => NULL_RETAIN,
+          })!;
+
+          joined.fields.forEach((f, i) => {
+            if (i > 0) {
+              let vals = f.values;
+              for (let i = 0; i < vals.length; i++) {
+                if (vals[i] == null) {
+                  vals[i] = null;
+                }
+              }
+            }
+          });
+
+          frames.push(joined);
+        }
+      });
 
       frame = outerJoinDataFrames({
-        frames: [startFrame, endFrame],
+        frames,
         keepDisplayNames: true,
         nullMode: () => NULL_RETAIN,
       })!;
-
-      frame.fields.forEach((f, i) => {
-        if (i > 0) {
-          let vals = f.values;
-          for (let i = 0; i < vals.length; i++) {
-            if (vals[i] == null) {
-              vals[i] = null;
-            }
-          }
-        }
-      });
 
       changed = true;
     }
