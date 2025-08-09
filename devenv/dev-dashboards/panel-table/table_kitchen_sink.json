@@ -429,7 +429,7 @@
           }
         ]
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {

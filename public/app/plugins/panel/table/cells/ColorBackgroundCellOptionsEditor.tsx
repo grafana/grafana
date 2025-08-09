@@ -27,6 +27,7 @@ export const ColorBackgroundCellOptionsEditor = ({
   };
 
   const onWrapTextChange = () => {
+    // @ts-ignore this has been migrated out of existence.
     cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);
   };
@@ -68,6 +69,7 @@ export const ColorBackgroundCellOptionsEditor = ({
         <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
       </Field>
       <Field label={label}>
+        {/* @ts-ignore this has been migrated out of existence. */}
         <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
       </Field>
     </>

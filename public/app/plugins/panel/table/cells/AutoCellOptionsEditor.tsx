@@ -9,6 +9,7 @@ export const AutoCellOptionsEditor = ({
   onChange,
 }: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions>) => {
   const onWrapTextChange = () => {
+    /* @ts-ignore this has been migrated out of existence. */
     cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);
   };
@@ -21,6 +22,7 @@ export const AutoCellOptionsEditor = ({
         'If selected text will be wrapped to the width of text in the configured column'
       )}
     >
+      {/* @ts-ignore this has been migrated out of existence. */}
       <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
     </Field>
   );

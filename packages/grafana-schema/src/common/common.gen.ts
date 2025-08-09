@@ -725,16 +725,6 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
- * Whenever we add text wrapping, we should add all text wrapping options at once
- */
-export interface TableWrapTextOptions {
-  /**
-   * if true, wrap the text content of the cell
-   */
-  wrapText?: boolean;
-}
-
-/**
  * Sort by field state
  */
 export interface TableSortByFieldState {
@@ -767,14 +757,14 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
 /**
  * Auto mode table cell options
  */
-export interface TableAutoCellOptions extends TableWrapTextOptions {
+export interface TableAutoCellOptions {
   type: TableCellDisplayMode.Auto;
 }
 
 /**
  * Colored text cell options
  */
-export interface TableColorTextCellOptions extends TableWrapTextOptions {
+export interface TableColorTextCellOptions {
   type: TableCellDisplayMode.ColorText;
 }
 
@@ -797,7 +787,7 @@ export interface TableImageCellOptions {
 /**
  * Show data links in the cell
  */
-export interface TableDataLinksCellOptions extends TableWrapTextOptions {
+export interface TableDataLinksCellOptions {
   type: TableCellDisplayMode.DataLinks;
 }
 
@@ -828,13 +818,13 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
 /**
  * Colored background cell options
  */
-export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions {
+export interface TableColoredBackgroundCellOptions {
   applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
 }
 
-export interface TablePillCellOptions extends TableWrapTextOptions {
+export interface TablePillCellOptions {
   type: TableCellDisplayMode.Pill;
 }
 
@@ -980,7 +970,7 @@ export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
  * Generally defines alignment, filtering capabilties, display options, etc.
  */
-export interface TableFieldOptions {
+export interface TableFieldOptions extends HideableFieldConfig {
   align: FieldTextAlignment;
   cellOptions: TableCellOptions;
   /**
@@ -988,7 +978,6 @@ export interface TableFieldOptions {
    */
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
-  hidden?: boolean; // ?? default is missing or false ??
   /**
    * Hides any header for a column, useful for columns that show some static content or buttons.
    */
@@ -1000,6 +989,10 @@ export interface TableFieldOptions {
    * Enables text wrapping for column headers
    */
   wrapHeaderText?: boolean;
+  /**
+   * if true, wrap the text content of the cell
+   */
+  wrapText?: boolean;
 }
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {

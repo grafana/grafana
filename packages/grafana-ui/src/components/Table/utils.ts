@@ -114,6 +114,7 @@ export function getColumns(
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions: TableFieldOptions = field.config.custom || {};
+    // @ts-ignore
     if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
       continue;
     }

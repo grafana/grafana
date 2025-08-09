@@ -1,6 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 
-import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
@@ -41,11 +41,9 @@ const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
   return result;
 };
 
-const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
+const disableAllTextWrap = async (loc: Page | Locator) => {
   // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
-  const wrapTextToggle = loc.locator(
-    `[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`
-  );
+  const wrapTextToggle = loc.getByText('Wrap text');
   const count = await wrapTextToggle.count();
 
   for (let i = 0; i < count; i++) {
@@ -77,10 +75,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // FIXME very bad selector to get the correct "wrap text" toggle here.
     // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
-    await page
-      .locator('[id="Override 13"]')
-      .locator(`[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`)
-      .click();
+    await page.locator('[id="Override 13"]').getByText('Wrap text').click();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
@@ -229,7 +224,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // because of text wrapping, we're guaranteed to only be showing a single row when we enable pagination.
     await expect(page.getByText(/([\d]+) - ([\d]+) of ([\d]+) rows/)).toBeVisible();
 
-    await disableAllTextWrap(page, selectors);
+    await disableAllTextWrap(page);
 
     // any number of rows that is not "1" is allowed here, we don't want to police the exact number of rows that
     // are rendered since there are tons of factors which could effect this. we do want to grab this number for comparison
@@ -292,7 +287,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).toBeVisible();
 
-    await disableAllTextWrap(page, selectors);
+    await disableAllTextWrap(page);
 
     const infoColumnIdx = await getColumnIdx(page, 'Info');
     const pillColIdx = await getColumnIdx(page, 'Pills');
