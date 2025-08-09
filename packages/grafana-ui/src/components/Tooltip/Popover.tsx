@@ -25,6 +25,7 @@ interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   wrapperClassName?: string;
   renderArrow?: boolean;
   hidePopper?: () => void;
+  style?: React.CSSProperties;
 }
 
 export function Popover({
@@ -36,6 +37,7 @@ export function Popover({
   referenceElement,
   renderArrow,
   hidePopper,
+  style: styleOverrides,
   ...rest
 }: Props) {
   const theme = useTheme2();
@@ -89,6 +91,7 @@ export function Popover({
         style={{
           ...floatingStyles,
           ...placementStyles,
+          ...styleOverrides,
         }}
         className={wrapperClassName}
         {...rest}

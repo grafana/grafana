@@ -40,6 +40,7 @@ import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { HeaderCell } from './components/HeaderCell';
 import { RowExpander } from './components/RowExpander';
 import { TableCellActions } from './components/TableCellActions';
+import { TooltipByField } from './components/TooltipByField';
 import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
@@ -55,6 +56,7 @@ import { getDefaultCellStyles, getFooterStyles, getGridStyles, getHeaderCellStyl
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps, TableCellStyleOptions } from './types';
 import {
   applySort,
+  canFieldBeColorized,
   computeColWidths,
   createTypographyContext,
   displayJsonValue,
@@ -378,10 +380,7 @@ export function TableNG(props: TableNGProps) {
         const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
-        const canBeColorized =
-          cellType === TableCellDisplayMode.ColorBackground ||
-          cellType === TableCellDisplayMode.ColorText ||
-          Boolean(applyToRowBgFn);
+        const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
         const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
 
         result.colsWithTooltip[displayName] = withTooltip;
@@ -389,6 +388,7 @@ export function TableNG(props: TableNGProps) {
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
         const linkStyles = getLinkStyles(theme, canBeColorized);
+        let _height: number | undefined;
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -427,7 +427,7 @@ export function TableNG(props: TableNGProps) {
             };
           }
 
-          return (
+          let cellContent = (
             <Cell
               key={key}
               {...props}
@@ -435,6 +435,69 @@ export function TableNG(props: TableNGProps) {
               style={style}
             />
           );
+
+          const tooltipByField = field.config.custom?.tooltipByField;
+          if (tooltipByField) {
+            const tooltipField = data.fields.find(
+              (f) => f.name === tooltipByField || getDisplayName(f) === tooltipByField
+            );
+
+            if (tooltipField) {
+              _height ??= rowHeightFn(props.row);
+
+              const tooltipCellOptions = getCellOptions(tooltipField);
+              const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
+              const tooltipCellStyleOptions = {
+                textAlign: getAlignment(tooltipField),
+                textWrap: shouldTextWrap(tooltipField),
+                shouldOverflow: false,
+              } satisfies TableCellStyleOptions;
+              const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
+              const defaultTooltipStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
+              const tooltipSpecificStyles = getCellSpecificStyles(
+                tooltipCellOptions.type,
+                tooltipField,
+                theme,
+                tooltipCellStyleOptions
+              );
+              const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
+
+              let tooltipStyle: CSSProperties | undefined;
+              if (tooltipCanBeColorized) {
+                const displayName = getDisplayName(tooltipField);
+                const tooltipDisplayValue = tooltipField.display!(props.row[displayName]); // this is yet another call to field.display() for the tooltip field
+                let { textColor, bgColor } = getCellColors(theme, tooltipCellOptions, tooltipDisplayValue);
+                tooltipStyle = {
+                  color: textColor,
+                  background: bgColor,
+                };
+              }
+
+              // this placement will be configurable as an option
+              const placement = 'bottom';
+
+              cellContent = (
+                <TooltipByField
+                  key={key}
+                  cellOptions={tooltipCellOptions}
+                  className={clsx(defaultTooltipStyles, tooltipSpecificStyles, tooltipLinkStyles)}
+                  data={data}
+                  disableSanitizeHtml={disableSanitizeHtml}
+                  field={tooltipField}
+                  getActions={getCellActions}
+                  height={_height}
+                  renderer={tooltipFieldRenderer}
+                  rowIdx={rowIdx}
+                  style={tooltipStyle}
+                  width={placement === 'left' || placement === 'right' ? tooltipField.config.custom?.width : width}
+                >
+                  {cellContent}
+                </TooltipByField>
+              );
+            }
+          }
+
+          return cellContent;
         };
 
         result.cellRootRenderers[displayName] = renderCellRoot;

@@ -127,4 +127,6 @@ TableFieldOptions: {
 	hideHeader?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
+  // Selecting or hovering this field will show a tooltip containing the content within the target field
+  tooltipByField?: string
 } @cuetsy(kind="interface")

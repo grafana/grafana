@@ -995,6 +995,10 @@ export interface TableFieldOptions {
   hideHeader?: boolean;
   inspect: boolean;
   minWidth?: number;
+  /**
+   * Selecting or hovering this field will show a tooltip containing the content within the target field
+   */
+  tooltipByField?: string;
   width?: number;
   /**
    * Enables text wrapping for column headers
