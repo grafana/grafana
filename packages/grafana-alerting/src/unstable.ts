@@ -6,6 +6,20 @@
 export * from './grafana/api/v0alpha1/types';
 export { useListContactPoints } from './grafana/contactPoints/hooks/v0alpha1/useContactPoints';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
+export { getContactPointDescription } from './grafana/contactPoints/utils';
+
+// Notification Policies
+export {
+  useMatchAlertInstancesToNotificationPolicies,
+  type RouteMatch,
+  type InstanceMatchResult,
+} from './grafana/notificationPolicies/hooks/useMatchPolicies';
+export {
+  type TreeMatch,
+  type RouteMatchResult,
+  matchAlertInstancesToPolicyTree,
+} from './grafana/notificationPolicies/utils';
+export * from './grafana/notificationPolicies/types';
 
 // Low-level API hooks
 export { alertingAPI } from './grafana/api/v0alpha1/api.gen';
