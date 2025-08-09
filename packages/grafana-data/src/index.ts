@@ -439,6 +439,13 @@ export {
   type DataSourcePluginContextType,
   PluginContext,
 } from './context/plugins/PluginContext';
+export {
+  type RestrictedGrafanaApisContextType,
+  type RestrictedGrafanaApisAllowList,
+  RestrictedGrafanaApisContext,
+  RestrictedGrafanaApisContextProvider,
+  useRestrictedGrafanaApis,
+} from './context/plugins/RestrictedGrafanaApis';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
