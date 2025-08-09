@@ -24,10 +24,17 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
+				StateTimelineLegendReducers: "duration" | "percentage" | "count" @cuetsy(kind="enum")				
+				
+				StateTimelineLegendOptions: {
+					ui.VizLegendOptions
+					reducers: [...StateTimelineLegendReducers]
+				} @cuetsy(kind="interface")
+				
 				Options: {
-					ui.OptionsWithLegend
 					ui.OptionsWithTooltip
 					ui.OptionsWithTimezones
+					legend: StateTimelineLegendOptions
 
 					//Show timeline values on chart
 					showValue: ui.VisibilityMode & (*"auto" | _)
