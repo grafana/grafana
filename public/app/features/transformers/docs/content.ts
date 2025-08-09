@@ -515,6 +515,7 @@ Use this transformation to customize the output of a string field. This transfor
 - **Kebab case** - Formats all characters in the string in lowercase and uses dashes instead of spaces between words.
 - **Trim** - Removes all leading and trailing spaces from the string.
 - **Substring** - Returns a substring of the string, using the specified start and end positions.
+- **Regex Replace** - Modifies the string to the specified format by regular expression replacement.
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.`;
     },
