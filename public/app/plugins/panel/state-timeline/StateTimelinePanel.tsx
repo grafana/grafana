@@ -24,7 +24,7 @@ import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
 import { Options } from './panelcfg.gen';
-import { containerStyles, usePagination } from './utils';
+import { containerStyles, usePagination, filterFramesBySelectedStates } from './utils';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
@@ -50,10 +50,19 @@ export const StateTimelinePanel = ({
   const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
-  const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
-    [data.series, options.mergeValues, timeRange, theme]
-  );
+  const { frames, warn } = useMemo(() => {
+    const timelineResult = prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme);
+
+    // Apply state filtering if states are selected
+    if (timelineResult.frames && options.selectedStates?.length) {
+      return {
+        ...timelineResult,
+        frames: filterFramesBySelectedStates(timelineResult.frames, options.selectedStates),
+      };
+    }
+
+    return timelineResult;
+  }, [data.series, options.mergeValues, options.selectedStates, timeRange, theme]);
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
     frames,
