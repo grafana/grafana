@@ -8,6 +8,8 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/services/jwttoken"
+
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -466,6 +468,8 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	jwttoken.ProvideService,
+	wire.Bind(new(jwttoken.JWTTokenService), new(*jwttoken.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
 )
 
@@ -482,6 +486,8 @@ var wireCLISet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	jwttoken.ProvideService,
+	wire.Bind(new(jwttoken.JWTTokenService), new(*jwttoken.Service)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -499,6 +505,8 @@ var wireTestSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
+	jwttoken.ProvideService,
+	wire.Bind(new(jwttoken.JWTTokenService), new(*jwttoken.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
 )
 
