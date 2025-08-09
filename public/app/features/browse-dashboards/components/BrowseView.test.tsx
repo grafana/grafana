@@ -1,42 +1,19 @@
-import { getByLabelText, render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getByLabelText, render, screen, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { BrowseView } from './BrowseView';
 
 const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
   getFolderFixtures();
-
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
-
-jest.mock('app/features/browse-dashboards/api/services', () => {
-  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
-
-  return {
-    ...orig,
-    listFolders(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-
-    listDashboards(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-  };
-});
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('browse-dashboards BrowseView', () => {
   const WIDTH = 800;
@@ -47,6 +24,9 @@ describe('browse-dashboards BrowseView', () => {
     canDeleteFolders: true,
     canDeleteDashboards: true,
   };
+  beforeEach(() => {
+    jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => true);
+  });
 
   afterEach(() => {
     // Reset permissions back to defaults
@@ -63,7 +43,7 @@ describe('browse-dashboards BrowseView', () => {
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
-    expect(screen.queryByText(folderA_folderA.item.title)).toBeInTheDocument();
+    expect(screen.getByText(folderA_folderA.item.title)).toBeInTheDocument();
 
     await collapseFolder(folderA.item);
     expect(screen.queryByText(folderA_folderA.item.title)).not.toBeInTheDocument();
