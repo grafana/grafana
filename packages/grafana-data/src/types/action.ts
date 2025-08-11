@@ -4,6 +4,7 @@ import { SelectableValue } from './select';
 
 export enum ActionType {
   Fetch = 'fetch',
+  Proxy = 'proxy',
 }
 
 type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
@@ -13,9 +14,8 @@ export interface Action {
   title: string;
 
   // Options for the selected type
-  // Currently this is required because there is only one valid type (fetch)
-  // once multiple types are valid, usage of this will need to be optional
-  [ActionType.Fetch]: FetchOptions;
+  [ActionType.Fetch]?: FetchOptions;
+  [ActionType.Proxy]?: ProxyOptions;
   confirmation?: string;
   oneClick?: boolean;
   variables?: ActionVariable[];
@@ -50,6 +50,11 @@ interface FetchOptions {
   body?: string;
   queryParams?: Array<[string, string]>;
   headers?: Array<[string, string]>;
+}
+
+export interface ProxyOptions extends FetchOptions {
+  type: 'yesoreyeram-infinity-datasource'; // Infinity?
+  datasourceUid: string;
 }
 
 export enum HttpRequestMethod {
