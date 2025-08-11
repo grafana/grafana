@@ -1,10 +1,9 @@
-import { CSSProperties, ReactElement, SyntheticEvent, useMemo, useState } from 'react';
+import { CSSProperties, ReactElement, SyntheticEvent, useMemo, useState, useRef } from 'react';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellTooltipPlacement } from '@grafana/schema';
 
-import { getPortalContainer } from '../../../Portal/Portal';
 import { Popover } from '../../../Tooltip/Popover';
 import { PopoverController } from '../../../Tooltip/PopoverController';
 import { TableCellOptions } from '../../types';
@@ -54,6 +53,7 @@ export function TableCellTooltip({
 }: Props) {
   const rawValue = field.values[rowIdx];
   const height = _height ?? TABLE.MAX_CELL_HEIGHT;
+  const tooltipContentRef = useRef<HTMLDivElement>(null);
 
   const [pinned, setPinned] = useState(false);
 
@@ -81,7 +81,9 @@ export function TableCellTooltip({
   }
 
   const body = (
-    <div data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper}>{renderer(rendererProps)}</div>
+    <div ref={tooltipContentRef} data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper}>
+      {renderer(rendererProps)}
+    </div>
   );
 
   return (
@@ -111,7 +113,7 @@ export function TableCellTooltip({
 
           const listener = (event: MouseEvent) => {
             const clickTarget = event.target as Node;
-            if (!origTarget.contains(clickTarget) && !(root ?? getPortalContainer()).contains(clickTarget)) {
+            if (!origTarget.contains(clickTarget) && !tooltipContentRef.current?.contains(clickTarget)) {
               unpinPopper();
               window.removeEventListener('click', listener);
             }

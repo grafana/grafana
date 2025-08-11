@@ -353,7 +353,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // TODO -- saving for another day.
   });
 
-  test('tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
+  test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -388,6 +388,41 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).toBeVisible();
 
     await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // when a pinned tooltip is open, clicking outside of it should close it.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // when a pinned tooltip is open, clicking inside of it should NOT close it.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    const tooltip = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper
+    );
+    await tooltip.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).click();
 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
