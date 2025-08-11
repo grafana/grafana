@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 
@@ -86,8 +85,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
     }
   }, [error, errorMap, inProgress, selectedPlugins]);
 
-  const { t } = useTranslate();
-
   const onConfirm = async () => {
     if (!inProgress) {
       reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME, {
@@ -162,13 +159,13 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       onConfirm={installsRemaining > 0 ? onConfirm : onDismissClick}
       onDismiss={onDismissClick}
       disabled={shouldDisableConfirm(inProgress, installsRemaining, pluginsSelected)}
-      confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected, t)}
+      confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected)}
       confirmButtonVariant="primary"
     />
   );
 };
 
-function getConfirmationText(installsRemaining: number, inProgress: boolean, pluginsSelected: number, t: TFunction) {
+function getConfirmationText(installsRemaining: number, inProgress: boolean, pluginsSelected: number) {
   if (inProgress) {
     return t('plugins.catalog.update-all.modal-in-progress', 'Updating...');
   }

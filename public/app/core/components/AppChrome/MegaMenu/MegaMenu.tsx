@@ -5,16 +5,13 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
-import { useDispatch, useSelector } from 'app/types';
-
-import { InviteUserButton } from '../../InviteUserButton/InviteUserButton';
-import { shouldRenderInviteUserButton } from '../../InviteUserButton/utils';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
@@ -37,7 +34,7 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
-    const { t } = useTranslate();
+
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
@@ -128,11 +125,6 @@ export const MegaMenu = memo(
               ))}
             </ul>
           </ScrollContainer>
-          {shouldRenderInviteUserButton && (
-            <div className={styles.inviteNewMemberButton}>
-              <InviteUserButton />
-            </div>
-          )}
         </nav>
       </div>
     );
@@ -169,11 +161,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
-    }),
-    inviteNewMemberButton: css({
-      display: 'flex',
-      padding: theme.spacing(1.5, 1, 1.5, 1),
-      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     dockMenuButton: css({
       display: 'none',

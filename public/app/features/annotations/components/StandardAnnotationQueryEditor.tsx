@@ -11,8 +11,7 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -101,11 +100,27 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   };
 
   onQueryChange = (target: DataQuery) => {
+    // if dealing with v2 dashboards
+    if (this.props.annotation.query && this.props.annotation.query.spec) {
+      target = {
+        ...this.props.annotation.query.spec,
+        ...target,
+      };
+    }
+    //target property is what ds query editor are using, but for v2 we also need to keep query in sync
     this.props.onChange({
       ...this.props.annotation,
+      // the query editor uses target, but the annotation in v2 uses query
+      // therefore we need to keep the target and query in sync
       target,
-      // Keep options from the original annotation if they exist
-      ...(this.props.annotation.options ? { options: this.props.annotation.options } : {}),
+      ...(this.props.annotation.query && {
+        query: {
+          kind: this.props.annotation.query.kind,
+          spec: { ...target },
+        },
+      }),
+      // Keep legacyOptions from the original annotation if they exist
+      ...(this.props.annotation.legacyOptions ? { legacyOptions: this.props.annotation.legacyOptions } : {}),
     });
   };
 
@@ -209,11 +224,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   onAnnotationChange = (annotation: AnnotationQuery) => {
-    // Also preserve any options field that might exist when migrating from V2 to V1
+    // Also preserve any legacyOptions field that might exist when migrating from V2 to V1
     this.props.onChange({
       ...annotation,
-      // Keep options from the original annotation if they exist
-      ...(this.props.annotation.options ? { options: this.props.annotation.options } : {}),
+      // Keep legacyOptions from the original annotation if they exist
+      ...(this.props.annotation.legacyOptions ? { legacyOptions: this.props.annotation.legacyOptions } : {}),
     });
   };
 
@@ -251,10 +266,9 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     // Create annotation object that respects annotations API
     let editorAnnotation = annotation;
 
-    // For v2 dashboards: propagate options to root level for datasource compatibility
-    if (annotation.query && annotation.options) {
-      editorAnnotation = { ...annotation };
-      Object.assign(editorAnnotation, annotation.options);
+    // For v2 dashboards: propagate legacyOptions to root level for datasource compatibility
+    if (annotation.query && annotation.legacyOptions) {
+      editorAnnotation = { ...annotation.legacyOptions, ...annotation };
     }
 
     return (

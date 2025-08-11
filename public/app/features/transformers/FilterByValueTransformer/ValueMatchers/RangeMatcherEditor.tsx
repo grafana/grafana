@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { ValueMatcherID, RangeValueMatcherOptions } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { InlineLabel } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
@@ -42,8 +42,6 @@ export function rangeMatcherEditor<T = string | number>(
       },
       [options, onChange, isInvalid, setInvalid, validator]
     );
-
-    const { t } = useTranslate();
 
     const suggestions = getVariableSuggestions();
 

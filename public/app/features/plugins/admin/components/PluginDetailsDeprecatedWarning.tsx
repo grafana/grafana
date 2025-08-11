@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as React from 'react';
 
 import { renderMarkdown } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
 
 import { CatalogPlugin } from '../types';
@@ -15,7 +15,7 @@ type Props = {
 export function PluginDetailsDeprecatedWarning(props: Props): React.ReactElement | null {
   const { className, plugin } = props;
   const [dismissed, setDismissed] = useState(false);
-  const { t } = useTranslate();
+
   const isWarningVisible = plugin.isDeprecated && !dismissed;
 
   return isWarningVisible ? (

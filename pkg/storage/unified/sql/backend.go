@@ -10,10 +10,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -278,7 +277,7 @@ func (b *backend) Stop(_ context.Context) error {
 
 // GetResourceStats implements Backend.
 func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
 	defer span.End()
 
 	req := &sqlStatsRequest{
@@ -301,6 +300,8 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 			}
 			if row.Count > int64(minCount) {
 				res = append(res, row)
+			} else {
+				b.log.Debug("skipping stats for resource with count less than min count", "namespace", row.Namespace, "group", row.Group, "resource", row.Resource, "count", row.Count, "minCount", minCount)
 			}
 		}
 		return err
@@ -329,7 +330,6 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
 	defer span.End()
 
-	guid := uuid.New().String()
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -341,12 +341,12 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 		}); err != nil {
-			if isRowAlreadyExistsError(err) {
-				return guid, resource.ErrResourceAlreadyExists
+			if IsRowAlreadyExistsError(err) {
+				return event.GUID, resource.ErrResourceAlreadyExists
 			}
-			return guid, fmt.Errorf("insert into resource: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource: %w", err)
 		}
 
 		// 2. Insert into resource history
@@ -355,9 +355,9 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			Generation:  event.Object.GetGeneration(),
-			GUID:        guid,
+			GUID:        event.GUID,
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
 		_ = b.historyPruner.Add(pruningKey{
 			namespace: event.Key.Namespace,
@@ -368,7 +368,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		if b.simulatedNetworkLatency > 0 {
 			time.Sleep(b.simulatedNetworkLatency)
 		}
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
@@ -387,11 +387,10 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	return rv, nil
 }
 
-// isRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
-func isRowAlreadyExistsError(err error) bool {
-	var sqlite sqlite3.Error
-	if errors.As(err, &sqlite) {
-		return sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
+// IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
+func IsRowAlreadyExistsError(err error) bool {
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
 	}
 
 	var pg *pgconn.PgError
@@ -418,7 +417,7 @@ func isRowAlreadyExistsError(err error) bool {
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Update")
 	defer span.End()
-	guid := uuid.New().String()
+
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -431,10 +430,10 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 		})
 		if err != nil {
-			return guid, fmt.Errorf("resource update: %w", err)
+			return event.GUID, fmt.Errorf("resource update: %w", err)
 		}
 
 		// 2. Insert into resource history
@@ -442,10 +441,10 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 			Generation:  event.Object.GetGeneration(),
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
 		_ = b.historyPruner.Add(pruningKey{
 			namespace: event.Key.Namespace,
@@ -453,7 +452,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			resource:  event.Key.Resource,
 			name:      event.Key.Name,
 		})
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
@@ -475,7 +474,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Delete")
 	defer span.End()
-	guid := uuid.New().String()
+
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -485,10 +484,10 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
-			GUID:        guid,
+			GUID:        event.GUID,
 		})
 		if err != nil {
-			return guid, fmt.Errorf("delete resource: %w", err)
+			return event.GUID, fmt.Errorf("delete resource: %w", err)
 		}
 
 		// 2. Add event to resource history
@@ -496,10 +495,10 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 			Generation:  0, // object does not exist
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
 		_ = b.historyPruner.Add(pruningKey{
 			namespace: event.Key.Namespace,
@@ -507,7 +506,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			resource:  event.Key.Resource,
 			name:      event.Key.Name,
 		})
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
@@ -571,10 +570,6 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 		return 0, fmt.Errorf("missing group or resource")
 	}
 
-	if req.Source != resourcepb.ListRequest_STORE {
-		return b.getHistory(ctx, req, cb)
-	}
-
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
 
 	// TODO: add support for RemainingItemCount
@@ -585,72 +580,12 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 	return b.listLatest(ctx, req, cb)
 }
 
-type listIter struct {
-	rows    db.Rows
-	offset  int64
-	listRV  int64
-	sortAsc bool
+func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"ListHistory")
+	defer span.End()
 
-	// any error
-	err error
-
-	// The row
-	guid      string
-	rv        int64
-	value     []byte
-	namespace string
-	resource  string
-	group     string
-	name      string
-	folder    string
+	return b.getHistory(ctx, req, cb)
 }
-
-// ContinueToken implements resource.ListIterator.
-func (l *listIter) ContinueToken() string {
-	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
-}
-
-func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
-}
-
-func (l *listIter) Error() error {
-	return l.err
-}
-
-func (l *listIter) Name() string {
-	return l.name
-}
-
-func (l *listIter) Namespace() string {
-	return l.namespace
-}
-
-func (l *listIter) Folder() string {
-	return l.folder
-}
-
-// ResourceVersion implements resource.ListIterator.
-func (l *listIter) ResourceVersion() int64 {
-	return l.rv
-}
-
-// Value implements resource.ListIterator.
-func (l *listIter) Value() []byte {
-	return l.value
-}
-
-// Next implements resource.ListIterator.
-func (l *listIter) Next() bool {
-	if l.rows.Next() {
-		l.offset++
-		l.err = l.rows.Scan(&l.guid, &l.rv, &l.namespace, &l.resource, &l.group, &l.name, &l.folder, &l.value)
-		return true
-	}
-	return false
-}
-
-var _ resource.ListIterator = (*listIter)(nil)
 
 // listLatest fetches the resources from the resource table.
 func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
@@ -664,7 +599,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{sortAsc: false}
+	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -702,11 +637,11 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	defer span.End()
 
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
+	iter := &listIter{listRV: req.ResourceVersion}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		iter.listRV = continueToken.ResourceVersion
 		iter.offset = continueToken.StartOffset
@@ -802,11 +737,13 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	// for Unset (default) and Exact matching.
 	listReq.SortAscending = req.GetVersionMatchV2() == resourcepb.ResourceVersionMatchV2_NotOlderThan
 
-	iter := &listIter{}
+	iter := &listIter{
+		useCurrentRV: true, // use the current RV for the continue token instead of the listRV
+	}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
 		listReq.SortAscending = continueToken.SortAscending
@@ -844,7 +781,14 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 			listReq.MinRV = latestDeletedRV + 1
 		}
 
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		var rows db.Rows
+		if listReq.Trash {
+			// unlike history, trash will not return an object if an object of the same name is live
+			// (i.e. in the resource table)
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceTrash, listReq)
+		} else {
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		}
 		if rows != nil {
 			defer func() {
 				if err := rows.Close(); err != nil {

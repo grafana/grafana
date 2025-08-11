@@ -1,18 +1,14 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
-import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
-import { ContactPointWithMetadata } from '../../../contact-points/utils';
 import { NeedHelpInfo } from '../../NeedHelpInfo';
 
-import { ContactPointDetails } from './contactPoint/ContactPointDetails';
 import { ContactPointSelector } from './contactPoint/ContactPointSelector';
 import { ActiveTimingFields } from './route-settings/ActiveTimingFields';
 import { MuteTimingFields } from './route-settings/MuteTimingFields';
@@ -27,29 +23,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
 
   const alertManagerName = alertManager.name;
 
-  const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
-    ContactPointWithMetadata | undefined
-  >();
   const { watch } = useFormContext<RuleFormValues>();
-
-  const contactPointInForm = watch(`contactPoints.${alertManagerName}.selectedContactPoint`);
-  const { contactPoints } = useContactPointsWithStatus({
-    // we only fetch the contact points with metadata for the first time we render an existing alert rule
-    alertmanager: alertManagerName,
-    skip: Boolean(selectedContactPointWithMetadata),
-  });
-  const contactPointWithMetadata = contactPoints.find((cp) => cp.name === contactPointInForm);
-
-  useEffect(() => {
-    if (contactPointWithMetadata && !selectedContactPointWithMetadata) {
-      onSelectContactPoint(contactPointWithMetadata);
-    }
-  }, [contactPointWithMetadata, selectedContactPointWithMetadata]);
-  const { t } = useTranslate();
-
-  const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
-    setSelectedContactPointWithMetadata(contactPoint);
-  };
 
   const hasRouteSettings =
     watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
@@ -68,11 +42,12 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
         <div className={styles.secondAlertManagerLine} />
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">
-        <ContactPointSelector alertManager={alertManagerName} onSelectContactPoint={onSelectContactPoint} />
+        <ContactPointSelector alertManager={alertManagerName} />
       </Stack>
-      {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
-        <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
-      )}
+      {/* @TODO
+        we can show the contact point details here when it's selected but we currently don't have a
+        way to summarize the details from the ContactPoint type in @grafana/alerting
+      */}
       <div className={styles.routingSection}>
         <CollapsableSection
           label={t(

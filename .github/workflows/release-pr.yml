@@ -17,9 +17,9 @@ on:
         type: string
         description: The version of Grafana that is being released (without the `v` prefix)`
       target:
-        required: true
+        required: false
         type: string
-        description: The release branch pattern (eg v9.5.x) that these changes are being merged into
+        description: 'Unused: left here for backwards compatibility'
       changelog:
         required: false
         type: boolean
@@ -36,25 +36,58 @@ on:
         required: false
         default: false
         type: boolean
+      release_date:
+        required: false
+        type: string
+        description: "Release date in format YYYY-MM-DD"
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
+  capture-date:
+    runs-on: ubuntu-latest
+    outputs:
+      release_date: ${{ steps.set_release_date.outputs.release_date }}
+    steps:
+      - name: compute_release_date
+        run: |
+          if [ -n "$DATE" ]; then
+            echo "release_date=$DATE" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "Fetching workflow run creation date..."
+          created_at=$(gh run view "$GITHUB_RUN_ID" --repo "$GH_REPO" --json createdAt -q .createdAt)
+          formatted_date=$(date -d "$created_at" +%Y-%m-%d)
+          echo "release_date=$formatted_date" >> "$GITHUB_ENV"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          DATE: ${{ inputs.release_date }}
+
+      - id: set_release_date
+        run: echo "release_date=$release_date" >> "$GITHUB_OUTPUT"
+
   push-changelog-to-main:
+    needs: capture-date
     permissions:
       contents: write
       id-token: write
       pull-requests: write
+
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
+    concurrency:
+      group: grafana-release-pr-update-changelog-main
+      cancel-in-progress: false
     with:
       previous_version: ${{inputs.previous_version}}
       version: ${{ inputs.version }}
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}
       target: main
+      work_branch: changelog/update-changelog-${{ needs.capture-date.outputs.release_date }}
 
   create-prs:
     permissions:
@@ -73,19 +106,28 @@ jobs:
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
           repo_secrets: |
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_changelog_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: "[\"grafana\", \"grafana-enterprise\"]"
+          permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.generate_changelog_token.outputs.token }}
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.generate_changelog_token.outputs.token }}
           ref: main
           fetch-depth: '0'
           path: .grafana-main
@@ -94,21 +136,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+      - uses: actions/setup-go@v5.5.0
+        with:
+          go-version-file: go.mod
       - name: Configure git user
         run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "grafana-delivery-bot[bot]"
+          git config --local user.email "grafana-delivery-bot[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
 
       - name: Create branch
         run: git checkout -b "release/${{ github.run_number }}/$VERSION"
-      - name: Generate changelog token
-        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
-        id: generate_changelog_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Generate changelog
         id: changelog
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
@@ -156,29 +194,31 @@ jobs:
       - name: Commit CHANGELOG.md changes
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
-
-      - name: Update package.json versions
+      - name: Bump versions
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
-        uses: ./.grafana-main/pkg/build/actions/bump-version
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
-          version: 'patch'
+          verb: run
+          args: go run -C .grafana-main ./pkg/build/actions/bump-version -version="patch"
 
+      - name: make gen-cue
+        shell: bash
+        run: make gen-cue
       - name: Add package.json changes
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
         run: |
           git add package.json lerna.json yarn.lock packages public
-          test -e e2e/test-plugins && git add e2e/test-plugins
+          test -e e2e-playwright/test-plugins && git add e2e-playwright/test-plugins
           git commit -m "Update version to $VERSION"
 
       - name: Git push
-        if: inputs.dry_run != true
         run: git push
       - name: Create PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: ${{ steps.branch.outputs.branch }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          LATEST_FLAG=""
+          LATEST_FLAG=()
           if [ "$LATEST" = "true" ]; then
             LATEST_FLAG=(-l "release/latest")
           fi
@@ -186,6 +226,6 @@ jobs:
             "${LATEST_FLAG[@]}" \
             -l "no-changelog" \
             --dry-run="$DRY_RUN" \
-            -B "$BRANCH" \
+            -B "${RELEASE_BRANCH}" \
             --title "Release: $VERSION" \
             --body "These code changes must be merged after a release is complete"

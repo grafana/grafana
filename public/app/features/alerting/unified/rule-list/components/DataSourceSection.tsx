@@ -3,16 +3,14 @@ import { PropsWithChildren, ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { IconButton, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, IconButton, LinkButton, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
-import { supportedImportTypes } from '../../components/import-to-gma/ImportFromDSRules';
-import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
-import { isAdmin } from '../../utils/misc';
+import { isAdmin, stringifyErrorLike } from '../../utils/misc';
 
 import { DataSourceIcon } from './Namespace';
 import { LoadingIndicator } from './RuleGroup';
@@ -24,6 +22,7 @@ export interface DataSourceSectionProps extends PropsWithChildren {
   application?: RulesSourceApplication;
   isLoading?: boolean;
   description?: ReactNode;
+  error?: unknown;
 }
 
 export const DataSourceSection = ({
@@ -32,18 +31,13 @@ export const DataSourceSection = ({
   application,
   children,
   loader,
+  error,
   isLoading = false,
   description = null,
 }: DataSourceSectionProps) => {
-  const styles = useStyles2(getStyles);
-  const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
-
-  const showImportLink =
-    uid !== GrafanaRulesSourceSymbol &&
-    rulesSourcesWithRuler.some(({ uid: dsUid, type }) => dsUid === uid && supportedImportTypes.includes(type));
-
   const [isCollapsed, toggleCollapsed] = useToggle(false);
-  const { t } = useTranslate();
+  const styles = useStyles2((theme) => getStyles(theme, isCollapsed));
+
   const configureLink = (() => {
     if (uid === GrafanaRulesSourceSymbol) {
       const userIsAdmin = isAdmin();
@@ -54,9 +48,10 @@ export const DataSourceSection = ({
     }
     return `/connections/datasources/edit/${String(uid)}`;
   })();
+
   return (
     <section aria-labelledby={`datasource-${String(uid)}-heading`} role="listitem">
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
         <Stack direction="column" gap={0}>
           {isLoading && <LoadingIndicator datasourceUid={String(uid)} />}
           <div className={styles.dataSourceSectionTitle}>
@@ -66,6 +61,7 @@ export const DataSourceSection = ({
                   name={isCollapsed ? 'angle-right' : 'angle-down'}
                   onClick={toggleCollapsed}
                   aria-label={t('common.collapse', 'Collapse')}
+                  disabled={Boolean(error)}
                 />
                 {application && <DataSourceIcon application={application} />}
 
@@ -73,27 +69,29 @@ export const DataSourceSection = ({
                   {name}
                 </Text>
                 {description && (
-                  <>
-                    {'·'}
-                    {description}
-                  </>
+                  <Text color="secondary">
+                    {'·'} {description}
+                  </Text>
                 )}
+
                 <Spacer />
-                {showImportLink && (
-                  <LinkButton
-                    variant="secondary"
-                    size="sm"
-                    href={`/alerting/import-datasource-managed-rules?datasourceUid=${String(uid)}`}
-                    icon="arrow-up"
+
+                {Boolean(error) && (
+                  <Toggletip
+                    title={t('alerting.rule-list.ds-error.title', 'Cannot load rules for this datasource')}
+                    content={<Text color="error">{stringifyErrorLike(error)}</Text>}
                   >
-                    <Trans i18nKey="alerting.data-source-section.import-to-grafana">Import to Grafana rules</Trans>
-                  </LinkButton>
+                    <Button variant="destructive" fill="text" size="sm" icon="exclamation-circle">
+                      <Trans i18nKey="alerting.rule-list.error-button">Error</Trans>
+                    </Button>
+                  </Toggletip>
                 )}
+
                 {configureLink && (
                   <WithReturnButton
                     title={t('alerting.rule-list.return-button.title', 'Alert rules')}
                     component={
-                      <LinkButton variant="secondary" size="sm" href={configureLink}>
+                      <LinkButton variant="secondary" fill="text" size="sm" href={configureLink}>
                         <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>
                       </LinkButton>
                     }
@@ -109,25 +107,12 @@ export const DataSourceSection = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, isCollapsed = false) => ({
   itemsWrapper: css({
     position: 'relative',
-    marginLeft: theme.spacing(1.5),
-
-    '&:before': {
-      content: "''",
-      position: 'absolute',
-      height: '100%',
-
-      marginLeft: `-${theme.spacing(1.5)}`,
-      borderLeft: `solid 1px ${theme.colors.border.weak}`,
-    },
   }),
   dataSourceSectionTitle: css({
     background: theme.colors.background.secondary,
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
-
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(1, 1.5),
   }),
 });

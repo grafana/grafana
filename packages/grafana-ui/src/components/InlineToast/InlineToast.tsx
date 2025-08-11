@@ -5,8 +5,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
-import { IconName } from '../../types';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { Portal } from '../Portal/Portal';
 

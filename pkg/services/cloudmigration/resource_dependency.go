@@ -24,7 +24,7 @@ var ResourceDependency = DependencyMap{
 	MuteTimingType:           nil,
 	NotificationTemplateType: nil,
 	ContactPointType:         {NotificationTemplateType},
-	NotificationPolicyType:   {ContactPointType},
+	NotificationPolicyType:   {ContactPointType, MuteTimingType},
 	AlertRuleType:            {DatasourceDataType, FolderDataType, DashboardDataType, MuteTimingType, ContactPointType, NotificationPolicyType},
 	AlertRuleGroupType:       {AlertRuleType},
 }

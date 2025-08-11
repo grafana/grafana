@@ -155,20 +155,29 @@ export function useRuleGroupConsistencyCheck() {
   const { isGroupInSync } = useRuleGroupIsInSync();
   const [groupConsistent, setGroupConsistent] = useState<boolean | undefined>();
 
-  const consistencyInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
+  const apiCheckInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
+  const timeoutInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
 
   useEffect(() => {
     return () => {
-      clearConsistencyInterval();
+      clearTimeoutInterval();
+      clearApiCheckInterval();
     };
   }, []);
 
-  const clearConsistencyInterval = () => {
-    if (consistencyInterval.current) {
-      clearTimeout(consistencyInterval.current);
-      consistencyInterval.current = undefined;
+  function clearTimeoutInterval() {
+    if (timeoutInterval.current) {
+      clearTimeout(timeoutInterval.current);
+      timeoutInterval.current = undefined;
     }
-  };
+  }
+
+  function clearApiCheckInterval() {
+    if (apiCheckInterval.current) {
+      clearTimeout(apiCheckInterval.current);
+      apiCheckInterval.current = undefined;
+    }
+  }
 
   /**
    * Waits for the rule group to be consistent between Prometheus and the Ruler.
@@ -177,11 +186,12 @@ export function useRuleGroupConsistencyCheck() {
    */
   async function waitForGroupConsistency(groupIdentifier: RuleGroupIdentifierV2) {
     // We can wait only for one rule group at a time
-    clearConsistencyInterval();
+    clearTimeoutInterval();
+    clearApiCheckInterval();
 
     const timeoutPromise = new Promise<void>((_, reject) => {
-      setTimeout(() => {
-        clearConsistencyInterval();
+      timeoutInterval.current = setTimeout(() => {
+        clearApiCheckInterval();
         const error = new Error('Timeout while waiting for rule group consistency');
         logError(error, { groupOrigin: groupIdentifier.groupOrigin });
         reject(error);
@@ -209,15 +219,16 @@ export function useRuleGroupConsistencyCheck() {
             setGroupConsistent(inSync);
             if (inSync) {
               logWaitingTime();
-              clearConsistencyInterval();
               resolve();
             } else {
-              consistencyInterval.current = setTimeout(checkGroupConsistency, CONSISTENCY_CHECK_POOL_INTERVAL);
+              apiCheckInterval.current = setTimeout(checkGroupConsistency, CONSISTENCY_CHECK_POOL_INTERVAL);
             }
           })
           .catch((error) => {
-            clearConsistencyInterval();
             reject(error);
+          })
+          .finally(() => {
+            clearTimeoutInterval();
           });
       }
 

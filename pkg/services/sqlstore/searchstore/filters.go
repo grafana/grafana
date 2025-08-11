@@ -43,11 +43,16 @@ func (f OrgFilter) Where() (string, []any) {
 }
 
 type TitleFilter struct {
-	Dialect migrator.Dialect
-	Title   string
+	Dialect         migrator.Dialect
+	Title           string
+	TitleExactMatch bool
 }
 
 func (f TitleFilter) Where() (string, []any) {
+	if f.TitleExactMatch {
+		return "dashboard.title = ?", []any{f.Title}
+	}
+
 	sql, params := f.Dialect.LikeOperator("dashboard.title", true, f.Title, true)
 	return sql, []any{params}
 }
@@ -61,10 +66,9 @@ func (f FolderFilter) Where() (string, []any) {
 }
 
 type FolderUIDFilter struct {
-	Dialect              migrator.Dialect
-	OrgID                int64
-	UIDs                 []string
-	NestedFoldersEnabled bool
+	Dialect migrator.Dialect
+	OrgID   int64
+	UIDs    []string
 }
 
 func (f FolderUIDFilter) Where() (string, []any) {
@@ -87,35 +91,19 @@ func (f FolderUIDFilter) Where() (string, []any) {
 	case len(params) < 1:
 		// do nothing
 	case len(params) == 1:
-		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid = ?)"
-		if f.NestedFoldersEnabled {
-			q = "dashboard.org_id = ? AND dashboard.folder_uid = ?"
-		}
+		q = "dashboard.org_id = ? AND dashboard.folder_uid = ?"
 		params = append([]any{f.OrgID}, params...)
 	default:
 		sqlArray := "(?" + strings.Repeat(",?", len(params)-1) + ")"
-		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN " + sqlArray + ")"
-		if f.NestedFoldersEnabled {
-			q = "dashboard.org_id = ? AND dashboard.folder_uid IN " + sqlArray
-		}
+		q = "dashboard.org_id = ? AND dashboard.folder_uid IN " + sqlArray
 		params = append([]any{f.OrgID}, params...)
 	}
 
 	if includeGeneral {
 		if q == "" {
-			if f.NestedFoldersEnabled {
-				q = "dashboard.folder_uid IS NULL "
-			} else {
-				q = "dashboard.folder_id = ? "
-				params = append(params, 0)
-			}
+			q = "dashboard.folder_uid IS NULL "
 		} else {
-			if f.NestedFoldersEnabled {
-				q = "(" + q + " OR dashboard.folder_uid IS NULL)"
-			} else {
-				q = "(" + q + " OR dashboard.folder_id = ?)"
-				params = append(params, 0)
-			}
+			q = "(" + q + " OR dashboard.folder_uid IS NULL)"
 		}
 	}
 

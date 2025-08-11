@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, Stack, useStyles2, InputActionMeta } from '@grafana/ui';
@@ -30,6 +30,8 @@ interface Props {
   isMulti?: boolean;
   allowCustomValue?: boolean;
   addVariablesToOptions?: boolean;
+  range?: TimeRange;
+  timeRangeForTags?: number;
 }
 const SearchField = ({
   filter,
@@ -45,6 +47,8 @@ const SearchField = ({
   addVariablesToOptions,
   isMulti = true,
   allowCustomValue = true,
+  range,
+  timeRangeForTags,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
@@ -57,7 +61,14 @@ const SearchField = ({
 
   const updateOptions = async () => {
     try {
-      const result = filter.tag ? await datasource.languageProvider.getOptionsV2(scopedTag, query) : [];
+      const result = filter.tag
+        ? await datasource.languageProvider.getOptionsV2({
+            tag: scopedTag,
+            query,
+            timeRangeForTags,
+            range,
+          })
+        : [];
       setAlertText(undefined);
       setError(null);
       return result;
@@ -77,6 +88,8 @@ const SearchField = ({
     datasource.languageProvider,
     setError,
     query,
+    range,
+    timeRangeForTags,
   ]);
 
   // Add selected option if it doesn't exist in the current list of options
@@ -127,12 +140,27 @@ const SearchField = ({
       return;
     }
 
+    let currentOptions = options;
+
+    // Add custom value if it exists and isn't already in options
+    if (filter.isCustomValue && filter.value) {
+      const customValue = Array.isArray(filter.value) ? filter.value : [filter.value];
+
+      const newCustomOptions = customValue
+        .filter((val) => !options.some((opt) => opt.value === val))
+        .map((val) => ({ label: val, value: val, type: filter.valueType }));
+
+      if (newCustomOptions.length > 0) {
+        currentOptions = [...options, ...newCustomOptions];
+      }
+    }
+
     if (tagValuesQuery.length === 0) {
-      return options.slice(0, OPTIONS_LIMIT);
+      return currentOptions.slice(0, OPTIONS_LIMIT);
     }
 
     const queryLowerCase = tagValuesQuery.toLowerCase();
-    return options
+    return currentOptions
       .filter((tag) => {
         if (tag.value && tag.value.length > 0) {
           return tag.value.toLowerCase().includes(queryLowerCase);
@@ -140,7 +168,7 @@ const SearchField = ({
         return false;
       })
       .slice(0, OPTIONS_LIMIT);
-  }, [tagValuesQuery, options]);
+  }, [tagValuesQuery, options, filter.isCustomValue, filter.value, filter.valueType]);
 
   return (
     <>
@@ -218,10 +246,24 @@ const SearchField = ({
                   ...filter,
                   value: val.map((v) => v.value),
                   valueType: val[0]?.type || uniqueOptionType,
+                  isCustomValue: false,
                 });
               } else {
-                updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
+                updateFilter({
+                  ...filter,
+                  value: val?.value,
+                  valueType: val?.type || uniqueOptionType,
+                  isCustomValue: false,
+                });
               }
+            }}
+            onCreateOption={(val) => {
+              updateFilter({
+                ...filter,
+                value: Array.isArray(filter.value) ? filter.value?.concat(val) : val,
+                valueType: uniqueOptionType,
+                isCustomValue: true,
+              });
             }}
             placeholder="Select value"
             isClearable={true}

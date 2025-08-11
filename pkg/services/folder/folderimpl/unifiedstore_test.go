@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -96,9 +97,11 @@ func TestComputeFullPath(t *testing.T) {
 
 func TestGetParents(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
+	tracer := noop.NewTracerProvider().Tracer("TestGetParents")
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
+		tracer:      tracer,
 	}
 
 	ctx := context.Background()
@@ -192,9 +195,11 @@ func TestGetParents(t *testing.T) {
 
 func TestGetChildren(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
+	tracer := noop.NewTracerProvider().Tracer("TestGetChildren")
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
+		tracer:      tracer,
 	}
 
 	ctx := context.Background()
@@ -739,9 +744,11 @@ func TestGetFolders(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCLI := new(client.MockK8sHandler)
 			tt.mock(mockCLI)
+			tracer := noop.NewTracerProvider().Tracer("TestGetFolders")
 			ss := &FolderUnifiedStoreImpl{
 				k8sclient:   mockCLI,
 				userService: usertest.NewUserServiceFake(),
+				tracer:      tracer,
 			}
 			got, err := ss.GetFolders(tt.args.ctx, tt.args.q)
 			require.Equal(t, tt.wantErr, err != nil, "GetFolders() error = %v, wantErr %v", err, tt.wantErr)
@@ -1099,9 +1106,11 @@ func TestList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCLI := new(client.MockK8sHandler)
 			tt.mock(mockCLI)
+			tracer := noop.NewTracerProvider().Tracer("TestList")
 			ss := &FolderUnifiedStoreImpl{
 				k8sclient:   mockCLI,
 				userService: usertest.NewUserServiceFake(),
+				tracer:      tracer,
 			}
 			got, err := ss.list(tt.args.ctx, tt.args.orgID, tt.args.opts)
 			if tt.wantErr {

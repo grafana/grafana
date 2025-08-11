@@ -1,6 +1,6 @@
 import { UseFormRegister } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, ControlledCollapse, Field, Text, TextLink } from '@grafana/ui';
 
 import { checkImageRenderer, checkPublicAccess } from '../GettingStarted/features';
@@ -12,7 +12,6 @@ export interface ConfigFormGithubCollapseProps {
 }
 
 export function ConfigFormGithubCollapse({ register }: ConfigFormGithubCollapseProps) {
-  const { t } = useTranslate();
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
 

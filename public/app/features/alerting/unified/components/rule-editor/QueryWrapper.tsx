@@ -16,7 +16,7 @@ import {
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -27,6 +27,7 @@ import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
+import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQueryExtensionPoint';
 
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
@@ -169,6 +170,7 @@ export const QueryWrapper = ({
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
+        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
           query={query}
@@ -237,7 +239,6 @@ export function MaxDataPointsOption({
   options: AlertQueryOptions;
   onChange: (options: AlertQueryOptions) => void;
 }) {
-  const { t } = useTranslate();
   const value = options.maxDataPoints ?? '';
 
   const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
@@ -281,7 +282,6 @@ export function MinIntervalOption({
   options: AlertQueryOptions;
   onChange: (options: AlertQueryOptions) => void;
 }) {
-  const { t } = useTranslate();
   const value = options.minInterval ?? '';
 
   const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {

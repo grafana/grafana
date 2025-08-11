@@ -14,7 +14,7 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
@@ -26,21 +26,18 @@ interface Props {
   defaultValue: any;
   option: NotificationChannelOption;
   getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
-  // this is defined if the option is rendered inside a subform
-  parentOption?: NotificationChannelOption;
   invalid?: boolean;
   pathPrefix: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
   customValidator?: (value: string) => boolean | string | Promise<boolean | string>;
   onResetSecureField?: (propertyName: string) => void;
-  onDeleteSubform?: (propertyName: string) => void;
+  onDeleteSubform?: (settingsPath: string, option: NotificationChannelOption) => void;
   secureFields: NotificationChannelSecureFields;
 }
 
 export const OptionField: FC<Props> = ({
   option,
-  parentOption,
   invalid,
   pathPrefix,
   error,
@@ -94,7 +91,6 @@ export const OptionField: FC<Props> = ({
         invalid={invalid}
         pathPrefix={pathPrefix}
         readOnly={readOnly}
-        parentOption={parentOption}
         customValidator={customValidator}
         onResetSecureField={onResetSecureField}
         secureFields={secureFields}
@@ -113,7 +109,6 @@ const OptionInput: FC<Props & { id: string }> = ({
   customValidator,
   onResetSecureField,
   secureFields = {},
-  parentOption,
   getOptionMeta,
 }) => {
   const styles = useStyles2(getStyles);
@@ -122,9 +117,9 @@ const OptionInput: FC<Props & { id: string }> = ({
   const optionMeta = getOptionMeta?.(option);
 
   const name = `${pathPrefix}${option.propertyName}`;
-  const nestedKey = parentOption ? `${parentOption.propertyName}.${option.propertyName}` : option.propertyName;
 
-  const isEncryptedInput = secureFields?.[nestedKey];
+  const secureFieldKey = option.secure && option.secureFieldKey ? option.secureFieldKey : '';
+  const isEncryptedInput = secureFieldKey && secureFields?.[secureFieldKey];
 
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
   useEffect(
@@ -162,7 +157,7 @@ const OptionInput: FC<Props & { id: string }> = ({
           onSelectTemplate={onSelectTemplate}
         >
           {isEncryptedInput ? (
-            <SecretInput id={id} onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+            <SecretInput id={id} onReset={() => onResetSecureField?.(secureFieldKey)} isConfigured />
           ) : (
             <Input
               id={id}
@@ -237,7 +232,7 @@ const OptionInput: FC<Props & { id: string }> = ({
           onSelectTemplate={onSelectTemplate}
         >
           {isEncryptedInput ? (
-            <SecretTextArea id={id} onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+            <SecretTextArea id={id} onReset={() => onResetSecureField?.(secureFieldKey)} isConfigured />
           ) : (
             <TextArea
               id={id}

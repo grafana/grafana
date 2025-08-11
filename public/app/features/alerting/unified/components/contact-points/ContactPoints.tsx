@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Button,
@@ -17,7 +17,7 @@ import {
 import { contextSrv } from 'app/core/core';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
@@ -68,7 +68,7 @@ const ContactPointsTab = () => {
   );
 
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
-  const { t } = useTranslate();
+
   const search = queryParams.get('search');
 
   if (isLoading) {
@@ -196,8 +196,11 @@ const useTabQueryParam = (defaultTab: ActiveTab) => {
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [, showContactPointsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, canViewContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, canCreateContactPoints] = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
   const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+
+  const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
 
   // Depending on permissions, user may not have access to all tabs,
   // but we can default to picking the first one that they definitely _do_ have access to
@@ -211,7 +214,6 @@ export const ContactPointsPageContents = () => {
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
-  const { t } = useTranslate();
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
@@ -257,7 +259,7 @@ interface ContactPointsListProps {
 const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
-  const { t } = useTranslate();
+
   if (pageItems.length === 0) {
     const emptyMessage = t('alerting.contact-points.no-contact-points-found', 'No contact points found');
     return <EmptyState variant="not-found" message={emptyMessage} />;

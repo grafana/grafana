@@ -4,88 +4,109 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 // decryptAuthorizer is the authorizer implementation for decrypt operations.
 type decryptAuthorizer struct {
-	allowList contracts.DecryptAllowList
+	tracer trace.Tracer
 }
 
-func ProvideDecryptAuthorizer(allowList contracts.DecryptAllowList) contracts.DecryptAuthorizer {
+func ProvideDecryptAuthorizer(tracer trace.Tracer) contracts.DecryptAuthorizer {
 	return &decryptAuthorizer{
-		allowList: allowList,
+		tracer: tracer,
 	}
 }
 
 // authorize checks whether the auth info token has the right permissions to decrypt the secure value.
-func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueDecrypters []string) (string, bool) {
+func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (id string, isAllowed bool) {
+	ctx, span := a.tracer.Start(ctx, "DecryptAuthorizer.Authorize", trace.WithAttributes(
+		attribute.String("name", secureValueName),
+		attribute.StringSlice("decrypters", secureValueDecrypters),
+	))
+	defer span.End()
+
+	defer func() {
+		if id != "" {
+			span.SetAttributes(attribute.String("serviceIdentity", id))
+		}
+		span.SetAttributes(attribute.Bool("allowed", isAllowed))
+	}()
+
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "", false
 	}
 
-	tokenPermissions := authInfo.GetTokenPermissions()
-
-	tokenActors := make(map[string]struct{}, 0)
-	for _, permission := range tokenPermissions {
-		// Will look like `secret.grafana.app/securevalues/<actor>:decrypt` for now.
-		gr, verb, found := strings.Cut(permission, ":")
-		if !found {
-			continue
-		}
-
-		// If it isn't decrypt, then we don't care to check.
-		if verb != "decrypt" {
-			continue
-		}
-
-		parts := strings.Split(gr, "/")
-		if len(parts) != 3 {
-			continue
-		}
-
-		group, resource, actor := parts[0], parts[1], parts[2]
-		if group != secretv0alpha1.GROUP || resource != secretv0alpha1.SecureValuesResourceInfo.GetName() || actor == "" {
-			continue
-		}
-
-		// TEMPORARY: while we can't onboard every app into secrets, we can block them from decrypting
-		// securevalues preemptively here before even reaching out to the database.
-		// This check can be removed once we open the gates for any service to use secrets.
-		if _, exists := a.allowList[actor]; !exists {
-			continue
-		}
-
-		tokenActors[actor] = struct{}{}
-	}
-
-	// If we arrived here and the token actors is empty, it means the permissions either have an invalid format,
-	// or it didn't pass the allow list, meaning no allowed decryptor.
-	if len(tokenActors) == 0 {
+	serviceIdentityList, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
+	if !ok {
 		return "", false
 	}
 
-	// TEMPORARY: while we still need to mix permission and identity, we can use this
-	// to decide whether the SecureValue can be decrypted or not.
-	// Once we have an `actor` field in the JWT claims, we can have a properly formatted permission,
-	// like `secret.grafana.app/securevalues{/<name>}:decrypt` and do regular access control eval,
-	// and for the `decrypters` part here, we can just check it against the `actor` field, which at
-	// that point will have a different format, depending on how the `actor` will be formatted.
-	// Check whether at least one of declared token actors matches the allowed decrypters from the SecureValue.
-	allowed := false
+	// If there's more than one service identity, something is suspicious and we reject it.
+	if len(serviceIdentityList) != 1 {
+		return "", false
+	}
 
-	var identity string
+	serviceIdentity := strings.TrimSpace(serviceIdentityList[0])
+	if len(serviceIdentity) == 0 {
+		return "", false
+	}
+
+	// Checks whether the token has the permission to decrypt secure values.
+	if !hasPermissionInToken(authInfo.GetTokenPermissions(), secureValueName) {
+		return serviceIdentity, false
+	}
+
+	// Finally check whether the service identity is allowed to decrypt this secure value.
+	allowed := false
 	for _, decrypter := range secureValueDecrypters {
-		if _, exists := tokenActors[decrypter]; exists {
+		if decrypter == serviceIdentity {
 			allowed = true
-			identity = decrypter
 			break
 		}
 	}
 
-	return identity, allowed
+	return serviceIdentity, allowed
+}
+
+// Adapted from https://github.com/grafana/authlib/blob/1492b99410603ca15730a1805a9220ce48232bc3/authz/client.go#L138
+// Changes: 1) we don't support `*` for verbs; 2) we support specific names in the permission.
+func hasPermissionInToken(tokenPermissions []string, name string) bool {
+	var (
+		group    = secretv1beta1.APIGroup
+		resource = secretv1beta1.SecureValuesResourceInfo.GetName()
+		verb     = "decrypt"
+	)
+
+	for _, p := range tokenPermissions {
+		tokenGR, tokenVerb, found := strings.Cut(p, ":")
+		if !found || tokenVerb != verb {
+			continue
+		}
+
+		parts := strings.SplitN(tokenGR, "/", 3)
+
+		switch len(parts) {
+		// secret.grafana.app/securevalues:decrypt
+		case 2:
+			if parts[0] == group && parts[1] == resource {
+				return true
+			}
+
+		// secret.grafana.app/securevalues/<name>:decrypt
+		case 3:
+			if parts[0] == group && parts[1] == resource && parts[2] == name && name != "" {
+				return true
+			}
+		}
+	}
+
+	return false
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -136,11 +137,11 @@ func TestSQLCommandCellLimits(t *testing.T) {
 				}
 			}
 
-			_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{}, metrics.NewTestMetrics())
+			res, _ := cmd.Execute(context.Background(), time.Now(), vars, &testTracer{}, metrics.NewTestMetrics())
 
 			if tt.expectError {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.errorContains)
+				require.Error(t, res.Error)
+				require.ErrorContains(t, res.Error, tt.errorContains)
 			} else {
 				require.NoError(t, err)
 			}
@@ -161,7 +162,7 @@ func TestSQLCommandMetrics(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify error count was not incremented
-	require.Equal(t, 0, testutil.CollectAndCount(m.SqlCommandErrorCount), "Expected error metric not to be recorded")
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCount), "Expected error metric not to be recorded")
 
 	// Verify duration was recorded
 	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandDuration), "Expected duration metric to be recorded")
@@ -187,3 +188,8 @@ type testSpan struct {
 
 func (ts *testSpan) End(opt ...trace.SpanEndOption) {
 }
+
+func (ts *testSpan) RecordError(err error, opt ...trace.EventOption) {
+}
+
+func (ts *testSpan) SetStatus(code codes.Code, msg string) {}

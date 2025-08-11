@@ -480,26 +480,6 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 	return migrationResult, nil
 }
 
-func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int64, keyId int64) error {
-	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
-	if err != nil {
-		return err
-	}
-	if len(basicKeys) == 0 {
-		return fmt.Errorf("no API keys to convert found")
-	}
-	for _, key := range basicKeys {
-		if keyId == key.ID {
-			err := s.CreateServiceAccountFromApikey(ctx, key)
-			if err != nil {
-				s.log.Error("Converting to service account failed with error", "keyId", keyId, "error", err)
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{

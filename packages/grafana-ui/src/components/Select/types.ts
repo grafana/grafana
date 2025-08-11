@@ -190,9 +190,10 @@ export type ReactSelectProps<Option, IsMulti extends boolean, Group extends Grou
   Option,
   IsMulti,
   Group
->['selectProps'] & {
-  invalid: boolean;
-};
+>['selectProps'] &
+  SelectCommonProps<Option> & {
+    autoWidth: boolean;
+  };
 
 // Use this type when implementing custom components for react select.
 // See SelectContainerProps in SelectContainer.tsx

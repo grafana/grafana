@@ -16,8 +16,8 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { TraceSpanReference } from '../../types/trace';
@@ -36,16 +36,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   AccordianReferences: css({
     label: 'AccordianReferences',
-    border: `1px solid ${autoColor(theme, '#d8d8d8')}`,
     position: 'relative',
     marginBottom: '0.25rem',
   }),
   AccordianReferencesHeader: css({
     label: 'AccordianReferencesHeader',
-    background: autoColor(theme, '#e4e4e4'),
     color: 'inherit',
     display: 'block',
-    padding: '0.25rem 0.5rem',
+    padding: '0.25rem 0',
     '&:hover': {
       background: autoColor(theme, '#dadada'),
     },
@@ -135,7 +133,7 @@ type ReferenceItemProps = {
 export function References(props: ReferenceItemProps) {
   const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <div className={styles.AccordianReferencesContent}>
       {data.map((reference, i) => (
@@ -176,7 +174,6 @@ export function References(props: ReferenceItemProps) {
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
                 label={t('explore.references.label-attributes', 'attributes')}
-                linksGetter={null}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>
@@ -224,7 +221,7 @@ const AccordianReferences = ({
             <Trans i18nKey="explore.accordian-references.references">References</Trans>
           </span>
         </strong>{' '}
-        ({data.length})
+        <Counter value={data.length} />
       </HeaderComponent>
       {isOpen && (
         <References

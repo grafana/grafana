@@ -3,6 +3,7 @@ package template
 import (
 	"context"
 	"errors"
+	"math"
 	"net/url"
 	"testing"
 
@@ -109,7 +110,7 @@ func TestNewData(t *testing.T) {
 		}
 
 		data := NewData(map[string]string{}, res)
-		assert.Equal(t, "10", data.Value)
+		assert.Equal(t, 10.0, data.Value)
 	})
 
 	t.Run("uses evaluation string when multiple datasource nodes exist", func(t *testing.T) {
@@ -159,7 +160,7 @@ func TestDatasourceValueInTemplating(t *testing.T) {
 
 		data := NewData(map[string]string{}, res)
 		// In Prometheus, a nil value would be rendered as NaN
-		assert.Equal(t, "NaN", data.Value)
+		assert.True(t, math.IsNaN(data.Value.(float64)))
 	})
 
 	t.Run("single datasource node uses query value", func(t *testing.T) {
@@ -188,7 +189,7 @@ func TestDatasourceValueInTemplating(t *testing.T) {
 		}
 
 		data := NewData(map[string]string{}, res)
-		assert.Equal(t, "10", data.Value)
+		assert.Equal(t, 10.0, data.Value)
 	})
 
 	t.Run("multiple datasource nodes uses evaluation string", func(t *testing.T) {
@@ -636,8 +637,56 @@ func TestExpandTemplate(t *testing.T) {
 		name:     "check that safeHtml doesn't error or panic",
 		text:     "{{ \"<b>\" | safeHtml }}",
 		expected: "<b>",
-	},
-	}
+	}, {
+		name: "$value numeric comparison with single datasource",
+		text: `{{ if eq $value 1.0 }}equal{{ else }}not equal{{ end }}`,
+		alertInstance: eval.Result{
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(1.0),
+				},
+			},
+		},
+		expected: "equal",
+	}, {
+		name: "humanize with string $value (multiple datasources)",
+		text: `{{ humanize $value }}`,
+		alertInstance: eval.Result{
+			EvaluationString: "1234567.0",
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(10.0),
+				},
+				"B": {
+					Var:              "B",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "bar"},
+					Value:            util.Pointer(20.0),
+				},
+			},
+		},
+		expected: "1.235M",
+	}, {
+		name: "humanize with numeric $value (single datasource)",
+		text: `{{ humanize $value }}`,
+		alertInstance: eval.Result{
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:              "A",
+					IsDatasourceNode: true,
+					Labels:           data.Labels{"instance": "foo"},
+					Value:            util.Pointer(1234567.0),
+				},
+			},
+		},
+		expected: "1.235M",
+	}}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

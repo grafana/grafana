@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -87,6 +88,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 				Key:    key,
 				Value:  value,
 				Object: meta,
+				GUID:   uuid.New().String(),
 			})
 			require.NoError(t, err)
 			require.Greater(t, rv, int64(0))
@@ -101,8 +103,8 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			Backend: backend,
 			Search: resource.SearchOptions{
 				Backend: searchBackend,
-				Resources: &testDocumentBuilderSupplier{
-					groupsResources: map[string]string{
+				Resources: &resource.TestDocumentBuilderSupplier{
+					GroupsResources: map[string]string{
 						"test.grafana.app": "testresources",
 					},
 				},

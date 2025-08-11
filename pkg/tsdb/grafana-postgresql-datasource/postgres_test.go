@@ -99,7 +99,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			database:    "database",
 			tlsSettings: tlsSettings{},
-			expErr:      "invalid port in host specifier",
+			expErr:      "error parsing postgres url",
 		},
 		{
 			desc:        "Password with single quote and backslash",
@@ -159,7 +159,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 				UID:                     tt.uid,
 			}
 
-			connStr, err := svc.generateConnectionString(ds)
+			connStr, err := svc.generateConnectionString(ds, tt.tlsSettings, false)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)

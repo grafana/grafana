@@ -13,8 +13,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, HorizontalGroup, InlineFormLabel, Modal, ScrollContainer, stylesFactory } from '@grafana/ui';
@@ -27,7 +26,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
@@ -409,7 +408,6 @@ export function QueryGroupTopSection({
 }: QueryGroupTopSectionProps) {
   const styles = getStyles();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const { t } = useTranslate();
 
   return (
     <>
@@ -433,7 +431,7 @@ export function QueryGroupTopSection({
                 <Button
                   variant="secondary"
                   icon="question-circle"
-                  title={t(
+                  tooltip={t(
                     'query.query-group-top-section.query-tab-help-button-title-open-data-source-help',
                     'Open data source help'
                   )}

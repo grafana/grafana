@@ -30,6 +30,12 @@ var (
 		errutil.WithPublic(
 			"time interval [Name: {{ .Public.Interval }}] is used by rule",
 		))
+
+	msgAlertmanagerMultipleExtraConfigsUnsupported = "multiple extra configurations are not supported, found another configuration with identifier: {{ .Public.Identifier }}"
+	ErrAlertmanagerMultipleExtraConfigsUnsupported = errutil.Conflict("alerting.notifications.alertmanager.multipleExtraConfigsUnsupported").MustTemplate(
+		msgAlertmanagerMultipleExtraConfigsUnsupported,
+		errutil.WithPublic(msgAlertmanagerMultipleExtraConfigsUnsupported),
+	)
 )
 
 type UnknownReceiverError struct {
@@ -217,11 +223,17 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
 	}
 
+	err = moa.Crypto.DecryptExtraConfigs(ctx, cfg)
+	if err != nil {
+		return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
+	}
+
 	result := definitions.GettableUserConfig{
 		TemplateFiles: cfg.TemplateFiles,
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			Config: cfg.AlertmanagerConfig.Config,
 		},
+		ExtraConfigs: cfg.ExtraConfigs,
 	}
 
 	// First we encrypt the secure settings.
@@ -337,6 +349,82 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 	}
 
 	return nil
+}
+
+// modifyAndApplyExtraConfiguration is a helper function that loads the current configuration,
+// applies a modification function to the ExtraConfigs, and saves the result.
+func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
+	ctx context.Context,
+	org int64,
+	modifyFn func([]definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error),
+) error {
+	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
+	if err != nil {
+		return fmt.Errorf("failed to get current configuration: %w", err)
+	}
+
+	cfg, err := Load([]byte(currentCfg.AlertmanagerConfiguration))
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal current alertmanager configuration: %w", err)
+	}
+
+	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
+	if err != nil {
+		return fmt.Errorf("failed to apply extra configuration: %w", err)
+	}
+
+	am, err := moa.AlertmanagerFor(org)
+	if err != nil {
+		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
+		if !errors.Is(err, ErrAlertmanagerNotReady) {
+			return err
+		}
+	}
+
+	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
+		moa.logger.Error("Unable to save and apply alertmanager configuration with extra config", "error", err, "org", org)
+		return AlertmanagerConfigRejectedError{err}
+	}
+
+	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org)
+	return nil
+}
+
+// SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
+func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig definitions.ExtraConfiguration) error {
+	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
+		// for now we validate that after the update there will be just one extra config.
+		for _, c := range configs {
+			if c.Identifier != extraConfig.Identifier {
+				return nil, ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
+			}
+		}
+
+		return []definitions.ExtraConfiguration{extraConfig}, nil
+	}
+
+	err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc)
+	if err != nil {
+		return err
+	}
+
+	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
+	return nil
+}
+
+// DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
+func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error {
+	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
+		filtered := make([]definitions.ExtraConfiguration, 0, len(configs))
+		for _, ec := range configs {
+			if ec.Identifier != identifier {
+				filtered = append(filtered, ec)
+			}
+		}
+		return filtered, nil
+	}
+
+	return moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc)
 }
 
 // assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.

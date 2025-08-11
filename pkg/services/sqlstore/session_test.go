@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 func TestIntegration_RetryingDisabled(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	store, _ := InitTestDB(t)
 	retryErrors := getRetryErrors(t, store)
 
@@ -63,6 +64,9 @@ func TestIntegration_RetryingDisabled(t *testing.T) {
 }
 
 func TestIntegration_RetryingOnFailures(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	store, _ := InitTestDB(t)
 	retryErrors := getRetryErrors(t, store)
 	store.dbCfg.QueryRetries = 5
@@ -140,13 +144,11 @@ func getRetryErrors(t *testing.T, store *SQLStore) []error {
 	var retryErrors []error
 	switch store.GetDialect().DriverName() {
 	case migrator.SQLite:
-		retryErrors = []error{sqlite3.Error{Code: sqlite3.ErrBusy}, sqlite3.Error{Code: sqlite3.ErrLocked}}
-	case migrator.Spanner:
-		retryErrors = []error{grpcstatus.Error(codes.Aborted, "aborted transaction")}
+		retryErrors = []error{sqlite.TestErrBusy, sqlite.TestErrLocked}
 	}
 
 	if len(retryErrors) == 0 {
-		t.Skip("This test only works with sqlite or spanner")
+		t.Skip("This test only works with sqlite")
 	}
 	return retryErrors
 }

@@ -1,0 +1,499 @@
+{
+  "grafana-prometheus": {
+    "components": {
+      "annotation-query-editor": {
+        "annotation-data-load-error": "Fout bij laden van annotatiegegevens!",
+        "aria-label-lower-limit-parameter": "Ondergrens instellen voor de stapparameter",
+        "label-min-step": "Min. stap",
+        "label-series-value-as-timestamp": "Reekswaarde als tijdstempel",
+        "label-tags": "Labels",
+        "label-text": "Tekst",
+        "label-title": "Titel",
+        "placeholder-auto": "automatisch",
+        "tooltip-either-pattern-example-instance-replaced-label": "Gebruik de naam of een patroon. Bijvoorbeeld, {{labelTemplate}} wordt vervangen door labelwaarde voor het label {{labelName}}.",
+        "tooltip-min-step": "Een extra ondergrens voor de stapparameter van de Prometheus-query en voor de variabelen <2>{{intervalVar}}</2> en <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "De eenheid van tijdstempel is milliseconden. Als de eenheid van de reekswaarde seconden is, vermenigvuldig dan de bereikvector met 1000."
+      },
+      "get-query-type-options": {
+        "description": {
+          "instant-query-range": "Een Instant-query en een Range-query uitvoeren"
+        },
+        "label": {
+          "both": "Allebei"
+        },
+        "range-options": {
+          "description": {
+            "query-range": "Een query uitvoeren over een tijdsbereik"
+          },
+          "label": {
+            "instant": "Direct",
+            "range": "Bereik"
+          }
+        }
+      },
+      "label-selector": {
+        "aria-label-filter-expression-for-label": "Filterexpressie voor label",
+        "description-select-labels": "Zodra labelwaarden zijn geselecteerd, worden alleen mogelijke labelcombinaties weergegeven.",
+        "select-labels-to-search-in": "2. Selecteer labels om te doorzoeken"
+      },
+      "metric-selector": {
+        "aria-label-filter-expression-for-metric": "Filterexpressie voor metriek",
+        "aria-label-limit-results-from-series-endpoint": "Resultaten beperken van serie-eindpunt",
+        "description-series-limit": "De limiet is van toepassing op alle metriek, labels en waarden. Laat het veld leeg om de standaardlimiet te gebruiken. Stel in op 0 om de limiet uit te schakelen en alles op te halen — dit kan prestatieproblemen veroorzaken.",
+        "label-select-metric": "Zodra een metriek is geselecteerd, worden alleen mogelijke labels weergegeven. Labels worden beperkt door de onderstaande reekslimiet.",
+        "select-a-metric": "1. Selecteer een metriek",
+        "series-limit": "Reekslimiet"
+      },
+      "prom-cheat-sheet": {
+        "prom-ql-cheat-sheet": "PromQL-spiekbriefje"
+      },
+      "prom-exemplar-field": {
+        "exemplars": "Voorbeelden",
+        "tooltip-disable-query": "Query met exemplaren uitschakelen",
+        "tooltip-enable-query": "Query met exemplaren inschakelen"
+      },
+      "prom-explore-extra-field": {
+        "aria-label-prometheus-extra-field": "Prometheus extra veld",
+        "aria-label-query-type-field": "Veld voor querytype",
+        "aria-label-step-field": "Stapveld",
+        "min-step": "Min. stap",
+        "query-type": "Query-type",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Tijdseenheden en ingebouwde variabelen kunnen hier worden gebruikt, bijvoorbeeld: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Standaard als er geen unit gespecifieerd is: {{default}})"
+      },
+      "prom-query-field": {
+        "placeholder-enter-a-prom-ql-query": "Voer een PromQL-query in..."
+      },
+      "prom-variable-query-editor": {
+        "aria-label-classic-query": "Klassieke query",
+        "aria-label-metric-regex": "Metrische regex",
+        "aria-label-metric-selector": "Metriekkiezer",
+        "aria-label-prometheus-query": "Prometheus-query",
+        "aria-label-query-type": "Query-type",
+        "aria-label-series-query": "Reeksquery",
+        "label-classic-query": "Klassieke query",
+        "label-label": "Label",
+        "label-metric-regex": "Metrische regex",
+        "label-query": "Query",
+        "label-query-type": "Query-type",
+        "label-series-query": "Reeksquery",
+        "placeholder-classic-query": "Klassieke query",
+        "placeholder-metric-regex": "Metrische regex",
+        "placeholder-prometheus-query": "Prometheus-query",
+        "placeholder-select-query-type": "Selecteer query",
+        "placeholder-series-query": "Reeksquery",
+        "returns-metrics-matching-specified-metric-regex": "Retourneert een lijst met metriek die overeenkomt met de opgegeven metriekregex.",
+        "tooltip-classic-query": "De oorspronkelijke implementatie van de Prometheus-variabele queryeditor. Voer een tekenreeks in met het juiste querytype en de juiste parameters zoals beschreven in deze documenten. Bijvoorbeeld, {{exampleQuery}}.",
+        "tooltip-label": "Retourneert een lijst met labelwaarden voor de labelnaam in alle metriek, tenzij de metriek is opgegeven.",
+        "tooltip-metric-regex": "Retourneert een lijst met labelnamen, optioneel gefilterd op opgegeven metriekregex.",
+        "tooltip-query": "Retourneert een lijst met Prometheus-zoekresultaten voor de zoekopdracht. Dit kan Prometheus-functies omvatten, bijv. {{exampleQuery}}.",
+        "tooltip-query-type": "De Prometheus-gegevensbronplugin biedt de volgende querytypes voor sjabloonvariabelen.",
+        "tooltip-series-query": "Voer een metriek in met labels, alleen een metriek of alleen labels, bijv. {{example1}}, {{example2}} of {{example3}}. Retourneert een lijst met tijdreeksen die zijn gekoppeld aan de ingevoerde gegevens."
+      },
+      "selector-actions": {
+        "aria-label-selector": "kiezer",
+        "aria-label-selector-clear-button": "Knop Kiezer wissen",
+        "aria-label-use-selector-as-metrics-button": "Kiezer gebruiken als metriekknop",
+        "aria-label-use-selector-for-query-button": "Kiezer gebruiken als query-knop",
+        "aria-label-validate-submit-button": "Knop Verzenden valideren",
+        "clear": "Wissen",
+        "resulting-selector": "4. Resulterende kiezer",
+        "use-as-rate-query": "Gebruiken als tarief-query",
+        "use-query": "Query gebruiken",
+        "validate-selector": "Validatiekiezer"
+      },
+      "value-selector": {
+        "aria-label-filter-expression-for-label-values": "Filterexpressie voor labelwaarden",
+        "aria-label-values-for": "Waarden voor {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Gebruik het zoekveld om waarden te vinden in geselecteerde labels.",
+        "select-multiple-values-for-your-labels": "3. Selecteer (meerdere) waarden voor je labels"
+      }
+    },
+    "configuration": {
+      "alerting-settings-overhaul": {
+        "label-allow-as-recording-rules-target": "Toestaan als doel van opnameregels",
+        "label-manage-alerts-via-alerting-ui": "Waarschuwingen beheren via waarschuwingsinterface",
+        "title-alerting": "Alerting",
+        "tooltip-allow-as-recording-rules-target": "Sta toe dat deze gegevensbron wordt geselecteerd als doel voor het schrijven van opnameregels.",
+        "tooltip-manage-alerts-via-alerting-ui": "Waarschuwingsregels voor deze gegevensbron beheren. Om andere waarschuwingsbronnen te beheren, voeg je een Alertmanager-gegevensbron toe."
+      },
+      "config-editor": {
+        "browser-access-mode-error": "Browsertoegangsmodus in de Prometheus-gegevensbron is niet langer beschikbaar. Schakel over naar de servertoegangsmodus.",
+        "description-advanced-settings": "Aanvullende instellingen zijn optionele instellingen die kunnen worden geconfigureerd voor meer controle over je gegevensbron. ",
+        "title-advanced-settings": "Geavanceerde instellingen",
+        "title-error": "Fout"
+      },
+      "data-source-http-settings-overhaul": {
+        "tooltip-browser-access-mode": "Je toegangsmethode is <1>Browser</1>, dit betekent dat de URL toegankelijk moet zijn vanuit de browser.",
+        "tooltip-http-url": "Geef een volledige HTTP-URL op (bijvoorbeeld {{exampleURL}})",
+        "tooltip-server-access-mode": "Je toegangsmethode is <1>Server</1>, dit betekent dat de URL toegankelijk moet zijn vanuit de Grafana-backend/server."
+      },
+      "docs-tip": {
+        "visit-docs-for-more-details-here": "Bezoek hier de documenten voor meer informatie."
+      },
+      "exemplar-setting": {
+        "label-data-source": "Gegevensbron",
+        "label-internal-link": "Interne link",
+        "label-label-name": "Labelnaam",
+        "label-remove-exemplar-link": "Voorbeeldlink verwijderen",
+        "label-url": "URL",
+        "label-url-label": "Label-URL",
+        "placeholder-go-to-examplecom": "Ga naar voorbeeld.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "Voorbeeldlink verwijderen",
+        "tooltip-data-source": "De gegevensbron waarnaar het voorbeeld gaat navigeren.",
+        "tooltip-internal-link": "Schakel deze optie in als je een interne link hebt. Wanneer ingeschakeld, wordt de gegevensbronselector weergegeven. Selecteer de backend-tracing-gegevensopslag voor je voorbeeldgegevens.",
+        "tooltip-label-name": "De naam van het veld in het labelobject dat moet worden gebruikt om de traceID op te halen.",
+        "tooltip-url": "De URL van de trace-backend die de gebruiker zou gebruiken om zijn trace te zien",
+        "tooltip-url-label": "Gebruik om het knoplabel op het voorbeeld traceID-veld te overschrijven."
+      },
+      "exemplars-settings": {
+        "add": "Toevoegen",
+        "no-exemplars-configurations": "Geen voorbeeldconfiguraties",
+        "title-exemplars": "Voorbeelden"
+      },
+      "prom-settings": {
+        "aria-label-default-editor": "Standaard editor (code of bouwer)",
+        "aria-label-prom-type-type": "{{promType}}-type",
+        "aria-label-prometheus-type": "Prometheus-type",
+        "aria-label-select-http-method": "HTTP-methode selecteren",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-cache-level": "Cacheniveau",
+        "label-custom-query-parameters": "Aangepaste query-parameters",
+        "label-default-editor": "Standaard-editor",
+        "label-disable-metrics-lookup": "Metriek opzoeken uitschakelen",
+        "label-disable-recording-rules-beta": "Opnameregels uitschakelen (bèta)",
+        "label-http-method": "HTTP-methode",
+        "label-incremental-querying-beta": "Incrementeel zoeken (bèta)",
+        "label-metric-names-suggestion-limit": "Suggestielimiet voor metrische namen",
+        "label-prom-type-version": "{{promType}}-versie",
+        "label-prometheus-type": "Prometheus-type",
+        "label-query-overlap-window": "Venster voor overlap van query",
+        "label-query-timeout": "Query-timeout",
+        "label-scrape-interval": "Scrape-interval",
+        "label-series-limit": "Reekslimiet",
+        "label-use-series-endpoint": "Serie-eindpunt gebruiken",
+        "more-info": "Zie de <2>provisioning-documentatie</2> voor meer informatie over het configureren van het Prometheus-type en de versie in gegevensbronnen.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Voorbeeld: {{example}}",
+        "title-interval-behaviour": "Intervalgedrag",
+        "title-other": "Overige",
+        "title-performance": "Prestaties",
+        "title-query-editor": "Query-editor",
+        "tooltip-cache-level": "Stelt het cacheniveau van de browser in voor editor-query's. Hogere cache-instellingen worden aanbevolen voor gegevensbronnen met een hoge kardinaliteit.",
+        "tooltip-custom-query-parameters": "Voeg aangepaste parameters toe aan de Prometheus-query-URL. Bijvoorbeeld {{example1}}, {{example2}}, {{example3}}, of{{example4}}. Meerdere parameters moeten worden samengevoegd met {{concatenationChar}}.",
+        "tooltip-default-editor": "Stel de standaard editoroptie in voor alle gebruikers van deze gegevensbron.",
+        "tooltip-disable-metrics-lookup": "Als je deze optie aanvinkt, worden de metriekkiezer en de metriek/label-ondersteuning in de auto-aanvulling van het query-veld uitgeschakeld. Dit helpt als je prestatieproblemen hebt met grotere Prometheus-instanties. ",
+        "tooltip-disable-recording-rules-beta": "Deze functie schakelt opnameregels uit. Schakel dit in om de prestaties van het dashboard te verbeteren",
+        "tooltip-http-method": "Je kunt de HTTP-methode POST of GET gebruiken om je Prometheus-gegevensbron op te vragen. POST is de aanbevolen methode omdat het grotere query's toestaat. Wijzig dit in GET als je een Prometheus-versie ouder dan 2.1 hebt of als POST-verzoeken in je netwerk zijn beperkt.",
+        "tooltip-incremental-querying-beta": "Deze functie zal het standaardgedrag van relatieve query's veranderen om altijd nieuwe gegevens van de Prometheus-instantie op te vragen, in plaats daarvan worden query-resultaten in de cache opgeslagen en worden alleen nieuwe records opgevraagd. Schakel dit in om de database- en netwerkbelasting te verminderen.",
+        "tooltip-metric-names-suggestion-limit": "Het maximale aantal metrische namen dat kan verschijnen als suggesties voor automatisch aanvullen in de codemodus van de query-editor.",
+        "tooltip-prom-type-version": "Gebruik dit om de versie van je {{promType}}-instantie in te stellen als deze niet automatisch is geconfigureerd.",
+        "tooltip-prometheus-type": "Stel dit in op het type van je Prometheus-database, bijvoorbeeld Prometheus, Cortex, Mimir of Thanos. Als je dit veld wijzigt, worden je huidige instellingen opgeslagen. Bepaalde soorten Prometheus ondersteunen of ondersteunen geen verschillende API's. Sommige typen ondersteunen bijvoorbeeld regex-matching voor label-query's om de prestaties te verbeteren. Sommige typen hebben een API voor metadata. Als je dit verkeerd instelt, kun je afwijkend gedrag ervaren bij het opvragen van metriek en labels. Controleer je Prometheus-documentatie om er zeker van te zijn dat je het juiste type invoert.",
+        "tooltip-query-overlap-window": "Stel een duur in zoals {{example1}} of {{example2}} of {{example3}}. Standaard van {{default}}. Deze duur wordt toegevoegd aan de duur van elk incrementeel verzoek.",
+        "tooltip-query-timeout": "Stel de Prometheus-query-time-out in.",
+        "tooltip-scrape-interval": "Dit interval is hoe vaak Prometheus doelen scrapet. Stel dit in op het typische scrape- en evaluatie-interval dat is geconfigureerd in je Prometheus-configuratiebestand. Als je dit instelt op een grotere waarde dan je Prometheus-configuratiebestandsinterval, zal Grafana de gegevens evalueren volgens dit interval en zul je minder gegevenspunten zien. Standaard ingesteld op {{default}}.",
+        "tooltip-series-limit": "De limiet is van toepassing op alle bronnen (metriek, labels en waarden) voor beide eindpunten (reeksen en labels). Laat het veld leeg om de standaardlimiet te gebruiken (40000). Stel in op 0 om de limiet uit te schakelen en alles op te halen. Dit kan prestatieproblemen veroorzaken. Standaardlimiet is 40000.",
+        "tooltip-use-series-endpoint": "Als je deze optie aanvinkt, wordt het serie-eindpunt met parameter {{exampleParameter}} de voorkeur gegeven boven het labelwaarden-eindpunt met parameter {{exampleParameter}}. Hoewel het eindpunt van de labelwaarden als beter presterend wordt beschouwd, geven sommige gebruikers de voorkeur aan de serie omdat deze een POST-methode heeft, terwijl het eindpunt van de labelwaarden alleen een GET-methode heeft."
+      }
+    },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
+    "querybuilder": {
+      "feedback-link": {
+        "give-feedback": "Feedback geven",
+        "title-give-feedback": "De metriekverkenner is nieuw, laat ons weten hoe we deze kunnen verbeteren"
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
+      },
+      "get-placeholders": {
+        "browse": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
+      },
+      "handle-function": {
+        "text": {
+          "query-parsing-is-ambiguous": "Queryparsing is dubbelzinnig."
+        }
+      },
+      "label-filter-item": {
+        "aria-label-remove": "{{name}} verwijderen",
+        "placeholder-select-label": "Selecteer etiket",
+        "placeholder-select-value": "Waarde selecteren"
+      },
+      "label-filters": {
+        "label-filters": "Labelfilters",
+        "label-label-filters": "Labelfilters",
+        "tooltip-label-filters": "Optioneel: wordt gebruikt om de metrische selectie voor dit query-type te filteren."
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
+      },
+      "metric-combobox": {
+        "async-select": {
+          "aria-label-open-metrics-explorer": "Metriekverkenner openen",
+          "placeholder-select-metric": "Selecteer een metriek",
+          "tooltip-open-metrics-explorer": "Metriekverkenner openen"
+        },
+        "label-metric": "Metrisch",
+        "tooltip-metric": "Optioneel: retourneert een lijst met labelwaarden voor de labelnaam in de opgegeven metriek."
+      },
+      "metrics-modal": {
+        "aria-label-browse-metrics": "Metriek bekijken",
+        "currently-selected": "Momenteel geselecteerd: {{selected}}",
+        "metrics-pre-filtered": "Deze metriek is vooraf gefilterd op labels die zijn gekozen in de labelfilters.",
+        "title-metrics-explorer": "Metriekverkenner"
+      },
+      "nested-query": {
+        "label": {
+          "ignoring": "Negeren",
+          "on": "Aan"
+        },
+        "operator": "Operator",
+        "tooltip-remove-match": "Overeenkomst verwijderen",
+        "vector-matches": "Vectorovereenkomsten"
+      },
+      "operation-editor": {
+        "not-found": "Bewerking {{id}} niet gevonden",
+        "title-remove": "{{name}} verwijderen"
+      },
+      "operation-header": {
+        "placeholder-replace-with": "Vervangen door",
+        "title-click-to-view-alternative-operations": "Klik om alternatieve bewerkingen te bekijken",
+        "title-remove-operation": "Uitvoering verwijderen"
+      },
+      "operation-info-button": {
+        "title-click-to-show-description": "Klik om beschrijving weer te geven",
+        "title-remove-operation": "Uitvoering verwijderen"
+      },
+      "operation-list": {
+        "operations": "Bedrijfsvoering",
+        "placeholder-search": "Zoeken",
+        "title-add-operation": "Uitvoering toevoegen"
+      },
+      "operation-param-editor": {
+        "title-add": "{{name}} toevoegen",
+        "title-remove": "{{name}} verwijderen"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
+      },
+      "prom-query-builder-options": {
+        "aria-label-lower-limit-parameter": "Ondergrens instellen voor de stapparameter",
+        "aria-label-select-resolution": "Resolutie selecteren",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
+        "label-exemplars": "Voorbeelden",
+        "label-format": "Formaat",
+        "label-min-step": "Min. stap",
+        "label-resolution": "Resolutie",
+        "label-type": "Type",
+        "placeholder-auto": "automatisch",
+        "title-options": "Opties",
+        "tooltip-min-step": "Een extra ondergrens voor de stapparameter van de Prometheus-query en voor de variabelen <2>{{interval}}</2> en <4>{{rateInterval}}</4>."
+      },
+      "prom-query-code-editor-autocomplete-info": {
+        "autocomplete-suggestions-limited": "Automatisch aanvullen van suggesties beperkt",
+        "tooltip-autocomplete-suggestions-limited": "Het aantal metrische namen overschrijdt de limiet voor automatisch aanvullen. Alleen de meest relevante metriek voor {{autocompleteLimit}} worden weergegeven. Je kunt de drempelwaarde aanpassen in de instellingen van de gegevensbron."
+      },
+      "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
+        "kick-start-your-query": "Start je query",
+        "label-explain": "Leg uit",
+        "run-queries": "Query's uitvoeren",
+        "title-parsing-error-switch-builder": "Parsingfout: overschakelen naar de bouwmodus?"
+      },
+      "prom-query-legend-editor": {
+        "label-legend": "Legenda",
+        "placeholder-select-legend-mode": "Legenda-modus selecteren",
+        "tooltip-legend": "Reeksnaam overschrijven of sjabloon. Bijv. {{templateExample}} wordt vervangen door labelwaarde voor {{labelName}}."
+      },
+      "query-builder-hints": {
+        "hint-details": "hint: {{hintDetails}}"
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
+      },
+      "query-pattern": {
+        "apply-query": "Query toepassen",
+        "aria-label-apply-query-starter-button": "knop Query starten toepassen",
+        "aria-label-back-button": "knop Terug",
+        "aria-label-create-new-query-button": "knop Nieuwe query aanmaken",
+        "aria-label-raw-query": "{{patternName}} onbewerkte query",
+        "aria-label-use-this-query-button": "knop Gebruik deze query",
+        "back": "Terug",
+        "create-new-query": "Nieuwe query aanmaken",
+        "use-this-query": "Gebruik deze query"
+      },
+      "query-patterns-modal": {
+        "aria-label-close-kick-start-your-query-modal": "modus Je query snelstarten afsluiten",
+        "aria-label-kick-start-your-query-modal": "Start je querymodus",
+        "aria-label-toggle-query-starter": "{{patternType}} query-startkaart openen en sluiten",
+        "close": "Sluiten",
+        "description-kick-start-your-query": "Snelstart je query door een van deze query's te selecteren. Je kunt dan doorgaan met het voltooien van je query.",
+        "label-toggle-query-starter": "{{patternType}} query-starters",
+        "title-kick-start-your-query": "Start je query"
+      },
+      "raw-query": {
+        "aria-label-selector": "kiezer"
+      },
+      "results-table": {
+        "content-descriptive-type": "Bij het maken van een {{descriptiveType}} stelt Prometheus meerdere series bloot met de typeteller. ",
+        "description": "Beschrijving",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
+        "name": "Naam",
+        "type": "Type"
+      },
+      "update-function-args": {
+        "text": {
+          "query-parsing-is-ambiguous": "Query-parsing is dubbelzinnig."
+        }
+      }
+    }
+  }
+}

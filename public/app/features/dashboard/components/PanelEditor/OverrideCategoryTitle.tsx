@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
 
@@ -22,7 +22,7 @@ export const OverrideCategoryTitle = ({
   onOverrideRemove,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
   const propertyNames = properties.map((p) => p?.name).join(', ');
   const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);

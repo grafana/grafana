@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, LanguageProvider, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, LanguageProvider, SelectableValue, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -9,6 +9,7 @@ import {
   getTagsByScope,
   getUnscopedTags,
 } from './SearchTraceQLEditor/utils';
+import { DEFAULT_TIME_RANGE_FOR_TAGS } from './configuration/TagsTimeRangeSettings';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { enumIntrinsics, intrinsicsV1 } from './traceql/traceql';
@@ -20,10 +21,19 @@ export const TAGS_LIMIT = 5000;
 // Limit maximum options in select dropdowns
 export const OPTIONS_LIMIT = 1000;
 
+interface GetOptionsV2 {
+  tag: string;
+  query?: string;
+  timeRangeForTags?: number;
+  range?: TimeRange;
+}
+
 export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
   tagsV1?: string[];
   tagsV2?: Scope[];
+  private previousRange?: TimeRange;
+
   constructor(datasource: TempoDatasource, initialValues?: any) {
     super();
 
@@ -36,9 +46,15 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return res?.data;
   };
 
-  start = async () => {
-    if (!this.startTask) {
-      this.startTask = this.fetchTags().then(() => {
+  start = async (range?: TimeRange, timeRangeForTags?: number) => {
+    // Check if we need to refetch tags due to range changes (minute-level granularity)
+    const shouldRefetch = this.shouldRefreshLabels(range, this.previousRange);
+
+    if (!this.startTask || shouldRefetch) {
+      // Store the current range for future comparison
+      this.previousRange = range;
+
+      this.startTask = this.fetchTags(timeRangeForTags, range).then(() => {
         return [];
       });
     }
@@ -46,14 +62,42 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
+  roundMsToMin = (milliseconds: number) => {
+    return this.roundSecToMin(milliseconds / 1000);
+  };
+
+  roundSecToMin = (seconds: number) => {
+    return Math.floor(seconds / 60);
+  };
+
+  shouldRefreshLabels = (range?: TimeRange, prevRange?: TimeRange): boolean => {
+    if (range && prevRange) {
+      const sameMinuteFrom = this.roundMsToMin(range.from.valueOf()) === this.roundMsToMin(prevRange.from.valueOf());
+      const sameMinuteTo = this.roundMsToMin(range.to.valueOf()) === this.roundMsToMin(prevRange.to.valueOf());
+      // If both are same, don't need to refresh
+      return !(sameMinuteFrom && sameMinuteTo);
+    }
+    // If one is defined and the other is not, we should refresh
+    return prevRange !== range;
+  };
+
   getTagsLimit = () => {
     return this.datasource.instanceSettings.jsonData?.tagLimit || TAGS_LIMIT;
   };
 
-  async fetchTags() {
+  async fetchTags(timeRangeForTags?: number, range?: TimeRange) {
     let v1Resp, v2Resp;
+
     try {
-      v2Resp = await this.request('/api/v2/search/tags', { limit: this.getTagsLimit() });
+      const params: { limit: number; start?: number; end?: number } = {
+        limit: this.getTagsLimit(),
+      };
+      if (timeRangeForTags && range && timeRangeForTags !== DEFAULT_TIME_RANGE_FOR_TAGS) {
+        const { start, end } = this.getTimeRangeForTags(timeRangeForTags, range);
+        params.start = start;
+        params.end = end;
+      }
+      v2Resp = await this.request(`/api/v2/search/tags`, params);
     } catch (error) {
       v1Resp = await this.request('/api/search/tags', []);
     }
@@ -144,14 +188,23 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return options;
   }
 
-  async getOptionsV2(tag: string, query?: string): Promise<Array<SelectableValue<string>>> {
+  async getOptionsV2({ tag, query, timeRangeForTags, range }: GetOptionsV2): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
-    const response = await this.request(
-      `/api/v2/search/tag/${encodedTag}/values`,
-      query
-        ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe), limit: this.getTagsLimit() }
-        : { limit: this.getTagsLimit() }
-    );
+    const params: { q?: string; limit: number; start?: number; end?: number } = {
+      limit: this.getTagsLimit(),
+    };
+
+    if (query) {
+      params.q = getTemplateSrv().replace(query, {}, VariableFormatID.Pipe);
+    }
+
+    if (timeRangeForTags && range && timeRangeForTags !== DEFAULT_TIME_RANGE_FOR_TAGS) {
+      const { start, end } = this.getTimeRangeForTags(timeRangeForTags, range);
+      params.start = start;
+      params.end = end;
+    }
+
+    const response = await this.request(`/api/v2/search/tag/${encodedTag}/values`, params);
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
       response.tagValues.forEach((v: { type: string; value?: string }) => {
@@ -166,6 +219,15 @@ export default class TempoLanguageProvider extends LanguageProvider {
     }
     return options;
   }
+
+  getTimeRangeForTags = (timeRangeForTags: number, range: TimeRange) => {
+    // Get tags from the last timeRangeForTags seconds, but don't go before the start of the range
+    // If timeRangeForTags is 1 hour and your query range is 24 hours, it will fetch tags from the last 1 hour of that 24-hour period
+    // If timeRangeForTags is larger than the total range duration, it will use the entire available range
+    const start = Math.max(range.from.unix(), range.to.unix() - timeRangeForTags);
+    const end = range.to.unix();
+    return { start, end };
+  };
 
   /**
    * Encode (serialize) a given tag for use in a URL.

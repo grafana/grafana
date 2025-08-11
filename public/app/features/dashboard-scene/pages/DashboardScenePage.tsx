@@ -11,7 +11,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
-import { DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { DashboardPreviewBanner } from '../saving/provisioned/DashboardPreviewBanner';
@@ -50,6 +50,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     return () => {
       preserveDashboardSceneStateInLocalStorage(locationService.getSearch(), uid);
       stateManager.clearState();
+      stateManager.resetActiveManager();
     };
 
     // removing slug and path (which has slug in it) from dependencies to prevent unmount when data links reference

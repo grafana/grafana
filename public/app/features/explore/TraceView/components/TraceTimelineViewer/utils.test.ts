@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import traceGenerator from '../demo/trace-generators';
-import { TraceSpan } from '../types';
+import { TraceSpan } from '../types/trace';
 
 import {
   findServerChildSpan,

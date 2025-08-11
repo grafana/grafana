@@ -28,14 +28,13 @@ Grafana supports user authentication through Okta, which is useful when you want
 1. Click **Create**.
 1. On the **General Settings** tab, enter a name for your Grafana integration. You can also upload a logo.
 1. On the **Configure SAML** tab, enter the SAML information related to your Grafana instance:
-
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
    - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, by default it is the `/saml/metadata` endpoint of your Grafana instance (for example `https://example.grafana.com/saml/metadata`). This could be configured differently, but the value here must match the `entity_id` setting of the SAML settings of Grafana.
    - Leave the default values for **Name ID format** and **Application username**.
      {{< admonition type="note" >}}
      If you plan to enable SAML Single Logout, consider setting the **Name ID format** to `EmailAddress` or `Persistent`. This must match the `name_id_format` setting of the Grafana instance.
      {{< /admonition >}}
-   - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
+   - In the **ATTRIBUTE STATEMENTS (REQUIRED)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
      | Attribute name (in Grafana) | Name and value (in Okta profile)                     | Grafana configuration (under `auth.saml`) |
      | --------------------------- | ---------------------------------------------------- | ----------------------------------------- |
@@ -47,3 +46,19 @@ Grafana supports user authentication through Okta, which is useful when you want
 
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.
+
+## Configure SAML assertions when using SCIM provisioning
+
+In order to verify the logged in user is the same user that was provisioned through Okta, you need to include the same `externalId` in the SAML assertion by mapping the SAML assertion `assertion_attribute_external_id`.
+
+1. Open your Okta application.
+1. Select the SAML single sign-on configuration.
+1. Edit the `Attributes & Claims` section.
+1. Add a new claim with the following settings:
+   - Name: `userUID`
+
+### Example configuration
+
+| Attribute name (in Grafana) | Name and value (in Okta profile)           | Grafana default configuration (under `auth.saml`) |
+| --------------------------- | ------------------------------------------ | ------------------------------------------------- |
+| userUID                     | userUID - `user.getInternalProperty("id")` | `assertion_attribute_login = userUID`             |

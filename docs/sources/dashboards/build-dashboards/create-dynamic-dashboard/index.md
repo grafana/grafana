@@ -77,7 +77,13 @@ refs:
 
 # Create and edit dynamic dashboards
 
-{{< docs/experimental product="Dynamic dashboards" featureFlag="dashboardNewLayouts" >}}
+{{< admonition type="caution" >}}
+
+Dynamic dashboards is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
 
 Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
 
@@ -99,13 +105,11 @@ To create a dashboard, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
 
 1. Under **Panel layout**, choose one of the following options:
-
    - **Custom** - Position and size panels manually. The default selection.
    - **Auto grid** - Panels are automatically resized to create a uniform grid based on the column and row settings.
 
 1. Click **+ Add visualization**.
 1. In the dialog box that opens, do one of the following:
-
    - Select one of your existing data sources.
    - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
    - Click **Configure a new data source** to set up a new one (Admins only).
@@ -131,7 +135,6 @@ To create a dashboard, follow these steps:
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
-
    - [Configure value mappings](ref:configure-value-mappings)
    - [Visualization-specific options](ref:visualization-specific-options)
    - [Override field values](ref:override-field-values)
@@ -221,9 +224,7 @@ To configure repeats, follow these steps:
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
 1. For panels only, set the following options:
-
    - Under **Repeat direction**, choose one of the following:
-
      - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can’t mix other panels on a row with a repeated panel.
      - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
@@ -270,14 +271,12 @@ To configure show/hide rules, follow these steps:
 1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
 1. Click **+ Add rule**.
 1. Select a rule type:
-
    - **Query result** - Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
    - **Template variable** - Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
    - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time frame. Select or enter a time range.
 
 1. Configure the rule.
 1. Under **Match rules**, select one of the following:
-
    - **Match all** - The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
    - **Match any** - The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
 
@@ -309,7 +308,6 @@ To edit dashboards, follow these steps:
 
 1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane.
 1. Do one of the following:
-
    - For rows or tabs, make the required changes using the edit pane.
    - For panels, update the panel title, description, repeat options or show/hide rules in the edit pane. For more changes, click **Configure** and continue in **Edit panel** view.
    - For dashboards, update the dashboard title, description, grouping or panel layout. For more changes, click the settings (gear) icon in the top-right corner.
@@ -318,6 +316,24 @@ To edit dashboards, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Toggle off the edit mode switch.
+
+### Undo and redo
+
+When a dashboard is in edit mode, you can undo and redo changes you've made using the buttons on the toolbar:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-undo-redo-icons-v12.0.png" max-width="500px" alt="Undo and redo buttons" >}}
+
+When you've made a change and hover the cursor over the buttons, the tooltip displays the change you're about to undo or redo.
+Also, you can continue undoing or redoing as many changes as you need:
+
+{{< video-embed src="/media/docs/grafana/dashboards/screen-record-undo-redo-v12.0.mp4" >}}
+
+The undo and redo buttons are only available at the dashboard level and only apply to changes made there, such as dashboard layout and grouping and high-level dashboard or panel updates.
+They aren't visible and don't apply when you're configuring a panel or making changes in the dashboard settings.
+
+{{< admonition type="note" >}}
+Not all dashboard edit actions can be undone or redone yet.
+{{< /admonition >}}
 
 ## Move or resize a panel
 
@@ -331,7 +347,6 @@ To move or resize, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 1. Do one of the following:
-
    - Click the panel title and drag the panel to the new location.
    - Click and drag the lower-right corner of the panel to change the size of the panel.
 

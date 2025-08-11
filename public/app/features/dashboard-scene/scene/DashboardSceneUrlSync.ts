@@ -5,7 +5,7 @@ import { config, locationService } from '@grafana/runtime';
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
-import { KioskMode } from 'app/types';
+import { KioskMode } from 'app/types/dashboard';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -141,8 +141,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         this._scene.onEnterEditMode();
       }
 
-      this._scene.state.scopesBridge?.setReadOnly(true);
-
       const libPanelBehavior = getLibraryPanelBehavior(panel);
       if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
         this._waitForLibPanelToLoadBeforeEnteringPanelEdit(panel, libPanelBehavior);
@@ -210,8 +208,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         if (panel) {
           this._viewEventSub?.unsubscribe();
           this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });
+          this._viewEventSub = undefined;
         }
       });
+
+      this._scene.state.body.activateRepeaters?.();
     }
   }
 

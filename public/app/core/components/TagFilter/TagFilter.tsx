@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { components, MultiValueRemoveProps } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 
 import { TagBadge, getStyles as getTagBadgeStyles } from './TagBadge';
@@ -26,6 +26,7 @@ export interface Props {
   tagOptions: () => Promise<TermCount[]>;
   tags: string[];
   width?: number;
+  disabled?: boolean;
 }
 
 const filterOption = (option: SelectableValue<string>, searchQuery: string) => {
@@ -44,6 +45,7 @@ export const TagFilter = ({
   tagOptions,
   tags,
   width,
+  disabled,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -55,7 +57,7 @@ export const TagFilter = ({
 
   // Necessary to force re-render to keep tag options up to date / relevant
   const selectKey = useMemo(() => tags.join(), [tags]);
-  const { t } = useTranslate();
+
   const onLoadOptions = useCallback(async () => {
     const options = await tagOptions();
     return options.map((option) => {
@@ -155,7 +157,7 @@ export const TagFilter = ({
   return (
     <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
-        <button className={styles.clear} onClick={() => onTagChange([])}>
+        <button className={styles.clear} onClick={() => onTagChange([])} disabled={disabled}>
           <Trans i18nKey="tag-filter.clear-button">Clear tags</Trans>
         </button>
       )}
@@ -164,6 +166,7 @@ export const TagFilter = ({
         {...selectOptions}
         prefix={<Icon name="tag-alt" />}
         aria-label={t('tag-filter.select-aria-label', 'Tag filter')}
+        disabled={disabled}
       />
     </div>
   );

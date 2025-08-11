@@ -4,13 +4,24 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  SpecialValue,
+  SelectableValue,
 } from '@grafana/data';
 import { TransposeTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
-  const { t } = useTranslate();
+import darkImage from '../images/dark/transpose.svg';
+import lightImage from '../images/light/transpose.svg';
+import { getEmptyOptions } from '../utils';
+
+export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
+  const onSelectEmptyValue = (value?: SelectableValue<SpecialValue>) => {
+    onChange({
+      ...options,
+      emptyValue: value?.value,
+    });
+  };
 
   return (
     <>
@@ -41,15 +52,30 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
           />
         </InlineField>
       </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={t('transformers.grouping-to-matrix-transformer-editor.label-empty-value', 'Empty value')}>
+          <Select options={getEmptyOptions()} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
+        </InlineField>
+      </InlineFieldRow>
     </>
   );
 };
 
-export const transposeTransformerRegistryItem: TransformerRegistryItem<TransposeTransformerOptions> = {
+export const getTransposeTransformerRegistryItem: () => TransformerRegistryItem<TransposeTransformerOptions> = () => ({
   id: DataTransformerID.transpose,
-  editor: TransposeTransfomerEditor,
+  editor: TransposeTransformerEditor,
   transformation: standardTransformers.transposeTransformer,
-  name: standardTransformers.transposeTransformer.name,
-  description: standardTransformers.transposeTransformer.description,
+  name: t('transformers.transpose-transformer-editor.name.transpose', 'Transpose'),
+  description: t(
+    'transformers.transpose-transformer-editor.description.transpose-data-frame',
+    'Transpose the data frame.'
+  ),
   categories: new Set([TransformerCategory.Reformat]),
-};
+  tags: new Set([
+    t('transformers.transpose-transformer-editor.tags.pivot', 'Pivot'),
+    t('transformers.transpose-transformer-editor.tags.translate', 'Translate'),
+    t('transformers.transpose-transformer-editor.tags.transform', 'Transform'),
+  ]),
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

@@ -15,9 +15,6 @@ WHERE 1 = 1
   {{ if .Key.Name }}
   AND {{ .Ident "name" }}      = {{ .Arg .Key.Name }}
   {{ end }}
-  {{ if .Trash }}
-  AND {{ .Ident "action" }} = 3
-  {{ end }}
   {{ if (gt .StartRV 0) }}
   {{ if .SortAscending }}
   AND {{ .Ident "resource_version" }} > {{ .Arg .StartRV }}
@@ -32,7 +29,7 @@ WHERE 1 = 1
   AND {{ .Ident "resource_version" }} = {{ .Arg .ExactRV }}
   {{ end }}
 {{ if .SortAscending }}
-ORDER BY resource_version ASC
+ORDER BY {{ .Ident "resource_version" }} ASC
 {{ else }}
-ORDER BY resource_version DESC
+ORDER BY {{ .Ident "resource_version" }} DESC
 {{ end }}

@@ -7,7 +7,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 	metadata "google.golang.org/grpc/metadata"
-	
+
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 

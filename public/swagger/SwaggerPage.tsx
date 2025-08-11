@@ -125,10 +125,9 @@ export const Page = () => {
               tryItOutEnabled={true}
               queryConfigEnabled={false}
               persistAuthorization={false}
+              displayOperationId
             />
           )}
-
-          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
           {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
         </NamespaceContext.Provider>
       </ThemeProvider>

@@ -11,6 +11,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -29,7 +30,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, authnService, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, authnService, nil, tracing.InitializeTracerForTest())
 		assert.True(t, hookRegistered)
 	})
 }
@@ -51,7 +52,7 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			&authntest.FakeService{}, nil,
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 		require.NoError(t, err)
@@ -61,7 +62,7 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			&authntest.FakeService{}, nil,
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{
 			ID:              "1",
@@ -86,7 +87,7 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			&authntest.FakeService{}, nil,
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
 		)
 		_, gotClaims, err := s.SignIdentity(context.Background(), &authn.Identity{
 			ID:              "1",
@@ -106,7 +107,7 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign new token if org role has changed", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			&authntest.FakeService{}, nil,
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
 		)
 
 		ident := &authn.Identity{

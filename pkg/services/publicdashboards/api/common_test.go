@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,31 +8,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/datasources/guardian"
-	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/query"
-	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -106,77 +89,4 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 	return recorder
-}
-
-// helper to query.Service
-// allows us to stub the cache and plugin clients
-func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store db.DB) *query.ServiceImpl {
-	//	build database if we need one
-	if store == nil {
-		store = db.InitTestDB(t)
-	}
-
-	// default cache service
-	if cs == nil {
-		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store, guardian.ProvideGuardian())
-	}
-
-	// default fakePluginClient
-	if fpc == nil {
-		fpc = &fakePluginClient{
-			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-				resp := backend.Responses{
-					"A": backend.DataResponse{
-						Frames: []*data.Frame{{}},
-					},
-				}
-				return &backend.QueryDataResponse{Responses: resp}, nil
-			},
-		}
-	}
-
-	ds := &fakeDatasources.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(),
-		localcache.ProvideService(), &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID: "mysql",
-					},
-				},
-			},
-		}, &fakeDatasources.FakeCacheService{}, ds,
-		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
-
-	return query.ProvideService(
-		setting.NewCfg(),
-		cs,
-		nil,
-		&fakeDataSourceRequestValidator{},
-		fpc,
-		pCtxProvider,
-	)
-}
-
-// copied from pkg/api/metrics_test.go
-type fakeDataSourceRequestValidator struct {
-	err error
-}
-
-func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
-	return rv.err
-}
-
-// copied from pkg/api/plugins_test.go
-type fakePluginClient struct {
-	plugins.Client
-	backend.QueryDataHandlerFunc
-}
-
-func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if c.QueryDataHandlerFunc != nil {
-		return c.QueryDataHandlerFunc.QueryData(ctx, req)
-	}
-
-	return backend.NewQueryDataResponse(), nil
 }

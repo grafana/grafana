@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, HorizontalGroup, ColorPicker, IconButton, Input, Button } from '@grafana/ui';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
@@ -58,8 +58,6 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       });
     }
   }, [mapping, inputRef, update]);
-
-  const { t } = useTranslate();
 
   const onChangeColor = (color: string) => {
     update((mapping) => {
@@ -122,12 +120,59 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   };
 
   const specialMatchOptions: Array<SelectableValue<SpecialValueMatch>> = [
-    { label: 'Null', value: SpecialValueMatch.Null, description: 'Matches null and undefined values' },
-    { label: 'NaN', value: SpecialValueMatch.NaN, description: 'Matches against Number.NaN (not a number)' },
-    { label: 'Null + NaN', value: SpecialValueMatch.NullAndNaN, description: 'Matches null, undefined and NaN' },
-    { label: 'True', value: SpecialValueMatch.True, description: 'Boolean true values' },
-    { label: 'False', value: SpecialValueMatch.False, description: 'Boolean false values' },
-    { label: 'Empty', value: SpecialValueMatch.Empty, description: 'Empty string' },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'Null',
+      value: SpecialValueMatch.Null,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-null-and-undefined-values',
+        'Matches null and undefined values'
+      ),
+    },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'NaN',
+      value: SpecialValueMatch.NaN,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-against-number-na-n-not-a-number',
+        'Matches against Number.NaN (not a number)'
+      ),
+    },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'Null + NaN',
+      value: SpecialValueMatch.NullAndNaN,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-null-undefined-and-na-n',
+        'Matches null, undefined and NaN'
+      ),
+    },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'True',
+      value: SpecialValueMatch.True,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.boolean-true-values',
+        'Boolean true values'
+      ),
+    },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'False',
+      value: SpecialValueMatch.False,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.boolean-false-values',
+        'Boolean false values'
+      ),
+    },
+    {
+      label: t('dimensions.value-mapping-edit-row.special-match-options.label.empty', 'Empty'),
+      value: SpecialValueMatch.Empty,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.empty-string',
+        'Empty string'
+      ),
+    },
   ];
 
   return (

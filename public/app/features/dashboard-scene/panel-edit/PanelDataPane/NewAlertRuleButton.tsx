@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService, logInfo } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
@@ -15,7 +15,7 @@ interface ScenesNewRuleFromPanelButtonProps {
 }
 export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRuleFromPanelButtonProps) => {
   const location = useLocation();
-  const { t } = useTranslate();
+
   const { loading, value: formValues } = useAsync(() => scenesPanelToRuleFormValues(panel), [panel]);
 
   if (loading) {

@@ -1,18 +1,19 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { useHasClonedParents } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
 import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
-  const { children, isHidden, isLazy } = model.useState();
+  const { children, isHidden } = model.useState();
   const hasClonedParents = useHasClonedParents(model);
   const styles = useStyles2(getStyles, model.state);
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
@@ -30,15 +31,9 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
       className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
       ref={model.containerRef}
     >
-      {children.map((item) =>
-        isLazy ? (
-          <LazyLoader key={item.state.key!} className={styles.container}>
-            <item.Component key={item.state.key} model={item} />
-          </LazyLoader>
-        ) : (
-          <item.Component key={item.state.key} model={item} />
-        )
-      )}
+      {children.map((item) => (
+        <item.Component key={item.state.key} model={item} />
+      ))}
       {showCanvasActions && <CanvasGridAddActions layoutManager={layoutManager} />}
     </div>
   );
@@ -68,31 +63,8 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
         }
       : undefined,
     // Show add action when hovering over the grid
-    '&:hover': {
-      '.dashboard-canvas-add-button': {
-        opacity: 1,
-        filter: 'unset',
-      },
-    },
+    ...dashboardCanvasAddButtonHoverStyles,
   }),
-  containerFillScreen: css({
-    flexGrow: 1,
-  }),
-  containerEditing: css({
-    paddingBottom: theme.spacing(5),
-    position: 'relative',
-  }),
-  wrapper: css({
-    display: 'grid',
-    position: 'relative',
-    width: '100%',
-    height: '100%',
-  }),
-  dragging: css({
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    zIndex: theme.zIndex.portal + 1,
-    pointerEvents: 'none',
-  }),
+  containerFillScreen: css({ flexGrow: 1 }),
+  containerEditing: css({ paddingBottom: theme.spacing(5), position: 'relative' }),
 });

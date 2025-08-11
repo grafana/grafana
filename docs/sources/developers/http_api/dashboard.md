@@ -474,7 +474,7 @@ Status Codes:
 
 Updates an existing dashboard via the dashboard uid.
 
-- namespace: to read more about the namespace to use, see the [API overview]({{< ref "apis" >}}).
+- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 - uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
 
 **Required permissions**
@@ -565,10 +565,8 @@ Status Codes:
 
 Gets a dashboard via the dashboard uid.
 
-- namespace: to read more about the namespace to use, see the [API overview]({{< ref "apis" >}}).
+- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 - uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
-
-Note: For large dashboards, add `/dto` to the end of the URL to get the full dashboard body.
 
 **Required permissions**
 
@@ -634,9 +632,7 @@ Status Codes:
 
 Lists all dashboards in the given organization. You can control the maximum number of dashboards returned through the `limit` query parameter. You can then use the `continue` token returned to fetch the next page of dashboards.
 
-- namespace: to read more about the namespace to use, see the [API overview]({{< ref "apis" >}}).
-
-Note: to read more about the namespace to use, see the [API overview]({{< ref "apis" >}}).
+- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
 **Required permissions**
 
@@ -713,7 +709,7 @@ Status Codes:
 
 Deletes a dashboard via the dashboard uid.
 
-- namespace: to read more about the namespace to use, see the [API overview]({{< ref "apis" >}}).
+- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 - uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
 
 **Required permissions**
@@ -853,7 +849,7 @@ Content-Type: application/json
 
 ## Dashboard Search
 
-See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search/" >}}).
+See [Folder/Dashboard Search API](../folder_dashboard_search/).
 
 ## APIs
 
@@ -1096,94 +1092,3 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Not found
-
-## Gets the home dashboard
-
-`GET /api/dashboards/home`
-
-Will return the home dashboard.
-
-**Example Request**:
-
-```http
-GET /api/dashboards/home HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "dashboard": {
-    "editable":false,
-    "nav":[
-      {
-        "enable":false,
-        "type":"timepicker"
-      }
-    ],
-    "style":"dark",
-    "tags":[],
-    "templating":{
-      "list":[
-      ]
-    },
-    "time":{
-    },
-    "timezone":"browser",
-    "title":"Home",
-    "version":5
-  },
-  "meta":	{
-    "isHome":true,
-    "canSave":false,
-    "canEdit":false,
-    "canStar":false,
-    "url":"",
-    "expires":"0001-01-01T00:00:00Z",
-    "created":"0001-01-01T00:00:00Z"
-  }
-}
-```
-
-## Tags for Dashboard
-
-`GET /api/dashboards/tags`
-
-Get all tags of dashboards
-
-**Example Request**:
-
-```http
-GET /api/dashboards/tags HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-[
-  {
-    "term":"tag1",
-    "count":1
-  },
-  {
-    "term":"tag2",
-    "count":4
-  }
-]
-```
-
-## Dashboard Search
-
-See [Folder/Dashboard Search API](../folder_dashboard_search/).

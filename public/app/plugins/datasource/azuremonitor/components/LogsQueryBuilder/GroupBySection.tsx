@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button } from '@grafana/ui';
 
@@ -10,7 +10,8 @@ import {
   BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { GroupByItem } from './GroupByItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -28,7 +29,6 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
   allColumns,
   templateVariableOptions,
 }) => {
-  const { t } = useTranslate();
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>(
@@ -106,6 +106,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
               />
             ) : (
               <Button
+                aria-label={t('components.group-by-section.aria-label-add-group-by', 'Add group by')}
                 variant="secondary"
                 icon="plus"
                 onClick={() =>

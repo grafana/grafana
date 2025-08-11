@@ -35,5 +35,26 @@
 
   "queryOptions": {
     "minInterval": true
-  }
+  },
+  "languages": [
+    "en-US",
+    "fr-FR",
+    "es-ES",
+    "de-DE",
+    "pt-BR",
+    "zh-Hans",
+    "it-IT",
+    "ja-JP",
+    "id-ID",
+    "ko-KR",
+    "ru-RU",
+    "cs-CZ",
+    "nl-NL",
+    "hu-HU",
+    "pt-PT",
+    "pl-PL",
+    "sv-SE",
+    "tr-TR",
+    "zh-Hant"
+  ]
 }

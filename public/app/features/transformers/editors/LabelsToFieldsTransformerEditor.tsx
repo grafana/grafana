@@ -9,15 +9,12 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { LabelsToFieldsMode, LabelsToFieldsOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
-
-const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
-  { value: LabelsToFieldsMode.Columns, label: 'Columns' },
-  { value: LabelsToFieldsMode.Rows, label: 'Rows' },
-];
+import darkImage from '../images/dark/labelsToFields.svg';
+import lightImage from '../images/light/labelsToFields.svg';
 
 export const LabelsAsFieldsTransformerEditor = ({
   input,
@@ -25,6 +22,17 @@ export const LabelsAsFieldsTransformerEditor = ({
   onChange,
 }: TransformerUIProps<LabelsToFieldsOptions>) => {
   const labelWidth = 20;
+
+  const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
+    {
+      value: LabelsToFieldsMode.Columns,
+      label: t('transformers.labels-as-fields-transformer-editor.modes.label.columns', 'Columns'),
+    },
+    {
+      value: LabelsToFieldsMode.Rows,
+      label: t('transformers.labels-as-fields-transformer-editor.modes.label.rows', 'Rows'),
+    },
+  ];
 
   const { labelNames, selected } = useMemo(() => {
     let labelNames: Array<SelectableValue<string>> = [];
@@ -48,8 +56,6 @@ export const LabelsAsFieldsTransformerEditor = ({
     const selected = new Set(options.keepLabels?.length ? options.keepLabels : Object.keys(uniqueLabels));
     return { labelNames, selected };
   }, [options.keepLabels, input]);
-
-  const { t } = useTranslate();
 
   const onValueLabelChange = (value: SelectableValue<string> | null) => {
     onChange({ ...options, valueLabel: value?.value });
@@ -135,13 +141,17 @@ export const LabelsAsFieldsTransformerEditor = ({
   );
 };
 
-export const labelsToFieldsTransformerRegistryItem: TransformerRegistryItem<LabelsToFieldsOptions> = {
+export const getLabelsToFieldsTransformerRegistryItem: () => TransformerRegistryItem<LabelsToFieldsOptions> = () => ({
   id: DataTransformerID.labelsToFields,
   editor: LabelsAsFieldsTransformerEditor,
   transformation: standardTransformers.labelsToFieldsTransformer,
-  name: standardTransformers.labelsToFieldsTransformer.name,
-  description: `Groups series by time and return labels or tags as fields.
-                Useful for showing time series with labels in a table where each label key becomes a separate column.`,
+  name: t('transformers.labels-to-fields-transformer-editor.name.labels-to-fields', 'Labels to fields'),
+  description: t(
+    'transformers.labels-to-fields-transformer-editor.description.groups-series-time-return-labels-tags-fields',
+    'Group series by time and return labels or tags as fields.'
+  ),
   categories: new Set([TransformerCategory.Reformat]),
   help: getTransformationContent(DataTransformerID.labelsToFields).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

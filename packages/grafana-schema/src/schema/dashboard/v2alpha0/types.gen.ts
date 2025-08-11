@@ -609,7 +609,7 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface GridLayoutSpec {
-	items: (GridLayoutItemKind | GridLayoutRowKind)[];
+	items: GridLayoutItemKind[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
@@ -669,42 +669,6 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 // other repeat modes will be added in the future: label, frame
 export const RepeatMode = "variable";
 
-export interface GridLayoutRowKind {
-	kind: "GridLayoutRow";
-	spec: GridLayoutRowSpec;
-}
-
-export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
-	kind: "GridLayoutRow",
-	spec: defaultGridLayoutRowSpec(),
-});
-
-export interface GridLayoutRowSpec {
-	y: number;
-	collapsed: boolean;
-	title: string;
-	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	elements: GridLayoutItemKind[];
-	repeat?: RowRepeatOptions;
-}
-
-export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
-	y: 0,
-	collapsed: false,
-	title: "",
-	elements: [],
-});
-
-export interface RowRepeatOptions {
-	mode: "variable";
-	value: string;
-}
-
-export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
-	value: "",
-});
-
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
 	spec: RowsLayoutSpec;
@@ -745,6 +709,16 @@ export interface RowsLayoutRowSpec {
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 export interface ConditionalRenderingGroupKind {

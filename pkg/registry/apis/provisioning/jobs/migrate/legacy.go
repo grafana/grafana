@@ -7,60 +7,55 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 )
 
 type LegacyMigrator struct {
 	legacyMigrator  LegacyResourcesMigrator
 	storageSwapper  StorageSwapper
 	syncWorker      jobs.Worker
-	wrapWithCloneFn WrapWithCloneFn
+	wrapWithStageFn WrapWithStageFn
 }
 
 func NewLegacyMigrator(
 	legacyMigrator LegacyResourcesMigrator,
 	storageSwapper StorageSwapper,
 	syncWorker jobs.Worker,
-	wrapWithCloneFn WrapWithCloneFn,
+	wrapWithStageFn WrapWithStageFn,
 ) *LegacyMigrator {
 	return &LegacyMigrator{
 		legacyMigrator:  legacyMigrator,
 		storageSwapper:  storageSwapper,
 		syncWorker:      syncWorker,
-		wrapWithCloneFn: wrapWithCloneFn,
+		wrapWithStageFn: wrapWithStageFn,
 	}
 }
 
 func (m *LegacyMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := rw.Config().Namespace
-
-	writer := gogit.Progress(func(line string) {
-		progress.SetMessage(ctx, line)
-	}, "finished")
-	cloneOptions := repository.CloneOptions{
-		PushOnWrites: options.History,
-		// TODO: make this configurable
-		Timeout:  10 * time.Minute,
-		Progress: writer,
-		BeforeFn: func() error {
-			progress.SetMessage(ctx, "clone repository")
-			return nil
-		},
-	}
-	pushOptions := repository.PushOptions{
-		// TODO: make this configurable
-		Timeout:  10 * time.Minute,
-		Progress: writer,
-		BeforeFn: func() error {
-			progress.SetMessage(ctx, "push changes")
-			return nil
-		},
+	var stageMode repository.StageMode
+	if options.History {
+		// When History is true, we want to commit and push each file (previous PushOnWrites: true)
+		stageMode = repository.StageModeCommitAndPushOnEach
+	} else {
+		// When History is false, we want to commit only once (previous CommitOnlyOnce: true)
+		stageMode = repository.StageModeCommitOnlyOnce
 	}
 
-	if err := m.wrapWithCloneFn(ctx, rw, cloneOptions, pushOptions, func(repo repository.Repository, cloned bool) error {
+	stageOptions := repository.StageOptions{
+		Mode:                  stageMode,
+		CommitOnlyOnceMessage: options.Message,
+		// TODO: make this configurable
+		Timeout: 10 * time.Minute,
+	}
+
+	// Fail if migrating at least one
+	progress.StrictMaxErrors(1)
+	progress.SetMessage(ctx, "migrating legacy resources")
+
+	if err := m.wrapWithStageFn(ctx, rw, stageOptions, func(repo repository.Repository, staged bool) error {
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
 			return errors.New("migration job submitted targeting repository that is not a ReaderWriter")

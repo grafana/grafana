@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestIsWriteAllowed(t *testing.T) {
@@ -134,6 +134,191 @@ func TestIsWriteAllowed(t *testing.T) {
 			wantErr:     true,
 			expectedErr: "this repository does not support the branch workflow",
 			statusCode:  http.StatusBadRequest,
+		},
+		{
+			name: "write workflow allowed on git repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			ref:     "",
+			wantErr: false,
+		},
+		{
+			name: "write allowed for configured branch of git repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "develop",
+					},
+				},
+			},
+			ref:     "develop",
+			wantErr: false,
+		},
+		{
+			name: "write not allowed for configured branch of git repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			ref:         "main",
+			wantErr:     true,
+			expectedErr: "this repository does not support the write workflow",
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			name: "write workflow not allowed for git repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			ref:         "",
+			wantErr:     true,
+			expectedErr: "this repository does not support the write workflow",
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			name: "branch workflow allowed on git repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
+			name: "branch workflow not allowed on git repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			ref:         "feature-branch",
+			wantErr:     true,
+			expectedErr: "this repository does not support the branch workflow",
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			name: "both workflows allowed on git repository - write workflow",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			ref:     "",
+			wantErr: false,
+		},
+		{
+			name: "both workflows allowed on git repository - branch workflow",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
+			name: "read only git repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			ref:         "",
+			wantErr:     true,
+			expectedErr: "this repository is read only",
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			name: "git repository with empty branch config - write workflow",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "",
+					},
+				},
+			},
+			ref:     "",
+			wantErr: false,
+		},
+		{
+			name: "git repository with empty branch config - branch workflow",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "",
+					},
+				},
+			},
+			ref:     "custom-branch",
+			wantErr: false,
+		},
+		{
+			name: "git repository without git config",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Git:       nil,
+				},
+			},
+			ref:     "",
+			wantErr: false,
 		},
 	}
 

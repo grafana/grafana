@@ -11,7 +11,7 @@ set -o pipefail
 
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 pushd "${SCRIPT_ROOT}/hack" && GO111MODULE=on go mod tidy && popd
-CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo $(go env GOPATH)/pkg/mod/k8s.io/code-generator@v0.32.0)}
+CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo $(go env GOPATH)/pkg/mod/k8s.io/code-generator@v0.33.1)}
 
 OUTDIR="${HOME}/go/src"
 OPENAPI_VIOLATION_EXCEPTIONS_FILENAME="zz_generated.openapi_violation_exceptions.list"
@@ -87,6 +87,7 @@ grafana::codegen:run pkg
 grafana::codegen:run pkg/apimachinery
 grafana::codegen:run pkg/aggregator
 grafana::codegen:run apps/dashboard/pkg
+grafana::codegen:run apps/provisioning/pkg
 grafana::codegen:run apps/folder/pkg
 
 if [ -d "pkg/extensions/apis" ]; then

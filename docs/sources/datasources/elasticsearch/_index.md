@@ -65,11 +65,11 @@ Our maintenance policy for Elasticsearch data source is aligned with the [Elasti
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-grafana).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
 You should now use the `index` field in `jsonData` to store the index name.
 Please see the examples below.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Provisioning examples
 

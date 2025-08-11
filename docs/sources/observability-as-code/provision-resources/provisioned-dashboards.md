@@ -15,8 +15,8 @@ weight: 300
 
 # Work with provisioned dashboards
 
-{{< admonition type="note" >}}
-Git Sync and File path provisioning an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana. These features aren't available publicly in Grafana Cloud yet.
+{{< admonition type="caution" >}}
+Git Sync and File path provisioning an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana. These features aren't available publicly in Grafana Cloud yet. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
 
 Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 
@@ -97,7 +97,6 @@ Saving changes requires opening a pull request in your GitHub repository.
 1. Click **Save dashboard**.
 
 1. On the **Provisioned dashboard** panel, choose the options you want to use:
-
    - **Update default refresh value**: Check this box to make the current refresh the new default.
    - **Update default variable values**: Check this box to make the current values the new default.
    - **Path**: Provide the path for your repository, ending in a JSON or YAML file.

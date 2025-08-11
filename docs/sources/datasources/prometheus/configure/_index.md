@@ -61,6 +61,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
+  manage-recording-rules-toggle:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_allow_recording_rules_target_alerts_ui_toggle
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_allow_recording_rules_target_alerts_ui_toggle
   private-data-source-connect:
     - pattern: /docs/grafana/
       destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
@@ -81,6 +86,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+  grafana-managed-recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
 ---
 
 # Configure the Prometheus data source
@@ -138,7 +148,6 @@ Use the IP address of the Prometheus container, or the hostname if you are using
 There are three authentication options for the Prometheus data source.
 
 - **Basic authentication** - The most common authentication method.
-
   - **User** - The username you use to connect to the data source.
   - **Password** - The password you use to connect to the data source.
 
@@ -179,6 +188,8 @@ Following are optional configuration settings you can configure for more control
 
 - **Manage alerts via Alerting UI** -Toggled on by default. This enables [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed. Change this by setting the [`default_manage_alerts_ui_toggle`](ref:manage-alerts-toggle) option in the `grafana.ini` configuration file.
 
+- **Allow as recording rules target** - Toggled on by default. This allows the data source to be selected as a target destination for writing [Grafana-managed recording rules](ref:grafana-managed-recording-rules). When enabled, this data source will appear in the target data source list when creating or importing recording rules. When disabled, the data source will be filtered out from recording rules target selection. Change this by setting the [`default_allow_recording_rules_target_alerts_ui_toggle`](ref:manage-recording-rules-toggle) option in the `grafana.ini` configuration file.
+
 **Interval behavior:**
 
 - **Scrape interval** - Sets the standard scrape and evaluation interval in Prometheus. The default is `15s`. This interval determines how often Prometheus scrapes targets. Set it to match the typical scrape and evaluation interval in your Prometheus configuration file. If you set a higher value than your Prometheus configuration, Grafana will evaluate data at this interval, resulting in fewer data points.
@@ -202,6 +213,7 @@ Following are optional configuration settings you can configure for more control
 - **Custom query parameters** - Add custom parameters to the Prometheus query URL, which allow for more control over how queries are executed. Examples: `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be joined using `&`.
 - **HTTP method** - Select either the `POST` or `GET` HTTP method to query your data source. `POST`is recommended and selected by default, as it supports larger queries. Select `GET` if you're using Prometheus version 2.1 or older, or if your network restricts `POST` requests.
   Toggle on
+- **Series limit** - Number of maximum returned series. The limit applies to all resources (metrics, labels, and values) for both endpoints (series and labels). Leave the field empty to use the default limit (40000). Set to 0 to disable the limit and fetch everything — this may cause performance issues. Default limit is 40000.
 - **Use series endpoint** - Enabling this option makes Grafana use the series endpoint (/api/v1/series) with the match[] parameter instead of the label values endpoint (/api/v1/label/<label_name>/values). While the label values endpoint is generally more performant, some users may prefer the series endpoint because it supports the `POST` method, whereas the label values endpoint only allows `GET` requests.
 
 **Exemplars:**
@@ -254,6 +266,7 @@ After you have provisioned a data source you cannot edit it.
         jsonData:
           httpMethod: POST
           manageAlerts: true
+          allowAsRecordingRulesTarget: true
           prometheusType: Prometheus
           prometheusVersion: 3.3.0
           cacheLevel: 'High'
@@ -284,9 +297,9 @@ Add the following setting in the **[auth]** section of the .ini configuration fi
 azure_auth_enabled = true
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Recording rules (beta)
 

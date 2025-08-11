@@ -4,7 +4,7 @@ import { FC, ReactElement, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -18,7 +18,7 @@ export function RuleListErrors(): ReactElement {
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const errors = useMemo((): JSX.Element[] => {
     const [promRequestErrors, rulerRequestErrors] = [promRuleRequests, rulerRuleRequests].map((requests) =>
       getRulesDataSources().reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
@@ -95,7 +95,7 @@ export function RuleListErrors(): ReactElement {
     );
 
     return result;
-  }, [promRuleRequests, rulerRuleRequests, styles.dsLink, t]);
+  }, [promRuleRequests, rulerRuleRequests, styles.dsLink]);
 
   return (
     <>
@@ -144,7 +144,7 @@ interface ErrorSummaryProps {
 
 const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <div className={styles.floatRight}>
       <Tooltip

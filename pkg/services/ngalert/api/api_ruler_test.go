@@ -216,7 +216,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()))
+			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()), gen.WithUpdatedBy(util.Pointer(models.UserUID("test-user"))))
 			queryAccessRules := folderGen.GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), queryAccessRules...)
 			noQueryAccessRules := folderGen.GenerateManyRef(2, 6)
@@ -974,7 +974,6 @@ func createService(store *fakes.RuleStore, _userService *usertest.FakeUserServic
 		authz:              accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		amConfigStore:      &fakeAMRefresher{},
 		amRefresher:        &fakeAMRefresher{},
-		featureManager:     featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
 		userService:        userService,
 		conditionValidator: &recordingConditionValidator{},
 	}

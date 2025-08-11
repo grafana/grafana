@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { UserOrg } from 'app/types';
+import { UserOrg } from 'app/types/user';
 
 export interface OrganizationBaseProps {
   orgs: UserOrg[];

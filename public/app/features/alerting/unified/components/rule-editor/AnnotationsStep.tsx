@@ -5,10 +5,11 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
+import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
@@ -55,7 +56,6 @@ const AnnotationsStep = () => {
     const currentPanel = allPanels.find((panel) => panel.id === selectedPanelId);
     setSelectedPanel(currentPanel);
   }, [selectedPanelId, dashboardModel, isDashboardFetching]);
-  const { t } = useTranslate();
 
   const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: number) => {
     const updatedAnnotations = produce(annotations, (draft) => {
@@ -139,6 +139,7 @@ const AnnotationsStep = () => {
       fullWidth
     >
       <Stack direction="column" gap={1}>
+        {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
@@ -174,6 +175,7 @@ const AnnotationsStep = () => {
                       className={cx(styles.flexRowItemMargin, styles.field)}
                       invalid={!!errors.annotations?.[index]?.value?.message}
                       error={errors.annotations?.[index]?.value?.message}
+                      noMargin
                     >
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
@@ -182,7 +184,7 @@ const AnnotationsStep = () => {
                         {...register(`annotations.${index}.value`)}
                         placeholder={
                           isUrl
-                            ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                            ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                               'https://'
                             : (annotationField.key &&
                                 t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {

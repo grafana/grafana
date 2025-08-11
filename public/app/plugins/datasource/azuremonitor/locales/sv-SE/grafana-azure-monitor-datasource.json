@@ -1,0 +1,311 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "Avancerat"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "Lägg till",
+      "aria-label-remove": "Ta bort",
+      "button-add-resource": "Lägg till resurs",
+      "button-add-resource-uri": "Lägg till resurs-URI",
+      "label-namespace": "Namnområde",
+      "label-region": "Region",
+      "label-resource-group": "Resursgrupp",
+      "label-resource-name": "Rättigheter",
+      "label-resource-number": "Resurs {{resourceNum}}",
+      "label-resource-uri": "Resurs-URI ",
+      "label-subscription": "Prenumeration",
+      "placeholder-resource-name": "namn",
+      "tooltip-region": "Resursens kodregion. Valfritt för en enskild resurs men obligatoriskt vid val av flera.",
+      "tooltip-resource-uri": "Redigera <2>resursens URI</2> manuellt. Stöder användning av flera mallvariabler (t.ex.: /subscriptions/$subId/resourceGroups/$rg)"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "Aggregeringsfunktion",
+      "aria-label-column": "Kolumn",
+      "aria-label-remove": "Ta bort",
+      "label-percentile": "AV"
+    },
+    "aggregate-section": {
+      "label-aggregate": "Aggregat",
+      "tooltip-aggregate": "Utför beräkningar över rader av data, till exempel antal, summa, genomsnitt, minimum, maximum, standardavvikelse eller percentiler."
+    },
+    "aggregation-field": {
+      "label-aggregation": "Aggregering"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "Kund-ID",
+      "aria-label-client-secret": "Kundhemlighet",
+      "aria-label-symbol-client-secret": "Kundhemlighet",
+      "aria-label-tenant-id": "Tenant ID",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "Program- (klient-) ID",
+      "label-client-secret": "Kundhemlighet",
+      "label-symbol-client-secret": "Kundhemlighet",
+      "label-tenant-id": "Katalog- (klientorganisations-) ID",
+      "placeholder-symbol-client-secret": "konfigurerad",
+      "reset-symbol-client-secret": "Återställ"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "{{queryDisplayName}} rå fråga",
+      "aria-label-use-query": "Använd denna frågeknapp",
+      "button-use-query": "Använd denna fråga",
+      "label-categories": "Kategorier",
+      "label-query-results": "Resultat av fråga: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "Alla kategorier",
+      "placeholder-search-logs": "Sök loggfrågor",
+      "text-loading": "Laddar …"
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "Kickstarta din frågemodal",
+      "title-kick-start": "Kickstarta din fråga"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "Välj typ av autentisering till Azure-tjänster",
+      "label-authentication": "Autentisering",
+      "title-authentication": "Autentisering"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "Grundläggande loggar",
+      "description-basic-logs": "Om den här funktionen aktiveras medför det Azure Monitor-kostnader per fråga för instrumentpanelspaneler som frågar tabeller konfigurerade för <2>basloggar</2>.",
+      "label-enable-basic-logs": "Aktivera basloggar"
+    },
+    "config-editor": {
+      "description-additional-settings": "",
+      "title-additional-settings": "Ytterligare inställningar"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "Reservautentiseringsuppgifter har inaktiverats. Eftersom användarbaserad autentisering i grunden endast stöder förfrågningar som är kopplade till en enskild användare kommer funktioner som aviseringar, registrerade frågor eller rapportering inte att fungera som förväntat. Läs <2>dokumentationen</2> för mer information.",
+      "body-service-credentials": "Användarbaserad autentisering stöder inte i grunden Grafana-funktioner som gör förfrågningar till datakällan utan att en användares uppgifter finns tillgängliga för förfrågan. Ett exempel på detta är larm. Om du vill säkerställa att funktioner som saknar en användare i begärans kontext ändå fungerar ska du ange reservuppgifter nedan.",
+      "description-authentication": "Välj typ av autentisering till Azure-tjänster",
+      "description-service-credentials": "Välj om reservuppgifter ska vara aktiverade eller inaktiverade för denna datakälla",
+      "label-authentication": "Autentisering",
+      "label-service-credentials": "Tjänsteautentiseringsuppgifter",
+      "note-service-credentials": "Obs! Funktioner som till exempel aviseringar kommer att begränsas till reservuppgifternas åtkomstnivå snarare än användarens. Det kan skapa förvirring för användarna och bör förtydligas.",
+      "title-fallback-credentials-disabled": "Reservautentiseringsuppgifter inaktiverade",
+      "title-fallback-service-credentials": "Reservautentiseringsuppgifter för tjänster",
+      "title-service-credentials": "Tjänsteautentiseringsuppgifter"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "Standardprenumeration",
+      "label-default-subscription": "Standardprenumeration",
+      "load-subscriptions": "Ladda prenumerationer"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "Ta bort",
+      "label-dimensions": "Mått",
+      "placeholder-field": "Fält",
+      "placeholder-operation": "Drift",
+      "placeholder-select-value": "Välj värde",
+      "placeholder-select-values": "Välj värde(n)"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "{{type}} föråldrades i Grafana 9. Se <3>Meddelande om föråldrad funktion</3> för mer information om migrering av dina frågor. Detta är den aktuella frågedefinitionen:",
+      "title-unknown-query-type": "Okänd frågetyp"
+    },
+    "filter": {
+      "aria-label-remove-filter": "Ta bort filter",
+      "placeholder-property": "Fastighet",
+      "placeholder-value": "Värde"
+    },
+    "filter-item": {
+      "aria-label-column": "Kolumn",
+      "aria-label-column-value": "Kolumnvärde",
+      "aria-label-operator": "Operatör",
+      "aria-label-remove-filter": "",
+      "label-or": "ELLER"
+    },
+    "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
+      "label-add-group": "Skapa grupp",
+      "label-and": "OCH",
+      "label-filters": "Filter",
+      "tooltip-filters": "Begränsa resultaten genom att tillämpa villkor på specifika kolumner."
+    },
+    "filters": {
+      "label-filters": "Filter"
+    },
+    "format-as-field": {
+      "label-format-as": "Formatera som"
+    },
+    "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
+      "aria-label-select-column": "Välj kolumn",
+      "label-fuzzy-search": "Fuzzy-sökning",
+      "placeholder-search-team": "Ange en sökterm",
+      "tooltip-fuzzy-search": "Hitta ungefärliga textmatchningar med tolerans för stavningsvariationer. Som standard skannar fuzzy-sökning alla kolumner (*) i hela tabellen, inte bara specifika fält."
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Funktion för Grafanas mallvariabler",
+      "placeholder-grafana-template-variable": "Skriv en Grafana mallvariabelfunktion, t.ex. {{example}}"
+    },
+    "group-by-item": {
+      "aria-label-column": "Kolumn",
+      "aria-label-remove": "Ta bort"
+    },
+    "group-by-section": {
+      "aria-label-add-group-by": "",
+      "label-group-by": "Gruppera efter",
+      "tooltip-group-by": "Organisera resultat i kategorier baserat på angivna kolumner. Gruppera efter kan användas fristående för att lista unika värden i valda kolumner, eller kombineras med aggregeringsfunktioner för att skapa sammanfattande statistik för varje grupp. Vid fristående användning returnerar den unika kombinationer av de angivna kolumnerna."
+    },
+    "kql-preview": {
+      "button-hide": "Dölj",
+      "button-show": "Visa",
+      "label-query-preview": "Förhandsgranskning av fråga"
+    },
+    "legend-format-field": {
+      "label-legend-format": "Format för förklaring",
+      "placeholder-legend-format": "Alias-mönster"
+    },
+    "limit-section": {
+      "label-limit": "Gräns",
+      "placeholder-limit": "Ange gräns",
+      "tooltip-limit": "Begränsa antalet rader som returneras (standard är 1 000)."
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "Grundläggande loggfrågor medför kostnader baserat på mängden data som skannas.",
+      "label-logs": "Loggar",
+      "title-basic-logs-queries": "Grundläggande loggfrågor",
+      "tooltip-logs": "Anger om en grundläggande eller analytisk loggfråga ska köras."
+    },
+    "logs-query-builder": {
+      "title-no-tables": "Resursen laddades utan några tabeller"
+    },
+    "logs-query-editor": {
+      "learn-more": "Läs mer",
+      "view-query": "Visa fråga i Azure Portal"
+    },
+    "metric-name-field": {
+      "label-metric": "Mått"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "Mätvärdesnamnrymd"
+    },
+    "nested-row": {
+      "text-loading": "Laddar …"
+    },
+    "order-by-section": {
+      "aria-label-add-order-by": "",
+      "aria-label-order-by-column": "Ordna efter kolumn",
+      "aria-label-order-direction": "Sorteringsordning",
+      "aria-label-remove-order-by": "",
+      "label-by": "AV",
+      "label-order-by": "Ordnad efter",
+      "tooltip-order-by": "Sortera resultat baserat på en eller flera kolumner i stigande eller fallande ordning."
+    },
+    "query-editor": {
+      "alert-error-occurred": "Ett fel uppstod vid begäran av metadata från Azure Monitor"
+    },
+    "query-header": {
+      "aria-label-kick-start": "Knapp för att kickstarta Azure-loggfrågor",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "Kickstarta din fråga",
+      "button-run-query": "Kör fråga",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "Service",
+      "placeholder-service": "Service …",
+      "title-switch-mode": "Växla redigeringsläge?"
+    },
+    "raw-query": {
+      "aria-label-selector": "Väljare"
+    },
+    "resource-field": {
+      "label-resource": "Resurs",
+      "title-select-resource": "Välj en resurs"
+    },
+    "resource-label": {
+      "select-resource": "Välj en resurs"
+    },
+    "resource-picker": {
+      "button-apply": "Tillämpa",
+      "button-cancel": "Avbryt",
+      "header-location": "Plats",
+      "header-scope": "Omfattning",
+      "header-type": "Typ",
+      "heading-selection": "Urval",
+      "result-limit": "Visar de första {{numResults}} resultaten",
+      "text-loading": "Laddar …",
+      "text-no-resources": "Inga resurser hittades",
+      "title-error-occurred": "Ett fel uppstod vid begäran av resurser från Azure Monitor"
+    },
+    "scope-selector": {
+      "label": ""
+    },
+    "search": {
+      "aria-label-resource-search": "Resurssökning",
+      "placeholder-resource-search": "Sök efter en resurs"
+    },
+    "subscription-field": {
+      "label-subscriptions": "Prenumerationer",
+      "validation-subscriptions": "Minst en prenumeration måste väljas."
+    },
+    "table-section": {
+      "aria-label-columns": "Kolumner",
+      "aria-label-table": "Tabell",
+      "label-columns": "Kolumner",
+      "label-table": "Tabell",
+      "placeholder-select-columns": "Välj kolumner",
+      "placeholder-select-table": "Välj en tabell",
+      "tooltip-remove-all-columns": ""
+    },
+    "time-grain-field": {
+      "label-time-grain": "Tidsgranularitet"
+    },
+    "time-management": {
+      "label-time-column": "Tidskolumn",
+      "label-time-range": "Tidsintervall",
+      "tooltip-time-column": "<0>Anger tidskolumnen som används för filtrering. Standardinställningen är den första tabellens <1>timeSpan</1>-kolumn, den första <3>datetime</3>-kolumnen som hittas eller <5>TimeGenerated</5>.</0>",
+      "tooltip-time-range": "<0>Anger tidsintervallet som används för att fråga. Alternativet <1>Fråga</1> använder endast de tidsintervall som anges i frågan. <3>Instrumentpanelen</3> kommer endast att använda Grafanas tidsintervall. I Logs Builder-läget kommer endast instrumentpanelens tid att användas.</0>"
+    },
+    "top-field": {
+      "label-top": "Topp"
+    },
+    "trace-type-field": {
+      "label-event-type": "Händelsetyp",
+      "placeholder-event-type": "Välj händelsetyper"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "Operations-ID"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "Användning av den här datakällan kräver att du autentiseras via Azure Entra (tidigare Azure Active Directory). Läs <2>dokumentationen</2> för mer information.",
+      "title-unsupported-auth": "Autentiseringsleverantör som inte stöds"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "Datakällans backend-funktioner (som aviseringar) kräver tjänsteautentiseringduppgifter för att fungera. Denna datakälla har konfigurerats utan reservautentiseringsuppgifter för tjänsten, eller så är reservfunktionen inaktiverad. Läs <2>dokumentationen</2> för mer information.",
+      "title-no-fallback-credentials": "Inga reservautentiseringsuppgifter tillgängliga"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "Välj anpassat namnutrymme",
+      "aria-label-select-namespace": "Välj namnutrymme",
+      "aria-label-select-query-type": "Välj typ av fråga",
+      "aria-label-select-region": "Välj region",
+      "aria-label-select-resource": "Välj resurs",
+      "aria-label-select-resource-group": "Välj resursgrupp",
+      "aria-label-select-subscription": "Välj prenumeration",
+      "label-custom-namespace": "Anpassat namnområde",
+      "label-namespace": "Namnområde",
+      "label-query-type": "Typ av fråga",
+      "label-region": "Region",
+      "label-resource": "Resurs",
+      "label-resource-group": "Resursgrupp",
+      "label-resource-type": "Resurstyp",
+      "label-subscription": "Prenumeration",
+      "placeholder-custom-namespace": "Valfritt",
+      "placeholder-namespace": "Valfritt",
+      "placeholder-region": "Valfritt",
+      "placeholder-resource-group": "Valfritt",
+      "title-error-occurred": "Ett fel uppstod vid begäran av metadata från Azure Monitor"
+    }
+  }
+}

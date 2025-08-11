@@ -1,6 +1,7 @@
 import { isString as _isString } from 'lodash';
 
 import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel, dateTimeAsMoment } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
@@ -23,8 +24,8 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
 
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Remove panel',
-        text: 'Are you sure you want to remove this panel?',
+        title: t('dashboard.remove-panel.title.remove-panel', 'Remove panel'),
+        text: t('dashboard.remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
         icon: 'trash-alt',
         confirmText: confirmText,
         yesText: 'Remove',

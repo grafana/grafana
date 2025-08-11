@@ -1,10 +1,12 @@
-import { sortBy } from 'lodash';
+import { isString, sortBy } from 'lodash';
 
 import { Labels, UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
   alertInstanceKey,
@@ -32,7 +34,12 @@ import {
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
-import { SupportedErrors, getErrorMessageFromCode, isApiMachineryError } from './k8s/errors';
+import {
+  KnownErrorCodes,
+  getErrorMessageFromApiMachineryErrorResponse,
+  getErrorMessageFromCode,
+  isApiMachineryError,
+} from './k8s/errors';
 import { getMatcherQueryParams } from './matchers';
 import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
@@ -193,6 +200,17 @@ export function makePanelLink(dashboardUID: string, panelId: string): string {
   return createRelativeUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
+export function makeEditContactPointLink(name: string, options?: Record<string, string>) {
+  return createRelativeUrl(`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`, options);
+}
+
+export function makeEditTimeIntervalLink(name: string, options?: Record<string, string>) {
+  return createRelativeUrl('/alerting/routes/mute-timing/edit', {
+    ...options,
+    muteName: name,
+  });
+}
+
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
 export function retryWhile<T, E = Error>(
   fn: () => Promise<T>,
@@ -269,15 +287,20 @@ export function isErrorLike(error: unknown): error is Error {
   return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
-export function getErrorCode(error: Error): unknown {
+export function getErrorCode(error: unknown): string | undefined {
   if (isApiMachineryError(error) && error.data.details) {
     return error.data.details.uid;
   }
-  return error.cause;
+
+  if (isErrorLike(error) && isString(error.cause)) {
+    return error.cause;
+  }
+
+  return;
 }
 
 /* this function will check if the error passed as the first argument contains an error code */
-export function isErrorMatchingCode(error: Error | undefined, code: SupportedErrors): boolean {
+export function isErrorMatchingCode(error: Error | undefined, code: KnownErrorCodes): boolean {
   if (!error) {
     return false;
   }
@@ -288,8 +311,8 @@ export function isErrorMatchingCode(error: Error | undefined, code: SupportedErr
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
-    if (isApiMachineryError(error) && error.data.details) {
-      const message = getErrorMessageFromCode(error.data.details.uid);
+    if (isApiMachineryError(error)) {
+      const message = getErrorMessageFromApiMachineryErrorResponse(error);
       if (message) {
         return message;
       }
@@ -298,9 +321,20 @@ export function stringifyErrorLike(error: unknown): string {
     if (error.message) {
       return error.message;
     }
+
     if ('message' in error.data && typeof error.data.message === 'string') {
-      return error.data.message;
+      const status = getStatusFromError(error);
+      const message = getMessageFromError(error);
+
+      const config = getRequestConfigFromError(error);
+
+      return t('alerting.errors.failedWith', '{{-config}} failed with {{status}}: {{-message}}', {
+        config,
+        status,
+        message,
+      });
     }
+
     if (error.statusText) {
       return error.statusText;
     }

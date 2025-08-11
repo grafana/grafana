@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -14,7 +14,6 @@ const AddToDashboard = lazy(() =>
 );
 
 export function BasicExtensions(props: ExtensionDropdownProps) {
-  const { t } = useTranslate();
   const { exploreId, links, setSelectedExtension, setIsModalOpen, isModalOpen, noQueriesInPane } = props;
   // If we only have the explore core extension point registered we show the old way of
   // adding a query to a dashboard.

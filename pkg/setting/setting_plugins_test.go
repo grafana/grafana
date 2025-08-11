@@ -172,12 +172,12 @@ func Test_readPluginSettings(t *testing.T) {
 			{
 				name:     "should add the default preinstalled plugin and the one defined",
 				rawInput: "plugin1",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: ""}),
 			},
 			{
 				name:     "should add the default preinstalled plugin and the one defined with version",
 				rawInput: "plugin1@1.0.0",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "1.0.0", ""}),
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "1.0.0", URL: ""}),
 			},
 			{
 				name:           "it should remove the disabled plugin",
@@ -207,12 +207,12 @@ func Test_readPluginSettings(t *testing.T) {
 			{
 				name:     "should parse a plugin with version and URL",
 				rawInput: "plugin1@1.0.1@https://example.com/plugin1.tar.gz",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "1.0.1", "https://example.com/plugin1.tar.gz"}),
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "1.0.1", URL: "https://example.com/plugin1.tar.gz"}),
 			},
 			{
 				name:     "should parse a plugin with URL",
 				rawInput: "plugin1@@https://example.com/plugin1.tar.gz",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", "https://example.com/plugin1.tar.gz"}),
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://example.com/plugin1.tar.gz"}),
 			},
 			{
 				name:         "when preinstall_async is false, should add all plugins to preinstall_sync",
@@ -236,6 +236,13 @@ func Test_readPluginSettings(t *testing.T) {
 					}
 					return plugins
 				}(),
+			},
+			{
+				name:         "when same plugin is defined in preinstall and preinstall_sync, should be only in preinstallSync",
+				rawInput:     "plugin1",
+				rawInputSync: "plugin1",
+				expected:     defaultPreinstallPluginsList,
+				expectedSync: []InstallPlugin{{ID: "plugin1"}},
 			},
 		}
 		for _, tc := range tests {
@@ -271,4 +278,152 @@ func Test_readPluginSettings(t *testing.T) {
 			})
 		}
 	})
+}
+
+func Test_migrateInstallPluginsToPreinstallPluginsSync(t *testing.T) {
+	tests := []struct {
+		name                string
+		installPluginsVal   string
+		installPluginsForce string
+		preinstallPlugins   map[string]InstallPlugin
+		expectedPlugins     map[string]InstallPlugin
+	}{
+		{
+			name:              "should return empty map when GF_INSTALL_PLUGINS is not set",
+			installPluginsVal: "",
+			preinstallPlugins: map[string]InstallPlugin{},
+			expectedPlugins:   map[string]InstallPlugin{},
+		},
+		{
+			name:              "should parse URL with folder format",
+			installPluginsVal: "https://grafana.com/grafana/plugins/grafana-piechart-panel/;grafana-piechart-panel",
+			preinstallPlugins: map[string]InstallPlugin{},
+			expectedPlugins: map[string]InstallPlugin{
+				"grafana-piechart-panel": {
+					ID:      "grafana-piechart-panel",
+					Version: "",
+					URL:     "https://grafana.com/grafana/plugins/grafana-piechart-panel/",
+				},
+			},
+		},
+		{
+			name:              "should parse mixed formats",
+			installPluginsVal: "https://github.com/VolkovLabs/business-links/releases/download/v1.2.1/volkovlabs-links-panel-1.2.1.zip;volkovlabs-links-panel,marcusolsson-static-datasource,volkovlabs-variable-panel",
+			preinstallPlugins: map[string]InstallPlugin{},
+			expectedPlugins: map[string]InstallPlugin{
+				"volkovlabs-links-panel": {
+					ID:      "volkovlabs-links-panel",
+					Version: "",
+					URL:     "https://github.com/VolkovLabs/business-links/releases/download/v1.2.1/volkovlabs-links-panel-1.2.1.zip",
+				},
+				"marcusolsson-static-datasource": {
+					ID:      "marcusolsson-static-datasource",
+					Version: "",
+					URL:     "",
+				},
+				"volkovlabs-variable-panel": {
+					ID:      "volkovlabs-variable-panel",
+					Version: "",
+					URL:     "",
+				},
+			},
+		},
+		{
+			name:              "should parse ID with version format",
+			installPluginsVal: "volkovlabs-links-panel 1.2.1,marcusolsson-static-datasource 1.0.0,volkovlabs-variable-panel",
+			preinstallPlugins: map[string]InstallPlugin{},
+			expectedPlugins: map[string]InstallPlugin{
+				"volkovlabs-links-panel": {
+					ID:      "volkovlabs-links-panel",
+					Version: "1.2.1",
+					URL:     "",
+				},
+				"marcusolsson-static-datasource": {
+					ID:      "marcusolsson-static-datasource",
+					Version: "1.0.0",
+					URL:     "",
+				},
+				"volkovlabs-variable-panel": {
+					ID:      "volkovlabs-variable-panel",
+					Version: "",
+					URL:     "",
+				},
+			},
+		},
+		{
+			name:                "should return empty map when GF_INSTALL_PLUGINS_FORCE is true",
+			installPluginsVal:   "grafana-piechart-panel",
+			installPluginsForce: "true",
+			preinstallPlugins:   map[string]InstallPlugin{},
+			expectedPlugins:     map[string]InstallPlugin{},
+		},
+		{
+			name:              "should skip plugins that are already configured",
+			installPluginsVal: "plugin1 1.0.0,plugin2,plugin3",
+			preinstallPlugins: map[string]InstallPlugin{
+				"plugin1": {ID: "plugin1", Version: "1.0.1"},
+				"plugin3": {ID: "plugin3"},
+			},
+			expectedPlugins: map[string]InstallPlugin{
+				"plugin2": {
+					ID: "plugin2",
+				},
+				"plugin3": {
+					ID: "plugin3",
+				},
+				"plugin1": {
+					ID:      "plugin1",
+					Version: "1.0.1",
+				},
+			},
+		},
+		{
+			name:              "should trim the space in the input",
+			installPluginsVal: " plugin1 1.0.0,  plugin2, plugin3   ",
+			preinstallPlugins: map[string]InstallPlugin{},
+			expectedPlugins: map[string]InstallPlugin{
+				"plugin2": {
+					ID: "plugin2",
+				},
+				"plugin3": {
+					ID: "plugin3",
+				},
+				"plugin1": {
+					ID:      "plugin1",
+					Version: "1.0.0",
+				},
+			},
+		},
+		{name: "parse private plugin",
+			installPluginsVal: "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.0+linux.zip;our-plugin-datasource 1.2.0",
+			preinstallPlugins: map[string]InstallPlugin{},
+			expectedPlugins: map[string]InstallPlugin{
+				"our-plugin-datasource": {
+					ID:      "our-plugin-datasource",
+					Version: "1.2.0",
+					URL:     "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.0+linux.zip",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+
+			cfg.migrateInstallPluginsToPreinstallPluginsSync(tc.installPluginsVal, tc.installPluginsForce, tc.preinstallPlugins)
+			assert.Equal(t, len(tc.expectedPlugins), len(tc.preinstallPlugins), "Number of plugins doesn't match")
+
+			// Check each expected plugin exists with correct values
+			for id, expectedPlugin := range tc.expectedPlugins {
+				actualPlugin, exists := tc.preinstallPlugins[id]
+				assert.True(t, exists, "Expected plugin %s not found", id)
+				if exists {
+					assert.Equal(t, expectedPlugin.ID, actualPlugin.ID, "Plugin ID mismatch for %s", id)
+					assert.Equal(t, expectedPlugin.Version, actualPlugin.Version, "Plugin version mismatch for %s", id)
+					assert.Equal(t, expectedPlugin.URL, actualPlugin.URL, "Plugin URL mismatch for %s", id)
+				}
+			}
+		})
+	}
 }

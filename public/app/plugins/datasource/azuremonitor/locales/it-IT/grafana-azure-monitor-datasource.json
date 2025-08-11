@@ -1,0 +1,311 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "Avanzate"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "Aggiungi",
+      "aria-label-remove": "Rimuovi",
+      "button-add-resource": "Aggiungi risorsa",
+      "button-add-resource-uri": "Aggiungi URI risorsa",
+      "label-namespace": "Namespace",
+      "label-region": "Regione",
+      "label-resource-group": "Gruppi risorse",
+      "label-resource-name": "Nome risorsa",
+      "label-resource-number": "Risorsa {{resourceNum}}",
+      "label-resource-uri": "URI risorsa/e ",
+      "label-subscription": "Abbonamento",
+      "placeholder-resource-name": "nome",
+      "tooltip-region": "La parte di codice della risorsa. Facoltativo per una risorsa ma obbligatorio quando se ne selezionano più di una.",
+      "tooltip-resource-uri": "Modifica manualmente l'<2>URI della risorsa</2>. Supporta l'uso di più variabili di modello (ad esempio: /subscriptions/$subId/resourceGroups/$rg)"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "Funzione aggregata",
+      "aria-label-column": "Colonna",
+      "aria-label-remove": "Rimuovi",
+      "label-percentile": "DI"
+    },
+    "aggregate-section": {
+      "label-aggregate": "Aggregato",
+      "tooltip-aggregate": "Esegui calcoli su righe di dati, come conteggio, somma, media, minimo, massimo, deviazione standard o percentili."
+    },
+    "aggregation-field": {
+      "label-aggregation": "Aggregazione"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "ID client",
+      "aria-label-client-secret": "Segreto client",
+      "aria-label-symbol-client-secret": "Segreto client",
+      "aria-label-tenant-id": "ID Tenant",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "ID applicazione (client)",
+      "label-client-secret": "Segreto client",
+      "label-symbol-client-secret": "Segreto client",
+      "label-tenant-id": "ID directory (tenant)",
+      "placeholder-symbol-client-secret": "configurato",
+      "reset-symbol-client-secret": "Ripristina"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "query {{queryDisplayName}} non elaborata",
+      "aria-label-use-query": "Utilizza questo pulsante di query",
+      "button-use-query": "Utilizza questa query",
+      "label-categories": "Categorie",
+      "label-query-results": "Risultati della query: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "Tutte le categorie",
+      "placeholder-search-logs": "Cerca query dei registri",
+      "text-loading": "Caricamento in corso..."
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "Avvia il modale della query",
+      "title-kick-start": "Avvia la query"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "Scegli il tipo di autenticazione per i servizi di Azure",
+      "label-authentication": "Autenticazione",
+      "title-authentication": "Autenticazione"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "Registri di base",
+      "description-basic-logs": "L'abilitazione di questa funzione comporta i costi per query di Azure Monitor sui pannelli della dashboard che eseguono query su tabelle configurate per <2>Registri di base</2>.",
+      "label-enable-basic-logs": "Abilita registri di base"
+    },
+    "config-editor": {
+      "description-additional-settings": "",
+      "title-additional-settings": "Impostazioni aggiuntive"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "Le credenziali di fallback sono state disabilitate. Poiché l'autenticazione basata sull'utente supporta solo richieste con un utente nell'ambito, funzionalità come avvisi, query registrate o report non funzioneranno come previsto. Consulta la <2>documentazione</2> per ulteriori dettagli.",
+      "body-service-credentials": "L'autenticazione basata sull'utente non supporta intrinsecamente le funzionalità di Grafana che effettuano richieste all'origine dei dati senza che i dettagli degli utenti siano disponibili per la richiesta. Un esempio di questo è l'avviso. Se desideri assicurarti che le funzionalità che non hanno un utente nel contesto della richiesta funzionino ancora, fornisci le credenziali di fallback qui sotto.",
+      "description-authentication": "Scegli il tipo di autenticazione per i servizi di Azure",
+      "description-service-credentials": "Scegli se le credenziali del servizio di fallback sono abilitate o disabilitate per questa origine dei dati",
+      "label-authentication": "Autenticazione",
+      "label-service-credentials": "Credenziali di servizio",
+      "note-service-credentials": "Nota: le funzionalità come gli avvisi saranno limitate al livello di accesso delle credenziali di fallback anziché all'utente. Ciò potrebbe creare confusione agli utenti e dovrebbe essere chiarito.",
+      "title-fallback-credentials-disabled": "Credenziali di fallback disabilitate",
+      "title-fallback-service-credentials": "Credenziali di servizio di fallback",
+      "title-service-credentials": "Credenziali di servizio"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "Abbonamento predefinito",
+      "label-default-subscription": "Abbonamento predefinito",
+      "load-subscriptions": "Carica abbonamenti"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "Rimuovi",
+      "label-dimensions": "Dimensioni",
+      "placeholder-field": "Campo",
+      "placeholder-operation": "Operazione",
+      "placeholder-select-value": "Seleziona valore",
+      "placeholder-select-values": "Seleziona valore/i"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "{{type}} è obsoleto in Grafana 9. Consulta l'<3>avviso di obsolescenza</3> per ottenere ulteriori informazioni su come migrare le query. Questa è la definizione della query corrente:",
+      "title-unknown-query-type": "Tipo di query sconosciuto"
+    },
+    "filter": {
+      "aria-label-remove-filter": "Rimuovi filtro",
+      "placeholder-property": "Proprietà",
+      "placeholder-value": "Valore"
+    },
+    "filter-item": {
+      "aria-label-column": "Colonna",
+      "aria-label-column-value": "Valore colonna",
+      "aria-label-operator": "Operatore",
+      "aria-label-remove-filter": "",
+      "label-or": "O"
+    },
+    "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
+      "label-add-group": "Aggiungi gruppo",
+      "label-and": "E",
+      "label-filters": "Filtri",
+      "tooltip-filters": "Restringi i risultati applicando condizioni a colonne specifiche."
+    },
+    "filters": {
+      "label-filters": "Filtri"
+    },
+    "format-as-field": {
+      "label-format-as": "Formatta come"
+    },
+    "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
+      "aria-label-select-column": "Seleziona colonna",
+      "label-fuzzy-search": "Ricerca fuzzy",
+      "placeholder-search-team": "Inserisci il termine da cercare",
+      "tooltip-fuzzy-search": "Trova corrispondenze di testo approssimative con tolleranza per le variazioni ortografiche. Per impostazione predefinita, la ricerca fuzzy analizza tutte le colonne (*) nell'intera tabella, non solo i campi specifici."
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Funzione variabile del modello di Grafana",
+      "placeholder-grafana-template-variable": "Digita una funzione variabile del modello di Grafana, ad esempio {{example}}"
+    },
+    "group-by-item": {
+      "aria-label-column": "Colonna",
+      "aria-label-remove": "Rimuovi"
+    },
+    "group-by-section": {
+      "aria-label-add-group-by": "",
+      "label-group-by": "Raggruppa per",
+      "tooltip-group-by": "Organizza i risultati in categorie in base alle colonne specificate. Raggruppa per può essere utilizzato in modo indipendente per elencare valori univoci nelle colonne selezionate o può essere combinato con funzioni di aggregazione per produrre statistiche di riepilogo per ciascun gruppo. Se usato da solo, restituisce combinazioni distinte delle colonne specificate."
+    },
+    "kql-preview": {
+      "button-hide": "Nascondi",
+      "button-show": "Mostra",
+      "label-query-preview": "Anteprima query"
+    },
+    "legend-format-field": {
+      "label-legend-format": "Formato legenda",
+      "placeholder-legend-format": "Modelli di alias"
+    },
+    "limit-section": {
+      "label-limit": "Limite",
+      "placeholder-limit": "Inserisci il limite",
+      "tooltip-limit": "Limita il numero di righe restituite (il valore predefinito è 1000)."
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "Le query dei registri di base comportano un costo in base alla quantità di dati analizzati.",
+      "label-logs": "Registri",
+      "title-basic-logs-queries": "Query sui registri di base",
+      "tooltip-logs": "Specifica se eseguire una query di base o di analisi sui registri."
+    },
+    "logs-query-builder": {
+      "title-no-tables": "Risorsa caricata correttamente ma senza tabelle"
+    },
+    "logs-query-editor": {
+      "learn-more": "Scopri di più",
+      "view-query": "Visualizza query in Azure Portal"
+    },
+    "metric-name-field": {
+      "label-metric": "Metrica"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "Spazio dei nomi metrico"
+    },
+    "nested-row": {
+      "text-loading": "Caricamento in corso..."
+    },
+    "order-by-section": {
+      "aria-label-add-order-by": "",
+      "aria-label-order-by-column": "Ordina per colonna",
+      "aria-label-order-direction": "Ordina direzione",
+      "aria-label-remove-order-by": "",
+      "label-by": "PER",
+      "label-order-by": "Ordina per",
+      "tooltip-order-by": "Ordina i risultati in base a una o più colonne in ordine crescente o decrescente."
+    },
+    "query-editor": {
+      "alert-error-occurred": "Si è verificato un errore durante la richiesta di metadati da Azure Monitor"
+    },
+    "query-header": {
+      "aria-label-kick-start": "I registri di Azure avviano il pulsante della query",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "Avvia la query",
+      "button-run-query": "Esegui query",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "Servizio",
+      "placeholder-service": "Servizio...",
+      "title-switch-mode": "Cambiare modalità editor?"
+    },
+    "raw-query": {
+      "aria-label-selector": "Selettore"
+    },
+    "resource-field": {
+      "label-resource": "Risorsa",
+      "title-select-resource": "Seleziona una risorsa"
+    },
+    "resource-label": {
+      "select-resource": "Seleziona una risorsa"
+    },
+    "resource-picker": {
+      "button-apply": "Applica",
+      "button-cancel": "Annulla",
+      "header-location": "Posizione",
+      "header-scope": "Ambito",
+      "header-type": "Tipo",
+      "heading-selection": "Selezione",
+      "result-limit": "Visualizzazione dei primi {{numResults}} risultati",
+      "text-loading": "Caricamento in corso...",
+      "text-no-resources": "Nessuna risorsa trovata",
+      "title-error-occurred": "Si è verificato un errore durante la richiesta di risorse da Azure Monitor"
+    },
+    "scope-selector": {
+      "label": ""
+    },
+    "search": {
+      "aria-label-resource-search": "Ricerca delle risorse",
+      "placeholder-resource-search": "Cerca una risorsa"
+    },
+    "subscription-field": {
+      "label-subscriptions": "Abbonamenti",
+      "validation-subscriptions": "È necessario scegliere almeno un abbonamento."
+    },
+    "table-section": {
+      "aria-label-columns": "Colonne",
+      "aria-label-table": "Tabella",
+      "label-columns": "Colonne",
+      "label-table": "Tabella",
+      "placeholder-select-columns": "Seleziona colonne",
+      "placeholder-select-table": "Seleziona una tabella",
+      "tooltip-remove-all-columns": ""
+    },
+    "time-grain-field": {
+      "label-time-grain": "Intervallo di tempo"
+    },
+    "time-management": {
+      "label-time-column": "Colonna \"Tempo\"",
+      "label-time-range": "Intervallo di tempo",
+      "tooltip-time-column": "<0>Specifica la colonna di tempo utilizzata per il filtro. Per impostazione predefinita, la prima colonna delle tabelle <1>timeSpan</1>, la prima colonna <3>datetime</3> trovata o <5>TimeGenerated</5>.</0>",
+      "tooltip-time-range": "<0>Specifica l'intervallo di tempo utilizzato per la query. L'opzione <1>Query</1> utilizzerà solo gli intervalli di tempo specificati nella query. <3>Dashboard</3> utilizzerà solo l'intervallo di tempo di Grafana. In modalità Generatore di registri, verrà utilizzato solo l'orario della dashboard.</0>"
+    },
+    "top-field": {
+      "label-top": "In alto"
+    },
+    "trace-type-field": {
+      "label-event-type": "Tipo di evento",
+      "placeholder-event-type": "Scegli i tipi di evento"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "ID operazione"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "L'utilizzo di questa origine dei dati richiede l'autenticazione tramite Azure Entra (precedentemente Azure Active Directory). Consulta la <2>documentazione</2> per ulteriori informazioni.",
+      "title-unsupported-auth": "Provider di autenticazione non supportato"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "Le funzionalità di back-end dell'origine dei dati (come gli avvisi) richiedono le credenziali del servizio per funzionare. Questa origine dei dati è configurata senza fallback delle credenziali di servizio oppure la funzionalità di fallback è disabilitata. Consulta la <2>documentazione</2> per ulteriori informazioni.",
+      "title-no-fallback-credentials": "Nessuna credenziale di fallback disponibile"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "Seleziona uno spazio dei nomi personalizzato",
+      "aria-label-select-namespace": "Seleziona spazio di nomi",
+      "aria-label-select-query-type": "Seleziona il tipo di query",
+      "aria-label-select-region": "Seleziona la regione",
+      "aria-label-select-resource": "Selezione la risorsa",
+      "aria-label-select-resource-group": "Seleziona un gruppo di risorse",
+      "aria-label-select-subscription": "Seleziona l'abbonamento",
+      "label-custom-namespace": "Spazio dei nomi personalizzato",
+      "label-namespace": "Namespace",
+      "label-query-type": "Tipo di query",
+      "label-region": "Regione",
+      "label-resource": "Risorsa",
+      "label-resource-group": "Gruppi risorse",
+      "label-resource-type": "Tipo di risorsa",
+      "label-subscription": "Abbonamento",
+      "placeholder-custom-namespace": "Facoltativo",
+      "placeholder-namespace": "Facoltativo",
+      "placeholder-region": "Facoltativo",
+      "placeholder-resource-group": "Facoltativo",
+      "title-error-occurred": "Si è verificato un errore durante la richiesta di metadati da Azure Monitor"
+    }
+  }
+}

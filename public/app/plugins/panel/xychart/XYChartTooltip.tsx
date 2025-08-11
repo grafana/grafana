@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { colorManipulator, DataFrame, InterpolateFunction, LinkModel } from '@grafana/data';
+import { colorManipulator, DataFrame, Field, InterpolateFunction, LinkModel } from '@grafana/data';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -34,6 +34,14 @@ function stripSeriesName(fieldName: string, seriesName: string) {
   return fieldName;
 }
 
+function hideFromTooltip(field: Field) {
+  return field.config.custom.hideFrom?.tooltip ?? false;
+}
+
+function getFieldName(field: Field) {
+  return field.state?.displayName ?? field.name;
+}
+
 export const XYChartTooltip = ({
   dataIdxs,
   seriesIdx,
@@ -55,52 +63,64 @@ export const XYChartTooltip = ({
 
   let label = series.name.value;
 
-  let seriesColor = series.color.fixed;
-  // let colorField = series.color.field;
-  // let pointColor: string;
+  let seriesColor = colorField?.display?.(colorField.values[rowIndex]).color ?? series.color.fixed ?? '#fff';
+  let fillOpacity = colorField?.config.custom?.fillOpacity;
 
-  // if (colorField != null) {
-  //   pointColor = colorField.display?.(colorField.values[rowIndex]).color!;
-  // }
+  // TODO: skip this if seriesColor already has an alpha component, such as opacity-by-value or opacity gradient schemes
+  if (fillOpacity != null) {
+    seriesColor = colorManipulator.alpha(seriesColor, fillOpacity / 100);
+  }
 
   const headerItem: VizTooltipItem = {
     label,
     value: '',
-    color: colorManipulator.alpha(seriesColor ?? '#fff', 0.5),
+    color: seriesColor,
     colorIndicator: ColorIndicator.marker_md,
   };
 
-  const contentItems: VizTooltipItem[] = [
-    {
-      label: stripSeriesName(xField.state?.displayName ?? xField.name, label),
-      value: fmt(xField, xField.values[rowIndex]),
-    },
-    {
-      label: stripSeriesName(yField.state?.displayName ?? yField.name, label),
-      value: fmt(yField, yField.values[rowIndex]),
-    },
-  ];
+  const contentItems: VizTooltipItem[] = [];
+  const addedFields = new Set<Field>();
 
-  // mapped fields for size/color
-  if (sizeField != null && sizeField !== yField) {
+  if (!hideFromTooltip(xField)) {
     contentItems.push({
-      label: stripSeriesName(sizeField.state?.displayName ?? sizeField.name, label),
-      value: fmt(sizeField, sizeField.values[rowIndex]),
+      label: stripSeriesName(getFieldName(xField), label),
+      value: fmt(xField, xField.values[rowIndex]),
     });
+    addedFields.add(xField);
   }
 
-  if (colorField != null && colorField !== yField) {
+  if (!hideFromTooltip(yField)) {
     contentItems.push({
-      label: stripSeriesName(colorField.state?.displayName ?? colorField.name, label),
+      label: stripSeriesName(getFieldName(yField), label),
+      value: fmt(yField, yField.values[rowIndex]),
+    });
+    addedFields.add(yField);
+  }
+
+  // mapped fields for size/color
+  if (sizeField != null && !addedFields.has(sizeField) && !hideFromTooltip(sizeField)) {
+    contentItems.push({
+      label: stripSeriesName(getFieldName(sizeField), label),
+      value: fmt(sizeField, sizeField.values[rowIndex]),
+    });
+    addedFields.add(sizeField);
+  }
+
+  if (colorField != null && !addedFields.has(colorField) && !hideFromTooltip(colorField)) {
+    contentItems.push({
+      label: stripSeriesName(getFieldName(colorField), label),
       value: fmt(colorField, colorField.values[rowIndex]),
     });
+    addedFields.add(colorField);
   }
 
   series._rest.forEach((field) => {
-    contentItems.push({
-      label: stripSeriesName(field.state?.displayName ?? field.name, label),
-      value: fmt(field, field.values[rowIndex]),
-    });
+    if (!hideFromTooltip(field)) {
+      contentItems.push({
+        label: stripSeriesName(field.state?.displayName ?? field.name, label),
+        value: fmt(field, field.values[rowIndex]),
+      });
+    }
   });
 
   let footer: ReactNode;

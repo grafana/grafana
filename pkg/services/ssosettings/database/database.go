@@ -144,7 +144,7 @@ func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
 		existing.Updated = time.Now().UTC()
 		existing.IsDeleted = true
 
-		// We must explicitly omit ID column from updates, because some databases (e.g. Spanner) don't allow updating
+		// We must explicitly omit ID column from updates, because some databases don't allow updating
 		// primary key. Xorm ignores autoincrement columns during updates, but since ID column here is a string,
 		// it's not ignored by default.
 		_, err = sess.ID(existing.ID).Omit(idColumn).MustCols(updatedColumn, isDeletedColumn).Update(existing)

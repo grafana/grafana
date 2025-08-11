@@ -229,23 +229,23 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 				return nil, fmt.Errorf("only one repo name is supported")
 			}
 			query.ManagerIdentity = vals[0]
+		case unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE:
+			if len(vals) != 1 {
+				return nil, fmt.Errorf("only one library panel uid is supported")
+			}
+
+			return c.getLibraryPanelConnections(ctx, user, vals[0], req.Options.Key.Namespace)
+		case resource.SEARCH_FIELD_TITLE_PHRASE:
+			if len(vals) != 1 {
+				return nil, fmt.Errorf("only one title supported")
+			}
+
+			query.Title = vals[0]
+			query.TitleExactMatch = true
 		}
 	}
-	searchFields := resource.StandardSearchFields()
-	columns := []*resourcepb.ResourceTableColumnDefinition{
-		searchFields.Field(resource.SEARCH_FIELD_TITLE),
-		searchFields.Field(resource.SEARCH_FIELD_FOLDER),
-		searchFields.Field(resource.SEARCH_FIELD_TAGS),
-		searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
-	}
 
-	if sortByField != "" {
-		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
-			Name: sortByField,
-			Type: resourcepb.ResourceTableColumnDefinition_INT64,
-		})
-	}
-
+	columns := c.getColumns(sortByField, query)
 	list := &resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
 			Columns: columns,
@@ -254,48 +254,71 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 
 	// if we are querying for provisioning information, we need to use a different
 	// legacy sql query, since legacy search does not support this
-	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 {
+	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 || query.ManagedBy != "" {
 		if query.ManagedBy == utils.ManagerKindUnknown {
 			return nil, fmt.Errorf("query by manager identity also requires manager.kind parameter")
 		}
 
-		var dashes []*dashboards.Dashboard
-		if query.ManagedBy == utils.ManagerKindPlugin {
-			dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
-				PluginID: query.ManagerIdentity,
-				OrgID:    user.GetOrgID(),
-			})
-		} else if query.ManagerIdentity != "" {
-			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
-		} else if len(query.ManagerIdentityNotIn) > 0 {
-			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn, user.GetOrgID())
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		for _, dashboard := range dashes {
-			cells := [][]byte{
-				[]byte(dashboard.Title),
-				[]byte(dashboard.FolderUID),
-				[]byte("[]"), // no tags retrieved for provisioned dashboards
-				[]byte(strconv.FormatInt(dashboard.ID, 10)),
+		// for plugin and orphaned dashboards, we will only return the manager kind alongside the regular search response
+		if query.ManagedBy == utils.ManagerKindPlugin || len(query.ManagerIdentityNotIn) > 0 {
+			var dashes []*dashboards.Dashboard
+			if query.ManagedBy == utils.ManagerKindPlugin {
+				dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
+					PluginID: query.ManagerIdentity,
+					OrgID:    user.GetOrgID(),
+				})
+			} else {
+				dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn, user.GetOrgID())
+			}
+			if err != nil {
+				return nil, err
 			}
 
-			if sortByField != "" {
-				cells = append(cells, []byte("0"))
+			for _, dashboard := range dashes {
+				list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
+					Key: getResourceKey(&dashboards.DashboardSearchProjection{
+						UID: dashboard.UID,
+					}, req.Options.Key.Namespace),
+					Cells: c.createProvisioningCells(dashboard, query),
+				})
 			}
 
+			list.TotalHits = int64(len(list.Results.Rows))
+			return list, nil
+		}
+
+		// for classic FP, we will return the regular search response alongside all the data in the dashboard_provisioning table
+		provisioningData := []*dashboards.DashboardProvisioningSearchResults{}
+		if query.ManagerIdentity == "" {
+			var data *dashboards.DashboardProvisioningSearchResults
+			if len(query.DashboardIds) > 0 {
+				data, err = c.dashboardStore.GetProvisionedDataByDashboardID(ctx, query.DashboardIds[0])
+			} else if len(query.DashboardUIDs) > 0 {
+				data, err = c.dashboardStore.GetProvisionedDataByDashboardUID(ctx, user.GetOrgID(), query.DashboardUIDs[0])
+			}
+			if err != nil {
+				return nil, err
+			}
+			if data != nil {
+				provisioningData = append(provisioningData, data)
+			}
+		} else {
+			provisioningData, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		for _, dashboard := range provisioningData {
 			list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
-					UID: dashboard.UID,
+					UID: dashboard.Dashboard.UID,
 				}, req.Options.Key.Namespace),
-				Cells: cells,
+				Cells: c.createDetailedProvisioningCells(dashboard, query),
 			})
 		}
 
 		list.TotalHits = int64(len(list.Results.Rows))
-
 		return list, nil
 	}
 
@@ -304,27 +327,14 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		return nil, err
 	}
 
-	hits := formatQueryResult(res)
-
-	for _, dashboard := range hits {
-		tags, err := json.Marshal(dashboard.Tags)
+	for _, dashboard := range res {
+		cells, err := c.createBaseCells(dashboard, sortByField)
 		if err != nil {
 			return nil, err
 		}
 
-		cells := [][]byte{
-			[]byte(dashboard.Title),
-			[]byte(dashboard.FolderUID),
-			tags,
-			[]byte(strconv.FormatInt(dashboard.ID, 10)),
-		}
-
-		if sortByField != "" {
-			cells = append(cells, []byte(strconv.FormatInt(dashboard.SortMeta, 10)))
-		}
-
 		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
-			Key:   getResourceKey(dashboard, req.Options.Key.Namespace),
+			Key:   getResourceKey(&dashboard, req.Options.Key.Namespace),
 			Cells: cells,
 		})
 	}
@@ -352,33 +362,32 @@ func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string
 	}
 }
 
-func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards.DashboardSearchProjection {
-	hitList := make([]*dashboards.DashboardSearchProjection, 0)
-	hits := make(map[string]*dashboards.DashboardSearchProjection)
-
-	for _, item := range res {
-		key := fmt.Sprintf("%s-%d", item.UID, item.OrgID)
-		hit, exists := hits[key]
-		if !exists {
-			hit = &dashboards.DashboardSearchProjection{
-				ID:        item.ID,
-				UID:       item.UID,
-				Title:     item.Title,
-				FolderUID: item.FolderUID,
-				Tags:      []string{},
-				IsFolder:  item.IsFolder,
-				SortMeta:  item.SortMeta,
-			}
-			hitList = append(hitList, hit)
-			hits[key] = hit
-		}
-
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
-		}
+// retrieves all the dashboards that are connected to the given library panel
+func (c *DashboardSearchClient) getLibraryPanelConnections(ctx context.Context, user identity.Requester, libraryElementUID, namespace string) (*resourcepb.ResourceSearchResponse, error) {
+	connections, err := c.dashboardStore.GetDashboardsByLibraryPanelUID(ctx, libraryElementUID, user.GetOrgID())
+	if err != nil {
+		return nil, err
 	}
 
-	return hitList
+	columns := c.getColumns("", &dashboards.FindPersistedDashboardsQuery{})
+	list := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: columns,
+		},
+	}
+
+	for _, dashboard := range connections {
+		cells := c.createCommonCells("", dashboard.FolderUID, dashboard.ID, nil) // nolint:staticcheck
+		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
+			Key: getResourceKey(&dashboards.DashboardSearchProjection{
+				UID: dashboard.UID,
+			}, namespace),
+			Cells: cells,
+		})
+	}
+
+	list.TotalHits = int64(len(list.Results.Rows))
+	return list, nil
 }
 
 func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
@@ -421,4 +430,94 @@ func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.Re
 			},
 		},
 	}, nil
+}
+
+func (c *DashboardSearchClient) getColumns(sortByField string, query *dashboards.FindPersistedDashboardsQuery) []*resourcepb.ResourceTableColumnDefinition {
+	searchFields := resource.StandardSearchFields()
+	columns := []*resourcepb.ResourceTableColumnDefinition{
+		searchFields.Field(resource.SEARCH_FIELD_TITLE),
+		searchFields.Field(resource.SEARCH_FIELD_FOLDER),
+		searchFields.Field(resource.SEARCH_FIELD_TAGS),
+		searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
+	}
+
+	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 || query.ManagedBy != "" {
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: resource.SEARCH_FIELD_MANAGER_KIND,
+			Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		})
+
+		if query.ManagedBy != utils.ManagerKindPlugin && len(query.ManagerIdentityNotIn) == 0 {
+			columns = append(columns, []*resourcepb.ResourceTableColumnDefinition{
+				{
+					Name: resource.SEARCH_FIELD_MANAGER_ID,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_PATH,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_TIME,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+			}...)
+		}
+
+		return columns
+	}
+
+	// cannot sort when querying provisioned dashboards
+	if sortByField != "" {
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: sortByField,
+			Type: resourcepb.ResourceTableColumnDefinition_INT64,
+		})
+	}
+
+	return columns
+}
+
+func (c *DashboardSearchClient) createCommonCells(title, folderUID string, id int64, tags []byte) [][]byte {
+	return [][]byte{
+		[]byte(title),
+		[]byte(folderUID),
+		tags,
+		[]byte(strconv.FormatInt(id, 10)),
+	}
+}
+
+func (c *DashboardSearchClient) createBaseCells(dashboard dashboards.DashboardSearchProjection, sortByField string) ([][]byte, error) {
+	tags, err := json.Marshal(dashboard.Tags)
+	if err != nil {
+		return nil, err
+	}
+
+	cells := c.createCommonCells(dashboard.Title, dashboard.FolderUID, dashboard.ID, tags)
+
+	if sortByField != "" {
+		cells = append(cells, []byte(strconv.FormatInt(dashboard.SortMeta, 10)))
+	}
+
+	return cells, nil
+}
+
+func (c *DashboardSearchClient) createProvisioningCells(dashboard *dashboards.Dashboard, query *dashboards.FindPersistedDashboardsQuery) [][]byte {
+	cells := c.createCommonCells(dashboard.Title, dashboard.FolderUID, dashboard.ID, []byte("[]"))
+	return append(cells, []byte(query.ManagedBy))
+}
+
+func (c *DashboardSearchClient) createDetailedProvisioningCells(dashboard *dashboards.DashboardProvisioningSearchResults, query *dashboards.FindPersistedDashboardsQuery) [][]byte {
+	cells := c.createCommonCells(dashboard.Dashboard.Title, dashboard.Dashboard.FolderUID, dashboard.Dashboard.ID, []byte("[]"))
+	return append(cells,
+		[]byte(query.ManagedBy),
+		[]byte(dashboard.Provisioner),
+		[]byte(dashboard.ExternalID),
+		[]byte(dashboard.CheckSum),
+		[]byte(strconv.FormatInt(dashboard.ProvisionUpdate, 10)),
+	)
 }

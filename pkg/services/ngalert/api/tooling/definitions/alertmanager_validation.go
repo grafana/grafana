@@ -31,18 +31,12 @@ func (t *NotificationTemplate) Validate() error {
 		content = fmt.Sprintf("{{ define \"%s\" }}\n%s\n{{ end }}", t.Name, content)
 	}
 	t.Template = content
-
-	// Validate template contents. We try to stick as close to what will actually happen when the templates are parsed
-	// by the alertmanager as possible.
-	tmpl, err := templates.NewTemplate()
-	if err != nil {
-		return fmt.Errorf("failed to create template: %w", err)
+	def := templates.TemplateDefinition{
+		Name:     t.Name,
+		Template: t.Template,
+		Kind:     templates.GrafanaKind,
 	}
-	if err := tmpl.Parse(strings.NewReader(t.Template)); err != nil {
-		return fmt.Errorf("invalid template: %w", err)
-	}
-
-	return nil
+	return def.Validate()
 }
 
 func (mt *MuteTimeInterval) Validate() error {

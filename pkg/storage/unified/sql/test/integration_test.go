@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -34,8 +36,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStorageServer(t *testing.T) {
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
 	}
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
 		dbstore := db.InitTestDB(t)
@@ -57,10 +59,9 @@ func TestIntegrationStorageServer(t *testing.T) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
 	}
-
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			dbstore := db.InitTestDB(t)
@@ -104,9 +105,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("Skipping benchmark on Spanner")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 
@@ -118,7 +117,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
 		Root:          tempDir,
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
 
@@ -144,9 +143,6 @@ func TestClientServer(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := db.InitTestDB(t)
@@ -157,7 +153,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
@@ -177,7 +173,7 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := unified.GrpcConn(svc.GetAddress(), prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
-		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, resource.RemoteResourceClientConfig{
+		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, conn, resource.RemoteResourceClientConfig{
 			Token:            "some-token",
 			TokenExchangeURL: "http://some-change-url",
 			AllowInsecure:    true,

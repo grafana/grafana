@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
 import { KBObjectArray, RuleFormValues } from '../../types/rule-form';
@@ -18,7 +18,7 @@ import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 export function GrafanaFolderAndLabelsStep() {
   const { setValue, getValues } = useFormContext<RuleFormValues>();
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
-  const { t } = useTranslate();
+
   function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
       setValue('labels', labelsToUpdate);

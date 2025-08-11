@@ -15,7 +15,7 @@ type DB struct{}
 
 // Stub out the QueryFrames method for ARM builds
 // See github.com/dolthub/go-mysql-server/issues/2837
-func (db *DB) QueryFrames(_ context.Context, _ tracing.Tracer, _, _ string, _ []*data.Frame, _...QueryOption) (*data.Frame, error) {
+func (db *DB) QueryFrames(_ context.Context, _ tracing.Tracer, _, _ string, _ []*data.Frame, _ ...QueryOption) (*data.Frame, error) {
 	return nil, fmt.Errorf("sql expressions not supported in arm")
 }
 

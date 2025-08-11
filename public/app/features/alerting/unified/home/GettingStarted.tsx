@@ -3,7 +3,7 @@ import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import atAGlanceDarkSvg from 'img/alerting/at_a_glance_dark.svg';
 import atAGlanceLightSvg from 'img/alerting/at_a_glance_light.svg';
@@ -119,7 +119,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
 
 export function WelcomeHeader({ className }: { className?: string }) {
   const styles = useStyles2(getWelcomeHeaderStyles);
-  const { t } = useTranslate();
+
   return (
     <Stack gap={2} direction="column">
       <ContentBox className={cx(styles.ctaContainer, className)}>
@@ -196,9 +196,7 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
       </Text>
       <div className={styles.desc}>{description}</div>
       <div className={styles.actionRow}>
-        <TextLink href={href} inline={false}>
-          {hrefText}
-        </TextLink>
+        <TextLink href={href}>{hrefText}</TextLink>
       </div>
     </div>
   );

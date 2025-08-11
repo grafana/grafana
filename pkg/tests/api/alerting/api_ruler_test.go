@@ -45,9 +45,13 @@ import (
 var testData embed.FS
 
 func TestIntegrationAlertRulePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -349,11 +353,14 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
@@ -784,6 +791,9 @@ func TestAlertRulePostExport(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	const folderName = "folder1"
@@ -799,13 +809,8 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 	apiClient.CreateFolder(t, folderName, folderName)
 
 	createAlertInGrafana := func(metadata *apimodels.AlertRuleMetadata) apimodels.GettableRuleGroupConfig {
@@ -961,9 +966,13 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -973,14 +982,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create user
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -1048,6 +1050,9 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 }
 
 func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1418,9 +1423,13 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestIntegrationRuleGroupSequence(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1524,18 +1533,17 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 }
 
 func TestIntegrationRuleCreate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+
 	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	namespaceUID := "default"
@@ -1663,9 +1671,13 @@ func TestIntegrationRuleCreate(t *testing.T) {
 }
 
 func TestIntegrationRuleUpdate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1697,13 +1709,6 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			}, nil)
 		require.NoError(t, err)
 	}
-
-	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -1756,42 +1761,42 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("missing_series_evals_to_resolve", func(t *testing.T) {
 		testCases := []struct {
 			name           string
-			initialValue   *int
-			updatedValue   *int
-			expectedValue  *int
+			initialValue   *int64
+			updatedValue   *int64
+			expectedValue  *int64
 			expectedStatus int
 		}{
 			{
 				name:           "should be able to set missing_series_evals_to_resolve to 5",
 				initialValue:   nil,
-				updatedValue:   util.Pointer(5),
-				expectedValue:  util.Pointer(5),
+				updatedValue:   util.Pointer[int64](5),
+				expectedValue:  util.Pointer[int64](5),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should be able to update missing_series_evals_to_resolve",
-				initialValue:   util.Pointer(1),
-				updatedValue:   util.Pointer(2),
-				expectedValue:  util.Pointer(2),
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](2),
+				expectedValue:  util.Pointer[int64](2),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should preserve missing_series_evals_to_resolve when it's set nil",
-				initialValue:   util.Pointer(5),
+				initialValue:   util.Pointer[int64](5),
 				updatedValue:   nil,
-				expectedValue:  util.Pointer(5),
+				expectedValue:  util.Pointer[int64](5),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should reject missing_series_evals_to_resolve < 0",
-				initialValue:   util.Pointer(1),
-				updatedValue:   util.Pointer(-1),
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](-1),
 				expectedStatus: http.StatusBadRequest,
 			},
 			{
 				name:           "should be able to reset missing_series_evals_to_resolve by setting it to 0",
-				initialValue:   util.Pointer(1),
-				updatedValue:   util.Pointer(0),
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](0),
 				expectedValue:  nil,
 				expectedStatus: http.StatusAccepted,
 			},
@@ -1944,6 +1949,9 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 }
 
 func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -2103,9 +2111,13 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 }
 
 func TestIntegrationRulerAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2117,7 +2129,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -2127,11 +2139,6 @@ func TestIntegrationRulerAccess(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	client := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
@@ -2220,9 +2227,13 @@ func TestIntegrationRulerAccess(t *testing.T) {
 }
 
 func TestIntegrationEval(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2500,9 +2511,13 @@ func TestIntegrationEval(t *testing.T) {
 }
 
 func TestIntegrationQuota(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2711,6 +2726,9 @@ func TestIntegrationQuota(t *testing.T) {
 }
 
 func TestIntegrationDeleteFolderWithRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	opts := testinfra.GrafanaOpts{
@@ -2877,9 +2895,13 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleCRUD(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -3452,7 +3474,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						},
 						NoDataState:                 apimodels.NoDataState(ngmodels.Alerting),
 						ExecErrState:                apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
-						MissingSeriesEvalsToResolve: util.Pointer(2), // If UID is specified, this field is required
+						MissingSeriesEvalsToResolve: util.Pointer[int64](2), // If UID is specified, this field is required
 					},
 				},
 			},
@@ -4158,9 +4180,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 }
 
 func TestIntegrationRulePause(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4288,9 +4314,13 @@ func TestIntegrationRulePause(t *testing.T) {
 }
 
 func TestIntegrationHysteresisRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:        true,
 		EnableUnifiedAlerting:        true,
@@ -4362,9 +4392,11 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 }
 
 func TestIntegrationRuleNotificationSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:        true,
 		EnableUnifiedAlerting:        true,
@@ -4631,21 +4663,17 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 }
 
 func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
-	// Setup Grafana and its Database
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -4690,9 +4718,11 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 }
 
 func TestIntegrationRuleVersions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4780,9 +4810,11 @@ func TestIntegrationRuleVersions(t *testing.T) {
 }
 
 func TestIntegrationRuleSoftDelete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4793,12 +4825,6 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
@@ -4897,9 +4923,11 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 }
 
 func TestIntegrationRulePermanentlyDelete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4910,12 +4938,6 @@ func TestIntegrationRulePermanentlyDelete(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),

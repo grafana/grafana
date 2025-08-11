@@ -52,6 +52,7 @@
       "button-use-query": "Use this query",
       "label-categories": "Categories",
       "label-query-results": "Query results: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "Unable to list all categories",
       "placeholder-all-categories": "All categories",
       "placeholder-search-logs": "Search Logs queries",
       "text-loading": "Loading..."
@@ -71,10 +72,8 @@
       "label-enable-basic-logs": "Enable Basic Logs"
     },
     "config-editor": {
-      "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy.",
-      "title-additional-settings": "Additional settings",
-      "title-request-timeout": "Request timeout",
-      "description-request-timeout": "Set the request timeout in seconds. Default is 30 seconds."
+      "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.",
+      "title-additional-settings": "Additional settings"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Fallback credentials have been disabled. As user-based authentication only inherently supports requests with a user in scope, features such as alerting, recorded queries, or reporting will not function as expected. Please review the <2>documentation</2> for more details.",
@@ -114,9 +113,12 @@
       "aria-label-column": "Column",
       "aria-label-column-value": "Column value",
       "aria-label-operator": "Operator",
+      "aria-label-remove-filter": "Remove filter",
       "label-or": "OR"
     },
     "filter-section": {
+      "aria-label-add-filter": "Add filter",
+      "aria-label-add-or-filter": "Add OR filter",
       "label-add-group": "Add group",
       "label-and": "AND",
       "label-filters": "Filters",
@@ -129,6 +131,8 @@
       "label-format-as": "Format as"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "Add fuzzy search",
+      "aria-label-remove-fuzzy-search": "Remove fuzzy search",
       "aria-label-select-column": "Select Column",
       "label-fuzzy-search": "Fuzzy Search",
       "placeholder-search-team": "Enter search term",
@@ -143,6 +147,7 @@
       "aria-label-remove": "Remove"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "Add group by",
       "label-group-by": "Group by",
       "tooltip-group-by": "Organize results into categories based on specified columns. Group by can be used independently to list unique values in selected columns, or combined with aggregate functions to produce summary statistics for each group. When used alone, it returns distinct combinations of the specified columns."
     },
@@ -161,6 +166,8 @@
       "tooltip-limit": "Restrict the number of rows returned (default is 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "Are you sure you want to switch to Basic Logs?",
+      "confirmText-confirm": "Confirm",
       "description-basic-logs-queries": "Basic Logs queries incur cost based on the amount of data scanned.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Basic Logs Queries",
@@ -183,8 +190,10 @@
       "text-loading": "Loading..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "Add order by",
       "aria-label-order-by-column": "Order by column",
       "aria-label-order-direction": "Order Direction",
+      "aria-label-remove-order-by": "Remove order by",
       "label-by": "BY",
       "label-order-by": "Order By",
       "tooltip-order-by": "Sort results based on one or more columns in ascending or descending order."
@@ -194,8 +203,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure logs kick start your query button",
+      "body-switching-to-builder": "Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?",
+      "body-switching-to-kql": "Switching to KQL will discard your current builder settings. Are you sure?",
       "button-kick-start-your-query": "Kick start your query",
       "button-run-query": "Run query",
+      "confirmText-switch-to": "Switch to {{newMode}}",
+      "editor-modes": {
+        "label-builder": "Builder",
+        "label-kql": "KQL"
+      },
       "label-service": "Service",
       "placeholder-service": "Service...",
       "title-switch-mode": "Switch editor mode?"
@@ -222,6 +238,9 @@
       "text-no-resources": "No resources found",
       "title-error-occurred": "An error occurred while requesting resources from Azure Monitor"
     },
+    "scope-selector": {
+      "label": "Scope"
+    },
     "search": {
       "aria-label-resource-search": "Resource search",
       "placeholder-resource-search": "Search for a resource"
@@ -236,7 +255,8 @@
       "label-columns": "Columns",
       "label-table": "Table",
       "placeholder-select-columns": "Select columns",
-      "placeholder-select-table": "Select a table"
+      "placeholder-select-table": "Select a table",
+      "tooltip-remove-all-columns": "Remove all columns"
     },
     "time-grain-field": {
       "label-time-grain": "Time grain"

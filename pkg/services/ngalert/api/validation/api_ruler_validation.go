@@ -23,15 +23,12 @@ type RuleLimits struct {
 	DefaultRuleEvaluationInterval time.Duration
 	// All intervals must be an integer multiple of this duration.
 	BaseInterval time.Duration
-	// Whether recording rules are allowed.
-	RecordingRulesAllowed bool
 }
 
 func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) RuleLimits {
 	return RuleLimits{
 		DefaultRuleEvaluationInterval: cfg.DefaultRuleEvaluationInterval,
 		BaseInterval:                  cfg.BaseInterval,
-		RecordingRulesAllowed:         toggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules),
 	}
 }
 
@@ -176,10 +173,6 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 // validateRecordingRuleFields validates only the fields on a rule that are specific to Recording rules.
 // it will load fields that pass validation onto newRule and return the result.
 func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, limits RuleLimits, canPatch bool) (ngmodels.AlertRule, error) {
-	if !limits.RecordingRulesAllowed {
-		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
 	err := ValidateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
 	if err != nil {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
@@ -306,10 +299,10 @@ func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode)
 //   - == 0, returns nil (reset to default)
 //   - == nil && UID == "", returns nil (new rule)
 //   - == nil && UID != "", returns -1 (existing rule)
-func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int, error) {
+func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int64, error) {
 	if ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
-			return util.Pointer(-1), nil // will be patched later with the real value of the current version of the rule
+			return util.Pointer[int64](-1), nil // will be patched later with the real value of the current version of the rule
 		}
 		return nil, nil // if it's a new rule, use nil as the default
 	}

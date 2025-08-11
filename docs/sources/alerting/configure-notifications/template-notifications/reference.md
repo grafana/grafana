@@ -110,14 +110,14 @@ You can execute this template by passing the dot (`.`):
 
 Grafana-managed alerts include these additional properties:
 
-| Name           | Type      | Description                                                                                        |
-| -------------- | --------- | -------------------------------------------------------------------------------------------------- |
-| `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation.                       |
-| `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation.                                        |
-| `SilenceURL`   | string    | A link to silence the alert.                                                                       |
-| `Values`       | [KV](#kv) | The values of expressions used to evaluate the alert condition. Only relevant values are included. |
-| `ValueString`  | string    | A string that contains the labels and value of each reduced expression in the alert.               |
-| `OrgID`        | integer   | The ID of the organization that owns the alert.                                                    |
+| Name           | Type      | Description                                                                                                                                          |
+| -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation, with time range from `1h` before alert start to end (or now if firing). |
+| `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation, with time range from `1h` before alert start to end (or now if firing).                  |
+| `SilenceURL`   | string    | A link to silence the alert.                                                                                                                         |
+| `Values`       | [KV](#kv) | The values of expressions used to evaluate the alert condition. Only relevant values are included.                                                   |
+| `ValueString`  | string    | A string that contains the labels and value of each reduced expression in the alert.                                                                 |
+| `OrgID`        | integer   | The ID of the organization that owns the alert.                                                                                                      |
 
 This example iterates over the list of firing and resolved alerts (`.Alerts`) in the notification and prints the data for each alert:
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { ComponentProps } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -14,7 +14,7 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
 
 export const ConfirmDeletedPermanentlyModal = ({ isOpen, onDismiss, guid }: ModalProps) => {
   const [remove] = alertRuleApi.endpoints.permanentlyDeleteRule.useMutation();
-  const { t } = useTranslate();
+
   const title = t('alerting.deleted-rules.delete-modal.title', 'Permanently delete alert rule');
   const confirmText = t('alerting.deleted-rules.delete-modal.confirm', 'Yes, permanently delete');
   const appNotification = useAppNotification();

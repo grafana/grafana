@@ -2,15 +2,14 @@ package migrator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	_ "github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -326,7 +325,7 @@ func (mg *Migrator) doMigration(ctx context.Context, m Migration) error {
 		err := mg.exec(ctx, m, sess)
 		// if we get an sqlite busy/locked error, sleep 100ms and try again
 		cnt := 0
-		for cnt < 3 && (errors.Is(err, sqlite3.ErrLocked) || errors.Is(err, sqlite3.ErrBusy)) {
+		for cnt < 3 && sqlite.IsBusyOrLocked(err) {
 			cnt++
 			logger.Debug("Database locked, sleeping then retrying", "error", err, "sql", sql)
 			span.AddEvent("Database locked, sleeping then retrying",
@@ -416,11 +415,6 @@ type dbTransactionFunc func(sess *xorm.Session) error
 func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
-
-	// XXX: Spanner cannot execute DDL statements in transactions
-	if mg.Dialect.DriverName() == Spanner {
-		return callback(sess)
-	}
 
 	if err := sess.Begin(); err != nil {
 		return err

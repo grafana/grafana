@@ -1,11 +1,11 @@
 import { AppEvents } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { RemovePanelEvent } from '../../../types/events';
 import { DashboardModel } from '../state/DashboardModel';
@@ -56,7 +56,7 @@ export class DashboardSrv {
     return getDashboardAPI().saveDashboard({
       dashboard: parsedJson,
       folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
-      message: 'Edit Dashboard JSON',
+      message: t('dashboard.dashboard-srv.message.edit-dashboard-json', 'Edit Dashboard JSON'),
       k8s: this.dashboard?.meta.k8s,
     });
   }

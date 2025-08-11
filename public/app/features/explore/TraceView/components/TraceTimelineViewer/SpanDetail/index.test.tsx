@@ -76,6 +76,8 @@ describe('<SpanDetail>', () => {
         to: 1000000000000,
       },
     },
+    datasourceType: 'tempo',
+    datasourceUid: 'grafanacloud-traces',
   };
 
   span.tags = [
@@ -248,7 +250,7 @@ describe('<SpanDetail>', () => {
 
   it('renders deep link URL', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    expect(screen.getByText('test-spanID')).toBeInTheDocument();
+    expect(screen.getByTestId('share-span-button')).toBeInTheDocument();
   });
 
   it('renders the flame graph', async () => {
@@ -257,5 +259,26 @@ describe('<SpanDetail>', () => {
       expect(screen.getByText(/16.5 Bil/)).toBeInTheDocument();
       expect(screen.getByText(/(Count)/)).toBeInTheDocument();
     });
+  });
+
+  it('should load plugin links for resource attributes', () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    expect(usePluginLinksMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: expect.objectContaining({
+          attributes: expect.objectContaining({
+            'http.url': expect.arrayContaining([expect.any(String)]),
+          }),
+          datasource: {
+            type: 'tempo',
+            uid: 'grafanacloud-traces',
+          },
+        }),
+      })
+    );
   });
 });

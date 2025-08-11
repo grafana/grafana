@@ -2,9 +2,10 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
+import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
+import { TABLE } from '../constants';
 import { BarGaugeCellProps } from '../types';
-import { extractPixelValue, getCellOptions, getAlignmentFactor, getCellLinks } from '../utils';
+import { getCellOptions, getAlignmentFactor } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -23,7 +24,7 @@ const defaultScale: ThresholdsConfig = {
 export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
-  const heightOffset = extractPixelValue(theme.spacing(1));
+  const heightOffset = TABLE.CELL_PADDING * 2;
 
   let config = getFieldConfigWithMinMax(field, false);
   if (!config.thresholds) {
@@ -44,17 +45,15 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
       cellOptions.valueDisplayMode !== undefined ? cellOptions.valueDisplayMode : BarGaugeValueMode.Text;
   }
 
-  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
-
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
+  // clamp the height of the gauge so it isn't stretched for large rows
+  const renderedHeight = Math.min(height - heightOffset, TABLE.MAX_CELL_HEIGHT);
 
-  const renderComponent = (menuProps: DataLinksContextMenuApi) => {
-    const { openMenu } = menuProps;
-
-    return (
+  return (
+    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
       <BarGauge
         width={width}
-        height={height - heightOffset}
+        height={renderedHeight}
         field={config}
         display={field.display}
         text={{ valueSize: 14 }}
@@ -62,28 +61,11 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
         orientation={VizOrientation.Horizontal}
         theme={theme}
         alignmentFactors={alignmentFactors}
-        onClick={openMenu}
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
         valueDisplayMode={valueDisplayMode}
       />
-    );
-  };
-
-  // @TODO: Actions
-  return (
-    <>
-      {hasLinks ? (
-        <DataLinksContextMenu
-          links={() => getCellLinks(field, rowIdx) || []}
-          style={{ display: 'flex', width: '100%' }}
-        >
-          {(api) => renderComponent(api)}
-        </DataLinksContextMenu>
-      ) : (
-        renderComponent({})
-      )}
-    </>
+    </MaybeWrapWithLink>
   );
 };

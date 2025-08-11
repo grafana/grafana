@@ -15,24 +15,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestIntegration_AdminApiReencrypt_Enterprise(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	getSecretsFunctions := map[string]func(*testing.T, *server.TestEnv) map[int]secret{}
 	getSecretsFunctions["settings"] = func(t *testing.T, env *server.TestEnv) map[int]secret {
 		return getSettingSecrets(t, env.SQLStore)
 	}
 
 	setup := func(t *testing.T, env *server.TestEnv, grafanaListenAddr string) {
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "admin",
-			Login:          "admin",
-			IsAdmin:        true,
-		})
-
 		addSetting(t, grafanaListenAddr)
 	}
 

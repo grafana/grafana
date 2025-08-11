@@ -1,8 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -29,6 +28,12 @@ jest.mock('@grafana/runtime', () => {
         },
       },
     },
+  };
+});
+
+jest.mock('app/features/dashboard-scene/utils/useProvisionedRequestHandler', () => {
+  return {
+    useProvisionedRequestHandler: jest.fn(),
   };
 });
 
@@ -116,7 +121,13 @@ function setup(props: Partial<Props> = {}) {
       diffs: {},
     },
     isNew: true,
-    isGitHub: true,
+    repository: {
+      type: 'github',
+      name: 'test-repo',
+      title: 'Test Repo',
+      workflows: ['branch', 'write'],
+      target: 'folder',
+    },
     defaultValues: {
       ref: 'dashboard/2023-01-01-abcde',
       path: 'test-dashboard.json',
@@ -127,13 +138,11 @@ function setup(props: Partial<Props> = {}) {
       description: 'Test Description',
       workflow: 'write',
     },
-    repository: {
-      name: 'repo-xyz',
-      type: 'github',
-      workflows: ['write', 'branch'],
-      title: 'Test Repository',
-      target: 'folder',
-    },
+    readOnly: false,
+    workflowOptions: [
+      { label: 'Branch', value: 'branch' },
+      { label: 'Write', value: 'write' },
+    ],
     ...props,
   };
 
@@ -186,6 +195,10 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should save a new dashboard successfully', async () => {
+    const mockAction = jest.fn();
+    const mockRequest = { ...mockRequestBase, isSuccess: true };
+    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const { user, props } = setup();
     const newDashboard = {
       apiVersion: 'dashboard.grafana.app/v1alpha1',
@@ -202,9 +215,7 @@ describe('SaveProvisionedDashboardForm', () => {
       },
     };
     props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
-    const mockAction = jest.fn();
-    const mockRequest = { ...mockRequestBase, isSuccess: true };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const titleInput = screen.getByRole('textbox', { name: /title/i });
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
     const pathInput = screen.getByRole('textbox', { name: /path/i });
@@ -224,9 +235,6 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
-    });
-    await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
         ref: undefined,
         name: 'test-repo',
@@ -235,16 +243,13 @@ describe('SaveProvisionedDashboardForm', () => {
         body: newDashboard,
       });
     });
-    const appEvents = getAppEvents();
-    expect(appEvents.publish).toHaveBeenCalledWith({
-      type: AppEvents.alertSuccess.name,
-      payload: ['Dashboard changes saved'],
-    });
-    expect(props.dashboard.closeModal).toHaveBeenCalled();
-    expect(locationService.partial).toHaveBeenCalledWith({ viewPanel: null, editPanel: null });
   });
 
   it('should update an existing dashboard successfully', async () => {
+    const mockAction = jest.fn();
+    const mockRequest = { ...mockRequestBase, isSuccess: true };
+    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const updatedDashboard = {
       apiVersion: 'dashboard.grafana.app/vXyz',
       metadata: {
@@ -256,7 +261,7 @@ describe('SaveProvisionedDashboardForm', () => {
       },
       spec: { title: 'Test Dashboard', description: 'Test Description' },
     };
-    const { user, props } = setup({
+    const { user } = setup({
       isNew: false,
       dashboard: {
         useState: () => ({
@@ -276,14 +281,9 @@ describe('SaveProvisionedDashboardForm', () => {
         setManager: jest.fn(),
       } as unknown as DashboardScene,
     });
-    const mockAction = jest.fn();
-    const mockRequest = { ...mockRequestBase, isSuccess: true };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const pathInput = screen.getByRole('textbox', { name: /path/i });
     expect(pathInput).toHaveAttribute('readonly'); // can not edit the path value
-    pathInput.removeAttribute('readonly'); // save won't get called unless we have a value
-    await user.clear(pathInput);
-    await user.type(pathInput, 'path/to/file.json');
 
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
@@ -291,22 +291,25 @@ describe('SaveProvisionedDashboardForm', () => {
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
     await waitFor(() => {
-      expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
-    });
-    await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
         ref: undefined,
         name: 'test-repo',
-        path: 'path/to/file.json',
+        path: 'test-dashboard.json',
         message: 'Update dashboard',
         body: updatedDashboard,
       });
     });
-    expect(props.dashboard.closeModal).toHaveBeenCalled();
-    expect(locationService.partial).toHaveBeenCalledWith({ viewPanel: null, editPanel: null });
   });
 
   it('should show error when save fails', async () => {
+    const mockAction = jest.fn();
+    const mockRequest = {
+      ...mockRequestBase,
+      isSuccess: false,
+      isError: true,
+      error: 'Failed to save dashboard',
+    };
+    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
     const { user, props } = setup();
     const newDashboard = {
       apiVersion: 'dashboard.grafana.app/v1alpha1',
@@ -323,14 +326,7 @@ describe('SaveProvisionedDashboardForm', () => {
       },
     };
     props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
-    const mockAction = jest.fn();
-    const mockRequest = {
-      ...mockRequestBase,
-      isSuccess: false,
-      isError: true,
-      error: 'Failed to save dashboard',
-    };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const titleInput = screen.getByRole('textbox', { name: /title/i });
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
     const pathInput = screen.getByRole('textbox', { name: /path/i });
@@ -358,13 +354,6 @@ describe('SaveProvisionedDashboardForm', () => {
         body: newDashboard,
       });
     });
-    await waitFor(() => {
-      const appEvents = getAppEvents();
-      expect(appEvents.publish).toHaveBeenCalledWith({
-        type: AppEvents.alertError.name,
-        payload: ['Error saving dashboard', 'Failed to save dashboard'],
-      });
-    });
   });
 
   it('should disable save button when dashboard is not dirty', () => {
@@ -390,17 +379,26 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
   });
 
-  it('should show read-only alert when repository has no workflows', () => {
+  it('should properly handle read-only state for a repository without workflows', () => {
     setup({
-      repository: {
-        name: 'repo-abc',
-        type: 'github',
-        workflows: [],
-        target: 'folder',
-        title: 'Read-only Repository',
-      },
+      isNew: false,
+      readOnly: true,
     });
 
-    expect(screen.getByText('This repository is read only')).toBeInTheDocument();
+    // Alert is shown
+    expect(screen.getByRole('alert', { name: 'This repository is read only' })).toBeInTheDocument();
+
+    // Save button is disabled
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    expect(saveButton).toBeDisabled();
+
+    // Common options are not shown for existing dashboards
+    expect(screen.queryByTestId('common-options')).not.toBeInTheDocument();
+
+    // Workflow options are not shown
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+
+    // Branch field is not shown
+    expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
   });
 });

@@ -35,7 +35,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -162,6 +161,13 @@ func NewStorage(
 	}
 
 	return s, func() {}, nil
+}
+
+// GetCurrentResourceVersion implements storage.Interface.
+// See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
+func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
+	// Although not totally accurate, this is sufficient
+	return uint64(time.Now().UnixMicro()), nil
 }
 
 func (s *Storage) Versioner() storage.Versioner {
@@ -557,16 +563,11 @@ func (s *Storage) GuaranteedUpdate(
 		existing.SetResourceVersionInt64(readResponse.ResourceVersion)
 		res.ResourceVersion = uint64(readResponse.ResourceVersion)
 
-		if rest.IsDualWriteUpdate(ctx) {
-			// Ignore the RV when updating legacy values
-			existing.SetResourceVersion("")
-		} else {
-			if err := preconditions.Check(key, existingObj); err != nil {
-				if attempt >= MaxUpdateAttempts {
-					return fmt.Errorf("precondition failed: %w", err)
-				}
-				continue
+		if err := preconditions.Check(key, existingObj); err != nil {
+			if attempt >= MaxUpdateAttempts {
+				return fmt.Errorf("precondition failed: %w", err)
 			}
+			continue
 		}
 
 		// restore the full original object before tryUpdate

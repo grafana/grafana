@@ -37,16 +37,15 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
           cache: true
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   mysql:
@@ -82,18 +81,17 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
           cache: true
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   postgres:
@@ -128,17 +126,43 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
           cache: true
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+
+  # This is the job that is actually required by rulesets.
+  # We want to only require one job instead of all the individual tests and shards.
+  # Future work also allows us to start skipping some tests based on changed files.
+  required-backend-integration-tests:
+    needs:
+      - mysql
+      - postgres
+      - sqlite
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All backend integration tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test suites
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"

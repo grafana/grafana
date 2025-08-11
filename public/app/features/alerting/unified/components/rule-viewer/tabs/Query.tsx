@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Stack } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -37,7 +37,6 @@ const QueryResults = ({ rule }: Props) => {
       onRunQueries();
     }
   }, [allDataSourcesAvailable, onRunQueries]);
-  const { t } = useTranslate();
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
 

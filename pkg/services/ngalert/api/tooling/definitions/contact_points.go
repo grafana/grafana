@@ -69,16 +69,19 @@ type JiraIntegration struct {
 	Project   string `yaml:"project,omitempty" json:"project,omitempty" hcl:"project"`
 	IssueType string `yaml:"issue_type,omitempty" json:"issue_type,omitempty" hcl:"issue_type"`
 
-	Summary           *string         `yaml:"summary,omitempty" json:"summary,omitempty" hcl:"summary"`
-	Description       *string         `yaml:"description,omitempty" json:"description,omitempty" hcl:"description"`
-	Labels            *[]string       `yaml:"labels,omitempty" json:"labels,omitempty" hcl:"labels"`
-	Priority          *string         `yaml:"priority,omitempty" json:"priority,omitempty" hcl:"priority"`
-	ReopenTransition  *string         `yaml:"reopen_transition,omitempty" json:"reopen_transition,omitempty" hcl:"reopen_transition"`
-	ResolveTransition *string         `yaml:"resolve_transition,omitempty" json:"resolve_transition,omitempty" hcl:"resolve_transition"`
-	WontFixResolution *string         `yaml:"wont_fix_resolution,omitempty" json:"wont_fix_resolution,omitempty" hcl:"wont_fix_resolution"`
-	ReopenDuration    *string         `yaml:"reopen_duration,omitempty" json:"reopen_duration,omitempty" hcl:"reopen_duration"`
-	DedupKeyFieldName *string         `yaml:"dedup_key_field,omitempty" json:"dedup_key_field,omitempty" hcl:"dedup_key_field"`
-	Fields            *map[string]any `yaml:"fields,omitempty" json:"fields,omitempty" hcl:"fields"`
+	Summary           *string   `yaml:"summary,omitempty" json:"summary,omitempty" hcl:"summary"`
+	Description       *string   `yaml:"description,omitempty" json:"description,omitempty" hcl:"description"`
+	Labels            *[]string `yaml:"labels,omitempty" json:"labels,omitempty" hcl:"labels"`
+	Priority          *string   `yaml:"priority,omitempty" json:"priority,omitempty" hcl:"priority"`
+	ReopenTransition  *string   `yaml:"reopen_transition,omitempty" json:"reopen_transition,omitempty" hcl:"reopen_transition"`
+	ResolveTransition *string   `yaml:"resolve_transition,omitempty" json:"resolve_transition,omitempty" hcl:"resolve_transition"`
+	WontFixResolution *string   `yaml:"wont_fix_resolution,omitempty" json:"wont_fix_resolution,omitempty" hcl:"wont_fix_resolution"`
+	ReopenDuration    *string   `yaml:"reopen_duration,omitempty" json:"reopen_duration,omitempty" hcl:"reopen_duration"`
+	DedupKeyFieldName *string   `yaml:"dedup_key_field,omitempty" json:"dedup_key_field,omitempty" hcl:"dedup_key_field"`
+
+	// This should be a map[string]any but gohcl does not support encoding that type. Instead, we force it to a string
+	// using a jsoniter extension `mapToJSONStringCodec` which will be handled in the TF provider.
+	Fields *string `yaml:"fields,omitempty" json:"fields,omitempty" hcl:"fields"`
 
 	User     *Secret `yaml:"user,omitempty" json:"user,omitempty" hcl:"user"`
 	Password *Secret `yaml:"password,omitempty" json:"password,omitempty" hcl:"password"`
@@ -324,6 +327,7 @@ type WebhookIntegration struct {
 	Message                  *string            `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 	TLSConfig                *TLSConfig         `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tlsConfig,block"`
 	HMACConfig               *HMACConfig        `json:"hmacConfig,omitempty" yaml:"hmacConfig,omitempty" hcl:"hmacConfig,block"`
+	HTTPConfig               *HTTPClientConfig  `json:"http_config,omitempty" yaml:"http_config,omitempty" hcl:"http_config,block"`
 
 	Payload *CustomPayload `json:"payload,omitempty" yaml:"payload,omitempty" hcl:"payload,block"`
 }
@@ -341,6 +345,41 @@ type HMACConfig struct {
 	// TimestampHeader is the name of the header containing the timestamp
 	// used to generate the HMAC signature. If empty, timestamp is not included.
 	TimestampHeader string `yaml:"timestampHeader,omitempty" json:"timestampHeader,omitempty" hcl:"timestamp_header"`
+}
+
+// HTTPClientConfig holds common configurations for notifier HTTP clients.
+type HTTPClientConfig struct {
+	OAuth2Config *OAuth2Config `json:"oauth2,omitempty" yaml:"oauth2,omitempty" hcl:"oauth2,block"`
+}
+
+type ProxyConfig struct {
+	// ProxyURL is the HTTP proxy server to use to connect to the targets.
+	ProxyURL *string `yaml:"proxy_url,omitempty" json:"proxy_url,omitempty" hcl:"proxy_url"`
+	// NoProxy contains addresses that should not use a proxy.
+	NoProxy *string `yaml:"no_proxy,omitempty" json:"no_proxy,omitempty" hcl:"no_proxy"`
+	// ProxyFromEnvironment uses environment HTTP_PROXY, HTTPS_PROXY and NO_PROXY to determine proxies.
+	ProxyFromEnvironment *bool `yaml:"proxy_from_environment,omitempty" json:"proxy_from_environment,omitempty" hcl:"proxy_from_environment"`
+	// ProxyConnectHeader optionally specifies headers to send to proxies during CONNECT requests.
+	ProxyConnectHeader *map[string]string `yaml:"proxy_connect_header,omitempty" json:"proxy_connect_header,omitempty" hcl:"proxy_connect_header"`
+}
+
+type OAuth2Config struct {
+	// ClientID is the OAuth2 client ID.
+	ClientID string `json:"client_id" yaml:"client_id" hcl:"client_id"`
+	// ClientSecret is the OAuth2 client secret.
+	ClientSecret *Secret `json:"client_secret" yaml:"client_secret" hcl:"client_secret"`
+	// TokenURL is the URL to get the OAuth2 token.
+	TokenURL string `json:"token_url" yaml:"token_url" hcl:"token_url"`
+
+	// Scopes is the optional list of OAuth2 scopes.
+	Scopes *[]string `json:"scopes,omitempty" yaml:"scopes,omitempty" hcl:"scopes"`
+	// EndpointParams is the optional map of additional parameters to include in the token request.
+	EndpointParams *map[string]string `json:"endpoint_params,omitempty" yaml:"endpoint_params,omitempty" hcl:"endpoint_params"`
+	// TLSConfig is the optional TLS configuration to use for the OAuth2 token request.
+	TLSConfig *TLSConfig `json:"tls_config,omitempty" yaml:"tls_config,omitempty" hcl:"tls_config,block"`
+
+	// ProxyConfig is the optional proxy configuration to use for the OAuth2 token request.
+	ProxyConfig *ProxyConfig `json:"proxy_config,omitempty" yaml:"proxy_config,omitempty" hcl:"proxy_config,block"`
 }
 
 type WecomIntegration struct {

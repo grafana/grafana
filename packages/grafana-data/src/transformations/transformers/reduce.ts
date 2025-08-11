@@ -230,10 +230,11 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
           const value = results[reducer];
           const copy = {
             ...field,
+            labels: { ...field.labels },
             type: getFieldType(reducer, field),
             values: [value],
+            state: undefined,
           };
-          copy.state = undefined;
           if (reducers.length > 1) {
             if (!copy.labels) {
               copy.labels = {};

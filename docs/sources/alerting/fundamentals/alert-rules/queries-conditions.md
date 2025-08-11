@@ -17,6 +17,11 @@ labels:
 title: Queries and conditions
 weight: 104
 refs:
+  dynamic-threshold-example:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-thresholds/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/dynamic-thresholds/
   alert-instance:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/#alert-instances
@@ -49,9 +54,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#reduce
   table-data-example:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/examples/table-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/examples/table-data/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/table-data/
 ---
 
 # Queries and conditions
@@ -109,7 +114,7 @@ Aggregates time series values within the selected time range into a single numbe
 
 Reduce takes one or more time series and transform each series into a single number, which can then be compared in the alert condition.
 
-The following aggregations functions are included: `Min`, `Max`, `Mean`, `Mediam`, `Sum`, `Count`, and `Last`. For more details, refer to the [Reduce documentation](ref:reduce-operation).
+The following aggregations functions are included: `Min`, `Max`, `Mean`, `Median`, `Sum`, `Count`, and `Last`. For more details, refer to the [Reduce documentation](ref:reduce-operation).
 
 ### Math
 
@@ -117,9 +122,7 @@ Performs free-form math functions/operations on time series data and numbers. Fo
 
 If queries being compared have **multiple series in their results**, series from different queries are matched(joined) if they have the same labels. For example:
 
-- `$A` returns series `{host=web01} 30` and `{host=web02} 20`
-- `$B` returns series `{host=web01} 10` and `{host=web02} 0`
-- `$A + $B` returns `{host=web01} 40` and `{host=web02} 20`.
+{{< docs/shared lookup="alerts/math-example.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 In this case, only series with matching labels are joined, and the operation is calculated between them.
 
@@ -129,6 +132,7 @@ You can also use a Math expression to define the **alert condition**. For exampl
 
 - `$B > 70` should fire if the value of B (query or expression) is more than 70.
 - `$B < $C * 100` should fire if the value of B is less than the value of C multiplied by 100.
+- Compare matching series from two queries, as shown in the [dynamic threshold example](ref:dynamic-threshold-example).
 
 ### Resample
 

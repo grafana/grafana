@@ -1,13 +1,16 @@
 import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
-import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
+import {
+  shouldRenderInviteUserButton,
+  performInviteUserClick,
+} from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
 import { changeTheme } from 'app/core/services/theme';
-import { currentMockApiState, toggleMockApiAndReload } from 'app/mock-api-utils';
+import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
+import { useSelector } from 'app/types/store';
 
-import { useSelector } from '../../../types';
 import { CommandPaletteAction } from '../types';
 import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
@@ -103,7 +106,7 @@ function getGlobalActions(): CommandPaletteAction[] {
   ];
 
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable @grafana/no-untranslated-strings
+    // eslint-disable @grafana/i18n/no-untranslated-strings
     const section = 'Dev tooling';
     const currentState = currentMockApiState();
     const mockApiAction = currentState ? 'Disable' : 'Enable';
@@ -116,7 +119,19 @@ function getGlobalActions(): CommandPaletteAction[] {
       priority: PREFERENCES_PRIORITY,
       perform: toggleMockApiAndReload,
     });
-    // eslint-enable @grafana/no-untranslated-strings
+
+    actions.push({
+      id: 'preferences/dev/pseudo-locale',
+      section,
+      name: 'Toggle pseudo locale',
+      subtitle: 'Toggles between default language and pseudo locale',
+      keywords: 'pseudo locale',
+      priority: PREFERENCES_PRIORITY,
+      perform: () => {
+        togglePseudoLocale();
+      },
+    });
+    // eslint-enable @grafana/i18n/no-untranslated-strings
   }
 
   return actions;
@@ -127,10 +142,10 @@ export function useStaticActions(): CommandPaletteAction[] {
   return useMemo(() => {
     const navBarActions = navTreeToActions(navBarTree);
 
-    if (shouldRenderInviteUserButton) {
+    if (shouldRenderInviteUserButton()) {
       navBarActions.push({
         id: 'invite-user',
-        name: t('navigation.invite-user.invite-new-member-button', 'Invite new member'),
+        name: t('navigation.invite-user.invite-new-user-button', 'Invite new user'),
         section: t('command-palette.section.actions', 'Actions'),
         priority: ACTIONS_PRIORITY,
         perform: () => {

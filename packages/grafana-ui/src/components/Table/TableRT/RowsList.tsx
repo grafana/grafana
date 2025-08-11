@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes';
+import { useTheme2 } from '../../../themes/ThemeContext';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../../PanelChrome';
 import { TableCell } from '../Cells/TableCell';

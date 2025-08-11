@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -9,7 +9,7 @@ import {
   SceneObject,
   VizPanel,
 } from '@grafana/scenes';
-import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
@@ -22,7 +22,6 @@ import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSe
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
-import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -33,7 +32,6 @@ import { LayoutParent } from '../types/LayoutParent';
 
 import { useEditOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
-import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
@@ -42,6 +40,8 @@ export interface TabItemState extends SceneObjectState {
   title?: string;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
+  repeatByVariable?: string;
+  repeatedTabs?: TabItem[];
 }
 
 export class TabItem
@@ -57,7 +57,6 @@ export class TabItem
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
 
-  private _layoutRestorer = new LayoutRestorer();
   public containerRef = React.createRef<HTMLDivElement>();
 
   constructor(state?: Partial<TabItemState>) {
@@ -86,8 +85,11 @@ export class TabItem
       typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'layers',
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    return this.state.layout.getOutlineChildren();
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -99,7 +101,7 @@ export class TabItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
+    this.setState({ layout });
   }
 
   public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
@@ -178,19 +180,10 @@ export class TabItem
   }
 
   public onChangeRepeat(repeat: string | undefined) {
-    let repeatBehavior = this._getRepeatBehavior();
-
     if (repeat) {
-      // Remove repeat behavior if it exists to trigger repeat when adding new one
-      if (repeatBehavior) {
-        repeatBehavior.removeBehavior();
-      }
-
-      repeatBehavior = new TabItemRepeaterBehavior({ variableName: repeat });
-      this.setState({ $behaviors: [...(this.state.$behaviors ?? []), repeatBehavior] });
-      repeatBehavior.activate();
+      this.setState({ repeatByVariable: repeat });
     } else {
-      repeatBehavior?.removeBehavior();
+      this.setState({ repeatedTabs: undefined, $variables: undefined, repeatByVariable: undefined });
     }
   }
 
@@ -217,10 +210,6 @@ export class TabItem
     }
   }
 
-  public getRepeatVariable(): string | undefined {
-    return this._getRepeatBehavior()?.state.variableName;
-  }
-
   public getParentLayout(): TabsLayoutManager {
     return sceneGraph.getAncestor(this, TabsLayoutManager);
   }
@@ -238,9 +227,5 @@ export class TabItem
     const parentLayout = this.getParentLayout();
     const duplicateTitles = parentLayout.duplicateTitles();
     return !duplicateTitles.has(this.state.title);
-  }
-
-  private _getRepeatBehavior(): TabItemRepeaterBehavior | undefined {
-    return this.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
   }
 }

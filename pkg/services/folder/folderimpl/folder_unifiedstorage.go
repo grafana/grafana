@@ -34,7 +34,7 @@ import (
 )
 
 const folderSearchLimit = 100000
-const folderListLimit = 100
+const folderListLimit = 100000
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.getFoldersFromApiServer")
@@ -310,11 +310,16 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 
 	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
-			Key:    folderkey,
-			Fields: []*resourcepb.Requirement{},
+			Key: folderkey,
+			Fields: []*resourcepb.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+					Operator: string(selection.Equals),
+					Values:   []string{title},
+				},
+			},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Query: title,
 		Limit: folderSearchLimit}
 
 	if parentUID != nil {

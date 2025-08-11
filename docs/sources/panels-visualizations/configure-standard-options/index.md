@@ -152,9 +152,9 @@ This section explains all available standard options.
 
 To set these options, expand the **Standard options** section in the panel editor pane. Most field options won't affect the visualization until you click outside of the field option box you're editing or press Enter.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Not all of the options listed apply to all visualizations with standard options.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Unit
 
@@ -172,14 +172,15 @@ You can further define a custom unit with specific syntax. For example, to set a
 
 The following table lists the special syntax options for custom units:
 
-| Custom unit                        | Description                                                                                                                                                                                                    |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `suffix:<suffix>`                  | Custom unit that should go after value.                                                                                                                                                                        |
-| `prefix:<prefix>`                  | Custom unit that should go before value.                                                                                                                                                                       |
-| `time:<format>`                    | Custom date time formats type, such as `time:YYYY-MM-DD`. Refer to [formats](https://momentjs.com/docs/#/displaying/) for the format syntax and options.                                                       |
-| `si:<base scale><unit characters>` | Custom SI units, such as `si: mF`. You can specify both a unit and the source data scale. For example, if your source data is represented as milli-something, prefix the unit with the `m` SI scale character. |
-| `count:<unit>`                     | Custom count unit.                                                                                                                                                                                             |
-| `currency:<unit>`                  | Custom currency unit.                                                                                                                                                                                          |
+| Custom unit                        | Description                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `suffix:<suffix>`                  | Custom unit that should go after value.                                                                                                                                                                                                                                                                                                                 |
+| `prefix:<prefix>`                  | Custom unit that should go before value.                                                                                                                                                                                                                                                                                                                |
+| `time:<format>`                    | Custom date time formats type, such as `time:YYYY-MM-DD`. Refer to [formats](https://momentjs.com/docs/#/displaying/) for the format syntax and options.                                                                                                                                                                                                |
+| `si:<base scale><unit characters>` | Custom SI units, such as `si: mF`. You can specify both a unit and the source data scale. For example, if your source data is represented as milli-something, prefix the unit with the `m` SI scale character.                                                                                                                                          |
+| `count:<unit>`                     | Custom count unit.                                                                                                                                                                                                                                                                                                                                      |
+| `currency:<unit>`                  | Custom currency unit.                                                                                                                                                                                                                                                                                                                                   |
+| `currency:financial:<unit>`        | Full format currency unit without abbreviations. Displays complete numeric values instead of scaled abbreviations (K: Thousand, M: Million, B: Billion, T: Trillion). For example, `currency:financial:$` displays `500,555` instead of `$501K`. Add `:suffix` to place the symbol after the number: `currency:financial:€:suffix` displays `500,555€`. |
 
 You can also paste a native emoji in the **Unit** drop-down and select it as a custom unit:
 
@@ -197,7 +198,6 @@ To display timestamps that are in seconds since epoch, multiply your timestamp v
 1. Click **Add transformation**.
 1. Select the **Add field from calculation** transformation.
 1. Set the following options:
-
    - **Mode** - **Binary operation**
    - **Operation**
      - Select your timestamp field

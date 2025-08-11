@@ -9,12 +9,6 @@
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
-import { t } from '../i18n';
-
-type TFunction = typeof t;
-
-export type { TFunction };
-export { t };
 
 export {
   addResourceBundle,
@@ -22,5 +16,6 @@ export {
   getI18nInstance,
   getLanguage,
   getResolvedLanguage,
-  initTranslations,
+  initializeI18n,
+  loadNamespacedResources,
 } from '../i18n';

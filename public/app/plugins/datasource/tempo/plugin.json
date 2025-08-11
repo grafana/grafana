@@ -6,7 +6,7 @@
   "executable": "gpx_tempo",
 
   "metrics": true,
-  "alerting": false,
+  "alerting": true,
   "annotations": false,
   "logs": false,
   "streaming": false,

@@ -87,6 +87,8 @@ export function getPrometheusRulesResponse(
               evaluationTime: 0,
               uid: rule_uid,
               folderUid: folderUid,
+              totals: {},
+              totalsFiltered: {},
             },
           ],
           interval: 60,

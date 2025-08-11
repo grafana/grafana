@@ -133,14 +133,6 @@ In Grafana's audit logs it will still show up as the same service account.
 
 Service account access tokens inherit permissions from the service account.
 
-### API keys
-
-{{< admonition type="note" >}}
-Grafana recommends using service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts](./#service-accounts).
-{{< /admonition >}}
-
-You can use Grafana API keys to interact with data sources via HTTP APIs.
-
 ## How to work with roles?
 
 Grafana roles control the access of users and service accounts to specific resources and determine their authorized actions.
@@ -190,7 +182,7 @@ When connecting Grafana to an identity provider, it's important to think beyond 
 Team sync is a feature that allows you to synchronize teams or groups from your authentication provider with teams in Grafana. This means that users of specific teams or groups in LDAP, OAuth, or SAML will be automatically added or removed as members of corresponding teams in Grafana. Whenever a user logs in, Grafana will check for any changes in the teams or groups of the authentication provider and update the user's teams in Grafana accordingly. This makes it easy to manage user permissions across multiple systems.
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 {{< admonition type="note" >}}

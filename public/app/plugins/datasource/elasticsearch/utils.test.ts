@@ -1,4 +1,4 @@
-import { ElasticsearchQuery } from './types';
+import { ElasticsearchDataQuery } from './dataquery.gen';
 import { flattenObject, isTimeSeriesQuery, removeEmpty } from './utils';
 
 describe('removeEmpty', () => {
@@ -38,7 +38,7 @@ describe('removeEmpty', () => {
 
 describe('isTimeSeriesQuery', () => {
   it('should return false when given a log query', () => {
-    const logsQuery: ElasticsearchQuery = {
+    const logsQuery: ElasticsearchDataQuery = {
       refId: `A`,
       metrics: [{ type: 'logs', id: '1' }],
     };
@@ -47,7 +47,7 @@ describe('isTimeSeriesQuery', () => {
   });
 
   it('should return false when bucket aggs are empty', () => {
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: `A`,
       bucketAggs: [],
     };
@@ -56,7 +56,7 @@ describe('isTimeSeriesQuery', () => {
   });
 
   it('returns false when empty date_histogram is not last', () => {
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: `A`,
       bucketAggs: [
         { id: '1', type: 'date_histogram' },
@@ -68,7 +68,7 @@ describe('isTimeSeriesQuery', () => {
   });
 
   it('returns true when empty date_histogram is last', () => {
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: `A`,
       bucketAggs: [
         { id: '1', type: 'terms' },

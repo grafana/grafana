@@ -1,14 +1,15 @@
 import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   Spec as DashboardV2Spec,
+  defaultDataQueryKind,
   GridLayoutItemKind,
-  GridLayoutItemSpec,
   GridLayoutKind,
-  GridLayoutRowSpec,
   PanelKind,
+  RowsLayoutKind,
+  RowsLayoutRowKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -24,7 +25,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import {
   getDefaultDatasource,
@@ -352,76 +353,6 @@ describe('ResponseTransformers', () => {
             },
             gridPos: { x: 0, y: 8, w: 12, h: 8 },
           },
-          {
-            id: 3,
-            type: 'row',
-            title: 'Row test title',
-            gridPos: { x: 0, y: 16, w: 12, h: 1 },
-            panels: [],
-            collapsed: false,
-          },
-          {
-            id: 4,
-            type: 'timeseries',
-            title: 'Panel in row',
-            gridPos: { x: 0, y: 17, w: 16, h: 8 },
-            targets: [
-              {
-                refId: 'A',
-                datasource: 'datasource1',
-                expr: 'test-query',
-                hide: false,
-              },
-            ],
-            datasource: {
-              type: 'prometheus',
-              uid: 'datasource1',
-            },
-            fieldConfig: { defaults: {}, overrides: [] },
-            options: {},
-            transparent: false,
-            links: [],
-            transformations: [],
-          },
-          {
-            id: 5,
-            type: 'row',
-            title: 'Collapsed row title',
-            gridPos: { x: 0, y: 25, w: 12, h: 1 },
-            panels: [
-              {
-                id: 5,
-                type: 'timeseries',
-                title: 'Panel in collapsed row',
-                gridPos: { x: 0, y: 26, w: 16, h: 8 },
-                targets: [
-                  {
-                    refId: 'A',
-                    datasource: 'datasource1',
-                    expr: 'test-query',
-                    hide: false,
-                  },
-                ],
-                datasource: {
-                  type: 'prometheus',
-                  uid: 'datasource1',
-                },
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-                transparent: false,
-                links: [],
-                transformations: [],
-              },
-            ],
-            collapsed: true,
-          },
-          {
-            id: 6,
-            type: 'row',
-            title: 'Row with no panel property',
-            gridPos: { x: 0, y: 25, w: 12, h: 1 },
-            collapsed: true,
-          },
         ],
       };
 
@@ -463,7 +394,7 @@ describe('ResponseTransformers', () => {
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
-      expect(transformed.apiVersion).toBe('v2alpha1');
+      expect(transformed.apiVersion).toBe('v2beta1');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
@@ -499,7 +430,7 @@ describe('ResponseTransformers', () => {
       // Panel
       expect(spec.layout.kind).toBe('GridLayout');
       const layout = spec.layout as GridLayoutKind;
-      expect(layout.spec.items).toHaveLength(5);
+      expect(layout.spec.items).toHaveLength(2);
       expect(layout.spec.items[0].spec).toEqual({
         element: {
           kind: 'ElementReference',
@@ -519,14 +450,15 @@ describe('ResponseTransformers', () => {
           id: 1,
           links: [],
           vizConfig: {
-            kind: 'timeseries',
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: undefined,
             spec: {
               fieldConfig: {
                 defaults: {},
                 overrides: [],
               },
               options: {},
-              pluginVersion: undefined,
             },
           },
           data: {
@@ -536,10 +468,14 @@ describe('ResponseTransformers', () => {
                 {
                   kind: 'PanelQuery',
                   spec: {
-                    datasource: 'datasource1',
                     hidden: false,
                     query: {
-                      kind: 'prometheus',
+                      kind: 'DataQuery',
+                      version: defaultDataQueryKind().version,
+                      group: 'prometheus',
+                      datasource: {
+                        name: 'datasource1',
+                      },
                       spec: {
                         expr: 'test-query',
                       },
@@ -585,48 +521,6 @@ describe('ResponseTransformers', () => {
         },
       });
 
-      const rowSpec = layout.spec.items[2].spec as GridLayoutRowSpec;
-
-      expect(rowSpec.collapsed).toBe(false);
-      expect(rowSpec.title).toBe('Row test title');
-      expect(rowSpec.repeat).toBeUndefined();
-
-      const panelInRow = rowSpec.elements[0].spec as GridLayoutItemSpec;
-
-      expect(panelInRow).toEqual({
-        element: {
-          kind: 'ElementReference',
-          name: 'panel-4',
-        },
-        x: 0,
-        y: 0,
-        width: 16,
-        height: 8,
-      });
-
-      const collapsedRowSpec = layout.spec.items[3].spec as GridLayoutRowSpec;
-      expect(collapsedRowSpec.collapsed).toBe(true);
-      expect(collapsedRowSpec.title).toBe('Collapsed row title');
-      expect(collapsedRowSpec.repeat).toBeUndefined();
-
-      const panelInCollapsedRow = collapsedRowSpec.elements[0].spec as GridLayoutItemSpec;
-
-      expect(panelInCollapsedRow).toEqual({
-        element: {
-          kind: 'ElementReference',
-          name: 'panel-5',
-        },
-        x: 0,
-        y: 0,
-        width: 16,
-        height: 8,
-      });
-
-      const rowWithNoPanelProperty = layout.spec.items[4].spec as GridLayoutRowSpec;
-      expect(rowWithNoPanelProperty.collapsed).toBe(true);
-      expect(rowWithNoPanelProperty.title).toBe('Row with no panel property');
-      expect(rowWithNoPanelProperty.elements).toHaveLength(0);
-
       // Variables
       validateVariablesV1ToV2(spec.variables[0], dashboardV1.templating?.list?.[0]);
       validateVariablesV1ToV2(spec.variables[1], dashboardV1.templating?.list?.[1]);
@@ -637,6 +531,254 @@ describe('ResponseTransformers', () => {
       validateVariablesV1ToV2(spec.variables[6], dashboardV1.templating?.list?.[6]);
       validateVariablesV1ToV2(spec.variables[7], dashboardV1.templating?.list?.[7]);
       validateVariablesV1ToV2(spec.variables[8], dashboardV1.templating?.list?.[8]);
+    });
+  });
+
+  describe('v1 -> v2 transformation with rows', () => {
+    it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
+      const dashboardV1: DashboardDataDTO = {
+        uid: 'dashboard-uid',
+        id: 123,
+        title: 'Dashboard Title',
+        description: 'Dashboard Description',
+        tags: ['tag1', 'tag2'],
+        schemaVersion: 1,
+        graphTooltip: 0,
+        preload: true,
+        liveNow: false,
+        editable: true,
+        time: { from: 'now-6h', to: 'now' },
+        timezone: 'browser',
+        refresh: '5m',
+        timepicker: {
+          refresh_intervals: ['5s', '10s', '30s'],
+          hidden: false,
+          nowDelay: '1m',
+          quick_ranges: [
+            {
+              display: 'Last 6 hours',
+              from: 'now-6h',
+              to: 'now',
+            },
+            {
+              display: 'Last 7 days',
+              from: 'now-7d',
+              to: 'now',
+            },
+          ],
+        },
+        fiscalYearStartMonth: 1,
+        weekStart: 'monday',
+        version: 1,
+        gnetId: 'something-like-a-uid',
+        revision: 225,
+        links: [],
+        annotations: {
+          list: [],
+        },
+        templating: {
+          list: [],
+        },
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            title: 'Panel Title',
+            gridPos: { x: 0, y: 0, w: 12, h: 8 },
+            targets: [
+              {
+                refId: 'A',
+                datasource: 'datasource1',
+                expr: 'test-query',
+                hide: false,
+              },
+            ],
+            datasource: {
+              type: 'prometheus',
+              uid: 'datasource1',
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+            options: {},
+            transparent: false,
+            links: [],
+            transformations: [],
+            repeat: 'var1',
+            repeatDirection: 'h',
+          },
+          {
+            id: 2,
+            type: 'table',
+            title: 'Just a shared table',
+            libraryPanel: {
+              uid: 'library-panel-table',
+              name: 'Table Panel as Library Panel',
+            },
+            gridPos: { x: 0, y: 8, w: 12, h: 8 },
+          },
+          {
+            id: 3,
+            type: 'row',
+            title: 'Row test title',
+            gridPos: { x: 0, y: 16, w: 12, h: 1 },
+            repeat: 'var1',
+            repeatDirection: 'v',
+            panels: [],
+            collapsed: false,
+          },
+          {
+            id: 4,
+            type: 'timeseries',
+            title: 'Panel in row',
+            gridPos: { x: 0, y: 17, w: 16, h: 8 },
+            targets: [
+              {
+                refId: 'A',
+                datasource: 'datasource1',
+                expr: 'test-query',
+                hide: false,
+              },
+            ],
+            datasource: {
+              type: 'prometheus',
+              uid: 'datasource1',
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+            options: {},
+            transparent: false,
+            links: [],
+            transformations: [],
+          },
+          {
+            id: 5,
+            type: 'row',
+            title: 'Collapsed row title',
+            gridPos: { x: 0, y: 25, w: 12, h: 1 },
+            panels: [
+              {
+                id: 6,
+                type: 'timeseries',
+                title: 'Panel in collapsed row',
+                gridPos: { x: 0, y: 26, w: 16, h: 8 },
+                targets: [
+                  {
+                    refId: 'A',
+                    datasource: 'datasource1',
+                    expr: 'test-query',
+                    hide: false,
+                  },
+                ],
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+                transparent: false,
+                links: [],
+                transformations: [],
+              },
+            ],
+            collapsed: true,
+          },
+          {
+            id: 7,
+            type: 'row',
+            title: 'collapsed row with no panel property',
+            gridPos: { x: 0, y: 26, w: 12, h: 1 },
+            collapsed: true,
+          },
+          {
+            id: 8,
+            type: 'row',
+            title: 'empty row',
+            gridPos: { x: 0, y: 27, w: 12, h: 1 },
+            collapsed: false,
+          },
+        ],
+      };
+
+      const dto: DashboardWithAccessInfo<DashboardDataDTO> = {
+        spec: dashboardV1,
+        access: {
+          slug: 'dashboard-slug',
+          url: '/d/dashboard-slug',
+          canAdmin: true,
+          canDelete: true,
+          canEdit: true,
+          canSave: true,
+          canShare: true,
+          canStar: true,
+          annotationsPermissions: {
+            dashboard: { canAdd: true, canEdit: true, canDelete: true },
+            organization: { canAdd: true, canEdit: true, canDelete: true },
+          },
+        },
+        apiVersion: 'v1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'dashboard-uid',
+          resourceVersion: '1',
+          creationTimestamp: '2023-01-01T00:00:00Z',
+          annotations: {
+            [AnnoKeyCreatedBy]: 'user1',
+            [AnnoKeyUpdatedBy]: 'user2',
+            [AnnoKeyUpdatedTimestamp]: '2023-01-02T00:00:00Z',
+            [AnnoKeyFolder]: 'folder1',
+            [AnnoKeySlug]: 'dashboard-slug',
+          },
+          labels: {
+            [DeprecatedInternalId]: '123',
+          },
+        },
+      };
+
+      const transformed = ResponseTransformers.ensureV2Response(dto);
+
+      const spec = transformed.spec;
+
+      // Panel
+      expect(spec.layout.kind).toBe('RowsLayout');
+      const layout = spec.layout as RowsLayoutKind;
+      expect(layout.spec.rows).toHaveLength(5);
+
+      const row0grid = layout.spec.rows[0].spec.layout as GridLayoutKind;
+      expect(row0grid.kind).toBe('GridLayout');
+      expect(row0grid.spec.items).toHaveLength(2);
+      expect(row0grid.spec.items[0].spec.element.name).toBe('panel-1');
+      expect(row0grid.spec.items[0].spec.y).toBe(0);
+      expect(row0grid.spec.items[1].spec.element.name).toBe('panel-2');
+      expect(row0grid.spec.items[1].spec.y).toBe(8);
+
+      const row1 = layout.spec.rows[1] as RowsLayoutRowKind;
+      expect(row1.kind).toBe('RowsLayoutRow');
+      expect(row1.spec.repeat?.value).toBe('var1');
+      expect(row1.spec.repeat?.mode).toBe('variable');
+
+      const row1grid = layout.spec.rows[1].spec.layout as GridLayoutKind;
+      expect(row1grid.kind).toBe('GridLayout');
+      expect(row1grid.spec.items).toHaveLength(1);
+      expect(row1grid.spec.items[0].spec.element.name).toBe('panel-4');
+
+      const row2grid = layout.spec.rows[2].spec.layout as GridLayoutKind;
+      expect(row2grid.kind).toBe('GridLayout');
+      expect(row2grid.spec.items).toHaveLength(1);
+      expect(row2grid.spec.items[0].spec.element.name).toBe('panel-6');
+
+      const row3 = layout.spec.rows[3] as RowsLayoutRowKind;
+      expect(row3.kind).toBe('RowsLayoutRow');
+      expect(row3.spec.collapse).toBe(true);
+      expect(row3.spec.layout.kind).toBe('GridLayout');
+      const row3grid = row3.spec.layout as GridLayoutKind;
+      expect(row3grid.kind).toBe('GridLayout');
+      expect(row3grid.spec.items).toHaveLength(0);
+
+      const row4 = layout.spec.rows[4] as RowsLayoutRowKind;
+      expect(row4.kind).toBe('RowsLayoutRow');
+      expect(row4.spec.collapse).toBe(false);
+      expect(row4.spec.layout.kind).toBe('GridLayout');
+      const row4grid = row4.spec.layout as GridLayoutKind;
+      expect(row4grid.kind).toBe('GridLayout');
+      expect(row4grid.spec.items).toHaveLength(0);
     });
   });
 
@@ -657,7 +799,7 @@ describe('ResponseTransformers', () => {
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2beta1',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           creationTimestamp: '2023-01-01T00:00:00Z',
@@ -804,9 +946,6 @@ describe('ResponseTransformers', () => {
         uid: 'uid-for-library-panel',
         name: 'Library Panel',
       });
-      expect(dashboard.panels![2].type).toBe('row');
-      expect(dashboard.panels![2].id).toBe(4); // Row id should be assigned to unique number following the highest id of panels.
-      expect(dashboard.panels![3].type).toBe('timeseries');
     });
 
     describe('getPanelQueries', () => {
@@ -840,11 +979,9 @@ describe('ResponseTransformers', () => {
 
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.datasource).toEqual({
-            type: 'theoretical-ds',
-            uid: 'theoretical-uid',
-          });
-          expect(query.spec.query.kind).toBe('theoretical-ds');
+          expect(query.spec.query.group).toEqual('theoretical-ds');
+          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+          expect(query.spec.query.kind).toBe('DataQuery');
         });
       });
 
@@ -870,11 +1007,9 @@ describe('ResponseTransformers', () => {
 
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.datasource).toEqual({
-            type: 'theoretical-ds',
-            uid: 'theoretical-uid',
-          });
-          expect(query.spec.query.kind).toBe('theoretical-ds');
+          expect(query.spec.query.group).toEqual('theoretical-ds');
+          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+          expect(query.spec.query.kind).toBe('DataQuery');
         });
       });
     });
@@ -882,14 +1017,14 @@ describe('ResponseTransformers', () => {
 
   function validateAnnotation(v1: AnnotationQuery, v2: DashboardV2Spec['annotations'][0]) {
     const { spec: v2Spec } = v2;
-
     expect(v1.name).toBe(v2Spec.name);
-    expect(v1.datasource).toBe(v2Spec.datasource);
+    expect(v1.datasource?.type).toBe(v2Spec.query.group);
+    expect(v1.datasource?.uid).toBe(v2Spec.query.datasource?.name);
     expect(v1.enable).toBe(v2Spec.enable);
     expect(v1.hide).toBe(v2Spec.hide);
     expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : 0);
-    expect(v1.target).toBe(v2Spec.query?.spec);
+    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : undefined);
+    expect(v1.target).toEqual(v2Spec.query.spec);
     expect(v1.filter).toEqual(v2Spec.filter);
   }
 
@@ -898,19 +1033,22 @@ describe('ResponseTransformers', () => {
 
     expect(v1.id).toBe(v2Spec.id);
     expect(v1.id).toBe(v2Spec.id);
-    expect(v1.type).toBe(v2Spec.vizConfig.kind);
+    expect(v1.type).toBe(v2Spec.vizConfig.group);
     expect(v1.title).toBe(v2Spec.title);
     expect(v1.description).toBe(v2Spec.description);
     expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
     expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
-    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.spec.pluginVersion);
+    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.version);
     expect(v1.links).toEqual(v2Spec.links);
     expect(v1.targets).toEqual(
       v2Spec.data.spec.queries.map((q) => {
         return {
           refId: q.spec.refId,
           hide: q.spec.hidden,
-          datasource: q.spec.datasource,
+          datasource: {
+            type: q.spec.query.spec.group,
+            uid: q.spec.query.spec.datasource?.uid,
+          },
           ...q.spec.query.spec,
         };
       })
@@ -960,18 +1098,24 @@ describe('ResponseTransformers', () => {
     };
 
     expect(v2Common).toEqual(v1Common);
-
     if (v2.kind === 'QueryVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
-
-      if (typeof v1.query === 'string') {
-        expect(v2.spec.query.spec[LEGACY_STRING_VALUE_KEY]).toEqual(v1.query);
-      } else {
-        expect(v2.spec.query).toEqual({
-          kind: v1.datasource?.type,
-          spec: {
-            ...(typeof v1.query === 'object' ? v1.query : {}),
+      expect(v2.spec.query).toMatchObject({
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: (v1.datasource?.type || getDefaultDataSourceRef()?.type) ?? 'grafana',
+        ...(v1.datasource?.uid && {
+          datasource: {
+            name: v1.datasource?.uid,
           },
+        }),
+      });
+      if (typeof v1.query === 'string') {
+        expect(v2.spec.query.spec).toEqual({
+          [LEGACY_STRING_VALUE_KEY]: v1.query,
+        });
+      } else {
+        expect(v2.spec.query.spec).toEqual({
+          ...(typeof v1.query === 'object' ? v1.query : {}),
         });
       }
     }
@@ -987,7 +1131,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'AdhocVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       // @ts-expect-error
       expect(v2.spec.filters).toEqual(v1.filters);
       // @ts-expect-error
@@ -1016,7 +1161,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'GroupByVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       expect(v2.spec.options).toEqual(v1.options);
     }
   }

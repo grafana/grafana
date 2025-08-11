@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
@@ -17,7 +17,7 @@ interface EditPaneHeaderProps {
 export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
@@ -36,6 +36,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
             onClick={onGoBack}
             tooltip={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
             aria-label={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
+            data-testid={selectors.components.EditPaneHeader.backButton}
           />
         )}
         <Text>{elementInfo.typeName}</Text>
@@ -65,6 +66,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
               variant="secondary"
               size="sm"
               icon="copy"
+              data-testid={selectors.components.EditPaneHeader.copyDropdown}
             >
               <Icon name="angle-down" />
             </Button>

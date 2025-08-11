@@ -3,7 +3,7 @@
 import { DataQuery, RelativeTimeRange } from '@grafana/data';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
-import { AlertGroupTotals } from './unified-alerting';
+import { AlertGroupTotals, AlertInstanceTotals } from './unified-alerting';
 
 export type Labels = Record<string, string>;
 export type Annotations = Record<string, string>;
@@ -132,6 +132,7 @@ interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {
   folderUid: string;
   isPaused: boolean;
   queriedDatasourceUIDs?: string[];
+  provenance?: string;
 }
 
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {
@@ -170,7 +171,10 @@ export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
   lastEvaluation?: string;
 }
 
-export interface GrafanaPromAlertingRuleDTO extends GrafanaPromRuleDTOBase, PromAlertingRuleDTO {}
+export interface GrafanaPromAlertingRuleDTO extends GrafanaPromRuleDTOBase, PromAlertingRuleDTO {
+  totals: AlertInstanceTotals;
+  totalsFiltered: AlertInstanceTotals;
+}
 
 export interface GrafanaPromRecordingRuleDTO extends GrafanaPromRuleDTOBase, PromRecordingRuleDTO {}
 

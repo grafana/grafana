@@ -1,6 +1,6 @@
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -12,7 +12,7 @@ import {
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
@@ -56,6 +56,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
   getElementPanelMapping: () => Map<string, number>;
   getDSReferencesMapping: () => DSReferencesMapping;
   makeExportableExternally: (s: DashboardScene) => Promise<E | { error: unknown }>;
+  getK8SMetadata: () => Partial<ObjectMeta> | undefined;
 }
 
 interface DashboardTrackingInfo {
@@ -178,6 +179,17 @@ export class V1DashboardSerializer
       uid: result.uid,
       version: result.version,
     };
+    this.metadata = {
+      ...this.metadata,
+      k8s: {
+        ...this.metadata?.k8s,
+        generation: result.version,
+      },
+    };
+  }
+
+  getK8SMetadata() {
+    return this.metadata?.k8s;
   }
 
   getTrackingInformation(): DashboardTrackingInfo | undefined {
@@ -276,7 +288,7 @@ export class V2DashboardSerializer
         const panelQueries = elementPanel.spec.data.spec.queries;
 
         for (const query of panelQueries) {
-          if (!query.spec.datasource) {
+          if (!query.spec.query.datasource?.name) {
             const elementId = this.getElementIdForPanel(elementPanel.spec.id);
             if (!this.defaultDsReferencesMap.panels.has(elementId)) {
               this.defaultDsReferencesMap.panels.set(elementId, new Set());
@@ -294,7 +306,7 @@ export class V2DashboardSerializer
     if (saveModel?.variables) {
       for (const variable of saveModel.variables) {
         // for query variables that dont have a ds defined add them to the list
-        if (variable.kind === 'QueryVariable' && !variable.spec.datasource) {
+        if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
           this.defaultDsReferencesMap.variables.add(variable.spec.name);
         }
       }
@@ -303,7 +315,7 @@ export class V2DashboardSerializer
     // initialize annotations ds references map
     if (saveModel?.annotations) {
       for (const annotation of saveModel.annotations) {
-        if (!annotation.spec.datasource) {
+        if (!annotation.spec.query?.datasource?.name) {
           this.defaultDsReferencesMap.annotations.add(annotation.spec.name);
         }
       }
@@ -376,6 +388,16 @@ export class V2DashboardSerializer
     this.initialSaveModel = {
       ...saveModel,
     };
+    if (this.metadata) {
+      this.metadata = {
+        ...this.metadata,
+        generation: result.version,
+      };
+    }
+  }
+
+  getK8SMetadata() {
+    return this.metadata;
   }
 
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
@@ -387,7 +409,7 @@ export class V2DashboardSerializer
       'elements' in this.initialSaveModel
         ? Object.values(this.initialSaveModel.elements)
             .filter((e) => e.kind === 'Panel')
-            .map((p) => p.spec.vizConfig.kind)
+            .map((p) => p.spec.vizConfig.group)
         : [];
     const panels = getPanelPluginCounts(panelPluginIds);
     const variables =

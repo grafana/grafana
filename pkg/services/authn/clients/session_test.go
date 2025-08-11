@@ -11,6 +11,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
@@ -31,7 +32,7 @@ func TestSession_Test(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.LoginCookieName = ""
 	cfg.LoginMaxLifetime = 20 * time.Second
-	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{}, &authinfotest.FakeService{})
+	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{}, &authinfotest.FakeService{}, tracing.InitializeTracerForTest())
 
 	disabled := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.False(t, disabled)
@@ -194,7 +195,7 @@ func TestSession_Authenticate(t *testing.T) {
 			cfg.LoginCookieName = cookieName
 			cfg.TokenRotationIntervalMinutes = 10
 			cfg.LoginMaxLifetime = 20 * time.Second
-			s := ProvideSession(cfg, tt.fields.sessionService, tt.fields.authInfoService)
+			s := ProvideSession(cfg, tt.fields.sessionService, tt.fields.authInfoService, tracing.InitializeTracerForTest())
 
 			got, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)

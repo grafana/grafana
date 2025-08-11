@@ -44,7 +44,7 @@ import (
 var testData embed.FS
 
 func TestMain(m *testing.M) {
-	testsuite.RunButSkipOnSpanner(m)
+	testsuite.Run(m)
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
@@ -725,7 +725,9 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 			updatedRoute := legacyCli.GetRoute(t)
 			for idx, route := range updatedRoute.Routes {
 				expectedTimeIntervals := replace(currentRoute.Routes[idx].MuteTimeIntervals, interval.Spec.Name, actual.Spec.Name)
-				assert.Equalf(t, expectedTimeIntervals, route.MuteTimeIntervals, "time interval in routes should have been renamed but it did not")
+				assert.Equalf(t, expectedTimeIntervals, route.MuteTimeIntervals, "mute time interval in routes should have been renamed but it did not")
+				expectedTimeIntervals = replace(currentRoute.Routes[idx].ActiveTimeIntervals, interval.Spec.Name, actual.Spec.Name)
+				assert.Equalf(t, expectedTimeIntervals, route.ActiveTimeIntervals, "active time interval in routes should have been renamed but it did not")
 			}
 
 			interval = *actual

@@ -411,6 +411,12 @@ describe('when creating variables objects', () => {
           operator: '=',
           value: 'test',
         },
+        {
+          key: 'originFilter',
+          operator: '=',
+          value: 'val',
+          origin: 'dashboard',
+        },
       ],
       baseFilters: [
         {
@@ -434,9 +440,17 @@ describe('when creating variables objects', () => {
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
+      originFilters: [
+        {
+          key: 'originFilter',
+          operator: '=',
+          value: 'val',
+          origin: 'dashboard',
+        },
+      ],
       skipUrlSync: false,
       type: 'adhoc',
-      filterExpression: 'filterTest="test"',
+      filterExpression: 'originFilter="val",filterTest="test"',
       filters: [{ key: 'filterTest', operator: '=', value: 'test' }],
       baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
       datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
@@ -504,6 +518,7 @@ describe('when creating variables objects', () => {
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
+      originFilters: [],
       skipUrlSync: false,
       type: 'adhoc',
       filterExpression: 'filterTest="test"',

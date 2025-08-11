@@ -17,7 +17,9 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('Dashboard reload', () => {
   let dashboardReloadSpy: jest.SpyInstance;
-
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation();
+  });
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;

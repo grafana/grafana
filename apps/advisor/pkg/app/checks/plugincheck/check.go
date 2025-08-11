@@ -2,64 +2,98 @@ package plugincheck
 
 import (
 	"context"
-	"fmt"
 	sysruntime "runtime"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 const (
-	CheckID           = "plugin"
-	DeprecationStepID = "deprecation"
-	UpdateStepID      = "update"
+	CheckID = "plugin"
 )
 
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
 	updateChecker pluginchecker.PluginUpdateChecker,
+	pluginErrorResolver plugins.ErrorResolver,
 	grafanaVersion string,
 ) checks.Check {
 	return &check{
-		PluginStore:    pluginStore,
-		PluginRepo:     pluginRepo,
-		GrafanaVersion: grafanaVersion,
-		updateChecker:  updateChecker,
+		PluginStore:         pluginStore,
+		PluginRepo:          pluginRepo,
+		GrafanaVersion:      grafanaVersion,
+		updateChecker:       updateChecker,
+		pluginErrorResolver: pluginErrorResolver,
 	}
 }
 
 type check struct {
-	PluginStore    pluginstore.Store
-	PluginRepo     repo.Service
-	updateChecker  pluginchecker.PluginUpdateChecker
-	GrafanaVersion string
-	pluginIndex    map[string]repo.PluginInfo
+	PluginStore         pluginstore.Store
+	PluginRepo          repo.Service
+	updateChecker       pluginchecker.PluginUpdateChecker
+	pluginErrorResolver plugins.ErrorResolver
+	GrafanaVersion      string
+	pluginIndex         map[string]repo.PluginInfo
 }
 
 func (c *check) ID() string {
 	return CheckID
 }
 
+func (c *check) Name() string {
+	return "plugin"
+}
+
+type pluginItem struct {
+	Plugin *pluginstore.Plugin
+	Err    *plugins.Error
+}
+
 func (c *check) Items(ctx context.Context) ([]any, error) {
 	ps := c.PluginStore.Plugins(ctx)
-	res := make([]any, len(ps))
-	for i, p := range ps {
-		res[i] = p
+	resMap := map[string]*pluginItem{}
+	for _, p := range ps {
+		resMap[p.ID] = &pluginItem{
+			Plugin: &p,
+			Err:    c.pluginErrorResolver.PluginError(ctx, p.ID),
+		}
 	}
+
+	// Plugins with errors are not added to the plugin store but
+	// we still want to show them in the check results so we add them to the map
+	pluginErrors := c.pluginErrorResolver.PluginErrors(ctx)
+	for _, e := range pluginErrors {
+		if _, exists := resMap[e.PluginID]; exists {
+			resMap[e.PluginID].Err = e
+		} else {
+			resMap[e.PluginID] = &pluginItem{
+				Plugin: nil,
+				Err:    e,
+			}
+		}
+	}
+
+	res := make([]any, 0, len(resMap))
+	for _, p := range resMap {
+		res = append(res, p)
+	}
+
 	return res, nil
 }
 
 func (c *check) Item(ctx context.Context, id string) (any, error) {
 	p, exists := c.PluginStore.Plugin(ctx, id)
 	if !exists {
-		return nil, fmt.Errorf("plugin %s not found", id)
+		return nil, nil
 	}
-	return p, nil
+	return &pluginItem{
+		Plugin: &p,
+		Err:    c.pluginErrorResolver.PluginError(ctx, p.ID),
+	}, nil
 }
 
 func (c *check) Init(ctx context.Context) error {
@@ -95,117 +129,8 @@ func (c *check) Steps() []checks.Step {
 			updateChecker:  c.updateChecker,
 			pluginIndex:    c.pluginIndex,
 		},
+		&unsignedStep{
+			pluginIndex: c.pluginIndex,
+		},
 	}
-}
-
-type deprecationStep struct {
-	GrafanaVersion string
-	updateChecker  pluginchecker.PluginUpdateChecker
-	pluginIndex    map[string]repo.PluginInfo
-}
-
-func (s *deprecationStep) Title() string {
-	return "Deprecation check"
-}
-
-func (s *deprecationStep) Description() string {
-	return "Check if any installed plugins are deprecated."
-}
-
-func (s *deprecationStep) Resolution() string {
-	return "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do'" +
-		"target=_blank>documentation</a> for recommended steps or delete the plugin."
-}
-
-func (s *deprecationStep) ID() string {
-	return DeprecationStepID
-}
-
-func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
-	p, ok := it.(pluginstore.Plugin)
-	if !ok {
-		return nil, fmt.Errorf("invalid item type %T", it)
-	}
-
-	if !s.updateChecker.IsUpdatable(ctx, p) {
-		return nil, nil
-	}
-
-	// Check if plugin is deprecated
-	i, ok := s.pluginIndex[p.ID]
-	if !ok {
-		// Unable to check deprecation status
-		return nil, nil
-	}
-	if i.Status == "deprecated" {
-		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
-			advisor.CheckReportFailureSeverityHigh,
-			s.ID(),
-			p.Name,
-			p.ID,
-			[]advisor.CheckErrorLink{
-				{
-					Message: "Admin",
-					Url:     fmt.Sprintf("/plugins/%s", p.ID),
-				},
-			},
-		)}, nil
-	}
-	return nil, nil
-}
-
-type updateStep struct {
-	GrafanaVersion string
-	updateChecker  pluginchecker.PluginUpdateChecker
-	pluginIndex    map[string]repo.PluginInfo
-}
-
-func (s *updateStep) Title() string {
-	return "Update check"
-}
-
-func (s *updateStep) Description() string {
-	return "Checks if an installed plugins has a newer version available."
-}
-
-func (s *updateStep) Resolution() string {
-	return "Go to the plugin admin page and upgrade to the latest version."
-}
-
-func (s *updateStep) ID() string {
-	return UpdateStepID
-}
-
-func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
-	p, ok := i.(pluginstore.Plugin)
-	if !ok {
-		return nil, fmt.Errorf("invalid item type %T", i)
-	}
-
-	if !s.updateChecker.IsUpdatable(ctx, p) {
-		return nil, nil
-	}
-
-	// Check if plugin has a newer version available
-	info, ok := s.pluginIndex[p.ID]
-	if !ok {
-		// Unable to check updates
-		return nil, nil
-	}
-	if s.updateChecker.CanUpdate(p.ID, p.Info.Version, info.Version, false) {
-		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
-			advisor.CheckReportFailureSeverityLow,
-			s.ID(),
-			p.Name,
-			p.ID,
-			[]advisor.CheckErrorLink{
-				{
-					Message: "Upgrade",
-					Url:     fmt.Sprintf("/plugins/%s?page=version-history", p.ID),
-				},
-			},
-		)}, nil
-	}
-
-	return nil, nil
 }

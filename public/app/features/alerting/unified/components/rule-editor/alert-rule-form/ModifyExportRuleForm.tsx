@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -193,7 +193,6 @@ const GrafanaRuleDesignExportPreview = ({
   useEffect(() => {
     !loadingGroup && payload.name && getExport({ payload, format: exportFormat, nameSpaceUID });
   }, [nameSpaceUID, exportFormat, payload, getExport, loadingGroup]);
-  const { t } = useTranslate();
 
   if (exportData.isLoading) {
     return <LoadingPlaceholder text={t('alerting.grafana-rule-design-export-preview.text-loading', 'Loading....')} />;
@@ -221,7 +220,7 @@ export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: G
   const exportingNewRule = !uid;
   const initialTab = exportingNewRule ? 'hcl' : 'yaml';
   const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
-  const { t } = useTranslate();
+
   const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
 
   return (

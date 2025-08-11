@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Checkbox, LinkButton, Stack, Alert } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { loadSupportBundleCollectors, createSupportBundle } from './state/actions';
 
@@ -58,7 +58,16 @@ export const SupportBundlesCreateUnconnected = ({
   );
 
   return (
-    <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }} subTitle={subTitle}>
+    <Page
+      navId="support-bundles"
+      pageNav={{
+        text: t(
+          'support-bundles.support-bundles-create-unconnected.text.create-support-bundle',
+          'Create support bundle'
+        ),
+      }}
+      subTitle={subTitle}
+    >
       <Page.Contents isLoading={isLoading}>
         {loadCollectorsError && <Alert title={loadCollectorsError} severity="error" />}
         {createBundleError && <Alert title={createBundleError} severity="error" />}

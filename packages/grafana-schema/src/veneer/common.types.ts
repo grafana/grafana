@@ -6,6 +6,8 @@ export interface MapLayerOptions<TConfig = any> extends raw.MapLayerOptions {
   // Custom options depending on the type
   config?: TConfig;
   filterData?: MatcherConfig;
+  // Disable world repetition for basemap layers
+  noRepeat?: boolean;
 }
 
 export interface DataQuery extends raw.DataQuery {
@@ -41,6 +43,7 @@ export * from '../common/common.gen';
 export const defaultTableFieldOptions: raw.TableFieldOptions = {
   align: 'auto',
   inspect: false,
+  wrapHeaderText: false,
   cellOptions: {
     type: raw.TableCellDisplayMode.Auto,
   },

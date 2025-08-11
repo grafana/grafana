@@ -124,6 +124,24 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 			expectedErr: errors.New("update error"),
 		},
 		{
+			name: "shutting down error",
+			checks: []checks.Check{
+				&mockCheck{
+					id: "check1",
+					steps: []checks.Step{
+						&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
+					},
+				},
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				return nil, k8sErrs.NewAlreadyExists(schema.GroupResource{}, obj.GetName())
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return nil, errors.New("apiserver is shutting down")
+			},
+			expectedErr: nil,
+		},
+		{
 			name: "custom namespace",
 			checks: []checks.Check{
 				&mockCheck{
@@ -178,18 +196,32 @@ func (m *mockCheckRegistry) Checks() []checks.Check {
 }
 
 type mockCheck struct {
-	checks.Check
-
 	id    string
 	steps []checks.Step
+}
+
+func (m *mockCheck) Init(ctx context.Context) error {
+	return nil
 }
 
 func (m *mockCheck) ID() string {
 	return m.id
 }
 
+func (m *mockCheck) Name() string {
+	return "mock"
+}
+
 func (m *mockCheck) Steps() []checks.Step {
 	return m.steps
+}
+
+func (m *mockCheck) Item(ctx context.Context, id string) (any, error) {
+	return nil, nil
+}
+
+func (m *mockCheck) Items(ctx context.Context) ([]any, error) {
+	return nil, nil
 }
 
 type mockStep struct {

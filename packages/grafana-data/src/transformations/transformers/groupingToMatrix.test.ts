@@ -21,7 +21,7 @@ describe('Grouping to Matrix', () => {
     const seriesA = toDataFrame({
       name: 'A',
       fields: [
-        { name: 'Time', type: FieldType.time, values: [1000, 1001, 1002] },
+        { name: 'Time', type: FieldType.time, values: [1000, 1001, 1002], config: { interval: 60000 } },
         { name: 'Value', type: FieldType.number, values: [1, 2, 3] },
       ],
     });
@@ -33,7 +33,9 @@ describe('Grouping to Matrix', () => {
           name: 'Time\\Time',
           type: FieldType.time,
           values: [1000, 1001, 1002],
-          config: {},
+          config: {
+            interval: 60000,
+          },
         },
         {
           name: '1000',
@@ -223,6 +225,52 @@ describe('Grouping to Matrix', () => {
           },
         ]
       `);
+    });
+  });
+
+  it('properly handles the value display name (by ignoring it)', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        columnField: 'Column',
+        rowField: 'Row',
+        valueField: 'CustomName',
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Column', type: FieldType.string, values: ['C1', 'C1', 'C2'] },
+        { name: 'Row', type: FieldType.string, values: ['R1', 'R2', 'R1'] },
+        { name: 'Temp', type: FieldType.number, values: [1, 4, 5], config: { displayName: 'CustomName' } },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Row\\Column',
+          type: FieldType.string,
+          values: ['R1', 'R2'],
+          config: {},
+        },
+        {
+          name: 'C1',
+          type: FieldType.number,
+          values: [1, 4],
+          config: {},
+        },
+        {
+          name: 'C2',
+          type: FieldType.number,
+          values: [5, ''],
+          config: {},
+        },
+      ];
+
+      expect(processed[0].fields).toEqual(expected);
     });
   });
 

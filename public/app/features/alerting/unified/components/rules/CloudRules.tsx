@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -14,6 +14,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
+import { isAdmin } from '../../utils/misc';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
 
@@ -48,13 +49,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const [viewExternalRuleSupported, viewExternalRuleAllowed] = useAlertingAbility(AlertingAction.ViewExternalAlertRule);
-  const { t } = useTranslate();
-  const canViewCloudRules = viewExternalRuleSupported && viewExternalRuleAllowed;
-  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
-  const canMigrateToGMA =
-    hasDataSourcesConfigured && canCreateGrafanaRules && canViewCloudRules && config.featureToggles.alertingMigrationUI;
+  const canMigrateToGMA = hasDataSourcesConfigured && isAdmin() && config.featureToggles.alertingMigrationUI;
 
   return (
     <section className={styles.wrapper}>
@@ -169,7 +164,7 @@ export function CreateRecordingRuleButton() {
 
 function MigrateToGMAButton() {
   const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
-  const { t } = useTranslate();
+
   return (
     <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
       <Stack direction="row" gap={1} alignItems="center">

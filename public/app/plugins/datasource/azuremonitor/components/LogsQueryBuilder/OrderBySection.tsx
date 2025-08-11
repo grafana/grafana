@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select, Label } from '@grafana/ui';
 
@@ -11,7 +11,8 @@ import {
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
@@ -25,7 +26,6 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const hasLoadedOrderBy = useRef(false);
-  const { t } = useTranslate();
 
   const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>(
     builderQuery?.orderBy?.expressions || []
@@ -139,9 +139,15 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
                     options={orderOptions}
                     onChange={(e) => e.value && handleOrderByChange(index, 'order', e.value)}
                   />
-                  <Button variant="secondary" icon="times" onClick={() => onDeleteOrderBy(index)} />
+                  <Button
+                    aria-label={t('components.order-by-section.aria-label-remove-order-by', 'Remove order by')}
+                    variant="secondary"
+                    icon="times"
+                    onClick={() => onDeleteOrderBy(index)}
+                  />
                   {index === orderBy.length - 1 ? (
                     <Button
+                      aria-label={t('components.order-by-section.aria-label-add-order-by', 'Add order by')}
                       variant="secondary"
                       onClick={() => handleOrderByChange(-1, 'column', '')}
                       icon="plus"
@@ -154,7 +160,12 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
               ))
             ) : (
               <InputGroup>
-                <Button variant="secondary" onClick={() => handleOrderByChange(-1, 'column', '')} icon="plus" />
+                <Button
+                  aria-label={t('components.order-by-section.aria-label-add-order-by', 'Add order by')}
+                  variant="secondary"
+                  onClick={() => handleOrderByChange(-1, 'column', '')}
+                  icon="plus"
+                />
               </InputGroup>
             )}
           </>

@@ -26,7 +26,11 @@ import {
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, DashboardDTO, FolderDTO, NotifiersState, ReceiversState, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { NotifiersState, ReceiversState } from 'app/types/alerting';
+import { DashboardDTO } from 'app/types/dashboard';
+import { FolderDTO } from 'app/types/folders';
+import { StoreState } from 'app/types/store';
 import {
   Alert,
   AlertingRule,
@@ -232,6 +236,8 @@ export const mockGrafanaPromAlertingRule = (
     uid: 'mock-rule-uid-123',
     folderUid: 'NAMESPACE_UID',
     isPaused: false,
+    totals: { alerting: 1 },
+    totalsFiltered: { alerting: 1 },
     ...partial,
   };
 };

@@ -102,20 +102,20 @@ describe('Selector', () => {
       await openSelector();
       expectRecentScopesSection();
       await expandRecentScopes();
-      expectRecentScope('Grafana');
-      expectRecentScope('Grafana, Mimir');
-      await selectRecentScope('Grafana');
+      expectRecentScope('Grafana Applications');
+      expectRecentScope('Grafana, Mimir Applications');
+      await selectRecentScope('Grafana Applications');
 
       expectScopesSelectorValue('Grafana');
 
       await openSelector();
       await expandRecentScopes();
-      expectRecentScope('Grafana, Mimir');
-      expectRecentScopeNotPresent('Grafana');
-      expectRecentScopeNotPresent('Mimir');
-      await selectRecentScope('Grafana, Mimir');
+      expectRecentScope('Grafana, Mimir Applications');
+      expectRecentScopeNotPresent('Grafana Applications');
+      expectRecentScopeNotPresent('Mimir Applications');
+      await selectRecentScope('Grafana, Mimir Applications');
 
-      expectScopesSelectorValue('Grafana, Mimir');
+      expectScopesSelectorValue('Grafana + Mimir');
     });
 
     it('recent scopes should not be visible when the first scope is selected', async () => {
@@ -148,7 +148,7 @@ describe('Selector', () => {
       await openSelector();
       expectRecentScopesSection();
       await expandRecentScopes();
-      expectRecentScope('Grafana, Mimir');
+      expectRecentScope('Grafana, Mimir Applications');
     });
 
     it('should update recent scopes when selecting a different combination', async () => {
@@ -169,8 +169,8 @@ describe('Selector', () => {
       // Check recent scopes are updated
       await openSelector();
       await expandRecentScopes();
-      expectRecentScope('Grafana, Mimir');
-      expectRecentScope('Grafana');
+      expectRecentScope('Grafana, Mimir Applications');
+      expectRecentScope('Grafana Applications');
     });
   });
 });

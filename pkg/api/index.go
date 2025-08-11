@@ -24,21 +24,21 @@ import (
 )
 
 type URLPrefs struct {
-	Language string
-	Locale   string
-	Theme    string
+	Language       string
+	RegionalFormat string
+	Theme          string
 }
 
 // URL prefs take precedence over any saved user preferences
 func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
 	language := c.Query("lang")
 	theme := c.Query("theme")
-	locale := c.Query("locale")
+	regionalFormat := c.Query("regionalFormat")
 
 	return URLPrefs{
-		Language: language,
-		Locale:   locale,
-		Theme:    theme,
+		Language:       language,
+		RegionalFormat: regionalFormat,
+		Theme:          theme,
 	}
 }
 
@@ -69,8 +69,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	// Locale is used for some number and date/time formatting, whereas language is used just for
 	// translating words in the interface
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
+	acceptLangHeaderFirstValue := ""
+
+	if len(acceptLangHeader) > 0 {
+		parts := strings.Split(acceptLangHeader, ",")
+		acceptLangHeaderFirstValue = parts[0]
+	}
+
 	locale := "en-US" // default to en formatting, but use the accept-lang header or user's preference
-	language := ""    // frontend will set the default language
+	if acceptLangHeaderFirstValue != "" {
+		locale = acceptLangHeaderFirstValue
+	}
+
+	language := "" // frontend will set the default language
 	urlPrefs := getURLPrefs(c)
 
 	if urlPrefs.Language != "" {
@@ -79,17 +90,27 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		language = prefs.JSONData.Language
 	}
 
-	if len(acceptLangHeader) > 0 {
-		parts := strings.Split(acceptLangHeader, ",")
-		locale = parts[0]
-	}
-
+	var regionalFormat string
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
-		locale = "en" // default to "en", not "en-US", matching the locale code
-		if urlPrefs.Locale != "" {
-			locale = urlPrefs.Locale
-		} else if prefs.JSONData.Locale != "" {
-			locale = prefs.JSONData.Locale
+		regionalFormat = "en"
+
+		// We default the regional format (locale) to the Accept-Language header rather than the language preference
+		// mainly because we want to avoid defaulting to en-US for most users who have not set a preference, and we
+		// don't have more specific English language preferences yet.
+
+		// Regional format preference order (from most-preferred to least):
+		// 1. URL parameter
+		// 2. regionalFormat User preference
+		// 3. Accept-Language header
+		// 4. Language preference
+		if urlPrefs.RegionalFormat != "" {
+			regionalFormat = urlPrefs.RegionalFormat
+		} else if prefs.JSONData.RegionalFormat != "" {
+			regionalFormat = prefs.JSONData.RegionalFormat
+		} else if acceptLangHeaderFirstValue != "" {
+			regionalFormat = acceptLangHeaderFirstValue
+		} else if language != "" {
+			regionalFormat = language
 		}
 	}
 
@@ -140,7 +161,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			LightTheme:                 theme.Type == "light",
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
-			Locale:                     locale,
+			Locale:                     locale, // << will be removed in favor of RegionalFormat
+			RegionalFormat:             regionalFormat,
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
@@ -282,7 +304,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	if pref.IsValidThemeID(themePrefId) {
 		theme := pref.GetThemeByID(themePrefId)
 		// TODO refactor
-		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagExtraThemes) || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
+		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
 			return theme
 		}
 	}

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { GroupConditionCondition } from './types';
@@ -14,14 +14,13 @@ interface Props {
 
 export const ConditionalRenderingGroupCondition = ({ value, onChange }: Props) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const options: Array<SelectableValue<GroupConditionCondition>> = useMemo(
     () => [
       { label: t('dashboard.conditional-rendering.conditions.group.condition.all', 'Match all'), value: 'and' },
       { label: t('dashboard.conditional-rendering.conditions.group.condition.any', 'Match any'), value: 'or' },
     ],
-    [t]
+    []
   );
 
   return (

@@ -3,8 +3,7 @@ import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
@@ -13,8 +12,8 @@ import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
 } from 'app/plugins/panel/table/migrations';
-import { StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
 
 import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { MetaInfoText } from '../MetaInfoText';

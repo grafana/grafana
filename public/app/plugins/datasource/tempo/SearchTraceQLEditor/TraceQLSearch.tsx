@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Stack, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, Select, useStyles2, TextLink } from '@grafana/ui';
 
 import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
@@ -28,11 +28,20 @@ interface Props {
   onClearResults: () => void;
   app?: CoreApp;
   addVariablesToOptions?: boolean;
+  range?: TimeRange;
 }
 
 const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
-const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVariablesToOptions = true }: Props) => {
+const TraceQLSearch = ({
+  datasource,
+  query,
+  onChange,
+  onClearResults,
+  app,
+  addVariablesToOptions = true,
+  range,
+}: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
   const [error, setError] = useState<Error | FetchError | null>(null);
@@ -74,7 +83,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        await datasource.languageProvider.start();
+        await datasource.languageProvider.start(range, datasource.timeRangeForTags);
         setIsTagsLoading(false);
         setAlertText(undefined);
       } catch (error) {
@@ -84,7 +93,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
       }
     };
     fetchTags();
-  }, [datasource, setAlertText]);
+  }, [datasource, setAlertText, range, datasource.timeRangeForTags]);
 
   useEffect(() => {
     // Initialize state with configured static filters that already have a value from the config
@@ -155,6 +164,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
                     hideTag={true}
                     query={generateQueryWithoutFilter(findFilter(f.id))}
                     addVariablesToOptions={addVariablesToOptions}
+                    range={range}
+                    timeRangeForTags={datasource.timeRangeForTags}
                   />
                 </InlineSearchField>
               )
@@ -179,6 +190,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               isMulti={false}
               allowCustomValue={false}
               addVariablesToOptions={addVariablesToOptions}
+              range={range}
+              timeRangeForTags={datasource.timeRangeForTags}
             />
           </InlineSearchField>
           <InlineSearchField
@@ -240,6 +253,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               generateQueryWithoutFilter={generateQueryWithoutFilter}
               requireTagAndValue={true}
               addVariablesToOptions={addVariablesToOptions}
+              range={range}
+              timeRangeForTags={datasource.timeRangeForTags}
             />
           </InlineSearchField>
           <AggregateByAlert
@@ -283,12 +298,13 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
           query={query}
           searchStreaming={datasource.isStreamingSearchEnabled() ?? false}
           metricsStreaming={datasource.isStreamingMetricsEnabled() ?? false}
+          app={app}
         />
       </div>
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
           Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
-          configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
+          configure it in the <TextLink href={`/datasources/edit/${datasource.uid}`}>datasource settings</TextLink>.
         </Alert>
       ) : null}
       {alertText && <TemporaryAlert severity={'error'} text={alertText} />}

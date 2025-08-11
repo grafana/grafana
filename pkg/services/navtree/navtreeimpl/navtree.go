@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -18,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
-	pc "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -39,7 +37,6 @@ type ServiceImpl struct {
 	pluginSettings       pluginsettings.Service
 	starService          star.Service
 	features             featuremgmt.FeatureToggles
-	openFeature          *featuremgmt.OpenFeatureService
 	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
@@ -62,7 +59,7 @@ type NavigationAppConfig struct {
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
-	license licensing.Licensing, authnService authn.Service, openFeature *featuremgmt.OpenFeatureService) navtree.Service {
+	license licensing.Licensing, authnService authn.Service) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -72,7 +69,6 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		pluginSettings:       pluginSettings,
 		starService:          starService,
 		features:             features,
-		openFeature:          openFeature,
 		dashboardService:     dashboardService,
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,
@@ -146,7 +142,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			Id:         navtree.NavIDDrilldown,
 			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
 			Icon:       "drilldown",
-			IsNew:      true,
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
 		})
@@ -162,10 +157,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if uaVisibleForOrg {
 		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
 			treeRoot.AddSection(alertingSection)
-		}
-
-		if aimlSection := s.buildAIMLNavLinks(c); aimlSection != nil {
-			treeRoot.AddSection(aimlSection)
 		}
 	}
 
@@ -196,7 +187,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
 	}
 
-	enabled := s.openFeature.Client.Boolean(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
+	enabled := openfeature.GetApiInstance().GetClient().Boolean(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
 	if enabled && c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
@@ -219,7 +210,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	} else {
 		homePage := s.cfg.HomePage
 
-		if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
+		if prefs.HomeDashboardUID == "" && len(homePage) > 0 {
 			homeUrl = homePage
 		}
 	}
@@ -231,17 +222,19 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
 	}
-	ctx := c.Req.Context()
-	if s.features.IsEnabled(ctx, featuremgmt.FlagHomeSetupGuide) {
-		var children []*navtree.NavLink
-		// setup guide (a submenu item under Home)
-		children = append(children, &navtree.NavLink{
-			Id:         "home-setup-guide",
-			Text:       "Setup guide",
-			Url:        homeUrl + "/setup-guide",
-			SortWeight: navtree.WeightHome,
-		})
-		homeNode.Children = children
+	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
+		ctx := c.Req.Context()
+		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
+			var children []*navtree.NavLink
+			// setup guide (a submenu item under Home)
+			children = append(children, &navtree.NavLink{
+				Id:         "home-setup-guide",
+				Text:       "Getting started guide",
+				Url:        "/a/grafana-setupguide-app/getting-started",
+				SortWeight: navtree.WeightHome,
+			})
+			homeNode.Children = children
+		}
 	}
 	return homeNode
 }
@@ -406,6 +399,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Icon: "library-panel",
 			})
 		}
+
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) && (c.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Recently deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "dashboards/recently-deleted",
+				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
+			})
+		}
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
@@ -420,80 +422,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	}
 
 	return dashboardChildNavs
-}
-
-func (s *ServiceImpl) buildAIMLNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
-	hasAccess := ac.HasAccess(s.accessControl, c)
-
-	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.GetOrgID()})
-	if err != nil {
-		s.log.Error("Failed to get plugin settings", "error", err)
-		return nil
-	}
-
-	// Check if ML plugin is enabled
-	isMLPluginEnabled := false
-	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
-		if plugin.ID == "grafana-ml-app" {
-			// Check if plugin is enabled in settings
-			if plugin.AutoEnabled {
-				isMLPluginEnabled = true
-				break
-			}
-			for _, ps := range pss {
-				if ps.PluginID == plugin.ID && ps.Enabled {
-					isMLPluginEnabled = true
-					break
-				}
-			}
-			break
-		}
-	}
-
-	// Return nil if plugin is not enabled
-	if !isMLPluginEnabled {
-		return nil
-	}
-
-	// Check if user has access to the plugin
-	if !hasAccess(ac.EvalPermission(pc.ActionAppAccess, "grafana-ml-app")) {
-		return nil
-	}
-
-	var aimlChildNavs []*navtree.NavLink
-
-	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
-		Text:     "Metric forecasting",
-		SubTitle: "Create a forecast",
-		Id:       "ai-ml-metric-forecast",
-		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/metric-forecast",
-	})
-
-	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
-		Text:     "Outlier detection",
-		SubTitle: "Create an outlier detector",
-		Id:       "ai-ml-outlier-detection",
-		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/outlier-detector",
-	})
-
-	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
-		Text:     "Sift investigations",
-		SubTitle: "View and create investigations",
-		Id:       "ai-ml-sift-investigations",
-		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/investigations",
-	})
-
-	var aimlNav = navtree.NavLink{
-		Text:       "AI & Machine Learning",
-		SubTitle:   "Explore AI and machine learning features",
-		Id:         "ai-ml-home",
-		Icon:       "gf-ml-alt",
-		Children:   aimlChildNavs,
-		SortWeight: navtree.WeightAIAndML,
-		Url:        s.cfg.AppSubURL + "/a/grafana-ml-app/home",
-	}
-
-	return &aimlNav
 }
 
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {

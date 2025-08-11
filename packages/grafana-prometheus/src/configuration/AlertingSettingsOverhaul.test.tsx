@@ -1,13 +1,14 @@
 import { render } from '@testing-library/react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
-import { createDefaultConfigOptions } from '../test/__mocks__/datasource';
+import { createDefaultConfigOptions } from '../test/mocks/datasource';
 
 import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 
 describe(AlertingSettingsOverhaul.name, () => {
-  describe('Switch checked behavior', () => {
+  describe('Manage Alerts toggle', () => {
     describe('when options.jsonData.manageAlerts is unset', () => {
       it('uses the config default `true`', () => {
         const options = createDefaultConfigOptions();
@@ -15,9 +16,12 @@ describe(AlertingSettingsOverhaul.name, () => {
 
         config.defaultDatasourceManageAlertsUiToggle = true;
 
-        const { getByRole } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
+        const { container } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
 
-        expect(getByRole('switch')).toBeChecked();
+        const manageAlertsToggle = container.querySelector(
+          `#${selectors.components.DataSource.Prometheus.configPage.manageAlerts}`
+        );
+        expect(manageAlertsToggle).toBeChecked();
       });
 
       it('uses the config default `false`', () => {
@@ -26,9 +30,12 @@ describe(AlertingSettingsOverhaul.name, () => {
 
         config.defaultDatasourceManageAlertsUiToggle = false;
 
-        const { getByRole } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
+        const { container } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
 
-        expect(getByRole('switch')).not.toBeChecked();
+        const manageAlertsToggle = container.querySelector(
+          `#${selectors.components.DataSource.Prometheus.configPage.manageAlerts}`
+        );
+        expect(manageAlertsToggle).not.toBeChecked();
       });
     });
 
@@ -39,9 +46,47 @@ describe(AlertingSettingsOverhaul.name, () => {
 
         config.defaultDatasourceManageAlertsUiToggle = configDefault;
 
-        const { getByRole } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
+        const { container } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
 
-        expect(getByRole('switch')).toBeChecked();
+        const manageAlertsToggle = container.querySelector(
+          `#${selectors.components.DataSource.Prometheus.configPage.manageAlerts}`
+        );
+        expect(manageAlertsToggle).toBeChecked();
+      });
+    });
+  });
+
+  describe('Recording Rules Target toggle', () => {
+    describe('when options.jsonData.allowAsRecordingRulesTarget is unset', () => {
+      it('defaults to `true` (enabled)', () => {
+        const options = createDefaultConfigOptions();
+        options.jsonData.allowAsRecordingRulesTarget = undefined;
+
+        const { container } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
+
+        const recordingRulesTargetToggle = container.querySelector(
+          `#${selectors.components.DataSource.Prometheus.configPage.allowAsRecordingRulesTarget}`
+        );
+        expect(recordingRulesTargetToggle).toBeChecked();
+      });
+    });
+
+    describe('when options.jsonData.allowAsRecordingRulesTarget is set', () => {
+      it.each([true, false])('uses the allowAsRecordingRulesTarget value %s', (value) => {
+        const options = createDefaultConfigOptions();
+        options.jsonData.allowAsRecordingRulesTarget = value;
+
+        const { container } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
+
+        const recordingRulesTargetToggle = container.querySelector(
+          `#${selectors.components.DataSource.Prometheus.configPage.allowAsRecordingRulesTarget}`
+        );
+
+        if (value) {
+          expect(recordingRulesTargetToggle).toBeChecked();
+        } else {
+          expect(recordingRulesTargetToggle).not.toBeChecked();
+        }
       });
     });
   });

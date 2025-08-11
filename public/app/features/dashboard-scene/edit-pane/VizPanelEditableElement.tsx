@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
@@ -14,7 +13,7 @@ import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
-  setPanelTitle,
+  editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -55,22 +54,27 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
+            id: 'PanelFrameTitle',
             value: panel.state.title,
             popularRank: 1,
-            render: () => <PanelFrameTitleInput panel={panel} isNewElement={isNewElement} />,
+            render: (descriptor) => (
+              <PanelFrameTitleInput id={descriptor.props.id} panel={panel} isNewElement={isNewElement} />
+            ),
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.description', 'Description'),
+            id: 'description-text-area',
             value: panel.state.description,
-            render: () => <PanelDescriptionTextArea panel={panel} />,
+            render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            render: () => <PanelBackgroundSwitch panel={panel} />,
+            id: 'transparent-background',
+            render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
           })
         );
     }, [panel, isNewElement]);
@@ -115,7 +119,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onChangeName(name: string) {
-    setPanelTitle(this.panel, name);
+    editPanelTitleAction(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
@@ -123,10 +127,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public scrollIntoView() {
-    if (this.panel.parent instanceof AutoGridItem) {
-      this.panel.parent.scrollIntoView();
-    }
-    if (this.panel.parent instanceof DashboardGridItem) {
+    if (this.panel.parent instanceof AutoGridItem || this.panel.parent instanceof DashboardGridItem) {
       this.panel.parent.scrollIntoView();
     }
   }

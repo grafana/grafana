@@ -18,6 +18,7 @@ const (
 	RetryAnnotation           = "advisor.grafana.app/retry"
 	IgnoreStepsAnnotation     = "advisor.grafana.app/ignore-steps"
 	IgnoreStepsAnnotationList = "advisor.grafana.app/ignore-steps-list"
+	NameAnnotation            = "advisor.grafana.app/checktype-name"
 	StatusAnnotationError     = "error"
 	StatusAnnotationProcessed = "processed"
 )
@@ -35,6 +36,24 @@ func NewCheckReportFailure(
 		Item:     item,
 		ItemID:   itemID,
 		Links:    links,
+	}
+}
+
+func NewCheckReportFailureWithMoreInfo(
+	severity advisor.CheckReportFailureSeverity,
+	stepID string,
+	item string,
+	itemID string,
+	links []advisor.CheckErrorLink,
+	moreInfo string,
+) advisor.CheckReportFailure {
+	return advisor.CheckReportFailure{
+		Severity: severity,
+		StepID:   stepID,
+		Item:     item,
+		ItemID:   itemID,
+		Links:    links,
+		MoreInfo: &moreInfo,
 	}
 }
 
@@ -86,4 +105,26 @@ func SetStatusAnnotation(ctx context.Context, client resource.Client, obj resour
 			Value:     annotations,
 		}},
 	}, resource.PatchOptions{}, obj)
+}
+
+func SetAnnotations(ctx context.Context, client resource.Client, obj resource.Object, annotations map[string]string) error {
+	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+		Operations: []resource.PatchOperation{{
+			Operation: resource.PatchOpAdd,
+			Path:      "/metadata/annotations",
+			Value:     annotations,
+		}},
+	}, resource.PatchOptions{}, obj)
+}
+
+func SetStatus(ctx context.Context, client resource.Client, obj resource.Object, status any) error {
+	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+		Operations: []resource.PatchOperation{{
+			Operation: resource.PatchOpAdd,
+			Path:      "/status",
+			Value:     status,
+		}},
+	}, resource.PatchOptions{
+		Subresource: "status",
+	}, obj)
 }

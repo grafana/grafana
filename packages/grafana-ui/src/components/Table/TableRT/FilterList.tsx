@@ -4,10 +4,14 @@ import * as React from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '../..';
-import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { ButtonSelect } from '../../Dropdown/ButtonSelect';
+import { FilterInput } from '../../FilterInput/FilterInput';
+import { Checkbox } from '../../Forms/Checkbox';
+import { Label } from '../../Forms/Label';
+import { Stack } from '../../Layout/Stack/Stack';
 
 interface Props {
   values: SelectableValue[];

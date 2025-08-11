@@ -1,32 +1,64 @@
-import { groupBy } from 'lodash';
+import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Icon, Stack, Text } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
+import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { groups } from '../utils/navigation';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
-import { LazyPagination } from './components/LazyPagination';
+import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
-import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
+import { LoadMoreButton } from './components/LoadMoreButton';
+import { NoRulesFound } from './components/NoRulesFound';
+import { groupFilter as groupFilterFn } from './hooks/filters';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
-import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
+import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
+import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
-const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
-
-interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
+interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
+  groupFilter?: string;
+  namespaceFilter?: string;
 }
 
-export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
+export function PaginatedDataSourceLoader({
+  rulesSourceIdentifier,
+  application,
+  groupFilter,
+  namespaceFilter,
+}: LoaderProps) {
+  const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}`;
+
+  // Key is crucial. It resets the generator when filters change.
+  return (
+    <PaginatedGroupsLoader
+      key={key}
+      rulesSourceIdentifier={rulesSourceIdentifier}
+      application={application}
+      groupFilter={groupFilter}
+      namespaceFilter={namespaceFilter}
+    />
+  );
+}
+
+function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter, namespaceFilter }: LoaderProps) {
+  // If there are filters, we don't want to populate the cache to avoid performance issues
+  // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
+  const hasFilters = Boolean(groupFilter || namespaceFilter);
+
   const { uid, name } = rulesSourceIdentifier;
-  const prometheusGroupsGenerator = usePrometheusGroupsGenerator({ populateCache: true });
+  const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
+
+  // If there are no filters we can match one frontend page to one API page.
+  // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
+  const apiGroupPageSize = getApiGroupPageSize(hasFilters);
 
   const groupsGenerator = useRef(
-    toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, DATA_SOURCE_GROUP_PAGE_SIZE))
+    toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, apiGroupPageSize))
   );
 
   useEffect(() => {
@@ -34,22 +66,29 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     return () => {
       currentGenerator.return();
     };
-  }, [groupsGenerator]);
+  }, []);
 
-  const {
-    page: groupsPage,
-    nextPage,
-    previousPage,
-    canMoveForward,
-    canMoveBackward,
-    isLoading,
-  } = usePaginatedPrometheusGroups(groupsGenerator.current, DATA_SOURCE_GROUP_PAGE_SIZE);
+  const filterFn = useMemo(
+    () => (group: PromRuleGroupDTO) =>
+      groupFilterFn(group, {
+        namespace: namespaceFilter,
+        groupName: groupFilter,
+      }),
+    [namespaceFilter, groupFilter]
+  );
 
-  const groupsByNamespace = useMemo(() => groupBy(groupsPage, 'file'), [groupsPage]);
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
+    groupsGenerator.current,
+    FRONTED_GROUPED_PAGE_SIZE,
+    filterFn
+  );
+
+  const hasNoRules = isEmpty(groups) && !isLoading;
+  const groupsByNamespace = useMemo(() => groupBy(groups, 'file'), [groups]);
 
   return (
-    <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
-      <Stack direction="column" gap={1}>
+    <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading} error={error}>
+      <Stack direction="column" gap={0}>
         {Object.entries(groupsByNamespace).map(([namespace, groups]) => (
           <ListSection
             key={namespace}
@@ -72,12 +111,13 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
             ))}
           </ListSection>
         ))}
-        <LazyPagination
-          nextPage={nextPage}
-          previousPage={previousPage}
-          canMoveForward={canMoveForward}
-          canMoveBackward={canMoveBackward}
-        />
+        {hasMoreGroups && (
+          // this div will make the button not stretch
+          <div>
+            <LoadMoreButton loading={isLoading} onClick={fetchMoreGroups} />
+          </div>
+        )}
+        {hasNoRules && <NoRulesFound />}
       </Stack>
     </DataSourceSection>
   );
@@ -106,7 +146,7 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
       name={group.name}
       href={groups.detailsPageLink(rulesSourceIdentifier.uid, namespaceName, group.name)}
       isOpen={false}
-      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
+      metaRight={<GroupIntervalIndicator seconds={group.interval} />}
     >
       <DataSourceGroupLoader groupIdentifier={groupIdentifier} expectedRulesCount={group.rules.length} />
     </ListGroup>

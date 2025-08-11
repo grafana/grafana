@@ -32,7 +32,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	testsuite.RunButSkipOnSpanner(m)
+	testsuite.Run(m)
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
@@ -108,7 +108,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 
-		defaultDefn, err := templates.DefaultTemplate()
+		defaultDefn, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
 		require.NoError(t, err)
 		require.Equal(t, v0alpha1.TemplateGroupSpec{
 			Title:   v0alpha1.DefaultTemplateTitle,

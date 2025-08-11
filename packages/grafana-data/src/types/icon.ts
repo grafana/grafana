@@ -69,6 +69,7 @@ export const availableIconsIndex = {
   'clock-nine': true,
   cloud: true,
   'cloud-download': true,
+  'cloud-provider': true,
   'cloud-upload': true,
   'code-branch': true,
   cog: true,
@@ -80,6 +81,8 @@ export const availableIconsIndex = {
   compass: true,
   'compress-arrows': true,
   copy: true,
+  'corner-up-left': true,
+  'corner-up-right': true,
   'corner-down-right-alt': true,
   'create-dashboard': true,
   'credit-card': true,
@@ -117,6 +120,8 @@ export const availableIconsIndex = {
   'file-export': true,
   'file-landscape-alt': true,
   filter: true,
+  'filter-plus': true,
+  'filter-minus': true,
   flip: true,
   folder: true,
   font: true,
@@ -271,6 +276,8 @@ export const availableIconsIndex = {
   attach: true,
   'dollar-alt': true,
   'ai-sparkle': true,
+  bitbucket: true,
+  git: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

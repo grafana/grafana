@@ -22,7 +22,7 @@ import { config, locationService } from '@grafana/runtime';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
@@ -241,6 +241,7 @@ jest.mock('@grafana/runtime', () => ({
       // if datasource is not found, return default instance settings
       return instance1SettingsMock;
     },
+    getList: () => [],
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,

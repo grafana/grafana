@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, LoadingPlaceholder, Modal, ModalsController, useStyles2 } from '@grafana/ui';
 import {
@@ -17,7 +17,6 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
   const styles = useStyles2(getStyles);
 
   const { data: dashboards, isLoading } = useGetActiveUserDashboardsQuery(email);
-  const { t } = useTranslate();
 
   return (
     <Modal
@@ -84,8 +83,6 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
 };
 
 export const DashboardsListModalButton = ({ email }: { email: string }) => {
-  const { t } = useTranslate();
-
   const translatedDashboardListModalButtonText = t(
     'public-dashboard-users-access-list.dashboard-modal.open-dashboard-list-text',
     'Open dashboards list'

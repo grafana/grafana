@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 import { Validate, UseFormSetValue } from 'react-hook-form';
 
 import { IconName, SelectableValue } from '@grafana/data';
-import { Settings } from 'app/types';
+import { Settings } from 'app/types/settings';
 export interface AuthProviderInfo {
   id: string;
   type: string;
@@ -26,6 +26,7 @@ export type SSOProviderSettingsBase = {
   clientSecret: string;
   managedIdentityClientId?: string;
   federatedCredentialAudience?: string;
+  workloadIdentityTokenFile?: string;
   emailAttributeName?: string;
   emailAttributePath?: string;
   emptyScopes?: boolean;
@@ -59,6 +60,8 @@ export type SSOProviderSettingsBase = {
   tlsSkipVerifyInsecure?: boolean;
   // For Azure AD
   forceUseGraphApi?: boolean;
+  domainHint?: string;
+  loginPrompt?: string;
   // For Google
   validateHd?: boolean;
 };

@@ -3,13 +3,13 @@ import { ReactElement, useEffect, useState } from 'react';
 import { Controller, DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { addToDashboard, SubmissionError } from './addToDashboard';
 
@@ -57,7 +57,6 @@ export function AddToDashboardForm<TOptions = undefined>({
   } = useForm<FormDTO>({
     defaultValues: { saveTarget: SaveTarget.NewDashboard },
   });
-  const { t } = useTranslate();
 
   const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
   const canWriteDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
@@ -66,14 +65,14 @@ export function AddToDashboardForm<TOptions = undefined>({
 
   if (canCreateDashboard) {
     saveTargets.push({
-      label: 'New dashboard',
+      label: t('dashboard-scene.add-to-dashboard-form.label.new-dashboard', 'New dashboard'),
       value: SaveTarget.NewDashboard,
     });
   }
 
   if (canWriteDashboard) {
     saveTargets.push({
-      label: 'Existing dashboard',
+      label: t('dashboard-scene.add-to-dashboard-form.label.existing-dashboard', 'Existing dashboard'),
       value: SaveTarget.ExistingDashboard,
     });
   }
@@ -154,7 +153,15 @@ export function AddToDashboardForm<TOptions = undefined>({
               control={control}
               name="dashboardUid"
               shouldUnregister
-              rules={{ required: { value: true, message: 'This field is required.' } }}
+              rules={{
+                required: {
+                  value: true,
+                  message: t(
+                    'dashboard-scene.add-to-dashboard-form.message.this-field-is-required',
+                    'This field is required.'
+                  ),
+                },
+              }}
             />
           );
         })()}

@@ -5,8 +5,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { Icon, TextLink, Themeable2, withTheme2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -85,7 +84,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
   onDelete = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Delete row',
+        title: t('dashboard.unthemed-dashboard-row.title.delete-row', 'Delete row'),
         text: 'Are you sure you want to remove this row and all its panels?',
         altActionText: 'Delete row only',
         icon: 'trash-alt',

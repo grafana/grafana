@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config, logMeasurement, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -17,18 +17,21 @@ import {
   SceneGridItemLike,
   SceneDataLayerProvider,
   UserActionEvent,
-  SceneInteractionProfileEvent,
   SceneObjectState,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
+import {
+  getDashboardInteractionCallback,
+  getDashboardSceneProfiler,
+} from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDTO, DashboardDataDTO } from 'app/types';
+import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
+import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -44,7 +47,11 @@ import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/Dash
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { getIsLazy } from '../scene/layouts-shared/utils';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -77,6 +84,56 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   scene.setInitialSaveModel(rsp.dashboard, rsp.meta, apiVersion);
 
   return scene;
+}
+
+export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
+  const rowItems: RowItem[] = [];
+
+  let currentLegacyRow: PanelModel | null = null;
+  let currentRowPanels: DashboardGridItem[] = [];
+
+  for (const panel of oldPanels) {
+    if (panel.type === 'row') {
+      if (!currentLegacyRow && currentRowPanels.length === 0) {
+        // This is the first row, and we have no panels before it. We set currentLegacyRow to the first row.
+        currentLegacyRow = panel;
+      } else if (!currentLegacyRow) {
+        // This is the first row but we have panels before the first row. We should flush the current panels into a row item with header hidden.
+        rowItems.push(
+          new RowItem({
+            title: '',
+            collapse: panel.collapsed,
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: currentRowPanels,
+              }),
+            }),
+            hideHeader: true,
+            $behaviors: [],
+          })
+        );
+        currentRowPanels = [];
+
+        currentLegacyRow = panel;
+      } else {
+        // This is a new row. We should flush the current panels into a row item.
+        rowItems.push(createRowItemFromLegacyRow(currentLegacyRow, currentRowPanels));
+        currentRowPanels = [];
+        currentLegacyRow = panel;
+      }
+    } else {
+      currentRowPanels.push(buildGridItemForPanel(panel));
+    }
+  }
+
+  if (currentLegacyRow) {
+    // If there is a row left to process, we should flush it into a row item.
+    rowItems.push(createRowItemFromLegacyRow(currentLegacyRow, currentRowPanels));
+  }
+
+  return new RowsLayoutManager({
+    rows: rowItems,
+  });
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -174,6 +231,22 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
   });
 }
 
+function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]): RowItem {
+  const rowItem = new RowItem({
+    key: getVizPanelKeyForPanelId(row.id),
+    title: row.title,
+    collapse: row.collapsed,
+    layout: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        // If the row is collapsed it will have panels within the row model.
+        children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
+      }),
+    }),
+    repeatByVariable: row.repeat,
+  });
+  return rowItem;
+}
+
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
@@ -181,17 +254,10 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   const uid = oldModel.uid;
   const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
-  if (oldModel.templating?.list?.length) {
-    if (oldModel.meta.isSnapshot) {
-      variables = createVariablesForSnapshot(oldModel);
-    } else {
-      variables = createVariablesForDashboard(oldModel);
-    }
+  if (oldModel.meta.isSnapshot) {
+    variables = createVariablesForSnapshot(oldModel);
   } else {
-    // Create empty variable set
-    variables = new SceneVariableSet({
-      variables: [],
-    });
+    variables = createVariablesForDashboard(oldModel);
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
@@ -229,15 +295,20 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         }
       : undefined;
 
+  const queryController = new behaviors.SceneQueryController(
+    {
+      enableProfiling:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+    },
+    getDashboardSceneProfiler()
+  );
+
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
     }),
-    new behaviors.SceneQueryController({
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
-    }),
+    queryController,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
@@ -245,9 +316,22 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
-      version: oldModel.version,
     }),
   ];
+
+  let body: DashboardLayoutManager;
+
+  if (config.featureToggles.dashboardNewLayouts && oldModel.panels.some((p) => p.type === 'row')) {
+    body = createRowsFromPanels(oldModel.panels);
+  } else {
+    body = new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        isLazy: getIsLazy(dto.preload),
+        children: createSceneObjectsForPanels(oldModel.panels),
+      }),
+    });
+  }
+
   const dashboardScene = new DashboardScene(
     {
       uid,
@@ -262,12 +346,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       title: oldModel.title,
       version: oldModel.version,
       scopeMeta,
-      body: new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({
-          isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
-          children: createSceneObjectsForPanels(oldModel.panels),
-        }),
-      }),
+      body,
       $timeRange: new SceneTimeRange({
         from: oldModel.time.from,
         to: oldModel.time.to,
@@ -282,6 +361,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       controls: new DashboardControls({
         timePicker: new SceneTimePicker({
           quickRanges: oldModel.timepicker.quick_ranges,
+          defaultQuickRanges: config.quickRanges,
         }),
         refreshPicker: new SceneRefreshPicker({
           refresh: oldModel.refresh,
@@ -336,6 +416,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+    headerActions: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      : undefined,
   };
 
   if (panel.libraryPanel) {
@@ -424,40 +507,3 @@ export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
     panel.snapshotData = [];
   }
 };
-
-function getDashboardInteractionCallback(uid: string, title: string) {
-  return (e: SceneInteractionProfileEvent) => {
-    let interactionType = '';
-
-    if (e.origin === 'SceneTimeRange') {
-      interactionType = 'time-range-change';
-    } else if (e.origin === 'SceneRefreshPicker') {
-      interactionType = 'refresh';
-    } else if (e.origin === 'DashboardScene') {
-      interactionType = 'view';
-    } else if (e.origin.indexOf('Variable') > -1) {
-      interactionType = 'variable-change';
-    }
-    reportInteraction('dashboard-render', {
-      interactionType,
-      duration: e.duration,
-      networkDuration: e.networkDuration,
-      totalJSHeapSize: e.totalJSHeapSize,
-      usedJSHeapSize: e.usedJSHeapSize,
-      jsHeapSizeLimit: e.jsHeapSizeLimit,
-    });
-
-    logMeasurement(
-      `dashboard.${interactionType}`,
-      {
-        duration: e.duration,
-        networkDuration: e.networkDuration,
-        totalJSHeapSize: e.totalJSHeapSize,
-        usedJSHeapSize: e.usedJSHeapSize,
-        jsHeapSizeLimit: e.jsHeapSizeLimit,
-        timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
-      },
-      { dashboard: uid, title: title }
-    );
-  };
-}

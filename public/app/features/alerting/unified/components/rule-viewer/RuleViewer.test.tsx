@@ -5,7 +5,7 @@ import { byLabelText, byRole, byText } from 'testing-library-selector';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
@@ -24,6 +24,7 @@ import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import * as ruleId from '../../utils/rule-id';
 import { stringifyIdentifier } from '../../utils/rule-id';
 
@@ -285,6 +286,19 @@ describe('RuleViewer', () => {
         const versionSummary = screen.getByRole('heading', { level: 4 });
         expect(versionSummary).toHaveTextContent(/Version 5 updated by alerting/i);
         expect(versionSummary).toHaveTextContent(/Version 6 updated by provisioning/i);
+      });
+
+      it('should not show any labels if we only have private labels', async () => {
+        const ruleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+        const rule = getGrafanaRule({
+          name: 'Test alert',
+          labels: {
+            [GRAFANA_ORIGIN_LABEL]: 'plugins/synthetic-monitoring-app',
+          },
+        });
+
+        await renderRuleViewer(rule, ruleIdentifier);
+        expect(screen.queryByText('Labels')).not.toBeInTheDocument();
       });
     });
   });

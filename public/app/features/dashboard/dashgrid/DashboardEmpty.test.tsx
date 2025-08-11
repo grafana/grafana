@@ -8,8 +8,8 @@ import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../utils
 
 import DashboardEmpty, { Props } from './DashboardEmpty';
 
-jest.mock('app/types', () => ({
-  ...jest.requireActual('app/types'),
+jest.mock('app/types/store', () => ({
+  ...jest.requireActual('app/types/store'),
   useDispatch: () => jest.fn(),
   useSelector: () => jest.fn(),
 }));
