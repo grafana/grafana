@@ -119,6 +119,7 @@ type Writer interface {
 	Move(ctx context.Context, oldPath, newPath, ref, message string) error
 }
 
+//go:generate mockery --name ReaderWriter --structname MockReaderWriter --inpackage --filename reader_writer_mock.go --with-expecter
 type ReaderWriter interface {
 	Reader
 	Writer

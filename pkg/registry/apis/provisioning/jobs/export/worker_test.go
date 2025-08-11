@@ -551,3 +551,182 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 }
 
 
+
+func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionPush,
+			Push: &v0alpha1.ExportJobOptions{
+				Branch:  "feature-branch",
+				Message: "test commit",
+			},
+		},
+	}
+
+	// Create a repository that implements both Repository and RepositoryWithURLs
+	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	
+	mockRepoWithURLs.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Type:      v0alpha1.GitHubRepositoryType,
+			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+		},
+	})
+
+	// Mock RefURLs method to return expected URLs
+	expectedRefURLs := &v0alpha1.RefURLs{
+		SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
+		CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+		NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+	}
+	mockRepoWithURLs.On("RefURLs", mock.Anything, "feature-branch").Return(expectedRefURLs, nil)
+
+	// Mock progress recorder to expect SetRefURLs call
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress.On("SetRefURLs", mock.Anything, expectedRefURLs).Once()
+
+	// Mock other dependencies
+	mockClients := resources.NewMockClientFactory(t)
+	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+
+	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+
+	mockExportFn := NewMockExportFn(t)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	// Mock the ReaderWriter interface that the export function expects
+	mockReaderWriter := repository.NewMockReaderWriter(t)
+
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		// The staging function needs to call the inner function with a ReaderWriter
+		return fn(mockReaderWriter, true)
+	})
+
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
+	err := r.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
+	require.NoError(t, err)
+
+	// Verify that SetRefURLs was called with the expected RefURLs
+	mockProgress.AssertExpectations(t)
+	mockRepoWithURLs.AssertExpectations(t)
+}
+
+func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionPush,
+			Push: &v0alpha1.ExportJobOptions{
+				Message: "test commit",
+				// No branch specified
+			},
+		},
+	}
+
+	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	
+	mockRepoWithURLs.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Type:      v0alpha1.GitHubRepositoryType,
+			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+		},
+	})
+
+	// Mock progress recorder - SetRefURLs should NOT be called
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Explicitly NOT expecting SetRefURLs call
+
+	// Mock other dependencies
+	mockClients := resources.NewMockClientFactory(t)
+	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+
+	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+
+	mockExportFn := NewMockExportFn(t)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	mockReaderWriter := repository.NewMockReaderWriter(t)
+
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockReaderWriter, true)
+	})
+
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
+	err := r.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
+	require.NoError(t, err)
+
+	// Verify that SetRefURLs was NOT called since no branch was specified
+	mockProgress.AssertExpectations(t)
+}
+
+func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionPush,
+			Push: &v0alpha1.ExportJobOptions{
+				Branch:  "feature-branch",
+				Message: "test commit",
+			},
+		},
+	}
+
+	// Use a regular Repository that doesn't implement RepositoryWithURLs
+	mockRepo := repository.NewMockRepository(t)
+	
+	mockRepo.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Type:      v0alpha1.GitRepositoryType, // Regular git repo, not GitHub
+			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+		},
+	})
+
+	// Mock progress recorder - SetRefURLs should NOT be called
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Explicitly NOT expecting SetRefURLs call
+
+	// Mock other dependencies
+	mockClients := resources.NewMockClientFactory(t)
+	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+
+	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+
+	mockExportFn := NewMockExportFn(t)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	mockReaderWriter := repository.NewMockReaderWriter(t)
+
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockReaderWriter, true)
+	})
+
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
+	err := r.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+
+	// Verify that SetRefURLs was NOT called since repo doesn't support URLs
+	mockProgress.AssertExpectations(t)
+}
+
