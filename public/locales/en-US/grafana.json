@@ -4475,7 +4475,6 @@
           "add": {
             "button": "Add rule",
             "data": "Query result",
-            "scopes": "Scopes",
             "time-range-size": "Time range less than",
             "variable": "Template variable"
           },
@@ -4490,17 +4489,6 @@
             "label": "{{type}} visibility",
             "show": "Show"
           }
-        },
-        "scopes": {
-          "info": "Show or hide the {{type}} dynamically based on the selected scopes.",
-          "label": "Scopes",
-          "operator": {
-            "includes": "Includes",
-            "includes-match": "Includes match",
-            "not-includes": "Not includes",
-            "not-includes-match": "Not includes match"
-          },
-          "value": "Scope name"
         },
         "shared": {
           "delete-condition": "Delete Condition",

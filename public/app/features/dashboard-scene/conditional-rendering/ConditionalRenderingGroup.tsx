@@ -13,7 +13,6 @@ import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
 import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
 import { ConditionalRenderingGroupVisibility } from './ConditionalRenderingGroupVisibility';
-import { ConditionalRenderingScopes } from './ConditionalRenderingScopes';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { conditionalRenderingSerializerRegistry } from './serializers';
@@ -71,13 +70,10 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     this.setStateAndNotify({ condition });
   }
 
-  public getItemByType(itemType: GroupConditionItemType): ConditionalRenderingConditions {
+  public createItem(itemType: GroupConditionItemType): ConditionalRenderingConditions {
     switch (itemType) {
       case 'data':
         return ConditionalRenderingData.createEmpty();
-
-      case 'scopes':
-        return ConditionalRenderingScopes.createEmpty();
 
       case 'timeRangeSize':
         return ConditionalRenderingTimeRangeSize.createEmpty();
@@ -192,7 +188,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         itemType={itemType}
         hasVariables={variables.length > 0}
         onAdd={({ value, label }) => {
-          const item = model.getItemByType(value!);
+          const item = model.createItem(value!);
           dashboardEditActions.edit({
             description: t('dashboard.edit-actions.add-conditional-rule', 'Add {{ruleDescription}} rule', {
               ruleDescription: lowerCase(label),

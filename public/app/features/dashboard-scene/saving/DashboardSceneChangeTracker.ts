@@ -17,7 +17,6 @@ import { createWorker } from 'app/features/dashboard-scene/saving/createDetectCh
 
 import { ConditionalRenderingData } from '../conditional-rendering/ConditionalRenderingData';
 import { ConditionalRenderingGroup } from '../conditional-rendering/ConditionalRenderingGroup';
-import { ConditionalRenderingScopes } from '../conditional-rendering/ConditionalRenderingScopes';
 import { ConditionalRenderingTimeRangeSize } from '../conditional-rendering/ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from '../conditional-rendering/ConditionalRenderingVariable';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -162,9 +161,6 @@ export class DashboardSceneChangeTracker {
       return true;
     }
     if (payload.changedObject instanceof ConditionalRenderingData) {
-      return true;
-    }
-    if (payload.changedObject instanceof ConditionalRenderingScopes) {
       return true;
     }
 

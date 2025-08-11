@@ -846,15 +846,15 @@ func NewDashboardConditionalRenderingGroupKind() *DashboardConditionalRenderingG
 
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingGroupSpec struct {
-	Visibility DashboardConditionalRenderingGroupSpecVisibility                                                                                                 `json:"visibility"`
-	Condition  DashboardConditionalRenderingGroupSpecCondition                                                                                                  `json:"condition"`
-	Items      []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind `json:"items"`
+	Visibility DashboardConditionalRenderingGroupSpecVisibility                                                                 `json:"visibility"`
+	Condition  DashboardConditionalRenderingGroupSpecCondition                                                                  `json:"condition"`
+	Items      []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind `json:"items"`
 }
 
 // NewDashboardConditionalRenderingGroupSpec creates a new DashboardConditionalRenderingGroupSpec object.
 func NewDashboardConditionalRenderingGroupSpec() *DashboardConditionalRenderingGroupSpec {
 	return &DashboardConditionalRenderingGroupSpec{
-		Items: []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind{},
+		Items: []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{},
 	}
 }
 
@@ -930,31 +930,6 @@ type DashboardConditionalRenderingTimeRangeSizeSpec struct {
 // NewDashboardConditionalRenderingTimeRangeSizeSpec creates a new DashboardConditionalRenderingTimeRangeSizeSpec object.
 func NewDashboardConditionalRenderingTimeRangeSizeSpec() *DashboardConditionalRenderingTimeRangeSizeSpec {
 	return &DashboardConditionalRenderingTimeRangeSizeSpec{}
-}
-
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingScopesKind struct {
-	Kind string                                  `json:"kind"`
-	Spec DashboardConditionalRenderingScopesSpec `json:"spec"`
-}
-
-// NewDashboardConditionalRenderingScopesKind creates a new DashboardConditionalRenderingScopesKind object.
-func NewDashboardConditionalRenderingScopesKind() *DashboardConditionalRenderingScopesKind {
-	return &DashboardConditionalRenderingScopesKind{
-		Kind: "ConditionalRenderingScopes",
-		Spec: *NewDashboardConditionalRenderingScopesSpec(),
-	}
-}
-
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingScopesSpec struct {
-	Operator DashboardConditionalRenderingScopesSpecOperator `json:"operator"`
-	Value    string                                          `json:"value"`
-}
-
-// NewDashboardConditionalRenderingScopesSpec creates a new DashboardConditionalRenderingScopesSpec object.
-func NewDashboardConditionalRenderingScopesSpec() *DashboardConditionalRenderingScopesSpec {
-	return &DashboardConditionalRenderingScopesSpec{}
 }
 
 // +k8s:openapi-gen=true
@@ -1891,16 +1866,6 @@ const (
 )
 
 // +k8s:openapi-gen=true
-type DashboardConditionalRenderingScopesSpecOperator string
-
-const (
-	DashboardConditionalRenderingScopesSpecOperatorIncludes         DashboardConditionalRenderingScopesSpecOperator = "includes"
-	DashboardConditionalRenderingScopesSpecOperatorNotIncludes      DashboardConditionalRenderingScopesSpecOperator = "notIncludes"
-	DashboardConditionalRenderingScopesSpecOperatorIncludesMatch    DashboardConditionalRenderingScopesSpecOperator = "includesMatch"
-	DashboardConditionalRenderingScopesSpecOperatorNotIncludesMatch DashboardConditionalRenderingScopesSpecOperator = "notIncludesMatch"
-)
-
-// +k8s:openapi-gen=true
 type DashboardAutoGridLayoutSpecColumnWidthMode string
 
 const (
@@ -2173,20 +2138,19 @@ func (resource *DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRow
 }
 
 // +k8s:openapi-gen=true
-type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind struct {
+type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind struct {
 	ConditionalRenderingVariableKind      *DashboardConditionalRenderingVariableKind      `json:"ConditionalRenderingVariableKind,omitempty"`
 	ConditionalRenderingDataKind          *DashboardConditionalRenderingDataKind          `json:"ConditionalRenderingDataKind,omitempty"`
 	ConditionalRenderingTimeRangeSizeKind *DashboardConditionalRenderingTimeRangeSizeKind `json:"ConditionalRenderingTimeRangeSizeKind,omitempty"`
-	ConditionalRenderingScopesKind        *DashboardConditionalRenderingScopesKind        `json:"ConditionalRenderingScopesKind,omitempty"`
 }
 
-// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind object.
-func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind {
-	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind{}
+// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind object.
+func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind {
+	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind` as JSON.
-func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` as JSON.
+func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) MarshalJSON() ([]byte, error) {
 	if resource.ConditionalRenderingVariableKind != nil {
 		return json.Marshal(resource.ConditionalRenderingVariableKind)
 	}
@@ -2196,15 +2160,12 @@ func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDa
 	if resource.ConditionalRenderingTimeRangeSizeKind != nil {
 		return json.Marshal(resource.ConditionalRenderingTimeRangeSizeKind)
 	}
-	if resource.ConditionalRenderingScopesKind != nil {
-		return json.Marshal(resource.ConditionalRenderingScopesKind)
-	}
 
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind` from JSON.
-func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` from JSON.
+func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2228,14 +2189,6 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 		}
 
 		resource.ConditionalRenderingDataKind = &dashboardConditionalRenderingDataKind
-		return nil
-	case "ConditionalRenderingScopes":
-		var dashboardConditionalRenderingScopesKind DashboardConditionalRenderingScopesKind
-		if err := json.Unmarshal(raw, &dashboardConditionalRenderingScopesKind); err != nil {
-			return err
-		}
-
-		resource.ConditionalRenderingScopesKind = &dashboardConditionalRenderingScopesKind
 		return nil
 	case "ConditionalRenderingTimeRangeSize":
 		var dashboardConditionalRenderingTimeRangeSizeKind DashboardConditionalRenderingTimeRangeSizeKind

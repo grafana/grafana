@@ -679,7 +679,7 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 export interface ConditionalRenderingGroupSpec {
 	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingScopesKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
@@ -743,26 +743,6 @@ export interface ConditionalRenderingTimeRangeSizeSpec {
 }
 
 export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
-	value: "",
-});
-
-export interface ConditionalRenderingScopesKind {
-	kind: "ConditionalRenderingScopes";
-	spec: ConditionalRenderingScopesSpec;
-}
-
-export const defaultConditionalRenderingScopesKind = (): ConditionalRenderingScopesKind => ({
-	kind: "ConditionalRenderingScopes",
-	spec: defaultConditionalRenderingScopesSpec(),
-});
-
-export interface ConditionalRenderingScopesSpec {
-	operator: "includes" | "notIncludes" | "includesMatch" | "notIncludesMatch";
-	value: string;
-}
-
-export const defaultConditionalRenderingScopesSpec = (): ConditionalRenderingScopesSpec => ({
-	operator: "includes",
 	value: "",
 });
 

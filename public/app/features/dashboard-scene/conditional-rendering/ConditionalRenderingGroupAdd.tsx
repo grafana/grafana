@@ -26,10 +26,6 @@ export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: 
         label: t('dashboard.conditional-rendering.conditions.group.add.time-range-size', 'Time range less than'),
         value: 'timeRangeSize',
       },
-      {
-        label: t('dashboard.conditional-rendering.conditions.group.add.scopes', 'Scopes'),
-        value: 'scopes',
-      },
     ];
 
     if (itemType !== 'panel') {

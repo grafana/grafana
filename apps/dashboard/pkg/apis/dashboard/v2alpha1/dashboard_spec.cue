@@ -935,7 +935,7 @@ ConditionalRenderingGroupKind: {
 ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
 	condition: "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingScopesKind]
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -965,14 +965,4 @@ ConditionalRenderingTimeRangeSizeKind: {
 
 ConditionalRenderingTimeRangeSizeSpec: {
 	value: string
-}
-
-ConditionalRenderingScopesKind: {
-	kind: "ConditionalRenderingScopes"
-	spec: ConditionalRenderingScopesSpec
-}
-
-ConditionalRenderingScopesSpec: {
-	operator: "includes" | "notIncludes" | "includesMatch" | "notIncludesMatch"
-	value:    string
 }

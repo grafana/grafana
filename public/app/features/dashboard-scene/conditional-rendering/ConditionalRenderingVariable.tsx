@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
-import { ConditionalRenderingVariableKind, ConditionalRenderingVariableSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import {
+  ConditionalRenderingVariableKind,
+  ConditionalRenderingVariableSpec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Box, Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
@@ -54,7 +57,7 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     const variable = sceneGraph.getVariables(this).getByName(this.state.value.name);
 
     if (!variable) {
-      return false;
+      return true;
     }
 
     const variableValue = variable.getValue() ?? '';
