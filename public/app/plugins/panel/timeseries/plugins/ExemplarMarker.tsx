@@ -178,9 +178,8 @@ export const ExemplarMarker = ({
     maxHeight,
   ]);
 
-  const seriesColor = config
-    .getSeries()
-    .find((s) => s.props.dataFrameFieldIndex?.frameIndex === frameIndex)?.props.lineColor;
+  const seriesColor = config.getSeries().find((s) => s.props.dataFrameFieldIndex?.frameIndex === frameIndex)
+    ?.props.lineColor;
 
   const onExemplarClick = () => {
     setClickedRowIndex(rowIndex);

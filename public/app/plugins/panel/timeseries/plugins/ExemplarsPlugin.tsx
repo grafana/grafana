@@ -32,7 +32,7 @@ export const ExemplarsPlugin = ({
 }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot>();
 
-  const [lockedExemplarFieldIndex, setLockedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
+  const [lockedExemplarRowIndex, setLockedExemplarRowIndex] = useState<number | undefined>();
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -72,7 +72,7 @@ export const ExemplarsPlugin = ({
   }, []);
 
   const renderMarker = useCallback(
-    (dataFrame: DataFrame, rowIndex: number) => {
+    (dataFrame: DataFrame, rowIndex: number): React.ReactNode => {
       const showMarker = visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, rowIndex) : true;
 
       const markerColor =
@@ -84,8 +84,8 @@ export const ExemplarsPlugin = ({
 
       return (
         <ExemplarMarker
-          setClickedRowIndex={setLockedExemplarFieldIndex}
-          clickedExemplarFieldIndex={lockedExemplarFieldIndex}
+          setClickedRowIndex={setLockedExemplarRowIndex}
+          clickedRowIndex={lockedExemplarRowIndex}
           timeZone={timeZone}
           dataFrame={dataFrame}
           frameIndex={0}
@@ -97,7 +97,7 @@ export const ExemplarsPlugin = ({
         />
       );
     },
-    [visibleSeries, lockedExemplarFieldIndex, timeZone, config, maxHeight, maxWidth]
+    [visibleSeries, lockedExemplarRowIndex, timeZone, config, maxHeight, maxWidth]
   );
 
   return (
