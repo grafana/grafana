@@ -15,6 +15,7 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-assistant-app',
   'grafana-dash-app',
   'grafana-grafanadocsplugin-app',
+  'grafana-pathfinder',
 ];
 
 export type ExtensionSidebarContextType = {
