@@ -73,8 +73,6 @@ export function TableCellTooltip({
     [cellOptions, data, disableSanitizeHtml, field, getActions, height, rawValue, rowIdx, theme, width]
   );
 
-  console.log(popoverRef);
-
   if (rawValue === null || rawValue === undefined) {
     return children;
   }
@@ -106,7 +104,6 @@ export function TableCellTooltip({
           const listener = (event: MouseEvent) => {
             const clickTarget = event.target as Node;
             if (!origTarget.contains(clickTarget) && !getPortalContainer().contains(clickTarget)) {
-              console.log('unpinning');
               unpinPopper();
               window.removeEventListener('click', listener);
             }
