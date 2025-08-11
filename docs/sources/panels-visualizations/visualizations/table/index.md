@@ -374,7 +374,7 @@ Pill cells also support text wrapping.
 
 The following data formats are supported for the pill cell type:
 
-- comma-separated values (`cows,chickens,goats`)
+- Comma-separated values (`cows,chickens,goats`)
 - JSON arrays of uniform (`(["cows","chickens","goats"])`) or mixed (`[1,2,3,"foo",42,"bar"]`) types
 
 #### Markdown + HTML
@@ -389,7 +389,7 @@ dynamically based on the cell content. If you use dynamic height, we strongly re
 also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
 Dynamic height disables table virtualization.
 
-By default, the HTML rendered in this cell is sanitized, and un-sanitized HTML can only be rendered
+By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
 in these cells if the [`disable_sanitize_html`](../../../setup-grafana/configure-grafana/_index.md#disable_sanitize_html) option is set to true for your Grafana instance.
 
 #### Image
