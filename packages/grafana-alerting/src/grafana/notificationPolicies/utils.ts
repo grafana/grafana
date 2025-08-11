@@ -13,10 +13,11 @@ export interface RouteMatchResult<T extends Route> {
   route: T;
   labels: Label[];
   matchDetails: LabelMatchDetails[];
+  routePath: T[];
 }
 
 // Normalization should have happened earlier in the code
-export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): Array<RouteMatchResult<T>> {
+export function findMatchingRoutes<T extends Route>(route: T, labels: Label[], routePath: T[] = []): Array<RouteMatchResult<T>> {
   let childMatches: Array<RouteMatchResult<T>> = [];
 
   // If the current node is not a match, return nothing
@@ -25,10 +26,12 @@ export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): 
     return [];
   }
 
+  const currentRoutePath =  [...routePath, route];
+
   // If the current node matches, recurse through child nodes
   if (route.routes) {
     for (const child of route.routes) {
-      const matchingChildren = findMatchingRoutes(child, labels);
+      const matchingChildren = findMatchingRoutes(child, labels, currentRoutePath);
       // TODO how do I solve this typescript thingy? It looks correct to me /shrug
       // @ts-ignore
       childMatches = childMatches.concat(matchingChildren);
@@ -41,7 +44,7 @@ export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): 
 
   // If no child nodes were matches, the current node itself is a match.
   if (childMatches.length === 0) {
-    childMatches.push({ route, labels, matchDetails: matchResult.details });
+    childMatches.push({ route, labels, matchDetails: matchResult.details, routePath: currentRoutePath });
   }
 
   return childMatches;
