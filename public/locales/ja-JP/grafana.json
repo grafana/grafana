@@ -784,7 +784,7 @@
       },
       "filterBy": "フィルタ条件：",
       "too-many-events": {
-        "text": "選択した期間には、表示するイベントが多すぎます。最新の5000イベントを表示します。もっと短い期間を使ってみてください。",
+        "text": "",
         "title": "すべてのイベントを表示できません"
       }
     },
@@ -3525,6 +3525,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3548,6 +3555,9 @@
       "select-all-header-checkbox": "すべて選択",
       "select-checkbox": "選択",
       "tags-column": "タグ"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "フォルダの削除に失敗しました",
@@ -3591,6 +3601,9 @@
     },
     "name-cell": {
       "no-items": "項目がありません"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "キャンセル",
@@ -5200,6 +5213,7 @@
         "new": "新しいタブ",
         "repeat": {
           "learn-more": "もっと詳しく",
+          "loading": "",
           "warning": "このタブのパネルは{{SHARED_DASHBOARD_QUERY}}データソースを使用しています。これらのパネルは、繰り返されたタブ内のパネルではなく、元のタブのパネルを参照します。"
         }
       },
@@ -5671,11 +5685,9 @@
       "api-error": "ダッシュボードの削除に失敗しました",
       "cancel-action": "キャンセル",
       "delete-action": "ダッシュボードを削除する",
-      "delete-read-only-file-message": "リポジトリが読み取り専用のため、このダッシュボードをGrafanaから直接削除することはできません。このダッシュボードを削除するには、Gitリポジトリからファイルを削除してください。",
       "deleting": "削除中…",
       "drawer-title": "プロビジョニングされたダッシュボードを削除",
-      "success-message": "",
-      "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
+      "success-message": ""
     },
     "description-label": {
       "description": "説明"
@@ -6045,7 +6057,6 @@
       "api-error": "ダッシュボードの保存中にエラーが発生しました",
       "cancel": "キャンセル",
       "cannot-be-saved": "このダッシュボードは別のソースからプロビジョニングされているため、Grafana UIからは保存できません。JSONをコピーするか下記のファイルに保存した上で、プロビジョニング元でダッシュボードを更新できます。",
-      "copy-json-message": "ターゲットに直接アクセスできる場合は、JSONをコピーしてそこに貼り付けます。",
       "copy-json-to-clipboard": "JSONをクリップボードにコピー",
       "file-path": "<0>ファイルパス：</0> {{filePath}}",
       "label-description": "説明",
@@ -6057,7 +6068,6 @@
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。",
       "title-required": "ダッシュボードのタイトルが必要です",
       "title-same-as-folder": "ダッシュボード名をフォルダ名と同じにすることはできません",
-      "title-this-repository-is-read-only": "このリポジトリは読み取り専用です",
       "title-validation-failed": "ダッシュボードのタイトルの検証に失敗しました。"
     },
     "scenes-new-rule-from-panel-button": {
@@ -6363,7 +6373,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "このエラーの詳細については、<2>こちら</2>をクリックしてください。",
-    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。"
+    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6502,7 +6513,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "ダッシュボードを作成",
-      "explore-data": "データを調査"
+      "explore-data": "データを調査",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "エラーの詳細"
@@ -9501,6 +9513,12 @@
         "total-bytes-processed": "処理済み総バイト数"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "重複排除",
       "disable-highlighting": "ハイライトを無効にする",
@@ -9524,8 +9542,12 @@
       "oldest-first": "古いログ順に並び替え - クリックして最新のログを最初に表示",
       "prettify-json": "JSONログを展開",
       "remove-escaping": "エスケープを削除",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "一番下までスクロール",
       "scroll-top": "一番上までスクロール",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "ログ結果内を検索",
       "show-timestamps": "タイムスタンプを表示",
       "show-unique-labels": "一意のラベルを表示",
@@ -9558,7 +9580,7 @@
     "name-order": "順番",
     "name-prettify-json": "JSONを整形",
     "name-show-controls": "コントロールを表示",
-    "name-time": "時間",
+    "name-time": "",
     "name-unique-labels": "一意のラベル",
     "name-wrap-lines": "行を折り返す",
     "order-options": {
@@ -9574,6 +9596,7 @@
       "line-contains": "行にフィルタが含まれている場合はフィルタとして追加",
       "line-contains-not": "フィルタが含まれていない行として追加"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "データリンク",
       "aria-label-fields": "フィールド",
@@ -12663,6 +12686,7 @@
     "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
     "description-count-rows": "すべてのデータ行の単一カウントを表示",
     "description-fields": "計算するフィールドを選択",
+    "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
     "name-calculation": "計算",
     "name-cell-height": "セルの高さ",
@@ -12674,6 +12698,7 @@
     "name-count-rows": "行数",
     "name-enable-pagination": "ページ分割を有効化",
     "name-fields": "フィールド",
+    "name-frozen-columns": "",
     "name-hide-in-table": "テーブルで非表示",
     "name-min-column-width": "最小列幅",
     "name-show-table-footer": "テーブルフッターを表示",

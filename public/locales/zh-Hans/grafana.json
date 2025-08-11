@@ -784,7 +784,7 @@
       },
       "filterBy": "筛选方式：",
       "too-many-events": {
-        "text": "所选时间段的事件过多，无法显示。正在显示最近的 5000 个事件。请尝试缩短时间段。",
+        "text": "",
         "title": "无法显示所有事件"
       }
     },
@@ -3525,6 +3525,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3548,6 +3555,9 @@
       "select-all-header-checkbox": "全选",
       "select-checkbox": "选择",
       "tags-column": "标签"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "删除文件夹失败",
@@ -3591,6 +3601,9 @@
     },
     "name-cell": {
       "no-items": "无项目"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "取消",
@@ -5200,6 +5213,7 @@
         "new": "新建标签页",
         "repeat": {
           "learn-more": "了解更多",
+          "loading": "",
           "warning": "此选项卡中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始选项卡中的面板，而不是重复选项卡中的面板。"
         }
       },
@@ -5671,11 +5685,9 @@
       "api-error": "删除数据面板失败",
       "cancel-action": "取消",
       "delete-action": "删除数据面板",
-      "delete-read-only-file-message": "此数据面板无法直接从 Grafana 删除，因为存储库是只读的。要删除此数据面板，请从 Git 存储库中移除相应文件。",
       "deleting": "正在删除...",
       "drawer-title": "删除已预置的数据面板",
-      "success-message": "",
-      "title-this-repository-is-read-only": "此存储库为只读"
+      "success-message": ""
     },
     "description-label": {
       "description": "描述"
@@ -6045,7 +6057,6 @@
       "api-error": "保存数据面板时出错",
       "cancel": "取消",
       "cannot-be-saved": "此数据面板无法从 Grafana 用户界面保存，因为它已从其他来源预配。复制 JSON 或将其保存到下面的文件中，然后您可以在预配源中更新您的数据面板。",
-      "copy-json-message": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。",
       "copy-json-to-clipboard": "将 JSON 复制到剪贴板",
       "file-path": "<0>文件路径：</0>{{filePath}}",
       "label-description": "描述",
@@ -6057,7 +6068,6 @@
       "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。",
       "title-required": "数据面板标题为必填项",
       "title-same-as-folder": "数据面板名称不能与文件夹名称相同",
-      "title-this-repository-is-read-only": "此存储库为只读",
       "title-validation-failed": "数据面板标题验证失败。"
     },
     "scenes-new-rule-from-panel-button": {
@@ -6363,7 +6373,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "点击<2>此处</2>了解有关此错误的更多信息。",
-    "success-more-details-links": "接下来，您可以通过<2>构建数据面板</2>或在<5>Explore 视图</5>中查询数据来开始可视化数据。"
+    "success-more-details-links": "接下来，您可以通过<2>构建数据面板</2>或在<5>Explore 视图</5>中查询数据来开始可视化数据。",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6502,7 +6513,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "构建数据面板",
-      "explore-data": "浏览数据"
+      "explore-data": "浏览数据",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有关错误的更多详情"
@@ -9501,6 +9513,12 @@
         "total-bytes-processed": "已处理的总字节数"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "去重",
       "disable-highlighting": "禁用突出显示",
@@ -9524,8 +9542,12 @@
       "oldest-first": "先显示最旧日志 - 点击以先显示最新日志",
       "prettify-json": "展开 JSON 日志",
       "remove-escaping": "移除转义",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "滚动到底部",
       "scroll-top": "滚动到顶部",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "在日志结果中搜索",
       "show-timestamps": "显示时间戳",
       "show-unique-labels": "显示唯一标签",
@@ -9558,7 +9580,7 @@
     "name-order": "顺序",
     "name-prettify-json": "美化 JSON",
     "name-show-controls": "显示控件",
-    "name-time": "时间",
+    "name-time": "",
     "name-unique-labels": "唯一标签",
     "name-wrap-lines": "多行显示",
     "order-options": {
@@ -9574,6 +9596,7 @@
       "line-contains": "添加为包含筛选器的行",
       "line-contains-not": "添加为不包含筛选器的行"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "数据关联",
       "aria-label-fields": "字段",
@@ -12663,6 +12686,7 @@
     "description-column-filter": "启用/禁用表格中的字段筛选条件",
     "description-count-rows": "显示所有数据行的单个计数",
     "description-fields": "选择应计算的字段",
+    "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
     "name-calculation": "计算",
     "name-cell-height": "单元格高度",
@@ -12674,6 +12698,7 @@
     "name-count-rows": "计算行",
     "name-enable-pagination": "启用分页",
     "name-fields": "字段",
+    "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隐藏",
     "name-min-column-width": "最小列宽",
     "name-show-table-footer": "显示表格页脚",

@@ -788,7 +788,7 @@
       },
       "filterBy": "Filtrar por:",
       "too-many-events": {
-        "text": "El periodo de tiempo seleccionado tiene demasiados eventos que mostrar. Se muestran los últimos 5000 eventos. Intenta utilizar un periodo de tiempo más corto.",
+        "text": "",
         "title": "No se pueden mostrar todos los eventos"
       }
     },
@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Seleccionar todo",
       "select-checkbox": "Seleccionar",
       "tags-column": "Etiquetas"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Sin elementos "
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Cancelar",
@@ -5220,6 +5233,7 @@
         "new": "Nueva pestaña",
         "repeat": {
           "learn-more": "Más información",
+          "loading": "",
           "warning": "Los paneles de esta pestaña utilizan la fuente de datos {{SHARED_DASHBOARD_QUERY}}. Estos paneles harán referencia al panel en la pestaña original, no a los de las pestañas repetidas."
         }
       },
@@ -5691,11 +5705,9 @@
       "api-error": "",
       "cancel-action": "Cancelar",
       "delete-action": "Eliminar panel de control",
-      "delete-read-only-file-message": "",
       "deleting": "Eliminando...",
       "drawer-title": "",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
+      "success-message": ""
     },
     "description-label": {
       "description": "Descripción"
@@ -6067,7 +6079,6 @@
       "api-error": "Error al guardar el panel de control",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este dashboard no se puede guardar desde la interfaz de usuario de Grafana porque se ha aprovisionado desde otra fuente. Copia el JSON o guárdalo en un archivo a continuación; luego puedes actualizar el dashboard en la fuente de aprovisionamiento.",
-      "copy-json-message": "Si tienes acceso directo al destino, copia el JSON y pégalo allí.",
       "copy-json-to-clipboard": "Copiar JSON al portapapeles",
       "file-path": "<0>Ruta del archivo:</0> {{filePath}}",
       "label-description": "Descripción",
@@ -6079,7 +6090,6 @@
       "see-docs": "Consulta la <2>documentación</2> para obtener más información sobre el aprovisionamiento.",
       "title-required": "El título del panel de control es obligatorio",
       "title-same-as-folder": "El nombre del panel de control no puede ser el mismo que el nombre de la carpeta",
-      "title-this-repository-is-read-only": "Este repositorio es de solo lectura",
       "title-validation-failed": "Error en la validación del título del panel de control."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6395,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Haz clic <2>aquí</2> para obtener más información sobre este error.",
-    "success-more-details-links": "A continuación, puedes empezar a visualizar los datos <2>creando un panel de control</2> o consultando los datos en la <5>vista Explorar</5>."
+    "success-more-details-links": "A continuación, puedes empezar a visualizar los datos <2>creando un panel de control</2> o consultando los datos en la <5>vista Explorar</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6535,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Crear un dashboard",
-      "explore-data": "Explorar datos"
+      "explore-data": "Explorar datos",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Más detalles sobre el error"
@@ -9531,6 +9543,12 @@
         "total-bytes-processed": "Total de bytes procesados"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplicación",
       "disable-highlighting": "Desactivar resaltado",
@@ -9554,8 +9572,12 @@
       "oldest-first": "Ordenado por los logs más antiguos primero: haga clic para mostrar los más nuevos primero",
       "prettify-json": "Expandir logs JSON",
       "remove-escaping": "Eliminar escape",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Desplazarse al final",
       "scroll-top": "Desplazarse al inicio",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "",
       "show-timestamps": "Mostrar marcas temporales",
       "show-unique-labels": "Mostrar etiquetas únicas",
@@ -9604,6 +9626,7 @@
       "line-contains": "Añadir como filtro «la línea contiene»",
       "line-contains-not": "Añadir como filtro «la línea no contiene»"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Enlaces de datos",
       "aria-label-fields": "Campos",
@@ -12705,6 +12728,7 @@
     "description-column-filter": "",
     "description-count-rows": "",
     "description-fields": "",
+    "description-frozen-columns": "",
     "description-min-column-width": "",
     "name-calculation": "",
     "name-cell-height": "",
@@ -12716,6 +12740,7 @@
     "name-count-rows": "",
     "name-enable-pagination": "",
     "name-fields": "",
+    "name-frozen-columns": "",
     "name-hide-in-table": "",
     "name-min-column-width": "",
     "name-show-table-footer": "",

@@ -796,7 +796,7 @@
       },
       "filterBy": "Filtrovat dle:",
       "too-many-events": {
-        "text": "Vybrané časové období má příliš mnoho událostí k zobrazení. Zobrazuje se posledních 5 000 událostí. Zkuste použít kratší časové období.",
+        "text": "",
         "title": "Všechny události nejde zobrazit"
       }
     },
@@ -3567,6 +3567,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3605,6 +3612,9 @@
       "select-all-header-checkbox": "Vybrat vše",
       "select-checkbox": "Vybrat",
       "tags-column": "Tagy"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "Složku se nepodařilo odstranit",
@@ -3648,6 +3658,9 @@
     },
     "name-cell": {
       "no-items": "Žádné položky"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Zrušit",
@@ -5260,6 +5273,7 @@
         "new": "Nová karta",
         "repeat": {
           "learn-more": "Zjistěte víc",
+          "loading": "",
           "warning": "Panely v této záložce používají zdroj dat {{SHARED_DASHBOARD_QUERY}}. Tyto panely budou odkazovat na panel v původní záložce, nikoli na panely v opakovaných záložkách."
         }
       },
@@ -5731,11 +5745,9 @@
       "api-error": "Nástěnku se nepodařilo odstranit",
       "cancel-action": "Zrušit",
       "delete-action": "Odstranit nástěnku",
-      "delete-read-only-file-message": "Tuto nástěnku nelze odstranit přímo z Grafany, protože úložiště je pouze pro čtení. Chcete-li tuto nástěnku odstranit, odeberte soubor z úložiště Git.",
       "deleting": "Probíhá odstranění…",
       "drawer-title": "Odstranit zajištěnou nástěnku",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
+      "success-message": ""
     },
     "description-label": {
       "description": "Popis"
@@ -6111,7 +6123,6 @@
       "api-error": "Chyba při ukládání nástěnky",
       "cancel": "Zrušit",
       "cannot-be-saved": "Tuto nástěnku nelze uložit z uživatelského rozhraní Grafana, protože byla zajištěna z jiného zdroje. Zkopírujte JSON nebo ho uložte do souboru níže a následně aktualizujte nástěnku ve zdroji zajištění.",
-      "copy-json-message": "Pokud máte přímý přístup k cíli, zkopírujte JSON a vložte ho tam.",
       "copy-json-to-clipboard": "Kopírovat JSON do schránky",
       "file-path": "<0>Cesta k souboru:</0> {{filePath}}",
       "label-description": "Popis",
@@ -6123,7 +6134,6 @@
       "see-docs": "Další informace o zajištění najdete v <2>dokumentaci</2>.",
       "title-required": "Název nástěnky je povinný",
       "title-same-as-folder": "Název nástěnky nemůže být stejný jako název složky",
-      "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení",
       "title-validation-failed": "Ověření názvu nástěnky selhalo."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6429,7 +6439,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klikněte <2>tady</2> a zjistěte víc o této chybě.",
-    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>."
+    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6568,7 +6579,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Vytvořit nástěnku",
-      "explore-data": "Prozkoumat data"
+      "explore-data": "Prozkoumat data",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Další podrobnosti o chybě"
@@ -9591,6 +9603,12 @@
         "total-bytes-processed": "Celkový počet zpracovaných bajtů"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplikace",
       "disable-highlighting": "Zakázat zvýraznění",
@@ -9614,8 +9632,12 @@
       "oldest-first": "Seřazeno od nejstarších protokolů – kliknutím zobrazíte nejnovější protokoly jako první",
       "prettify-json": "Rozbalit protokoly JSON",
       "remove-escaping": "Odebrat únik",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Posunout dolů",
       "scroll-top": "Posunout nahoru",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Výsledek vyhledávání v protokolech",
       "show-timestamps": "Zobrazit časová razítka",
       "show-unique-labels": "Zobrazit jedinečné štítky",
@@ -9648,7 +9670,7 @@
     "name-order": "Objednávka",
     "name-prettify-json": "Zkrášlit JSON",
     "name-show-controls": "Zobrazit ovládací prvky",
-    "name-time": "Čas",
+    "name-time": "",
     "name-unique-labels": "Jedinečné štítky",
     "name-wrap-lines": "Zalomit řádky",
     "order-options": {
@@ -9664,6 +9686,7 @@
       "line-contains": "Přidat jako řádek obsahuje filtr",
       "line-contains-not": "Přidat jako řádek neobsahuje filtr"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",
       "aria-label-fields": "Pole",
@@ -12789,6 +12812,7 @@
     "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
     "description-count-rows": "Zobrazit jeden počet pro všechny datové řádky",
     "description-fields": "Vyberte pole, která by měla být vypočtena",
+    "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "name-calculation": "Výpočet",
     "name-cell-height": "Výška buňky",
@@ -12800,6 +12824,7 @@
     "name-count-rows": "Spočítat řádky",
     "name-enable-pagination": "Povolit stránkování",
     "name-fields": "Pole",
+    "name-frozen-columns": "",
     "name-hide-in-table": "Skrýt v tabulce",
     "name-min-column-width": "Minimální šířka sloupce",
     "name-show-table-footer": "Zobrazit zápatí tabulky",

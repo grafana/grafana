@@ -788,7 +788,7 @@
       },
       "filterBy": "Szűrési mód:",
       "too-many-events": {
-        "text": "A kijelölt időszakban túl sok esemény jeleníthető meg. A legutóbbi 5000 esemény megjelenítése. Próbálkozzon rövidebb időtartammal.",
+        "text": "",
         "title": "Nem lehet megjeleníteni az összes eseményt"
       }
     },
@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Összes kijelölése",
       "select-checkbox": "Kijelölés",
       "tags-column": "Címkék"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "A mappa törlése nem sikerült",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Nincsenek elemek"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Mégse",
@@ -5220,6 +5233,7 @@
         "new": "Új lap",
         "repeat": {
           "learn-more": "További információk",
+          "loading": "",
           "warning": "Az ezen a lapon lévő panelek a(z) {{SHARED_DASHBOARD_QUERY}} adatforrást használják. Ezek a panelek az eredeti lapon lévő panelre hivatkoznak, nem az ismétlődő lapokon lévőkre."
         }
       },
@@ -5691,11 +5705,9 @@
       "api-error": "Az irányítópult törlése nem sikerült",
       "cancel-action": "Mégse",
       "delete-action": "Irányítópult törlése",
-      "delete-read-only-file-message": "Ez az irányítópult nem törölhető közvetlenül a Grafanából, mert az adattár csak olvasható. Az irányítópult törléséhez távolítsa el a fájlt a Git-tárból.",
       "deleting": "Törlés...",
       "drawer-title": "Kiépített irányítópult törlése",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
+      "success-message": ""
     },
     "description-label": {
       "description": "Leírás"
@@ -6067,7 +6079,6 @@
       "api-error": "Hiba történt az irányítópult mentésekor",
       "cancel": "Mégse",
       "cannot-be-saved": "Ez az irányítópult nem menthető a Grafana kezelőfelületéből, mert egy másik forrásból van kiépítve. Másolja a JSON-t, vagy mentse fájlba az alábbiakban, majd frissítheti az irányítópultot a kiépítési forrásban.",
-      "copy-json-message": "Ha közvetlen hozzáférése van a célhoz, másolja ki a JSON-kódot, és illessze be oda.",
       "copy-json-to-clipboard": "JSON másolása a vágólapra",
       "file-path": "<0>Fájl útvonala:</0> {{filePath}}",
       "label-description": "Leírás",
@@ -6079,7 +6090,6 @@
       "see-docs": "A kiépítéssel kapcsolatos további információkért tekintse meg a <2>dokumentációt</2>.",
       "title-required": "Az irányítópult címének megadása kötelező",
       "title-same-as-folder": "Az irányítópult neve nem lehet ugyanaz, mint a mappa neve",
-      "title-this-repository-is-read-only": "Ez az adattár csak olvasható",
       "title-validation-failed": "Az irányítópult címének ellenőrzése sikertelen."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6395,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Ha többet szeretne megtudni erről a hibáról, kattintson <2>ide</2>.",
-    "success-more-details-links": "Ezután < 2 >létrehozhat egy irányítópultot</2>, vagy lekérdezheti az adatokat az <5>Explore nézetben</5>."
+    "success-more-details-links": "Ezután < 2 >létrehozhat egy irányítópultot</2>, vagy lekérdezheti az adatokat az <5>Explore nézetben</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6535,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Irányítópult létrehozása",
-      "explore-data": "Adatok felfedezése"
+      "explore-data": "Adatok felfedezése",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "További részletek a hibáról"
@@ -9531,6 +9543,12 @@
         "total-bytes-processed": "Összes feldolgozott bájt"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Duplikálás megszüntetése",
       "disable-highlighting": "Kiemelés letiltása",
@@ -9554,8 +9572,12 @@
       "oldest-first": "Rendezés a legrégebbi naplók szerint – kattintson, hogy a legújabb naplók jelenjenek meg elsőként",
       "prettify-json": "JSON-naplók kibontása",
       "remove-escaping": "Módosított értelmezés eltávolítása",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Görgetés az aljára",
       "scroll-top": "Görgetés a tetejére",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Keresés a naplóeredményekben",
       "show-timestamps": "Időbélyegek megjelenítése",
       "show-unique-labels": "Egyedi címkék megjelenítése",
@@ -9588,7 +9610,7 @@
     "name-order": "Sorrend",
     "name-prettify-json": "JSON szépítése",
     "name-show-controls": "Vezérlőelemek megjelenítése",
-    "name-time": "Idő",
+    "name-time": "",
     "name-unique-labels": "Egyedi címkék",
     "name-wrap-lines": "Sortörés",
     "order-options": {
@@ -9604,6 +9626,7 @@
       "line-contains": "A hozzáadás sorként szűrőt tartalmaz",
       "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Adathivatkozások",
       "aria-label-fields": "Mezők",
@@ -12705,6 +12728,7 @@
     "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
     "description-count-rows": "Egyetlen szám megjelenítése az összes adatsorhoz",
     "description-fields": "Válassza ki a kiszámítandó mezőket",
+    "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
     "name-calculation": "Számítás",
     "name-cell-height": "Cellamagasság",
@@ -12716,6 +12740,7 @@
     "name-count-rows": "Sorok számlálása",
     "name-enable-pagination": "Oldalszámozás engedélyezése",
     "name-fields": "Mezők",
+    "name-frozen-columns": "",
     "name-hide-in-table": "Elrejtés a táblázatban",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-show-table-footer": "Táblázatlábléc megjelenítése",

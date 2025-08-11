@@ -788,7 +788,7 @@
       },
       "filterBy": "Filteren op:",
       "too-many-events": {
-        "text": "De geselecteerde tijdsperiode heeft te veel gebeurtenissen om weer te geven. Weergave van de laatste 5000 evenementen. Probeer een kortere periode te gebruiken.",
+        "text": "",
         "title": "Kan niet alle gebeurtenissen weergeven"
       }
     },
@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Alles selecteren",
       "select-checkbox": "Selecteren",
       "tags-column": "Tags"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "Kan map niet verwijderen",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Geen items"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Annuleren",
@@ -5220,6 +5233,7 @@
         "new": "Nieuw tabblad",
         "repeat": {
           "learn-more": "Meer informatie",
+          "loading": "",
           "warning": "Panelen in dit tabblad gebruiken de gegevensbron van{{SHARED_DASHBOARD_QUERY}}. Deze panelen verwijzen naar het paneel in het oorspronkelijke tabblad, niet naar die in de herhaalde tabbladen."
         }
       },
@@ -5691,11 +5705,9 @@
       "api-error": "Kan dashboard niet verwijderen",
       "cancel-action": "Annuleren",
       "delete-action": "Dashboard verwijderen",
-      "delete-read-only-file-message": "Dit dashboard kan niet rechtstreeks uit Grafana worden verwijderd omdat de repository alleen-lezen is. Verwijder het bestand uit je Git-repository om dit dashboard te verwijderen.",
       "deleting": "Bezig met verwijderen ...",
       "drawer-title": "Kan provisioned dashboard niet verwijderen",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
+      "success-message": ""
     },
     "description-label": {
       "description": "Beschrijving"
@@ -6067,7 +6079,6 @@
       "api-error": "Fout bij opslaan van dashboard",
       "cancel": "Annuleren",
       "cannot-be-saved": "Dit dashboard kan niet worden opgeslagen vanuit de Grafana-gebruikersinterface omdat het is geprovisioneerd vanuit een andere bron. Kopieer de JSON of sla deze op in een onderstaand bestand. Vervolgens kun je je dashboard bijwerken in de provisioningbron.",
-      "copy-json-message": "Als je directe toegang hebt tot het doel, kopieer je de JSON en plak je deze daar.",
       "copy-json-to-clipboard": "JSON kopiëren naar klembord",
       "file-path": "<0>Bestandspad:</0> {{filePath}} ",
       "label-description": "Beschrijving",
@@ -6079,7 +6090,6 @@
       "see-docs": "Bekijk de <2>documentatie</2> voor meer informatie over provisioning.",
       "title-required": "Dashboardtitel is vereist",
       "title-same-as-folder": "Dashboardnaam mag niet hetzelfde zijn als de mapnaam",
-      "title-this-repository-is-read-only": "Deze repository is alleen-lezen",
       "title-validation-failed": "Validatie dashboardtitel mislukt."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6395,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>hier</2> voor meer informatie over deze fout.",
-    "success-more-details-links": "Vervolgens kun je beginnen met het visualiseren van gegevens door <2> een dashboard te bouwen </2> of door gegevens op te vragen in de <5> Verkennen-weergave</5>."
+    "success-more-details-links": "Vervolgens kun je beginnen met het visualiseren van gegevens door <2> een dashboard te bouwen </2> of door gegevens op te vragen in de <5> Verkennen-weergave</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6535,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Maak een dashboard",
-      "explore-data": "Gegevens verkennen"
+      "explore-data": "Gegevens verkennen",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Meer informatie over de fout"
@@ -9531,6 +9543,12 @@
         "total-bytes-processed": "Totaal aantal verwerkte bytes"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Dedupliceren",
       "disable-highlighting": "Markeren uitschakelen",
@@ -9554,8 +9572,12 @@
       "oldest-first": "Gesorteerd op oudste logboeken eerst - klik om nieuwste eerst weer te geven",
       "prettify-json": "JSON-logs uitvouwen",
       "remove-escaping": "Escaping verwijderen",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Naar beneden scrollen",
       "scroll-top": "Naar boven scrollen",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Zoeken in logresultaten",
       "show-timestamps": "Tijdstempels weergeven",
       "show-unique-labels": "Unieke labels weergeven",
@@ -9588,7 +9610,7 @@
     "name-order": "Orde",
     "name-prettify-json": "JSON verfraaien",
     "name-show-controls": "Bedieningselementen tonen",
-    "name-time": "Tijd",
+    "name-time": "",
     "name-unique-labels": "Unieke labels",
     "name-wrap-lines": "Lijnen omsluiten",
     "order-options": {
@@ -9604,6 +9626,7 @@
       "line-contains": "Toevoegen als regel filter bevat",
       "line-contains-not": "Toevoegen als regel geen filter bevat"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Gegevenslinks",
       "aria-label-fields": "Velden",
@@ -12705,6 +12728,7 @@
     "description-column-filter": "Schakelt veldfilters in tabel in/uit",
     "description-count-rows": "Een enkele telling weergeven voor alle gegevensrijen",
     "description-fields": "Selecteer de velden die moeten worden berekend",
+    "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "name-calculation": "Berekening",
     "name-cell-height": "Celhoogte",
@@ -12716,6 +12740,7 @@
     "name-count-rows": "Rijen tellen",
     "name-enable-pagination": "Paginering inschakelen",
     "name-fields": "Velden",
+    "name-frozen-columns": "",
     "name-hide-in-table": "In tabel verbergen",
     "name-min-column-width": "Minimale kolombreedte",
     "name-show-table-footer": "Voettekst tabel tonen",

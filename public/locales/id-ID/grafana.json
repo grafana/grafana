@@ -784,7 +784,7 @@
       },
       "filterBy": "Filter menurut:",
       "too-many-events": {
-        "text": "Periode waktu yang dipilih memiliki terlalu banyak kejadian untuk ditampilkan. Menampilkan 5000 kejadian terbaru. Coba gunakan periode waktu yang lebih singkat.",
+        "text": "",
         "title": "Tidak dapat menampilkan semua kejadian"
       }
     },
@@ -3525,6 +3525,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3548,6 +3555,9 @@
       "select-all-header-checkbox": "Pilih semua",
       "select-checkbox": "Pilih",
       "tags-column": "Tag"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "Gagal menghapus folder",
@@ -3591,6 +3601,9 @@
     },
     "name-cell": {
       "no-items": "Tidak ada item"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Batalkan",
@@ -5200,6 +5213,7 @@
         "new": "Tab baru",
         "repeat": {
           "learn-more": "Pelajari lebih lanjut",
+          "loading": "",
           "warning": "Panel di tab ini menggunakan sumber data {{SHARED_DASHBOARD_QUERY}}. Panel-panel ini akan mereferensikan panel di tab asli, bukan yang ada di tab berulang."
         }
       },
@@ -5671,11 +5685,9 @@
       "api-error": "Gagal menghapus dasbor",
       "cancel-action": "Batalkan",
       "delete-action": "Hapus dasbor",
-      "delete-read-only-file-message": "Dasbor ini tidak dapat dihapus langsung dari Grafana karena repositori bersifat hanya-baca. Untuk menghapus dasbor ini, harap hapus file dari repositori Git Anda.",
       "deleting": "Menghapus...",
       "drawer-title": "Hapus Dasbor yang Disediakan",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
+      "success-message": ""
     },
     "description-label": {
       "description": "Deskripsi"
@@ -6045,7 +6057,6 @@
       "api-error": "Kesalahan saat menyimpan dasbor",
       "cancel": "Batalkan",
       "cannot-be-saved": "Dasbor ini tidak dapat disimpan dari UI Grafana karena telah disediakan dari sumber lain. Salin JSON atau simpan ke file di bawah ini, lalu Anda dapat memperbarui dasbor Anda di sumber penyediaan.",
-      "copy-json-message": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana.",
       "copy-json-to-clipboard": "Salin JSON ke papan klip",
       "file-path": "<0>Jalur file:</0> {{filePath}}",
       "label-description": "Deskripsi",
@@ -6057,7 +6068,6 @@
       "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan.",
       "title-required": "Judul dasbor wajib diisi",
       "title-same-as-folder": "Nama dasbor tidak boleh sama dengan nama folder",
-      "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca",
       "title-validation-failed": "Validasi judul dasbor gagal."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6363,7 +6373,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>di sini</2> untuk mempelajari selengkapnya tentang kesalahan ini.",
-    "success-more-details-links": "Selanjutnya, Anda dapat mulai memvisualisasikan data dengan <2>membuat dasbor</2>, atau dengan melakukan kueri data di <5>tampilan Explore</5>."
+    "success-more-details-links": "Selanjutnya, Anda dapat mulai memvisualisasikan data dengan <2>membuat dasbor</2>, atau dengan melakukan kueri data di <5>tampilan Explore</5>.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6502,7 +6513,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Buat dasbor",
-      "explore-data": "Jelajahi data"
+      "explore-data": "Jelajahi data",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Detail lebih lanjut tentang kesalahan"
@@ -9501,6 +9513,12 @@
         "total-bytes-processed": "Total bita yang diproses"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplikasi",
       "disable-highlighting": "Nonaktifkan penyorotan",
@@ -9524,8 +9542,12 @@
       "oldest-first": "Diurutkan berdasarkan log paling lama lebih dulu - Klik untuk menampilkan yang terbaru lebih dulu",
       "prettify-json": "Perluas log JSON",
       "remove-escaping": "Hapus escape",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Gulir ke bawah",
       "scroll-top": "Gulir ke atas",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Cari di hasil log",
       "show-timestamps": "Tampilkan stempel waktu",
       "show-unique-labels": "Tampilkan label unik",
@@ -9558,7 +9580,7 @@
     "name-order": "Urutan",
     "name-prettify-json": "Rapikan JSON",
     "name-show-controls": "Tampilkan kontrol",
-    "name-time": "Waktu",
+    "name-time": "",
     "name-unique-labels": "Label unik",
     "name-wrap-lines": "Bungkus baris",
     "order-options": {
@@ -9574,6 +9596,7 @@
       "line-contains": "Tambahkan sebagai baris berisi filter",
       "line-contains-not": "Tambahkan sebagai baris tidak berisi filter"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Tautan data",
       "aria-label-fields": "Bidang",
@@ -12663,6 +12686,7 @@
     "description-column-filter": "Mengaktifkan/menonaktifkan filter bidang di tabel",
     "description-count-rows": "Tampilkan satu hitungan untuk semua baris data",
     "description-fields": "Pilih bidang yang harus dihitung",
+    "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
     "name-calculation": "Perhitungan",
     "name-cell-height": "Tinggi sel",
@@ -12674,6 +12698,7 @@
     "name-count-rows": "Hitung baris",
     "name-enable-pagination": "Aktifkan paginasi",
     "name-fields": "Bidang",
+    "name-frozen-columns": "",
     "name-hide-in-table": "Sembunyikan di tabel",
     "name-min-column-width": "Lebar kolom minimum",
     "name-show-table-footer": "Tampilkan footer tabel",

@@ -96,7 +96,7 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 	h.AwaitJobSuccess(t, t.Context(), unstruct)
 }
 
-func (h *provisioningTestHelper) TriggerJobAndWait(t *testing.T, repo string, spec provisioning.JobSpec) {
+func (h *provisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
 	t.Helper()
 
 	body := asJSON(spec)
@@ -126,40 +126,77 @@ func (h *provisioningTestHelper) TriggerJobAndWait(t *testing.T, repo string, sp
 	h.AwaitJobSuccess(t, t.Context(), unstruct)
 }
 
+func (h *provisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo string, spec provisioning.JobSpec) *unstructured.Unstructured {
+	t.Helper()
+
+	body := asJSON(spec)
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("jobs").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	if apierrors.IsAlreadyExists(result.Error()) {
+		// Wait for all jobs to finish as we don't have the name.
+		h.AwaitJobs(t, repo)
+		t.Errorf("repository %s already has a job running, but we expected a new one to be created", repo)
+		t.FailNow()
+
+		return nil
+	}
+
+	obj, err := result.Get()
+	require.NoError(t, err, "expecting to be able to sync repository")
+
+	unstruct, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expecting unstructured object, but got %T", obj)
+
+	name := unstruct.GetName()
+	require.NotEmpty(t, name, "expecting name to be set")
+
+	return h.AwaitJob(t, t.Context(), unstruct)
+}
+
 func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
+	t.Helper()
+	job = h.AwaitJob(t, ctx, job)
+	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
+	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
+	lastState := mustNestedString(job.Object, "status", "state")
+	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
+		"historic job '%s' was not successful", job.GetName())
+}
+
+func (h *provisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job *unstructured.Unstructured) *unstructured.Unstructured {
 	t.Helper()
 
 	repo := job.GetLabels()[jobs.LabelRepository]
 	require.NotEmpty(t, repo)
-	// TODO: simply this
-	if !assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+
+	var lastResult *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		result, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(job.GetUID()))
 
 		if apierrors.IsNotFound(err) {
-			assert.Fail(collect, "job '%s' not found yet yet", job.GetName())
+			collect.Errorf("job '%s' not found, still waiting for it to complete", job.GetName())
 			return // continue trying
 		}
 
-		// Can fail fast here -- the jobs are immutable
-		require.NoError(t, err)
-		require.NotNil(t, result)
-
-		errors := mustNestedStringSlice(result.Object, "status", "errors")
-		require.Empty(t, errors, "historic job '%s' has errors: %v", job.GetName(), errors)
-		state := mustNestedString(result.Object, "status", "state")
-		require.Equal(t, string(provisioning.JobStateSuccess), state,
-			"historic job '%s' was not successful", job.GetName())
-	}, time.Second*10, time.Millisecond*25) {
-		// We also want to add the job details to the error when it fails.
-		job, err := h.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
 		if err != nil {
-			t.Logf("failed to get job details for further help: %v", err)
-		} else {
-			t.Logf("job details: %+v", job.Object)
+			collect.Errorf("failed to get job '%s': %v", job.GetName(), err)
+			collect.FailNow()
+			return
 		}
-		t.FailNow()
-	}
+
+		lastResult = result
+	}, time.Second*10, time.Millisecond*25)
+	require.NotNil(t, lastResult, "expected job result to be non-nil")
+
+	return lastResult
 }
 
 func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
@@ -273,6 +310,46 @@ func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	file := h.LoadFile(from)
 	err = os.WriteFile(fullPath, file, 0600)
 	require.NoError(t, err, "failed to write file to provisioning path")
+}
+
+type TestRepo struct {
+	Name               string
+	Target             string
+	Values             map[string]any
+	Copies             map[string]string
+	ExpectedDashboards int
+	ExpectedFolders    int
+}
+
+func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
+	if repo.Target == "" {
+		repo.Target = "instance"
+	}
+
+	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo.Name,
+		"SyncEnabled": true,
+		"SyncTarget":  repo.Target,
+	})
+
+	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	for from, to := range repo.Copies {
+		h.CopyToProvisioningPath(t, from, to)
+	}
+
+	// Trigger and wait for initial sync to populate resources
+	h.SyncAndWait(t, repo.Name, nil)
+
+	// Verify initial state
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
+
+	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
 }
 
 type grafanaOption func(opts *testinfra.GrafanaOpts)

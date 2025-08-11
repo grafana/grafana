@@ -788,7 +788,7 @@
       },
       "filterBy": "Filtern nach:",
       "too-many-events": {
-        "text": "Der ausgewählte Zeitraum enthält zu viele Ereignisse, die nicht alle angezeigt werden können. Es werden nur die letzten 5.000 Ereignisse angezeigt. Versuchen Sie es mit einem kürzeren Zeitraum.",
+        "text": "",
         "title": "Es können nicht alle Ereignisse angezeigt werden"
       }
     },
@@ -3539,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3567,6 +3574,9 @@
       "select-all-header-checkbox": "Alle auswählen",
       "select-checkbox": "Auswählen",
       "tags-column": "Tags"
+    },
+    "delete-folder": {
+      "read-only-message": ""
     },
     "delete-provisioned-folder-form": {
       "api-error": "Ordner konnte nicht gelöscht werden",
@@ -3610,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Keine Elemente"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Abbrechen",
@@ -5220,6 +5233,7 @@
         "new": "Neues Tab",
         "repeat": {
           "learn-more": "Mehr erfahren",
+          "loading": "",
           "warning": "Die Panels in dieser Registerkarte verwenden {{SHARED_DASHBOARD_QUERY}} als Datenquelle. Diese Panels verweisen auf das Panel in der ursprünglichen Registerkarte, nicht auf die in den wiederholten Registerkarten."
         }
       },
@@ -5691,11 +5705,9 @@
       "api-error": "Das Dashboard konnte nicht gelöscht werden",
       "cancel-action": "Abbrechen",
       "delete-action": "Dashboard löschen",
-      "delete-read-only-file-message": "Dieses Dashboard kann nicht direkt von Grafana aus gelöscht werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu löschen, entfernen Sie bitte die Datei aus Ihrem Git-Repository.",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
+      "success-message": ""
     },
     "description-label": {
       "description": "Beschreibung"
@@ -6067,7 +6079,6 @@
       "api-error": "Fehler beim Speichern des Dashboards",
       "cancel": "Abbrechen",
       "cannot-be-saved": "Dieses Dashboard kann nicht über die Grafana-Benutzeroberfläche gespeichert werden, da es von einer anderen Quelle bereitgestellt wurde. Kopieren Sie JSON oder speichern Sie es unten in einer Datei. Anschließend können Sie Ihr Dashboard in der Bereitstellungsquelle aktualisieren.",
-      "copy-json-message": "Wenn Sie direkten Zugriff auf das Ziel haben, kopieren Sie den JSON und fügen Sie ihn dort ein.",
       "copy-json-to-clipboard": "JSON in die Zwischenablage kopieren",
       "file-path": "<0>Dateipfad:</0> {{filePath}}",
       "label-description": "Beschreibung",
@@ -6079,7 +6090,6 @@
       "see-docs": "Weitere Informationen zur Bereitstellung finden Sie in der <2>Dokumentation</2>.",
       "title-required": "Dashboard-Titel ist erforderlich",
       "title-same-as-folder": "Der Dashboard-Name darf nicht mit dem Ordnernamen identisch sein",
-      "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt",
       "title-validation-failed": "Die Validierung des Dashboard-Titels ist fehlgeschlagen."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6395,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicken Sie <2>hier</2>, um mehr über diesen Fehler zu erfahren.",
-    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen."
+    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6535,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Dashboard erstellen",
-      "explore-data": "Daten untersuchen"
+      "explore-data": "Daten untersuchen",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Weitere Details zum Fehler"
@@ -9531,6 +9543,12 @@
         "total-bytes-processed": "Gesamte verarbeitete Bytes"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplizierung",
       "disable-highlighting": "Markierung deaktivieren",
@@ -9554,8 +9572,12 @@
       "oldest-first": "Sortiert nach ältesten Logs zuerst – klicken Sie, um die neuesten zuerst anzuzeigen",
       "prettify-json": "JSON-Logs ausklappen",
       "remove-escaping": "Escaping entfernen",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Nach unten scrollen",
       "scroll-top": "Nach oben scrollen",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Ergebnis der Suche in Logs",
       "show-timestamps": "Zeitstempel anzeigen",
       "show-unique-labels": "Eindeutige Labels anzeigen",
@@ -9588,7 +9610,7 @@
     "name-order": "Reihenfolge",
     "name-prettify-json": "JSON formatieren",
     "name-show-controls": "Steuerelemente anzeigen",
-    "name-time": "Zeit",
+    "name-time": "",
     "name-unique-labels": "Eindeutige Labels",
     "name-wrap-lines": "Zeilen umbrechen",
     "order-options": {
@@ -9604,6 +9626,7 @@
       "line-contains": "„Als Zeile hinzufügen“ enthält Filter",
       "line-contains-not": "„Als Zeile hinzufügen“ enthält keinen Filter"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Datenlinks",
       "aria-label-fields": "Felder",
@@ -12705,6 +12728,7 @@
     "description-column-filter": "Aktiviert/deaktiviert Feldfilter in der Tabelle",
     "description-count-rows": "Eine einzelne Anzahl für alle Datenzeilen anzeigen",
     "description-fields": "Wählen Sie die Felder aus, die berechnet werden sollen",
+    "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
     "name-calculation": "Berechnung",
     "name-cell-height": "Zellenhöhe",
@@ -12716,6 +12740,7 @@
     "name-count-rows": "Zeilen zählen",
     "name-enable-pagination": "Seitennummerierung aktivieren",
     "name-fields": "Felder",
+    "name-frozen-columns": "",
     "name-hide-in-table": "In Tabelle ausblenden",
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-show-table-footer": "Tabellenfußzeile anzeigen",

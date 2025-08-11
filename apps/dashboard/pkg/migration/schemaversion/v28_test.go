@@ -160,6 +160,19 @@ func TestV28(t *testing.T) {
 									"fixedColor": "#ff0000",
 								},
 								"mappings": []interface{}{},
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
 							},
 							"overrides": []interface{}{},
 						},
@@ -228,6 +241,19 @@ func TestV28(t *testing.T) {
 									"fixedColor": "#ff0000",
 								},
 								"mappings": []interface{}{},
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
 							},
 							"overrides": []interface{}{},
 						},
@@ -512,7 +538,20 @@ func TestV28(t *testing.T) {
 						},
 						"fieldConfig": map[string]interface{}{
 							"defaults": map[string]interface{}{
-								"unit":     "short",
+								"unit": "short",
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
 								"mappings": []interface{}{},
 							},
 							"overrides": []interface{}{},
@@ -564,7 +603,20 @@ func TestV28(t *testing.T) {
 						},
 						"fieldConfig": map[string]interface{}{
 							"defaults": map[string]interface{}{
-								"unit":     "short",
+								"unit": "short",
+								"thresholds": map[string]interface{}{
+									"mode": "absolute",
+									"steps": []interface{}{
+										map[string]interface{}{
+											"color": "green",
+											"value": nil,
+										},
+										map[string]interface{}{
+											"color": "red",
+											"value": 80,
+										},
+									},
+								},
 								"mappings": []interface{}{},
 							},
 							"overrides": []interface{}{},
@@ -626,7 +678,20 @@ func TestV28(t *testing.T) {
 								},
 								"fieldConfig": map[string]interface{}{
 									"defaults": map[string]interface{}{
-										"unit":     "bytes",
+										"unit": "bytes",
+										"thresholds": map[string]interface{}{
+											"mode": "absolute",
+											"steps": []interface{}{
+												map[string]interface{}{
+													"color": "green",
+													"value": nil,
+												},
+												map[string]interface{}{
+													"color": "red",
+													"value": 80,
+												},
+											},
+										},
 										"mappings": []interface{}{},
 									},
 									"overrides": []interface{}{},
