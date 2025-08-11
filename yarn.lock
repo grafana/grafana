@@ -3584,11 +3584,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.29.6--canary.1211.16847485720.0":
-  version: 6.29.6--canary.1211.16847485720.0
-  resolution: "@grafana/scenes-react@npm:6.29.6--canary.1211.16847485720.0"
+"@grafana/scenes-react@npm:6.29.6":
+  version: 6.29.6
+  resolution: "@grafana/scenes-react@npm:6.29.6"
   dependencies:
-    "@grafana/scenes": "npm:6.29.6--canary.1211.16847485720.0"
+    "@grafana/scenes": "npm:6.29.6"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3600,13 +3600,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/46ad4c9489f198b68c6496fb8949d23b2958507fd71698da3dc9dbf9baf1357fc47af1d3924259f46c3f65b94194f4b0ee5b91a80bc46df8c2bcd007f8ad9152
+  checksum: 10/915f91492f8bad2157ef0cbb949ceacef1bb81843acbf38e98278d7f997f7f5209535975154a56f8b3ab87489330f07041997f18a47c5448b29c8bb068ddca98
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.29.6--canary.1211.16847485720.0":
-  version: 6.29.6--canary.1211.16847485720.0
-  resolution: "@grafana/scenes@npm:6.29.6--canary.1211.16847485720.0"
+"@grafana/scenes@npm:6.29.6":
+  version: 6.29.6
+  resolution: "@grafana/scenes@npm:6.29.6"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3626,7 +3626,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/efb621247895e1bb984ef1f42cafd66929af74af5d81714b2b3ab5dba85f25d383b2f922a30164ec3187e1b15920180bdd39f41c9de058fca608bbe564df21e8
+  checksum: 10/51d4e25489208d4ab7296b3b1352291d873c84c1d5845f70537816b768a7432e51d7e8ffe63f0b44f9427786552ec70780d02f972fcfc2f4d580b3dbef588585
   languageName: node
   linkType: hard
 
@@ -18218,8 +18218,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.9"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.29.6--canary.1211.16847485720.0"
-    "@grafana/scenes-react": "npm:6.29.6--canary.1211.16847485720.0"
+    "@grafana/scenes": "npm:6.29.6"
+    "@grafana/scenes-react": "npm:6.29.6"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
