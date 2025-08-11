@@ -988,6 +988,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Registers AuthZ resource permission /apis endpoints
+  */
+  kubernetesAuthzResourcePermissionApis?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
