@@ -913,6 +913,11 @@ func (in *ResourceStats) DeepCopyInto(out *ResourceStats) {
 		*out = make([]ResourceCount, len(*in))
 		copy(*out, *in)
 	}
+	if in.Unmanaged != nil {
+		in, out := &in.Unmanaged, &out.Unmanaged
+		*out = make([]ResourceCount, len(*in))
+		copy(*out, *in)
+	}
 	if in.Managed != nil {
 		in, out := &in.Managed, &out.Managed
 		*out = make([]ManagerStats, len(*in))
