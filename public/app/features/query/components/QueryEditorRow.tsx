@@ -544,7 +544,7 @@ export function QueryLibraryEditingBadge(props: { queryLibraryRef?: string }) {
     <Badge
       color="blue"
       icon="book"
-      text={t('query-operation.query-library.from-library', 'Editing From Query Library')}
+      text={t('query-operation.query-library.from-library', 'Update query from library')}
       tooltip={t('query-operation.query-library.editing-tooltip', 'Editing query from library ({{queryLibraryRef}})', {
         queryLibraryRef,
       })}
