@@ -9,14 +9,26 @@ export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_in
 export type InheritableKeys = typeof INHERITABLE_KEYS;
 export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
-export interface RouteMatchResult<T extends Route> {
+interface RouteMatchPath {
+  id: string;
+  matchDetails: LabelMatchDetails[];
+  matchPaths: RouteMatchPath[];
+}
+
+export interface RouteMatchResult<T> {
   route: T;
+  routeMatchPath: RouteMatchPath;
   labels: Label[];
   matchDetails: LabelMatchDetails[];
+  routeIds: string[]; // List of route IDs involved in the selection algorithm
 }
 
 // Normalization should have happened earlier in the code
-export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): Array<RouteMatchResult<T>> {
+export function findMatchingRoutes<T extends Route>(
+  route: T, 
+  labels: Label[], 
+  parentRouteIds: string[] = []
+): Array<RouteMatchResult<T>> {
   let childMatches: Array<RouteMatchResult<T>> = [];
 
   // If the current node is not a match, return nothing
@@ -25,13 +37,30 @@ export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): 
     return [];
   }
 
+  // Get the current route ID (if it has one) and build the current path
+  const currentRouteId = (route as any).id || uniqueId('route-');
+  const currentRouteIds = [...parentRouteIds, currentRouteId];
+
+  // Build the route match path for this level
+  const routeMatchPath: RouteMatchPath = {
+    id: currentRouteId,
+    matchDetails: matchResult.details,
+    matchPaths: []
+  };
+
   // If the current node matches, recurse through child nodes
   if (route.routes) {
     for (const child of route.routes) {
-      const matchingChildren = findMatchingRoutes(child, labels);
+      const matchingChildren = findMatchingRoutes(child, labels, currentRouteIds);
       // TODO how do I solve this typescript thingy? It looks correct to me /shrug
       // @ts-ignore
       childMatches = childMatches.concat(matchingChildren);
+      
+      // Add child match paths to current route match path
+      matchingChildren.forEach(childMatch => {
+        routeMatchPath.matchPaths.push(childMatch.routeMatchPath);
+      });
+      
       // we have matching children and we don't want to continue, so break here
       if (matchingChildren.length && !child.continue) {
         break;
@@ -41,7 +70,19 @@ export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): 
 
   // If no child nodes were matches, the current node itself is a match.
   if (childMatches.length === 0) {
-    childMatches.push({ route, labels, matchDetails: matchResult.details });
+    childMatches.push({ 
+      route, 
+      labels, 
+      matchDetails: matchResult.details,
+      routeMatchPath,
+      routeIds: currentRouteIds
+    });
+  } else {
+    // Update all child matches to include the current route in their path
+    childMatches = childMatches.map(match => ({
+      ...match,
+      routeIds: currentRouteIds.concat(match.routeIds.slice(currentRouteIds.length))
+    }));
   }
 
   return childMatches;
@@ -132,7 +173,7 @@ export function matchAlertInstancesToPolicyTree(instances: Label[][], routingTre
   const expandedTree = addUniqueIdentifier(computeInheritedTree(routingTree));
 
   // let's first find all matching routes for the provided instances
-  const matchesArray = instances.flatMap((labels) => findMatchingRoutes(expandedTree, labels));
+  const matchesArray = instances.flatMap((labels) => findMatchingRoutes(expandedTree, labels, []));
 
   // now group the matches by route ID
   // this will give us a map of route IDs to their matching instances

@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
 
 import { useMatchAlertInstancesToNotificationPolicies } from '@grafana/alerting/unstable';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Alert, Box, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -19,13 +17,10 @@ const UNKNOWN_RECEIVER = 'unknown';
 function NotificationPreviewByAlertManager({
   alertManagerSource,
   instances,
-  onlyOneAM,
 }: {
   alertManagerSource: AlertManagerDataSource;
   instances: Labels[];
-  onlyOneAM: boolean;
 }) {
-  const styles = useStyles2(getStyles);
   const { matchInstancesToPolicies, isLoading, error } = useMatchAlertInstancesToNotificationPolicies();
 
   if (error) {
@@ -67,32 +62,19 @@ function NotificationPreviewByAlertManager({
   const contactPointGroups = groupBy(flattenedResults, 'receiver');
 
   return matchingPoliciesFound ? (
-    <div className={styles.alertManagerRow}>
-      {!onlyOneAM && (
-        <Stack direction="row" alignItems="center">
-          <div className={styles.firstAlertManagerLine} />
-          <div className={styles.alertManagerName}>
-            <Trans i18nKey="alerting.notification-preview.alertmanager">Alertmanager:</Trans>
-            <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
-            {alertManagerSource.name}
-          </div>
-          <div className={styles.secondAlertManagerLine} />
-        </Stack>
-      )}
-      <Stack gap={1} direction="column">
+    <Box display="flex" direction="column" gap={1} width="100%">
+      <Stack direction="column" gap={0}>
         {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) => (
-          <Stack direction="column" key={receiver}>
-            <GrafanaContactPointGroup name={receiver} matchedInstancesCount={resultsForReceiver.length}>
-              <Stack direction="column" gap={0}>
-                {resultsForReceiver.map(({ policyTree, matchDetails }) => (
-                  <InstanceMatch key={matchDetails.labels.join(',')} matchedInstance={matchDetails} />
-                ))}
-              </Stack>
-            </GrafanaContactPointGroup>
-          </Stack>
+          <GrafanaContactPointGroup key={receiver} name={receiver} matchedInstancesCount={resultsForReceiver.length}>
+            <Stack direction="column" gap={0}>
+              {resultsForReceiver.map(({ policyTree, matchDetails }) => (
+                <InstanceMatch key={matchDetails.labels.join(',')} matchedInstance={matchDetails} policyTreeSpec={policyTree.expandedSpec} policyTreeMetadata={policyTree.metadata} />
+              ))}
+            </Stack>
+          </GrafanaContactPointGroup>
         ))}
       </Stack>
-    </div>
+    </Box>
   ) : null;
 }
 
@@ -100,31 +82,3 @@ function NotificationPreviewByAlertManager({
 // Due to loading of the web worker we don't want to load this component when not necessary
 export default withErrorBoundary(NotificationPreviewByAlertManager);
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  alertManagerRow: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    width: '100%',
-  }),
-  firstAlertManagerLine: css({
-    height: '1px',
-    width: theme.spacing(4),
-    backgroundColor: theme.colors.secondary.main,
-  }),
-  alertManagerName: css({
-    width: 'fit-content',
-  }),
-  secondAlertManagerLine: css({
-    height: '1px',
-    width: '100%',
-    flex: 1,
-    backgroundColor: theme.colors.secondary.main,
-  }),
-  img: css({
-    marginLeft: theme.spacing(2),
-    width: theme.spacing(3),
-    height: theme.spacing(3),
-    marginRight: theme.spacing(1),
-  }),
-});

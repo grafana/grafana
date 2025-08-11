@@ -108,7 +108,7 @@ export function normalizeRoute<T extends Route>(rootRoute: T): T {
   return normalizedRootRoute;
 }
 
-export function unquoteRouteMatchers(route: Route): Route {
+export function unquoteRouteMatchers<T extends Route>(route: T): T {
   function unquoteRoute(route: Route) {
     route.object_matchers = route.object_matchers?.map(([name, operator, value]) => {
       return [unquoteWithUnescape(name), operator, unquoteWithUnescape(value)];

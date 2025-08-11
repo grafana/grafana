@@ -51,17 +51,18 @@ export function GrafanaContactPointGroup({ name, matchedInstancesCount, children
 export function ExternalContactPointGroup({
   name,
   alertmanagerSourceName,
+  matchedInstancesCount,
   children,
 }: ContactPointGroupProps & { alertmanagerSourceName: string }) {
   const link = (
-    <TextLink color="primary" external inline={false} href={createContactPointLink(name, alertmanagerSourceName)}>
+    <TextLink color="primary" variant="bodySmall" external inline={false} href={createContactPointLink(name, alertmanagerSourceName)}>
       {name}
     </TextLink>
   );
-  return <ContactPointGroup name={link}>{children}</ContactPointGroup>;
+  return <ContactPointGroup name={link} matchedInstancesCount={matchedInstancesCount}>{children}</ContactPointGroup>;
 }
 
-interface ContactPointGroupInnerProps extends ContactPointGroupProps {
+interface ContactPointGroupInnerProps extends Omit<ContactPointGroupProps, 'name'> {
   name: ReactNode;
   description?: ReactNode;
   isLoading?: boolean;
@@ -90,13 +91,6 @@ export function ContactPointGroup({
           {isLoading && loader}
           {!isLoading && (
             <>
-              {matchedInstancesCount && (
-                <MetaText icon="layers-alt">
-                  {/* @TODO pluralization */}
-                  {matchedInstancesCount}{' '}
-                  <Trans i18nKey="alerting.notification-route-header.instances">instances</Trans>
-                </MetaText>
-              )}
               {name && (
                 <>
                   <MetaText icon="at">
@@ -107,6 +101,16 @@ export function ContactPointGroup({
                       ⋅ {description}
                     </Text>
                   )}
+                </>
+              )}
+              {matchedInstancesCount && (
+                <>
+                  <Text color="secondary" variant='bodySmall'>|</Text>
+                  <MetaText icon="layers-alt">
+                    {/* @TODO pluralization */}
+                    {matchedInstancesCount}{' '}
+                    <Trans i18nKey="alerting.notification-route-header.instances">instances</Trans>
+                  </MetaText>
                 </>
               )}
             </>

@@ -237,7 +237,6 @@ describe('NotificationPreviewByAlertmanager', () => {
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
         instances={potentialInstances}
-        onlyOneAM={true}
       />
     );
 
@@ -290,7 +289,6 @@ describe('NotificationPreviewByAlertmanager', () => {
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
         instances={potentialInstances}
-        onlyOneAM={true}
       />
     );
 
@@ -344,7 +342,6 @@ describe('NotificationPreviewByAlertmanager', () => {
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
         instances={potentialInstances}
-        onlyOneAM={true}
       />
     );
 
@@ -391,7 +388,6 @@ describe('NotificationPreviewByAlertmanager', () => {
         <NotificationPreviewByAlertManager
           alertManagerSource={grafanaAlertManagerDataSource}
           instances={potentialInstances}
-          onlyOneAM={true}
         />
       );
 
@@ -417,7 +413,6 @@ describe('NotificationPreviewByAlertmanager', () => {
         <NotificationPreviewByAlertManager
           alertManagerSource={grafanaAlertManagerDataSource}
           instances={potentialInstances}
-          onlyOneAM={true}
         />
       );
 
@@ -442,7 +437,6 @@ describe('NotificationPreviewByAlertmanager', () => {
         <NotificationPreviewByAlertManager
           alertManagerSource={grafanaAlertManagerDataSource}
           instances={potentialInstances}
-          onlyOneAM={true}
         />
       );
 
@@ -468,7 +462,6 @@ describe('NotificationPreviewByAlertmanager', () => {
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
         instances={potentialInstances}
-        onlyOneAM={true}
       />
     );
 

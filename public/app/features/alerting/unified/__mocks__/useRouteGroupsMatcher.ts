@@ -11,7 +11,7 @@ export function useRouteGroupsMatcher() {
   }, []);
 
   const matchInstancesToRoute = useCallback(async (rootRoute: RouteWithID, instancesToMatch: Labels[]) => {
-    return routeGroupsMatcher.matchInstancesToRoute(rootRoute, instancesToMatch);
+    return routeGroupsMatcher.matchInstancesToRoutes(rootRoute, instancesToMatch);
   }, []);
 
   return { getRouteGroupsMap, matchInstancesToRoute };
