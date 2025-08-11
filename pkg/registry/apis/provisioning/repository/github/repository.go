@@ -224,6 +224,25 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 	return urls, nil
 }
 
+// RefURLs implements RepositoryWithURLs.
+func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioning.RefURLs, error) {
+	cfg := r.config.Spec.GitHub
+	if cfg == nil || ref == "" {
+		return nil, nil
+	}
+
+	urls := &provisioning.RefURLs{
+		SourceURL: fmt.Sprintf("%s/tree/%s", cfg.URL, ref),
+	}
+
+	if ref != cfg.Branch {
+		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
+		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
+	}
+
+	return urls, nil
+}
+
 func (r *githubRepository) OnCreate(_ context.Context) ([]map[string]interface{}, error) {
 	return nil, nil
 }

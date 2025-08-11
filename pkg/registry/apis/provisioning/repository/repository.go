@@ -129,6 +129,7 @@ type RepositoryWithURLs interface {
 
 	// Get resource URLs for a file inside a repository
 	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.ResourceURLs, error)
+	RefURLs(ctx context.Context, ref string) (*provisioning.RefURLs, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted

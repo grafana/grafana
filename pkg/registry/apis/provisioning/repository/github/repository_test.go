@@ -783,6 +783,92 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 	}
 }
 
+func TestGitHubRepositoryRefURLs(t *testing.T) {
+	tests := []struct {
+		name          string
+		ref           string
+		config        *provisioning.Repository
+		expectedURLs  *provisioning.RefURLs
+		expectedError error
+	}{
+		{
+			name: "ref different from branch",
+			ref:  "feature-branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RefURLs{
+				SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
+			name: "ref same as branch",
+			ref:  "main",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RefURLs{
+				SourceURL: "https://github.com/grafana/grafana/tree/main",
+			},
+		},
+		{
+			name: "empty ref returns nil",
+			ref:  "",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: nil,
+		},
+		{
+			name: "nil github config returns nil",
+			ref:  "feature-branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: nil,
+				},
+			},
+			expectedURLs: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &githubRepository{
+				config: tt.config,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			urls, err := repo.RefURLs(context.Background(), tt.ref)
+
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedURLs, urls)
+			}
+		})
+	}
+}
+
 // Test simple delegation functions
 func TestGitHubRepositoryDelegation(t *testing.T) {
 	ctx := context.Background()
