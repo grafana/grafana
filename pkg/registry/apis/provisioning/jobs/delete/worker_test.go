@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -31,7 +31,7 @@ func (m *mockReaderWriter) Delete(ctx context.Context, path, ref, message string
 type simpleRepository struct{}
 
 func (s *simpleRepository) Config() *v0alpha1.Repository { return nil }
-func (s *simpleRepository) Validate() field.ErrorList        { return nil }
+func (s *simpleRepository) Validate() field.ErrorList    { return nil }
 func (s *simpleRepository) Test(ctx context.Context) (*v0alpha1.TestResults, error) {
 	return nil, nil
 }
@@ -1149,4 +1149,3 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	// Verify that SetRefURLs was NOT called since repo doesn't support URLs
 	mockProgress.AssertExpectations(t)
 }
-

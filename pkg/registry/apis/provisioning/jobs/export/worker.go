@@ -89,7 +89,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	err := r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
-	
+
 	// Set RefURLs if the repository supports it and we have a target branch
 	if options.Branch != "" {
 		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
@@ -98,6 +98,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			}
 		}
 	}
-	
+
 	return err
 }

@@ -1000,4 +1000,3 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	// Verify that SetRefURLs was NOT called since repo doesn't support URLs
 	mockProgress.AssertExpectations(t)
 }
-

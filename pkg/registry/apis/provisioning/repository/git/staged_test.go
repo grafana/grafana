@@ -153,17 +153,17 @@ func TestNewStagedGitRepository(t *testing.T) {
 						// Second call: get source branch (main)
 						if ref == "refs/heads/main" {
 							return nanogit.Ref{
-								Name: "refs/heads/main", 
+								Name: "refs/heads/main",
 								Hash: hash.Hash{1, 2, 3},
 							}, nil
 						}
 					}
 					return nanogit.Ref{}, errors.New("unexpected call")
 				}
-				
+
 				// CreateRef should be called to create the new branch
 				mockClient.CreateRefReturns(nil)
-				
+
 				mockWriter := &mocks.FakeStagedWriter{}
 				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},

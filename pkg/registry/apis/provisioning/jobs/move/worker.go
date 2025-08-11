@@ -88,7 +88,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	if err != nil {
 		return fmt.Errorf("move files in repository: %w", err)
 	}
-	
+
 	// Set RefURLs if the repository supports it and we have a target ref
 	if opts.Ref != "" {
 		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {

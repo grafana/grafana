@@ -550,8 +550,6 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 	require.EqualError(t, err, "export failed")
 }
 
-
-
 func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
@@ -565,7 +563,7 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 
 	// Create a repository that implements both Repository and RepositoryWithURLs
 	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
-	
+
 	mockRepoWithURLs.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -631,7 +629,7 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 	}
 
 	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
-	
+
 	mockRepoWithURLs.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -687,7 +685,7 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 
 	// Use a regular Repository that doesn't implement RepositoryWithURLs
 	mockRepo := repository.NewMockRepository(t)
-	
+
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -729,4 +727,3 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	// Verify that SetRefURLs was NOT called since repo doesn't support URLs
 	mockProgress.AssertExpectations(t)
 }
-

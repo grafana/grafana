@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestJobProgressRecorderSetRefURLs(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
@@ -39,7 +39,7 @@ func TestJobProgressRecorderSetRefURLs(t *testing.T) {
 
 func TestJobProgressRecorderSetRefURLsNil(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
@@ -61,7 +61,7 @@ func TestJobProgressRecorderSetRefURLsNil(t *testing.T) {
 
 func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
