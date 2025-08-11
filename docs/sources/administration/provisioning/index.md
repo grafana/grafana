@@ -130,12 +130,12 @@ datasources:
     user:
     # <string> Sets the database name, if necessary.
     database:
-    # <bool> Enables basic authorization (ignored unless
-    # access is direct). If proxied data source requires
-    # basic auth, add a custom HTTP Authorization header
-    # instead (see section below).
+    # <bool> Enables basic auth (only applies when access
+    # is direct). If your proxied data source requires basic
+    # auth, add a custom HTTP Authorization header instead
+    # (see section below).
     basicAuth:
-    # <string> Sets the basic authorization username.
+    # <string> Sets the basic auth username.
     basicAuthUser:
     # <bool> Enables credential headers.
     withCredentials:
@@ -162,7 +162,7 @@ datasources:
       tlsClientKey: '...'
       # <string> Sets the database password, if necessary.
       password:
-      # <string> Sets the basic authorization password.
+      # <string> Sets the basic auth password.
       basicAuthPassword:
     # <int> Sets the version. Used to compare versions when
     # updating. Ignored when creating a new data source.
@@ -255,7 +255,7 @@ All of these settings are optional.
 | `tlsClientCert`     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests                    |
 | `tlsClientKey`      | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client key for outgoing requests                     |
 | `password`          | string | _HTTP\*_, MySQL, PostgreSQL, MSSQL | password                                                 |
-| `basicAuthPassword` | string | _HTTP\*_                           | password for basic authentication                        |
+| `basicAuthPassword` | string | _HTTP\*_                           | password for basic auth                                  |
 | `accessKey`         | string | Amazon CloudWatch                  | Access key for connecting to Amazon CloudWatch           |
 | `secretKey`         | string | Amazon CloudWatch                  | Secret key for connecting to Amazon CloudWatch           |
 | `sigV4AccessKey`    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider |
