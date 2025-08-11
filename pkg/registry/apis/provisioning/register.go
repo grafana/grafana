@@ -59,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -107,7 +108,8 @@ type APIBuilder struct {
 	legacyMigrator    legacy.LegacyMigrator
 	storageStatus     dualwrite.Service
 	unified           resource.ResourceClient
-	repositorySecrets secrets.RepositorySecrets
+	decryptSvc        secret.DecryptService
+	repositorySecrets secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
 	client            client.ProvisioningV0alpha1Interface
 	access            authlib.AccessChecker
 	mutators          []controller.Mutator
@@ -130,6 +132,7 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
+	decryptSvc secret.DecryptService,
 	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
@@ -160,6 +163,7 @@ func NewAPIBuilder(
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
+		decryptSvc:          decryptSvc,
 		repositorySecrets:   repositorySecrets,
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
@@ -232,6 +236,7 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
+	decryptSvc secret.DecryptService,
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -250,6 +255,7 @@ func RegisterAPIService(
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		usageStats,
+		decryptSvc,
 		repositorySecrets,
 		access,
 		tracer,
