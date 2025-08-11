@@ -350,21 +350,22 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
 
   // Create label options for the multi-select dropdown
   const labelOptions = useMemo((): Array<ComboboxOption<string>> => {
-    const options: Array<ComboboxOption<string>> = [];
+    const infoOption: ComboboxOption<string> = {
+      label: t('label-dropdown-info', "Can't find your label? Enter it manually"),
+      value: '__GRAFANA_LABEL_DROPDOWN_INFO__',
+      infoOption: true,
+    };
 
-    grafanaLabels.forEach((values, key) => {
-      values.forEach((value) => {
-        const labelPair = `${key}=${value}`;
-        options.push({
-          label: labelPair,
-          value: labelPair,
-          description: `Label: ${key}, Value: ${value}`,
-        });
-      });
-    });
+    const selectableOptions = Array.from(grafanaLabels.entries())
+      .flatMap(([key, values]) =>
+        Array.from(values).map((value: string) => {
+          const labelPair = `${key}=${value}`;
+          return { label: labelPair, value: labelPair };
+        })
+      )
+      .sort((a, b) => new Intl.Collator().compare(a.label, b.label));
 
-    // eslint-disable-next-line no-restricted-syntax
-    return options.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+    return [...selectableOptions, infoOption];
   }, [grafanaLabels]);
 
   // Generate appropriate placeholder text
@@ -446,7 +447,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
                     : t('alerting.rules-filter.placeholder-labels', 'Select labels')
                 }
                 loading={isLoadingGrafanaLabels}
-                disabled={isLoadingGrafanaLabels || labelOptions.length === 0}
+                disabled={isLoadingGrafanaLabels || labelOptions.filter((option) => !option.infoOption).length === 0}
                 portalContainer={portalContainer}
                 width="auto"
                 minWidth={40}

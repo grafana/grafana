@@ -199,6 +199,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
+          // Don't allow selection of info options
+          if (newSelectedItem?.infoOption) {
+            break;
+          }
+
           // Handle All functionality
           if (newSelectedItem?.value === ALL_OPTION_VALUE) {
             // TODO: fix bug where if the search filtered items list is the
@@ -206,13 +211,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             const isAllFilteredSelected = selectedItems.length === options.length - 1;
 
             // if every option is already selected, clear the selection.
-            // otherwise, select all the options (excluding the first ALL_OTION)
-            const realOptions = options.slice(1);
+            // otherwise, select all the options (excluding the first ALL_OPTION and info options)
+            const realOptions = options.slice(1).filter((option) => !option.infoOption);
             let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
             if (!isAllFilteredSelected && inputValue !== '') {
-              // Select all currently filtered items and deduplicate
-              newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
+              // Select all currently filtered items and deduplicate (excluding info options)
+              const filteredRealOptions = realOptions.filter((option) => !option.infoOption);
+              newSelectedItems = [...new Set([...selectedItems, ...filteredRealOptions])];
             }
 
             if (isAllFilteredSelected && inputValue !== '') {
