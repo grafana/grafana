@@ -1,7 +1,17 @@
 import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
-import { CSSProperties, Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  createRef,
+  CSSProperties,
+  Key,
+  ReactNode,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -327,6 +337,9 @@ export function TableNG(props: TableNGProps) {
         background: undefined,
       };
 
+      // only used when tooltips are enabled for one or more columns.
+      const cellRefsMatrix: Array<Array<React.RefObject<HTMLDivElement>>> = [];
+
       f.forEach((field, i) => {
         const cellOptions = getCellOptions(field);
         const cellType = cellOptions.type;
@@ -426,12 +439,21 @@ export function TableNG(props: TableNGProps) {
             };
           }
 
+          const tooltipFieldName = field.config.custom?.tooltip?.field;
+          let ref: React.RefObject<HTMLDivElement> | undefined;
+          if (tooltipFieldName) {
+            ref = createRef();
+            cellRefsMatrix[rowIdx] = cellRefsMatrix[rowIdx] || [];
+            cellRefsMatrix[rowIdx][i] = ref;
+          }
+
           return (
             <Cell
               key={key}
               {...props}
               className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
               style={style}
+              ref={ref}
             />
           );
         };
@@ -533,6 +555,7 @@ export function TableNG(props: TableNGProps) {
                   getActions={getCellActions}
                   height={height}
                   placement={placement}
+                  popoverRef={cellRefsMatrix[props.row.__index][props.column.idx]}
                   renderer={tooltipFieldRenderer}
                   rowIdx={rowIdx}
                   style={tooltipStyle}
@@ -546,6 +569,7 @@ export function TableNG(props: TableNGProps) {
               );
             }
           }
+
           return content;
         };
 

@@ -1,4 +1,4 @@
-import { CSSProperties, ReactElement, SyntheticEvent, useMemo, useRef, useState } from 'react';
+import { CSSProperties, ReactElement, SyntheticEvent, useMemo, useState } from 'react';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { TableCellTooltipPlacement } from '@grafana/schema';
@@ -20,6 +20,7 @@ export interface Props {
   getActions: (field: Field, rowIdx: number) => ActionModel[];
   height?: number;
   placement?: TableCellTooltipPlacement;
+  popoverRef: React.MutableRefObject<HTMLElement | null>;
   renderer: TableCellRenderer;
   rowIdx: number;
   style?: CSSProperties;
@@ -39,6 +40,7 @@ export function TableCellTooltip({
   getActions,
   height: _height,
   placement,
+  popoverRef,
   renderer,
   rowIdx,
   style,
@@ -47,7 +49,6 @@ export function TableCellTooltip({
   tooltipWrapperClass,
   width = 300,
 }: Props) {
-  const popoverRef = useRef<HTMLDivElement>(null);
   const rawValue = field.values[rowIdx];
   const height = _height ?? TABLE.MAX_CELL_HEIGHT;
 
@@ -71,6 +72,8 @@ export function TableCellTooltip({
       }) satisfies TableCellRendererProps,
     [cellOptions, data, disableSanitizeHtml, field, getActions, height, rawValue, rowIdx, theme, width]
   );
+
+  console.log(popoverRef);
 
   if (rawValue === null || rawValue === undefined) {
     return children;
@@ -131,7 +134,6 @@ export function TableCellTooltip({
             <div
               className={tooltipCaretClassName}
               style={{ backgroundColor: pinned ? theme.colors.info.transparent : undefined }}
-              ref={popoverRef}
               onMouseEnter={showPopper}
               onMouseLeave={hidePopper}
               onClick={pinned ? unpinPopper : pinPopper}
