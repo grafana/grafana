@@ -33,7 +33,6 @@ import {
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
-import { QueryLibraryInteractions } from '../../../extensions/query-library/QueryLibraryAnalyticsEvents';
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
@@ -238,9 +237,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onCancelQueryLibraryEdit = () => {
     const { query } = this.props;
-    // Track the cancel action
-    QueryLibraryInteractions.updateQueryFromExploreCancelled(query.datasource?.type);
-
+    reportInteraction('query_library-update_query_from_explore_cancelled', {
+      datasourceType: query.datasource?.type,
+    });
     this.props.onCancelQueryLibraryEdit?.();
   };
 
