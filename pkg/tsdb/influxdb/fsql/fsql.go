@@ -143,7 +143,7 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 		md.Set("Authorization", fmt.Sprintf("Bearer %s", dsInfo.Token))
 	}
 
-	fsqlClient, err := newFlightSQLClient(u, md, !dsInfo.InsecureGrpc,dsInfo.TLSConfig, dsInfo.ProxyClient)
+	fsqlClient, err := newFlightSQLClient(u, md, !dsInfo.InsecureGrpc, dsInfo.TLSConfig, dsInfo.ProxyClient)
 	if err != nil {
 		return nil, err
 	}
