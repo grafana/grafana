@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -40,7 +40,7 @@ export const ExemplarsPlugin = ({
     });
   }, [config]);
 
-  const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+  const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, rowIndex: number) => {
     const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
     const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 
@@ -55,7 +55,7 @@ export const ExemplarsPlugin = ({
     const yMin = plotInstance.current.scales[yScale].min;
     const yMax = plotInstance.current.scales[yScale].max;
 
-    let y = value.values[dataFrameFieldIndex.fieldIndex];
+    let y = value.values[rowIndex];
     // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
     if (yMin != null && y < yMin) {
       y = yMin;
@@ -66,13 +66,13 @@ export const ExemplarsPlugin = ({
     }
 
     return {
-      x: plotInstance.current.valToPos(time.values[dataFrameFieldIndex.fieldIndex], 'x'),
+      x: plotInstance.current.valToPos(time.values[rowIndex], 'x'),
       y: plotInstance.current.valToPos(y, yScale),
     };
   }, []);
 
   const renderMarker = useCallback(
-    (dataFrame: DataFrame, rowIndex: number): React.ReactNode => {
+    (dataFrame: DataFrame, rowIndex: number): ReactNode => {
       const showMarker = visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, rowIndex) : true;
 
       const markerColor =
