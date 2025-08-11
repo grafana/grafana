@@ -29,7 +29,6 @@ import { AITriageButtonComponent } from '../../../enterprise-components/AI/AIGen
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { createRelativeUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
@@ -39,6 +38,7 @@ import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAler
 import { EventDetails } from './EventDetails';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { useRuleHistoryRecords } from './useRuleHistoryRecords';
+import { parseBackendLabelFilters } from './utils';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 const PAGE_SIZE = 100;
@@ -66,16 +66,7 @@ export const HistoryEventsList = ({
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
-  const labelMatchers = parsePromQLStyleMatcherLooseSafe(valueInLabelFilter.toString());
-
-  // Prepare labels for filtering on the backend side.
-  // Backend supports only exact matchers.
-  const labelFilters: Record<string, string> = {};
-  labelMatchers.forEach((matcher) => {
-    if (!matcher.isRegex && matcher.isEqual) {
-      labelFilters[matcher.name] = matcher.value;
-    }
-  });
+  const labelFilters = parseBackendLabelFilters(valueInLabelFilter.toString());
 
   const {
     data: stateHistory,
@@ -86,7 +77,7 @@ export const HistoryEventsList = ({
     from: from,
     to: to,
     limit: LIMIT_EVENTS,
-    labels: Object.keys(labelFilters).length > 0 ? labelFilters : undefined,
+    labels: labelFilters,
   });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
