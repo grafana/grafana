@@ -80,15 +80,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           category: cellCategory,
           shouldApply: () => true,
         })
-        .addFieldNamePicker({
-          path: 'tooltipByField',
-          name: t('table-new.name-tooltip-by-field', 'Tooltip by field'),
-          description: t(
-            'table-new.description-tooltip-by-field',
-            'Show the value from a sibling field in a tooltip when hovering a cell in this field. Markdown and HTML are supported.'
-          ),
-          category: cellCategory,
-        })
         .addBooleanSwitch({
           path: 'inspect',
           name: t('table-new.name-cell-value-inspect', 'Cell value inspect'),
@@ -124,6 +115,31 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           category,
           defaultValue: undefined,
           hideFromDefaults: true,
+        })
+        .addFieldNamePicker({
+          path: 'tooltip.field',
+          name: t('table-new.name-tooltip-by-field', 'Tooltip by field'),
+          description: t(
+            'table-new.description-tooltip-by-field',
+            'Render the value from a sibling field in a tooltip when hovering a cell in this field.'
+          ),
+          category: cellCategory,
+        })
+        .addSelect({
+          path: 'tooltip.placement',
+          name: t('table-new.name-tooltip-placement', 'Tooltip placement'),
+          category: cellCategory,
+          settings: {
+            options: [
+              { label: t('table-new.tooltip-placement-options.label-auto', 'Auto'), value: 'auto' },
+              { label: t('table-new.tooltip-placement-options.label-top', 'Top'), value: 'top' },
+              { label: t('table-new.tooltip-placement-options.label-right', 'Right'), value: 'right' },
+              { label: t('table-new.tooltip-placement-options.label-bottom', 'Bottom'), value: 'bottom' },
+              { label: t('table-new.tooltip-placement-options.label-left', 'Left'), value: 'left' },
+            ],
+          },
+          defaultValue: 'auto',
+          showIf: (cfg) => cfg.tooltip?.field !== undefined,
         });
     },
   })

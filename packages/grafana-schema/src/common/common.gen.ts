@@ -976,6 +976,14 @@ export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions
     type: TableCellDisplayMode.Geo
   });
 
+export enum TableCellTooltipPlacement {
+  Auto = 'auto',
+  Bottom = 'bottom',
+  Left = 'left',
+  Right = 'right',
+  Top = 'top',
+}
+
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
  * Generally defines alignment, filtering capabilties, display options, etc.
@@ -998,7 +1006,16 @@ export interface TableFieldOptions {
   /**
    * Selecting or hovering this field will show a tooltip containing the content within the target field
    */
-  tooltipByField?: string;
+  tooltip?: {
+    /**
+     * The name of the field to get the tooltip content from
+     */
+    field: string;
+    /**
+     * placement of the tooltip
+     */
+    placement?: TableCellTooltipPlacement;
+  };
   width?: number;
   /**
    * Enables text wrapping for column headers

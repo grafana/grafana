@@ -112,6 +112,25 @@ export const getGridStyles = (
     padding: theme.spacing(0, 1, 0, 2),
   }),
   menuItem: css({ maxWidth: '200px' }),
+  tooltipWrapper: css({
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    overflow: 'hidden',
+    padding: theme.spacing(1),
+  }),
+  tooltipCaret: css({
+    width: 0,
+    height: 0,
+    borderTop: '12px solid transparent',
+    borderBottom: '12px solid transparent',
+    borderRight: `12px solid ${theme.colors.secondary.transparent}`,
+    transform: 'rotate(45deg)',
+    position: 'absolute',
+    top: -8,
+    left: -2,
+  }),
 });
 
 export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
