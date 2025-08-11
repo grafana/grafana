@@ -63,6 +63,7 @@ The interactions mentioned above are reported to Echo service as well as sent to
 const payload = {
   duration: e.duration,
   networkDuration: e.networkDuration,
+  processingTime: e.duration - e.networkDuration,
   startTs: e.startTs,
   endTs: e.endTs,
   totalJSHeapSize: e.totalJSHeapSize,
@@ -108,10 +109,21 @@ interface SceneInteractionProfileEvent {
 For each tracked interaction, the system collects:
 
 - **Dashboard Metadata**: UID, title
-- **Performance Metrics**: Duration, network duration
+- **Performance Metrics**:
+  - `duration`: Total interaction time from start to finish
+  - `networkDuration`: Time spent on network requests (API calls, data fetching)
+  - `processingTime`: Client-side processing time calculated as `duration - networkDuration`
 - **Memory Metrics**: JavaScript heap usage statistics
 - **Timing Information**: Time since boot, profile start and end timestamps
 - **Interaction Context**: Type of user interaction
+
+#### Performance Metric Breakdown
+
+The performance metrics provide detailed insights into where time is spent during dashboard interactions:
+
+- **Total Duration (`duration`)**: Complete time from interaction start to completion
+- **Network Time (`networkDuration`)**: Time spent waiting for server responses (data source queries, API calls)
+- **Processing Time (`processingTime`)**: Time spent on client-side operations (rendering, computations, DOM updates)
 
 ## Debugging and Development
 
@@ -176,6 +188,7 @@ The system reports the following data for each interaction:
   uid: string,                  // Dashboard UID
   duration: number,             // Total duration
   networkDuration: number,      // Network time
+  processingTime: number,       // Client-side processing time (duration - networkDuration)
   startTs: number,              // Profile start timestamp
   endTs: number,                // Profile end timestamp
   totalJSHeapSize: number,      // Memory metrics
@@ -231,3 +244,5 @@ This fallback catches cases where visibility events might be missed and prevents
 - [PR #1199 - SceneRenderProfiler: add start and end timestamps to profile events](https://github.com/grafana/scenes/pull/1199)
 - [PR #1205 - SceneRenderProfiler: Handle tab inactivity](https://github.com/grafana/scenes/pull/1205)
 - [PR #1209 - SceneRenderProfiler: Only capture network requests within measurement window](https://github.com/grafana/scenes/pull/1209)
+- [PR #1211 - SceneRenderProfiler: Improve profiler accuracy by adding cancellation and skipping inactive tabs](https://github.com/grafana/scenes/pull/1211)
+- [PR #1212 - SceneQueryController: Fix profiler query controller registration on scene re-activation](https://github.com/grafana/scenes/pull/1212)
