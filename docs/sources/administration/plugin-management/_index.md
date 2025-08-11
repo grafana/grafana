@@ -152,7 +152,6 @@ Here is an example based on `grafana-lokiexplore-app` plugins.
 #### Install plugins using the Grafana Helm chart
 
 With the Grafana Helm chart, you can install plugins using one of the following methods:
-The following YAML snippets installs v1.9.0 of the Grafana OnCall App plugin and the Redis data source plugin.
 
 ##### Method 1: Using the `plugins` field
 
