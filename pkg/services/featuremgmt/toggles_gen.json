@@ -656,6 +656,20 @@
     },
     {
       "metadata": {
+        "name": "azureResourcePickerUpdates",
+        "resourceVersion": "1754910058337",
+        "creationTimestamp": "2025-08-11T11:00:58Z"
+      },
+      "spec": {
+        "description": "Enables the updated Azure Monitor resource picker",
+        "stage": "preview",
+        "codeowner": "@grafana/partner-datasources",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-10-12T16:56:49Z"

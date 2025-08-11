@@ -1902,6 +1902,14 @@ var (
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "azureResourcePickerUpdates",
+			Description:  "Enables the updated Azure Monitor resource picker",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
 	}
 )
 
