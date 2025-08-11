@@ -9,15 +9,8 @@ export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_in
 export type InheritableKeys = typeof INHERITABLE_KEYS;
 export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
-interface RouteMatchPath {
-  id: string;
-  matchDetails: LabelMatchDetails[];
-  matchPaths: RouteMatchPath[];
-}
-
 export interface RouteMatchResult<T> {
   route: T;
-  routeMatchPath: RouteMatchPath;
   labels: Label[];
   matchDetails: LabelMatchDetails[];
 }
