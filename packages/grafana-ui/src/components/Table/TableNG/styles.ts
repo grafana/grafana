@@ -26,6 +26,8 @@ export const getGridStyles = (
       ? theme.colors.background.primary
       : theme.colors.background.secondary,
 
+    '--rdg-selection-color': theme.colors.info.transparent,
+
     // TODO: magic 32px number is unfortunate. it would be better to have the content
     // flow using flexbox rather than hard-coding this size via a calc
     blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
@@ -112,6 +114,9 @@ export const getGridStyles = (
     padding: theme.spacing(0, 1, 0, 2),
   }),
   menuItem: css({ maxWidth: '200px' }),
+  tooltipContent: css({
+    height: '100%',
+  }),
   tooltipWrapper: css({
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
@@ -125,11 +130,17 @@ export const getGridStyles = (
     height: 0,
     borderTop: '12px solid transparent',
     borderBottom: '12px solid transparent',
-    borderRight: `12px solid ${theme.colors.secondary.transparent}`,
+    borderRight: `12px solid ${theme.colors.secondary.main}`,
     transform: 'rotate(45deg)',
     position: 'absolute',
     top: -8,
     left: -2,
+    ':hover': {
+      borderRightColor: theme.colors.secondary.shade,
+    },
+    '&[aria-pressed=true]': {
+      borderRightColor: theme.colors.border.medium,
+    },
   }),
 });
 

@@ -283,6 +283,14 @@
               {
                 "id": "custom.width",
                 "value": 255
+              },
+              {
+                "id": "custom.tooltip.field",
+                "value": "State"
+              },
+              {
+                "id": "custom.tooltip.placement",
+                "value": "left"
               }
             ]
           },

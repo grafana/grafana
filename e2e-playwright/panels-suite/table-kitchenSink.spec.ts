@@ -353,6 +353,47 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // TODO -- saving for another day.
   });
 
+  test('tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    const firstCaret = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Caret)
+      .first();
+
+    // test hovering over and blurring the caret, and whether the tooltip appears and disappears as expected.
+    await firstCaret.hover();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).hover();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // test clicking the caret to show and hide the tooltip.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+  });
+
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,

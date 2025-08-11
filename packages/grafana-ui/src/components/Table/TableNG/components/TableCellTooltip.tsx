@@ -1,6 +1,7 @@
 import { CSSProperties, ReactElement, SyntheticEvent, useMemo, useState } from 'react';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellTooltipPlacement } from '@grafana/schema';
 
 import { getPortalContainer } from '../../../Portal/Portal';
@@ -22,6 +23,7 @@ export interface Props {
   placement?: TableCellTooltipPlacement;
   popoverRef: React.MutableRefObject<HTMLElement | null>;
   renderer: TableCellRenderer;
+  root?: HTMLElement;
   rowIdx: number;
   style?: CSSProperties;
   theme: GrafanaTheme2;
@@ -42,6 +44,7 @@ export function TableCellTooltip({
   placement,
   popoverRef,
   renderer,
+  root,
   rowIdx,
   style,
   theme,
@@ -77,8 +80,12 @@ export function TableCellTooltip({
     return children;
   }
 
+  const body = (
+    <div data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper}>{renderer(rendererProps)}</div>
+  );
+
   return (
-    <PopoverController content={<>{renderer(rendererProps)}</>} placement={placement}>
+    <PopoverController content={body} placement={placement}>
       {(_showPopper, _hidePopper, popperProps) => {
         const showPopper = () => {
           _showPopper();
@@ -91,6 +98,7 @@ export function TableCellTooltip({
         };
 
         const unpinPopper = () => {
+          console.log('unpin');
           setPinned(false);
           _hidePopper();
         };
@@ -103,7 +111,7 @@ export function TableCellTooltip({
 
           const listener = (event: MouseEvent) => {
             const clickTarget = event.target as Node;
-            if (!origTarget.contains(clickTarget) && !getPortalContainer().contains(clickTarget)) {
+            if (!origTarget.contains(clickTarget) && !(root ?? getPortalContainer()).contains(clickTarget)) {
               unpinPopper();
               window.removeEventListener('click', listener);
             }
@@ -119,6 +127,7 @@ export function TableCellTooltip({
                 {...popperProps}
                 wrapperClassName={tooltipWrapperClass}
                 className={className}
+                root={root}
                 style={{ ...style, width, height }}
                 referenceElement={popoverRef.current}
                 onMouseLeave={hidePopper}
@@ -130,7 +139,8 @@ export function TableCellTooltip({
             {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
             <div
               className={tooltipCaretClassName}
-              style={{ backgroundColor: pinned ? theme.colors.info.transparent : undefined }}
+              data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Caret}
+              aria-pressed={pinned}
               onMouseEnter={showPopper}
               onMouseLeave={hidePopper}
               onClick={pinned ? unpinPopper : pinPopper}

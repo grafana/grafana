@@ -548,7 +548,12 @@ export function TableNG(props: TableNGProps) {
               content = (
                 <TableCellTooltip
                   cellOptions={tooltipCellOptions}
-                  className={clsx(defaultTooltipStyles, tooltipSpecificStyles, tooltipLinkStyles)}
+                  className={clsx(
+                    styles.tooltipContent,
+                    defaultTooltipStyles,
+                    tooltipSpecificStyles,
+                    tooltipLinkStyles
+                  )}
                   data={data}
                   disableSanitizeHtml={disableSanitizeHtml}
                   field={tooltipField}
@@ -557,6 +562,7 @@ export function TableNG(props: TableNGProps) {
                   placement={placement}
                   popoverRef={cellRefsMatrix[props.row.__index][props.column.idx]}
                   renderer={tooltipFieldRenderer}
+                  root={gridRef.current?.element ?? undefined}
                   rowIdx={rowIdx}
                   style={tooltipStyle}
                   theme={theme}

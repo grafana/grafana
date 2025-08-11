@@ -25,6 +25,7 @@ interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   wrapperClassName?: string;
   renderArrow?: boolean;
   hidePopper?: () => void;
+  root?: HTMLElement;
   style?: React.CSSProperties;
 }
 
@@ -36,6 +37,7 @@ export function Popover({
   wrapperClassName,
   referenceElement,
   renderArrow,
+  root,
   hidePopper,
   style: styleOverrides,
   ...rest
@@ -85,7 +87,7 @@ export function Popover({
   });
 
   return show ? (
-    <Portal>
+    <Portal root={root}>
       <div
         ref={refs.setFloating}
         style={{
