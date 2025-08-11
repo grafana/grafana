@@ -1,9 +1,9 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import * as React from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 
-import { DataFrame, DataFrameFieldIndex } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -14,11 +14,8 @@ interface EventsCanvasProps {
   id: string;
   config: UPlotConfigBuilder;
   events: DataFrame[];
-  renderEventMarker: (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => React.ReactNode;
-  mapEventToXYCoords: (
-    dataFrame: DataFrame,
-    dataFrameFieldIndex: DataFrameFieldIndex
-  ) => { x: number; y: number } | undefined;
+  renderEventMarker: (dataFrame: DataFrame, rowIndex: number) => ReactNode;
+  mapEventToXYCoords: (dataFrame: DataFrame, rowIndex: number) => { x: number; y: number } | undefined;
 }
 
 export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords, config }: EventsCanvasProps) {
@@ -50,14 +47,15 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
 
     for (let i = 0; i < events.length; i++) {
       const frame = events[i];
+
       for (let j = 0; j < frame.length; j++) {
-        const coords = mapEventToXYCoords(frame, { fieldIndex: j, frameIndex: i });
+        const coords = mapEventToXYCoords(frame, j);
         if (!coords) {
           continue;
         }
         markers.push(
           <Marker {...coords} key={`${id}-marker-${i}-${j}`}>
-            {renderEventMarker(frame, { fieldIndex: j, frameIndex: i })}
+            {renderEventMarker(frame, j)}
           </Marker>
         );
       }

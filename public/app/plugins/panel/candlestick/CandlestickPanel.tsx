@@ -324,7 +324,13 @@ export const CandlestickPanel = ({
             />
             <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
             {data.annotations && (
-              <ExemplarsPlugin config={uplotConfig} exemplars={data.annotations} timeZone={timeZone} />
+              <ExemplarsPlugin
+                config={uplotConfig}
+                exemplars={data.annotations}
+                timeZone={timeZone}
+                maxHeight={options.tooltip.maxHeight}
+                maxWidth={options.tooltip.maxWidth}
+              />
             )}
             {((canEditThresholds && onThresholdsChange) || showThresholds) && (
               <ThresholdControlsPlugin

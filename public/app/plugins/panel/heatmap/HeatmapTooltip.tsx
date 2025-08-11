@@ -27,7 +27,8 @@ import {
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
+import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
+import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
 import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
@@ -54,13 +55,23 @@ interface HeatmapTooltipProps {
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   if (props.seriesIdx === 2) {
+    const dispValuesAndLinks = getDisplayValuesAndLinks(props.dataRef.current!.exemplars!, props.dataIdxs[2]!);
+
+    if (dispValuesAndLinks == null) {
+      return null;
+    }
+
+    const { displayValues, links } = dispValuesAndLinks;
+
     return (
-      <DataHoverView
-        data={props.dataRef.current!.exemplars}
-        rowIndex={props.dataIdxs[2]}
-        header={'Exemplar'}
-        padding={8}
+      <ExemplarTooltip
+        items={displayValues.map((dispVal) => ({
+          label: dispVal.name,
+          value: dispVal.valueString,
+        }))}
+        links={links}
         maxHeight={props.maxHeight}
+        isPinned={props.isPinned}
       />
     );
   }

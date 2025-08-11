@@ -6806,6 +6806,7 @@
       }
     }
   },
+  "exemplar-tooltip-header": "Exemplar",
   "explore": {
     "accordian-logs": {
       "events": "Events",
