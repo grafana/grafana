@@ -45,7 +45,7 @@
             "group": "prometheus",
             "version": "v0",
             "datasource": {
-              "name": "prometheus-uid"
+              "name": "existing-ref-uid"
             },
             "spec": {
               "expr": "ALERTS{alertstate=\"firing\"}",
@@ -69,10 +69,10 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "grafana-testdata-datasource",
+            "group": "prometheus",
             "version": "v0",
             "datasource": {
-              "name": "testdata-uid"
+              "name": "default-ds-uid"
             },
             "spec": {
               "lines": 10,
@@ -98,7 +98,7 @@
             "group": "elasticsearch",
             "version": "v0",
             "datasource": {
-              "name": "elastic-uid"
+              "name": "existing-target-uid"
             },
             "spec": {
               "query": "tags:deployment",
@@ -125,10 +125,10 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "grafana-postgresql-datasource",
+            "group": "loki",
             "version": "v0",
             "datasource": {
-              "name": "postgres-uid"
+              "name": "non-default-test-ds-uid"
             },
             "spec": {
               "format": "table",
@@ -180,7 +180,7 @@
             "group": "prometheus",
             "version": "v0",
             "datasource": {
-              "name": "prometheus-uid"
+              "name": "existing-ref-uid"
             },
             "spec": {
               "expr": "disabled_query",

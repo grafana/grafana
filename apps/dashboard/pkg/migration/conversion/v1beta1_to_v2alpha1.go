@@ -989,12 +989,6 @@ func buildVariableCurrent(current interface{}) dashv2alpha1.DashboardVariableOpt
 	}
 }
 
-// Helper function to get default datasource type
-func getDefaultDatasourceType() string {
-	// Simplified - in reality this should check configuration
-	return "grafana"
-}
-
 // Helper function to build DataQuery kind
 func buildDataQueryKind(query interface{}, datasourceType, datasourceUID string) dashv2alpha1.DashboardDataQueryKind {
 	var querySpec map[string]interface{}
@@ -1023,8 +1017,16 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceType = getStringField(ds, "type", getDefaultDatasourceType())
 		datasourceUID = getStringField(ds, "uid", "")
+		datasourceType = getStringField(ds, "type", "")
+
+		// If we have a UID, use it to get the correct type from the datasource service
+		if datasourceUID != "" {
+			datasourceType = getDatasourceTypeByUID(datasourceUID)
+		} else if datasourceType == "" {
+			// If no UID and no type, use default
+			datasourceType = getDefaultDatasourceType()
+		}
 	} else {
 		datasourceType = getDefaultDatasourceType()
 	}
@@ -1048,7 +1050,7 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		},
 	}
 
-	// Only include datasource if datasourceUID exists
+	// Only include datasource if datasourceUID exists (matching frontend behavior)
 	if datasourceUID != "" {
 		dsRef := &dashv2alpha1.DashboardDataSourceRef{
 			Type: &datasourceType,
@@ -1057,10 +1059,8 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		queryVar.Spec.Datasource = dsRef
 	}
 
-	// Only set options if they are defined in the input
-	if options, exists := varMap["options"]; exists {
-		queryVar.Spec.Options = buildVariableOptions(options)
-	}
+	// Always set options (matching frontend behavior)
+	queryVar.Spec.Options = buildVariableOptions(varMap["options"])
 
 	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
 		queryVar.Spec.AllValue = &allValue
@@ -1098,10 +1098,8 @@ func buildDatasourceVariable(varMap map[string]interface{}, commonProps CommonVa
 		},
 	}
 
-	// Only set options if they are defined in the input
-	if options, exists := varMap["options"]; exists {
-		dsVar.Spec.Options = buildVariableOptions(options)
-	}
+	// Always set options (matching frontend behavior)
+	dsVar.Spec.Options = buildVariableOptions(varMap["options"])
 
 	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
 		dsVar.Spec.AllValue = &allValue
@@ -1130,10 +1128,8 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 		},
 	}
 
-	// Only set options if they are defined in the input
-	if options, exists := varMap["options"]; exists {
-		customVar.Spec.Options = buildVariableOptions(options)
-	}
+	// Always set options (matching frontend behavior)
+	customVar.Spec.Options = buildVariableOptions(varMap["options"])
 
 	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
 		customVar.Spec.AllValue = &allValue
@@ -1183,10 +1179,8 @@ func buildIntervalVariable(varMap map[string]interface{}, commonProps CommonVari
 		},
 	}
 
-	// Only set options if they are defined in the input
-	if options, exists := varMap["options"]; exists {
-		intervalVar.Spec.Options = buildVariableOptions(options)
-	}
+	// Always set options (matching frontend behavior)
+	intervalVar.Spec.Options = buildVariableOptions(varMap["options"])
 
 	return dashv2alpha1.DashboardVariableKind{
 		IntervalVariableKind: intervalVar,
@@ -1219,8 +1213,16 @@ func buildAdhocVariable(varMap map[string]interface{}, commonProps CommonVariabl
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceType = getStringField(ds, "type", getDefaultDatasourceType())
 		datasourceUID = getStringField(ds, "uid", "")
+		datasourceType = getStringField(ds, "type", "")
+
+		// If we have a UID, use it to get the correct type from the datasource service
+		if datasourceUID != "" {
+			datasourceType = getDatasourceTypeByUID(datasourceUID)
+		} else if datasourceType == "" {
+			// If no UID and no type, use default
+			datasourceType = getDefaultDatasourceType()
+		}
 	} else {
 		datasourceType = getDefaultDatasourceType()
 	}
@@ -1258,7 +1260,7 @@ func buildAdhocVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		}
 	}
 
-	// Only include datasource if datasourceUID exists
+	// Only include datasource if datasourceUID exists (matching frontend behavior)
 	if datasourceUID != "" {
 		dsRef := &dashv2alpha1.DashboardDataSourceRef{
 			Type: &datasourceType,
@@ -1373,8 +1375,16 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceType = getStringField(ds, "type", getDefaultDatasourceType())
 		datasourceUID = getStringField(ds, "uid", "")
+		datasourceType = getStringField(ds, "type", "")
+
+		// If we have a UID, use it to get the correct type from the datasource service
+		if datasourceUID != "" {
+			datasourceType = getDatasourceTypeByUID(datasourceUID)
+		} else if datasourceType == "" {
+			// If no UID and no type, use default
+			datasourceType = getDefaultDatasourceType()
+		}
 	} else {
 		datasourceType = getDefaultDatasourceType()
 	}
@@ -1401,10 +1411,8 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 		groupByVar.Spec.Datasource = dsRef
 	}
 
-	// Only set options if they are defined in the input
-	if options, exists := varMap["options"]; exists {
-		groupByVar.Spec.Options = buildVariableOptions(options)
-	}
+	// Always set options (matching frontend behavior)
+	groupByVar.Spec.Options = buildVariableOptions(varMap["options"])
 
 	return dashv2alpha1.DashboardVariableKind{
 		GroupByVariableKind: groupByVar,
@@ -1444,8 +1452,16 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	var datasourceType, datasourceUID string
 
 	if datasource, ok := annotationMap["datasource"].(map[string]interface{}); ok {
-		datasourceType = getStringField(datasource, "type", getDefaultDatasourceType())
 		datasourceUID = getStringField(datasource, "uid", "")
+		datasourceType = getStringField(datasource, "type", "")
+
+		// If we have a UID, use it to get the correct type from the datasource service
+		if datasourceUID != "" {
+			datasourceType = getDatasourceTypeByUID(datasourceUID)
+		} else if datasourceType == "" {
+			// If no UID and no type, use default
+			datasourceType = getDefaultDatasourceType()
+		}
 
 		if datasourceUID != "" {
 			datasourceRef = &dashv2alpha1.DashboardDataSourceRef{
@@ -1565,8 +1581,17 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 	// Get panel datasource
 	var panelDatasource *dashv2alpha1.DashboardDataSourceRef
 	if ds, ok := panelMap["datasource"].(map[string]interface{}); ok {
-		dsType := getStringField(ds, "type", getDefaultDatasourceType())
 		dsUID := getStringField(ds, "uid", "")
+		dsType := getStringField(ds, "type", "")
+
+		// If we have a UID, use it to get the correct type from the datasource service
+		if dsUID != "" {
+			dsType = getDatasourceTypeByUID(dsUID)
+		} else if dsType == "" {
+			// If no UID and no type, use default
+			dsType = getDefaultDatasourceType()
+		}
+
 		panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
 			Type: &dsType,
 			Uid:  &dsUID,
@@ -1592,8 +1617,16 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 	var queryDatasourceType string
 	var queryDatasourceUID string
 	if ds, ok := targetMap["datasource"].(map[string]interface{}); ok {
-		queryDatasourceType = getStringField(ds, "type", getDefaultDatasourceType())
 		queryDatasourceUID = getStringField(ds, "uid", "")
+		queryDatasourceType = getStringField(ds, "type", "")
+
+		// If we have a UID, use it to get the correct type from the datasource service
+		if queryDatasourceUID != "" {
+			queryDatasourceType = getDatasourceTypeByUID(queryDatasourceUID)
+		} else if queryDatasourceType == "" {
+			// If no UID and no type, use default
+			queryDatasourceType = getDefaultDatasourceType()
+		}
 	} else if panelDatasource != nil {
 		if panelDatasource.Type != nil {
 			queryDatasourceType = *panelDatasource.Type

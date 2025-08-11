@@ -43,7 +43,7 @@
                     },
                     "datasource": {
                       "type": "prometheus",
-                      "uid": "prometheus-uid"
+                      "uid": "existing-ref-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -61,7 +61,7 @@
                     },
                     "datasource": {
                       "type": "prometheus",
-                      "uid": "prometheus-uid"
+                      "uid": "existing-ref-uid"
                     },
                     "refId": "B",
                     "hidden": true
@@ -165,14 +165,14 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "prometheus",
                       "spec": {
                         "scenarioId": "random_walk"
                       }
                     },
                     "datasource": {
-                      "type": "grafana-testdata-datasource",
-                      "uid": "testdata"
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -217,15 +217,15 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "postgres",
+                      "kind": "loki",
                       "spec": {
                         "format": "table",
                         "rawSql": "SELECT * FROM metrics"
                       }
                     },
                     "datasource": {
-                      "type": "postgres",
-                      "uid": "postgres-uid"
+                      "type": "loki",
+                      "uid": "non-default-test-ds-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -290,7 +290,7 @@
                     },
                     "datasource": {
                       "type": "elasticsearch",
-                      "uid": "elastic-uid"
+                      "uid": "existing-target-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -333,7 +333,6 @@
                 "timeFrom": "1h",
                 "maxDataPoints": 1000,
                 "timeShift": "1h",
-                "queryCachingTTL": 300,
                 "hideTimeOverride": true
               }
             }

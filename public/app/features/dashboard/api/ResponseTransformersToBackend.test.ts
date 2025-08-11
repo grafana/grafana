@@ -45,6 +45,18 @@ jest.mock('@grafana/runtime', () => ({
             meta: { id: 'mixed' },
             name: '-- Mixed --',
           },
+          'influx-uid': {
+            meta: { id: 'influxdb' },
+            name: 'influx-uid',
+          },
+          'cloudwatch-uid': {
+            meta: { id: 'cloudwatch' },
+            name: 'cloudwatch-uid',
+          },
+          '-- Grafana --': {
+            meta: { id: 'grafana' },
+            name: '-- Grafana --',
+          },
         },
       },
     },
@@ -104,6 +116,24 @@ const dataSources = {
     name: MIXED_DATASOURCE_NAME,
     type: 'mixed',
     uid: MIXED_DATASOURCE_NAME,
+    isDefault: false,
+  }),
+  influx: mockDataSource({
+    name: 'InfluxDB Test Datasource',
+    uid: 'influx-uid',
+    type: 'influxdb',
+    isDefault: false,
+  }),
+  cloudwatch: mockDataSource({
+    name: 'CloudWatch Test Datasource',
+    uid: 'cloudwatch-uid',
+    type: 'cloudwatch',
+    isDefault: false,
+  }),
+  grafana: mockDataSource({
+    name: '-- Grafana --',
+    uid: '-- Grafana --',
+    type: 'grafana',
     isDefault: false,
   }),
 };

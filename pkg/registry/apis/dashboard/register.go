@@ -150,9 +150,15 @@ func RegisterAPIService(
 		},
 		reg: reg,
 	}
-	migration.Initialize(&datasourceInfoProvider{
+	// Create the datasource info provider
+	dsInfoProvider := &datasourceInfoProvider{
 		datasourceService: datasourceService,
-	}, &PluginStorePanelProvider{
+	}
+
+	// Initialize the converter with the datasource provider
+	conversion.Initialize(dsInfoProvider)
+
+	migration.Initialize(dsInfoProvider, &PluginStorePanelProvider{
 		pluginStore:  pluginStore,
 		buildVersion: cfg.BuildVersion,
 	})

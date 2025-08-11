@@ -105,7 +105,7 @@
           "description": "Available instances",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "query": {
             "kind": "prometheus",
@@ -179,7 +179,7 @@
           "name": "adhoc_var",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "baseFilters": [
             {
@@ -269,7 +269,7 @@
           "name": "groupby_var",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "current": {
             "text": [
@@ -320,7 +320,7 @@
           "description": "Variable with legacy string value",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "query": {
             "kind": "prometheus",
@@ -330,7 +330,7 @@
           },
           "regex": "",
           "sort": "disabled",
-          "options": null,
+          "options": [],
           "multi": false,
           "includeAll": false,
           "allowCustomValue": true
@@ -359,7 +359,7 @@
           "description": "Variable with complex query and all features",
           "datasource": {
             "type": "elasticsearch",
-            "uid": "elastic-uid"
+            "uid": "existing-target-uid"
           },
           "query": {
             "kind": "elasticsearch",

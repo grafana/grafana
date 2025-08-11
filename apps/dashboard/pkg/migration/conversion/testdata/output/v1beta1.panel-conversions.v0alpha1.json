@@ -18,7 +18,7 @@
         "cacheTimeout": "60s",
         "datasource": {
           "type": "prometheus",
-          "uid": "prometheus-uid"
+          "uid": "existing-ref-uid"
         },
         "fieldConfig": {
           "defaults": {
@@ -134,7 +134,7 @@
       {
         "datasource": {
           "type": "grafana-testdata-datasource",
-          "uid": "testdata"
+          "uid": "default-ds-uid"
         },
         "fieldConfig": {
           "defaults": {
@@ -174,7 +174,7 @@
           {
             "datasource": {
               "type": "postgres",
-              "uid": "postgres-uid"
+              "uid": "non-default-test-ds-uid"
             },
             "fieldConfig": {
               "defaults": {},
@@ -207,7 +207,7 @@
       {
         "datasource": {
           "type": "elasticsearch",
-          "uid": "elastic-uid"
+          "uid": "existing-target-uid"
         },
         "fieldConfig": {
           "defaults": {
@@ -241,7 +241,7 @@
           "orientation": "horizontal"
         },
         "pluginVersion": "9.5.0",
-        "queryCachingTTL": "300",
+        "queryCachingTTL": 300,
         "targets": [
           {
             "bucketAggs": [

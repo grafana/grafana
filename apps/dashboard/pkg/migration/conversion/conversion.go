@@ -1,6 +1,8 @@
 package conversion
 
 import (
+	"sync"
+
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -8,7 +10,35 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
+
+var (
+	converterInstance = &converter{
+		dsProvider: nil,
+		ready:      make(chan struct{}),
+	}
+	converterOnce sync.Once
+)
+
+type converter struct {
+	dsProvider schemaversion.DataSourceInfoProvider
+	ready      chan struct{}
+}
+
+// Initialize provides the converter singleton with required dependencies
+func Initialize(dsProvider schemaversion.DataSourceInfoProvider) {
+	converterOnce.Do(func() {
+		converterInstance.dsProvider = dsProvider
+		close(converterInstance.ready)
+	})
+}
+
+// GetDataSourceProvider returns the datasource provider from the converter instance
+func GetDataSourceProvider() schemaversion.DataSourceInfoProvider {
+	<-converterInstance.ready
+	return converterInstance.dsProvider
+}
 
 func RegisterConversions(s *runtime.Scheme) error {
 	// v0 conversions

@@ -26,7 +26,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "prometheus-uid"
+          "uid": "existing-ref-uid"
         },
         "targets": [
           {
@@ -140,8 +140,8 @@
           "h": 6
         },
         "datasource": {
-          "type": "grafana-testdata-datasource",
-          "uid": "testdata"
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "targets": [
           {
@@ -182,8 +182,8 @@
               "h": 8
             },
             "datasource": {
-              "type": "postgres",
-              "uid": "postgres-uid"
+              "type": "loki",
+              "uid": "non-default-test-ds-uid"
             },
             "targets": [
               {
@@ -214,7 +214,7 @@
         },
         "datasource": {
           "type": "elasticsearch",
-          "uid": "elastic-uid"
+          "uid": "existing-target-uid"
         },
         "targets": [
           {
@@ -280,7 +280,7 @@
         "timeFrom": "1h",
         "timeShift": "1h",
         "hideTimeOverride": true,
-        "queryCachingTTL": "300"
+        "queryCachingTTL": 300
       }
     ],
     "time": {

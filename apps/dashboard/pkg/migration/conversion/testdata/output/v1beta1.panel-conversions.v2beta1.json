@@ -39,7 +39,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "prometheus-uid"
+                        "name": "existing-ref-uid"
                       },
                       "spec": {
                         "expr": "up",
@@ -58,7 +58,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "prometheus-uid"
+                        "name": "existing-ref-uid"
                       },
                       "spec": {
                         "expr": "cpu_usage",
@@ -169,10 +169,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "testdata"
+                        "name": "default-ds-uid"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -223,10 +223,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "postgres",
+                      "group": "loki",
                       "version": "v0",
                       "datasource": {
-                        "name": "postgres-uid"
+                        "name": "non-default-test-ds-uid"
                       },
                       "spec": {
                         "format": "table",
@@ -287,7 +287,7 @@
                       "group": "elasticsearch",
                       "version": "v0",
                       "datasource": {
-                        "name": "elastic-uid"
+                        "name": "existing-target-uid"
                       },
                       "spec": {
                         "bucketAggs": [
@@ -341,7 +341,6 @@
                 "timeFrom": "1h",
                 "maxDataPoints": 1000,
                 "timeShift": "1h",
-                "queryCachingTTL": 300,
                 "hideTimeOverride": true
               }
             }

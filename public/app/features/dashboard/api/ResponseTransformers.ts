@@ -42,6 +42,8 @@ import {
   defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
+  defaultDashboardLinkType,
+  defaultDashboardLink,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
@@ -179,16 +181,16 @@ export function ensureV2Response(
       ...(dashboard.timepicker?.nowDelay !== undefined && { nowDelay: dashboard.timepicker.nowDelay }),
     },
     links: (dashboard.links || []).map((link) => ({
-      title: link.title || '',
-      url: link.url || '',
-      ...(link.targetBlank && { targetBlank: link.targetBlank }),
-      ...(link.icon !== undefined && { icon: link.icon }),
-      ...(link.includeVars !== undefined && { includeVars: link.includeVars }),
-      ...(link.keepTime !== undefined && { keepTime: link.keepTime }),
-      ...(link.tags !== undefined && { tags: link.tags }),
-      ...(link.tooltip !== undefined && { tooltip: link.tooltip }),
-      ...(link.type !== undefined && { type: link.type }),
-      ...(link.asDropdown !== undefined && { asDropdown: link.asDropdown }),
+      title: link.title ?? defaultDashboardLink().title,
+      url: link.url ?? defaultDashboardLink().url,
+      type: link.type ?? defaultDashboardLinkType(),
+      icon: link.icon ?? defaultDashboardLink().icon,
+      tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
+      tags: link.tags ?? defaultDashboardLink().tags,
+      asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
+      keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
+      includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
+      targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
     })),
     annotations,
     variables,
@@ -475,6 +477,7 @@ export function getDefaultDatasource(): DataSourceRef {
 export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
+    const ds = t.datasource || panelDatasource;
     const q: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -483,10 +486,10 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: t.datasource?.type || panelDatasource.type!,
-          ...((t.datasource?.uid || panelDatasource.uid) && {
+          group: ds.type!,
+          ...(ds.uid && {
             datasource: {
-              name: t.datasource?.uid || panelDatasource.uid,
+              name: ds.uid,
             },
           }),
           spec: {
@@ -594,14 +597,14 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           kind: 'QueryVariable',
           spec: {
             ...commonProperties,
-            ...(v.multi !== undefined && { multi: Boolean(v.multi) }),
-            ...(v.includeAll !== undefined && { includeAll: Boolean(v.includeAll) }),
+            multi: v.multi ?? false,
+            includeAll: v.includeAll ?? false,
             ...(v.allValue && { allValue: v.allValue }),
             current: {
               value: v.current?.value,
               text: v.current?.text,
             },
-            ...(v.options !== undefined && { options: v.options }),
+            options: v.options ?? [],
             refresh: transformVariableRefreshToEnum(v.refresh),
             ...(v.datasource?.uid && {
               datasource: {
@@ -613,7 +616,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             query: {
               kind: 'DataQuery',
               version: defaultDataQueryKind().version,
-              group: v.datasource?.type ?? getDefaultDatasourceType(),
+              group: v.datasource?.type ?? getDefaultDatasource().type!,
               ...(v.datasource?.uid && {
                 datasource: {
                   name: v.datasource.uid,
@@ -621,7 +624,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               }),
               spec: query,
             },
-            ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(qv);
@@ -637,18 +640,18 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           kind: 'DatasourceVariable',
           spec: {
             ...commonProperties,
-            ...(v.multi !== undefined && { multi: Boolean(v.multi) }),
-            ...(v.includeAll !== undefined && { includeAll: Boolean(v.includeAll) }),
+            multi: v.multi ?? false,
+            includeAll: v.includeAll ?? false,
             ...(v.allValue && { allValue: v.allValue }),
             current: {
               value: v.current.value,
               text: v.current.text,
             },
-            ...(v.options !== undefined && { options: v.options }),
+            options: v.options ?? [],
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
             regex: v.regex ?? '',
-            ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(dv);
@@ -664,10 +667,10 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               text: v.current.text,
             },
             options: v.options ?? [],
-            ...(v.multi !== undefined && { multi: v.multi }),
-            ...(v.includeAll !== undefined && { includeAll: v.includeAll }),
+            multi: v.multi ?? false,
+            includeAll: v.includeAll ?? false,
             ...(v.allValue && { allValue: v.allValue }),
-            ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(cv);
@@ -686,14 +689,13 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           }),
           spec: {
             ...commonProperties,
-            ...(v.baseFilters !== undefined && { baseFilters: validateFiltersOrigin(v.baseFilters) }),
-            ...(v.filters !== undefined && { filters: validateFiltersOrigin(v.filters) }),
-            ...(v.defaultKeys !== undefined && {
-              defaultKeys: v.defaultKeys.map((key: string | MetricFindValue) =>
+            baseFilters: validateFiltersOrigin(v.baseFilters ?? []),
+            filters: validateFiltersOrigin(v.filters ?? []),
+            defaultKeys:
+              v.defaultKeys?.map((key: string | MetricFindValue) =>
                 typeof key === 'string' ? { text: key, value: key } : key
-              ),
-            }),
-            ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
+              ) ?? [],
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
 

@@ -108,7 +108,7 @@
             "group": "prometheus",
             "version": "v0",
             "datasource": {
-              "name": "prometheus-uid"
+              "name": "existing-ref-uid"
             },
             "spec": {
               "__legacyStringValue": "label_values(up, instance)"
@@ -178,7 +178,7 @@
         "kind": "AdhocVariable",
         "group": "prometheus",
         "datasource": {
-          "name": "prometheus-uid"
+          "name": "existing-ref-uid"
         },
         "spec": {
           "name": "adhoc_var",
@@ -268,7 +268,7 @@
         "kind": "GroupByVariable",
         "group": "prometheus",
         "datasource": {
-          "name": "prometheus-uid"
+          "name": "existing-ref-uid"
         },
         "spec": {
           "name": "groupby_var",
@@ -324,7 +324,7 @@
             "group": "prometheus",
             "version": "v0",
             "datasource": {
-              "name": "prometheus-uid"
+              "name": "existing-ref-uid"
             },
             "spec": {
               "__legacyStringValue": "up"
@@ -332,7 +332,7 @@
           },
           "regex": "",
           "sort": "disabled",
-          "options": null,
+          "options": [],
           "multi": false,
           "includeAll": false,
           "allowCustomValue": true
@@ -364,7 +364,7 @@
             "group": "elasticsearch",
             "version": "v0",
             "datasource": {
-              "name": "elastic-uid"
+              "name": "existing-target-uid"
             },
             "spec": {
               "bucketAggs": [

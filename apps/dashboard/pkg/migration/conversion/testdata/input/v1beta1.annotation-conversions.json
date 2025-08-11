@@ -35,7 +35,7 @@
           "name": "Prometheus Annotations",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "enable": true,
           "hide": false,
@@ -52,8 +52,8 @@
         {
           "name": "TestData Annotations",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-uid"
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "enable": true,
           "hide": false,
@@ -70,7 +70,7 @@
           "name": "Elasticsearch Annotations",
           "datasource": {
             "type": "elasticsearch",
-            "uid": "elastic-uid"
+            "uid": "existing-target-uid"
           },
           "enable": true,
           "hide": false,
@@ -90,8 +90,8 @@
         {
           "name": "SQL Annotations",
           "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres-uid"
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           },
           "enable": true,
           "hide": false,
@@ -124,7 +124,7 @@
           "name": "Hidden Annotation",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "enable": false,
           "hide": true,

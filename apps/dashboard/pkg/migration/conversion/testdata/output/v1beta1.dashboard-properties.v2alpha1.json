@@ -196,7 +196,7 @@
             "text": "value1",
             "value": "value1"
           },
-          "options": null,
+          "options": [],
           "multi": false,
           "includeAll": false,
           "hide": "dontHide",

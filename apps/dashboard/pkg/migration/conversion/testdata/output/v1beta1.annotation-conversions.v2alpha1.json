@@ -41,7 +41,7 @@
         "spec": {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "query": {
             "kind": "prometheus",
@@ -66,11 +66,11 @@
         "kind": "AnnotationQuery",
         "spec": {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-uid"
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "query": {
-            "kind": "grafana-testdata-datasource",
+            "kind": "prometheus",
             "spec": {
               "lines": 10,
               "refId": "Anno",
@@ -92,7 +92,7 @@
         "spec": {
           "datasource": {
             "type": "elasticsearch",
-            "uid": "elastic-uid"
+            "uid": "existing-target-uid"
           },
           "query": {
             "kind": "elasticsearch",
@@ -120,11 +120,11 @@
         "kind": "AnnotationQuery",
         "spec": {
           "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres-uid"
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           },
           "query": {
-            "kind": "grafana-postgresql-datasource",
+            "kind": "loki",
             "spec": {
               "format": "table",
               "rawSql": "SELECT time, title, text, tags FROM annotations WHERE $__timeFilter(time)",
@@ -170,7 +170,7 @@
         "spec": {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "query": {
             "kind": "prometheus",

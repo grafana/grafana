@@ -50,7 +50,7 @@
           "description": "Available instances",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "definition": "label_values(up, instance)",
           "query": "label_values(up, instance)",
@@ -129,7 +129,7 @@
           "description": "Add filters",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "filters": [
             {
@@ -220,7 +220,7 @@
           "description": "Group results by field",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "query": "",
           "current": {
@@ -256,7 +256,7 @@
           "description": "Variable with legacy string value",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "query": "up",
           "current": {
@@ -276,7 +276,7 @@
           "description": "Variable with complex query and all features",
           "datasource": {
             "type": "elasticsearch",
-            "uid": "elastic-uid"
+            "uid": "existing-target-uid"
           },
           "definition": "terms field:@host size:100",
           "query": {

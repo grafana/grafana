@@ -64,7 +64,7 @@
           },
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "definition": "label_values(up, instance)",
           "description": "Available instances",
@@ -145,7 +145,7 @@
           ],
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "defaultKeys": [
             "job",
@@ -242,7 +242,7 @@
           },
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "description": "Group results by field",
           "hide": 0,
@@ -280,7 +280,7 @@
           },
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "description": "Variable with legacy string value",
           "hide": 0,
@@ -307,7 +307,7 @@
           },
           "datasource": {
             "type": "elasticsearch",
-            "uid": "elastic-uid"
+            "uid": "existing-target-uid"
           },
           "definition": "terms field:@host size:100",
           "description": "Variable with complex query and all features",

@@ -24,6 +24,9 @@ import (
 )
 
 func TestConversionMatrixExist(t *testing.T) {
+	// Initialize the converter with a test data source provider
+	Initialize(testutil.GetTestDataSourceProvider())
+
 	// Initialize the migrator with a test data source provider
 	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
@@ -75,6 +78,9 @@ func TestDeepCopyValid(t *testing.T) {
 }
 
 func TestDashboardConversionToAllVersions(t *testing.T) {
+	// Initialize the converter with a test data source provider
+	Initialize(testutil.GetTestDataSourceProvider())
+
 	// Initialize the migrator with a test data source provider
 	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 

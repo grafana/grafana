@@ -31,7 +31,7 @@
           "builtIn": 0,
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "enable": true,
           "hide": false,
@@ -48,8 +48,8 @@
         {
           "builtIn": false,
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-uid"
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "enable": true,
           "hide": false,
@@ -66,7 +66,7 @@
           "builtIn": 0,
           "datasource": {
             "type": "elasticsearch",
-            "uid": "elastic-uid"
+            "uid": "existing-target-uid"
           },
           "enable": true,
           "hide": false,
@@ -86,8 +86,8 @@
         {
           "builtIn": 0,
           "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres-uid"
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           },
           "enable": true,
           "hide": false,
@@ -120,7 +120,7 @@
           "builtIn": 0,
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus-uid"
+            "uid": "existing-ref-uid"
           },
           "enable": false,
           "hide": true,
