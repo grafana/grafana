@@ -27,13 +27,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
 
   return (
     <Stack>
-      {isReadOnlyRepo && (
-        <Badge
-          color="darkgrey"
-          text={t('folder-repo.read-only-badge', 'Read only')}
-          tooltip={getReadOnlyTooltipText()}
-        />
-      )}
+      {isReadOnlyRepo && <Badge color="darkgrey" text={t('folder-repo.read-only-badge', 'Read only')} />}
       <StatusBadge repo={repository} />
       {repoHref && (
         <Button variant="secondary" icon={providerIcon} onClick={() => window.open(repoHref, '_blank')}>

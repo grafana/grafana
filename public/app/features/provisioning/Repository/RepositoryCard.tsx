@@ -7,7 +7,6 @@ import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
-import { getReadOnlyTooltipText } from '../utils/constants';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
@@ -67,11 +66,7 @@ export function RepositoryCard({ repository }: Props) {
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && (
-            <Badge
-              color="darkgrey"
-              text={t('provisioning.repository-card.read-only-badge', 'Read only')}
-              tooltip={getReadOnlyTooltipText()}
-            />
+            <Badge color="darkgrey" text={t('provisioning.repository-card.read-only-badge', 'Read only')} />
           )}
         </Stack>
       </Card.Heading>
