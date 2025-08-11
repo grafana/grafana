@@ -155,7 +155,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "grafana",
+            "group": "prometheus",
             "version": "v0",
             "spec": {
               "expr": "static_annotation_query",
@@ -271,7 +271,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "grafana",
+            "group": "prometheus",
             "version": "v0",
             "spec": {}
           },

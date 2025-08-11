@@ -38,6 +38,9 @@
                       "kind": "DataQuery",
                       "group": "prometheus",
                       "version": "v0",
+                      "datasource": {
+                        "name": "prometheus-uid"
+                      },
                       "spec": {
                         "expr": "up",
                         "interval": "30s"
@@ -54,6 +57,9 @@
                       "kind": "DataQuery",
                       "group": "prometheus",
                       "version": "v0",
+                      "datasource": {
+                        "name": "prometheus-uid"
+                      },
                       "spec": {
                         "expr": "cpu_usage",
                         "interval": "1m"
@@ -70,12 +76,9 @@
                   "spec": {
                     "id": "reduce",
                     "options": {
-                      "id": "reduce",
-                      "options": {
-                        "reducers": [
-                          "mean"
-                        ]
-                      }
+                      "reducers": [
+                        "mean"
+                      ]
                     }
                   }
                 }
@@ -168,6 +171,9 @@
                       "kind": "DataQuery",
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
+                      "datasource": {
+                        "name": "testdata"
+                      },
                       "spec": {
                         "scenarioId": "random_walk"
                       }
@@ -219,6 +225,9 @@
                       "kind": "DataQuery",
                       "group": "postgres",
                       "version": "v0",
+                      "datasource": {
+                        "name": "postgres-uid"
+                      },
                       "spec": {
                         "format": "table",
                         "rawSql": "SELECT * FROM metrics"
@@ -277,6 +286,9 @@
                       "kind": "DataQuery",
                       "group": "elasticsearch",
                       "version": "v0",
+                      "datasource": {
+                        "name": "elastic-uid"
+                      },
                       "spec": {
                         "bucketAggs": [
                           {
@@ -299,15 +311,12 @@
                   "spec": {
                     "id": "groupBy",
                     "options": {
-                      "id": "groupBy",
-                      "options": {
-                        "fields": {
-                          "status": {
-                            "aggregations": [
-                              "count"
-                            ],
-                            "operation": "groupby"
-                          }
+                      "fields": {
+                        "status": {
+                          "aggregations": [
+                            "count"
+                          ],
+                          "operation": "groupby"
                         }
                       }
                     }
@@ -318,15 +327,12 @@
                   "spec": {
                     "id": "sortBy",
                     "options": {
-                      "id": "sortBy",
-                      "options": {
-                        "sort": [
-                          {
-                            "desc": true,
-                            "field": "count"
-                          }
-                        ]
-                      }
+                      "sort": [
+                        {
+                          "desc": true,
+                          "field": "count"
+                        }
+                      ]
                     }
                   }
                 }

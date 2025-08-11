@@ -14,7 +14,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "grafana",
+            "kind": "prometheus",
             "spec": {
               "refId": "Anno"
             }
@@ -46,7 +46,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana",
+                      "kind": "prometheus",
                       "spec": {}
                     },
                     "refId": "A",
@@ -100,35 +100,41 @@
     "links": [
       {
         "title": "External Monitoring System",
-        "type": "",
-        "icon": "",
-        "tooltip": "",
+        "type": "link",
+        "icon": "external link",
+        "tooltip": "View in external system",
         "url": "https://monitoring.example.com/dashboard?from=${__from}\u0026to=${__to}",
-        "tags": null,
+        "tags": [
+          "monitoring",
+          "alerts"
+        ],
         "asDropdown": false,
         "targetBlank": true,
-        "includeVars": false,
-        "keepTime": false
+        "includeVars": true,
+        "keepTime": true
       },
       {
         "title": "Related Dashboards",
-        "type": "",
-        "icon": "",
-        "tooltip": "",
+        "type": "dashboards",
+        "icon": "dashboard",
+        "tooltip": "Navigate to related dashboards",
         "url": "",
-        "tags": null,
-        "asDropdown": false,
+        "tags": [
+          "grafana",
+          "internal"
+        ],
+        "asDropdown": true,
         "targetBlank": false,
         "includeVars": false,
         "keepTime": false
       },
       {
         "title": "Documentation",
-        "type": "",
-        "icon": "",
-        "tooltip": "",
+        "type": "link",
+        "icon": "info",
+        "tooltip": "View documentation",
         "url": "https://docs.example.com/dashboard-guide",
-        "tags": null,
+        "tags": [],
         "asDropdown": false,
         "targetBlank": true,
         "includeVars": false,
@@ -136,15 +142,17 @@
       },
       {
         "title": "Tag-based Link",
-        "type": "",
-        "icon": "",
-        "tooltip": "",
+        "type": "tag",
+        "icon": "tag",
+        "tooltip": "Filtered by tags",
         "url": "/dashboards/tag/alerts",
-        "tags": null,
+        "tags": [
+          "alerts"
+        ],
         "asDropdown": false,
         "targetBlank": false,
-        "includeVars": false,
-        "keepTime": false
+        "includeVars": true,
+        "keepTime": true
       }
     ],
     "liveNow": true,
@@ -188,7 +196,7 @@
             "text": "value1",
             "value": "value1"
           },
-          "options": [],
+          "options": null,
           "multi": false,
           "includeAll": false,
           "hide": "dontHide",

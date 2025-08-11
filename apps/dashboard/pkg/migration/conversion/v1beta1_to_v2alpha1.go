@@ -320,14 +320,26 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 		result := make([]dashv2alpha1.DashboardDashboardLink, 0, len(links))
 		for _, link := range links {
 			if linkMap, ok := link.(map[string]interface{}); ok {
-				url := getStringField(linkMap, "url", "")
+				// Required fields with defaults
 				dashLink := dashv2alpha1.DashboardDashboardLink{
-					Title: getStringField(linkMap, "title", ""),
-					Url:   &url,
+					Title:       getStringField(linkMap, "title", ""),
+					Type:        dashv2alpha1.DashboardDashboardLinkType(getStringField(linkMap, "type", "link")),
+					Icon:        getStringField(linkMap, "icon", ""),
+					Tooltip:     getStringField(linkMap, "tooltip", ""),
+					Tags:        getStringSlice(linkMap, "tags"),
+					AsDropdown:  getBoolField(linkMap, "asDropdown", false),
+					TargetBlank: getBoolField(linkMap, "targetBlank", false),
+					IncludeVars: getBoolField(linkMap, "includeVars", false),
+					KeepTime:    getBoolField(linkMap, "keepTime", false),
 				}
-				if targetBlank := getBoolField(linkMap, "targetBlank", false); targetBlank {
-					dashLink.TargetBlank = targetBlank
+
+				// Optional field - only set if present
+				if url, exists := linkMap["url"]; exists {
+					if urlStr, ok := url.(string); ok {
+						dashLink.Url = &urlStr
+					}
 				}
+
 				result = append(result, dashLink)
 			}
 		}
@@ -1017,14 +1029,6 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		datasourceType = getDefaultDatasourceType()
 	}
 
-	var dsRef *dashv2alpha1.DashboardDataSourceRef
-	if datasourceUID != "" || datasourceType != "" {
-		dsRef = &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
-		}
-	}
-
 	queryVar := &dashv2alpha1.DashboardQueryVariableKind{
 		Kind: "QueryVariable",
 		Spec: dashv2alpha1.DashboardQueryVariableSpec{
@@ -1034,7 +1038,6 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			Hide:             commonProps.Hide,
 			SkipUrlSync:      commonProps.SkipUrlSync,
 			Current:          buildVariableCurrent(varMap["current"]),
-			Options:          buildVariableOptions(varMap["options"]),
 			Multi:            getBoolField(varMap, "multi", false),
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
@@ -1042,8 +1045,21 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			Regex:            getStringField(varMap, "regex", ""),
 			Query:            buildDataQueryKind(varMap["query"], datasourceType, datasourceUID),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
-			Datasource:       dsRef,
 		},
+	}
+
+	// Only include datasource if datasourceUID exists
+	if datasourceUID != "" {
+		dsRef := &dashv2alpha1.DashboardDataSourceRef{
+			Type: &datasourceType,
+			Uid:  &datasourceUID,
+		}
+		queryVar.Spec.Datasource = dsRef
+	}
+
+	// Only set options if they are defined in the input
+	if options, exists := varMap["options"]; exists {
+		queryVar.Spec.Options = buildVariableOptions(options)
 	}
 
 	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
@@ -1074,13 +1090,17 @@ func buildDatasourceVariable(varMap map[string]interface{}, commonProps CommonVa
 			SkipUrlSync:      commonProps.SkipUrlSync,
 			PluginId:         pluginId,
 			Current:          buildVariableCurrent(varMap["current"]),
-			Options:          buildVariableOptions(varMap["options"]),
 			Multi:            getBoolField(varMap, "multi", false),
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Regex:            getStringField(varMap, "regex", ""),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
+	}
+
+	// Only set options if they are defined in the input
+	if options, exists := varMap["options"]; exists {
+		dsVar.Spec.Options = buildVariableOptions(options)
 	}
 
 	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
@@ -1104,11 +1124,15 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 			SkipUrlSync:      commonProps.SkipUrlSync,
 			Query:            getStringField(varMap, "query", ""),
 			Current:          buildVariableCurrent(varMap["current"]),
-			Options:          buildVariableOptions(varMap["options"]),
 			Multi:            getBoolField(varMap, "multi", false),
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
+	}
+
+	// Only set options if they are defined in the input
+	if options, exists := varMap["options"]; exists {
+		customVar.Spec.Options = buildVariableOptions(options)
 	}
 
 	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
@@ -1152,12 +1176,16 @@ func buildIntervalVariable(varMap map[string]interface{}, commonProps CommonVari
 			SkipUrlSync: commonProps.SkipUrlSync,
 			Query:       getStringField(varMap, "query", ""),
 			Current:     buildVariableCurrent(varMap["current"]),
-			Options:     buildVariableOptions(varMap["options"]),
 			Refresh:     dashv2alpha1.DashboardVariableRefreshOnTimeRangeChanged, // Always onTimeRangeChanged for interval
 			Auto:        getBoolField(varMap, "auto", false),
 			AutoMin:     getStringField(varMap, "auto_min", ""),
 			AutoCount:   int64(getIntField(varMap, "auto_count", 0)),
 		},
+	}
+
+	// Only set options if they are defined in the input
+	if options, exists := varMap["options"]; exists {
+		intervalVar.Spec.Options = buildVariableOptions(options)
 	}
 
 	return dashv2alpha1.DashboardVariableKind{
@@ -1197,14 +1225,6 @@ func buildAdhocVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		datasourceType = getDefaultDatasourceType()
 	}
 
-	var dsRef *dashv2alpha1.DashboardDataSourceRef
-	if datasourceUID != "" || datasourceType != "" {
-		dsRef = &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
-		}
-	}
-
 	adhocVar := &dashv2alpha1.DashboardAdhocVariableKind{
 		Kind: "AdhocVariable",
 		Spec: dashv2alpha1.DashboardAdhocVariableSpec{
@@ -1213,17 +1233,138 @@ func buildAdhocVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			Description:      commonProps.Description,
 			Hide:             commonProps.Hide,
 			SkipUrlSync:      commonProps.SkipUrlSync,
-			Datasource:       dsRef,
-			BaseFilters:      []dashv2alpha1.DashboardAdHocFilterWithLabels{}, // TODO: transform from baseFilters
-			Filters:          []dashv2alpha1.DashboardAdHocFilterWithLabels{}, // TODO: transform from filters
-			DefaultKeys:      []dashv2alpha1.DashboardMetricFindValue{},       // TODO: transform from defaultKeys
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
+	}
+
+	// Transform baseFilters if they exist
+	if baseFilters, exists := varMap["baseFilters"]; exists {
+		if baseFiltersArray, ok := baseFilters.([]interface{}); ok {
+			adhocVar.Spec.BaseFilters = transformAdHocFilters(baseFiltersArray)
+		}
+	}
+
+	// Transform filters if they exist
+	if filters, exists := varMap["filters"]; exists {
+		if filtersArray, ok := filters.([]interface{}); ok {
+			adhocVar.Spec.Filters = transformAdHocFilters(filtersArray)
+		}
+	}
+
+	// Transform defaultKeys if they exist
+	if defaultKeys, exists := varMap["defaultKeys"]; exists {
+		if defaultKeysArray, ok := defaultKeys.([]interface{}); ok {
+			adhocVar.Spec.DefaultKeys = transformMetricFindValues(defaultKeysArray)
+		}
+	}
+
+	// Only include datasource if datasourceUID exists
+	if datasourceUID != "" {
+		dsRef := &dashv2alpha1.DashboardDataSourceRef{
+			Type: &datasourceType,
+			Uid:  &datasourceUID,
+		}
+		adhocVar.Spec.Datasource = dsRef
 	}
 
 	return dashv2alpha1.DashboardVariableKind{
 		AdhocVariableKind: adhocVar,
 	}, nil
+}
+
+// Helper function to transform adhoc filters
+func transformAdHocFilters(filters []interface{}) []dashv2alpha1.DashboardAdHocFilterWithLabels {
+	result := make([]dashv2alpha1.DashboardAdHocFilterWithLabels, 0, len(filters))
+
+	for _, filter := range filters {
+		if filterMap, ok := filter.(map[string]interface{}); ok {
+			// Only include filters that don't have an origin or have origin "dashboard"
+			// This matches the frontend validateFiltersOrigin logic
+			if origin, exists := filterMap["origin"]; !exists || origin == "dashboard" {
+				adhocFilter := dashv2alpha1.DashboardAdHocFilterWithLabels{
+					Key:      getStringField(filterMap, "key", ""),
+					Operator: getStringField(filterMap, "operator", "="),
+					Value:    getStringField(filterMap, "value", ""),
+				}
+
+				// Handle optional fields
+				if keyLabel := getStringField(filterMap, "keyLabel", ""); keyLabel != "" {
+					adhocFilter.KeyLabel = &keyLabel
+				}
+				if condition := getStringField(filterMap, "condition", ""); condition != "" {
+					adhocFilter.Condition = &condition
+				}
+
+				// Handle multi-value filters
+				if values, exists := filterMap["values"]; exists {
+					if valuesArray, ok := values.([]interface{}); ok {
+						stringValues := make([]string, 0, len(valuesArray))
+						for _, v := range valuesArray {
+							if str, ok := v.(string); ok {
+								stringValues = append(stringValues, str)
+							}
+						}
+						if len(stringValues) > 0 {
+							adhocFilter.Values = stringValues
+						}
+					}
+				}
+
+				// Handle value labels for multi-value filters
+				if valueLabels, exists := filterMap["valueLabels"]; exists {
+					if valueLabelsArray, ok := valueLabels.([]interface{}); ok {
+						stringValueLabels := make([]string, 0, len(valueLabelsArray))
+						for _, v := range valueLabelsArray {
+							if str, ok := v.(string); ok {
+								stringValueLabels = append(stringValueLabels, str)
+							}
+						}
+						if len(stringValueLabels) > 0 {
+							adhocFilter.ValueLabels = stringValueLabels
+						}
+					}
+				}
+
+				result = append(result, adhocFilter)
+			}
+		}
+	}
+
+	return result
+}
+
+// Helper function to transform metric find values
+func transformMetricFindValues(values []interface{}) []dashv2alpha1.DashboardMetricFindValue {
+	result := make([]dashv2alpha1.DashboardMetricFindValue, 0, len(values))
+
+	for _, value := range values {
+		if valueMap, ok := value.(map[string]interface{}); ok {
+			// Handle object format with text and value properties
+			metricFindValue := dashv2alpha1.DashboardMetricFindValue{
+				Text: getStringField(valueMap, "text", ""),
+			}
+
+			// Handle value field - it can be string or float64
+			if valueStr := getStringField(valueMap, "value", ""); valueStr != "" {
+				metricFindValue.Value = &dashv2alpha1.DashboardStringOrFloat64{
+					String: &valueStr,
+				}
+			}
+
+			result = append(result, metricFindValue)
+		} else if str, ok := value.(string); ok {
+			// Handle simple string values - convert to object format with text and value
+			metricFindValue := dashv2alpha1.DashboardMetricFindValue{
+				Text: str,
+				Value: &dashv2alpha1.DashboardStringOrFloat64{
+					String: &str,
+				},
+			}
+			result = append(result, metricFindValue)
+		}
+	}
+
+	return result
 }
 
 // GroupBy Variable
@@ -1238,14 +1379,6 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 		datasourceType = getDefaultDatasourceType()
 	}
 
-	var dsRef *dashv2alpha1.DashboardDataSourceRef
-	if datasourceUID != "" || datasourceType != "" {
-		dsRef = &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
-		}
-	}
-
 	groupByVar := &dashv2alpha1.DashboardGroupByVariableKind{
 		Kind: "GroupByVariable",
 		Spec: dashv2alpha1.DashboardGroupByVariableSpec{
@@ -1254,11 +1387,23 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Datasource:  dsRef,
 			Current:     buildVariableCurrent(varMap["current"]),
-			Options:     buildVariableOptions(varMap["options"]),
 			Multi:       getBoolField(varMap, "multi", false),
 		},
+	}
+
+	// Only include datasource if datasourceUID exists
+	if datasourceUID != "" {
+		dsRef := &dashv2alpha1.DashboardDataSourceRef{
+			Type: &datasourceType,
+			Uid:  &datasourceUID,
+		}
+		groupByVar.Spec.Datasource = dsRef
+	}
+
+	// Only set options if they are defined in the input
+	if options, exists := varMap["options"]; exists {
+		groupByVar.Spec.Options = buildVariableOptions(options)
 	}
 
 	return dashv2alpha1.DashboardVariableKind{
@@ -1302,7 +1447,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		datasourceType = getStringField(datasource, "type", getDefaultDatasourceType())
 		datasourceUID = getStringField(datasource, "uid", "")
 
-		if datasourceType != "" || datasourceUID != "" {
+		if datasourceUID != "" {
 			datasourceRef = &dashv2alpha1.DashboardDataSourceRef{
 				Type: &datasourceType,
 				Uid:  &datasourceUID,
@@ -1445,11 +1590,16 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 
 	// Extract datasource from query or use panel datasource
 	var queryDatasourceType string
+	var queryDatasourceUID string
 	if ds, ok := targetMap["datasource"].(map[string]interface{}); ok {
 		queryDatasourceType = getStringField(ds, "type", getDefaultDatasourceType())
+		queryDatasourceUID = getStringField(ds, "uid", "")
 	} else if panelDatasource != nil {
 		if panelDatasource.Type != nil {
 			queryDatasourceType = *panelDatasource.Type
+		}
+		if panelDatasource.Uid != nil {
+			queryDatasourceUID = *panelDatasource.Uid
 		}
 	} else {
 		queryDatasourceType = getDefaultDatasourceType()
@@ -1466,16 +1616,24 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 		}
 	}
 
+	// Create the panel query spec
+	panelQuerySpec := dashv2alpha1.DashboardPanelQuerySpec{
+		RefId:  refId,
+		Hidden: hidden,
+		Query:  buildDataQueryKind(querySpec, queryDatasourceType, queryDatasourceUID),
+	}
+
+	// Only include datasource reference if UID is provided
+	if queryDatasourceUID != "" {
+		panelQuerySpec.Datasource = &dashv2alpha1.DashboardDataSourceRef{
+			Type: &queryDatasourceType,
+			Uid:  &queryDatasourceUID,
+		}
+	}
+
 	return dashv2alpha1.DashboardPanelQueryKind{
 		Kind: "PanelQuery",
-		Spec: dashv2alpha1.DashboardPanelQuerySpec{
-			RefId:  refId,
-			Hidden: hidden,
-			Query: dashv2alpha1.DashboardDataQueryKind{
-				Kind: queryDatasourceType,
-				Spec: querySpec,
-			},
-		},
+		Spec: panelQuerySpec,
 	}
 }
 
@@ -1488,11 +1646,20 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 	result := make([]dashv2alpha1.DashboardTransformationKind, 0, len(transformations))
 	for _, t := range transformations {
 		if tMap, ok := t.(map[string]interface{}); ok {
+			// Extract the transformation ID
+			transformationId := getStringField(tMap, "id", "")
+
+			// Extract the options field specifically
+			var options interface{}
+			if opts, exists := tMap["options"]; exists {
+				options = opts
+			}
+
 			transformationKind := dashv2alpha1.DashboardTransformationKind{
-				Kind: getStringField(tMap, "id", ""),
+				Kind: transformationId,
 				Spec: dashv2alpha1.DashboardDataTransformerConfig{
-					Id:      getStringField(tMap, "id", ""),
-					Options: tMap, // Include all properties as options
+					Id:      transformationId,
+					Options: options,
 				},
 			}
 			result = append(result, transformationKind)

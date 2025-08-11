@@ -41,6 +41,10 @@
                         "interval": "30s"
                       }
                     },
+                    "datasource": {
+                      "type": "prometheus",
+                      "uid": "prometheus-uid"
+                    },
                     "refId": "A",
                     "hidden": false
                   }
@@ -55,6 +59,10 @@
                         "interval": "1m"
                       }
                     },
+                    "datasource": {
+                      "type": "prometheus",
+                      "uid": "prometheus-uid"
+                    },
                     "refId": "B",
                     "hidden": true
                   }
@@ -66,12 +74,9 @@
                   "spec": {
                     "id": "reduce",
                     "options": {
-                      "id": "reduce",
-                      "options": {
-                        "reducers": [
-                          "mean"
-                        ]
-                      }
+                      "reducers": [
+                        "mean"
+                      ]
                     }
                   }
                 }
@@ -165,6 +170,10 @@
                         "scenarioId": "random_walk"
                       }
                     },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata"
+                    },
                     "refId": "A",
                     "hidden": false
                   }
@@ -213,6 +222,10 @@
                         "format": "table",
                         "rawSql": "SELECT * FROM metrics"
                       }
+                    },
+                    "datasource": {
+                      "type": "postgres",
+                      "uid": "postgres-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -275,6 +288,10 @@
                         "query": "*"
                       }
                     },
+                    "datasource": {
+                      "type": "elasticsearch",
+                      "uid": "elastic-uid"
+                    },
                     "refId": "A",
                     "hidden": false
                   }
@@ -286,15 +303,12 @@
                   "spec": {
                     "id": "groupBy",
                     "options": {
-                      "id": "groupBy",
-                      "options": {
-                        "fields": {
-                          "status": {
-                            "aggregations": [
-                              "count"
-                            ],
-                            "operation": "groupby"
-                          }
+                      "fields": {
+                        "status": {
+                          "aggregations": [
+                            "count"
+                          ],
+                          "operation": "groupby"
                         }
                       }
                     }
@@ -305,15 +319,12 @@
                   "spec": {
                     "id": "sortBy",
                     "options": {
-                      "id": "sortBy",
-                      "options": {
-                        "sort": [
-                          {
-                            "desc": true,
-                            "field": "count"
-                          }
-                        ]
-                      }
+                      "sort": [
+                        {
+                          "desc": true,
+                          "field": "count"
+                        }
+                      ]
                     }
                   }
                 }

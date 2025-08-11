@@ -182,9 +182,30 @@
         },
         "spec": {
           "name": "adhoc_var",
-          "baseFilters": [],
-          "filters": [],
-          "defaultKeys": [],
+          "baseFilters": [
+            {
+              "key": "environment",
+              "operator": "=",
+              "value": "production"
+            }
+          ],
+          "filters": [
+            {
+              "key": "job",
+              "operator": "=",
+              "value": "prometheus"
+            }
+          ],
+          "defaultKeys": [
+            {
+              "text": "job",
+              "value": "job"
+            },
+            {
+              "text": "instance",
+              "value": "instance"
+            }
+          ],
           "label": "Filters",
           "hide": "dontHide",
           "skipUrlSync": false,
@@ -311,7 +332,7 @@
           },
           "regex": "",
           "sort": "disabled",
-          "options": [],
+          "options": null,
           "multi": false,
           "includeAll": false,
           "allowCustomValue": true

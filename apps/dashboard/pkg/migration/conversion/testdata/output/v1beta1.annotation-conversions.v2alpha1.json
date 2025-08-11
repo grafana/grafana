@@ -149,7 +149,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "grafana",
+            "kind": "prometheus",
             "spec": {
               "expr": "static_annotation_query",
               "refId": "Anno"
@@ -260,7 +260,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "grafana",
+            "kind": "prometheus",
             "spec": {}
           },
           "enable": false,

@@ -1,4 +1,5 @@
 import { TypedVariableModel } from '@grafana/data';
+import { MetricFindValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AnnotationQuery,
@@ -181,13 +182,13 @@ export function ensureV2Response(
       title: link.title || '',
       url: link.url || '',
       ...(link.targetBlank && { targetBlank: link.targetBlank }),
-      icon: link.icon || '',
-      includeVars: link.includeVars || false,
-      keepTime: link.keepTime || false,
-      tags: link.tags || [],
-      tooltip: link.tooltip || '',
-      type: link.type || 'link',
-      asDropdown: link.asDropdown || false,
+      ...(link.icon !== undefined && { icon: link.icon }),
+      ...(link.includeVars !== undefined && { includeVars: link.includeVars }),
+      ...(link.keepTime !== undefined && { keepTime: link.keepTime }),
+      ...(link.tags !== undefined && { tags: link.tags }),
+      ...(link.tooltip !== undefined && { tooltip: link.tooltip }),
+      ...(link.type !== undefined && { type: link.type }),
+      ...(link.asDropdown !== undefined && { asDropdown: link.asDropdown }),
     })),
     annotations,
     variables,
@@ -384,7 +385,7 @@ function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): RowsLayoutRo
     spec: {
       collapse: p.collapsed,
       title: p.title ?? '',
-      repeat: p.repeat ? { value: p.repeat, mode: 'variable' } : undefined,
+      ...(p.repeat ? { repeat: { value: p.repeat, mode: 'variable' } } : {}),
       layout: {
         kind: 'GridLayout',
         spec: {
@@ -403,9 +404,16 @@ function buildGridItemKind(p: Panel, elementName: string, yOverride?: number): G
       y: yOverride ?? p.gridPos!.y,
       width: p.gridPos!.w,
       height: p.gridPos!.h,
-      repeat: p.repeat
-        ? { value: p.repeat, mode: 'variable', direction: p.repeatDirection, maxPerRow: p.maxPerRow }
-        : undefined,
+      ...(p.repeat
+        ? {
+            repeat: {
+              value: p.repeat,
+              mode: 'variable',
+              ...(p.repeatDirection !== undefined && { direction: p.repeatDirection }),
+              ...(p.maxPerRow !== undefined && { maxPerRow: p.maxPerRow }),
+            },
+          }
+        : {}),
       element: {
         kind: 'ElementReference',
         name: elementName!,
@@ -504,9 +512,14 @@ export function buildPanelKind(p: Panel): PanelKind {
       vizConfig: {
         kind: 'VizConfig',
         group: p.type,
-        ...(p.pluginVersion && { version: p.pluginVersion }),
+        version: p.pluginVersion ?? '',
         spec: {
-          fieldConfig: (p.fieldConfig as any) || { defaults: {}, overrides: [] },
+          fieldConfig: {
+            defaults: {
+              custom: (p.fieldConfig as any) || {},
+            },
+            overrides: [],
+          },
           options: p.options as any,
         },
       },
@@ -540,17 +553,11 @@ export function buildPanelKind(p: Panel): PanelKind {
 
 function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {
   return transformations.map((t) => {
-    const { id, ...specWithoutId } = t;
-    // Remove any nested id field from options if it exists
-    if (specWithoutId.options && typeof specWithoutId.options === 'object' && 'id' in specWithoutId.options) {
-      const { id: optionsId, ...optionsWithoutId } = specWithoutId.options as any;
-      specWithoutId.options = optionsWithoutId;
-    }
     return {
-      kind: id,
+      kind: t.id,
       spec: {
-        ...specWithoutId,
-        topic: transformDataTopic(t.topic),
+        ...t,
+        ...(t.topic !== undefined && { topic: transformDataTopic(t.topic) }),
       },
     };
   });
@@ -561,7 +568,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
   for (const v of vars) {
     const commonProperties = {
       name: v.name,
-      label: v.label,
+      ...(v.label !== undefined && { label: v.label }),
       ...(v.description && { description: v.description }),
       skipUrlSync: Boolean(v.skipUrlSync),
       hide: transformVariableHideToEnum(v.hide),
@@ -601,8 +608,8 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
                 name: v.datasource.uid,
               },
             }),
-            ...(v.regex !== undefined && { regex: v.regex }),
-            ...(v.sort !== undefined && { sort: transformSortVariableToEnum(v.sort) }),
+            regex: v.regex ?? '',
+            sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
               version: defaultDataQueryKind().version,
@@ -640,7 +647,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...(v.options !== undefined && { options: v.options }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
-            ...(v.regex !== undefined && { regex: v.regex }),
+            regex: v.regex ?? '',
             ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
           },
         };
@@ -656,7 +663,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               value: v.current.value,
               text: v.current.text,
             },
-            ...(v.options !== undefined && { options: v.options }),
+            options: v.options ?? [],
             ...(v.multi !== undefined && { multi: v.multi }),
             ...(v.includeAll !== undefined && { includeAll: v.includeAll }),
             ...(v.allValue && { allValue: v.allValue }),
@@ -681,7 +688,11 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...commonProperties,
             ...(v.baseFilters !== undefined && { baseFilters: validateFiltersOrigin(v.baseFilters) }),
             ...(v.filters !== undefined && { filters: validateFiltersOrigin(v.filters) }),
-            ...(v.defaultKeys !== undefined && { defaultKeys: v.defaultKeys }),
+            ...(v.defaultKeys !== undefined && {
+              defaultKeys: v.defaultKeys.map((key: string | MetricFindValue) =>
+                typeof key === 'string' ? { text: key, value: key } : key
+              ),
+            }),
             ...(v.allowCustomValue !== undefined && { allowCustomValue: v.allowCustomValue }),
           },
         };
@@ -1004,7 +1015,7 @@ function transformV2PanelToV1Panel(
         panel.links?.map<DashboardLink>((l) => ({
           title: l.title,
           url: l.url,
-          ...(l.targetBlank && { targetBlank: l.targetBlank }),
+          ...(l.targetBlank !== undefined && { targetBlank: l.targetBlank }),
         })) || [],
       targets: panel.data.spec.queries.map((q) => {
         return {
@@ -1019,17 +1030,27 @@ function transformV2PanelToV1Panel(
       }),
       transformations: panel.data.spec.transformations.map((t) => t.spec),
       gridPos,
-      cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-      maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
-      interval: panel.data.spec.queryOptions.interval,
-      hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
-      queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-      timeFrom: panel.data.spec.queryOptions.timeFrom,
-      timeShift: panel.data.spec.queryOptions.timeShift,
-      transparent: panel.transparent,
-      ...(repeat?.value && { repeat: repeat.value }),
-      ...(repeat?.direction && { repeatDirection: repeat.direction }),
-      ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
+      ...(panel.data.spec.queryOptions.cacheTimeout !== undefined && {
+        cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+      }),
+      ...(panel.data.spec.queryOptions.maxDataPoints !== undefined && {
+        maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
+      }),
+      ...(panel.data.spec.queryOptions.interval !== undefined && { interval: panel.data.spec.queryOptions.interval }),
+      ...(panel.data.spec.queryOptions.hideTimeOverride !== undefined && {
+        hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
+      }),
+      ...(panel.data.spec.queryOptions.queryCachingTTL !== undefined && {
+        queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+      }),
+      ...(panel.data.spec.queryOptions.timeFrom !== undefined && { timeFrom: panel.data.spec.queryOptions.timeFrom }),
+      ...(panel.data.spec.queryOptions.timeShift !== undefined && {
+        timeShift: panel.data.spec.queryOptions.timeShift,
+      }),
+      ...(panel.transparent !== undefined && { transparent: panel.transparent }),
+      ...(repeat?.value !== undefined && { repeat: repeat.value }),
+      ...(repeat?.direction !== undefined && { repeatDirection: repeat.direction }),
+      ...(repeat?.maxPerRow !== undefined && { maxPerRow: repeat.maxPerRow }),
     };
   } else if (p.kind === 'LibraryPanel') {
     const panel = p.spec;
