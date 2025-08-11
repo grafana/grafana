@@ -124,6 +124,7 @@ type ReaderWriter interface {
 	Writer
 }
 
+//go:generate mockery --name RepositoryWithURLs --structname MockRepositoryWithURLs --inpackage --filename repository_with_urls_mock.go --with-expecter
 type RepositoryWithURLs interface {
 	Repository
 

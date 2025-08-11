@@ -77,6 +77,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	if err != nil {
 		return fmt.Errorf("delete files from repository: %w", err)
 	}
+	
+	// Set RefURLs if the repository supports it and we have a target ref
+	if opts.Ref != "" {
+		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, opts.Ref); urlErr == nil && refURLs != nil {
+				progress.SetRefURLs(ctx, refURLs)
+			}
+		}
+	}
 
 	if opts.Ref == "" {
 		progress.ResetResults()

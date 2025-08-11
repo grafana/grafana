@@ -549,3 +549,5 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export failed")
 }
+
+
