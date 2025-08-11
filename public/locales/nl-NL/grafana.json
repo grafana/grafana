@@ -788,7 +788,7 @@
       },
       "filterBy": "Filteren op:",
       "too-many-events": {
-        "text": "De geselecteerde tijdsperiode heeft te veel gebeurtenissen om weer te geven. Weergave van de laatste 5000 evenementen. Probeer een kortere periode te gebruiken.",
+        "text": "",
         "title": "Kan niet alle gebeurtenissen weergeven"
       }
     },
@@ -5233,6 +5233,7 @@
         "new": "Nieuw tabblad",
         "repeat": {
           "learn-more": "Meer informatie",
+          "loading": "",
           "warning": "Panelen in dit tabblad gebruiken de gegevensbron van{{SHARED_DASHBOARD_QUERY}}. Deze panelen verwijzen naar het paneel in het oorspronkelijke tabblad, niet naar die in de herhaalde tabbladen."
         }
       },
@@ -9542,6 +9543,12 @@
         "total-bytes-processed": "Totaal aantal verwerkte bytes"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Dedupliceren",
       "disable-highlighting": "Markeren uitschakelen",
@@ -9565,8 +9572,12 @@
       "oldest-first": "Gesorteerd op oudste logboeken eerst - klik om nieuwste eerst weer te geven",
       "prettify-json": "JSON-logs uitvouwen",
       "remove-escaping": "Escaping verwijderen",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Naar beneden scrollen",
       "scroll-top": "Naar boven scrollen",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Zoeken in logresultaten",
       "show-timestamps": "Tijdstempels weergeven",
       "show-unique-labels": "Unieke labels weergeven",
@@ -9599,7 +9610,7 @@
     "name-order": "Orde",
     "name-prettify-json": "JSON verfraaien",
     "name-show-controls": "Bedieningselementen tonen",
-    "name-time": "Tijd",
+    "name-time": "",
     "name-unique-labels": "Unieke labels",
     "name-wrap-lines": "Lijnen omsluiten",
     "order-options": {
@@ -9615,6 +9626,7 @@
       "line-contains": "Toevoegen als regel filter bevat",
       "line-contains-not": "Toevoegen als regel geen filter bevat"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Gegevenslinks",
       "aria-label-fields": "Velden",
@@ -12716,6 +12728,7 @@
     "description-column-filter": "Schakelt veldfilters in tabel in/uit",
     "description-count-rows": "Een enkele telling weergeven voor alle gegevensrijen",
     "description-fields": "Selecteer de velden die moeten worden berekend",
+    "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "name-calculation": "Berekening",
     "name-cell-height": "Celhoogte",
@@ -12727,6 +12740,7 @@
     "name-count-rows": "Rijen tellen",
     "name-enable-pagination": "Paginering inschakelen",
     "name-fields": "Velden",
+    "name-frozen-columns": "",
     "name-hide-in-table": "In tabel verbergen",
     "name-min-column-width": "Minimale kolombreedte",
     "name-show-table-footer": "Voettekst tabel tonen",

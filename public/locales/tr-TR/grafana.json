@@ -788,7 +788,7 @@
       },
       "filterBy": "Filtre ölçütü:",
       "too-many-events": {
-        "text": "Seçilen zaman diliminde görüntülenecek çok fazla etkinlik var. En son 5000 etkinlik görüntüleniyor. Daha kısa bir süre kullanmayı deneyin.",
+        "text": "",
         "title": "Tüm etkinlikler görüntülenemiyor"
       }
     },
@@ -5233,6 +5233,7 @@
         "new": "Yeni sekme",
         "repeat": {
           "learn-more": "Daha fazla bilgi edinin",
+          "loading": "",
           "warning": "Bu sekmedeki paneller {{SHARED_DASHBOARD_QUERY}} veri kaynağını kullanır. Bu paneller tekrarlanan sekmelerdeki panelleri değil, orijinal sekmedeki paneli referans alacaktır."
         }
       },
@@ -9542,6 +9543,12 @@
         "total-bytes-processed": "İşlenen toplam bayt"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Yinelenenleri kaldırma",
       "disable-highlighting": "Vurgulamayı devre dışı bırak",
@@ -9565,8 +9572,12 @@
       "oldest-first": "Günlükler eskiden yeniye sıralandı: En yenileri göstermek için tıklayın",
       "prettify-json": "JSON günlük kayıtlarını genişlet",
       "remove-escaping": "Kaçış karakterini kaldır",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "En alta kaydır",
       "scroll-top": "En üste kaydır",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "",
       "show-timestamps": "Zaman damgalarını göster",
       "show-unique-labels": "Benzersiz etiketleri göster",
@@ -9615,6 +9626,7 @@
       "line-contains": "Satır içerir filtresi olarak ekle",
       "line-contains-not": "Satır içermez filtresi olarak ekle"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Veri bağlantıları",
       "aria-label-fields": "Alanlar",
@@ -12716,6 +12728,7 @@
     "description-column-filter": "",
     "description-count-rows": "",
     "description-fields": "",
+    "description-frozen-columns": "",
     "description-min-column-width": "",
     "name-calculation": "",
     "name-cell-height": "",
@@ -12727,6 +12740,7 @@
     "name-count-rows": "",
     "name-enable-pagination": "",
     "name-fields": "",
+    "name-frozen-columns": "",
     "name-hide-in-table": "",
     "name-min-column-width": "",
     "name-show-table-footer": "",

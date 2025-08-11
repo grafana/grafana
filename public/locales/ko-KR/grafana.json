@@ -784,7 +784,7 @@
       },
       "filterBy": "필터링 기준:",
       "too-many-events": {
-        "text": "선택한 기간에 표시할 이벤트가 너무 많습니다. 최신 기준 5,000개의 이벤트를 표시합니다. 더 짧은 기간을 사용해 보세요.",
+        "text": "",
         "title": "모든 이벤트 표시 불가"
       }
     },
@@ -5213,6 +5213,7 @@
         "new": "새 탭",
         "repeat": {
           "learn-more": "자세히 알아보기",
+          "loading": "",
           "warning": "이 탭의 패널은 {{SHARED_DASHBOARD_QUERY}} 데이터 소스를 사용합니다. 이러한 패널은 반복된 탭이 아닌 원래 탭의 패널을 참조합니다."
         }
       },
@@ -9512,6 +9513,12 @@
         "total-bytes-processed": "처리된 총 바이트"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "중복 제거",
       "disable-highlighting": "강조 표시 비활성화",
@@ -9535,8 +9542,12 @@
       "oldest-first": "오래된 로그순으로 정렬 - 클릭하여 최신 로그순으로 표시",
       "prettify-json": "JSON 로그 펼치기",
       "remove-escaping": "이스케이프 제거",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "맨 아래로 스크롤",
       "scroll-top": "맨 위로 스크롤",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "",
       "show-timestamps": "타임스탬프 표시",
       "show-unique-labels": "고유 라벨 표시",
@@ -9585,6 +9596,7 @@
       "line-contains": "라인에 포함 필터로 추가",
       "line-contains-not": "라인에 미포함 필터로 추가"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "데이터 링크",
       "aria-label-fields": "필드",
@@ -12674,6 +12686,7 @@
     "description-column-filter": "",
     "description-count-rows": "",
     "description-fields": "",
+    "description-frozen-columns": "",
     "description-min-column-width": "",
     "name-calculation": "",
     "name-cell-height": "",
@@ -12685,6 +12698,7 @@
     "name-count-rows": "",
     "name-enable-pagination": "",
     "name-fields": "",
+    "name-frozen-columns": "",
     "name-hide-in-table": "",
     "name-min-column-width": "",
     "name-show-table-footer": "",

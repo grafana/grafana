@@ -784,7 +784,7 @@
       },
       "filterBy": "フィルタ条件：",
       "too-many-events": {
-        "text": "選択した期間には、表示するイベントが多すぎます。最新の5000イベントを表示します。もっと短い期間を使ってみてください。",
+        "text": "",
         "title": "すべてのイベントを表示できません"
       }
     },
@@ -5213,6 +5213,7 @@
         "new": "新しいタブ",
         "repeat": {
           "learn-more": "もっと詳しく",
+          "loading": "",
           "warning": "このタブのパネルは{{SHARED_DASHBOARD_QUERY}}データソースを使用しています。これらのパネルは、繰り返されたタブ内のパネルではなく、元のタブのパネルを参照します。"
         }
       },
@@ -9512,6 +9513,12 @@
         "total-bytes-processed": "処理済み総バイト数"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "重複排除",
       "disable-highlighting": "ハイライトを無効にする",
@@ -9535,8 +9542,12 @@
       "oldest-first": "古いログ順に並び替え - クリックして最新のログを最初に表示",
       "prettify-json": "JSONログを展開",
       "remove-escaping": "エスケープを削除",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "一番下までスクロール",
       "scroll-top": "一番上までスクロール",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "ログ結果内を検索",
       "show-timestamps": "タイムスタンプを表示",
       "show-unique-labels": "一意のラベルを表示",
@@ -9569,7 +9580,7 @@
     "name-order": "順番",
     "name-prettify-json": "JSONを整形",
     "name-show-controls": "コントロールを表示",
-    "name-time": "時間",
+    "name-time": "",
     "name-unique-labels": "一意のラベル",
     "name-wrap-lines": "行を折り返す",
     "order-options": {
@@ -9585,6 +9596,7 @@
       "line-contains": "行にフィルタが含まれている場合はフィルタとして追加",
       "line-contains-not": "フィルタが含まれていない行として追加"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "データリンク",
       "aria-label-fields": "フィールド",
@@ -12674,6 +12686,7 @@
     "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
     "description-count-rows": "すべてのデータ行の単一カウントを表示",
     "description-fields": "計算するフィールドを選択",
+    "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
     "name-calculation": "計算",
     "name-cell-height": "セルの高さ",
@@ -12685,6 +12698,7 @@
     "name-count-rows": "行数",
     "name-enable-pagination": "ページ分割を有効化",
     "name-fields": "フィールド",
+    "name-frozen-columns": "",
     "name-hide-in-table": "テーブルで非表示",
     "name-min-column-width": "最小列幅",
     "name-show-table-footer": "テーブルフッターを表示",

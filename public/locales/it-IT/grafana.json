@@ -788,7 +788,7 @@
       },
       "filterBy": "Filtra per:",
       "too-many-events": {
-        "text": "Il periodo di tempo selezionato ha troppi eventi da visualizzare. Visualizzazione degli ultimi 5000 eventi. Prova a utilizzare un periodo di tempo più breve.",
+        "text": "",
         "title": "Impossibile visualizzare tutti gli eventi"
       }
     },
@@ -5233,6 +5233,7 @@
         "new": "Nuova scheda",
         "repeat": {
           "learn-more": "Scopri di più",
+          "loading": "",
           "warning": "I pannelli in questa scheda utilizzano l'origine dei dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella scheda originale, non a quelli nelle schede ripetute."
         }
       },
@@ -9542,6 +9543,12 @@
         "total-bytes-processed": ""
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplicazione",
       "disable-highlighting": "Disabilita evidenziazione",
@@ -9565,8 +9572,12 @@
       "oldest-first": "Ordine: prima i registri meno recenti - Fai clic per mostrare prima i più recenti",
       "prettify-json": "Ingrandisci i registri JSON",
       "remove-escaping": "Rimuovi escaping",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Scorri verso il basso",
       "scroll-top": "Scorri verso l'alto",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "",
       "show-timestamps": "Mostra marca temporale",
       "show-unique-labels": "Mostra etichette univoche",
@@ -9615,6 +9626,7 @@
       "line-contains": "Aggiungi come riga contenente filtro",
       "line-contains-not": "Aggiungi come riga non contenente filtro"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Collegamenti dati",
       "aria-label-fields": "Campi",
@@ -12716,6 +12728,7 @@
     "description-column-filter": "",
     "description-count-rows": "",
     "description-fields": "",
+    "description-frozen-columns": "",
     "description-min-column-width": "",
     "name-calculation": "",
     "name-cell-height": "",
@@ -12727,6 +12740,7 @@
     "name-count-rows": "",
     "name-enable-pagination": "",
     "name-fields": "",
+    "name-frozen-columns": "",
     "name-hide-in-table": "",
     "name-min-column-width": "",
     "name-show-table-footer": "",
