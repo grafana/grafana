@@ -326,7 +326,7 @@ When a dashboard is in edit mode, you can undo and redo changes you've made usin
 When you've made a change and hover the cursor over the buttons, the tooltip displays the change you're about to undo or redo.
 Also, you can continue undoing or redoing as many changes as you need:
 
-{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-undo-redo-v12.0.mp4" >}}
+{{< video-embed src="/media/docs/grafana/dashboards/screen-record-undo-redo-v12.0.mp4" >}}
 
 The undo and redo buttons are only available at the dashboard level and only apply to changes made there, such as dashboard layout and grouping and high-level dashboard or panel updates.
 They aren't visible and don't apply when you're configuring a panel or making changes in the dashboard settings.
