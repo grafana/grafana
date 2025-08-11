@@ -931,7 +931,7 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 					sv := vals[getJSONFieldName(f, i)]
 					val.Set(reflect.ValueOf(sv))
 				} else {
-					return fmt.Errorf("Invalid secure value: %v", val)
+					return fmt.Errorf("invalid secure value: %v", val)
 				}
 			}
 			return
