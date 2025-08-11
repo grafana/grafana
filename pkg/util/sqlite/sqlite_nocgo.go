@@ -9,6 +9,8 @@ import (
 	"modernc.org/sqlite"
 )
 
+type Driver = sqlite.SQLiteDriver
+
 const DriverName = "sqlite"
 
 // The errors below are used in tests to simulate specific SQLite errors. It's a temporary solution
