@@ -796,7 +796,7 @@
       },
       "filterBy": "Filtrovat dle:",
       "too-many-events": {
-        "text": "Vybrané časové období má příliš mnoho událostí k zobrazení. Zobrazuje se posledních 5 000 událostí. Zkuste použít kratší časové období.",
+        "text": "",
         "title": "Všechny události nejde zobrazit"
       }
     },
@@ -5273,6 +5273,7 @@
         "new": "Nová karta",
         "repeat": {
           "learn-more": "Zjistěte víc",
+          "loading": "",
           "warning": "Panely v této záložce používají zdroj dat {{SHARED_DASHBOARD_QUERY}}. Tyto panely budou odkazovat na panel v původní záložce, nikoli na panely v opakovaných záložkách."
         }
       },
@@ -9602,6 +9603,12 @@
         "total-bytes-processed": "Celkový počet zpracovaných bajtů"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplikace",
       "disable-highlighting": "Zakázat zvýraznění",
@@ -9625,8 +9632,12 @@
       "oldest-first": "Seřazeno od nejstarších protokolů – kliknutím zobrazíte nejnovější protokoly jako první",
       "prettify-json": "Rozbalit protokoly JSON",
       "remove-escaping": "Odebrat únik",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Posunout dolů",
       "scroll-top": "Posunout nahoru",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Výsledek vyhledávání v protokolech",
       "show-timestamps": "Zobrazit časová razítka",
       "show-unique-labels": "Zobrazit jedinečné štítky",
@@ -9659,7 +9670,7 @@
     "name-order": "Objednávka",
     "name-prettify-json": "Zkrášlit JSON",
     "name-show-controls": "Zobrazit ovládací prvky",
-    "name-time": "Čas",
+    "name-time": "",
     "name-unique-labels": "Jedinečné štítky",
     "name-wrap-lines": "Zalomit řádky",
     "order-options": {
@@ -9675,6 +9686,7 @@
       "line-contains": "Přidat jako řádek obsahuje filtr",
       "line-contains-not": "Přidat jako řádek neobsahuje filtr"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",
       "aria-label-fields": "Pole",
@@ -12800,6 +12812,7 @@
     "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
     "description-count-rows": "Zobrazit jeden počet pro všechny datové řádky",
     "description-fields": "Vyberte pole, která by měla být vypočtena",
+    "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "name-calculation": "Výpočet",
     "name-cell-height": "Výška buňky",
@@ -12811,6 +12824,7 @@
     "name-count-rows": "Spočítat řádky",
     "name-enable-pagination": "Povolit stránkování",
     "name-fields": "Pole",
+    "name-frozen-columns": "",
     "name-hide-in-table": "Skrýt v tabulce",
     "name-min-column-width": "Minimální šířka sloupce",
     "name-show-table-footer": "Zobrazit zápatí tabulky",

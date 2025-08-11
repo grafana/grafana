@@ -784,7 +784,7 @@
       },
       "filterBy": "Filter menurut:",
       "too-many-events": {
-        "text": "Periode waktu yang dipilih memiliki terlalu banyak kejadian untuk ditampilkan. Menampilkan 5000 kejadian terbaru. Coba gunakan periode waktu yang lebih singkat.",
+        "text": "",
         "title": "Tidak dapat menampilkan semua kejadian"
       }
     },
@@ -5213,6 +5213,7 @@
         "new": "Tab baru",
         "repeat": {
           "learn-more": "Pelajari lebih lanjut",
+          "loading": "",
           "warning": "Panel di tab ini menggunakan sumber data {{SHARED_DASHBOARD_QUERY}}. Panel-panel ini akan mereferensikan panel di tab asli, bukan yang ada di tab berulang."
         }
       },
@@ -9512,6 +9513,12 @@
         "total-bytes-processed": "Total bita yang diproses"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplikasi",
       "disable-highlighting": "Nonaktifkan penyorotan",
@@ -9535,8 +9542,12 @@
       "oldest-first": "Diurutkan berdasarkan log paling lama lebih dulu - Klik untuk menampilkan yang terbaru lebih dulu",
       "prettify-json": "Perluas log JSON",
       "remove-escaping": "Hapus escape",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Gulir ke bawah",
       "scroll-top": "Gulir ke atas",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Cari di hasil log",
       "show-timestamps": "Tampilkan stempel waktu",
       "show-unique-labels": "Tampilkan label unik",
@@ -9569,7 +9580,7 @@
     "name-order": "Urutan",
     "name-prettify-json": "Rapikan JSON",
     "name-show-controls": "Tampilkan kontrol",
-    "name-time": "Waktu",
+    "name-time": "",
     "name-unique-labels": "Label unik",
     "name-wrap-lines": "Bungkus baris",
     "order-options": {
@@ -9585,6 +9596,7 @@
       "line-contains": "Tambahkan sebagai baris berisi filter",
       "line-contains-not": "Tambahkan sebagai baris tidak berisi filter"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Tautan data",
       "aria-label-fields": "Bidang",
@@ -12674,6 +12686,7 @@
     "description-column-filter": "Mengaktifkan/menonaktifkan filter bidang di tabel",
     "description-count-rows": "Tampilkan satu hitungan untuk semua baris data",
     "description-fields": "Pilih bidang yang harus dihitung",
+    "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
     "name-calculation": "Perhitungan",
     "name-cell-height": "Tinggi sel",
@@ -12685,6 +12698,7 @@
     "name-count-rows": "Hitung baris",
     "name-enable-pagination": "Aktifkan paginasi",
     "name-fields": "Bidang",
+    "name-frozen-columns": "",
     "name-hide-in-table": "Sembunyikan di tabel",
     "name-min-column-width": "Lebar kolom minimum",
     "name-show-table-footer": "Tampilkan footer tabel",
