@@ -42,9 +42,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: folderUID,
-  });
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUID });
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -109,7 +107,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
   const permissions = {
-    canEditFolders: canEditFolders && !isReadOnlyRepo,
+    canEditFolders,
     canEditDashboards,
     canDeleteFolders,
     canDeleteDashboards,
