@@ -33,6 +33,11 @@ export const DEGREES = [
   { label: () => t('transformers.regression-transformer-editor.label.cubic', 'Cubic'), value: 3 },
   { label: () => t('transformers.regression-transformer-editor.label.quartic', 'Quartic'), value: 4 },
   { label: () => t('transformers.regression-transformer-editor.label.quintic', 'Quintic'), value: 5 },
+  { label: () => t('transformers.regression-transformer-editor.label.sextic', 'Sextic'), value: 6 },
+  { label: () => t('transformers.regression-transformer-editor.label.septic', 'Septic'), value: 7 },
+  { label: () => t('transformers.regression-transformer-editor.label.octic', 'Octic'), value: 8 },
+  { label: () => t('transformers.regression-transformer-editor.label.nonic', 'Nonic'), value: 9 },
+  { label: () => t('transformers.regression-transformer-editor.label.decic', 'Decic'), value: 10 },
 ];
 
 export const getRegressionTransformer: () => SynchronousDataTransformerInfo<RegressionTransformerOptions> = () => ({
