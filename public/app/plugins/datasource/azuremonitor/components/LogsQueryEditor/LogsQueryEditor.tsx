@@ -108,11 +108,9 @@ const LogsQueryEditor = ({
             if (schema.database?.tables) {
               schema.database.tables = t;
             }
-            setSchema(schema);
           });
-        } else {
-          setSchema(schema);
         }
+        setSchema(schema);
         setIsLoadingSchema(false);
       });
     }
