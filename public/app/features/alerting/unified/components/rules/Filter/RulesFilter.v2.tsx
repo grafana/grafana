@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { pickBy } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
@@ -30,14 +29,19 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { useGetLabelsFromDataSourceName } from '../../../components/rule-editor/useAlertRuleSuggestions';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
-import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
 import { PopupCard } from '../../HoverCard';
 
 import { RulesFilterProps } from './RulesFilter';
 import { RulesViewModeSelector } from './RulesViewModeSelector';
-import { emptyAdvancedFilters, formAdvancedFiltersToRuleFilter, searchQueryToDefaultValues } from './utils';
+import {
+  emptyAdvancedFilters,
+  formAdvancedFiltersToRuleFilter,
+  searchQueryToDefaultValues,
+  usePluginsFilterStatus,
+  usePortalContainer,
+} from './utils';
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
@@ -48,31 +52,6 @@ const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlActi
  * @param zIndex - The z-index value for the portal container
  * @returns HTMLDivElement container appended to document.body, or undefined during initial render
  */
-function usePortalContainer(zIndex: number): HTMLElement | undefined {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const container = document.createElement('div');
-    Object.assign(container.style, {
-      position: 'fixed',
-      top: '0',
-      left: '0',
-      width: '100%',
-      height: '100%',
-      pointerEvents: 'none',
-      zIndex: String(zIndex),
-    });
-
-    document.body.appendChild(container);
-    containerRef.current = container;
-
-    return () => {
-      container.remove();
-    };
-  }, [zIndex]);
-
-  return containerRef.current || undefined;
-}
 
 export type AdvancedFilters = {
   namespace?: string | null;
@@ -98,10 +77,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { searchQuery, updateFilters, setSearchQuery } = useRulesFilter();
   const popupRef = useRef<HTMLDivElement>(null);
-
-  // Check if plugins filter is enabled
-  const { components } = useAlertingHomePageExtensions();
-  const pluginsFilterEnabled = components.length > 0;
+  const { pluginsFilterEnabled } = usePluginsFilterStatus();
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { setValue, watch, handleSubmit } = useForm<SearchQueryForm>({
@@ -126,21 +102,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     const newSearchQuery = applySearchFilterToQuery('', newFilter);
     setSearchQuery(newSearchQuery);
 
-    // Filter out empty/default values before tracking
-    const meaningfulValues = pickBy(values, (value, key) => {
-      if (value === null || value === undefined || value === '') {
-        return false;
-      }
-      if (Array.isArray(value) && value.length === 0) {
-        return false;
-      }
-      if (key === 'plugins' && !pluginsFilterEnabled) {
-        return false;
-      }
-      return true;
-    });
-
-    trackFilterButtonApplyClick(meaningfulValues);
+    trackFilterButtonApplyClick(values, pluginsFilterEnabled);
     setIsPopupOpen(false); // Should close popup after applying filters?
   };
 
@@ -184,7 +146,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const filterButtonLabel = t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Filter');
   return (
     <form onSubmit={handleSubmit(submitHandler)} onReset={() => {}}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <Stack direction="column" gap={1}>
         <Label htmlFor="rulesSearchInput">
           <Stack gap={0.5} alignItems="center">
             <span>
@@ -256,7 +218,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
           </PopupCard>
           <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
         </Stack>
-      </div>
+      </Stack>
     </form>
   );
 }
@@ -304,53 +266,65 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
     );
   }, [isLoadingGrafanaPromRules, isLoadingGrafanaRulerRules, externalPromRulesQueries]);
 
-  // Combine all namespace data
-  const allNamespaceNames = useMemo(() => {
-    const namespaceSet = new Set<string>();
-
-    // Add Grafana namespaces
-    grafanaPromRules.forEach((namespace) => namespaceSet.add(namespace.name));
-
-    // Add external data source namespaces
-    externalPromRulesQueries.forEach((query) => {
-      query.currentData?.forEach((namespace) => namespaceSet.add(namespace.name));
-    });
-
-    return Array.from(namespaceSet).sort();
-  }, [grafanaPromRules, externalPromRulesQueries]);
-
   // Create namespace options with better display names and grouping
   const namespaceOptions = useMemo((): Array<ComboboxOption<string>> => {
     const grafanaFolders: Array<ComboboxOption<string>> = [];
-    const externalFiles: Array<ComboboxOption<string>> = [];
+    const externalNamespaces: Array<ComboboxOption<string>> = [];
 
-    allNamespaceNames.forEach((namespace) => {
-      // Handle file paths from external Prometheus data sources
-      if (namespace.includes('/') && (namespace.endsWith('.yml') || namespace.endsWith('.yaml'))) {
-        const filename = namespace.split('/').pop() || namespace;
-        externalFiles.push({
-          label: filename,
-          value: namespace,
-          description: namespace, // Show full path as description
-        });
-      } else {
-        // Grafana managed folder
-        grafanaFolders.push({
-          label: namespace,
-          value: namespace,
-          description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
-        });
-      }
+    // Add Grafana folders
+    grafanaPromRules.forEach((namespace) => {
+      grafanaFolders.push({
+        label: namespace.name,
+        value: namespace.name,
+        description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
+      });
     });
 
-    // Sort each group and combine (folders first, then external files)
+    // Add external data source namespaces
+    externalPromRulesQueries.forEach((query) => {
+      query.currentData?.forEach((namespace) => {
+        // Handle file paths from external Prometheus data sources
+        if (namespace.name.includes('/') && (namespace.name.endsWith('.yml') || namespace.name.endsWith('.yaml'))) {
+          const filename = namespace.name.split('/').pop() || namespace.name;
+          const maxDescriptionLength = 100;
+          const truncatedDescription =
+            namespace.name.length > maxDescriptionLength
+              ? `${namespace.name.substring(0, maxDescriptionLength)}...`
+              : namespace.name;
+
+          externalNamespaces.push({
+            label: filename,
+            value: namespace.name,
+            description: truncatedDescription,
+          });
+        } else {
+          // For other external namespaces (like Mimir)
+          const maxLength = 50;
+          const maxDescriptionLength = 100;
+          const truncatedName =
+            namespace.name.length > maxLength ? `${namespace.name.substring(0, maxLength)}...` : namespace.name;
+          const truncatedDescription =
+            namespace.name.length > maxDescriptionLength
+              ? `${namespace.name.substring(0, maxDescriptionLength)}...`
+              : namespace.name;
+
+          externalNamespaces.push({
+            label: truncatedName,
+            value: namespace.name,
+            description: truncatedDescription,
+          });
+        }
+      });
+    });
+
+    // Sort each group and combine (folders first, then external namespaces)
     // eslint-disable-next-line no-restricted-syntax
     grafanaFolders.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
     // eslint-disable-next-line no-restricted-syntax
-    externalFiles.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+    externalNamespaces.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
 
-    return [...grafanaFolders, ...externalFiles];
-  }, [allNamespaceNames]);
+    return [...grafanaFolders, ...externalNamespaces];
+  }, [grafanaPromRules, externalPromRulesQueries]);
 
   // Combine all group names
   const allGroupNames = useMemo(() => {

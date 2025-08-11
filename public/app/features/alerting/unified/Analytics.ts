@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, pickBy } from 'lodash';
 
 import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
@@ -335,8 +335,22 @@ export function trackFilterButtonClick() {
   reportInteraction('grafana_alerting_filter_button_click');
 }
 
-export function trackFilterButtonApplyClick(payload: Partial<AdvancedFilters>) {
-  reportInteraction('grafana_alerting_filter_button_apply_click', payload);
+export function trackFilterButtonApplyClick(payload: AdvancedFilters, pluginsFilterEnabled: boolean) {
+  // Filter out empty/default values before tracking
+  const meaningfulValues = pickBy(payload, (value, key) => {
+    if (value === null || value === undefined || value === '') {
+      return false;
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return false;
+    }
+    if (key === 'plugins' && !pluginsFilterEnabled) {
+      return false;
+    }
+    return true;
+  });
+
+  reportInteraction('grafana_alerting_filter_button_apply_click', meaningfulValues);
 }
 
 export function trackFilterButtonClearClick() {
