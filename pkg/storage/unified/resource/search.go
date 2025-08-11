@@ -944,7 +944,7 @@ func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr 
 	key := fmt.Sprintf("%s/%s/%s", nsr.Namespace, nsr.Group, nsr.Resource)
 	if indexQueueProcessor, ok := s.indexQueueProcessors[key]; ok {
 		// index stored on existing processor may have been closed and rebuilt, so we need to update it
-		indexQueueProcessor.index = index
+		indexQueueProcessor.updateIndex(index)
 		return indexQueueProcessor, nil
 	}
 
