@@ -159,6 +159,9 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
+		if err != nil {
+			err = MakeParseError(rn.RefID, err)
+		}
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:

@@ -77,6 +77,25 @@ func MakeDependencyError(refID, depRefID string) error {
 	return DependencyError.Build(data)
 }
 
+var parsErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure of the dependent expression or query [{{.Public.err}}]"
+
+var ParseError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.parseError").MustTemplate(
+	parsErrStr,
+	errutil.WithPublic(parsErrStr))
+
+func MakeParseError(refID string, err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+			"err":   err,
+		},
+		Error: fmt.Errorf("did not execute expression %v due to a failure of the dependent expression or query %v", refID, err),
+	}
+
+	return ParseError.Build(data)
+}
+
 var unexpectedNodeTypeErrString = "expected executable node type but got node type [{{ .Public.nodeType }} for refid [{{ .Public.refId}}]"
 
 var UnexpectedNodeTypeError = errutil.NewBase(
