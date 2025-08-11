@@ -204,6 +204,16 @@ type JobStatus struct {
 
 	// Summary of processed actions
 	Summary []*JobResourceSummary `json:"summary,omitempty"`
+
+	// URLs
+	URLs *JobURLs `json:"urls,omitempty"`
+}
+
+type JobURLs struct {
+	// A URL pointing to the ref in the repository
+	SourceURL string `json:"sourceURL,omitempty"`
+	// A URL that will create a new pull request for this branch
+	NewPullRequestURL string `json:"newPullRequestURL,omitempty"`
 }
 
 // Convert a JOB to a

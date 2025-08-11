@@ -34,6 +34,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary":        schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec":                   schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus":                 schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobURLs":                   schema_pkg_apis_provisioning_v0alpha1_JobURLs(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig":     schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ManagerStats":              schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":         schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
@@ -1116,11 +1117,43 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							},
 						},
 					},
+					"urls": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URLs",
+							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobURLs"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobURLs"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobURLs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"sourceURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the ref in the repository",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"newPullRequestURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL that will create a new pull request for this branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

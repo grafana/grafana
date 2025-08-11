@@ -3135,6 +3135,27 @@
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobResourceSummary"
             }
+          },
+          "urls": {
+            "description": "URLs",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobURLs"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobURLs": {
+        "type": "object",
+        "properties": {
+          "newPullRequestURL": {
+            "description": "A URL that will create a new pull request for this branch",
+            "type": "string"
+          },
+          "sourceURL": {
+            "description": "A URL pointing to the ref in the repository",
+            "type": "string"
           }
         }
       },
@@ -4666,6 +4687,22 @@
             "description": "Summary of processed actions",
             "type": "array",
             "items": {}
+          },
+          "urls": {
+            "description": "URLs"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobURLs": {
+        "type": "object",
+        "properties": {
+          "newPullRequestURL": {
+            "description": "A URL that will create a new pull request for this branch",
+            "type": "string"
+          },
+          "sourceURL": {
+            "description": "A URL pointing to the ref in the repository",
+            "type": "string"
           }
         }
       },
