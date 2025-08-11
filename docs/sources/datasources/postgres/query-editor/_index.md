@@ -9,7 +9,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: PostgreSQL query editor
+menuTitle: Query editor
 title: PostgreSQL query editor
 weight: 20
 refs:

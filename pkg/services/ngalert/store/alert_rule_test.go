@@ -565,7 +565,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all version and insert one with empty rule_uid when DeletedRuleRetention is set", func(t *testing.T) {
-		orgID := int64(rand.IntN(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -632,7 +632,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all versions and not keep history if DeletedRuleRetention = 0", func(t *testing.T) {
-		orgID := int64(rand.IntN(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -685,7 +685,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all versions and not keep history if permanently is true", func(t *testing.T) {
-		orgID := int64(rand.IntN(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -1908,7 +1908,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 	gen := models.RuleGen
-	orgID := int64(rand.IntN(1000))
+	orgID := int64(rand.IntN(1000)) + 1
 
 	gen = gen.With(gen.WithOrgID(orgID))
 

@@ -311,10 +311,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filter metric names by regex search, using an additional call on the Prometheus API.",
-        "disable-text-wrap": "Disable text wrap"
-      },
       "feedback-link": {
         "give-feedback": "Give feedback",
         "title-give-feedback": "The metrics explorer is new, please let us know how we can improve it"
@@ -328,9 +324,6 @@
       },
       "get-placeholders": {
         "browse": "Search metrics by name",
-        "include-null-metadata": "Include results with no metadata",
-        "metadata-search-switch": "Include description in search",
-        "set-use-backend": "Enable regex search",
         "type": "Filter by type"
       },
       "get-prom-types": {
@@ -378,15 +371,9 @@
         "tooltip-metric": "Optional: returns a list of label values for the label name in the specified metric."
       },
       "metrics-modal": {
-        "additional-settings": "Additional Settings",
-        "aria-label-additional-settings": "Additional settings",
         "aria-label-browse-metrics": "Browse metrics",
         "currently-selected": "Currently selected: {{selected}}",
         "metrics-pre-filtered": "These metrics have been pre-filtered by labels chosen in the label filters.",
-        "placeholder-results-per-page": "results per page",
-        "results-amount_one": "Showing {{num}} of {{count}} results",
-        "results-amount_other": "Showing {{num}} of {{count}} results",
-        "results-per-page": "Results per page",
         "title-metrics-explorer": "Metrics explorer"
       },
       "nested-query": {
@@ -500,7 +487,6 @@
         "message-expand-search": "There are no metrics found. Try to expand your search and filters.",
         "message-no-metrics-found": "There are no metrics found in the data source.",
         "name": "Name",
-        "select": "Select",
         "type": "Type"
       },
       "update-function-args": {

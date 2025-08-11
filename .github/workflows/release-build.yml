@@ -1,6 +1,12 @@
 name: Build Release Packages
 on:
   workflow_dispatch:
+    inputs:
+      source-event:
+        description: If this workflow was triggered by another workflow, this value should be set to the GITHUB_EVENT_NAME of that source workflow.
+        type: string
+        required: false
+        default: workflow_dispatch
   schedule:
     # Every weeknight at midnight
     # "Scheduled workflows will only run on the default branch." (docs.github.com)
