@@ -5,7 +5,9 @@ import { locationUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
 import {
   getImportPhrase,
   getNewDashboardPhrase,
@@ -33,6 +35,10 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
+  // Get the repository for the current folder context
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: parentFolder?.uid,
+  });
 
   const onCreateFolder = async (folderName: string) => {
     try {
@@ -94,7 +100,11 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
   return (
     <>
       <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
-        <Button>
+        <Button
+          disabled={isReadOnlyRepo}
+          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText() : undefined}
+          variant="secondary"
+        >
           {getNewPhrase()}
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>

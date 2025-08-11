@@ -6,6 +6,8 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
@@ -30,6 +32,9 @@ export function FolderActionsButton({ folder }: Props) {
 
   const deleteFolder = useDeleteFolderMutationFacade();
 
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: folder?.uid,
+  });
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
   // Can only move folders when the folder is not provisioned
@@ -137,7 +142,11 @@ export function FolderActionsButton({ folder }: Props) {
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Button variant="secondary">
+        <Button
+          variant="secondary"
+          disabled={isReadOnlyRepo}
+          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText() : undefined}
+        >
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>

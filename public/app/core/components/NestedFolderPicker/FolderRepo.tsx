@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
 import { NestedFolderDTO } from 'app/features/search/service/types';
 import { FolderDTO, FolderListItemDTO } from 'app/types/folders';
 
@@ -9,11 +10,30 @@ export interface Props {
 }
 
 export function FolderRepo({ folder }: Props) {
-  const isProvisionedInstance = useIsProvisionedInstance();
+  // skip rendering if:
+  // folder is not present
+  // folder have parentUID
+  // folder is not managed
+  const skipRender = !folder || ('parentUID' in folder && folder.parentUID) || !folder.managedBy;
 
-  if (!folder || ('parentUID' in folder && folder.parentUID) || !folder.managedBy || isProvisionedInstance) {
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: skipRender ? undefined : folder?.uid,
+  });
+
+  if (skipRender) {
     return null;
   }
 
-  return <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.badge-tooltip', 'Provisioned')} />;
+  return (
+    <>
+      {isReadOnlyRepo && (
+        <Badge
+          color="darkgrey"
+          text={t('folder-repo.read-only-badge', 'Read only')}
+          tooltip={getReadOnlyTooltipText()}
+        />
+      )}
+      <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.badge-tooltip', 'Provisioned')} />
+    </>
+  );
 }
