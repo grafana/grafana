@@ -24,6 +24,23 @@ import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
 
+/**
+ * Parse label filters and prepare backend filters.
+ * Backend supports only exact matchers.
+ */
+export function parseBackendLabelFilters(labelFilter: string): Record<string, string> {
+  const labelMatchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
+  const labelFilters: Record<string, string> = {};
+
+  labelMatchers.forEach((matcher) => {
+    if (!matcher.isRegex && matcher.isEqual) {
+      labelFilters[matcher.name] = matcher.value;
+    }
+  });
+
+  return labelFilters;
+}
+
 interface HistoryFilters {
   stateTo: string;
   stateFrom: string;
