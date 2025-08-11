@@ -136,9 +136,6 @@ export const ComboboxList = <T extends string | number>({
                       value={allItemsSelected || isOptionSelected(item)}
                       indeterminate={item.value === ALL_OPTION_VALUE && selectedItems.length > 0 && !allItemsSelected}
                       aria-labelledby={itemId}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
                     />
                   </div>
                 )}

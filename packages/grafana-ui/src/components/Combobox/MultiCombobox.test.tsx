@@ -378,6 +378,46 @@ describe('MultiCombobox', () => {
       expect(asyncOptions).toHaveBeenCalledTimes(1);
       expect(asyncOptions).toHaveBeenCalledWith('abc');
     });
+
+    it('should allow deselection via checkbox click with async options', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      
+      const ControlledMultiCombobox = () => {
+        const [value, setValue] = React.useState<Array<ComboboxOption<string>>>([]);
+        return (
+          <MultiCombobox
+            options={asyncOptions}
+            value={value}
+            onChange={(val) => {
+              setValue(val ?? []);
+              onChangeHandler(val);
+            }}
+          />
+        );
+      };
+
+      render(<ControlledMultiCombobox />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      // Debounce
+      await act(async () => jest.advanceTimersByTime(200));
+
+      // Select an option by clicking the option
+      const option1 = await screen.findByRole('option', { name: 'Option 1' });
+      await user.click(option1);
+
+      expect(onChangeHandler).toHaveBeenCalledWith([simpleAsyncOptions[0]]);
+
+      // Now try to deselect by clicking the checkbox for Option 1
+      const option1Element = screen.getByRole('option', { name: 'Option 1' });
+      const option1Checkbox = option1Element.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      await user.click(option1Checkbox);
+
+      // This should call onChange with empty array but currently doesn't work
+      expect(onChangeHandler).toHaveBeenCalledWith([]);
+    });
   });
 });
 
