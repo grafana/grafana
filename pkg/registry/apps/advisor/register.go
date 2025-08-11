@@ -5,8 +5,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
-	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
+	"github.com/grafana/grafana/pkg/registry/apps/advisor/checkregistry"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,11 +28,11 @@ func RegisterApp(
 	}
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter:         advisorv0alpha1.GetOpenAPIDefinitions,
-		ManagedKinds:             advisorapp.GetKinds(),
-		Authorizer:               advisorapp.GetAuthorizer(),
+		ManagedKinds:             GetKinds(),
+		Authorizer:               GetAuthorizer(),
 		CustomConfig:             any(specificConfig),
 		AllowedV0Alpha1Resources: []string{builder.AllResourcesAllowed},
 	}
-	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, advisorapp.New)
+	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, New)
 	return provider
 }
