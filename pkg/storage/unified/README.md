@@ -263,8 +263,6 @@ unifiedStorageSearchUI = true
 unifiedStorageSearch = true
 ; (optional) Allows you to sort dashboards by usage insights fields when using enterprise
 ; unifiedStorageSearchSprinkles = true
-; (optional) Will skip search results filter based on user permissions
-; unifiedStorageSearchPermissionFiltering = false
 ```
 
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
@@ -298,6 +296,11 @@ docker in case you don't have one:
 docker run -d --name db -e "MYSQL_DATABASE=grafana" -e "MYSQL_USER=grafana" -e "MYSQL_PASSWORD=grafana" -e "MYSQL_ROOT_PASSWORD=root" -p 3306:3306 docker.io/bitnami/mysql:8.0.31
 ```
 
+or use our mysql docker block:
+```sh
+make devenv sources=mysql
+```
+
 ### 2. Create dedicated ini files for every service
 
 Example distributor ini file:
@@ -306,7 +309,7 @@ Example distributor ini file:
 * Bind and join `memberlist` on `127.0.0.1:7946` (default memberlist port)
 
 ```ini
-target = distributor
+target = search-server-distributor
 
 [server]
 http_port = 3000
@@ -367,8 +370,6 @@ signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
 
 [feature_toggles]
-kubernetesDashboardsAPI = true
-kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageSearch = true
 
@@ -408,6 +409,7 @@ path = grafana1.db
 [grafana-apiserver]
 address = 127.0.0.1:10000
 storage_type = unified-grpc
+search_server_address = 127.0.0.1:10000
 
 [server]
 protocol = http
@@ -415,8 +417,6 @@ http_port = 3011
 http_addr = "127.0.0.2"
 
 [feature_toggles]
-kubernetesDashboardsAPI = true
-kubernetesFolders = true
 unifiedStorageSearchUI = true
 
 [unified_storage.dashboards.dashboard.grafana.app]
@@ -449,9 +449,9 @@ Repeat for the other services.
 ./bin/grafana server target --config conf/storage-api-2.ini
 ./bin/grafana server target --config conf/storage-api-3.ini
 
-./bin/grafana server target --config conf/grafana1.ini
-./bin/grafana server target --config conf/grafana2.ini
-./bin/grafana server target --config conf/grafana3.ini
+./bin/grafana server --config conf/grafana1.ini
+./bin/grafana server --config conf/grafana2.ini
+./bin/grafana server --config conf/grafana3.ini
 ```
 
 etc
@@ -875,7 +875,6 @@ Unified Search requires several feature flags to be enabled depending on the des
 |--------------|---------|-------|--------------|
 | `unifiedStorageSearch` | Core search functionality | Experimental | Search API servers, indexing |
 | `unifiedStorageSearchUI` | Frontend search interface | Experimental | Grafana UI search |
-| `unifiedStorageSearchPermissionFiltering` | User permission filtering | GA | Access control in search results |
 | `unifiedStorageSearchSprinkles` | Usage insights integration | Experimental | Dashboard usage sorting (Enterprise) |
 | `unifiedStorageSearchDualReaderEnabled` | Shadow traffic to unified search | Experimental | Shadow traffic during migration |
 
@@ -890,9 +889,6 @@ unifiedStorageSearch = true
 
 ; Enable search UI (required for frontend)
 unifiedStorageSearchUI = true
-
-; Enable permission filtering (recommended)
-unifiedStorageSearchPermissionFiltering = true
 
 ; Enable shadow traffic during migration (optional)
 unifiedStorageSearchDualReaderEnabled = true

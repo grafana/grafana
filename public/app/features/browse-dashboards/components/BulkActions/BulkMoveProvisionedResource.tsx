@@ -32,7 +32,6 @@ import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 import { MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
-import { useBulkActionRequest } from './useBulkActionRequest';
 import {
   BulkActionFormData,
   BulkActionProvisionResourceProps,
@@ -41,6 +40,7 @@ import {
   getResourceTargetPath,
   MoveResultSuccessState,
 } from './utils';
+
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
   repository: RepositoryView;

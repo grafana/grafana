@@ -10,7 +10,7 @@ import {
   useDeleteRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
-import { AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
@@ -219,7 +219,6 @@ export function BulkDeleteProvisionedResource({
   const { repository, folder } = useGetResourceRepositoryView({
     folderName: folderUid || selectedFolderUid,
   });
-
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();

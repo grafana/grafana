@@ -4,14 +4,15 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellOptions } from '@grafana/schema';
+import { TableCellOptions, TableWrapTextOptions } from '@grafana/schema';
 import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
-import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
+import { TextWrapOptionsEditor } from './cells/TextWrapOptionsEditor';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -24,6 +25,19 @@ export interface TableCellEditorProps<T> {
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
+}
+
+const TEXT_WRAP_CELL_TYPES = new Set([
+  TableCellDisplayMode.Auto,
+  TableCellDisplayMode.Sparkline,
+  TableCellDisplayMode.ColorText,
+  TableCellDisplayMode.ColorBackground,
+  TableCellDisplayMode.DataLinks,
+  TableCellDisplayMode.Pill,
+]);
+
+function isTextWrapCellType(value: TableCellOptions): value is TableCellOptions & TableWrapTextOptions {
+  return TEXT_WRAP_CELL_TYPES.has(value.type);
 }
 
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
@@ -41,6 +55,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
     { value: TableCellDisplayMode.Sparkline, label: t('table.cell-types.sparkline', 'Sparkline') },
     { value: TableCellDisplayMode.JSONView, label: t('table.cell-types.json', 'JSON View') },
     { value: TableCellDisplayMode.Pill, label: t('table.cell-types.pill', 'Pill') },
+    { value: TableCellDisplayMode.Markdown, label: t('table.cell-types.markdown', 'Markdown + HTML') },
     { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
     { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
   ];
@@ -79,9 +94,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       <Field>
         <Combobox options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
-      {(cellType === TableCellDisplayMode.Auto || cellType === TableCellDisplayMode.ColorText) && (
-        <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
-      )}
+      {isTextWrapCellType(value) && <TextWrapOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />}
       {cellType === TableCellDisplayMode.Gauge && (
         <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
@@ -93,6 +106,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       )}
       {cellType === TableCellDisplayMode.Image && (
         <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {cellType === TableCellDisplayMode.Markdown && (
+        <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
     </div>
   );

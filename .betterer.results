@@ -863,6 +863,9 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/utils/useAsyncDependency.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/api/clients/folder/v1beta1/hooks.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/core/TableModel.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -900,9 +903,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
-    ],
-    "public/app/core/components/LocalStorageValueProvider/index.tsx:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./LocalStorageValueProvider\`)", "0"]
     ],
     "public/app/core/components/Login/LoginForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -978,11 +978,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`JsonExplorer\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`TimeSeries\`)", "1"],
       [0, 0, 0, "Do not re-export imported variable (\`appEvents\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`assignModelProperties\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`colors\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`contextSrv\`)", "5"],
-      [0, 0, 0, "Do not re-export imported variable (\`profiler\`)", "6"],
-      [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "7"]
+      [0, 0, 0, "Do not re-export imported variable (\`colors\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`contextSrv\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`profiler\`)", "5"],
+      [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "6"]
     ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2154,6 +2153,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"]
     ],
+    "public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "public/app/features/dashboard/state/DashboardModel.repeat.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -3058,9 +3060,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/BasicLogsToggle.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
-    "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/ConfigEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
     "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/CurrentUserFallbackCredentials.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
@@ -3919,9 +3918,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/table/table-new/TableCellOptionEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
-    "public/app/plugins/panel/table/table-new/cells/AutoCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
     "public/app/plugins/panel/table/table-new/cells/BarGaugeCellOptionsEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
@@ -3935,9 +3931,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
     ],
+    "public/app/plugins/panel/table/table-new/cells/MarkdownCellOptionsEditor.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
     "public/app/plugins/panel/table/table-new/cells/SparklineCellOptionsEditor.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
+    ],
+    "public/app/plugins/panel/table/table-new/cells/TextWrapOptionsEditor.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
     "public/app/plugins/panel/table/table-new/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4222,16 +4224,10 @@ exports[`no skipping a11y tests in stories`] = {
     "packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
-    "packages/grafana-ui/src/components/ColorPicker/ColorPicker.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
     "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/FileDropzone/FileDropzone.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/FormField/FormField.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
@@ -4240,16 +4236,10 @@ exports[`no skipping a11y tests in stories`] = {
     "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
-    "packages/grafana-ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
     "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Layout/Stack/Stack.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Link/TextLink.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
@@ -4280,9 +4270,6 @@ exports[`no skipping a11y tests in stories`] = {
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Table/Table.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [

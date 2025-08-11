@@ -3,6 +3,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
+import { GENERAL_FOLDER_UID } from '../../search/constants';
 import { isSharedWithMe } from '../components/utils';
 import { BrowseDashboardsState } from '../types';
 
@@ -24,7 +25,7 @@ export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: R
     isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
   };
 
-  if (parentUID) {
+  if (parentUID && parentUID !== GENERAL_FOLDER_UID) {
     state.childrenByParentUID[parentUID] = newCollection;
   } else {
     state.rootItems = newCollection;
