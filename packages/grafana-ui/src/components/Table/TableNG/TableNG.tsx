@@ -24,7 +24,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId, TableCellTooltipPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -517,9 +517,11 @@ export function TableNG(props: TableNGProps) {
                 };
               }
 
-              const placement = field.config.custom?.tooltip?.placement ?? 'auto';
+              const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
               const tooltipWidth =
-                placement === 'left' || placement === 'right' ? tooltipField.config.custom?.width : width;
+                placement === TableCellTooltipPlacement.Left || placement === TableCellTooltipPlacement.Right
+                  ? tooltipField.config.custom?.width
+                  : width;
 
               content = (
                 <TableCellTooltip

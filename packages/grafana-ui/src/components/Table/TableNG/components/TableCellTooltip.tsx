@@ -1,6 +1,7 @@
 import { CSSProperties, ReactElement, SyntheticEvent, useMemo, useRef, useState } from 'react';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
+import { TableCellTooltipPlacement } from '@grafana/schema';
 
 import { getPortalContainer } from '../../../Portal/Portal';
 import { Popover } from '../../../Tooltip/Popover';
@@ -18,7 +19,7 @@ export interface Props {
   field: Field;
   getActions: (field: Field, rowIdx: number) => ActionModel[];
   height?: number;
-  placement?: 'top' | 'right' | 'bottom' | 'left' | 'auto';
+  placement?: TableCellTooltipPlacement;
   renderer: TableCellRenderer;
   rowIdx: number;
   style?: CSSProperties;

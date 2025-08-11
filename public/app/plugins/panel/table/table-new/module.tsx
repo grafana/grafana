@@ -9,7 +9,13 @@ import {
   FieldConfigProperty,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
+import {
+  TableCellOptions,
+  TableCellDisplayMode,
+  defaultTableFieldOptions,
+  TableCellHeight,
+  TableCellTooltipPlacement,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -131,11 +137,26 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           category: cellCategory,
           settings: {
             options: [
-              { label: t('table-new.tooltip-placement-options.label-auto', 'Auto'), value: 'auto' },
-              { label: t('table-new.tooltip-placement-options.label-top', 'Top'), value: 'top' },
-              { label: t('table-new.tooltip-placement-options.label-right', 'Right'), value: 'right' },
-              { label: t('table-new.tooltip-placement-options.label-bottom', 'Bottom'), value: 'bottom' },
-              { label: t('table-new.tooltip-placement-options.label-left', 'Left'), value: 'left' },
+              {
+                label: t('table-new.tooltip-placement-options.label-auto', 'Auto'),
+                value: TableCellTooltipPlacement.Auto,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-top', 'Top'),
+                value: TableCellTooltipPlacement.Top,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-right', 'Right'),
+                value: TableCellTooltipPlacement.Right,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-bottom', 'Bottom'),
+                value: TableCellTooltipPlacement.Bottom,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-left', 'Left'),
+                value: TableCellTooltipPlacement.Left,
+              },
             ],
           },
           defaultValue: 'auto',
