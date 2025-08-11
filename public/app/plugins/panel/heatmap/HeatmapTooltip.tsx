@@ -55,7 +55,7 @@ interface HeatmapTooltipProps {
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   if (props.seriesIdx === 2) {
-    const dispValuesAndLinks = getDisplayValuesAndLinks(props.dataRef.current!.exemplars!, props.dataIdxs[2]!, 2);
+    const dispValuesAndLinks = getDisplayValuesAndLinks(props.dataRef.current!.exemplars!, props.dataIdxs[2]!);
 
     if (dispValuesAndLinks == null) {
       return null;

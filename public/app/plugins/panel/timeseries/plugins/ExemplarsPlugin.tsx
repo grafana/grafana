@@ -72,12 +72,11 @@ export const ExemplarsPlugin = ({
   }, []);
 
   const renderMarker = useCallback(
-    (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      const showMarker =
-        visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, dataFrameFieldIndex) : true;
+    (dataFrame: DataFrame, rowIndex: number) => {
+      const showMarker = visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, rowIndex) : true;
 
       const markerColor =
-        visibleSeries !== undefined ? getExemplarColor(dataFrame, dataFrameFieldIndex, visibleSeries) : undefined;
+        visibleSeries !== undefined ? getExemplarColor(dataFrame, rowIndex, visibleSeries) : undefined;
 
       if (!showMarker) {
         return <></>;
@@ -85,11 +84,12 @@ export const ExemplarsPlugin = ({
 
       return (
         <ExemplarMarker
-          setClickedExemplarFieldIndex={setLockedExemplarFieldIndex}
+          setClickedRowIndex={setLockedExemplarFieldIndex}
           clickedExemplarFieldIndex={lockedExemplarFieldIndex}
           timeZone={timeZone}
           dataFrame={dataFrame}
-          dataFrameFieldIndex={dataFrameFieldIndex}
+          frameIndex={0}
+          rowIndex={rowIndex}
           config={config}
           exemplarColor={markerColor}
           maxHeight={maxHeight}
@@ -147,11 +147,7 @@ interface LabelWithExemplarUIData {
 /**
  * Get color of active series in legend
  */
-const getExemplarColor = (
-  dataFrame: DataFrame,
-  dataFrameFieldIndex: DataFrameFieldIndex,
-  visibleLabels: VisibleExemplarLabels
-) => {
+const getExemplarColor = (dataFrame: DataFrame, rowIndex: number, visibleLabels: VisibleExemplarLabels) => {
   let exemplarColor;
   visibleLabels.labels.some((visibleLabel) => {
     const labelKeys = Object.keys(visibleLabel.labels);
@@ -160,7 +156,7 @@ const getExemplarColor = (
     });
     if (fields.length) {
       const hasMatch = fields.every((field, index, fields) => {
-        const value = field.values[dataFrameFieldIndex.fieldIndex];
+        const value = field.values[rowIndex];
         return visibleLabel.labels[field.name] === value;
       });
 
@@ -177,11 +173,7 @@ const getExemplarColor = (
 /**
  * Determine if the current exemplar marker is filtered by what series are selected in the legend UI
  */
-const showExemplarMarker = (
-  visibleSeries: VisibleExemplarLabels,
-  dataFrame: DataFrame,
-  dataFrameFieldIndex: DataFrameFieldIndex
-) => {
+const showExemplarMarker = (visibleSeries: VisibleExemplarLabels, dataFrame: DataFrame, rowIndex: number) => {
   let showMarker = false;
   // If all series are visible, don't filter any exemplars
   if (visibleSeries.labels.length === visibleSeries.totalSeriesCount) {
@@ -205,7 +197,7 @@ const showExemplarMarker = (
           showMarker = visibleSeries.labels.some((series) => {
             return Object.keys(series.labels).every((label) => {
               const value = series.labels[label];
-              return fields.find((field) => field.values[dataFrameFieldIndex.fieldIndex] === value);
+              return fields.find((field) => field.values[rowIndex] === value);
             });
           });
         }

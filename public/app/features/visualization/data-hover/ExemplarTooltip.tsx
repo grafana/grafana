@@ -23,7 +23,7 @@ export const ExemplarTooltip = ({ items, links, isPinned, maxHeight }: Props) =>
       <VizTooltipHeader
         item={{
           label: t('exemplar-tooltip-header', 'Exemplar'),
-          value: timeItem?.label ?? '',
+          value: timeItem?.value ?? '',
         }}
         isPinned={isPinned}
       />

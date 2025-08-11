@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { DataFrame, DataFrameFieldIndex, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { DataFrame, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
@@ -20,14 +20,17 @@ import { VizTooltipItem } from '@grafana/ui/internal';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
+import { getDataLinks } from '../../status-history/utils';
+
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
   dataFrame: DataFrame;
-  dataFrameFieldIndex: DataFrameFieldIndex;
+  frameIndex: number;
+  rowIndex: number;
   config: UPlotConfigBuilder;
   exemplarColor?: string;
-  clickedExemplarFieldIndex: DataFrameFieldIndex | undefined;
-  setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
+  clickedRowIndex: number | undefined;
+  setClickedRowIndex: React.Dispatch<number | undefined>;
   maxHeight?: number;
   maxWidth?: number;
 }
@@ -35,11 +38,12 @@ interface ExemplarMarkerProps {
 export const ExemplarMarker = ({
   timeZone,
   dataFrame,
-  dataFrameFieldIndex,
+  frameIndex,
+  rowIndex,
   config,
   exemplarColor,
-  clickedExemplarFieldIndex,
-  setClickedExemplarFieldIndex,
+  clickedRowIndex,
+  setClickedRowIndex,
   maxHeight,
   maxWidth,
 }: ExemplarMarkerProps) => {
@@ -70,24 +74,19 @@ export const ExemplarMarker = ({
   const dismiss = useDismiss(context);
   const hover = useHover(context, {
     handleClose: safePolygon(),
-    enabled: clickedExemplarFieldIndex === undefined,
+    enabled: clickedRowIndex === undefined,
   });
 
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover]);
 
   useEffect(() => {
-    if (
-      !(
-        clickedExemplarFieldIndex?.fieldIndex === dataFrameFieldIndex.fieldIndex &&
-        clickedExemplarFieldIndex?.frameIndex === dataFrameFieldIndex.frameIndex
-      )
-    ) {
+    if (clickedRowIndex !== rowIndex) {
       setIsLocked(false);
     }
-  }, [clickedExemplarFieldIndex, dataFrameFieldIndex]);
+  }, [clickedRowIndex, rowIndex]);
 
   const getSymbol = () => {
-    const symbols = [
+    return (
       <rect
         fill={exemplarColor}
         key="diamond"
@@ -95,27 +94,38 @@ export const ExemplarMarker = ({
         width="4.78985"
         height="4.78985"
         transform="rotate(45 3.38672 0)"
-      />,
-      <path
-        fill={exemplarColor}
-        key="x"
-        d="M1.94444 3.49988L0 5.44432L1.55552 6.99984L3.49996 5.05539L5.4444 6.99983L6.99992 5.44431L5.05548 3.49988L6.99983 1.55552L5.44431 0L3.49996 1.94436L1.5556 0L8.42584e-05 1.55552L1.94444 3.49988Z"
-      />,
-      <path fill={exemplarColor} key="triangle" d="M4 0L7.4641 6H0.535898L4 0Z" />,
-      <rect fill={exemplarColor} key="rectangle" width="5" height="5" />,
-      <path
-        fill={exemplarColor}
-        key="pentagon"
-        d="M3 0.5L5.85317 2.57295L4.76336 5.92705H1.23664L0.146831 2.57295L3 0.5Z"
-      />,
-      <path
-        fill={exemplarColor}
-        key="plus"
-        d="m2.35672,4.2425l0,2.357l1.88558,0l0,-2.357l2.3572,0l0,-1.88558l-2.3572,0l0,-2.35692l-1.88558,0l0,2.35692l-2.35672,0l0,1.88558l2.35672,0z"
-      />,
-    ];
+      />
+    );
 
-    return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
+    // const symbols = [
+    //   <rect
+    //     fill={exemplarColor}
+    //     key="diamond"
+    //     x="3.38672"
+    //     width="4.78985"
+    //     height="4.78985"
+    //     transform="rotate(45 3.38672 0)"
+    //   />,
+    //   <path
+    //     fill={exemplarColor}
+    //     key="x"
+    //     d="M1.94444 3.49988L0 5.44432L1.55552 6.99984L3.49996 5.05539L5.4444 6.99983L6.99992 5.44431L5.05548 3.49988L6.99983 1.55552L5.44431 0L3.49996 1.94436L1.5556 0L8.42584e-05 1.55552L1.94444 3.49988Z"
+    //   />,
+    //   <path fill={exemplarColor} key="triangle" d="M4 0L7.4641 6H0.535898L4 0Z" />,
+    //   <rect fill={exemplarColor} key="rectangle" width="5" height="5" />,
+    //   <path
+    //     fill={exemplarColor}
+    //     key="pentagon"
+    //     d="M3 0.5L5.85317 2.57295L4.76336 5.92705H1.23664L0.146831 2.57295L3 0.5Z"
+    //   />,
+    //   <path
+    //     fill={exemplarColor}
+    //     key="plus"
+    //     d="m2.35672,4.2425l0,2.357l1.88558,0l0,-2.357l2.3572,0l0,-1.88558l-2.3572,0l0,-2.35692l-1.88558,0l0,2.35692l-2.35672,0l0,1.88558l2.35672,0z"
+    //   />,
+    // ];
+
+    // return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
   };
 
   const lockExemplarModal = () => {
@@ -123,36 +133,25 @@ export const ExemplarMarker = ({
   };
 
   const renderMarker = useCallback(() => {
-    //Put fields with links on the top
-    const fieldsWithLinks =
-      dataFrame.fields.filter((field) => field.config.links?.length && field.config.links?.length > 0) || [];
-    const orderedDataFrameFields = [
-      ...fieldsWithLinks,
-      ...dataFrame.fields.filter((field) => !fieldsWithLinks.includes(field)),
-    ];
-
     const onClose = () => {
       setIsLocked(false);
       setIsOpen(false);
-      setClickedExemplarFieldIndex(undefined);
+      setClickedRowIndex(undefined);
     };
 
-    let displayValues: VizTooltipItem[] = [];
-    let links: LinkModel[] | undefined = [];
+    let items: VizTooltipItem[] = [];
+    let links: LinkModel[] = [];
 
-    orderedDataFrameFields.map((field: Field, i) => {
-      const value = field.values[dataFrameFieldIndex.fieldIndex];
+    dataFrame.fields.forEach((field: Field) => {
+      const value = field.values[rowIndex];
 
-      if (field.config.links?.length) {
-        links?.push(...(field.getLinks?.({ valueRowIndex: dataFrameFieldIndex.fieldIndex }) || []));
-      }
+      links.push(...getDataLinks(field, rowIndex));
 
-      const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+      const fieldDisplay = field.display?.(value) ?? { text: `${value}`, numeric: +value };
 
-      displayValues.push({
+      items.push({
         label: field.state?.displayName ?? field.name,
         value: formattedValueToString(fieldDisplay),
-        isActive: false,
       });
     });
 
@@ -164,15 +163,15 @@ export const ExemplarMarker = ({
         {...getFloatingProps()}
       >
         {isLocked && <CloseButton onClick={onClose} />}
-        <ExemplarTooltip items={displayValues} links={links} isPinned={isLocked} maxHeight={maxHeight} />
+        <ExemplarTooltip items={items} links={links} isPinned={isLocked} maxHeight={maxHeight} />
       </div>
     );
   }, [
     dataFrame.fields,
-    dataFrameFieldIndex,
+    rowIndex,
     styles,
     isLocked,
-    setClickedExemplarFieldIndex,
+    setClickedRowIndex,
     floatingStyles,
     getFloatingProps,
     refs.setFloating,
@@ -181,10 +180,10 @@ export const ExemplarMarker = ({
 
   const seriesColor = config
     .getSeries()
-    .find((s) => s.props.dataFrameFieldIndex?.frameIndex === dataFrameFieldIndex.frameIndex)?.props.lineColor;
+    .find((s) => s.props.dataFrameFieldIndex?.frameIndex === frameIndex)?.props.lineColor;
 
   const onExemplarClick = () => {
-    setClickedExemplarFieldIndex(dataFrameFieldIndex);
+    setClickedRowIndex(rowIndex);
     lockExemplarModal();
   };
 
