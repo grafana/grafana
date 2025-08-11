@@ -103,6 +103,16 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					link.Id = "standalone-plugin-page-" + include.Path
 					link.SortWeight = pathConfig.SortWeight
+					// Determine effective subtitle from overrides (path-level preferred, otherwise plugin-level)
+					effectiveSubTitle := ""
+					if len(pathConfig.SubTitle) > 0 {
+						effectiveSubTitle = pathConfig.SubTitle
+					} else if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride && len(navConfig.SubTitle) > 0 {
+						effectiveSubTitle = navConfig.SubTitle
+					}
+					if effectiveSubTitle != "" {
+						link.SubTitle = effectiveSubTitle
+					}
 
 					// Check if the section already has a page with the same URL, and in that case override it
 					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
@@ -112,6 +122,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 							child.Id = link.Id
 							child.SortWeight = link.SortWeight
 							child.PluginID = link.PluginID
+							// If a subtitle override is provided, apply it to the overridden core page
+							if link.SubTitle != "" {
+								child.SubTitle = link.SubTitle
+							}
 							child.Children = []*navtree.NavLink{}
 							isOverridingCorePage = true
 							break

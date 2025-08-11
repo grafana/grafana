@@ -357,6 +357,101 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestStandalonePageSubtitleOverrides(t *testing.T) {
+    httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+    reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+
+    // Plugin with a page that can override the core Connections page
+    testApp3 := pluginstore.Plugin{
+        JSONData: plugins.JSONData{
+            ID:   "test-app3",
+            Name: "Test app3 name",
+            Type: plugins.TypeApp,
+            Includes: []*plugins.Includes{
+                {
+                    Name:       "Default page",
+                    Path:       "/a/test-app3/default",
+                    Type:       "page",
+                    AddToNav:   true,
+                    DefaultNav: true,
+                },
+                {
+                    Name:     "Add new connection",
+                    Path:     "/connections/add-new-connection",
+                    Type:     "page",
+                    AddToNav: false,
+                },
+            },
+        },
+    }
+
+    pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+        testApp3.ID: {ID: 0, OrgID: 1, PluginID: testApp3.ID, PluginVersion: "1.0.0", Enabled: true},
+    }}
+
+    newService := func() ServiceImpl {
+        // Provide permissions so Connections section is built by buildDataConnectionsNavLink
+        perms := []ac.Permission{
+            {Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+            {Action: datasources.ActionCreate, Scope: "*"},
+            {Action: datasources.ActionRead, Scope: "*"},
+        }
+        return ServiceImpl{
+            log:            log.New("navtree"),
+            cfg:            setting.NewCfg(),
+            accessControl:  accesscontrolmock.New().WithPermissions(perms),
+            pluginSettings: &pluginSettings,
+            features:       featuremgmt.WithFeatures(),
+            pluginStore: &pluginstore.FakePluginStore{
+                PluginList: []pluginstore.Plugin{testApp3},
+            },
+        }
+    }
+
+    t.Run("uses path-level SubTitle override when provided", func(t *testing.T) {
+        service := newService()
+        // Path-level override with SubTitle
+        service.navigationAppPathConfig = map[string]NavigationAppConfig{
+            "/connections/add-new-connection": {SectionID: "connections", SubTitle: "Path override subtitle"},
+        }
+
+        // Build Connections section first (core page present and then overridden)
+        treeRoot := navtree.NavTreeRoot{}
+        treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+
+        err := service.addAppLinks(&treeRoot, reqCtx)
+        require.NoError(t, err)
+
+        // The core page should be overridden by the standalone plugin page entry with SubTitle from the path override
+        overridden := treeRoot.FindById("standalone-plugin-page-/connections/add-new-connection")
+        require.NotNil(t, overridden)
+        require.Equal(t, "Path override subtitle", overridden.SubTitle)
+    })
+
+    t.Run("falls back to plugin-level SubTitle override when path has none", func(t *testing.T) {
+        service := newService()
+        // Path-level override without SubTitle
+        service.navigationAppPathConfig = map[string]NavigationAppConfig{
+            "/connections/add-new-connection": {SectionID: "connections"},
+        }
+        // Plugin-level override with SubTitle
+        service.navigationAppConfig = map[string]NavigationAppConfig{
+            "test-app3": {SubTitle: "Plugin override subtitle"},
+        }
+
+        // Build Connections section first
+        treeRoot := navtree.NavTreeRoot{}
+        treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+
+        err := service.addAppLinks(&treeRoot, reqCtx)
+        require.NoError(t, err)
+
+        overridden := treeRoot.FindById("standalone-plugin-page-/connections/add-new-connection")
+        require.NotNil(t, overridden)
+        require.Equal(t, "Plugin override subtitle", overridden.SubTitle)
+    })
+}
+
 func TestReadingNavigationSettings(t *testing.T) {
 	t.Run("Should include defaults", func(t *testing.T) {
 		service := ServiceImpl{
