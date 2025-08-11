@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { Badge } from '@grafana/ui';
+import { Badge, Stack } from '@grafana/ui';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
 import { NestedFolderDTO } from 'app/features/search/service/types';
@@ -25,7 +25,8 @@ export function FolderRepo({ folder }: Props) {
   }
 
   return (
-    <>
+    // badge with text and icon only has different height, we will need to adjust the layout using stretch
+    <Stack direction="row" alignItems="stretch">
       {isReadOnlyRepo && (
         <Badge
           color="darkgrey"
@@ -34,6 +35,6 @@ export function FolderRepo({ folder }: Props) {
         />
       )}
       <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.provisioned-badge', 'Provisioned')} />
-    </>
+    </Stack>
   );
 }
