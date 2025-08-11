@@ -608,7 +608,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref common.ReferenceCallb
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "HistoricJob is a history entry of Job. It is used to store Jobs that have been processed.\n\nThe repository name and type are stored as labels.",
+				Description: "HistoricJob is an append only log, saving all jobs that have been processed.\n\nNOTE: This should not be used directly by any external consumer. When there is a more stable integration with loki (an appropriate append only store) this may be removed without notice.\n\nThe repository name and type are stored as labels.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
