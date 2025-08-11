@@ -1,5 +1,7 @@
 import { Page, Response } from '@playwright/test';
 
+import { testScopes } from './scopes';
+
 export type TestScope = {
   name: string;
   title: string;
@@ -146,26 +148,35 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
     scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
 
+  const groups = ['Most relevant', 'Dashboards', 'Something else', ''];
+
   await page.route(url, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         apiVersion: 'scope.grafana.app/v0alpha1',
-        items: scopes.map((scope) => {
-          return {
-            kind: 'ScopeDashboardBinding',
-            apiVersion: 'scope.grafana.app/v0alpha1',
-            metadata: {},
-            spec: {
-              dashboard: scope.dashboardUid ?? 'edediimbjhdz4b',
-              scope: `scope-${scope.name}`,
-            },
-            status: {
-              dashboardTitle: scope.dashboardTitle ?? 'A tall dashboard',
-              groups: ['Dashboards'],
-            },
-          };
+        items: scopes.flatMap((scope) => {
+          const bindings: any = [];
+
+          for (let i = 0; i < 10; i++) {
+            const selectedGroup = groups[Math.floor(Math.random() * groups.length)];
+            bindings.push({
+              kind: 'ScopeDashboardBinding',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: {},
+              spec: {
+                dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
+                scope: `scope-${scope.name}`,
+              },
+              status: {
+                dashboardTitle: (scope.dashboardTitle ?? 'A tall dashboard') + (selectedGroup[0] ?? 'U') + i,
+                ...(selectedGroup !== '' && { groups: [selectedGroup] }),
+              },
+            });
+          }
+
+          return bindings;
         }),
       }),
     });
@@ -230,4 +241,30 @@ export async function getScopeLeafTitle(page: Page, nth: number): Promise<string
   }
 
   return scopeTitle;
+}
+
+export async function setScopes(
+  page: Page,
+  useLiveData: boolean,
+  scopeBindingSetting?: { uid: string; title: string }
+) {
+  const scopes = testScopes(scopeBindingSetting);
+  await openScopesSelector(page, useLiveData ? undefined : scopes); //used only in mocked scopes version
+
+  let scopeName = await getScopeTreeName(page, 0);
+
+  const firstLevelScopes = scopes[0].children!; //used only in mocked scopes version
+  await expandScopesSelection(page, scopeName, useLiveData ? undefined : firstLevelScopes);
+
+  scopeName = await getScopeTreeName(page, 1);
+
+  const secondLevelScopes = firstLevelScopes[0].children!; //used only in mocked scopes version
+  await expandScopesSelection(page, scopeName, useLiveData ? undefined : secondLevelScopes);
+
+  const selectedScopes = [secondLevelScopes[0]]; //used only in mocked scopes version
+
+  scopeName = await getScopeLeafName(page, 0);
+  await selectScope(page, scopeName, useLiveData ? undefined : selectedScopes[0]);
+
+  await applyScopes(page, useLiveData ? undefined : selectedScopes); //used only in mocked scopes version
 }

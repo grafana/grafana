@@ -10,10 +10,10 @@ test.use({
   },
 });
 
-const USE_LIVE_DATA = process.env.USE_LIVE_DATA;
+const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
 const LIVE_DASHBOARD_UID = process.env.LIVE_DASHBOARD_UID;
 
-export const FIRST_DASHBOARD = USE_LIVE_DATA && LIVE_DASHBOARD_UID ? LIVE_DASHBOARD_UID : 'scopes-dashboard-1';
+export const DASHBOARD = USE_LIVE_DATA && LIVE_DASHBOARD_UID ? LIVE_DASHBOARD_UID : 'scopes-dashboard-1';
 
 test.describe(
   'GroupBy CUJs',
@@ -44,7 +44,7 @@ test.describe(
 
     test('Groupby data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
       await test.step('1.Apply a groupBy across one or mulitple dimensions', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         if (!USE_LIVE_DATA) {
           // mock the API call to get the labels
@@ -87,7 +87,7 @@ test.describe(
       });
 
       await test.step('2.Autocomplete for the groupby values', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         if (!USE_LIVE_DATA) {
           // mock the API call to get the labels
@@ -128,7 +128,7 @@ test.describe(
       });
 
       await test.step('3.Edit and restore default groupBy', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         if (!USE_LIVE_DATA) {
           // mock the API call to get the labels
@@ -190,7 +190,7 @@ test.describe(
       });
 
       await test.step('4.Enter multiple values using keyboard only', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         if (!USE_LIVE_DATA) {
           // mock the API call to get the labels

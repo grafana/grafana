@@ -47,7 +47,7 @@
       "id": 2,
       "options": {
         "mode": "markdown",
-        "content": "GroupByVar: $groupBy\n\nAdHocVar: $adHoc"
+        "content": "GroupByVar: $groupBy\n\nAdHocVar: $adHoc\n\nTimerange: ${__url_time_range}"
       },
       "pluginVersion": "8.4.0-pre",
       "title": "Panel Title",

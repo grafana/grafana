@@ -1,18 +1,7 @@
-import { Page } from 'playwright-core';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
 import scopesDashboardOne from '../dashboards/scopes-cujs/scopeDashboardOne.json';
-import {
-  applyScopes,
-  expandScopesSelection,
-  getScopeLeafName,
-  getScopeTreeName,
-  openScopesSelector,
-  selectScope,
-  TestScope,
-} from '../utils/scope-helpers';
-import { testScopes } from '../utils/scopes';
+import { setScopes } from '../utils/scope-helpers';
 
 test.use({
   featureToggles: {
@@ -22,10 +11,10 @@ test.use({
   },
 });
 
-const USE_LIVE_DATA = process.env.USE_LIVE_DATA;
+const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
 const LIVE_DASHBOARD_UID = process.env.LIVE_DASHBOARD_UID;
 
-export const FIRST_DASHBOARD = USE_LIVE_DATA && LIVE_DASHBOARD_UID ? LIVE_DASHBOARD_UID : 'scopes-dashboard-1';
+export const DASHBOARD = USE_LIVE_DATA && LIVE_DASHBOARD_UID ? LIVE_DASHBOARD_UID : 'scopes-dashboard-1';
 
 test.describe(
   'AdHoc Filters CUJs',
@@ -56,7 +45,7 @@ test.describe(
 
     test('Filter data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
       await test.step('1.Apply filtering to a whole dashboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
@@ -121,7 +110,7 @@ test.describe(
       });
 
       await test.step('2.Autocomplete for the filter values', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         if (!USE_LIVE_DATA) {
           // mock the API call to get the labels
@@ -180,7 +169,7 @@ test.describe(
       });
 
       await test.step('3.Choose operators on the filters', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         await page.waitForTimeout(500);
 
@@ -253,7 +242,7 @@ test.describe(
       });
 
       await test.step('4.Edit and restore default filters applied to the dashboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         const defaultDashboardFilter = page.getByLabel(/^Edit filter with key/).first();
         const pillText = await defaultDashboardFilter.textContent();
@@ -277,13 +266,13 @@ test.describe(
       });
 
       await test.step('5.Edit and restore filters implied by scope', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         await page.waitForTimeout(500);
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
-        await setScopes(page);
+        await setScopes(page, USE_LIVE_DATA);
 
         await page.waitForTimeout(500);
 
@@ -311,7 +300,7 @@ test.describe(
       });
 
       await test.step('6.Add and edit filters through keyboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
         await page.waitForTimeout(500);
 
@@ -390,28 +379,3 @@ test.describe(
     });
   }
 );
-
-const setScopes = async (page: Page) => {
-  const scopesSelector = page.getByTestId('scopes-selector-input');
-
-  expect.soft(scopesSelector).toHaveValue('');
-
-  await openScopesSelector(page, USE_LIVE_DATA ? undefined : testScopes); //used only in mocked scopes version
-
-  let scopeName = await getScopeTreeName(page, 0);
-
-  const firstLevelScopes = testScopes[0].children!; //used only in mocked scopes version
-  await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : firstLevelScopes);
-
-  scopeName = await getScopeTreeName(page, 1);
-
-  const secondLevelScopes = firstLevelScopes[0].children!; //used only in mocked scopes version
-  await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : secondLevelScopes);
-
-  const selectedScopes = [secondLevelScopes[0]]; //used only in mocked scopes version
-
-  scopeName = await getScopeLeafName(page, 0);
-  await selectScope(page, scopeName, USE_LIVE_DATA ? undefined : selectedScopes[0]);
-
-  await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes); //used only in mocked scopes version
-};
