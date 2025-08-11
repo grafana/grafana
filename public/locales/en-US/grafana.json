@@ -5268,8 +5268,7 @@
       "discard-panel-new": "Discard panel",
       "edit": {
         "label": "Edit",
-        "tooltip": "Enter edit mode",
-        "tooltip-read-only": "This dashboard is managed by a read-only repository"
+        "tooltip": "Enter edit mode"
       },
       "enter-edit-mode": {
         "label": "Make editable",
@@ -7507,7 +7506,7 @@
     "loading": "Loading folders..."
   },
   "folder-repo": {
-    "badge-tooltip": "Provisioned",
+    "provisioned-badge": "Provisioned",
     "read-only-badge": "Read only"
   },
   "folders": {
