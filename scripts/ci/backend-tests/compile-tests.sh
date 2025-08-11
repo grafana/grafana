@@ -5,7 +5,9 @@ usage() {
   {
     echo "compile-tests.sh: Compile Go tests in the given packages."
     echo "                  Reminder: The test binaries must be run separately, and they must use -test. prefixes on flags."
-    echo "usage: $0 [-h] [-o <directory>] <packages>..."
+    echo "usage: $0 [-h] [-o <directory>] [-c <flags>]... <packages>..."
+    echo
+    echo "This is expected to be run from the root of the repository."
     echo
     echo "  -h: Show this help message."
     echo "  -o: The directory to output the compiled tests in."
@@ -64,4 +66,7 @@ if [ -d "$output_dir" ]; then
   rm -r "$output_dir"
 fi
 mkdir -p "$output_dir"
-printf '%s\n' "${packages[@]}" | go run github.com/shenwei356/rush@latest -- go test -c -o "${output_dir}"/'{%:}-{#}' "${flags[@]}" '{}'
+printf '%s\n' "${packages[@]}" | go run github.com/shenwei356/rush@latest -- "$root/scripts/ci/backend-tests/_compile-single-test.sh" '{}' "${output_dir}" "${flags[@]}" || {
+  echo "Error: Failed to compile tests." >&2
+  exit 1
+}
