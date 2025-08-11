@@ -1236,13 +1236,6 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		}
 	}
 
-	// Currently not used, but will error if they do not decrypt properly
-	// TODO, replace nested secure values
-	_, err := decrypt(ctx, r, b.decryptSvc)
-	if err != nil {
-		return nil, err
-	}
-
 	switch r.Spec.Type {
 	case provisioning.BitbucketRepositoryType:
 		return nil, errors.New("repository type bitbucket is not available")
