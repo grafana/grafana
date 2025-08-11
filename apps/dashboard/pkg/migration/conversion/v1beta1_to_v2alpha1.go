@@ -1718,9 +1718,20 @@ func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQu
 	if hideTimeOverride := getBoolField(panelMap, "hideTimeOverride", false); hideTimeOverride {
 		queryOptions.HideTimeOverride = &hideTimeOverride
 	}
-	if queryCachingTTL := getStringField(panelMap, "queryCachingTTL", ""); queryCachingTTL != "" {
-		// Convert string to int64 for queryCachingTTL
-		if ttl, err := strconv.ParseInt(queryCachingTTL, 10, 64); err == nil {
+	// Handle queryCachingTTL as string or number
+	if val, exists := panelMap["queryCachingTTL"]; exists {
+		switch v := val.(type) {
+		case string:
+			if v != "" {
+				if ttl, err := strconv.ParseInt(v, 10, 64); err == nil {
+					queryOptions.QueryCachingTTL = &ttl
+				}
+			}
+		case float64:
+			ttl := int64(v)
+			queryOptions.QueryCachingTTL = &ttl
+		case int:
+			ttl := int64(v)
 			queryOptions.QueryCachingTTL = &ttl
 		}
 	}
@@ -1747,8 +1758,8 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 				Title: getStringField(linkMap, "title", ""),
 				Url:   getStringField(linkMap, "url", ""),
 			}
-
-			if targetBlank := getBoolField(linkMap, "targetBlank", false); targetBlank {
+			if _, exists := linkMap["targetBlank"]; exists {
+				targetBlank := getBoolField(linkMap, "targetBlank", false)
 				dataLink.TargetBlank = &targetBlank
 			}
 

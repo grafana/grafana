@@ -133,7 +133,7 @@
       },
       {
         "datasource": {
-          "type": "grafana-testdata-datasource",
+          "type": "prometheus",
           "uid": "default-ds-uid"
         },
         "fieldConfig": {
@@ -173,7 +173,7 @@
         "panels": [
           {
             "datasource": {
-              "type": "postgres",
+              "type": "loki",
               "uid": "non-default-test-ds-uid"
             },
             "fieldConfig": {

@@ -140,22 +140,11 @@
           },
           "enable": true,
           "filter": {
+            "exclude": true,
             "ids": [
               1,
               2,
               3
-            ],
-            "list": [
-              {
-                "key": "service",
-                "operator": "=",
-                "value": "api"
-              },
-              {
-                "key": "environment",
-                "operator": "!=",
-                "value": "test"
-              }
             ]
           },
           "hide": false,

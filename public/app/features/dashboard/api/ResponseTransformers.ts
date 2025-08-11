@@ -530,7 +530,7 @@ export function buildPanelKind(p: Panel): PanelKind {
         p.links?.map<DataLink>((l) => ({
           title: l.title,
           url: l.url || '',
-          targetBlank: l.targetBlank,
+          ...(l.targetBlank !== undefined && { targetBlank: l.targetBlank }),
         })) || [],
       id: p.id!,
       data: {
@@ -606,17 +606,12 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             },
             options: v.options ?? [],
             refresh: transformVariableRefreshToEnum(v.refresh),
-            ...(v.datasource?.uid && {
-              datasource: {
-                name: v.datasource.uid,
-              },
-            }),
             regex: v.regex ?? '',
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
               version: defaultDataQueryKind().version,
-              group: v.datasource?.type ?? getDefaultDatasource().type!,
+              group: v.datasource?.type ?? getDefaultDatasourceType(),
               ...(v.datasource?.uid && {
                 datasource: {
                   name: v.datasource.uid,
@@ -831,7 +826,13 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       case 'QueryVariable':
         const qv: VariableModel = {
           ...commonProperties,
-          current: v.spec.current,
+          current: {
+            text: v.spec.current.text,
+            value:
+              LEGACY_STRING_VALUE_KEY in v.spec.current.value
+                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+                : v.spec.current.value,
+          },
           options: v.spec.options,
           query:
             LEGACY_STRING_VALUE_KEY in v.spec.query.spec
@@ -870,8 +871,14 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
         const cv: VariableModel = {
           ...commonProperties,
           current: {
-            text: v.spec.current.value,
-            value: v.spec.current.value,
+            text:
+              LEGACY_STRING_VALUE_KEY in v.spec.current.value
+                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+                : v.spec.current.value,
+            value:
+              LEGACY_STRING_VALUE_KEY in v.spec.current.value
+                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+                : v.spec.current.value,
           },
           options: v.spec.options,
           query: v.spec.query,
@@ -885,12 +892,21 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
         const constant: VariableModel = {
           ...commonProperties,
           current: {
-            text: v.spec.current.value,
-            value: v.spec.current.value,
+            text:
+              LEGACY_STRING_VALUE_KEY in v.spec.current.value
+                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+                : v.spec.current.value,
+            value:
+              LEGACY_STRING_VALUE_KEY in v.spec.current.value
+                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+                : v.spec.current.value,
           },
           hide: transformVariableHideToEnumV1(v.spec.hide),
           // @ts-expect-error
-          query: v.spec.current.value,
+          query:
+            LEGACY_STRING_VALUE_KEY in v.spec.current.value
+              ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+              : v.spec.current.value,
         };
         variables.push(constant);
         break;
@@ -898,8 +914,14 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
         const iv: VariableModel = {
           ...commonProperties,
           current: {
-            text: v.spec.current.value,
-            value: v.spec.current.value,
+            text:
+              LEGACY_STRING_VALUE_KEY in v.spec.current.value
+                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+                : v.spec.current.value,
+            value:
+              LEGACY_STRING_VALUE_KEY in v.spec.current.value
+                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+                : v.spec.current.value,
           },
           hide: transformVariableHideToEnumV1(v.spec.hide),
           query: v.spec.query,
@@ -913,16 +935,21 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
         variables.push(iv);
         break;
       case 'TextVariable':
+        const currentValue =
+          LEGACY_STRING_VALUE_KEY in v.spec.current.value
+            ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
+            : v.spec.current.value;
+
         const current = {
-          text: v.spec.current.value,
-          value: v.spec.current.value,
+          text: currentValue,
+          value: currentValue,
         };
 
         const tv: VariableModel = {
           ...commonProperties,
           current: {
-            text: v.spec.current.value,
-            value: v.spec.current.value,
+            text: currentValue,
+            value: currentValue,
           },
           options: [{ ...current, selected: true }],
           query: v.spec.query,

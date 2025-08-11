@@ -265,7 +265,8 @@
           "links": [
             {
               "title": "Drill Down",
-              "url": "/d/detailed-view"
+              "url": "/d/detailed-view",
+              "targetBlank": false
             }
           ],
           "data": {
@@ -333,6 +334,7 @@
                 "timeFrom": "1h",
                 "maxDataPoints": 1000,
                 "timeShift": "1h",
+                "queryCachingTTL": 300,
                 "hideTimeOverride": true
               }
             }
