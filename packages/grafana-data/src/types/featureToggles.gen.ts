@@ -447,7 +447,7 @@ export interface FeatureToggles {
   alertingSaveStatePeriodic?: boolean;
   /**
   * Enables the compressed protobuf-based alert state storage
-  * @default false
+  * @default true
   */
   alertingSaveStateCompressed?: boolean;
   /**
@@ -987,6 +987,10 @@ export interface FeatureToggles {
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
+  /**
+  * Registers AuthZ resource permission /apis endpoints
+  */
+  kubernetesAuthzResourcePermissionApis?: boolean;
   /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
