@@ -829,6 +829,65 @@ func (_c *MockGithubRepository_ReadTree_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// RefURLs provides a mock function with given fields: ctx, ref
+func (_m *MockGithubRepository) RefURLs(ctx context.Context, ref string) (*v0alpha1.RefURLs, error) {
+	ret := _m.Called(ctx, ref)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RefURLs")
+	}
+
+	var r0 *v0alpha1.RefURLs
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v0alpha1.RefURLs, error)); ok {
+		return rf(ctx, ref)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v0alpha1.RefURLs); ok {
+		r0 = rf(ctx, ref)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v0alpha1.RefURLs)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, ref)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGithubRepository_RefURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RefURLs'
+type MockGithubRepository_RefURLs_Call struct {
+	*mock.Call
+}
+
+// RefURLs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ref string
+func (_e *MockGithubRepository_Expecter) RefURLs(ctx interface{}, ref interface{}) *MockGithubRepository_RefURLs_Call {
+	return &MockGithubRepository_RefURLs_Call{Call: _e.mock.On("RefURLs", ctx, ref)}
+}
+
+func (_c *MockGithubRepository_RefURLs_Call) Run(run func(ctx context.Context, ref string)) *MockGithubRepository_RefURLs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_RefURLs_Call) Return(_a0 *v0alpha1.RefURLs, _a1 error) *MockGithubRepository_RefURLs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGithubRepository_RefURLs_Call) RunAndReturn(run func(context.Context, string) (*v0alpha1.RefURLs, error)) *MockGithubRepository_RefURLs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Repo provides a mock function with no fields
 func (_m *MockGithubRepository) Repo() string {
 	ret := _m.Called()
