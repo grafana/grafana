@@ -1318,6 +1318,19 @@
     },
     {
       "metadata": {
+        "name": "favoriteDatasources",
+        "resourceVersion": "1754648387873",
+        "creationTimestamp": "2025-08-08T10:19:47Z"
+      },
+      "spec": {
+        "description": "Enable favorite datasources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "featureHighlights",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2022-02-03T11:53:23Z"
