@@ -25,6 +25,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig":    schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitRepositoryConfig":       schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus":              schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob":               schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJobList":           schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoryItem":               schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoryList":               schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Job":                       schema_pkg_apis_provisioning_v0alpha1_Job(ref),
@@ -599,6 +601,100 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 				Required: []string{"healthy"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "HistoricJob is a history entry of Job. It is used to store Jobs that have been processed.\n\nThe repository name and type are stored as labels.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJob", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
