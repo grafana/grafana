@@ -788,7 +788,7 @@
       },
       "filterBy": "Filtrer par :",
       "too-many-events": {
-        "text": "La période sélectionnée contient trop d'événements à afficher. Affichage des 5 000 derniers événements. Essayez d'utiliser une période plus courte.",
+        "text": "",
         "title": "Impossible d'afficher tous les événements"
       }
     },
@@ -5233,6 +5233,7 @@
         "new": "Nouvel onglet",
         "repeat": {
           "learn-more": "En savoir plus",
+          "loading": "",
           "warning": "Les panneaux de cet onglet utilisent la source de données {{SHARED_DASHBOARD_QUERY}}. Ces panneaux feront référence au panneau de l’onglet d’origine, pas à ceux des onglets répétés."
         }
       },
@@ -9542,6 +9543,12 @@
         "total-bytes-processed": "Nombre total d’octets traités"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "",
+        "label-nanoseconds": ""
+      }
+    },
     "logs-controls": {
       "deduplication": "Déduplication",
       "disable-highlighting": "Désactiver la surbrillance",
@@ -9565,8 +9572,12 @@
       "oldest-first": "Trié par les journaux les plus anciens en premier - Cliquez pour afficher les plus récents en premier",
       "prettify-json": "Développer les journaux JSON",
       "remove-escaping": "Supprimer l’échappement",
+      "resolution-ms": "",
+      "resolution-ns": "",
       "scroll-bottom": "Faire défiler vers le bas",
       "scroll-top": "Retour en haut de page",
+      "show-ms-timestamps": "",
+      "show-ns-timestamps": "",
       "show-search": "Rechercher dans les résultats de logs",
       "show-timestamps": "Afficher les horodatages",
       "show-unique-labels": "Afficher les étiquettes uniques",
@@ -9599,7 +9610,7 @@
     "name-order": "Ordre",
     "name-prettify-json": "Embellir le JSON",
     "name-show-controls": "Afficher les contrôles",
-    "name-time": "Heure",
+    "name-time": "",
     "name-unique-labels": "Étiquettes uniques",
     "name-wrap-lines": "Retour à la ligne automatique",
     "order-options": {
@@ -9615,6 +9626,7 @@
       "line-contains": "Ajouter car la ligne contient un filtre",
       "line-contains-not": "Ajouter car la ligne ne contient pas de filtre"
     },
+    "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Données de liaison",
       "aria-label-fields": "Champs",
@@ -12716,6 +12728,7 @@
     "description-column-filter": "Active ou désactive les filtres de champ dans le tableau",
     "description-count-rows": "Afficher un seul total pour l’ensemble des lignes de données",
     "description-fields": "Sélectionner les champs à utiliser pour le calcul",
+    "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
     "name-calculation": "Calcul",
     "name-cell-height": "Hauteur de cellule",
@@ -12727,6 +12740,7 @@
     "name-count-rows": "Compter les lignes",
     "name-enable-pagination": "Activer la pagination",
     "name-fields": "Champs",
+    "name-frozen-columns": "",
     "name-hide-in-table": "Masquer dans le tableau",
     "name-min-column-width": "Largeur minimale de colonne",
     "name-show-table-footer": "Afficher le pied de tableau",
