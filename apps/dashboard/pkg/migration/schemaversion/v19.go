@@ -60,7 +60,6 @@ func V19(dashboard map[string]interface{}) error {
 	return nil
 }
 
-// upgradePanelLinks upgrades legacy panel links to the new format
 func upgradePanelLinks(links []interface{}) []interface{} {
 	if len(links) == 0 {
 		return links
@@ -80,7 +79,6 @@ func upgradePanelLinks(links []interface{}) []interface{} {
 	return result
 }
 
-// upgradePanelLink upgrades a single panel link from legacy format to new format
 func upgradePanelLink(link map[string]interface{}) map[string]interface{} {
 	url := buildPanelLinkURL(link)
 
@@ -125,12 +123,11 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 		params = append(params, customParams)
 	}
 
-	// Append parameters to URL - matching frontend appendQueryToUrl logic
+	// Append parameters to URL
 	for _, param := range params {
 		if param != "" {
 			pos := strings.Index(url, "?")
 			if pos != -1 {
-				// If there's already a ? and there are characters after it, add &
 				if len(url)-pos > 1 {
 					url += "&"
 				}
@@ -146,7 +143,6 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 
 // slugifyForURL converts a dashboard name to a URL-friendly slug
 func slugifyForURL(name string) string {
-	// Simple slugification - replace spaces with hyphens and convert to lowercase
 	result := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
 	// Remove any non-alphanumeric characters except hyphens
 	result = strings.Map(func(r rune) rune {
@@ -158,7 +154,6 @@ func slugifyForURL(name string) string {
 	return result
 }
 
-// getStringValue safely extracts a string value from a map
 func getStringValue(m map[string]interface{}, key string) string {
 	if v, ok := m[key].(string); ok {
 		return v
@@ -166,7 +161,6 @@ func getStringValue(m map[string]interface{}, key string) string {
 	return ""
 }
 
-// getBoolValue safely extracts a boolean value from a map
 func getBoolValue(m map[string]interface{}, key string) bool {
 	if v, ok := m[key].(bool); ok {
 		return v
