@@ -5,7 +5,6 @@ import { locationUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
 import {
@@ -26,19 +25,16 @@ interface Props {
   parentFolder?: FolderDTO;
   canCreateFolder: boolean;
   canCreateDashboard: boolean;
+  isReadOnlyRepo: boolean;
 }
 
-export default function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder }: Props) {
+export default function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder, isReadOnlyRepo }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const [newFolder] = useNewFolderMutation();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
-  // Get the repository for the current folder context
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: parentFolder?.uid,
-  });
 
   const onCreateFolder = async (folderName: string) => {
     try {

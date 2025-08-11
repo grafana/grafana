@@ -33,7 +33,7 @@ export function FolderRepo({ folder }: Props) {
           tooltip={getReadOnlyTooltipText()}
         />
       )}
-      <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.badge-tooltip', 'Provisioned')} />
+      <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.provisioned-badge', 'Provisioned')} />
     </>
   );
 }

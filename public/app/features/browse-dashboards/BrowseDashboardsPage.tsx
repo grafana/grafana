@@ -165,12 +165,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
               <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
             </LinkButton>
           )}
-          {folderDTO && <FolderActionsButton folder={folderDTO} />}
+          {folderDTO && <FolderActionsButton folder={folderDTO} isReadOnlyRepo={isReadOnlyRepo} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton
               parentFolder={folderDTO}
               canCreateDashboard={canCreateDashboards}
               canCreateFolder={canCreateFolders}
+              isReadOnlyRepo={isReadOnlyRepo}
             />
           )}
         </>

@@ -357,11 +357,7 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={() => {
           dashboard.onEnterEditMode();
         }}
-        tooltip={
-          isReadOnlyRepo
-            ? t('dashboard.toolbar.edit.tooltip-read-only', 'This dashboard is managed by a read-only repository')
-            : t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')
-        }
+        tooltip={isReadOnlyRepo ? getReadOnlyTooltipText() : t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')}
         key="edit"
         className={styles.buttonWithExtraMargin}
         variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}

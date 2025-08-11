@@ -6,7 +6,6 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -22,9 +21,10 @@ import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
 interface Props {
   folder: FolderDTO;
+  isReadOnlyRepo?: boolean;
 }
 
-export function FolderActionsButton({ folder }: Props) {
+export function FolderActionsButton({ folder, isReadOnlyRepo }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
@@ -32,9 +32,6 @@ export function FolderActionsButton({ folder }: Props) {
 
   const deleteFolder = useDeleteFolderMutationFacade();
 
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: folder?.uid,
-  });
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
   // Can only move folders when the folder is not provisioned
