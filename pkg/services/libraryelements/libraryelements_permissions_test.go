@@ -35,7 +35,7 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(env.SQLStore, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), env.SQLStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
 	require.NoError(t, err)
 
@@ -143,7 +143,7 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(env.SQLStore, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), env.SQLStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
 	require.NoError(t, err)
 
@@ -364,7 +364,7 @@ func createUserInOrg(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUs
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(db, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

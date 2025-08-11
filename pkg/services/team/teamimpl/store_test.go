@@ -50,7 +50,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		}
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		quotaService := quotaimpl.ProvideService(sqlStore, cfgProvider)
+		quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
@@ -458,7 +458,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				cfgProvider, err := configprovider.ProvideService(cfg)
 				require.NoError(t, err)
-				quotaService := quotaimpl.ProvideService(sqlStore, cfgProvider)
+				quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
@@ -616,7 +616,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		quotaService := quotaimpl.ProvideService(store, cfgProvider)
+		quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(

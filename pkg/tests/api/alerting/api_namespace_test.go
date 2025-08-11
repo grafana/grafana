@@ -182,7 +182,7 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 	t.Run("org separation", func(t *testing.T) {
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(store, cfgProvider))
+		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(context.Background(), store, cfgProvider))
 		require.NoError(t, err)
 		newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "Test Org 2"})
 		require.NoError(t, err)
@@ -390,7 +390,7 @@ func TestIntegration_NamespacingForPrometheusRules(t *testing.T) {
 	t.Run("should maintain org separation for Prometheus rules", func(t *testing.T) {
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(store, cfgProvider))
+		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(context.Background(), store, cfgProvider))
 		require.NoError(t, err)
 		newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "Prometheus Test Org 2"})
 		require.NoError(t, err)

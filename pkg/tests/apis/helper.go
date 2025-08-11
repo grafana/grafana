@@ -98,7 +98,7 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
 	require.NoError(c.t, err)
-	quotaService := quotaimpl.ProvideService(c.env.SQLStore, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), c.env.SQLStore, cfgProvider)
 	orgSvc, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc

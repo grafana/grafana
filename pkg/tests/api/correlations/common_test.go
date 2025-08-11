@@ -147,7 +147,7 @@ func (c TestContext) createOrg(name string) int64 {
 	c.env.Cfg.AutoAssignOrg = false
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
 	require.NoError(c.t, err)
-	quotaService := quotaimpl.ProvideService(store, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
 	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	orgId, err := orgService.GetOrCreate(context.Background(), name)
@@ -163,7 +163,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
 	require.NoError(c.t, err)
-	quotaService := quotaimpl.ProvideService(store, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
 	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	usrSvc, err := userimpl.ProvideService(

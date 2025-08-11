@@ -108,7 +108,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := ProvideService(sqlStore, cfgProvider)
+	quotaService := ProvideService(context.Background(), sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
@@ -252,7 +252,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 
 			cfgProvider, err := configprovider.ProvideService(cfg)
 			require.NoError(t, err)
-			quotaSrv := ProvideService(sqlStore, cfgProvider)
+			quotaSrv := ProvideService(context.Background(), sqlStore, cfgProvider)
 			q, err := getQuotaBySrvTargetScope(t, quotaSrv, ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, quota.OrgScope, &quota.ScopeParameters{OrgID: o.ID})
 
 			require.NoError(t, err)

@@ -57,7 +57,7 @@ type service struct {
 	targetToSrv *quota.TargetToSrv
 }
 
-func ProvideService(db db.DB, configProvider configprovider.ConfigProvider) quota.Service {
+func ProvideService(ctx context.Context, db db.DB, configProvider configprovider.ConfigProvider) quota.Service {
 	logger := log.New("quota_service")
 	s := service{
 		store:         &sqlStore{db: db, logger: logger},
@@ -68,15 +68,15 @@ func ProvideService(db db.DB, configProvider configprovider.ConfigProvider) quot
 		targetToSrv:   quota.NewTargetToSrv(),
 	}
 
-	if s.IsDisabled() {
+	if s.IsDisabled(ctx) {
 		return &serviceDisabled{}
 	}
 
 	return &s
 }
 
-func (s *service) IsDisabled() bool {
-	return !s.cfg.Get(context.Background()).Quota.Enabled
+func (s *service) IsDisabled(ctx context.Context) bool {
+	return !s.cfg.Get(ctx).Quota.Enabled
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context
