@@ -10926,6 +10926,9 @@
       "label-plugin-id": "Plugin Id",
       "label-severity": "Severity"
     },
+    "no-updates-available": {
+      "message": "All plugins are up to date"
+    },
     "not-found-plugin": {
       "body-plugin-not-found": "That plugin cannot be found. Please check the url is correct or <1></1>go to the <3>plugin catalog</3>.",
       "title-plugin-not-found": "Plugin not found"

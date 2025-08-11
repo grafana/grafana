@@ -9,18 +9,46 @@ export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_in
 export type InheritableKeys = typeof INHERITABLE_KEYS;
 export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
+<<<<<<< HEAD
 export interface RouteMatchResult<T> {
+=======
+// Represents matching information for a single route in the traversal path
+export type RouteMatchInfo<T extends Route> = {
+  route: T;
+  matchDetails: LabelMatchDetails[];
+  matched: boolean;
+};
+
+export interface RouteMatchResult<T extends Route> {
+>>>>>>> alerting/pkg-add-route-matching-hook
   route: T;
   labels: Label[];
-  matchDetails: LabelMatchDetails[];
+  // Track matching information for each route in the traversal path
+  matchingJourney: Array<RouteMatchInfo<T>>;
 }
 
 // Normalization should have happened earlier in the code
-export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): Array<RouteMatchResult<T>> {
+export function findMatchingRoutes<T extends Route>(
+  route: T, 
+  labels: Label[], 
+  matchingJourney: Array<RouteMatchInfo<T>> = []
+): Array<RouteMatchResult<T>> {
   let childMatches: Array<RouteMatchResult<T>> = [];
 
-  // If the current node is not a match, return nothing
+  // Check if the current node matches
   const matchResult = matchLabels(route.matchers ?? [], labels);
+  
+  // Create matching info for this route
+  const currentMatchInfo: RouteMatchInfo<T> = {
+    route,
+    matchDetails: matchResult.details,
+    matched: matchResult.matches,
+  };
+  
+  // Add current route's matching info to the journey
+  const currentMatchingJourney = [...matchingJourney, currentMatchInfo];
+
+  // If the current node is not a match, return nothing
   if (!matchResult.matches) {
     return [];
   }
@@ -28,7 +56,7 @@ export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): 
   // If the current node matches, recurse through child nodes
   if (route.routes) {
     for (const child of route.routes) {
-      const matchingChildren = findMatchingRoutes(child, labels);
+      const matchingChildren = findMatchingRoutes(child, labels, currentMatchingJourney);
       // TODO how do I solve this typescript thingy? It looks correct to me /shrug
       // @ts-ignore
       childMatches = childMatches.concat(matchingChildren);
@@ -41,7 +69,11 @@ export function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): 
 
   // If no child nodes were matches, the current node itself is a match.
   if (childMatches.length === 0) {
-    childMatches.push({ route, labels, matchDetails: matchResult.details });
+    childMatches.push({ 
+      route, 
+      labels, 
+      matchingJourney: currentMatchingJourney
+    });
   }
 
   return childMatches;
@@ -74,15 +106,16 @@ export function getInheritedProperties(
   const inheritableProperties: InheritableProperties = {
     ...propsFromParent,
     ...propertiesParentInherited,
-  };
+  } as const;
 
+  // @ts-expect-error we're using "keyof" for the property so the type checker can help us out but this makes the
+  // reduce function signature unhappy
   const inherited = reduce(
     inheritableProperties,
-    (inheritedProperties: InheritableProperties, parentValue, property) => {
+    (inheritedProperties: InheritableProperties, parentValue, property: keyof InheritableProperties) => {
       const parentHasValue = parentValue != null;
 
       const inheritableValues = [undefined, '', null];
-      // @ts-ignore
       const childIsInheriting = inheritableValues.some((value) => childRoute[property] === value);
       const inheritFromValue = childIsInheriting && parentHasValue;
 
