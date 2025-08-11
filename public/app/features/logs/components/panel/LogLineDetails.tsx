@@ -178,6 +178,7 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
     height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
     paddingBottom: theme.spacing(0.5),
     marginRight: 1,
+    maxWidth: '95vw',
   }),
   container: css({
     overflow: 'auto',
