@@ -223,7 +223,7 @@
     "msw": "2.10.4",
     "mutationobserver-shim": "0.3.7",
     "node-notifier": "10.0.1",
-    "nx": "20.7.1",
+    "nx": "21.3.11",
     "openapi-types": "^12.1.3",
     "pa11y-ci": "^4.0.0",
     "pdf-parse": "^1.1.1",
