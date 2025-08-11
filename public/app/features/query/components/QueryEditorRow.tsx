@@ -545,9 +545,13 @@ export function QueryLibraryEditingBadge(props: { queryLibraryRef?: string }) {
       color="blue"
       icon="book"
       text={t('query-operation.query-library.from-library', 'Update query from library')}
-      tooltip={t('query-operation.query-library.editing-tooltip', 'Editing query from library ({{queryLibraryRef}})', {
-        queryLibraryRef,
-      })}
+      tooltip={t(
+        'query-operation.query-library.editing-tooltip',
+        'Update query from library\nUID: {{queryLibraryRef}}',
+        {
+          queryLibraryRef,
+        }
+      )}
     />
   );
 }

@@ -11851,7 +11851,7 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component",
     "query-library": {
-      "editing-tooltip": "Editing query from library ({{queryLibraryRef}})",
+      "editing-tooltip": "Update query from library\nUID: {{queryLibraryRef}}",
       "from-library": "Update query from library"
     }
   },
