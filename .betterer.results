@@ -4227,16 +4227,10 @@ exports[`no skipping a11y tests in stories`] = {
     "packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
-    "packages/grafana-ui/src/components/ColorPicker/ColorPicker.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
     "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/FileDropzone/FileDropzone.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/FormField/FormField.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
@@ -4245,16 +4239,10 @@ exports[`no skipping a11y tests in stories`] = {
     "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
-    "packages/grafana-ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
     "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Layout/Stack/Stack.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/Link/TextLink.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
@@ -4285,9 +4273,6 @@ exports[`no skipping a11y tests in stories`] = {
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Table/Table.story.tsx:5381": [
-      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
