@@ -79,7 +79,7 @@ export const AuthSettings = (props: Props) => {
       return authProps.selectedMethod;
     }
 
-    switch (true) {
+    switch (!!authOptions) {
       case authOptions.basicAuth:
         return AuthMethod.BasicAuth;
       case authOptions.oAuthForward:

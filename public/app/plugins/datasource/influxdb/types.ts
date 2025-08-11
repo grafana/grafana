@@ -18,6 +18,7 @@ export interface InfluxOptions extends DataSourceJsonData {
   dbName?: string;
   product?: string;
   pdcInjected?: boolean;
+  oauthPassThru?: boolean;
 
   // With Flux
   organization?: string;
@@ -27,8 +28,6 @@ export interface InfluxOptions extends DataSourceJsonData {
   // With SQL
   metadata?: Array<Record<string, string>>;
   insecureGrpc?: boolean;
-
-  oauthPassThru?: boolean;
 }
 
 /**

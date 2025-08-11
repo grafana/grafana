@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { InfluxVersion } from '../../../types';
 
@@ -65,11 +64,7 @@ describe('DatabaseConnectionSection', () => {
       },
     };
 
-    render(
-      <MemoryRouter>
-        <DatabaseConnectionSection {...props} />
-      </MemoryRouter>
-    );
+    render(<DatabaseConnectionSection {...props} />);
     expect(screen.getByTestId('influxql-connection')).toBeInTheDocument();
   });
 
