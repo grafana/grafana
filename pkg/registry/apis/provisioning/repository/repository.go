@@ -124,7 +124,6 @@ type ReaderWriter interface {
 	Writer
 }
 
-// Hooks called after the repository has been created, updated or deleted
 type RepositoryWithURLs interface {
 	Repository
 

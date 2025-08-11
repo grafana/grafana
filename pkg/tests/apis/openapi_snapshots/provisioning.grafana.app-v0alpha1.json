@@ -3114,6 +3114,14 @@
             "type": "number",
             "format": "double"
           },
+          "refURLs": {
+            "description": "RefURLs contains URLs for the reference branch or commit if applicable.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefURLs"
+              }
+            ]
+          },
           "started": {
             "type": "integer",
             "format": "int64"
@@ -3135,27 +3143,6 @@
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobResourceSummary"
             }
-          },
-          "urls": {
-            "description": "URLs",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobURLs"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobURLs": {
-        "type": "object",
-        "properties": {
-          "newPullRequestURL": {
-            "description": "A URL that will create a new pull request for this branch",
-            "type": "string"
-          },
-          "sourceURL": {
-            "description": "A URL pointing to the ref in the repository",
-            "type": "string"
           }
         }
       },
@@ -3298,6 +3285,23 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefURLs": {
+        "type": "object",
+        "properties": {
+          "compareURL": {
+            "description": "Compare this version to the target branch",
+            "type": "string"
+          },
+          "newPullRequestURL": {
+            "description": "A URL that will create a new pull request for this branch",
+            "type": "string"
+          },
+          "sourceURL": {
+            "description": "A URL pointing to the ref in the repository",
+            "type": "string"
+          }
+        }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository": {
         "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
@@ -4668,6 +4672,9 @@
             "type": "number",
             "format": "double"
           },
+          "refURLs": {
+            "description": "RefURLs contains URLs for the reference branch or commit if applicable."
+          },
           "started": {
             "type": "integer",
             "format": "int64"
@@ -4687,22 +4694,6 @@
             "description": "Summary of processed actions",
             "type": "array",
             "items": {}
-          },
-          "urls": {
-            "description": "URLs"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobURLs": {
-        "type": "object",
-        "properties": {
-          "newPullRequestURL": {
-            "description": "A URL that will create a new pull request for this branch",
-            "type": "string"
-          },
-          "sourceURL": {
-            "description": "A URL pointing to the ref in the repository",
-            "type": "string"
           }
         }
       },
@@ -4848,6 +4839,23 @@
           },
           "metadata": {
             "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RefURLs": {
+        "type": "object",
+        "properties": {
+          "compareURL": {
+            "description": "Compare this version to the target branch",
+            "type": "string"
+          },
+          "newPullRequestURL": {
+            "description": "A URL that will create a new pull request for this branch",
+            "type": "string"
+          },
+          "sourceURL": {
+            "description": "A URL pointing to the ref in the repository",
+            "type": "string"
           }
         }
       },

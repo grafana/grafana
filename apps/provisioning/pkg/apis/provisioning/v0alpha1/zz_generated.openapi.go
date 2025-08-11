@@ -34,7 +34,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary":        schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobSpec":                   schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobStatus":                 schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
-		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobURLs":                   schema_pkg_apis_provisioning_v0alpha1_JobURLs(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig":     schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ManagerStats":              schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":         schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
@@ -42,6 +41,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":     schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefItem":                   schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefList":                   schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefURLs":                   schema_pkg_apis_provisioning_v0alpha1_RefURLs(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Repository":                schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryList":            schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositorySpec":            schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
@@ -1117,43 +1117,17 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							},
 						},
 					},
-					"urls": {
+					"refURLs": {
 						SchemaProps: spec.SchemaProps{
-							Description: "URLs",
-							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobURLs"),
+							Description: "RefURLs contains URLs for the reference branch or commit if applicable.",
+							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefURLs"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobURLs"},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_JobURLs(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"sourceURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "A URL pointing to the ref in the repository",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"newPullRequestURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "A URL that will create a new pull request for this branch",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobResourceSummary", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefURLs"},
 	}
 }
 
@@ -1426,6 +1400,39 @@ func schema_pkg_apis_provisioning_v0alpha1_RefList(ref common.ReferenceCallback)
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RefURLs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"sourceURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the ref in the repository",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"newPullRequestURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL that will create a new pull request for this branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"compareURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Compare this version to the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
