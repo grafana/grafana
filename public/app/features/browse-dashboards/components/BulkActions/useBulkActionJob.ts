@@ -60,6 +60,7 @@ export function useBulkActionJob(): UseBulkActionJobResult {
           job: response, // Return the full job object
         };
       } else {
+        // This can happen if the backend creates the job but fails to populate metadata.name
         return { success: false, error: 'Job created but no ID returned' };
       }
     } catch (error) {
