@@ -43,8 +43,8 @@
 /docs/sources/datasources/                                                        @lwandz13
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @irenerl24 @GrafanaWriter
-/docs/sources/upgrade-guide/                                                      @imatwawana
-/docs/sources/whatsnew/                                                           @imatwawana
+/docs/sources/upgrade-guide/                                                      @jtvdez
+/docs/sources/whatsnew/                                                           @jtvdez
 
 /docs/sources/developers/plugins/                                                 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 
@@ -72,14 +72,20 @@
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 
-/pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
+# Git Sync / App Platform Provisioning
+/apps/provisioning/ @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
+/pkg/tests/apis/provisioning @grafana/grafana-git-ui-sync-team
+# Git Sync frontend owned by frontend team as a whole.
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
+/apps/plugins/ @grafana/plugins-platform-backend
+/apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
+/apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
@@ -408,6 +414,39 @@
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/ @grafana/grafana-frontend-platform
 /e2e-playwright/dashboard-new-layouts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-browse-nested.spec.ts @grafana/grafana-search-navigate-organise
+/e2e-playwright/dashboards-suite/dashboard-browse.spec.ts @grafana/grafana-search-navigate-organise
+/e2e-playwright/dashboards-suite/dashboard-export-image.spec.ts @grafana/sharing-squad
+/e2e-playwright/dashboards-suite/dashboard-export-json.spec.ts @grafana/sharing-squad
+/e2e-playwright/dashboards-suite/dashboard-keybindings.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-links-without-slug.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-live-streaming.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-public-create.spec.ts @grafana/grafana-operator-experience-squad
+/e2e-playwright/dashboards-suite/dashboard-public-templating.spec.ts @grafana/grafana-operator-experience-squad
+/e2e-playwright/dashboards-suite/dashboard-share-externally-create.spec.ts @grafana/sharing-squad
+/e2e-playwright/dashboards-suite/dashboard-share-internally.spec.ts @grafana/sharing-squad
+/e2e-playwright/dashboards-suite/dashboard-share-snapshot-create.spec.ts @grafana/sharing-squad
+/e2e-playwright/dashboards-suite/dashboard-templating.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-time-zone.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-timepicker.spec.ts @grafana/grafana-frontend-platform
+/e2e-playwright/dashboards-suite/embedded-dashboard.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/general-dashboards.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/import-dashboard.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/load-options-from-url.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/new-constant-variable.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/new-custom-variable.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/new-datasource-variable.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/new-interval-variable.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/new-query-variable.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/new-text-box-variable.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/repeating-a-panel-horizontally.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/repeating-a-panel-vertically.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/repeating-an-empty-row.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/set-options-from-ui.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/snapshot-create.spec.ts @grafana/sharing-squad
+/e2e-playwright/dashboards-suite/templating-dashboard-links-and-variables.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/textbox-variables.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-search-navigate-organise
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-search-navigate-organise
 /e2e-playwright/panels-suite/datagrid-data-change.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/datagrid-editing-features.spec.ts @grafana/dataviz-squad
@@ -468,7 +507,7 @@
 /packages/grafana-data/src/utils/binaryOperators.ts @grafana/datapro
 /packages/grafana-data/src/utils/csv* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/dataLinks* @grafana/dashboards-squad
-/packages/grafana-data/src/utils/datasource.ts @grafana/grafana-datasources-core-services
+/packages/grafana-data/src/utils/datasource* @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/utils/docs.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/deprecationWarning* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/featureToggles.ts @grafana/grafana-frontend-platform
@@ -598,7 +637,7 @@
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /packages/grafana-schema/src/**/parca @grafana/oss-big-tent
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
-/packages/grafana-schema/src/**/publicdashboard @grafana/sharing-squad
+/packages/grafana-schema/src/**/publicdashboard @grafana/grafana-operator-experience-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad
@@ -647,6 +686,7 @@
 /project.json @grafana/frontend-ops
 /.nxignore @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
+/scripts/tsconfig.base.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /eslint.config.js @grafana/frontend-ops
 /.betterer.eslint.config.js @grafana/frontend-ops
@@ -675,23 +715,142 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 # public folder
 /public/app/api/ @grafana/grafana-frontend-platform
-/public/app/core/ @grafana/grafana-frontend-platform
-/public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
-/public/app/core/components/Layers/ @grafana/dataviz-squad
-/public/app/core/components/GraphNG/ @grafana/dataviz-squad
-/public/app/core/components/TimeSeries/ @grafana/dataviz-squad
-/public/app/core/components/TimelineChart/ @grafana/dataviz-squad
+/public/app/core/actions/ @grafana/grafana-frontend-platform
+/public/app/core/app_events.ts @grafana/grafana-frontend-platform
+/public/app/core/components/AccessControl/ @grafana/identity-access-team
+/public/app/core/components/Animations/ @grafana/grafana-frontend-platform
+/public/app/core/components/AppNotifications/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/AppChrome/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/Branding/ @grafana/grafana-frontend-platform
+/public/app/core/components/Breadcrumbs/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/BouncingLoader/ @grafana/grafana-frontend-platform
+/public/app/core/components/CardButton.tsx @grafana/dashboards-squad
+/public/app/core/components/CloseButton/ @grafana/grafana-frontend-platform
+/public/app/core/components/ColorScale/ @grafana/dataviz-squad
+/public/app/core/components/DynamicImports/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/EmptyListCTA/ @grafana/grafana-frontend-platform
+/public/app/core/components/FolderFilter/ @grafana/sharing-squad
+/public/app/core/components/Footer/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/ForgottenPassword/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
+/public/app/core/components/FormPrompt/ @grafana/grafana-frontend-platform
+/public/app/core/components/GraphNG/ @grafana/dataviz-squad
+/public/app/core/components/help/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/Indent/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/Layers/ @grafana/dataviz-squad
+/public/app/core/components/Login/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/NativeScrollbar.tsx @grafana/grafana-search-navigate-organise
+/public/app/core/components/NavLandingPage/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/NestedFolderPicker/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
+/public/app/core/components/Page/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/PageActionBar/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/PageInfo/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/PageLoader/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/PageNotFound/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/PanelTypeFilter/ @grafana/sharing-squad
+/public/app/core/components/PasswordField/ @grafana/grafana-frontend-platform
+/public/app/core/components/PluginHelp/ @grafana/plugins-platform-frontend
+/public/app/core/components/QueryOperationRow/ @grafana/dashboards-squad
+/public/app/core/components/RolePickerDrawer/ @grafana/identity-access-team
+/public/app/core/components/Select/ @grafana/grafana-frontend-platform
+/public/app/core/components/SharedPreferences/ @grafana/grafana-frontend-platform
+/public/app/core/components/Signup/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/SplitPaneWrapper/ @grafana/observability-traces-and-profiling
+/public/app/core/components/SVG/ @grafana/dataviz-squad
+/public/app/core/components/TagFilter/ @grafana/grafana-frontend-platform
+/public/app/core/components/Theme/ @grafana/grafana-frontend-platform
+/public/app/core/components/ThemeSelector/ @grafana/grafana-frontend-platform
+/public/app/core/components/TimelineChart/ @grafana/dataviz-squad
+/public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
+/public/app/core/components/TimeSeries/ @grafana/dataviz-squad
+/public/app/core/components/Upgrade/ @grafana/grafana-operator-experience-squad
+/public/app/core/components/ValidationLabels/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/VersionHistory/ @grafana/dashboards-squad
+/public/app/core/config.ts @grafana/grafana-frontend-platform
+/public/app/core/constants.ts @grafana/grafana-frontend-platform
+/public/app/core/context/ @grafana/grafana-frontend-platform
+/public/app/core/copy/appNotification.ts @grafana/grafana-search-navigate-organise
+/public/app/core/core.ts @grafana/grafana-frontend-platform
+/public/app/core/crash/ @grafana/observability-traces-and-profiling
+/public/app/core/history/ @grafana/observability-traces-and-profiling
+/public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform
+/public/app/core/hooks/useCleanup.ts @grafana/grafana-frontend-platform
+/public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
+/public/app/core/hooks/useNavModel.ts @grafana/grafana-search-navigate-organise
+/public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
+/public/app/core/icons/ @grafana/grafana-frontend-platform
+/public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
+/public/app/core/log_events.ts @grafana/dashboards-squad
+/public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
+/public/app/core/navigation/ @grafana/grafana-search-navigate-organise
+/public/app/core/profiler.ts @grafana/dashboards-squad
+/public/app/core/reducers/ @grafana/grafana-frontend-platform
+/public/app/core/selectors/ @grafana/grafana-frontend-platform
+/public/app/core/services/__mocks__/backend_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/backend_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/context_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/CorrelationsService.ts @grafana/datapro
+/public/app/core/services/echo/ @grafana/grafana-frontend-platform
+/public/app/core/services/FetchQueue* @grafana/grafana-frontend-platform
+/public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
+/public/app/core/services/keybindingSrv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/mocks/subscribeTester.ts @grafana/grafana-frontend-platform
+/public/app/core/services/mousetrap/ @grafana/grafana-frontend-platform
+/public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
+/public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
+/public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
+/public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
+/public/app/core/services/theme.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/factors.test.ts @grafana/dashboards-squad
+/public/app/core/specs/flatten.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/impression_srv.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/rangeutil.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/store.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/TableModel.test.ts @grafana/partner-datasources
+/public/app/core/specs/ticks.test.ts @grafana/plugins-platform-frontend
+/public/app/core/specs/time_series.test.ts @grafana/dataviz-squad
+/public/app/core/store.ts @grafana/grafana-frontend-platform
+/public/app/core/TableModel.ts @grafana/partner-datasources
+/public/app/core/time_series2.ts @grafana/dataviz-squad
+/public/app/core/trustedTypePolicies.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/accessControl.ts @grafana/identity-access-team
+/public/app/core/utils/applyStateChanges.ts @grafana/dashboards-squad
+/public/app/core/utils/arrayMove.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/auth.ts @grafana/identity-access-team
+/public/app/core/utils/browser* @grafana/grafana-frontend-platform
+/public/app/core/utils/colors.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/ConfigProvider.tsx @grafana/grafana-frontend-platform
+/public/app/core/utils/CorsSharedWorker.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/CorsWorker.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/connectWithReduxStore.tsx @grafana/grafana-frontend-platform
+/public/app/core/utils/dag* @grafana/grafana-frontend-platform
+/public/app/core/utils/deferred.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/docsLinks.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/errors* @grafana/grafana-frontend-platform
+/public/app/core/utils/explore* @grafana/observability-traces-and-profiling
+/public/app/core/utils/factors.ts @grafana/dashboards-squad
+/public/app/core/utils/fetch* @grafana/grafana-frontend-platform
+/public/app/core/utils/flatten.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/isShallowEqual.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/kbn* @grafana/grafana-frontend-platform
+/public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
+/public/app/core/utils/object* @grafana/grafana-frontend-platform
+/public/app/core/utils/query* @grafana/grafana-datasources-core-services
+/public/app/core/utils/richHistory* @grafana/observability-traces-and-profiling
+/public/app/core/utils/set.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/shortLinks* @grafana/sharing-squad
+/public/app/core/utils/ticks.ts @grafana/plugins-platform-frontend
+/public/app/core/utils/timePicker* @grafana/grafana-frontend-platform
+/public/app/core/utils/timeRegions* @grafana/dataviz-squad
+/public/app/core/utils/urlToken.ts @grafana/identity-access-team
+/public/app/core/utils/version.ts @grafana/partner-datasources
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
-/public/app/core/history/ @grafana/observability-traces-and-profiling
-/public/app/features/admin/ @grafana/identity-access-team
-
-# Temp owners until Enterprise team takes over
-/public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
-
 /public/app/features/actions/ @grafana/dataviz-squad
+/public/app/features/admin/ @grafana/identity-access-team
 /public/app/features/auth-config/ @grafana/identity-squad
 /public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/canvas/ @grafana/dataviz-squad
@@ -715,6 +874,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/live/ @grafana/dashboards-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
+/public/app/features/migrate-to-cloud @grafana/grafana-operator-experience-squad
 /public/app/features/notifications/ @grafana/grafana-search-navigate-organise
 /public/app/features/org/ @grafana/grafana-search-navigate-organise
 /public/app/features/panel/ @grafana/dashboards-squad
@@ -949,6 +1109,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/registry/apps/advisor @grafana/plugins-platform-backend
 /pkg/registry/apps/alerting @grafana/alerting-backend
+/pkg/registry/apps/plugins @grafana/plugins-platform-backend
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
@@ -972,6 +1133,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/setup-grafana-bench/ @Proximyst
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
 /.github/actions/change-detection @grafana/grafana-developer-enablement-squad
+/.github/actions/setup-node @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-developer-enablement-squad
 /.github/workflows/actionlint.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling

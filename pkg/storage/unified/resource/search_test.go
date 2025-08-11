@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"sync"
 	"testing"
 	"time"
@@ -121,7 +123,7 @@ func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource
 	return nil, nil
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -317,7 +319,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"})
+			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
 		}()
 	}
 
@@ -340,7 +342,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
 		},
 	}
-	search := &slowSearchBackend{
+	search := &slowSearchBackendWithCache{
 		mockSearchBackend: mockSearchBackend{},
 	}
 	supplier := &TestDocumentBuilderSupplier{
@@ -362,10 +364,12 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
-	_, err = support.getOrCreateIndex(ctx, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"})
+	_, err = support.getOrCreateIndex(ctx, key, "test")
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
@@ -373,16 +377,96 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	search.wg.Wait()
 
 	require.NotEmpty(t, search.buildIndexCalls)
+
+	// Wait until new index is put into cache.
+	require.Eventually(t, func() bool {
+		idx, err := support.search.GetIndex(ctx, key)
+		return err == nil && idx != nil
+	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
+
+	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
+	_, err = support.getOrCreateIndex(ctx, key, "test")
+	require.NoError(t, err)
 }
 
-type slowSearchBackend struct {
+func TestSearchWillUpdateIndexOnQueueProcessor(t *testing.T) {
+	// Regression test: Indexes were being closed when being rebuilt, but not updated on the queue processor. This was causing new events to
+	// be added to a closed index, resulting in an error and missing docs in the index.
+
+	// Create mock components
+	mockIndex1 := &MockResourceIndex{}
+	mockIndex2 := &MockResourceIndex{} // Different index to test replacement
+	mockBuilder := &MockDocumentBuilder{}
+
+	// Create searchSupport instance
+	s := &searchSupport{
+		log:                       slog.Default(),
+		indexQueueProcessors:      make(map[string]*indexQueueProcessor),
+		indexQueueProcessorsMutex: sync.Mutex{},
+		indexEventsChan:           make(chan *IndexEvent, 10),
+	}
+
+	nsr := NamespacedResource{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+	}
+
+	// Pre-populate the processor to avoid the builders.get() call
+	key := fmt.Sprintf("%s/%s/%s", nsr.Namespace, nsr.Group, nsr.Resource)
+	processor1 := newIndexQueueProcessor(mockIndex1, nsr, 10, mockBuilder, s.indexEventsChan)
+	s.indexQueueProcessors[key] = processor1
+
+	// Verify initial state
+	require.Same(t, mockIndex1, processor1.index)
+
+	// Call getOrCreateIndexQueueProcessor with a different index
+	// This should return the existing processor but update its index
+	processor2, err := s.getOrCreateIndexQueueProcessor(mockIndex2, nsr)
+	require.NoError(t, err)
+	require.NotNil(t, processor2)
+
+	// Same processor instance, but index was replaced
+	require.Same(t, processor1, processor2, "Should return the same processor instance")
+	require.Same(t, mockIndex2, processor2.index, "Index should be replaced with mockIndex2")
+	require.Same(t, mockIndex2, processor1.index, "Original processor should have updated index")
+}
+
+type slowSearchBackendWithCache struct {
 	mockSearchBackend
 	wg sync.WaitGroup
+
+	mu    sync.Mutex
+	cache map[NamespacedResource]ResourceIndex
 }
 
-func (m *slowSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *slowSearchBackendWithCache) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.cache[key], nil
+}
+
+func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
 	m.wg.Add(1)
 	defer m.wg.Done()
+
 	time.Sleep(1 * time.Second)
-	return m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, builder)
+
+	// Simulate erroring out when context is cancelled.
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.cache == nil {
+		m.cache = make(map[NamespacedResource]ResourceIndex)
+	}
+	m.cache[key] = idx
+	return idx, nil
 }

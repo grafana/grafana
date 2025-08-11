@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -164,6 +164,7 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 		return !opts.PushOnWrites &&
 			opts.Timeout == 10*time.Minute &&
 			opts.Mode == repository.StageModeCommitOnlyOnce &&
+			opts.Ref == "main" &&
 			opts.CommitOnlyOnceMessage == "Delete from Grafana "+job.Name
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)

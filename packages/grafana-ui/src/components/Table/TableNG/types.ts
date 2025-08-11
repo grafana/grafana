@@ -1,4 +1,3 @@
-import { Property } from 'csstype';
 import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
@@ -18,6 +17,8 @@ import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
+
+import { TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -128,6 +129,7 @@ export interface BaseTableProps {
   onCellFilterAdded?: TableFilterActionCallback;
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
+  frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
   structureRev?: number;
@@ -141,6 +143,8 @@ export interface BaseTableProps {
   getActions?: GetActionsFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
+  // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
+  disableSanitizeHtml?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -159,8 +163,8 @@ export interface TableCellRendererProps {
   theme: GrafanaTheme2;
   cellInspect: boolean;
   showFilters: boolean;
-  justifyContent: Property.JustifyContent;
   getActions?: GetActionsFunctionLocal;
+  disableSanitizeHtml?: boolean;
 }
 
 export type ContextMenuProps = {
@@ -186,14 +190,12 @@ export interface TableCellActionsProps {
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
-  height: number;
   onCellExpand: (e: SyntheticEvent) => void;
   isExpanded?: boolean;
 }
 
 export interface SparklineCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -213,8 +215,6 @@ export interface BarGaugeCellProps {
 export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  height: number;
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
   rowIdx: number;
 }
@@ -226,7 +226,6 @@ export interface DataLinksCellProps {
 
 export interface GeoCellProps {
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   height: number;
 }
 
@@ -242,11 +241,31 @@ export interface AutoCellProps {
   rowIdx: number;
 }
 
+export interface MarkdownCellProps {
+  field: Field;
+  rowIdx: number;
+  disableSanitizeHtml?: boolean;
+}
+
 export interface ActionCellProps {
   field: Field;
   rowIdx: number;
   getActions: GetActionsFunctionLocal;
 }
+
+export interface PillCellProps {
+  theme: GrafanaTheme2;
+  field: Field;
+  rowIdx: number;
+}
+
+export interface TableCellStyleOptions {
+  textWrap: boolean;
+  textAlign: TextAlign;
+  shouldOverflow: boolean;
+}
+
+export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
@@ -264,13 +283,14 @@ export interface ScrollPosition {
 
 export interface TypographyCtx {
   ctx: CanvasRenderingContext2D;
-  font: string;
+  fontFamily: string;
+  letterSpacing: number;
   avgCharWidth: number;
   estimateLines: LineCounter;
   wrappedCount: LineCounter;
 }
 
-export type LineCounter = (value: unknown, width: number) => number;
+export type LineCounter = (value: unknown, width: number, field: Field, rowIdx: number) => number;
 export interface LineCounterEntry {
   /**
    * given a values and the available width, returns the line count for that value

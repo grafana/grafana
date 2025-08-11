@@ -474,40 +474,36 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 }
 
 func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesLibraryPanelConnections) {
-		res, err := dr.k8sclient.Search(ctx, orgID, &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Fields: []*resourcepb.Requirement{
-					{
-						Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
-						Operator: string(selection.Equals),
-						Values:   []string{libraryPanelUID},
-					},
+	res, err := dr.k8sclient.Search(ctx, orgID, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Fields: []*resourcepb.Requirement{
+				{
+					Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+					Operator: string(selection.Equals),
+					Values:   []string{libraryPanelUID},
 				},
 			},
-			Limit: listAllDashboardsLimit,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		results, err := dashboardsearch.ParseResults(res, 0)
-		if err != nil {
-			return nil, err
-		}
-
-		dashes := make([]*dashboards.DashboardRef, 0, len(results.Hits))
-		for _, row := range results.Hits {
-			dashes = append(dashes, &dashboards.DashboardRef{
-				UID:       row.Name,
-				FolderUID: row.Folder,
-				ID:        row.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), // nolint:staticcheck
-			})
-		}
-		return dashes, nil
+		},
+		Limit: listAllDashboardsLimit,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	return dr.dashboardStore.GetDashboardsByLibraryPanelUID(ctx, libraryPanelUID, orgID)
+	results, err := dashboardsearch.ParseResults(res, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	dashes := make([]*dashboards.DashboardRef, 0, len(results.Hits))
+	for _, row := range results.Hits {
+		dashes = append(dashes, &dashboards.DashboardRef{
+			UID:       row.Name,
+			FolderUID: row.Folder,
+			ID:        row.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), // nolint:staticcheck
+		})
+	}
+	return dashes, nil
 }
 
 func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
@@ -1166,7 +1162,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	isNested := obj.GetFolder() != ""
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
 		// legacy behavior
-		if !isNested || !dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		if !isNested {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
@@ -1396,7 +1392,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboards")
 	defer span.End()
 
-	if dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
+	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
 		start := time.Now()
 		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
 		if err != nil {
