@@ -14,6 +14,10 @@ type FakeProvisioningV0alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeProvisioningV0alpha1) HistoricJobs(namespace string) v0alpha1.HistoricJobInterface {
+	return newFakeHistoricJobs(c, namespace)
+}
+
 func (c *FakeProvisioningV0alpha1) Jobs(namespace string) v0alpha1.JobInterface {
 	return newFakeJobs(c, namespace)
 }

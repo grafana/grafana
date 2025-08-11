@@ -222,6 +222,7 @@ alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,fal
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 kubernetesAuthzApis,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 skipTokenRotationIfRecent,GA,@grafana/identity-access-team,false,false,false
@@ -242,5 +243,6 @@ dashboardDsAdHocFiltering,experimental,@grafana/datapro,false,false,true
 dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 adhocFiltersInTooltips,experimental,@grafana/datapro,false,false,true
+favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
 newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
