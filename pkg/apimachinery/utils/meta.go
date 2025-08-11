@@ -936,7 +936,7 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 					val.Set(reflect.ValueOf(sv))
 					delete(keys, k)
 				} else {
-					return fmt.Errorf("Invalid secure value: %v", val)
+					return fmt.Errorf("invalid secure value: %v", val)
 				}
 			}
 			if len(keys) > 0 {
