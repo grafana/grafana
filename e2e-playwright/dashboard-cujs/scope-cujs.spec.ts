@@ -61,7 +61,7 @@ test.describe(
     });
 
     test('Choose a scope', async ({ page, gotoDashboardPage }) => {
-      await test.step('1.1.View and select any scope', async () => {
+      await test.step('1.View and select any scope', async () => {
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         const scopesSelector = page.getByTestId('scopes-selector-input');
@@ -91,7 +91,7 @@ test.describe(
         expect.soft(scopesSelector).toHaveValue(scopeTitle);
       });
 
-      await test.step('1.2.Select a scope across multiple types of production entities', async () => {
+      await test.step('2.Select a scope across multiple types of production entities', async () => {
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         const scopesSelector = page.getByTestId('scopes-selector-input');
@@ -123,7 +123,7 @@ test.describe(
         await expect.soft(scopesSelector).toHaveValue(scopeTitles.join(' + '));
       });
 
-      await test.step('1.3.View and select a recently viewed scope', async () => {
+      await test.step('3.View and select a recently viewed scope', async () => {
         // this step depends on the previous ones because they set recent scopes
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
@@ -146,7 +146,7 @@ test.describe(
         await expect.soft(scopesSelector).toHaveValue(scopeName!.replace(', ', ' + '));
       });
 
-      await test.step('1.4.View and select a scope configured by any team', async () => {
+      await test.step('4.View and select a scope configured by any team', async () => {
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         const scopesSelector = page.getByTestId('scopes-selector-input');
@@ -176,7 +176,7 @@ test.describe(
         expect.soft(scopesSelector).toHaveValue(new RegExp(`^${scopeTitle}`));
       });
 
-      await test.step('1.5.View pre-completed production entity values as I type', async () => {
+      await test.step('5.View pre-completed production entity values as I type', async () => {
         await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         await openScopesSelector(page, USE_LIVE_DATA ? undefined : testScopes); //used only in mocked scopes version

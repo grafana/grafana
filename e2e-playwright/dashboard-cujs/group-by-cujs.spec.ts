@@ -1,7 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 import scopesDashboardOne from '../dashboards/scopes-cujs/scopeDashboardOne.json';
-import scopesDashboardTwo from '../dashboards/scopes-cujs/scopeDashboardTwo.json';
 
 test.use({
   featureToggles: {
@@ -22,36 +21,30 @@ test.describe(
     tag: ['@dashboard-cujs'],
   },
   () => {
-    let dashboardUIDs: string[] = [];
+    let dashboardUID: string;
 
     test.beforeAll(async ({ request }) => {
       // Import the test dashboard
-      for (const dashboard of [scopesDashboardOne, scopesDashboardTwo]) {
-        let response = await request.post('/api/dashboards/import', {
-          data: {
-            dashboard,
-            folderUid: '',
-            overwrite: true,
-            inputs: [],
-          },
-        });
-        let responseBody = await response.json();
-        dashboardUIDs.push(responseBody.uid);
-      }
+      let response = await request.post('/api/dashboards/import', {
+        data: {
+          dashboard: scopesDashboardOne,
+          folderUid: '',
+          overwrite: true,
+          inputs: [],
+        },
+      });
+      let responseBody = await response.json();
+      dashboardUID = responseBody.uid;
     });
 
     test.afterAll(async ({ request }) => {
       // Clean up the imported dashboard
-      for (const dashboardUID of dashboardUIDs) {
-        await request.delete(`/api/dashboards/uid/${dashboardUID}`);
-      }
+      await request.delete(`/api/dashboards/uid/${dashboardUID}`);
     });
 
     test('Groupby data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
-      await test.step('1.1.Apply a groupBy across one or mulitple dimensions', async () => {
+      await test.step('1.Apply a groupBy across one or mulitple dimensions', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
-        await dashboardPage.waitForQueryDataResponse();
-        const initialLegendSeriesCount = await page.getByTestId(/^data-testid VizLegend series/).count();
 
         if (!USE_LIVE_DATA) {
           // mock the API call to get the labels
@@ -76,28 +69,24 @@ test.describe(
         await groupByVariable.click();
 
         const groupByOption = page.getByTestId('data-testid Select option').nth(1);
-        const text = await groupByOption.textContent();
-
-        if (!USE_LIVE_DATA) {
-          await page.route('**/query*', async (route, request) => {
-            if (text) {
-              expect(request.postData()?.includes(text));
-            }
-          });
-        }
 
         await groupByOption.click();
         await page.keyboard.press('Escape');
 
-        await dashboardPage.waitForQueryDataResponse();
-        const groupByLegendSeriesCount = await page.getByTestId(/^data-testid VizLegend series/).count();
+        const selectedValues = await page
+          .getByTestId(/^GroupBySelect-/)
+          .first()
+          .locator('div:has(+ button)')
+          .allTextContents();
 
-        if (USE_LIVE_DATA) {
-          expect(groupByLegendSeriesCount).not.toBe(initialLegendSeriesCount);
-        }
+        // assert the panel is visible and has the correct value
+        const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
+        await expect(panelContent).toBeVisible();
+        const markdownContent = panelContent.locator('.markdown-html');
+        await expect(markdownContent).toContainText(`GroupByVar: ${selectedValues.join(', ')}`);
       });
 
-      await test.step('1.2.Autocomplete for the groupby values', async () => {
+      await test.step('2.Autocomplete for the groupby values', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         if (!USE_LIVE_DATA) {
@@ -138,7 +127,7 @@ test.describe(
         expect(searchedOptionsCount).toBeLessThanOrEqual(optionsCount);
       });
 
-      await test.step('1.3.Edit and restore default groupBy', async () => {
+      await test.step('3.Edit and restore default groupBy', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         if (!USE_LIVE_DATA) {
@@ -155,6 +144,12 @@ test.describe(
             });
           });
         }
+
+        const initialSelectedOptionsCount = await page
+          .getByTestId(/^GroupBySelect-/)
+          .first()
+          .locator('div:has(+ button)')
+          .count();
 
         const groupByVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('groupBy'))
@@ -171,25 +166,30 @@ test.describe(
         await groupByOption.click();
         await page.keyboard.press('Escape');
 
-        const selectedOptionsCount = await page
+        const afterEditOptionsCount = await page
           .getByTestId(/^GroupBySelect-/)
           .first()
-          .locator('div')
+          .locator('div:has(+ button)')
           .count();
+
+        expect(afterEditOptionsCount).toBe(initialSelectedOptionsCount + 1);
 
         const restoreBtn = page.getByLabel('Restore groupby set by this dashboard.');
         await restoreBtn.click();
 
+        await page.waitForTimeout(500);
+
         const restoredOptionsCount = await page
           .getByTestId(/^GroupBySelect-/)
           .first()
-          .locator('div')
+          .locator('div:has(+ button)')
           .count();
 
-        expect(restoredOptionsCount).toBeLessThan(selectedOptionsCount);
+        expect(restoredOptionsCount).not.toBe(afterEditOptionsCount);
+        expect(restoredOptionsCount).toBe(initialSelectedOptionsCount);
       });
 
-      await test.step('1.4.Enter multiple values using keyboard only', async () => {
+      await test.step('4.Enter multiple values using keyboard only', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: FIRST_DASHBOARD });
 
         if (!USE_LIVE_DATA) {
@@ -206,12 +206,6 @@ test.describe(
             });
           });
         }
-
-        const selectedOptionsCount = await page
-          .getByTestId(/^GroupBySelect-/)
-          .first()
-          .locator('div')
-          .count();
 
         const groupByVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('groupBy'))
