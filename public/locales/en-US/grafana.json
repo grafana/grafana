@@ -11434,6 +11434,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },

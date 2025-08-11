@@ -69,7 +69,7 @@ export function RepositoryCard({ repository }: Props) {
           {isReadOnlyRepo && (
             <Badge
               color="darkgrey"
-              text={t('provisioning.repository-card.read-only', 'Read only')}
+              text={t('provisioning.repository-card.read-only-badge', 'Read only')}
               tooltip={getReadOnlyTooltipText()}
             />
           )}
