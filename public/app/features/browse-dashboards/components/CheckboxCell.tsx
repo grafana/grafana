@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Checkbox, useStyles2 } from '@grafana/ui';
+import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
 
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
@@ -31,6 +32,17 @@ export default function CheckboxCell({
 
   if (isSharedWithMe(item.uid)) {
     return <CheckboxSpacer />;
+  }
+
+  if (permissions && permissions.isReadOnlyRepo) {
+    // When the folder is read-only (inherited from repository), disable checkbox with tooltip
+    return (
+      <Tooltip content={getReadOnlyTooltipText()}>
+        <span>
+          <Checkbox disabled value={false} />
+        </span>
+      </Tooltip>
+    );
   }
 
   // Check if user can edit this specific item type

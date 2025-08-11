@@ -16,6 +16,7 @@ import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo'
 import { contextSrv } from '../../core/services/context_srv';
 import { ManagerKind } from '../apiserver/types';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
+import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -41,6 +42,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: folderUID,
+  });
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -105,10 +109,11 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
   const permissions = {
-    canEditFolders,
+    canEditFolders: canEditFolders && !isReadOnlyRepo,
     canEditDashboards,
     canDeleteFolders,
     canDeleteDashboards,
+    isReadOnlyRepo,
   };
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
