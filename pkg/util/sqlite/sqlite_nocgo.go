@@ -7,9 +7,10 @@ import (
 	"errors"
 
 	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
-type Driver = sqlite.SQLiteDriver
+type Driver = sqlite.Driver
 
 const DriverName = "sqlite"
 
