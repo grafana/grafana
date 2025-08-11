@@ -55,7 +55,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
         id={id}
         checked={active}
         name={name}
-        aria-label={ariaLabel ?? description}
+        aria-label={ariaLabel}
         ref={ref}
       />
     );
