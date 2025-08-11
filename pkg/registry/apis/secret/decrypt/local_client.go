@@ -21,7 +21,7 @@ func NewLocalDecryptClient(decryptStorage contracts.DecryptStorage) (*LocalDecry
 	}, nil
 }
 
-func (c *LocalDecryptClient) Decrypt(ctx context.Context, serviceName, namespace string, names []string) (map[string]contracts.DecryptResult, error) {
+func (c *LocalDecryptClient) Decrypt(ctx context.Context, serviceName, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
 	ns, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
@@ -32,6 +32,10 @@ func (c *LocalDecryptClient) Decrypt(ctx context.Context, serviceName, namespace
 	results := make(map[string]contracts.DecryptResult, len(names))
 
 	for _, name := range names {
+		_, found := results[name]
+		if found || name == "" {
+			continue // no need to decrypt
+		}
 		exposedSecureValue, err := c.decryptStorage.Decrypt(ctx, xkube.Namespace(namespace), name)
 		if err != nil {
 			results[name] = contracts.NewDecryptResultErr(err)
@@ -41,8 +45,4 @@ func (c *LocalDecryptClient) Decrypt(ctx context.Context, serviceName, namespace
 	}
 
 	return results, nil
-}
-
-func (c *LocalDecryptClient) Close() error {
-	return nil
 }

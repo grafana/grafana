@@ -1523,7 +1523,10 @@
       "group-loading-error": "Fehler beim Laden der Gruppe",
       "interval": "Intervall",
       "namespace": "Namensraum",
-      "new": ""
+      "new": "",
+      "title": {
+        "back": ""
+      }
     },
     "group-edit": {
       "ds-error": "Fehler beim Laden der Datenquellendetails",
@@ -2240,6 +2243,9 @@
       "title-attention": "Achtung",
       "title-manage-contact-point-permissions": "Kontaktpunkt-Berechtigungen verwalten"
     },
+    "receiver-metadata-badge": {
+      "aria-label-open-external-link": ""
+    },
     "receivers-section": {
       "button-more": "Mehr",
       "new-menu": {
@@ -2566,6 +2572,7 @@
       }
     },
     "rule-viewer": {
+      "aria-label-return-to": "",
       "error-loading": "Beim Laden der Regel ist ein Fehler aufgetreten",
       "evaluation-interval": "Alle {{interval}}",
       "prometheus-consistency-check": {
@@ -3482,7 +3489,6 @@
       "bulk-delete-provisioned-resources": "",
       "bulk-move-provisioned-resources": "",
       "cancel-button": "Abbrechen",
-      "cannot-move-folders": "Ordner können nicht verschoben werden",
       "confirmation-text": "Löschen",
       "delete-button": "Löschen",
       "delete-modal-invalid-text": "Ein oder mehrere Ordner enthalten Bibliotheksfenster oder Alarmierungsregeln. Löschen Sie diese zuerst, um fortzufahren.",
@@ -3533,6 +3539,13 @@
       "button-move": "",
       "button-moving": "",
       "deleting": "",
+      "error": {
+        "read-only-message": "",
+        "read-only-saving-message": "",
+        "read-only-title": "",
+        "repository-not-found-message": "",
+        "repository-not-found-title": ""
+      },
       "error-file-content-not-found": "",
       "error-path-not-found": "",
       "error-target-folder-path-missing": "",
@@ -3562,6 +3575,9 @@
       "select-checkbox": "Auswählen",
       "tags-column": "Tags"
     },
+    "delete-folder": {
+      "read-only-message": ""
+    },
     "delete-provisioned-folder-form": {
       "api-error": "Ordner konnte nicht gelöscht werden",
       "button-cancel": "Abbrechen",
@@ -3581,6 +3597,7 @@
     },
     "folder-actions-button": {
       "delete": "Löschen",
+      "delete-folder-error": "",
       "folder-actions": "Ordneraktionen",
       "manage-permissions": "Berechtigungen verwalten",
       "move": "Verschieben"
@@ -3603,6 +3620,9 @@
     },
     "name-cell": {
       "no-items": "Keine Elemente"
+    },
+    "new-folder": {
+      "read-only-message": ""
     },
     "new-folder-form": {
       "cancel-label": "Abbrechen",
@@ -4127,11 +4147,39 @@
       "body": "Probieren Sie den neuen Advisor aus, um mögliche Probleme mit Ihren Datenquellen und Plugins zu erkennen.",
       "go-to-advisor": "Zu Advisor"
     },
+    "cloud": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "collector": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "integrations": {
+          "subtitle": "",
+          "title": ""
+        },
+        "private-data-source-connections": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
+    },
     "connect-data": {
       "category-header-label": "Datenquellen",
       "empty-message": "Es wurden keine Ergebnisse gefunden, die Ihrer Abfrage entsprechen",
       "request-data-source": "Neue Datenquelle anfordern",
       "roadmap": "Roadmap anzeigen"
+    },
+    "connections-home-page": {
+      "welcome-to-connections": ""
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link zu Verbindungen",
@@ -4162,6 +4210,19 @@
     },
     "not-found-datasource": {
       "body": "Möglicherweise haben Sie die URL falsch eingegeben oder das Plugin mit der ID <1></1> ist nicht verfügbar.<3></3>Um eine Liste der verfügbaren Datenquellen anzuzeigen, <5>klicken Sie bitte hier</5>."
+    },
+    "oss": {
+      "connections-home-page": {
+        "add-new-connection": {
+          "subtitle": "",
+          "title": ""
+        },
+        "data-sources": {
+          "subtitle": "",
+          "title": ""
+        },
+        "subtitle": ""
+      }
     },
     "search": {
       "aria-label-search-all": "Alle durchsuchen",
@@ -4270,7 +4331,7 @@
       "source-label": "Quelle",
       "sub-text": "<0>Definieren, welche Datenquelle die Korrelation anzeigt und welche Daten die zuvor definierten Variablen ersetzen sollen. </0>"
     },
-    "sub-title": "Definieren, wie sich Daten in verschiedenen Datenquellen miteinander verbinden. Lesen Sie mehr in der <2>Dokumentation<1></1></2>",
+    "sub-title": "",
     "target-form": {
       "control-rules": "Dieses Feld ist erforderlich.",
       "sub-text": "<0>Definiere, wohin die Korrelation verlinken soll. Mit dem Typ „Abfrage“ wird eine Abfrage ausgeführt, wenn auf die Korrelation geklickt wird. Beim Typ „Extern“ wird durch Klicken auf die Korrelation eine URL geöffnet.</0>",
@@ -4673,7 +4734,7 @@
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
-      "import-a-dashboard-body": "Importiere Dashboards aus Dateien oder von <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren"
     },
@@ -4943,6 +5004,10 @@
     "options": {
       "description": "Beschreibung",
       "title-option": "Titel"
+    },
+    "options-pane-category": {
+      "aria-label-collapse": "",
+      "aria-label-expand": ""
     },
     "options-pane-options": {
       "placeholder-search-options": "Suchoptionen",
@@ -5639,11 +5704,9 @@
       "api-error": "Das Dashboard konnte nicht gelöscht werden",
       "cancel-action": "Abbrechen",
       "delete-action": "Dashboard löschen",
-      "delete-read-only-file-message": "Dieses Dashboard kann nicht direkt von Grafana aus gelöscht werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu löschen, entfernen Sie bitte die Datei aus Ihrem Git-Repository.",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
-      "success-message": "",
-      "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
+      "success-message": ""
     },
     "description-label": {
       "description": "Beschreibung"
@@ -6015,7 +6078,6 @@
       "api-error": "Fehler beim Speichern des Dashboards",
       "cancel": "Abbrechen",
       "cannot-be-saved": "Dieses Dashboard kann nicht über die Grafana-Benutzeroberfläche gespeichert werden, da es von einer anderen Quelle bereitgestellt wurde. Kopieren Sie JSON oder speichern Sie es unten in einer Datei. Anschließend können Sie Ihr Dashboard in der Bereitstellungsquelle aktualisieren.",
-      "copy-json-message": "Wenn Sie direkten Zugriff auf das Ziel haben, kopieren Sie den JSON und fügen Sie ihn dort ein.",
       "copy-json-to-clipboard": "JSON in die Zwischenablage kopieren",
       "file-path": "<0>Dateipfad:</0> {{filePath}}",
       "label-description": "Beschreibung",
@@ -6027,7 +6089,6 @@
       "see-docs": "Weitere Informationen zur Bereitstellung finden Sie in der <2>Dokumentation</2>.",
       "title-required": "Dashboard-Titel ist erforderlich",
       "title-same-as-folder": "Der Dashboard-Name darf nicht mit dem Ordnernamen identisch sein",
-      "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt",
       "title-validation-failed": "Die Validierung des Dashboard-Titels ist fehlgeschlagen."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6333,7 +6394,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicken Sie <2>hier</2>, um mehr über diesen Fehler zu erfahren.",
-    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen."
+    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen.",
+    "success-more-details-links-extensions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6472,7 +6534,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Dashboard erstellen",
-      "explore-data": "Daten untersuchen"
+      "explore-data": "Daten untersuchen",
+      "open-in-explore": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Weitere Details zum Fehler"
@@ -6598,6 +6661,7 @@
       "label-source": "Quelle"
     },
     "resource-picker": {
+      "aria-label-clear-value": "",
       "render-small-resource-picker": {
         "set-icon": "Symbol festlegen"
       }
@@ -6634,6 +6698,7 @@
       "noOptionsMessage-no-fields-found": ""
     },
     "text-dimension-editor": {
+      "aria-label-clear-value": "",
       "description-field": "Feldwert anzeigen",
       "description-fixed": "Fester Wert",
       "label-field": "Feld",
@@ -6771,7 +6836,8 @@
     },
     "content-outline-item-button": {
       "body": {
-        "aria-label-content-outline-item-collapse-button": "Schaltfläche zum Einklappen von Elementen der Inhaltsübersicht"
+        "aria-label-content-outline-item-collapse-button": "Schaltfläche zum Einklappen von Elementen der Inhaltsübersicht",
+        "aria-label-content-outline-item-delete-button": ""
       }
     },
     "correlation-editor-mode-bar": {
@@ -6981,6 +7047,7 @@
       "content-streaming": "Streaming"
     },
     "logs-volume-panel-list": {
+      "aria-label-reload-log-volume": "",
       "label-reload-log-volume": "Log-Volumen neu laden",
       "loading": "Wird geladen ...",
       "title-failed-volume-query": "Das Log-Volumen für diese Abfrage konnte nicht geladen werden",
@@ -7279,6 +7346,7 @@
       "split-widen": "Bereich verbreitern"
     },
     "trace-page-header": {
+      "aria-label-share-dropdown": "",
       "duration": "",
       "export-started": "",
       "give-feedback": "",
@@ -7303,6 +7371,7 @@
       "label-show-paths": "Schalter „Nur kritischen Pfad anzeigen“"
     },
     "trace-view": {
+      "aria-label-copy": "",
       "no-data": "Keine Daten",
       "tooltip-copy-icon": "Kopiert"
     },
@@ -7435,9 +7504,12 @@
     "loading": "Ordner werden geladen …"
   },
   "folder-repo": {
-    "badge-text": "Bereitgestellt"
+    "badge-tooltip": ""
   },
   "folders": {
+    "api": {
+      "folder-deleted-success": ""
+    },
     "get-loading-nav": {
       "main": {
         "title": {
@@ -7607,6 +7679,7 @@
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
+      "aria-label-close": "",
       "tooltip-show-measure-tools": "Messtools anzeigen"
     },
     "name-initial-view": "",
@@ -8639,6 +8712,7 @@
       "csv-placeholder": "CSV hier eingeben …",
       "filter-placeholder": "Filterwerte",
       "filter-popup-apply": "Ok",
+      "filter-popup-aria-label-match-case": "",
       "filter-popup-cancel": "Abbrechen",
       "filter-popup-clear": "Filter löschen",
       "filter-popup-heading": "Nach Werten filtern:",
@@ -10252,7 +10326,7 @@
     },
     "invite-user": {
       "invite-button": "",
-      "invite-new-member-button": "Neues Mitglied einladen",
+      "invite-new-user-button": "",
       "invite-tooltip": ""
     },
     "item": {
@@ -11034,6 +11108,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "pull-requests-label": "",
+        "pull-requests-read-write": "",
+        "repository-label": "",
+        "repository-read-write-admin": "",
+        "webhooks-label": "",
+        "webhooks-read-write": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11065,6 +11147,9 @@
     },
     "check-repository": {
       "check": "Überprüfen"
+    },
+    "code-block": {
+      "aria-label-copy": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository-Einstellungen gespeichert",
@@ -11244,6 +11329,14 @@
       "branch-required": "",
       "path-description": "",
       "path-label": "",
+      "permissions": {
+        "api": "",
+        "api-read-write": "",
+        "repository-label": "",
+        "repository-read-write": "",
+        "user-label": "",
+        "user-read": ""
+      },
       "pr-workflow-description": "",
       "pr-workflow-label": "",
       "token-description": "",
@@ -11450,6 +11543,14 @@
     },
     "token-permissions-info": {
       "and-click": "und klicken",
+      "bitbucket": {
+        "create-token-button": "",
+        "token-text": ""
+      },
+      "gitlab": {
+        "create-token-button": "",
+        "token-text": ""
+      },
       "go-to": "Weiter zu",
       "make-sure": "Achten Sie darauf, dass diese Berechtigungen berücksichtigt werden"
     },
@@ -13121,6 +13222,7 @@
       }
     },
     "filter-by-value-filter-editor": {
+      "aria-label-remove-filter": "",
       "label-field": "Feld",
       "label-match": "Übereinstimmung",
       "label-value": "Wert",

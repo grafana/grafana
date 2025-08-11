@@ -1195,12 +1195,39 @@ func Test_ParseMetricDataQueries_account_Id(t *testing.T) {
 }
 
 func Test_ParseMetricDataQueries_default_region(t *testing.T) {
-	t.Run("default region is used when when region not set", func(t *testing.T) {
+	t.Run("default region is used when when region is default", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
 				   "refId":"ref1",
 				   "region":"default",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "id": "",
+				   "expression": "",
+				   "dimensions":{
+					  "InstanceId":["test"],
+					  "InstanceType":["test2"]
+				   },
+				   "statistic":"Average",
+				   "period":"900",
+				   "hide":false
+				}`),
+			},
+		}
+
+		region := "us-east-2"
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), region, logger, false)
+		assert.NoError(t, err)
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0])
+		assert.Equal(t, region, res[0].Region)
+	})
+	t.Run("default region is used when when region not set", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "refId":"ref1",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
 				   "id": "",

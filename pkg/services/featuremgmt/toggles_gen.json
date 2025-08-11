@@ -1318,6 +1318,19 @@
     },
     {
       "metadata": {
+        "name": "favoriteDatasources",
+        "resourceVersion": "1754648387873",
+        "creationTimestamp": "2025-08-08T10:19:47Z"
+      },
+      "spec": {
+        "description": "Enable favorite datasources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "featureHighlights",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2022-02-03T11:53:23Z"
@@ -2094,19 +2107,6 @@
         "description": "Use double quotes to escape keyword in a MySQL query",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
-      }
-    },
-    {
-      "metadata": {
-        "name": "nestedFolders",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2022-10-26T14:15:14Z"
-      },
-      "spec": {
-        "description": "Enable folder nesting",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "expression": "true"
       }
     },
     {
@@ -3027,7 +3027,8 @@
       "metadata": {
         "name": "teamHttpHeadersMimir",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-13T10:42:47Z"
+        "creationTimestamp": "2025-01-13T10:42:47Z",
+        "deletionTimestamp": "2025-08-06T08:19:47Z"
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
@@ -3236,21 +3237,6 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "unifiedStorageSearchPermissionFiltering",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-22T11:38:37Z"
-      },
-      "spec": {
-        "description": "Enable permission filtering on unified storage search",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true,
-        "expression": "true"
       }
     },
     {
