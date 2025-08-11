@@ -93,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   postgres:
     strategy:
       matrix:
@@ -138,7 +138,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests and shards.
