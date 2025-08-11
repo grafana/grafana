@@ -775,8 +775,16 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	oas.Info.Description = "Provisioning"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
-	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
+	// Hide the internal historic jobs endpoint from the OpenAPI spec.
+	historicjobs := root + "namespaces/{namespace}/historicjobs"
+	for path := range oas.Paths.Paths {
+		if strings.HasPrefix(path, historicjobs) {
+			delete(oas.Paths.Paths, path)
+		}
+	}
+
+	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	defsBase := "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1."
 	refsBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."

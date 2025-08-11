@@ -236,7 +236,11 @@ type JobResourceSummary struct {
 	Errors []string `json:"errors,omitempty"`
 }
 
-// HistoricJob is a history entry of Job. It is used to store Jobs that have been processed.
+// HistoricJob is an append only log, saving all jobs that have been processed.
+//
+// NOTE: This should not be used directly by any external consumer.
+// When there is a more stable integration with loki (an appropriate append only store)
+// this may be removed without notice.
 //
 // The repository name and type are stored as labels.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
