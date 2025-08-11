@@ -26,7 +26,7 @@ export function setupMockedMetricsQueryRunner({
     range: TimeRangeMock,
     rangeRaw: { from: '1483228800', to: '1483232400' },
     targets: [],
-    requestId: '',
+    requestId: 'mockId',
     interval: '',
     intervalMs: 0,
     scopedVars: {},

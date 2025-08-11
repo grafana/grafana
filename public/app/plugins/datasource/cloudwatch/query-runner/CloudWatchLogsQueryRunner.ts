@@ -420,7 +420,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       ...options,
       range,
       skipQueryCache: true,
-      requestId: options?.requestId || '', // dummy
+      requestId: options?.requestId + '-logs' || '', // adding -logs to prevent requestId from matching metric queries from the same panel
       interval: options?.interval || '', // dummy
       intervalMs: options?.intervalMs || 1, // dummy
       scopedVars: options?.scopedVars || {}, // dummy
