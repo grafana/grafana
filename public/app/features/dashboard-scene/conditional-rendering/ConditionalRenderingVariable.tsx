@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
@@ -6,7 +6,7 @@ import {
   ConditionalRenderingVariableKind,
   ConditionalRenderingVariableSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Box, Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';
+import { Box, Combobox, ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
 
@@ -69,10 +69,14 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
         ? variableValue.includes(this.state.value.value.toString())
         : variableValue === this.state.value.value.toString();
     } else {
-      const regex = new RegExp(this.state.value.value);
-      hit = Array.isArray(variableValue)
-        ? variableValue.some((currentVariableValue) => regex.test(currentVariableValue.toString()))
-        : regex.test(variableValue.toString());
+      try {
+        const regex = new RegExp(this.state.value.value);
+        hit = Array.isArray(variableValue)
+          ? variableValue.some((currentVariableValue) => regex.test(currentVariableValue.toString()))
+          : regex.test(variableValue.toString());
+      } catch (err) {
+        return true;
+      }
     }
 
     return this.state.value.operator === '!=' || this.state.value.operator === '!~' ? !hit : hit;
@@ -93,7 +97,7 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     return new ConditionalRenderingVariable({
       value: {
         name: model.spec.variable,
-        operator: this._getShortOperator(model.spec.operator),
+        operator: ConditionalRenderingVariable._getShortOperator(model.spec.operator),
         value: model.spec.value,
       },
     });
@@ -141,6 +145,12 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
 function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<ConditionalRenderingVariable>) {
   const { value } = model.useState();
 
+  const [actualValue, setActualValue] = useState(value.value);
+
+  useEffect(() => {
+    setActualValue(value.value);
+  }, [value.value]);
+
   const variables = useMemo(() => sceneGraph.getVariables(model), [model]);
 
   const variableNames: ComboboxOption[] = useMemo(
@@ -167,6 +177,19 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
     []
   );
 
+  const valueError = useMemo(() => {
+    if (value.operator === '=~' || value.operator === '!~') {
+      try {
+        new RegExp(actualValue);
+        return '';
+      } catch (err) {
+        return t('dashboard.conditional-rendering.conditions.variable.error.invalid-regex', 'Invalid regex');
+      }
+    }
+
+    return '';
+  }, [actualValue, value.operator]);
+
   const undoText = t('dashboard.edit-actions.edit-template-variable-rule', 'Change template variable rule');
 
   return (
@@ -178,12 +201,14 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
             options={variableNames}
             value={value.name}
             onChange={(option) => {
-              dashboardEditActions.edit({
-                description: undoText,
-                source: model,
-                perform: () => model.setStateAndNotify({ value: { ...value, name: option.value } }),
-                undo: () => model.setStateAndNotify({ value: { ...value, name: value.name } }),
-              });
+              if (option.value !== value.name) {
+                dashboardEditActions.edit({
+                  description: undoText,
+                  source: model,
+                  perform: () => model.setStateAndNotify({ value: { ...value, name: option.value } }),
+                  undo: () => model.setStateAndNotify({ value: { ...value, name: value.name } }),
+                });
+              }
             }}
           />
         </Box>
@@ -194,28 +219,38 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
           options={operatorOptions}
           value={value.operator}
           onChange={(option) => {
-            dashboardEditActions.edit({
-              description: undoText,
-              source: model,
-              perform: () => model.setStateAndNotify({ value: { ...value, operator: option.value } }),
-              undo: () => model.setStateAndNotify({ value: { ...value, operator: value.operator } }),
-            });
+            if (option.value !== value.operator) {
+              dashboardEditActions.edit({
+                description: undoText,
+                source: model,
+                perform: () => model.setStateAndNotify({ value: { ...value, operator: option.value } }),
+                undo: () => model.setStateAndNotify({ value: { ...value, operator: value.operator } }),
+              });
+            }
           }}
         />
       </Stack>
-      <Input
-        placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
-        value={value.value}
-        onChange={(e) => {
-          const eventValue = e.currentTarget.value;
-          dashboardEditActions.edit({
-            description: undoText,
-            source: model,
-            perform: () => model.setStateAndNotify({ value: { ...value, value: eventValue } }),
-            undo: () => model.setStateAndNotify({ value: { ...value, value: value.value } }),
-          });
-        }}
-      />
+      <Field error={valueError} invalid={!!valueError} noMargin>
+        <Input
+          placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
+          value={actualValue}
+          onChange={(evt) => {
+            if (evt.currentTarget.value !== value.value) {
+              setActualValue(evt.currentTarget.value);
+            }
+          }}
+          onBlur={() => {
+            if (actualValue !== value.value) {
+              dashboardEditActions.edit({
+                description: undoText,
+                source: model,
+                perform: () => model.setStateAndNotify({ value: { ...value, value: actualValue } }),
+                undo: () => model.setStateAndNotify({ value: { ...value, value: value.value } }),
+              });
+            }
+          }}
+        />
+      </Field>
     </Stack>
   );
 }
