@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -12,7 +12,9 @@ import { generateTimestamp } from 'app/features/dashboard-scene/saving/provision
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { useDispatch } from 'app/types/store';
 
+import { refreshParents } from '../../state/actions';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
 import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
 import { collectSelectedItems } from '../utils';
@@ -37,6 +39,16 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
+  const dispatch = useDispatch();
+
+  const onJobSuccess = useCallback(() => {
+    const selectedUIDs = [
+      ...Object.keys(selectedItems.folder || {}).filter((id) => selectedItems.folder[id]),
+      ...Object.keys(selectedItems.dashboard || {}).filter((id) => selectedItems.dashboard[id]),
+    ];
+    // refresh necessary parents
+    dispatch(refreshParents(selectedUIDs));
+  }, [dispatch, selectedItems]);
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setHasSubmitted(true);
@@ -84,7 +96,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           </Box>
 
           {hasSubmitted && job ? (
-            <JobStatus watch={job} jobType="delete" />
+            <JobStatus watch={job} jobType="delete" onSuccess={onJobSuccess} />
           ) : (
             <>
               <ResourceEditFormSharedFields

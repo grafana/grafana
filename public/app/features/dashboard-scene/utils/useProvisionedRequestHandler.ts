@@ -12,7 +12,7 @@ import { Resource } from 'app/features/apiserver/types';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
-import { dispatch } from 'app/store/store';
+import { useDispatch } from 'app/types/store';
 
 type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
 
@@ -73,6 +73,7 @@ export function useProvisionedRequestHandler<T>({
   repository,
   resourceType,
 }: Props<T>) {
+  const dispatch = useDispatch();
   useEffect(() => {
     const repoType = repository?.type || 'git';
     const info: ProvisionedOperationInfo = {
@@ -115,7 +116,7 @@ export function useProvisionedRequestHandler<T>({
 
       handlers.onDismiss?.();
     }
-  }, [request, workflow, handlers, successMessage, repository, resourceType, folderUID]);
+  }, [request, workflow, handlers, successMessage, repository, resourceType, folderUID, dispatch]);
 }
 
 function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
