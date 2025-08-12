@@ -14,13 +14,14 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-s
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { DescendantCount } from '../BrowseActions/DescendantCount';
+import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
 import { collectSelectedItems } from '../utils';
 
 import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { useFolderNameFromSelection } from './useFolderNameFromSelection';
 import { BulkActionFormData, BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
@@ -148,8 +149,12 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 }
 
 export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
-  const folderName = useFolderNameFromSelection({ folderUid, selectedItems });
-  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName });
+  // Check if we're on the root browser dashboards page
+  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+  const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
+  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: isRootPage ? selectedItemsRepoUID : folderUid,
+  });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
@@ -172,7 +177,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
       initialValues={initialValues}
       repository={repository}
       workflowOptions={workflowOptions}
-      folderPath={folderPath}
+      folderPath={isRootPage ? '/' : folderPath}
     />
   );
 }

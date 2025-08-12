@@ -12,6 +12,10 @@ import { useSelector } from 'app/types/store';
 import { findItem } from '../../state/utils';
 import { DashboardTreeSelection } from '../../types';
 
+// TODO: This will soon be remove after bulk action is merged in
+
+// This hook can be remove once searching endpoint returns provisioning status
+// It is used to determine if the selected items are provisioned or not, which is currently missing from the search API
 export function useSelectionProvisioningStatus(
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
   isParentProvisioned: boolean
@@ -23,7 +27,6 @@ export function useSelectionProvisioningStatus(
   const provisioningEnabled = config.featureToggles.provisioning;
 
   const [status, setStatus] = useState({ hasProvisioned: false, hasNonProvisioned: false });
-
   const [folderCache, setFolderCache] = useState<Record<string, boolean>>({});
   const [dashboardCache, setDashboardCache] = useState<Record<string, boolean>>({});
 
@@ -37,6 +40,8 @@ export function useSelectionProvisioningStatus(
       }),
     []
   );
+
+  // Simplified: removed complex root folder tracking logic
 
   const findItemInState = useCallback(
     (uid: string) => {
@@ -84,7 +89,6 @@ export function useSelectionProvisioningStatus(
   const checkItemProvisioning = useCallback(
     async (uid: string, isFolder: boolean): Promise<boolean> => {
       if (isSearching) {
-        // If searching, we need provisioning status with fetching metadata
         return isFolder ? await getFolderMeta(uid) : await getDashboardMeta(uid);
       }
 
@@ -93,7 +97,7 @@ export function useSelectionProvisioningStatus(
         return item?.managedBy === ManagerKind.Repo;
       }
 
-      // Check parent folder first
+      // Check parent folder first for dashboards
       const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
       if (parent?.managedBy === ManagerKind.Repo) {
         return true;
@@ -106,7 +110,7 @@ export function useSelectionProvisioningStatus(
 
   useEffect(() => {
     const checkProvisioningStatus = async () => {
-      // If the instance is provisioned or the parent folder is provisioned, we can skip checking individual items
+      // Early returns for simple cases
       if (isProvisionedInstance || isParentProvisioned) {
         setStatus({ hasProvisioned: true, hasNonProvisioned: false });
         return;
@@ -120,6 +124,12 @@ export function useSelectionProvisioningStatus(
       const folders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
       const dashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
 
+      // If no items selected
+      if (folders.length === 0 && dashboards.length === 0) {
+        setStatus({ hasProvisioned: false, hasNonProvisioned: false });
+        return;
+      }
+
       let hasProvisioned = false;
       let hasNonProvisioned = false;
 
@@ -127,11 +137,18 @@ export function useSelectionProvisioningStatus(
         ...folders.map((uid) => ({ uid, isFolder: true })),
         ...dashboards.map((uid) => ({ uid, isFolder: false })),
       ];
+
       for (const { uid, isFolder } of allItems) {
         const isProvisioned = await checkItemProvisioning(uid, isFolder);
-        isProvisioned ? (hasProvisioned = true) : (hasNonProvisioned = true);
+
+        if (isProvisioned) {
+          hasProvisioned = true;
+        } else {
+          hasNonProvisioned = true;
+        }
+
         if (hasProvisioned && hasNonProvisioned) {
-          // If we have both provisioned and non-provisioned items, we can stop checking
+          // If we have both, we can stop checking
           break;
         }
       }
@@ -140,15 +157,10 @@ export function useSelectionProvisioningStatus(
     };
 
     checkProvisioningStatus();
-  }, [
-    selectedItems,
-    isProvisionedInstance,
-    isParentProvisioned,
-    isSearching,
-    findItemInState,
-    checkItemProvisioning,
-    provisioningEnabled,
-  ]);
+  }, [selectedItems, isProvisionedInstance, isParentProvisioned, checkItemProvisioning, provisioningEnabled]);
 
-  return status;
+  return {
+    hasProvisioned: status.hasProvisioned,
+    hasNonProvisioned: status.hasNonProvisioned,
+  };
 }
