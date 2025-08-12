@@ -24,7 +24,7 @@ import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
@@ -88,7 +88,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const folderRepo = useSelector((state) => selectFolderRepository()(state, meta.folderUid));
   const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
   // Get the repository for the dashboard's folder
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: meta.folderUid,
   });
 
@@ -143,7 +143,7 @@ export function ToolbarActions({ dashboard }: Props) {
           <Badge
             color="darkgrey"
             text={t('dashboard.toolbar.read-only', 'Read only')}
-            tooltip={getReadOnlyTooltipText()}
+            tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
           />
         );
       },
@@ -357,7 +357,11 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={() => {
           dashboard.onEnterEditMode();
         }}
-        tooltip={isReadOnlyRepo ? getReadOnlyTooltipText() : t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')}
+        tooltip={
+          isReadOnlyRepo
+            ? getReadOnlyTooltipText({ isLocal: repoType === 'local' })
+            : t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')
+        }
         key="edit"
         className={styles.buttonWithExtraMargin}
         variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}

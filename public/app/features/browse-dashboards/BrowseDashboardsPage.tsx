@@ -42,7 +42,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUID });
+  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderUID });
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -163,12 +163,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
               <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
             </LinkButton>
           )}
-          {folderDTO && <FolderActionsButton folder={folderDTO} isReadOnlyRepo={isReadOnlyRepo} />}
+          {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton
               parentFolder={folderDTO}
               canCreateDashboard={canCreateDashboards}
               canCreateFolder={canCreateFolders}
+              repoType={repoType}
               isReadOnlyRepo={isReadOnlyRepo}
             />
           )}

@@ -5,8 +5,9 @@ import { locationUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/constants';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import {
   getImportPhrase,
   getNewDashboardPhrase,
@@ -26,9 +27,16 @@ interface Props {
   canCreateFolder: boolean;
   canCreateDashboard: boolean;
   isReadOnlyRepo: boolean;
+  repoType?: RepoType;
 }
 
-export default function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder, isReadOnlyRepo }: Props) {
+export default function CreateNewButton({
+  parentFolder,
+  canCreateDashboard,
+  canCreateFolder,
+  isReadOnlyRepo,
+  repoType,
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const [newFolder] = useNewFolderMutation();
@@ -98,7 +106,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
       <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
         <Button
           disabled={isReadOnlyRepo}
-          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText() : undefined}
+          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
           variant="secondary"
         >
           {getNewPhrase()}

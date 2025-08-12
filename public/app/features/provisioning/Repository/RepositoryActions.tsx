@@ -4,7 +4,6 @@ import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
-import { getReadOnlyTooltipText } from '../utils/constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
