@@ -258,7 +258,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       "buttons"
       "editor"
     `,
-    gap: theme.spacing(1.5),
+    gap: theme.spacing(0.5),
   }),
   editorContainer: css({
     gridArea: 'editor',
