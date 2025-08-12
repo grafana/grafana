@@ -1,8 +1,22 @@
 module github.com/grafana/grafana/apps/iam
 
-go 1.24.5
+go 1.24.6
 
 replace github.com/grafana/grafana => ../../
+
+replace github.com/grafana/grafana/apps/folder => ../folder
+
+replace github.com/grafana/grafana/apps/dashboard => ../dashboard
+
+replace github.com/grafana/grafana/apps/secret => ../secret
+
+replace github.com/grafana/grafana/apps/provisioning => ../provisioning
+
+replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
+
+replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
+
+replace github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250620093340-be61a673dee6
 
@@ -12,8 +26,8 @@ require (
 	github.com/grafana/grafana-app-sdk v0.40.3
 	github.com/grafana/grafana-app-sdk/logging v0.40.2
 	github.com/grafana/grafana-app-sdk/plugin v0.40.3
-	github.com/grafana/grafana/apps/folder v0.0.0-20250802141302-8ac74e24df1f
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250801162753-7e4796893956
+	github.com/grafana/grafana/apps/folder v0.0.0
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	google.golang.org/grpc v1.74.2
 	k8s.io/apimachinery v0.33.3
 	k8s.io/client-go v0.33.3
@@ -104,7 +118,7 @@ require (
 	github.com/go-openapi/strfmt v0.23.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
-	github.com/go-sql-driver/mysql v1.9.2 // indirect
+	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -124,18 +138,18 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250729175202-b4b881b7b263 // indirect
+	github.com/grafana/alerting v0.0.0-20250808160954-dae4478cb0dc // indirect
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914 // indirect
-	github.com/grafana/grafana-aws-sdk v1.0.4 // indirect
+	github.com/grafana/grafana-aws-sdk v1.1.0 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0 // indirect
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017 // indirect
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b // indirect
+	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
-	github.com/grafana/sqlds/v4 v4.2.3 // indirect
+	github.com/grafana/sqlds/v4 v4.2.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 // indirect

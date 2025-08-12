@@ -53,7 +53,7 @@ Geomaps allow you to view and customize the world map using geospatial data. It'
 
 You can configure and overlay [map layers](#layer-type), like heatmaps and networks, and blend included basemaps or your own custom maps. This helps you to easily focus on the important location-based characteristics of the data.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" alt="Geomap visualization" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="750px" alt="Geomap visualization" >}}
 
 When a geomap is in focus, in addition to typical mouse controls, you can pan around using the arrow keys or zoom in and out using the plus (`+`) and minus (`-`) keys or icons.
 
@@ -186,11 +186,7 @@ You might need to reload the dashboard for this feature to work.
 
 #### No map repeating
 
-The **No map repeating** option prevents the base map tiles from repeating horizontally when you pan across the world. This constrains the view to a single instance of the world map and avoids visual confusion when displaying global datasets.
-
-{{< admonition type="note" >}}
-Enabling this option requires the map to reinitialize.
-{{< /admonition >}}
+The **No map repeating** option prevents the base map tiles from repeating horizontally when you pan across the world. This constrains the view to a single instance of the world map and avoids visual confusion when displaying global datasets. Enabling this option requires the map to reinitialize.
 
 ### Map layers options
 
@@ -349,7 +345,7 @@ Styles can be set within the "properties" object of the GeoJSON with support for
 
 The Night / Day layer displays night and day regions based on the current time range.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" alt="Geomap panel Night / Day" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="600px" alt="Geomap panel Night / Day" >}}
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -372,11 +368,11 @@ The Route layer is currently in [public preview](/docs/release-life-cycle/). Gra
 
 The Route layer renders data points as a route.
 
-{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" alt="Geomap panel Route" >}}
+{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="600px" alt="Geomap panel Route" >}}
 
 The layer can also render a route with arrows.
 
-{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" alt="Geomap panel Route arrows with size" >}}
+{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="600px" alt="Geomap panel Route arrows with size" >}}
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -401,7 +397,7 @@ The Photos layer is currently in [public preview](/docs/release-life-cycle/). Gr
 
 The Photos layer renders a photo at each data point.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" alt="Geomap panel Photos" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="600px" alt="Geomap panel Photos" >}}
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -471,7 +467,7 @@ You can convert node graph data to a network layer:
 
 A map from a collaborative free geographic world database.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="1200px" alt="Geomap panel Open Street Map" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="600px" alt="Geomap panel Open Street Map" >}}
 
 - **Opacity** from 0 (transparent) to 1 (opaque)
 - **Display tooltip** - allows you to toggle tooltips for the layer.
@@ -485,9 +481,9 @@ A CARTO layer is from CARTO Raster basemaps.
 - **Theme**
   - Auto
   - Light
-    {{< figure src="/static/img/docs/geomap-panel/geomap-carto-light-9-1-0.png" max-width="1200px" alt="Geomap panel CARTO light example" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-carto-light-9-1-0.png" max-width="600px" alt="Geomap panel CARTO light example" >}}
   - Dark
-    {{< figure src="/static/img/docs/geomap-panel/geomap-carto-dark-9-1-0.png" max-width="1200px" alt="Geomap panel CARTO dark example" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-carto-dark-9-1-0.png" max-width="600px" alt="Geomap panel CARTO dark example" >}}
 - **Show labels** shows the Country details on top of the map.
 - **Opacity** from 0 (transparent) to 1 (opaque)
 - **Display tooltip** - allows you to toggle tooltips for the layer.
@@ -500,17 +496,17 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
 - **Server Instance** to select the map type.
   - World Street Map
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wsm-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS World Street Map" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wsm-9-1-0.png" max-width="600px" alt="Geomap panel ArcGIS World Street Map" >}}
   - World Imagery
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wi-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS World Imagery" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wi-9-1-0.png" max-width="600px" alt="Geomap panel ArcGIS World Imagery" >}}
   - World Physical
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wp-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS World Physical" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wp-9-1-0.png" max-width="600px" alt="Geomap panel ArcGIS World Physical" >}}
   - Topographic
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-topographic-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS Topographic" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-topographic-9-1-0.png" max-width="600px" alt="Geomap panel ArcGIS Topographic" >}}
   - USA Topographic
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-usa-topographic-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS USA Topographic" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-usa-topographic-9-1-0.png" max-width="600px" alt="Geomap panel ArcGIS USA Topographic" >}}
   - World Ocean
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-ocean-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS World Ocean" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-ocean-9-1-0.png" max-width="600px" alt="Geomap panel ArcGIS World Ocean" >}}
   - Custom MapServer (see [XYZ](#xyz-tile-layer) for formatting)
     - URL template
     - Attribution
@@ -526,7 +522,7 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
 The XYZ Tile layer is a map from a generic tile layer.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" alt="Geomap panel xyz example" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="600px" alt="Geomap panel xyz example" >}}
 
 - **URL template** - Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
 - **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
@@ -647,7 +643,7 @@ The map controls section contains various options for map information and tool o
 
 Displays zoom controls in the upper left corner. This control can be useful when using systems that don't have a mouse.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-zoom-9-1-0.png" max-width="1200px" alt="Geomap panel zoom" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-zoom-9-1-0.png" max-width="300px" alt="Geomap panel zoom" >}}
 
 #### Mouse wheel zoom
 
@@ -657,19 +653,19 @@ Enables the mouse wheel to be used for zooming in or out.
 
 Displays attribution for basemap layers.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="1200px" alt="Geomap panel attribution" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="400px" alt="Geomap panel attribution" >}}
 
 #### Show scale
 
 Displays scale information in the bottom left corner in meters (m) or kilometers (km).
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-scale-9-1-0.png" max-width="1200px" alt="Geomap panel scale" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-scale-9-1-0.png" max-width="400px" alt="Geomap panel scale" >}}
 
 #### Show measure tools
 
 Displays measure tools in the upper right corner. Measurements appear only when this control is open.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-9-1-0.png" max-width="1200px" alt="Geomap panel measure" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-9-1-0.png" max-width="400px" alt="Geomap panel measure" >}}
 
 - **Click** to start measuring
 - **Continue clicking** to continue measurement
@@ -686,7 +682,7 @@ Get the spherical length of a geometry. This length is the sum of the great circ
 - **Miles (mi)**
 - **Nautical miles (nmi)**
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-length-9-1-0.png" max-width="1200px" alt="Geomap panel measure length" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-length-9-1-0.png" max-width="400px" alt="Geomap panel measure length" >}}
 
 ##### Area
 
@@ -699,7 +695,7 @@ Get the spherical area of a geometry. This area is calculated assuming that poly
 - **Acres (acre)**
 - **Hectare (ha)**
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="1200px" alt="Geomap panel measure area" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="550px" alt="Geomap panel measure area" >}}
 
 #### Show debug
 
@@ -708,12 +704,30 @@ Displays debug information in the upper right corner. This can be useful for deb
 - **Zoom** displays current zoom level of the map.
 - **Center** displays the current **longitude**, **latitude** of the map center.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-debug-9-1-0.png" max-width="1200px" alt="Geomap panel debug" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-debug-9-1-0.png" max-width="400px" alt="Geomap panel debug" >}}
 
 #### Tooltip
 
+Tooltips are supported for the **Markers**, **Heatmap**, **Photos** (beta) layers.
+For these layer types, choose from the following tooltip options:
+
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
+
+When a data point on the geomap represents one row&mdash;that is, only a single row of response data is relevant to that point&mdash;the tooltip displays a grid with the row's names and values:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-single-row-marker-v12.1.png" max-width="750px" alt="A data point with one row of associated data" >}}
+
+When a data point represents more than one row&mdash;that is, different rows but with the same geographical information&mdash;then each row appears as a single entry:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-multiple-row-marker-v12.1.png" max-width="750px" alt="A data point with mulitple rows of associated data" >}}
+
+The text displayed in each tooltip row is associated with the first field value in each data row.
+Click it to expand and display the full details of the data row.
+
+{{< admonition type="note" >}}
+The data appearing in each detail row is determined by the underlying query and transformations applied to the query's results, and can't be directly controlled using tooltip options.
+{{< /admonition >}}
 
 ### Standard options
 

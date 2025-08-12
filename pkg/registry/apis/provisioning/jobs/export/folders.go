@@ -50,7 +50,10 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 			Resource: resources.FolderResource.Resource,
 			Group:    resources.FolderResource.Group,
 			Path:     folder.Path,
-			Error:    err,
+		}
+
+		if err != nil {
+			result.Error = fmt.Errorf("creating folder %s at path %s: %w", folder.ID, folder.Path, err)
 		}
 
 		if !created {
