@@ -5,7 +5,7 @@ import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
-import { getJustifyContent } from './utils';
+import { getJustifyContent, TextAlign } from './utils';
 
 export const getGridStyles = (
   theme: GrafanaTheme2,
@@ -124,34 +124,6 @@ export const getGridStyles = (
       padding: theme.spacing(0, 1, 0, 2),
     }),
     menuItem: css({ maxWidth: '200px' }),
-    tooltipContent: css({
-      height: '100%',
-    }),
-    tooltipWrapper: css({
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
-      overflow: 'hidden',
-      padding: theme.spacing(1),
-    }),
-    tooltipCaret: css({
-      width: 0,
-      height: 0,
-      borderTop: '10px solid transparent',
-      borderBottom: '10px solid transparent',
-      borderRight: `10px solid ${theme.colors.border.weak}`,
-      transform: 'rotate(45deg)',
-      position: 'absolute',
-      top: -4,
-      left: 1,
-      ':hover': {
-        borderRightColor: theme.colors.border.medium,
-      },
-      '&[aria-pressed=true]': {
-        borderRightColor: theme.colors.border.strong,
-      },
-    }),
   };
 };
 
@@ -204,3 +176,31 @@ export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
           }),
     },
   });
+
+export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => ({
+  tooltipContent: css({
+    height: '100%',
+  }),
+  tooltipWrapper: css({
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    overflow: 'hidden',
+    padding: theme.spacing(1),
+  }),
+  tooltipCaret: css({
+    width: 0,
+    height: 0,
+    borderTop: '10px solid transparent',
+    borderBottom: '10px solid transparent',
+    borderRight: `10px solid ${theme.colors.border.medium}`,
+    transform: `rotate(${textAlign === 'right' ? '135deg' : '45deg'})`,
+    position: 'absolute',
+    top: -4,
+    [textAlign === 'right' ? 'right' : 'left']: 1,
+    '&:hover, &[aria-pressed=true]': {
+      borderRightColor: theme.colors.border.strong,
+    },
+  }),
+});

@@ -62,7 +62,14 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
-import { getDefaultCellStyles, getFooterStyles, getGridStyles, getHeaderCellStyles, getLinkStyles } from './styles';
+import {
+  getDefaultCellStyles,
+  getFooterStyles,
+  getGridStyles,
+  getHeaderCellStyles,
+  getLinkStyles,
+  getTooltipStyles,
+} from './styles';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps, TableCellStyleOptions } from './types';
 import {
   applySort,
@@ -530,14 +537,17 @@ export function TableNG(props: TableNGProps) {
 
               let tooltipStyle: CSSProperties | undefined;
               if (tooltipCanBeColorized) {
-                const displayName = getDisplayName(tooltipField);
-                const tooltipDisplayValue = tooltipField.display!(props.row[displayName]); // this is yet another call to field.display() for the tooltip field
+                const tooltipDisplayName = getDisplayName(tooltipField);
+                const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
                 let { textColor, bgColor } = getCellColors(theme, tooltipCellOptions, tooltipDisplayValue);
                 tooltipStyle = {
                   color: textColor,
                   background: bgColor,
                 };
               }
+
+              // provide the root element's textAlign for the caret placement.
+              const tooltipClasses = getTooltipStyles(theme, textAlign);
 
               const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
               const tooltipWidth =
@@ -549,7 +559,7 @@ export function TableNG(props: TableNGProps) {
                 <TableCellTooltip
                   cellOptions={tooltipCellOptions}
                   className={clsx(
-                    styles.tooltipContent,
+                    tooltipClasses.tooltipContent,
                     defaultTooltipStyles,
                     tooltipSpecificStyles,
                     tooltipLinkStyles
@@ -566,8 +576,8 @@ export function TableNG(props: TableNGProps) {
                   rowIdx={rowIdx}
                   style={tooltipStyle}
                   theme={theme}
-                  tooltipCaretClassName={styles.tooltipCaret}
-                  tooltipWrapperClass={styles.tooltipWrapper}
+                  tooltipCaretClassName={tooltipClasses.tooltipCaret}
+                  tooltipWrapperClass={tooltipClasses.tooltipWrapper}
                   width={tooltipWidth}
                 >
                   {content}

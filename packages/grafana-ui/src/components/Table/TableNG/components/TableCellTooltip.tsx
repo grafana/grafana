@@ -1,11 +1,10 @@
-import { CSSProperties, ReactElement, SyntheticEvent, useMemo, useState, useRef } from 'react';
+import { CSSProperties, ReactElement, useMemo, useState, useRef, useEffect } from 'react';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellTooltipPlacement } from '@grafana/schema';
 
 import { Popover } from '../../../Tooltip/Popover';
-import { PopoverController } from '../../../Tooltip/PopoverController';
 import { TableCellOptions } from '../../types';
 import { TABLE } from '../constants';
 import { TableCellRenderer, TableCellRendererProps } from '../types';
@@ -53,9 +52,44 @@ export function TableCellTooltip({
 }: Props) {
   const rawValue = field.values[rowIdx];
   const height = _height ?? TABLE.MAX_CELL_HEIGHT;
+  const tooltipCaretRef = useRef<HTMLDivElement>(null);
   const tooltipContentRef = useRef<HTMLDivElement>(null);
 
+  const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);
+
+  const show = hovered || pinned;
+
+  useEffect(() => {
+    if (pinned) {
+      const clickListener = (event: MouseEvent) => {
+        const clickTarget = event.target;
+        if (!(clickTarget instanceof HTMLElement)) {
+          return;
+        }
+
+        if (!tooltipContentRef.current?.contains(clickTarget) && !tooltipCaretRef.current?.contains(clickTarget)) {
+          setPinned(false);
+          window.removeEventListener('click', clickListener);
+        }
+      };
+
+      const scrollListener = () => {
+        setPinned(false);
+        window.removeEventListener('scroll', scrollListener);
+      };
+
+      window.addEventListener('click', clickListener);
+      root?.addEventListener('scroll', scrollListener);
+
+      return () => {
+        window.removeEventListener('click', clickListener);
+        root?.removeEventListener('scroll', scrollListener);
+      };
+    }
+
+    return;
+  }, [pinned, root]);
 
   const rendererProps = useMemo(
     () =>
@@ -86,74 +120,41 @@ export function TableCellTooltip({
     </div>
   );
 
+  const onMouseLeave = () => setHovered(false);
+  const onMouseEnter = () => setHovered(true);
+
   return (
-    <PopoverController content={body} placement={placement}>
-      {(_showPopper, _hidePopper, popperProps) => {
-        const showPopper = () => {
-          _showPopper();
-        };
+    <>
+      {popoverRef.current && (
+        <Popover
+          content={body}
+          show={show}
+          placement={placement}
+          wrapperClassName={tooltipWrapperClass}
+          className={className}
+          root={root}
+          style={{ ...style, width, height }}
+          referenceElement={popoverRef.current}
+          onMouseLeave={onMouseLeave}
+          onMouseEnter={onMouseEnter}
+        />
+      )}
 
-        const hidePopper = () => {
-          if (!pinned) {
-            _hidePopper();
-          }
-        };
+      {/* a11y is handled by connecting this tooltip with the selection system. */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div
+        className={tooltipCaretClassName}
+        ref={tooltipCaretRef}
+        data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Caret}
+        aria-pressed={pinned}
+        onClick={() => setPinned((prev) => !prev)}
+        onMouseLeave={onMouseLeave}
+        onMouseEnter={onMouseEnter}
+        onBlur={onMouseLeave}
+        onFocus={onMouseEnter}
+      />
 
-        const unpinPopper = () => {
-          setPinned(false);
-          _hidePopper();
-        };
-
-        const pinPopper = (origEvent: SyntheticEvent) => {
-          setPinned(true);
-          _showPopper();
-
-          const origTarget = origEvent.currentTarget;
-
-          const listener = (event: MouseEvent) => {
-            const clickTarget = event.target as Node;
-            if (!origTarget.contains(clickTarget) && !tooltipContentRef.current?.contains(clickTarget)) {
-              unpinPopper();
-              window.removeEventListener('click', listener);
-            }
-          };
-
-          window.addEventListener('click', listener);
-        };
-
-        return (
-          <>
-            {popoverRef.current && (
-              <Popover
-                {...popperProps}
-                show={popperProps.show || pinned}
-                wrapperClassName={tooltipWrapperClass}
-                className={className}
-                root={root}
-                style={{ ...style, width, height }}
-                referenceElement={popoverRef.current}
-                onMouseLeave={hidePopper}
-                onMouseEnter={showPopper}
-              />
-            )}
-
-            {/* TODO figure out how we would make this accessible */}
-            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <div
-              className={tooltipCaretClassName}
-              data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Caret}
-              aria-pressed={pinned}
-              onMouseEnter={showPopper}
-              onMouseLeave={hidePopper}
-              onClick={pinned ? unpinPopper : pinPopper}
-              onFocus={showPopper}
-              onBlur={hidePopper}
-            />
-
-            {children}
-          </>
-        );
-      }}
-    </PopoverController>
+      {children}
+    </>
   );
 }
