@@ -107,13 +107,7 @@ export const PieChart = ({
           <Pie
             data={filteredFieldDisplayValues}
             pieValue={getValue}
-            pieSortValues={(a, b) =>
-              pieSorting === PieChartSortOptions.Descending
-                ? b - a
-                : pieSorting === PieChartSortOptions.Ascending
-                  ? a - b
-                  : 0
-            }
+            pieSortValues={() => 0}
             outerRadius={layout.outerRadius}
             innerRadius={layout.innerRadius}
             cornerRadius={3}
