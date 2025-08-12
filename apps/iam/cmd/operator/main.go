@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
-
 	"github.com/grafana/grafana/apps/iam/pkg/app"
 )
 
@@ -64,9 +63,7 @@ func main() {
 
 	// Create app config from operator config
 	appCfg := app.AppConfig{
-		ZanzanaClient: app.ZanzanaClientConfig{
-			Addr: cfg.ZanzanaClient.Addr,
-		},
+		ZanzanaAddr: cfg.ZanzanaClient.Addr,
 	}
 
 	// Run
