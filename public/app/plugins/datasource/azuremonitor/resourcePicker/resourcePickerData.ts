@@ -143,15 +143,22 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     return addResources(rows, parentRow.uri, nestedRows);
   }
 
-  search = async (searchPhrase: string, searchType: ResourcePickerQueryType): Promise<ResourceRowGroup> => {
+  search = async (
+    searchPhrase: string,
+    searchType: ResourcePickerQueryType,
+    filters: { subscriptions: string[]; types: string[]; locations: string[] }
+  ): Promise<ResourceRowGroup> => {
     let searchQuery = 'resources';
     if (searchType === 'logs') {
       searchQuery += `
       | union resourcecontainers`;
     }
+
+    const filtersQuery = createFilter(filters);
     searchQuery += `
         | where id contains "${searchPhrase}"
         ${await this.filterByType(searchType)}
+        ${filtersQuery}
         | order by tolower(name) asc
         | limit ${this.resultLimit}
       `;
