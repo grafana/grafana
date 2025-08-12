@@ -7,6 +7,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  Box,
   Button,
   Combobox,
   ComboboxOption,
@@ -22,11 +23,12 @@ import {
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackFilterButtonApplyClick, trackFilterButtonClearClick, trackFilterButtonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
+import { prometheusApi } from '../../../api/prometheusApi';
 import { useGetLabelsFromDataSourceName } from '../../../components/rule-editor/useAlertRuleSuggestions';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
@@ -80,7 +82,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
-  const { setValue, watch, handleSubmit } = useForm<SearchQueryForm>({
+  const { setValue, getValues, handleSubmit } = useForm<SearchQueryForm>({
     defaultValues: {
       query: searchQuery,
     },
@@ -163,7 +165,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
           </Stack>
         </Label>
         <Stack direction="row" alignItems="center" gap={1}>
-          <div style={{ flex: 1 }}>
+          <Box flex={1}>
             <FilterInput
               id="rulesSearchInput"
               data-testid="search-query-input"
@@ -174,13 +176,13 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               name="searchQuery"
               onChange={(string) => setValue('query', string)}
               onBlur={() => {
-                const currentQuery = watch('query');
+                const currentQuery = getValues('query');
                 const parsedFilter = getSearchFilterFromQuery(currentQuery);
                 updateFilters(parsedFilter);
               }}
-              value={watch('query')}
+              value={getValues('query')}
             />
-          </div>
+          </Box>
           {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
           <PopupCard
             showOn="click"
@@ -240,11 +242,30 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
 
   const defaultValues = searchQueryToDefaultValues(filterState);
 
-  // Fetch namespace and group data from all sources
-  const { currentData: grafanaPromRules = [], isLoading: isLoadingGrafanaPromRules } =
-    alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
-      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+  // Fetch namespace and group data from all sources (optimized for filter UI)
+  const { currentData: grafanaPromRulesResponse, isLoading: isLoadingGrafanaPromRules } =
+    prometheusApi.endpoints.getGrafanaGroups.useQuery({
+      limitAlerts: 0, // Don't fetch alert instances, only rule metadata
+      groupLimit: 1000, // Limit to reasonable number for UI
     });
+
+  // Transform Grafana groups to namespace structure
+  const grafanaPromRules = useMemo(() => {
+    if (!grafanaPromRulesResponse?.data?.groups) {
+      return [];
+    }
+
+    const namespaceMap = new Map<string, { name: string; groups: GrafanaPromRuleGroupDTO[] }>();
+    grafanaPromRulesResponse.data.groups.forEach((group) => {
+      const namespaceName = group.file || 'default';
+      if (!namespaceMap.has(namespaceName)) {
+        namespaceMap.set(namespaceName, { name: namespaceName, groups: [] });
+      }
+      namespaceMap.get(namespaceName)!.groups.push(group);
+    });
+
+    return Array.from(namespaceMap.values());
+  }, [grafanaPromRulesResponse]);
 
   const { isLoading: isLoadingGrafanaRulerRules } = alertRuleApi.endpoints.rulerRules.useQuery({
     rulerConfig: GRAFANA_RULER_CONFIG,
@@ -253,8 +274,10 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
   const externalDataSources = useMemo(getRulesDataSources, []);
 
   const externalPromRulesQueries = externalDataSources.map((ds) =>
-    alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
-      ruleSourceName: ds.name,
+    prometheusApi.endpoints.getGroups.useQuery({
+      ruleSource: { uid: ds.uid },
+      excludeAlerts: true,
+      groupLimit: 500, // Limit to reasonable number for external sources
     })
   );
 
@@ -282,19 +305,25 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
 
     // Add external data source namespaces
     externalPromRulesQueries.forEach((query) => {
-      query.currentData?.forEach((namespace) => {
+      // Transform groups to unique namespaces
+      const namespaces = new Set<string>();
+      query.currentData?.data?.groups?.forEach((group) => {
+        namespaces.add(group.file || 'default');
+      });
+
+      namespaces.forEach((namespaceName) => {
         // Handle file paths from external Prometheus data sources
-        if (namespace.name.includes('/') && (namespace.name.endsWith('.yml') || namespace.name.endsWith('.yaml'))) {
-          const filename = namespace.name.split('/').pop() || namespace.name;
+        if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
+          const filename = namespaceName.split('/').pop() || namespaceName;
           const maxDescriptionLength = 100;
           const truncatedDescription =
-            namespace.name.length > maxDescriptionLength
-              ? `${namespace.name.substring(0, maxDescriptionLength)}...`
-              : namespace.name;
+            namespaceName.length > maxDescriptionLength
+              ? `${namespaceName.substring(0, maxDescriptionLength)}...`
+              : namespaceName;
 
           externalNamespaces.push({
             label: filename,
-            value: namespace.name,
+            value: namespaceName,
             description: truncatedDescription,
           });
         } else {
@@ -302,15 +331,15 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
           const maxLength = 50;
           const maxDescriptionLength = 100;
           const truncatedName =
-            namespace.name.length > maxLength ? `${namespace.name.substring(0, maxLength)}...` : namespace.name;
+            namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
           const truncatedDescription =
-            namespace.name.length > maxDescriptionLength
-              ? `${namespace.name.substring(0, maxDescriptionLength)}...`
-              : namespace.name;
+            namespaceName.length > maxDescriptionLength
+              ? `${namespaceName.substring(0, maxDescriptionLength)}...`
+              : namespaceName;
 
           externalNamespaces.push({
             label: truncatedName,
-            value: namespace.name,
+            value: namespaceName,
             description: truncatedDescription,
           });
         }
@@ -337,8 +366,8 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
 
     // Add external data source groups
     externalPromRulesQueries.forEach((query) => {
-      query.currentData?.forEach((namespace) => {
-        namespace.groups.forEach((group) => groupSet.add(group.name));
+      query.currentData?.data?.groups?.forEach((group) => {
+        groupSet.add(group.name);
       });
     });
 

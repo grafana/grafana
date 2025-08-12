@@ -216,9 +216,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
             if (!isAllFilteredSelected && inputValue !== '') {
-              // Select all currently filtered items and deduplicate (excluding info options)
-              const filteredRealOptions = realOptions.filter((option) => !option.infoOption);
-              newSelectedItems = [...new Set([...selectedItems, ...filteredRealOptions])];
+              newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
             }
 
             if (isAllFilteredSelected && inputValue !== '') {
