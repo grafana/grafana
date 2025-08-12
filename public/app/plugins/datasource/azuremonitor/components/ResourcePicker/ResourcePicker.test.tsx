@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 
 import Datasource from '../../datasource';
-import createMockDatasource from '../../mocks/datasource';
+import createMockDatasource, { createMockLocations, createMockMetricsNamespaces } from '../../mocks/datasource';
 import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 import {
   createMockResourceGroupsBySubscription,
