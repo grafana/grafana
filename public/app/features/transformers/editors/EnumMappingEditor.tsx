@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { DataFrame, EnumFieldConfig, GrafanaTheme2 } from '@grafana/data';
 import { ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { Button, HorizontalGroup, InlineFieldRow, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Button, InlineFieldRow, Stack, useStyles2 } from '@grafana/ui';
 
 import EnumMappingRow from './EnumMappingRow';
 
@@ -120,7 +120,7 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
 
   return (
     <InlineFieldRow>
-      <HorizontalGroup>
+      <Stack>
         <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.button}>
           <Trans i18nKey="transformers.enum-mapping-editor.generate-enum-values-from-data">
             Generate enum values from data
@@ -129,37 +129,35 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
         <Button size="sm" icon="plus" onClick={() => onAddEnumRow()} className={styles.button}>
           <Trans i18nKey="transformers.enum-mapping-editor.add-enum-value">Add enum value</Trans>
         </Button>
-      </HorizontalGroup>
+      </Stack>
 
-      <VerticalGroup>
-        <table className={styles.compactTable}>
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="sortable-enum-config-mappings" direction="vertical">
-              {(provided) => (
-                <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                  {[...enumRows].reverse().map((value: string, index: number) => {
-                    // Reverse the order of the enum values to match the order of the enum values in the table to the order in the visualization
-                    const mappedIndex = enumRows.length - index - 1;
-                    return (
-                      <EnumMappingRow
-                        key={`${transformIndex}/${value}`}
-                        transformIndex={transformIndex}
-                        value={value}
-                        index={index}
-                        mappedIndex={mappedIndex}
-                        onChangeEnumValue={onChangeEnumValue}
-                        onRemoveEnumRow={onRemoveEnumRow}
-                        checkIsEnumUniqueValue={checkIsEnumUniqueValue}
-                      />
-                    );
-                  })}
-                  {provided.placeholder}
-                </tbody>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </table>
-      </VerticalGroup>
+      <table className={styles.compactTable}>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="sortable-enum-config-mappings" direction="vertical">
+            {(provided) => (
+              <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                {[...enumRows].reverse().map((value: string, index: number) => {
+                  // Reverse the order of the enum values to match the order of the enum values in the table to the order in the visualization
+                  const mappedIndex = enumRows.length - index - 1;
+                  return (
+                    <EnumMappingRow
+                      key={`${transformIndex}/${value}`}
+                      transformIndex={transformIndex}
+                      value={value}
+                      index={index}
+                      mappedIndex={mappedIndex}
+                      onChangeEnumValue={onChangeEnumValue}
+                      onRemoveEnumRow={onRemoveEnumRow}
+                      checkIsEnumUniqueValue={checkIsEnumUniqueValue}
+                    />
+                  );
+                })}
+                {provided.placeholder}
+              </tbody>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </table>
     </InlineFieldRow>
   );
 };
@@ -171,6 +169,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     marginTop: theme.spacing(1),
     marginBottom: theme.spacing(2),
+    minHeight: theme.spacing(3),
   }),
   button: css({
     marginTop: theme.spacing(1),
