@@ -1,4 +1,4 @@
-import { formatFolderName, hasFolderNameCharactersToReplace } from './utils';
+import { formatFolderName } from './utils';
 
 describe('formatFolderName', () => {
   it('should handle empty string', () => {
@@ -56,69 +56,5 @@ describe('formatFolderName', () => {
     expect(formatFolderName('already-formatted')).toBe('already-formatted');
     expect(formatFolderName('folder123')).toBe('folder123');
     expect(formatFolderName('test-folder-name-123')).toBe('test-folder-name-123');
-  });
-});
-
-describe('hasFolderNameCharactersToReplace', () => {
-  it('should return false for non-string inputs', () => {
-    // @ts-expect-error
-    expect(hasFolderNameCharactersToReplace(null)).toBe(false);
-    // @ts-expect-error
-    expect(hasFolderNameCharactersToReplace(undefined)).toBe(false);
-    // @ts-expect-error
-    expect(hasFolderNameCharactersToReplace(123)).toBe(false);
-    // @ts-expect-error
-    expect(hasFolderNameCharactersToReplace({})).toBe(false);
-    // @ts-expect-error
-    expect(hasFolderNameCharactersToReplace([])).toBe(false);
-  });
-
-  it('should return false for empty string', () => {
-    expect(hasFolderNameCharactersToReplace('')).toBe(false);
-  });
-
-  it('should return false for valid folder names', () => {
-    expect(hasFolderNameCharactersToReplace('validname')).toBe(false);
-    expect(hasFolderNameCharactersToReplace('folder123')).toBe(false);
-    expect(hasFolderNameCharactersToReplace('test-folder-name')).toBe(false);
-    expect(hasFolderNameCharactersToReplace('folder-123')).toBe(false);
-    expect(hasFolderNameCharactersToReplace('123-folder')).toBe(false);
-    expect(hasFolderNameCharactersToReplace('a')).toBe(false);
-    expect(hasFolderNameCharactersToReplace('1')).toBe(false);
-  });
-
-  it('should return true for names with whitespace', () => {
-    expect(hasFolderNameCharactersToReplace('folder name')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder  name')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder\tname')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder\nname')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('  folder')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder  ')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('   ')).toBe(true);
-  });
-
-  it('should return true for names with uppercase letters', () => {
-    expect(hasFolderNameCharactersToReplace('FolderName')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('UPPERCASE')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('MiXeD')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder-Name')).toBe(true);
-  });
-
-  it('should return true for names with special characters', () => {
-    expect(hasFolderNameCharactersToReplace('folder@name')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder!name')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder_name')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder.name')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder/name')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder#name')).toBe(true);
-  });
-
-  it('should return true for mixed cases with multiple issues', () => {
-    expect(hasFolderNameCharactersToReplace('Test@Folder#Name$123')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('Multiple   Spaces   Between')).toBe(true);
-  });
-
-  it('should return true for strings with only special characters', () => {
-    expect(hasFolderNameCharactersToReplace('!@#$%^&*()')).toBe(true);
   });
 });

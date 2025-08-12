@@ -1,11 +1,10 @@
-import { css } from '@emotion/css';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Text, Button, Field, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
@@ -24,7 +23,7 @@ import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormD
 
 import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
 import { validateFolderName } from './NewFolderForm';
-import { formatFolderName, hasFolderNameCharactersToReplace } from './utils';
+import { formatFolderName } from './utils';
 
 interface FormProps extends Props {
   initialValues: BaseProvisionedFormData;
@@ -48,7 +47,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow, title] = watch(['workflow', 'title']);
+  const [workflow] = watch(['workflow']);
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
@@ -111,7 +110,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
 
     // Convert folder title to filename format (lowercase, replace spaces with hyphens)
-    const titleInFilenameFormat = formatFolderName(title); // TODO: this is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
+    const titleInFilenameFormat = formatFolderName(title); // TODO: folder name validation is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
 
     const prefix = basePath ? `${basePath}/` : '';
     const path = `${prefix}${titleInFilenameFormat}/`;
@@ -169,7 +168,6 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
               id="folder-name-input"
             />
           </Field>
-          <FolderNamePreviewMessage folderName={title} />
 
           <ResourceEditFormSharedFields
             resourceType="folder"
@@ -244,39 +242,3 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
     />
   );
 }
-
-function FolderNamePreviewMessage({ folderName }: { folderName: string }) {
-  const styles = useStyles2(getStyles);
-  const isValidFolderName =
-    folderName.length && hasFolderNameCharactersToReplace(folderName) && validateFolderName(folderName);
-
-  if (!isValidFolderName) {
-    return null;
-  }
-
-  return (
-    <div className={styles.folderNameMessage}>
-      <Icon name="check-circle" type="solid" />
-      <Text color="success">
-        {t(
-          'browse-dashboards.new-provisioned-folder-form.text-your-folder-will-be-created-as',
-          'Your folder will be created as {{folderName}}',
-          {
-            folderName: formatFolderName(folderName),
-          }
-        )}
-      </Text>
-    </div>
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    folderNameMessage: css({
-      display: 'flex',
-      alignItems: 'center',
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.success.text,
-    }),
-  };
-};
