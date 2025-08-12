@@ -124,7 +124,3 @@ const OperatorFunctions: Record<LabelMatcher['type'], OperatorPredicate> = {
     return !re.test(lv);
   },
 };
-
-export function stringifyMatcher(matcher: LabelMatcher) {
-  return Object.values(matcher).join('');
-}
