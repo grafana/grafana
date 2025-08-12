@@ -5,7 +5,7 @@ import { Trans } from '@grafana/i18n';
 import { Button, Drawer, Text, TextLink } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
-import { createRelativeUrl } from '../../../utils/url'; 
+import { createRelativeUrl } from '../../../utils/url';
 import { Label } from '../../Label';
 
 import { ConnectionLine } from './ConnectionLine';
@@ -41,7 +41,7 @@ export function NotificationPolicyDrawer({
 
   return (
     <>
-      <Button fill="outline" icon="sign-alt" variant="secondary" size="sm" onClick={handleOpenDrawer}>
+      <Button fill="outline" variant="secondary" size="sm" onClick={handleOpenDrawer}>
         <Trans i18nKey="alerting.instance-match.notification-policy">View journey</Trans>
       </Button>
 
