@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
@@ -41,6 +43,24 @@ func New(cfg app.Config) (app.App, error) {
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: shorturlv1alpha1.ShortURLKind(),
+				Validator: &simple.Validator{
+					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+						// Cast the incoming object to ShortURL for validation
+						shortURL, ok := req.Object.(*shorturlv1alpha1.ShortURL)
+						if !ok {
+							return fmt.Errorf("expected ShortURL object, got %T", req.Object)
+						}
+
+						relPath := strings.TrimSpace(shortURL.Spec.Path)
+						if path.IsAbs(relPath) {
+							return fmt.Errorf("%w: %s", ErrShortURLAbsolutePath, relPath)
+						}
+						if strings.Contains(relPath, "../") {
+							return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, relPath)
+						}
+						return nil
+					},
+				},
 			},
 		},
 	}
