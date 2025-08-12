@@ -28,6 +28,7 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
   const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(
     !provisioningEnabled ? skipToken : undefined
   );
+
   const skipFolderQuery = !folderName || !provisioningEnabled;
   const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
     skipFolderQuery ? skipToken : { name: folderName }

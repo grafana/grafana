@@ -3,6 +3,8 @@ import { render } from 'test/test-utils';
 
 import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
+
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 import { ResponseType } from './useBulkActionJob';
 
@@ -18,6 +20,14 @@ jest.mock('../BrowseActions/DescendantCount', () => ({
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
   useGetResourceRepositoryView: jest.fn(),
 }));
+
+jest.mock('../BrowseActions/useSelectionRepoValidation', () => ({
+  useSelectionRepoValidation: jest.fn(),
+}));
+
+const mockUseSelectionRepoValidation = useSelectionRepoValidation as jest.MockedFunction<
+  typeof useSelectionRepoValidation
+>;
 
 jest.mock('./useBulkActionJob', () => ({
   useBulkActionJob: jest.fn(),
@@ -103,6 +113,13 @@ function setup(
 describe('BulkDeleteProvisionedResource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockUseSelectionRepoValidation.mockReturnValue({
+      selectedItemsRepoUID: 'test-folder',
+      isInLockedRepo: jest.fn().mockReturnValue(false),
+      isCrossRepo: false,
+      isUidInReadOnlyRepo: jest.fn().mockReturnValue(false),
+    });
   });
 
   afterEach(() => {

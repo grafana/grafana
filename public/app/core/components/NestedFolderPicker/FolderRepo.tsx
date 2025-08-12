@@ -20,8 +20,6 @@ export function FolderRepo({ folder }: Props) {
     folderName: skipRender ? undefined : folder?.uid,
   });
 
-  console.log({ isReadOnlyRepo, repoType });
-
   if (skipRender) {
     return null;
   }
