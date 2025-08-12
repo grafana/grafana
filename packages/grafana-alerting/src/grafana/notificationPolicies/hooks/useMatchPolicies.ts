@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
-import { RoutingTree, RoutingTreeRoute, alertingAPI } from '../../api/v0alpha1/api.gen';
-import { Label, LabelMatcher } from '../../matchers/types';
+import { RoutingTree, alertingAPI } from '../../api/v0alpha1/api.gen';
+import { Label } from '../../matchers/types';
 import { Route } from '../types';
-import { RouteMatchResult, RouteWithID, matchAlertInstancesToPolicyTree } from '../utils';
+import { RouteMatchResult, RouteWithID, convertRoutingTreeToRoute, matchAlertInstancesToPolicyTree } from '../utils';
 
 export type RouteMatch = {
   route: Route;
@@ -94,36 +94,4 @@ export function useMatchAlertInstancesToNotificationPolicies() {
   );
 
   return { matchInstancesToPolicies, ...rest };
-}
-
-/**
- * Converts a RoutingTree to a Route by merging defaults with routes.
- * 
- * @param routingTree - The RoutingTree from the API
- * @returns A Route that can be used with the matching functions
- */
-function convertRoutingTreeToRoute(routingTree: RoutingTree): Route {
-  const convertRoutingTreeRoutes = (routes: RoutingTreeRoute[]): Route[] => {
-    return routes.map((route): Route => ({
-      ...route,
-      matchers: route.matchers?.map((matcher): LabelMatcher => ({
-        ...matcher,
-        // sadly we use type narrowing for this on Route but the codegen has it as a string
-        type: matcher.type as LabelMatcher['type'],
-      })),
-      routes: route.routes ? convertRoutingTreeRoutes(route.routes) : [],
-    }));
-  };
-
-  // Create the root route by merging defaults with the route structure
-  const rootRoute: Route = {
-    ...routingTree.spec.defaults,
-    continue: false,
-    active_time_intervals: [],
-    mute_time_intervals: [],
-    matchers: [], // Root route has no matchers (catch-all)
-    routes: convertRoutingTreeRoutes(routingTree.spec.routes),
-  };
-
-  return rootRoute;
 }

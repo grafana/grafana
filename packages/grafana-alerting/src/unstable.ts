@@ -21,5 +21,10 @@ export {
 } from './grafana/notificationPolicies/utils';
 export * from './grafana/notificationPolicies/types';
 
+// Matchers
+export {
+  type LabelMatcher,
+} from './grafana/matchers/types';
+
 // Low-level API hooks
 export { alertingAPI } from './grafana/api/v0alpha1/api.gen';
