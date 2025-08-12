@@ -63,7 +63,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		Password:       "admin",
 		IsAdmin:        true,
 		OrgID:          2,
-	})
+	}, grafanaListedAddr)
 
 	savedFolder := createFolder(t, grafanaListedAddr, "Saved folder")
 	savedDashInFolder := createDashboard(t, grafanaListedAddr, "Saved dash in folder", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
@@ -753,7 +753,7 @@ func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
 				},
 				{
 					"id": 2,
-					"title": "Library Panel 2", 
+					"title": "Library Panel 2",
 					"type": "stat",
 					"gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
 					"libraryPanel": {
@@ -777,7 +777,7 @@ func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
 					}
 				},
 				"test-lib-panel-2": {
-					"uid": "test-lib-panel-2", 
+					"uid": "test-lib-panel-2",
 					"name": "Test Library Panel 2",
 					"kind": 1,
 					"type": "stat",
@@ -997,13 +997,13 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 		Login:          "editor",
 		Password:       "editor",
 		IsAdmin:        false,
-	})
+	}, grafanaListedAddr)
 	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Login:          "viewer",
 		Password:       "viewer",
 		IsAdmin:        false,
-	})
+	}, grafanaListedAddr)
 	savedFolder := createFolder(t, grafanaListedAddr, "Saved folder")
 	otherSavedFolder := createFolder(t, grafanaListedAddr, "Other saved folder")
 	savedDashInFolder := createDashboard(t, grafanaListedAddr, "Saved dash in folder", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
@@ -1166,7 +1166,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			Login:          "noneuser",
 			Password:       "noneuser",
 			IsAdmin:        false,
-		})
+		}, grafanaListedAddr)
 		parentFolder := createFolder(t, grafanaListedAddr, "parent")
 		childFolder := createFolder(t, grafanaListedAddr, "child")
 		createDashboard(t, grafanaListedAddr, "dashboard in root", 0, "")

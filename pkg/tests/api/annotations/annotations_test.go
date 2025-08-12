@@ -43,7 +43,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		Password:       "noneuser",
 		IsAdmin:        false,
 		OrgID:          1,
-	})
+	}, grafanaListedAddr)
 
 	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
@@ -51,7 +51,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		Password:       "editor",
 		IsAdmin:        false,
 		OrgID:          1,
-	})
+	}, grafanaListedAddr)
 
 	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
@@ -59,7 +59,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		Password:       "viewer",
 		IsAdmin:        false,
 		OrgID:          1,
-	})
+	}, grafanaListedAddr)
 	savedFolder := createFolder(t, grafanaListedAddr, "Test Folder")
 	dash1 := createDashboard(t, grafanaListedAddr, "Dashboard 1", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
 	dash2 := createDashboard(t, grafanaListedAddr, "Dashboard 2", savedFolder.ID, savedFolder.UID) // nolint:staticcheck

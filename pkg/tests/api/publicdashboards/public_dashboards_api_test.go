@@ -39,7 +39,7 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		Login:          adminUsername,
 		Password:       "admin",
 		IsAdmin:        true,
-	})
+	}, grafanaListedAddr)
 	adminClient := createHTTPClient(grafanaListedAddr, adminUsername, "admin")
 
 	t.Run("should create, get, update, and delete public dashboard", func(t *testing.T) {
@@ -341,7 +341,7 @@ func TestPublicDashboardsAPI(t *testing.T) {
 				Login:          limitedUserUsername,
 				Password:       "password",
 				IsAdmin:        false,
-			})
+			}, grafanaListedAddr)
 			limitedUserClient := createHTTPClient(grafanaListedAddr, limitedUserUsername, "password")
 			permissionPayload := map[string]interface{}{
 				"permission": "View",

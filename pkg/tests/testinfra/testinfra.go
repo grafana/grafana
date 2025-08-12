@@ -167,6 +167,31 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 	t.Logf("Grafana is listening on %s", addr)
 
+	if !cfg.DisableInitAdminCreation {
+		maxRetries := 10
+		// Verify admin user is actually available for authentication
+		adminURL := fmt.Sprintf("http://%s:%s@%s/api/user", cfg.AdminUser, cfg.AdminPassword, addr)
+		for idx := range maxRetries {
+			// ignore gosec G107 as URL is constructed from test configuration, not user input
+			//nolint:gosec
+			resp, err := http.Get(adminURL)
+			if err == nil && resp.StatusCode == 200 {
+				_ = resp.Body.Close()
+				break
+			}
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
+			if idx == maxRetries-1 {
+				t.Log("Unable to verify admin was available")
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+	// Allow RBAC roles to propagate
+	time.Sleep(100 * time.Millisecond)
+
 	return addr, env
 }
 

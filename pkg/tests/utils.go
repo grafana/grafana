@@ -3,10 +3,14 @@ package tests
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	goapi "github.com/grafana/grafana-openapi-client-go/client"
@@ -35,7 +39,7 @@ func SkipIntegrationTestInShortMode(t testing.TB) {
 	}
 }
 
-func CreateUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+func CreateUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand, grafanaListedAddr string) int64 {
 	t.Helper()
 
 	cfg.AutoAssignOrg = true
@@ -54,6 +58,12 @@ func CreateUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 
 	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
+
+	// Verify the user has API access before returning
+	if grafanaListedAddr != "" {
+		verifyUserAPIAccess(t, grafanaListedAddr, cmd.Login, string(cmd.Password))
+	}
+
 	return u.ID
 }
 
@@ -84,7 +94,64 @@ func GetClient(host string, username string, password string) *goapi.GrafanaHTTP
 		// HTTPHeaders contains an optional map of HTTP headers to add to each request
 		HTTPHeaders: map[string]string{},
 	}
-	return goapi.NewHTTPClientWithConfig(strfmt.Default, cfg)
+	client := goapi.NewHTTPClientWithConfig(strfmt.Default, cfg)
+
+	// Verify authentication is ready before returning the client
+	verifyClientAuthentication(client)
+
+	return client
+}
+
+// verifyClientAuthentication ensures the client can authenticate successfully
+// This prevents race conditions where user exists in DB but isn't ready for HTTP auth
+func verifyClientAuthentication(client *goapi.GrafanaHTTPAPI) {
+	verifyAuthenticationWithRetries(client, 10)
+}
+
+// verifyUserAPIAccess verifies that a user can successfully authenticate via the API
+func verifyUserAPIAccess(t *testing.T, grafanaListedAddr, username, password string) {
+	t.Helper()
+
+	// Create client config directly to avoid circular dependency
+	cfg := &goapi.TransportConfig{
+		Host:      grafanaListedAddr,
+		BasePath:  "/api",
+		Schemes:   []string{"http"},
+		BasicAuth: url.UserPassword(username, password),
+		OrgID:     1,
+		TLSConfig: &tls.Config{},
+	}
+	client := goapi.NewHTTPClientWithConfig(strfmt.Default, cfg)
+
+	// Verify authentication directly
+	verifyAuthenticationWithRetries(client, 10)
+}
+
+// verifyAuthenticationWithRetries attempts to verify authentication with retries
+// This prevents race conditions where user exists in DB but isn't ready for HTTP auth
+func verifyAuthenticationWithRetries(client *goapi.GrafanaHTTPAPI, maxRetries int) {
+	for idx := range maxRetries {
+		// Try to get current user info to verify authentication
+		_, err := client.SignedInUser.GetSignedInUser()
+		if err == nil {
+			// Authentication successful
+			return
+		}
+
+		// Check if it's an authentication error that might be due to race condition
+		if strings.Contains(err.Error(), strconv.Itoa(http.StatusUnauthorized)) || strings.Contains(err.Error(), strconv.Itoa(http.StatusForbidden)) {
+			if idx < maxRetries-1 {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+		}
+		// For other errors or final retry, break
+		break
+	}
+	// Allow RBAC roles to propagate
+	time.Sleep(100 * time.Millisecond)
+	// Authentication verification failed, log warning but don't fail
+	fmt.Printf("Warning: Unable to verify user was available")
 }
 
 func RemoveFolderPermission(t *testing.T, store resourcepermissions.Store, orgID int64, role org.RoleType, uid string) {

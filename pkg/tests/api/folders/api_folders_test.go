@@ -48,19 +48,19 @@ func TestGetFolders(t *testing.T) {
 		OrgID:          orgID,
 		Password:       "viewer",
 		Login:          "viewer",
-	})
+	}, grafanaListedAddr)
 	tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 		OrgID:          orgID,
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
+	}, grafanaListedAddr)
 	tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 		OrgID:          orgID,
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin2",
-	})
+	}, grafanaListedAddr)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin2", "admin")
 	editorClient := tests.GetClient(grafanaListedAddr, "editor", "editor")

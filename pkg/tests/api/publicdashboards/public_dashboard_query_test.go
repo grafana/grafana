@@ -32,7 +32,7 @@ func TestPublicDashboardQueryAPI(t *testing.T) {
 		Login:          adminUsername,
 		Password:       "admin",
 		IsAdmin:        true,
-	})
+	}, grafanaListedAddr)
 	adminClient := createHTTPClient(grafanaListedAddr, adminUsername, "admin")
 
 	datasourcePayload := map[string]interface{}{

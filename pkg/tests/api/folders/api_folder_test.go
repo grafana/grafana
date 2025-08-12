@@ -291,7 +291,7 @@ func TestIntegrationNestedFolders(t *testing.T) {
 					OrgID:          orgID,
 					Password:       "editor",
 					Login:          "editor",
-				})
+				}, grafanaListedAddr)
 				editorClient := tests.GetClient(grafanaListedAddr, "editor", "editor")
 
 				sourceResp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
@@ -367,7 +367,7 @@ func TestIntegrationSharedWithMe(t *testing.T) {
 		OrgID:          orgID,
 		Password:       "none",
 		Login:          "none",
-	})
+	}, grafanaListedAddr)
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 	noneClient := tests.GetClient(grafanaListedAddr, "none", "none")
 
@@ -422,13 +422,13 @@ func TestIntegrationBasicRoles(t *testing.T) {
 		OrgID:          orgID,
 		Password:       "viewer",
 		Login:          "viewer",
-	})
+	}, grafanaListedAddr)
 	tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 		OrgID:          orgID,
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
+	}, grafanaListedAddr)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 	viewerClient := tests.GetClient(grafanaListedAddr, "viewer", "viewer")
@@ -558,7 +558,7 @@ func TestIntegrationFineGrainedPermissions(t *testing.T) {
 		OrgID:          orgID,
 		Password:       "none",
 		Login:          "none",
-	})
+	}, grafanaListedAddr)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 	noneClient := tests.GetClient(grafanaListedAddr, "none", "none")
