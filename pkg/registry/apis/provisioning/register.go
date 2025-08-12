@@ -275,7 +275,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				// A Grafana sub-system should have full access. We trust them to make wise decisions.
 				return authorizer.DecisionAllow, "", nil
 			}
-			
+
 			info, ok := authlib.AuthInfoFrom(ctx)
 			if ok && authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) {
 				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
@@ -649,12 +649,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.repositoryLister = repoInformer.Lister()
-	
+
 			// if running solely CRUD, skip the rest of the setup
 			if b.localFileResolver == nil {
 				return nil
 			}
-	
+
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
