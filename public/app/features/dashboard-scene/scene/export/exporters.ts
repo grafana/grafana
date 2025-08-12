@@ -174,16 +174,21 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           };
         }
 
+        console.log('obj - after', obj);
         obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
       });
   };
 
   const processPanel = async (panel: PanelModel) => {
     if (panel.type !== 'row') {
+      console.log('running panel');
       await templateizeDatasourceUsage(panel);
 
       if (panel.targets) {
         for (const target of panel.targets) {
+          console.log('running target', {
+            target,
+          });
           await templateizeDatasourceUsage(target, panel.datasource!);
         }
       }
@@ -221,6 +226,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
   try {
     // check up panel data sources
     for (const panel of saveModel.panels) {
+      console.log('calling panel in try', { panel });
       await processPanel(panel);
 
       // handle collapsed rows

@@ -42,6 +42,10 @@ func (e *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 	e.result = simplejson.New()
 	e.variables = make(map[string]string)
 
+	fmt.Println("template", prettyPrint(e.template))
+	fmt.Println("inputs", prettyPrint(e.inputs))
+	fmt.Println("variables", prettyPrint(e.variables))
+
 	// check that we have all inputs we need
 	for _, inputDef := range e.template.Get("__inputs").MustArray() {
 		inputDefJson := simplejson.NewFromAny(inputDef)
@@ -107,4 +111,12 @@ func (e *DashTemplateEvaluator) evalObject(source *simplejson.Json) any {
 	}
 
 	return result
+}
+
+func prettyPrint(value any) string {
+	json, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("Error: %v", err)
+	}
+	return string(json)
 }
