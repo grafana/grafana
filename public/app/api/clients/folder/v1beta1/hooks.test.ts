@@ -1,8 +1,12 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { renderHook } from '@testing-library/react';
 
+import { AppEvents } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useGetFolderQuery as useGetFolderQueryLegacy } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import {
+  useGetFolderQuery as useGetFolderQueryLegacy,
+  useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
+} from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
 import {
   AnnoKeyCreatedBy,
@@ -14,18 +18,20 @@ import {
 } from '../../../../features/apiserver/types';
 import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
-import { useGetFolderQueryFacade } from './hooks';
+import { useGetFolderQueryFacade, useDeleteMultipleFoldersMutationFacade } from './hooks';
 
-import { useGetFolderQuery, useGetFolderParentsQuery } from './index';
+import { useGetFolderQuery, useGetFolderParentsQuery, useDeleteFolderMutation } from './index';
 
 // Mocks for the hooks used inside useGetFolderQueryFacade
 jest.mock('./index', () => ({
   useGetFolderQuery: jest.fn(),
   useGetFolderParentsQuery: jest.fn(),
+  useDeleteFolderMutation: jest.fn(),
 }));
 
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   useGetFolderQuery: jest.fn(),
+  useDeleteFoldersMutation: jest.fn(),
 }));
 
 jest.mock('../../iam/v0alpha1', () => ({
@@ -158,6 +164,65 @@ describe('useGetFolderQueryFacade', () => {
     config.featureToggles.foldersAppPlatformAPI = false;
     const { result } = renderHook(() => useGetFolderQueryFacade('folder-uid'));
     expect(result.current.data).toMatchObject(mockLegacyResponse.data);
+  });
+});
+
+describe('useDeleteMultipleFoldersMutationFacade', () => {
+  const dispatchMock = jest.fn();
+  const publishMock = jest.fn();
+  const mockDeleteFolder = jest.fn(() => ({ error: undefined }));
+  const mockDeleteFolderLegacy = jest.fn(() => ({ error: undefined }));
+
+  const oldToggleValue = config.featureToggles.foldersAppPlatformAPI;
+
+  afterAll(() => {
+    config.featureToggles.foldersAppPlatformAPI = oldToggleValue;
+  });
+
+  beforeEach(() => {
+    mockDeleteFolder.mockClear();
+    mockDeleteFolderLegacy.mockClear();
+    (useDeleteFolderMutation as jest.Mock).mockReturnValue([mockDeleteFolder]);
+    (useDeleteFoldersMutationLegacy as jest.Mock).mockReturnValue([mockDeleteFolderLegacy]);
+
+    // Mock getAppEvents().publish
+    jest.spyOn(require('@grafana/runtime'), 'getAppEvents').mockReturnValue({
+      publish: publishMock,
+    });
+    // Mock useDispatch
+    jest.spyOn(require('../../../../types/store'), 'useDispatch').mockReturnValue(dispatchMock);
+  });
+
+  it('deletes multiple folders and publishes success alert', async () => {
+    config.featureToggles.foldersAppPlatformAPI = true;
+    const folderUIDs = ['uid1', 'uid2'];
+    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
+    await deleteFolders({ folderUIDs });
+
+    // Should call deleteFolder for each UID
+    expect(mockDeleteFolder).toHaveBeenCalledTimes(folderUIDs.length);
+    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid1' });
+    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid2' });
+
+    // Should publish success alert
+    expect(publishMock).toHaveBeenCalledWith({
+      type: AppEvents.alertSuccess.name,
+      payload: ['Folder deleted'],
+    });
+
+    // Should dispatch refreshParents
+    expect(dispatchMock).toHaveBeenCalled();
+  });
+
+  it('uses legacy call when flag is false', async () => {
+    config.featureToggles.foldersAppPlatformAPI = false;
+    const folderUIDs = ['uid1', 'uid2'];
+    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
+    await deleteFolders({ folderUIDs });
+
+    // Should call deleteFolder for each UID
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
   });
 });
 

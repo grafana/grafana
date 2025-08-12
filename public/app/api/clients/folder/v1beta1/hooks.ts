@@ -199,7 +199,7 @@ export function useDeleteFolderMutationFacade() {
 }
 
 export function useDeleteMultipleFoldersMutationFacade() {
-  if (config.featureToggles.foldersAppPlatformAPI) {
+  if (!config.featureToggles.foldersAppPlatformAPI) {
     const [deleteFolders] = useDeleteFoldersMutationLegacy();
     return deleteFolders;
   }
