@@ -53,16 +53,11 @@ export function useBulkActionJob(): UseBulkActionJobResult {
       }).unwrap();
 
       const jobId = response.metadata?.name;
-      if (jobId) {
-        return {
-          success: true,
-          jobId,
-          job: response, // Return the full job object
-        };
-      } else {
-        // This can happen if the backend creates the job but fails to populate metadata.name
-        return { success: false, error: 'Job created but no ID returned' };
-      }
+      return {
+        success: true,
+        jobId,
+        job: response, // Return the full job object
+      };
     } catch (error) {
       return { success: false, error: extractErrorMessage(error) };
     }
