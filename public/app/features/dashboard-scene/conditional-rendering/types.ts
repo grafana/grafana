@@ -22,7 +22,7 @@ export type GroupConditionValue = ConditionalRenderingConditions[];
 
 export type TimeRangeSizeConditionValue = string;
 
-export type VariableConditionValueOperator = '=' | '!=';
+export type VariableConditionValueOperator = '=' | '!=' | '=~' | '!~';
 
 export type VariableConditionValue = {
   name: string;

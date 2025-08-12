@@ -70,15 +70,17 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     this.setStateAndNotify({ condition });
   }
 
-  public createItem(itemType: GroupConditionItemType) {
-    const item =
-      itemType === 'data'
-        ? ConditionalRenderingData.createEmpty()
-        : itemType === 'variable'
-          ? ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name)
-          : ConditionalRenderingTimeRangeSize.createEmpty();
+  public createItem(itemType: GroupConditionItemType): ConditionalRenderingConditions {
+    switch (itemType) {
+      case 'data':
+        return ConditionalRenderingData.createEmpty();
 
-    return item;
+      case 'timeRangeSize':
+        return ConditionalRenderingTimeRangeSize.createEmpty();
+
+      case 'variable':
+        return ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name);
+    }
   }
 
   public addItem(item: ConditionalRenderingConditions) {

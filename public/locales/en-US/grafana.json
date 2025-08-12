@@ -4497,12 +4497,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": "Invalid regex"
+          },
           "info": "Show or hide the {{type}} dynamically based on the variable value.",
           "label": "Template variable",
           "name": "Name",
           "operator": {
             "equals": "Equals",
-            "not-equals": "Not equals"
+            "matches": "Matches",
+            "not-equals": "Not equals",
+            "not-matches": "Not matches"
           },
           "value": "Value"
         }

@@ -22,13 +22,6 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
-  if (isConditionallyHidden && !isEditing) {
-    return null;
-  }
-
-  const isDragging = !!draggingKey;
-  const isDragged = draggingKey === key;
-
   const Wrapper = useMemo(
     () =>
       memo(
@@ -68,6 +61,13 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ),
     [conditionalRenderingClass, conditionalRenderingOverlay, isLazy, key, model.containerRef, styles]
   );
+
+  if (isConditionallyHidden && !isEditing) {
+    return null;
+  }
+
+  const isDragging = !!draggingKey;
+  const isDragged = draggingKey === key;
 
   return repeatedPanels ? (
     <>

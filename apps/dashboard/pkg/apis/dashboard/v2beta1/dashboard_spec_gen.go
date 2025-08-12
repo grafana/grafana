@@ -1884,8 +1884,10 @@ const (
 type DashboardConditionalRenderingVariableSpecOperator string
 
 const (
-	DashboardConditionalRenderingVariableSpecOperatorEquals    DashboardConditionalRenderingVariableSpecOperator = "equals"
-	DashboardConditionalRenderingVariableSpecOperatorNotEquals DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+	DashboardConditionalRenderingVariableSpecOperatorEquals     DashboardConditionalRenderingVariableSpecOperator = "equals"
+	DashboardConditionalRenderingVariableSpecOperatorNotEquals  DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+	DashboardConditionalRenderingVariableSpecOperatorMatches    DashboardConditionalRenderingVariableSpecOperator = "matches"
+	DashboardConditionalRenderingVariableSpecOperatorNotMatches DashboardConditionalRenderingVariableSpecOperator = "notMatches"
 )
 
 // +k8s:openapi-gen=true
