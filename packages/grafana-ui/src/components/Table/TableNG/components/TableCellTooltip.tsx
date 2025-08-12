@@ -64,19 +64,28 @@ export function TableCellTooltip({
     if (pinned) {
       const gridRoot = gridRef.current?.element;
 
-      const listener = () => {
+      const windowListener = (ev: Event) => {
+        if (ev.target === tooltipCaretRef.current) {
+          return;
+        }
+
         setPinned(false);
+        window.removeEventListener('click', windowListener);
       };
 
-      window.addEventListener('click', listener, { once: true });
+      window.addEventListener('click', windowListener);
+
       // right now, we kill the pinned tooltip on any form of scrolling to avoid awkward rendering
       // where the tooltip bumps up against the edge of the scrollable container. we could try to
       // kill the tooltip when it hits these boundaries rather than when scrolling starts.
-      gridRoot?.addEventListener('scroll', listener, { once: true });
+      const scrollListener = () => {
+        setPinned(false);
+      };
+      gridRoot?.addEventListener('scroll', scrollListener, { once: true });
 
       return () => {
-        window.removeEventListener('click', listener);
-        gridRoot?.removeEventListener('scroll', listener);
+        window.removeEventListener('click', windowListener);
+        gridRoot?.removeEventListener('scroll', scrollListener);
       };
     }
 
@@ -108,6 +117,7 @@ export function TableCellTooltip({
 
   const body = <>{renderer(rendererProps)}</>;
 
+  // TODO: perist the hover if you mouse out of the trigger and into the popover
   const onMouseLeave = () => setHovered(false);
   const onMouseEnter = () => setHovered(true);
 
@@ -136,10 +146,7 @@ export function TableCellTooltip({
         ref={tooltipCaretRef}
         data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Caret}
         aria-pressed={pinned}
-        onClick={(ev) => {
-          ev.stopPropagation(); // prevent click from bubbling to the global click listener for un-pinning
-          setPinned((prev) => !prev);
-        }}
+        onClick={() => setPinned((prev) => !prev)}
         onMouseLeave={onMouseLeave}
         onMouseEnter={onMouseEnter}
         onBlur={onMouseLeave}
