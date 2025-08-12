@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -505,21 +505,6 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
         };
       }
     });
-  }
-
-  // Handle row repeats scenario
-  if (panel.parent?.parent instanceof SceneGridRow) {
-    const row = panel.parent.parent;
-    if (row.state.$variables) {
-      row.state.$variables.state.variables.forEach((variable) => {
-        if (variable instanceof LocalValueVariable) {
-          scopedVars = {
-            ...scopedVars,
-            [variable.state.name]: { value: variable.getValue(), text: variable.getValueText() },
-          };
-        }
-      });
-    }
   }
 
   return {
