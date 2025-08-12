@@ -79,6 +79,10 @@ type ResourceIndex interface {
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
+
+	GetLatestResourceVersion(ctx context.Context) (int64, error)
+
+	SetLatestResourceVersion(ctx context.Context, rv int64) error
 }
 
 // SearchBackend contains the technology specific logic to support search
@@ -640,6 +644,19 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	}
 
 	if idx != nil {
+		// what is rv of the index?
+		indexRv, _ := idx.GetLatestResourceVersion(ctx)
+		// what is the latest rv?
+		latestRv, _ := s.storage.GetResourceMaxHistoryRv(ctx, &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		})
+		// If they are different, we need to index the delta
+		if indexRv < latestRv {
+			// TODO - get the delta of events
+		}
+
 		return idx, nil
 	}
 

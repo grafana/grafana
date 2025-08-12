@@ -310,6 +310,22 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 	return res, err
 }
 
+// GetResourceMaxHistoryRv( ctx context.Context, key *resourcepb.ResourceKey) (int64, error)
+func (b *backend) GetResourceMaxHistoryRv(ctx context.Context, key *resourcepb.ResourceKey) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceMaxHistoryRv")
+	defer span.End()
+
+	if key == nil {
+		return 0, fmt.Errorf("key cannot be nil")
+	}
+
+	rv, err := b.fetchLatestHistoryRV(ctx, b.db, b.dialect, key, -1) // pass -1 to consider all event types
+	if err != nil {
+		return 0, fmt.Errorf("failed to get max history RV for %s: %w", key.String(), err)
+	}
+	return rv, nil
+}
+
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()

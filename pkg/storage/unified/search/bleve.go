@@ -563,6 +563,21 @@ type bleveIndex struct {
 	allFields []*resourcepb.ResourceTableColumnDefinition
 	features  featuremgmt.FeatureToggles
 	tracing   trace.Tracer
+
+	latestRv int64 // The latest resource version that was used to build this index.
+}
+
+func (b *bleveIndex) GetLatestResourceVersion(ctx context.Context) (int64, error) {
+	return b.latestRv, nil
+}
+
+func (b *bleveIndex) SetLatestResourceVersion(ctx context.Context, rv int64) error {
+	if rv > b.latestRv {
+		b.latestRv = rv
+		return nil
+	}
+
+	return fmt.Errorf("cannot set latest resource version to less than the current one: %d < %d", rv, b.latestRv)
 }
 
 // BulkIndex implements resource.ResourceIndex.
