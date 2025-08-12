@@ -176,7 +176,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
 
   return (
     <>
-      <Stack direction="column" gap={1.5}>
+      <div className={styles.sqlContainer}>
         <div className={styles.sqlButtons}>
           <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
             <Suspense fallback={null}>
@@ -228,7 +228,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
             language={EDITOR_LANGUAGE_DEFINITION}
           />
         </div>
-      </Stack>
+      </div>
       <>
         <Suspense fallback={null}>
           <GenAISuggestionsDrawer
@@ -251,21 +251,35 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  sqlContainer: css({
+    display: 'grid',
+    gridTemplateRows: 'auto 1fr',
+    gridTemplateAreas: `
+      "buttons"
+      "editor"
+    `,
+    gap: theme.spacing(1.5),
+  }),
   editorContainer: css({
+    gridArea: 'editor',
     height: '240px',
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
   }),
+  // This is NOT ideal. The alternative is to expose SQL buttons as a separate component,
+  // Then consume them in ExpressionQueryEditor. This requires a lot of refactoring and
+  // can be prioritized later.
   sqlButtons: css({
-    // This is NOT ideal. The alternative is to expose SQL buttons as a separate component,
-    // Then consume them in ExpressionQueryEditor. This requires a lot of refactoring and
-    // can be prioritized later.
-    marginTop: theme.spacing(-4),
-    gap: theme.spacing(1),
+    gridArea: 'buttons',
+    justifySelf: 'end',
+    transform: `translateY(${theme.spacing(-4)})`,
+    marginBottom: theme.spacing(-4), // Prevent affecting editor position
+    zIndex: 10, // Ensure buttons appear above other elements
+    position: 'relative', // Required for z-index to work
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    gap: theme.spacing(1),
   }),
 });
 
