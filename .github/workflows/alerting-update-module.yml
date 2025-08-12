@@ -155,5 +155,5 @@ jobs:
           payload:  |
             {
               "channel": "C076RNRRZ2N",
-              "text": "Update alerting module in Grafana to ${{ steps.latest-commit.outputs.to_commit }}: ${{ steps.create-pr.outputs.pull-request-url }}",
+              "text": "Update alerting module in Grafana to ${{ steps.latest-commit.outputs.to_commit }}: ${{ steps.create-pr.outputs.pull-request-url }}"
             }
