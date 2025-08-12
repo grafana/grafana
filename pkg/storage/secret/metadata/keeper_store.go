@@ -366,7 +366,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		success := err == nil
 
 		args := []any{
-			"namespace", namespace,
+			"namespace", namespace.String(),
 			"success", success,
 		}
 
