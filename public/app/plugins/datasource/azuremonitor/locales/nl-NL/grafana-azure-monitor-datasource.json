@@ -52,7 +52,7 @@
       "button-use-query": "Gebruik deze query",
       "label-categories": "Categorieën",
       "label-query-results": "Resultaten van query: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Kan niet alle categorieën weergeven",
       "placeholder-all-categories": "Alle categorieën",
       "placeholder-search-logs": "Querylogboeken zoeken",
       "text-loading": "Laden..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
     "config-editor": {
-      "description-additional-settings": "Aanvullende instellingen zijn optionele instellingen die kunnen worden geconfigureerd voor meer controle over je gegevensbron. Dit omvat Secure Socks Proxy.",
-      "description-request-timeout": "Stel de time-out van het verzoek in seconden in. Standaard is 30 seconden.",
-      "title-additional-settings": "Aanvullende instellingen",
-      "title-request-timeout": "Time-out verzoek"
+      "description-additional-settings": "",
+      "title-additional-settings": "Aanvullende instellingen"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Fallback-inloggegevens zijn uitgeschakeld. Omdat op gebruikers gebaseerde authenticatie alleen inherent verzoeken met een gebruiker in het bereik ondersteunt, werken functies zoals waarschuwingen, opgenomen query's of rapportage niet zoals verwacht. Bekijk de <2>documentatie</2> voor meer informatie.",
@@ -168,8 +166,8 @@
       "tooltip-limit": "Beperk het aantal geretourneerde rijen (standaard is 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Weet je zeker dat je wilt overschakelen naar Basislogs?",
+      "confirmText-confirm": "Bevestigen",
       "description-basic-logs-queries": "Basislogquery's brengen kosten met zich mee op basis van de hoeveelheid gescande gegevens.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Basislogquery's",
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Knop Start query met Azure-logboeken",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Als je overschakelt naar Bouwer, wordt je huidige KQL-query verwijderd en wordt de KQL-editor gewist. Weet je het zeker?",
+      "body-switching-to-kql": "Als je overschakelt naar KQL, worden je huidige bouwerinstellingen verwijderd. Weet je het zeker?",
       "button-kick-start-your-query": "Start je query",
       "button-run-query": "Query uitvoeren",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Overschakelen naar {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Bouwer",
+        "label-kql": "KQL"
       },
       "label-service": "Service",
       "placeholder-service": "Service...",

@@ -52,7 +52,7 @@
       "button-use-query": "使用此查詢",
       "label-categories": "分類",
       "label-query-results": "查詢結果：{{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "無法列出所有類別",
       "placeholder-all-categories": "所有分類",
       "placeholder-search-logs": "搜尋「紀錄查詢」",
       "text-loading": "正在載入…"
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "啟用基本紀錄"
     },
     "config-editor": {
-      "description-additional-settings": "附加設定為可選設定，可進行設定以便更妥善掌控您的資料來源，其中包括安全 Socks 代理。",
-      "description-request-timeout": "設定請求逾時時間（秒）。預設為 30 秒。",
-      "title-additional-settings": "附加設定",
-      "title-request-timeout": "請求逾時"
+      "description-additional-settings": "",
+      "title-additional-settings": "附加設定"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "備用憑證已停用。由於使用者型驗證本質上僅支援範圍內的使用者請求，因此警報、已記錄查詢或報告等功能將無法按預期運作。請查看<2>文件</2>，了解更多詳細資訊。",
@@ -168,8 +166,8 @@
       "tooltip-limit": "限制傳回的列數（預設為 1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "確定要切換至基本紀錄嗎？",
+      "confirmText-confirm": "確認",
       "description-basic-logs-queries": "基本紀錄查詢會根據掃描的資料量產生費用。",
       "label-logs": "紀錄",
       "title-basic-logs-queries": "基本紀錄查詢",
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "切換到建立器將捨棄您目前的 KQL 查詢並清除 KQL 編輯器。您確定嗎？",
+      "body-switching-to-kql": "切換到 KQL 將捨棄您目前的建立器設定。您確定嗎？",
       "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "切換到 {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "建立器",
+        "label-kql": "KQL"
       },
       "label-service": "服務",
       "placeholder-service": "服務…",
