@@ -158,8 +158,8 @@
         "aria-label-prometheus-type": "Prometheus-type",
         "aria-label-select-http-method": "HTTP-methode selecteren",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Bouwer",
+          "label-code": "Code"
         },
         "label-cache-level": "Cacheniveau",
         "label-custom-query-parameters": "Aangepaste query-parameters",
@@ -200,114 +200,114 @@
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "(Uitgeschakeld)",
+      "enabled-label": "Metriekenbrowser"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Bevat alleen unieke labels",
+        "description-custom": "Geef een naamgevingssjabloon op",
+        "description-verbose": "Alle labelnamen en -waarden",
+        "label-auto": "Automatisch",
+        "label-custom": "Aangepast",
+        "label-verbose": "Gedetailleerd"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "Bereken het gemiddelde over dimensies",
+        "documentation-bottomk": "Kleinste k-elementen per steekproefwaarde",
+        "documentation-count": "Aantal elementen in de vector tellen",
+        "documentation-count-values": "Aantal elementen met dezelfde waarde tellen",
+        "documentation-group": "Alle waarden in de resulterende vector zijn 1",
+        "documentation-max": "Selecteer maximum over dimensies",
+        "documentation-min": "Selecteer minimum over dimensies",
+        "documentation-quantile": "Bereken φ-kwantiel (0 ≤ φ ≤ 1) over dimensies",
+        "documentation-stddev": "Bereken de standaardafwijking van de populatie over dimensies",
+        "documentation-stdvar": "Bereken de standaardvariantie van de populatie over dimensies",
+        "documentation-sum": "Bereken de som over dimensies",
+        "documentation-topk": "Grootste k-elementen per steekproefwaarde"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "Retourneert de invoervector met alle steekproefwaarden omgezet naar hun absolute waarde.",
+        "documentation-absent": "Retourneert een lege vector terug als de doorgegeven vector elementen heeft en een 1-elementvector met de waarde 1 als de doorgegeven vector geen elementen heeft. Dit is handig om te waarschuwen wanneer er geen tijdreeksen bestaan voor een bepaalde metrische naam en labelcombinatie.",
+        "documentation-absent-over-time": "Retourneert een lege vector terug als de doorgegeven bereikvector elementen heeft en een 1-elementvector met de waarde 1 als de doorgegeven bereikvector geen elementen heeft.",
+        "documentation-avg-over-time": "De gemiddelde waarde van alle punten in het opgegeven interval.",
+        "documentation-ceil": "Rondt de steekproefwaarden van alle elementen in 'v' naar boven af op het dichtstbijzijnde gehele getal.",
+        "documentation-changes": "Voor elke invoertijdreeks retourneert 'changes(v range-vector)' het aantal keren dat de waarde is gewijzigd binnen het opgegeven tijdsbereik als een instantvector.",
+        "documentation-clamp": "Klemt de steekproefwaarden van alle elementen in 'v' vast om een ondergrens van 'min' en een bovengrens van 'max' te hebben.",
+        "documentation-clamp-max": "Klemt de steekproefwaarden van alle elementen in 'v' vast om een bovengrens van 'max' te hebben.",
+        "documentation-clamp-min": "Klemt de steekproefwaarden van alle elementen in 'v' vast om een ondergrens van 'min' te hebben.",
+        "documentation-count-over-time": "Het aantal van alle waarden in het opgegeven interval.",
+        "documentation-count-scalar": "Retourneert het aantal elementen in een tijdreeksvector als een scalaire waarde. Dit staat in contrast met de aggregatieoperator 'count()', die altijd een vector retourneert (een lege als de invoervector leeg is) en groepering op labels mogelijk maakt via een 'by'-clausule.",
+        "documentation-day-of-month": "Retourneert de dag van de maand voor elk van de opgegeven tijden in UTC. Geretourneerde waarden zijn van 1 tot 31.",
+        "documentation-day-of-week": "Retourneert de dag van de week voor elk van de opgegeven tijden in UTC. Geretourneerde waarden zijn van 0 tot 6, waarbij 0 zondag betekent, enz.",
+        "documentation-day-of-year": "Retourneert de dag van het jaar voor elk van de opgegeven tijden in UTC. Geretourneerde waarden zijn van 1 tot 365 voor niet-schrikkeljaren en 1 tot 366 in schrikkeljaren.",
+        "documentation-days-in-month": "Retourneert het aantal dagen in de maand voor elk van de opgegeven tijden in UTC. Geretourneerde waarden zijn van 28 tot 31.",
+        "documentation-deg": "Converteert radialen naar graden voor alle elementen in v",
+        "documentation-delta": "Berekent het verschil tussen de eerste en laatste waarde van elk tijdreeks-element in een bereikvector 'v' en geeft een instantvector terug met de gegeven delta's en equivalente labels. De delta wordt geëxtrapoleerd om het volledige tijdsbereik te dekken zoals gespecificeerd in de bereikvectorselector, zodat het mogelijk is om een niet-geheel getal te krijgen, zelfs als de steekproefwaarden allemaal gehele getallen zijn.",
+        "documentation-deriv": "Berekent de afgeleide per seconde van de tijdreeks in een bereikvector 'v', met behulp van eenvoudige lineaire regressie.",
+        "documentation-double-exponential-smoothing": "Produceert een gladde waarde voor tijdreeksen op basis van het bereik in 'v'. Hoe lager de gladmakingsfactor 'sf', hoe meer belang wordt gehecht aan oude gegevens. Hoe hoger de trendfactor 'tf', hoe meer trends in de gegevens worden overwogen. Zowel 'sf' als 'tf' moeten tussen 0 en 1 liggen.",
+        "documentation-drop-common-labels": "Verwijdert alle labels met dezelfde naam en waarde in alle reeksen in de invoervector.",
+        "documentation-exp": "Berekent de exponentiële functie voor alle elementen in 'v'.\nSpeciale gevallen zijn:\n* 'Exp(+Inf) = +Inf' \n* 'Exp(NaN) = NaN'",
+        "documentation-floor": "Rondt de steekproefwaarden van alle elementen in 'v' naar boven af op het dichtstbijzijnde gehele getal.",
+        "documentation-histogram-avg": "Retourneert het rekenkundige gemiddelde van de waargenomen waarden opgeslagen in een native histogram. Monsters die geen native histogrammen zijn, worden genegeerd en verschijnen niet in de geretourneerde vector.",
+        "documentation-histogram-count": "Retourneert het aantal waarnemingen dat is opgeslagen in een native histogram.",
+        "documentation-histogram-fraction": "Retourneert de geschatte fractie van observaties tussen de opgegeven lagere en hogere waarden.",
+        "documentation-histogram-quantile": "Berekent het φ-kwantiel (0 ≤ φ ≤ 1) uit de buckets 'b' van een histogram. De steekproeven in 'b' zijn de tellingen van observaties in elke bucket. Elke steekproef moet een label 'le' hebben waarbij de labelwaarde de inclusieve bovengrens van de bucket aangeeft. (Steekproeven zonder een dergelijk label worden stilzwijgend genegeerd.) Het metrische type histogram biedt automatisch tijdreeksen met het achtervoegsel '_bucket' en de juiste labels.",
+        "documentation-histogram-stddev": "Retourneert de geschatte standaardafwijking van waarnemingen in een native histogram, gebaseerd op het geometrische gemiddelde van de buckets waar de waarnemingen liggen.",
+        "documentation-histogram-stdvar": "Retourneert de geschatte standaardvariantie van waarnemingen in een native histogram.",
+        "documentation-histogram-sum": "Retourneert het aantal waarnemingen dat is opgeslagen in een native histogram.",
+        "documentation-holt-winters": "Hernoemd als double_exponential_smoothing in prometheus v3.x. Gebruik voor prometheus-versies gelijk aan en groter dan v3.0 double_exponential_smoothing. \n\nProduceert een gladde waarde voor tijdreeksen op basis van het bereik in 'v'. Hoe lager de gladmakingsfactor 'sf', hoe meer belang wordt gehecht aan oude gegevens. Hoe hoger de trendfactor 'tf', hoe meer trends in de gegevens worden overwogen. Zowel 'sf' als 'tf' moeten tussen 0 en 1 liggen.",
+        "documentation-hour": "Retourneert het uur van de dag voor elk van de opgegeven tijden in UTC. Geretourneerde waarden zijn van 0 tot 23.",
+        "documentation-idelta": "Berekent het verschil tussen de laatste twee steekproeven in de bereikvector 'v' en geeft een instantvector terug met de gegeven delta's en equivalente labels.",
+        "documentation-increase": "Berekent de toename in de tijdreeks in de bereikvector. Breuken in monotoniciteit (zoals teller-resets als gevolg van doelherstarten) worden automatisch aangepast. De toename wordt geëxtrapoleerd om het volledige tijdsbereik te dekken zoals gespecificeerd in de bereikvectorselector, zodat het mogelijk is om een niet-geheel getal te krijgen, zelfs als een teller alleen met gehele stappen toeneemt.",
+        "documentation-info": "Retourneert de nieuwste details en metadata over een groep statistieken, zoals hun labels en huidige waarden, zonder berekeningen uit te voeren",
+        "documentation-irate": "Berekent de momentane snelheid per seconde van de toename van de tijdreeks in de bereikvector. Dit is gebaseerd op de laatste twee datapunten. Breuken in monotoniciteit (zoals teller-resets als gevolg van doelherstarten) worden automatisch aangepast.",
+        "documentation-label-join": "Voor elke tijdreeks in 'v' worden alle waarden van alle 'src_labels' samengevoegd met behulp van 'separator' en wordt de tijdreeks geretourneerd met het label 'dst_label' dat de samengevoegde waarde bevat. Er kan een willekeurig aantal 'src_labels' in deze functie zijn.",
+        "documentation-label-replace": "Voor elke tijdreeks in 'v', 'label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)' komt de reguliere expressie 'regex' overeen met het label 'src_label'. Als het overeenkomt, wordt de tijdreeks geretourneerd met het label 'dst_label' vervangen door de uitbreiding van 'replacement'. '$1' wordt vervangen door de eerste overeenkomende subgroep, '$2' met de tweede enz. Als de reguliere expressie niet overeenkomt, wordt de tijdreeks ongewijzigd geretourneerd.",
+        "documentation-last-over-time": "De meest recente puntwaarde in het opgegeven interval.",
+        "documentation-ln": "Berekent het natuurlijke logaritme voor alle elementen in 'v'.\nSpeciale gevallen zijn:\n * 'ln(+Inf) = +Inf'\n * 'ln(0) = -Inf'\n * 'ln(x < 0) = NaN'\n * 'ln(NaN) = NaN'",
+        "documentation-log10": "Berekent het decimale logaritme voor alle elementen in 'v'. De speciale gevallen zijn gelijk aan die in 'ln'.",
+        "documentation-log2": "Berekent het binaire logaritme voor alle elementen in 'v'. De speciale gevallen zijn gelijk aan die in 'ln'.",
+        "documentation-max-over-time": "De maximale waarde van alle punten in het opgegeven interval.",
+        "documentation-min-over-time": "De minimale waarde van alle punten in het opgegeven interval.",
+        "documentation-minute": "Retourneert de minuut van het uur voor elk van de opgegeven tijden in UTC. Geretourneerde waarden zijn van 0 tot 59.",
+        "documentation-month": "Retourneert de maand van het jaar voor elk van de opgegeven tijden in UTC. Geretourneerde waarden zijn van 1 tot 12, waarbij 1 januari betekent, enz.",
+        "documentation-pi": "Retourneert pi",
+        "documentation-predict-linear": "Voorspelt de waarde van tijdreeksen 't' seconden vanaf nu, op basis van de bereikvector 'v', met behulp van eenvoudige lineaire regressie.",
+        "documentation-present-over-time": "De waarde 1 voor elke reeks in het opgegeven interval.",
+        "documentation-quantile-over-time": "Het φ-kwantiel (0 ≤ φ ≤ 1) van de waarden in het opgegeven interval.",
+        "documentation-rad": "Converteert graden naar radialen voor alle elementen in v",
+        "documentation-rate": "Berekent de gemiddelde snelheid per seconde van de toename van de tijdreeks in de bereikvector. Breuken in monotoniciteit (zoals teller-resets als gevolg van doelherstarten) worden automatisch aangepast. Ook extrapoleert de berekening naar de uiteinden van het tijdsbereik, waardoor gemiste scrapes of imperfecte uitlijning van scrapecycli met de tijdsperiode van het bereik mogelijk zijn.",
+        "documentation-resets": "Voor elke invoertijdreeks retourneert 'resets(v range-vector)' het aantal teller-resets binnen het opgegeven tijdsbereik als een instantvector. Elke afname van de waarde tussen twee opeenvolgende monsters wordt geïnterpreteerd als een teller-reset.",
+        "documentation-round": "Rondt de steekproefwaarden van alle elementen in 'v' af op het dichtstbijzijnde gehele getal. Gelijken wordt opgelost door naar boven af te ronden. Met het optionele argument 'to_nearest' kan het dichtstbijzijnde veelvoud worden opgegeven waarop de steekproefwaarden moeten worden afgerond. Dit veelvoud kan ook een breuk zijn.",
+        "documentation-scalar": "Gegeven een invoervector met één element, retourneert 'scalar(v instant-vector)' de steekproefwaarde van dat enkele element als een scalaire waarde. Als de invoervector niet precies één element heeft, retourneert 'scalar' 'NaN'.",
+        "documentation-sgn": "Retourneert een vector met alle steekproefwaarden omgezet naar hun teken, gedefinieerd als volgt: 1 als v positief is, -1 als v negatief is en 0 als v gelijk is aan nul.",
+        "documentation-sort": "Retourneert vectorelementen gesorteerd op hun steekproefwaarden, in oplopende volgorde.",
+        "documentation-sort-desc": "Retourneert vectorelementen gesorteerd op hun steekproefwaarden, in aflopende volgorde.",
+        "documentation-sqrt": "Berekent de vierkantswortel van alle elementen in 'v'.",
+        "documentation-stddev-over-time": "De standaardafwijking van de populatie van de waarden in het opgegeven interval.",
+        "documentation-stdvar-over-time": "De standaardvariantie van de populatie van de waarden in het opgegeven interval.",
+        "documentation-sum-over-time": "Het aantal van alle waarden in het opgegeven interval.",
+        "documentation-time": "Retourneert het aantal seconden sinds 1 januari 1970 UTC. Merk op dat dit niet de huidige tijd retourneert, maar de tijd waarop de expressie moet worden geëvalueerd.",
+        "documentation-timestamp": "Retourneert het tijdstempel van elk van de steekproeven van de gegeven vector als het aantal seconden sinds 1 januari 1970 UTC.",
+        "documentation-vector": "Retourneert de scalaire 's' als een vector zonder labels.",
+        "documentation-year": "Retourneert het jaar voor elk van de opgegeven tijden in UTC."
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "berekent de boogcosinus van alle elementen in {{argument}}",
+        "documentation-acosh": "berekent de inverse hyperbolische cosinus van alle elementen in {{argument}}",
+        "documentation-asin": "berekent de boogsinus van alle elementen in {{argument}}",
+        "documentation-asinh": "berekent de inverse hyperbolische cosinus van alle elementen in {{argument}} ",
+        "documentation-atan": "berekent de boogtangens van alle elementen in {{argument}}",
+        "documentation-atanh": "berekent de inverse hyperbolische cosinus van alle elementen in {{argument}}",
+        "documentation-cos": "berekent de cosinus van alle elementen in {{argument}}",
+        "documentation-cosh": "berekent de inverse hyperbolische cosinus van alle elementen in {{argument}} ",
+        "documentation-sin": "berekent de cosinus van alle elementen in {{argument}} ",
+        "documentation-sinh": "berekent de inverse hyperbolische cosinus van alle elementen in {{argument}}",
+        "documentation-tan": "berekent de cosinus van alle elementen in {{argument}}",
+        "documentation-tanh": "berekent de inverse hyperbolische cosinus van alle elementen in {{argument}} "
       }
     },
     "querybuilder": {
@@ -316,31 +316,31 @@
         "title-give-feedback": "De metriekverkenner is nieuw, laat ons weten hoe we deze kunnen verbeteren"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Voorbeelden: {{value}}",
+        "format": "Formaat: {{value}}",
+        "legend": "Legenda: {{value}}",
+        "step": "Stap: {{value}}",
+        "type": "Type: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "type": ""
+        "browse": "Metriek zoeken op naam",
+        "type": "Filteren op type"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Een cumulatieve statistiek die een enkele monotoon toenemende teller vertegenwoordigt waarvan de waarde alleen kan toenemen of kan worden gereset naar nul bij het opnieuw opstarten.",
+        "description-gauge": "Een statistiek die een enkele numerieke waarde vertegenwoordigt die willekeurig op en neer kan gaan.",
+        "description-histogram": "Een histogram neemt steekproeven van observaties (meestal dingen zoals verzoekduur of responsgrootte) en telt ze in configureerbare buckets.",
+        "description-native-histogram": "Native histogrammen verschillen op een aantal manieren van klassieke Prometheus-histogrammen: native histogrambucketgrenzen worden berekend met een formule die afhankelijk is van de schaal (resolutie) van het native histogram en zijn niet door de gebruiker gedefinieerd.",
+        "description-no-type": "Deze statistieken hebben geen gedefinieerd type in de metagegevens.",
+        "description-summary": "Een samenvatting neemt steekproeven van observaties (meestal dingen zoals verzoekduur en responsgrootte) en kan configureerbare kwantielen berekenen over een glijdend tijdsvenster.",
+        "description-unknown": "Deze statistieken hebben het type onbekend gekregen in de metagegevens.",
+        "label-counter": "Teller",
+        "label-gauge": "Meter",
+        "label-histogram": "Histogram",
+        "label-native-histogram": "Native histogram",
+        "label-no-type": "Geen type",
+        "label-summary": "Samenvatting",
+        "label-unknown": "Onbekend"
       },
       "handle-function": {
         "text": {
@@ -358,8 +358,8 @@
         "tooltip-label-filters": "Optioneel: wordt gebruikt om de metrische selectie voor dit query-type te filteren."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Labels laden",
+        "noOptionsMessage-no-labels-found": "Geen labels gevonden"
       },
       "metric-combobox": {
         "async-select": {
@@ -409,18 +409,18 @@
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "Berekent {{aggregationName}} over dimensies met behoud van {{labelWord}} {{labels}}.",
+          "label-default": "Berekent {{aggregationName}} over de dimensies.",
+          "label-without": "Berekent {{aggregationName}} over de dimensies {{labels}}. Alle andere labels blijven behouden."
         }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Ondergrens instellen voor de stapparameter",
         "aria-label-select-resolution": "Resolutie selecteren",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Heatmap",
+          "label-table": "Tabel",
+          "label-time-series": "Tijdreeks"
         },
         "label-exemplars": "Voorbeelden",
         "label-format": "Formaat",
@@ -436,8 +436,8 @@
         "tooltip-autocomplete-suggestions-limited": "Het aantal metrische namen overschrijdt de limiet voor automatisch aanvullen. Alleen de meest relevante metriek voor {{autocompleteLimit}} worden weergegeven. Je kunt de drempelwaarde aanpassen in de instellingen van de gegevensbron."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Er is een syntaxisfout of de querystructuur kan niet worden gevisualiseerd bij het overschakelen naar de bouwmodus. Delen van de query kunnen verloren gaan.",
+        "confirmText-continue": "Doorgaan",
         "kick-start-your-query": "Start je query",
         "label-explain": "Leg uit",
         "run-queries": "Query's uitvoeren",
@@ -453,8 +453,8 @@
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Bouwer",
+          "label-code": "Code"
         }
       },
       "query-pattern": {
@@ -483,9 +483,9 @@
       "results-table": {
         "content-descriptive-type": "Bij het maken van een {{descriptiveType}} stelt Prometheus meerdere series bloot met de typeteller. ",
         "description": "Beschrijving",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Er zijn geen statistieken gevonden. Probeer uw labelfilters uit te breiden.",
+        "message-expand-search": "Er zijn geen statistieken gevonden. Probeer uw zoekopdracht en filters uit te breiden.",
+        "message-no-metrics-found": "Er zijn geen statistieken gevonden in de gegevensbron.",
         "name": "Naam",
         "type": "Type"
       },

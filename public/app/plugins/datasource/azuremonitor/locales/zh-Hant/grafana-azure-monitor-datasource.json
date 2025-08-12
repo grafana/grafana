@@ -52,7 +52,7 @@
       "button-use-query": "使用此查詢",
       "label-categories": "分類",
       "label-query-results": "查詢結果：{{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "無法列出所有類別",
       "placeholder-all-categories": "所有分類",
       "placeholder-search-logs": "搜尋「紀錄查詢」",
       "text-loading": "正在載入…"
@@ -166,8 +166,8 @@
       "tooltip-limit": "限制傳回的列數（預設為 1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "確定要切換至基本紀錄嗎？",
+      "confirmText-confirm": "確認",
       "description-basic-logs-queries": "基本紀錄查詢會根據掃描的資料量產生費用。",
       "label-logs": "紀錄",
       "title-basic-logs-queries": "基本紀錄查詢",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "切換到建立器將捨棄您目前的 KQL 查詢並清除 KQL 編輯器。您確定嗎？",
+      "body-switching-to-kql": "切換到 KQL 將捨棄您目前的建立器設定。您確定嗎？",
       "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "切換到 {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "建立器",
+        "label-kql": "KQL"
       },
       "label-service": "服務",
       "placeholder-service": "服務…",

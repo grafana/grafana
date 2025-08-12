@@ -52,7 +52,7 @@
       "button-use-query": "Gunakan kueri ini",
       "label-categories": "Kategori",
       "label-query-results": "Hasil kueri: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Tidak dapat mencantumkan semua kategori",
       "placeholder-all-categories": "Semua kategori",
       "placeholder-search-logs": "Pencarian kueri Log",
       "text-loading": "Memuat..."
@@ -166,8 +166,8 @@
       "tooltip-limit": "Batasi jumlah baris yang dikembalikan (default-nya adalah 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Yakin ingin beralih ke Log Dasar?",
+      "confirmText-confirm": "Konfirmasi",
       "description-basic-logs-queries": "Kueri Log Dasar dikenakan biaya berdasarkan jumlah data yang dipindai.",
       "label-logs": "Log",
       "title-basic-logs-queries": "Kueri Log Dasar",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Tombol kueri untuk memulai menggunakan log Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Beralih ke Builder akan membuang kueri KQL Anda saat ini dan menghapus editor KQL. Anda yakin?",
+      "body-switching-to-kql": "Beralih ke KQL akan membuang pengaturan pembangun Anda saat ini. Anda yakin?",
       "button-kick-start-your-query": "Mulai kueri Anda",
       "button-run-query": "Jalankan kueri",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Beralih ke {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Pembangun",
+        "label-kql": "KQL"
       },
       "label-service": "Layanan",
       "placeholder-service": "Melayani...",

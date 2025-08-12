@@ -52,7 +52,7 @@
       "button-use-query": "使用此查询",
       "label-categories": "类别",
       "label-query-results": "查询结果：{{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "无法列出所有类别",
       "placeholder-all-categories": "所有类别",
       "placeholder-search-logs": "在日志查询中搜索",
       "text-loading": "加载中..."
@@ -166,8 +166,8 @@
       "tooltip-limit": "限制返回的行数（默认为 1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "您确定要切换到基本日志吗？",
+      "confirmText-confirm": "确认",
       "description-basic-logs-queries": "基本日志查询根据扫描的数据量产生费用。",
       "label-logs": "日志",
       "title-basic-logs-queries": "基本日志查询",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 日志启动查询按钮",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "切换到构建器将丢弃当前的 KQL 查询并清除 KQL 编辑器。您确定吗？",
+      "body-switching-to-kql": "切换到 KQL 将丢弃当前的构建器设置。您确定吗？",
       "button-kick-start-your-query": "启动您的查询",
       "button-run-query": "运行查询",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "切换到 {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "构建器",
+        "label-kql": "KQL"
       },
       "label-service": "服务",
       "placeholder-service": "服务...",

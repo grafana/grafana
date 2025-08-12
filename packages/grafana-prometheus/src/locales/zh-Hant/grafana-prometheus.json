@@ -158,8 +158,8 @@
         "aria-label-prometheus-type": "Prometheus 類型",
         "aria-label-select-http-method": "選取 HTTP 方法",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "建立器",
+          "label-code": "代碼"
         },
         "label-cache-level": "快取層級",
         "label-custom-query-parameters": "自訂查詢參數",
@@ -200,114 +200,114 @@
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "（已停用）",
+      "enabled-label": "指標瀏覽器"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "僅包含唯一標籤",
+        "description-custom": "提供命名範本",
+        "description-verbose": "所有標籤名稱和值",
+        "label-auto": "自動",
+        "label-custom": "自訂",
+        "label-verbose": "詳細"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "計算維度的平均值",
+        "documentation-bottomk": "依照樣本值的最小 k 元素",
+        "documentation-count": "計算向量中的元素數量",
+        "documentation-count-values": "計算具有相同值的元素數",
+        "documentation-group": "結果向量中的所有值均為 1",
+        "documentation-max": "選取維度的最大值",
+        "documentation-min": "選取維度的最小值",
+        "documentation-quantile": "計算維度的 φ-quantile (0 ≤ φ ≤ 1)",
+        "documentation-stddev": "計算維度的總體標準差",
+        "documentation-stdvar": "計算維度上的總體標準差",
+        "documentation-sum": "計算維度的總和",
+        "documentation-topk": "按樣本值的最大 k 元素"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "傳回輸入向量，其中所有樣本值都轉換為其絕對值。",
+        "documentation-absent": "如果傳遞給它的向量有任何元素，則傳回空向量；如果傳遞給它的向量沒有元素，則傳回值為 1 的 1 元素向量。這對於在給定的指標名稱和標籤組合不存在時間序列時發出警報很有用。",
+        "documentation-absent-over-time": "如果傳遞給它的範圍向量有任何元素，則傳回空向量；如果傳遞給它的範圍向量沒有元素，則傳回值為 1 的 1 元素向量。",
+        "documentation-avg-over-time": "指定間隔內所有點的平均值。",
+        "documentation-ceil": "將「v」中所有元素的樣本值四捨五入為最接近的整數。",
+        "documentation-changes": "對於每個輸入時間序列，「changes(v range-vector)」會傳回其值在提供的時間範圍內作為即時向量變更的次數。",
+        "documentation-clamp": "將「v」中所有元素的樣本值限制為下限為「min」且上限為「max」。",
+        "documentation-clamp-max": "將「v」中所有元素的樣本值限制為「max」的上限。",
+        "documentation-clamp-min": "將「v」中所有元素的樣本值限制為「min」的下限。",
+        "documentation-count-over-time": "指定間隔中的所有值計數。",
+        "documentation-count-scalar": "以純量形式傳回時間序列向量中的元素數量。這與「count()」彙總運算子相反，後者始終傳回向量（如果輸入向量為空，則為空向量），並允許透過「by」子句按標籤分組。",
+        "documentation-day-of-month": "傳回 UTC 中每個指定時間的當月日期。傳回的值介於 1 至 31 之間。",
+        "documentation-day-of-week": "以 UTC 格式傳回每個指定時間的星期幾。傳回的值介於 0 至 6 之間，其中 0 表示星期日等。",
+        "documentation-day-of-year": "傳回每個指定時間的當年日期（UTC 時區）。傳回的值在非閏年為 1 至 365，在閏年為 1 至 366。",
+        "documentation-days-in-month": "針對 UTC 中的每個指定時間，傳回當月的天數。傳回的值介於 28 至 31 之間。",
+        "documentation-deg": "將 v 中所有元素的弧度轉換為度數",
+        "documentation-delta": "計算範圍向量「v」中每個時間序列元素的第一個值和最後一個值之間的差異，傳回具有給定增量和等效標籤的即時向量。增量被外推以涵蓋範圍向量選擇器中指定的完整時間範圍，因此即使樣本值都是整數，也可以得到非整數結果。",
+        "documentation-deriv": "使用簡單的線性回歸計算範圍向量「v」中時間序列的每秒導數。",
+        "documentation-double-exponential-smoothing": "根據「v」中的範圍，產生時間序列的平滑值。平滑因子「sf」越低，舊資料的重要性就越高。趨勢因子「tf」越高，就越考慮資料中的趨勢。「sf」和「tf」都必須介於 0 和 1 之間。",
+        "documentation-drop-common-labels": "刪除輸入向量中所有序列中具有相同名稱和值的所有標籤。",
+        "documentation-exp": "計算「v」中所有元素的指數函數。\n特殊情況為：\n* 'Exp(+Inf) = +Inf' \n* 'Exp(NaN) = NaN'",
+        "documentation-floor": "將「v」中所有元素的樣本值向下四捨五入為最接近的整數。",
+        "documentation-histogram-avg": "傳回儲存在原生直方圖中觀測值的算術平均值。將忽略非原生直方圖的樣本，且不會顯示在傳回的向量中。",
+        "documentation-histogram-count": "傳回儲存在本機直方圖中的觀測值計數。",
+        "documentation-histogram-fraction": "傳回所提供的下限值和上限值之間的估計觀測值分數。",
+        "documentation-histogram-quantile": "從直方圖的區塊「b」計算 φ-quantile (0 ≤ φ ≤ 1)。「b」中的樣本是每個區塊中的觀測值計數。每個樣本都必須有一個標籤「le」，其中標籤值表示區塊的包含上限。（沒有這樣標籤的樣本會被靜默忽略。）直方圖度量類型會自動提供帶有「_bucket」後綴和適當標籤的時間序列。",
+        "documentation-histogram-stddev": "根據觀測值所在的儲存貯體的幾何平均值，傳回原生直方圖中觀測值的估計標準差。",
+        "documentation-histogram-stdvar": "傳回原生直方圖中觀測值的估計標準差。",
+        "documentation-histogram-sum": "傳回儲存在本機直方圖中的觀測值總和。",
+        "documentation-holt-winters": "在 prometheus v3.x 中重新命名為 double_exponential_smoothing。對於等於或大於 v3.0 的 prometheus 版本，請使用 double_exponential_smoothing。\n\n根據「v」中的範圍為時間序列產生平滑值。平滑因子「sf」越低，舊資料的重要性就越高。趨勢因子「tf」越高，就會考慮越多的資料趨勢。「sf」和「tf」都必須介於 0 和 1 之間。",
+        "documentation-hour": "傳回 UTC 中每個指定時間的當日時數。傳回的值介於 0 到 23 之間。",
+        "documentation-idelta": "計算範圍向量「v」中最後兩個樣本之間的差異，傳回具有指定增量和等效標籤的即時向量。",
+        "documentation-increase": "計算範圍向量中時間序列的增加。單調性中斷（例如由於目標重新啟動而導致的計數器重置）會自動調整。增加會推斷為涵蓋範圍向量選擇器中指定的完整時間範圍，因此即使計數器僅以整數增量增加，也可以獲得非整數結果。",
+        "documentation-info": "傳回一組指標的最新詳細資訊和中繼資料，例如其標籤和目前值，而無需進行任何計算",
+        "documentation-irate": "計算範圍向量中時間序列的每秒瞬間增長率。這是以最後兩個資料點為基礎。單調性中斷（例如由於目標重新啟動而導致的計數器重置）會自動調整。",
+        "documentation-label-join": "對於「v」中的每個時序，使用「separator」連接所有「src_labels」的所有值，並傳回包含連接值的標籤「dst_label」的時序。此函數中可以有任意數量的「src_labels」。",
+        "documentation-label-replace": "對於「v」中的每個時序，「label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)」將標籤「src_label」與規則運算式「regex」進行比對。如果匹配，則返回時序，並將標籤「dst_label」替換為「replacement」的擴展。「$1」被替換為第一個匹配的子群組，「$2」被替換為第二個匹配的子群組，依此類推。如果規則運算式不匹配，則返回不變的時序。",
+        "documentation-last-over-time": "指定間隔內的最新點值。",
+        "documentation-ln": "計算「v」中所有元素的自然對數。\n特殊情況為：\n * 'ln(+Inf) = +Inf'\n * 'ln(0) = -Inf'\n * 'ln(x < 0) = NaN'\n * 'ln(NaN) = NaN'",
+        "documentation-log10": "計算「v」中所有元素的十進位對數。特殊案例等同於「ln」中的案例。",
+        "documentation-log2": "計算「v」中所有元素的二進位對數。特殊案例等同於「ln」中的案例。",
+        "documentation-max-over-time": "指定間隔內所有點的最大值。",
+        "documentation-min-over-time": "指定間隔內所有點的最小值。",
+        "documentation-minute": "傳回 UTC 中每個指定時間的分鐘。傳回的值介於 0 到 59 之間。",
+        "documentation-month": "傳回 UTC 中每個指定時間的月份。傳回的值介於 1 到 12 之間，其中 1 表示一月等。",
+        "documentation-pi": "傳回 pi",
+        "documentation-predict-linear": "使用簡單的線性回歸，根據範圍向量「v」，預測從現在開始的時間序列「t」秒的值。",
+        "documentation-present-over-time": "指定間隔內任何序列的值 1。",
+        "documentation-quantile-over-time": "指定間隔內的 φ-quantile (0 ≤ φ ≤ 1) 值。",
+        "documentation-rad": "將 v 中所有元素的度數轉換為弧度",
+        "documentation-rate": "計算範圍向量中時間序列的每秒平均增長率。單調性中斷（例如由於目標重新啟動而導致的計數器重置）會自動調整。此外，計算外推到時間範圍的末端，允許錯過的刮擦或刮擦週期與範圍時間段的不完美對齊。",
+        "documentation-resets": "對於每個輸入時間序列，「resets(v range-vector)」會將提供的時間範圍內的計數器重設數傳回為即時向量。兩個連續樣本之間的數值減少會被解釋為計數器重設。",
+        "documentation-round": "將「v」中所有元素的樣本值四捨五入為最接近的整數。若出現相同情況，則向上取整。可選的「to_nearest」引數允許指定應將樣本值四捨五入為最接近的倍數。此倍數也可以是分數。",
+        "documentation-scalar": "假設有一個單元素輸入向量，「scalar(v instant-vector)」會將該單元素的樣本值作為純量傳回。如果輸入向量不僅僅只有一個元素，「scalar」會傳回「NaN」。",
+        "documentation-sgn": "傳回一個向量，其中所有樣本值都轉換為其符號，定義如下：如果 v 為正數，則為 1；如果 v 為負數，則為 -1；如果 v 等於零，則為 0。",
+        "documentation-sort": "傳回按樣本值排序的向量元素，按遞增順序排序。",
+        "documentation-sort-desc": "傳回按樣本值排序的向量元素，按遞減順序排列。",
+        "documentation-sqrt": "計算「v」中所有元素的平方根。",
+        "documentation-stddev-over-time": "指定間隔內值的總體標準差。",
+        "documentation-stdvar-over-time": "指定間隔內值的母體標準差。",
+        "documentation-sum-over-time": "指定間隔內所有值的總和。",
+        "documentation-time": "傳回自 1970 年 1 月 1 日 (UTC) 以來的秒數。請注意，這實際上並不會傳回目前時間，而是傳回要評估運算式的時間。",
+        "documentation-timestamp": "傳回指定向量每個樣本的時間戳記，作為自 1970 年 1 月 1 日 (UTC) 起的秒數。",
+        "documentation-vector": "傳回標量「s」作為沒有標籤的向量。",
+        "documentation-year": "傳回每個指定時間的年份（UTC 時間）。"
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "計算「{{argument}}」中所有元素的反餘弦值",
+        "documentation-acosh": "計算「{{argument}}」中所有元素的反雙曲餘弦值",
+        "documentation-asin": "計算「{{argument}}」中所有元素的反正弦值",
+        "documentation-asinh": "計算「{{argument}}」中所有元素的反雙曲正弦值",
+        "documentation-atan": "計算「{{argument}}」所有元素的反正切",
+        "documentation-atanh": "計算「{{argument}}」中所有元素的反雙曲正切",
+        "documentation-cos": "計算「{{argument}}」中所有元素的餘弦值",
+        "documentation-cosh": "計算「{{argument}}」中所有元素的雙曲餘弦值",
+        "documentation-sin": "計算「{{argument}}」中所有元素的正弦值",
+        "documentation-sinh": "計算「{{argument}}」中所有元素的反雙曲正弦值",
+        "documentation-tan": "計算「{{argument}}」中所有元素的正切值",
+        "documentation-tanh": "計算「{{argument}}」中所有元素的雙曲正切"
       }
     },
     "querybuilder": {
@@ -316,31 +316,31 @@
         "title-give-feedback": "指標瀏覽器為新功能，請告訴我們如何改善"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "範例：{{value}}",
+        "format": "格式：{{value}}",
+        "legend": "圖例：{{value}}",
+        "step": "步驟：{{value}}",
+        "type": "類型：{{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "type": ""
+        "browse": "按名稱搜尋指標",
+        "type": "依照類型篩選"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "累積指標，代表單一單調遞增計數器，其值只能增加或在重新啟動時重設為零。",
+        "description-gauge": "代表單一數值的指標，可以任意上下移動。",
+        "description-histogram": "直方圖對觀察結果（通常是請求持續時間或回應大小等）進行抽樣，並在可設定的區塊中進行計數。",
+        "description-native-histogram": "原生直方圖在許多方面與經典的 Prometheus 直方圖不同：原生直方圖的區間界限是由一個公式計算得出，該公式取決於原生直方圖的比例（解析度），並且不是使用者定義的。",
+        "description-no-type": "這些指標在中繼資料中沒有定義的類型。",
+        "description-summary": "摘要樣本觀察（通常是請求持續時間和回應大小等），並且可以在滑動時間窗口中計算可設定的分位數。",
+        "description-unknown": "這些指標在中繼資料中被賦予未知類型。",
+        "label-counter": "計數器",
+        "label-gauge": "儀表",
+        "label-histogram": "直方圖",
+        "label-native-histogram": "原生直方圖",
+        "label-no-type": "無類型",
+        "label-summary": "摘要",
+        "label-unknown": "未知"
       },
       "handle-function": {
         "text": {
@@ -358,8 +358,8 @@
         "tooltip-label-filters": "選擇性設定：用於篩選為此查詢類型的指標選擇。"
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "載入標籤",
+        "noOptionsMessage-no-labels-found": "未找到標籤"
       },
       "metric-combobox": {
         "async-select": {
@@ -409,18 +409,18 @@
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "計算維度上的「{{aggregationName}}」，同時保留 {{labelWord}} {{labels}}。",
+          "label-default": "計算維度的「{{aggregationName}}」。",
+          "label-without": "計算維度{{labels}}的「{{aggregationName}}」。保留所有其他標籤。"
         }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "設定步驟參數的下限",
         "aria-label-select-resolution": "選擇解決方案",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "熱度圖",
+          "label-table": "表格",
+          "label-time-series": "時間序列"
         },
         "label-exemplars": "範例點",
         "label-format": "格式",
@@ -436,8 +436,8 @@
         "tooltip-autocomplete-suggestions-limited": "指標名稱的數量超過自動完成限制。僅顯示與{{autocompleteLimit}}最相關的指標。您可以在資料來源設定中調整臨界值。"
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "存在語法錯誤，或在切換至編輯器模式時無法將查詢結構視覺化。查詢的部分可能會遺失。",
+        "confirmText-continue": "繼續",
         "kick-start-your-query": "啟動您的查詢",
         "label-explain": "說明",
         "run-queries": "執行查詢",
@@ -453,8 +453,8 @@
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "建立器",
+          "label-code": "代碼"
         }
       },
       "query-pattern": {
@@ -483,9 +483,9 @@
       "results-table": {
         "content-descriptive-type": "建立{{descriptiveType}}時，Prometheus 會透過類型計數器顯示多個序列。",
         "description": "說明",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "未找到指標。請嘗試展開標籤篩選條件。",
+        "message-expand-search": "未找到指標。請嘗試擴大搜尋範圍和篩選條件。",
+        "message-no-metrics-found": "在資料來源中未找到任何指標。",
         "name": "名稱（名字）",
         "type": "類型"
       },

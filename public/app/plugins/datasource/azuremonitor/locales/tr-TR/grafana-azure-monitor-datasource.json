@@ -52,7 +52,7 @@
       "button-use-query": "Bu sorguyu kullanın",
       "label-categories": "Kategoriler",
       "label-query-results": "Sorgu sonuçları: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Tüm kategoriler listelenemiyor",
       "placeholder-all-categories": "Tüm kategoriler",
       "placeholder-search-logs": "Günlük sorgusu ara",
       "text-loading": "Yükleniyor..."
@@ -166,8 +166,8 @@
       "tooltip-limit": "Döndürülen satır sayısını kısıtlayın (varsayılan 1000'dir)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Temel Günlüklere geçmek istediğinizden emin misiniz?",
+      "confirmText-confirm": "Onayla",
       "description-basic-logs-queries": "Temel Günlük sorguları, taranan veri miktarına bağlı olarak maliyet doğurur.",
       "label-logs": "Günlük kayıtları",
       "title-basic-logs-queries": "Temel Günlük Sorguları",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure günlükleri sorgu hızlı başlatma düğmesi",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Oluşturucuya geçmek, mevcut KQL sorgunuzu siler ve KQL düzenleyicisini temizler. Emin misiniz?",
+      "body-switching-to-kql": "KQL'ye geçmek, mevcut oluşturucu ayarlarınızı siler. Emin misiniz?",
       "button-kick-start-your-query": "Sorgunuzu hızlı başlatın",
       "button-run-query": "Sorgu çalıştır",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Şuna geç: {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Oluşturucu",
+        "label-kql": "KQL"
       },
       "label-service": "Hizmet",
       "placeholder-service": "Hizmet...",
@@ -239,7 +239,7 @@
       "title-error-occurred": "Azure Monitor'dan kaynaklar istenirken bir hata oluştu"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Kapsam"
     },
     "search": {
       "aria-label-resource-search": "Kaynak arama",

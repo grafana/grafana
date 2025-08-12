@@ -52,7 +52,7 @@
       "button-use-query": "このクエリを使用",
       "label-categories": "カテゴリ－",
       "label-query-results": "クエリ結果：{{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "すべてのカテゴリを一覧表示できません",
       "placeholder-all-categories": "すべてのカテゴリー",
       "placeholder-search-logs": "ログクエリを検索",
       "text-loading": "読み込み中..."
@@ -166,8 +166,8 @@
       "tooltip-limit": "返される行数を制限します（デフォルトは1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "基本ログに切り替えてもよろしいですか？",
+      "confirmText-confirm": "確認",
       "description-basic-logs-queries": "基本ログクエリを使用すると、スキャンされたデータ量に基づいてコストが発生します。",
       "label-logs": "ログ",
       "title-basic-logs-queries": "基本ログクエリ",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azureログのクエリ開始ボタン",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "ビルダーに切り替えると、現在のKQLクエリが破棄され、KQLエディターがクリアされます。よろしいですか？",
+      "body-switching-to-kql": "KQLに切り替えると、現在のビルダー設定が破棄されます。よろしいですか？",
       "button-kick-start-your-query": "クエリを開始",
       "button-run-query": "クエリの実行",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "{{newMode}}に切り替える",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "ビルダー",
+        "label-kql": "KQL"
       },
       "label-service": "サービス",
       "placeholder-service": "サービス...",

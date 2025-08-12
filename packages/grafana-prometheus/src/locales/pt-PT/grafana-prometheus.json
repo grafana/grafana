@@ -2,496 +2,496 @@
   "grafana-prometheus": {
     "components": {
       "annotation-query-editor": {
-        "annotation-data-load-error": "",
-        "aria-label-lower-limit-parameter": "",
-        "label-min-step": "",
-        "label-series-value-as-timestamp": "",
+        "annotation-data-load-error": "Erro de carregamento de dados de anotação!",
+        "aria-label-lower-limit-parameter": "Definir limite inferior para o parâmetro de passos",
+        "label-min-step": "Passo mín.",
+        "label-series-value-as-timestamp": "Valor da série como registo de data e hora",
         "label-tags": "Etiquetas",
-        "label-text": "",
+        "label-text": "Texto",
         "label-title": "Título",
-        "placeholder-auto": "",
-        "tooltip-either-pattern-example-instance-replaced-label": "",
-        "tooltip-min-step": "",
-        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+        "placeholder-auto": "auto",
+        "tooltip-either-pattern-example-instance-replaced-label": "Utilize o nome ou um padrão. Por exemplo, {{labelTemplate}} é substituído pelo valor da etiqueta para a etiqueta {{labelName}}.",
+        "tooltip-min-step": "Um limite inferior adicional para o parâmetro de etapa da consulta Prometheus e para as variáveis <2>{{intervalVar}}</2> e <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "A unidade do registo de data e hora é milissegundos. Se a unidade do valor da série for segundos, multiplique o seu vetor de intervalo por 1000."
       },
       "get-query-type-options": {
         "description": {
-          "instant-query-range": ""
+          "instant-query-range": "Executar uma consulta instantânea e uma consulta de intervalo"
         },
         "label": {
-          "both": ""
+          "both": "Ambas"
         },
         "range-options": {
           "description": {
-            "query-range": ""
+            "query-range": "Executar consulta durante um intervalo de tempo"
           },
           "label": {
-            "instant": "",
-            "range": ""
+            "instant": "Instantânea ",
+            "range": "Alcance"
           }
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "",
-        "description-select-labels": "",
-        "select-labels-to-search-in": ""
+        "aria-label-filter-expression-for-label": "Expressão de filtro para etiqueta",
+        "description-select-labels": "Depois de selecionados os valores de etiqueta, apenas são mostradas as combinações de etiquetas possíveis.",
+        "select-labels-to-search-in": "2. Selecionar etiquetas para pesquisar em"
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "",
-        "aria-label-limit-results-from-series-endpoint": "",
-        "description-series-limit": "",
-        "label-select-metric": "",
-        "select-a-metric": "",
-        "series-limit": ""
+        "aria-label-filter-expression-for-metric": "Expressão de filtro para métrica",
+        "aria-label-limit-results-from-series-endpoint": "Limitar resultados do ponto final da série",
+        "description-series-limit": "O limite aplica-se a todas as métricas, etiquetas e valores. Deixar o campo vazio para utilizar o limite predefinido. Definir para 0 para desativar o limite e obter tudo — isso pode causar problemas de desempenho.",
+        "label-select-metric": "Depois de selecionada uma métrica, apenas são mostradas as etiquetas possíveis. As etiquetas são limitadas pelo limite de série abaixo.",
+        "select-a-metric": "1. Selecionar uma métrica",
+        "series-limit": "Limite de série"
       },
       "prom-cheat-sheet": {
-        "prom-ql-cheat-sheet": ""
+        "prom-ql-cheat-sheet": "Folha de consulta PromQL"
       },
       "prom-exemplar-field": {
-        "exemplars": "",
-        "tooltip-disable-query": "",
-        "tooltip-enable-query": ""
+        "exemplars": "Exemplares",
+        "tooltip-disable-query": "Desativar consulta com exemplares",
+        "tooltip-enable-query": "Ativar consulta com exemplares"
       },
       "prom-explore-extra-field": {
-        "aria-label-prometheus-extra-field": "",
-        "aria-label-query-type-field": "",
-        "aria-label-step-field": "",
-        "min-step": "",
-        "query-type": "",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+        "aria-label-prometheus-extra-field": "Campo extra do Prometheus",
+        "aria-label-query-type-field": "Campo de tipo de consulta",
+        "aria-label-step-field": "Campo de etapa",
+        "min-step": "Passo mín.",
+        "query-type": "Tipo de consulta",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Unidades de tempo e variáveis integradas podem ser utilizadas aqui, por exemplo: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Predefinição se nenhuma unidade for especificada: {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": ""
+        "placeholder-enter-a-prom-ql-query": "Introduza uma consulta PromQL..."
       },
       "prom-variable-query-editor": {
-        "aria-label-classic-query": "",
-        "aria-label-metric-regex": "",
-        "aria-label-metric-selector": "",
-        "aria-label-prometheus-query": "",
-        "aria-label-query-type": "",
-        "aria-label-series-query": "",
-        "label-classic-query": "",
+        "aria-label-classic-query": "Consulta clássica",
+        "aria-label-metric-regex": "Regex métrico",
+        "aria-label-metric-selector": "Seletor métrico",
+        "aria-label-prometheus-query": "Consulta Prometheus",
+        "aria-label-query-type": "Tipo de consulta",
+        "aria-label-series-query": "Consulta de série",
+        "label-classic-query": "Consulta clássica",
         "label-label": "Etiqueta",
-        "label-metric-regex": "",
+        "label-metric-regex": "Regex métrico",
         "label-query": "Consulta",
-        "label-query-type": "",
-        "label-series-query": "",
-        "placeholder-classic-query": "",
-        "placeholder-metric-regex": "",
-        "placeholder-prometheus-query": "",
+        "label-query-type": "Tipo de consulta",
+        "label-series-query": "Consulta de série",
+        "placeholder-classic-query": "Consulta clássica",
+        "placeholder-metric-regex": "Regex métrico",
+        "placeholder-prometheus-query": "Consulta Prometheus",
         "placeholder-select-query-type": "Selecionar o tipo de consulta",
-        "placeholder-series-query": "",
-        "returns-metrics-matching-specified-metric-regex": "",
-        "tooltip-classic-query": "",
-        "tooltip-label": "",
-        "tooltip-metric-regex": "",
-        "tooltip-query": "",
-        "tooltip-query-type": "",
-        "tooltip-series-query": ""
+        "placeholder-series-query": "Consulta de série",
+        "returns-metrics-matching-specified-metric-regex": "Devolve uma lista de métricas que correspondem ao regex métrico especificado.",
+        "tooltip-classic-query": "A implementação original do editor de consultas de variáveis Prometheus. Introduzir uma cadeia de carateres com o tipo de consulta e parâmetros corretos, conforme descrito nestes documentos. Por exemplo, {{exampleQuery}}.",
+        "tooltip-label": "Devolve uma lista de valores de etiqueta para o nome da etiqueta em todas as métricas, a menos que a métrica seja especificada.",
+        "tooltip-metric-regex": "Devolve uma lista de nomes de etiquetas, filtrando opcionalmente por regex métrico especificado.",
+        "tooltip-query": "Devolve uma lista de resultados de consulta Prometheus para a consulta. Isto pode incluir funções Prometheus, ou seja,{{exampleQuery}}.",
+        "tooltip-query-type": "O plugin de origem de dados do Prometheus fornece os seguintes tipos de consulta para variáveis de modelo.",
+        "tooltip-series-query": "Introduza uma métrica com etiquetas, apenas uma métrica ou apenas etiquetas, ou seja, {{example1}}, {{example2}}, ou {{example3}}. Devolve uma lista de séries temporais associadas aos dados inseridos."
       },
       "selector-actions": {
-        "aria-label-selector": "",
-        "aria-label-selector-clear-button": "",
-        "aria-label-use-selector-as-metrics-button": "",
-        "aria-label-use-selector-for-query-button": "",
-        "aria-label-validate-submit-button": "",
+        "aria-label-selector": "seletor",
+        "aria-label-selector-clear-button": "Botão de limpeza do seletor",
+        "aria-label-use-selector-as-metrics-button": "Utilizar o seletor como botão de métricas",
+        "aria-label-use-selector-for-query-button": "Utilizar o seletor para o botão de consulta",
+        "aria-label-validate-submit-button": "Validar botão de envio",
         "clear": "Limpar",
-        "resulting-selector": "",
-        "use-as-rate-query": "",
-        "use-query": "",
-        "validate-selector": ""
+        "resulting-selector": "4. Seletor resultante",
+        "use-as-rate-query": "Utilizar como consulta de taxa",
+        "use-query": "Utilizar consulta",
+        "validate-selector": "Validar seletor"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "",
-        "aria-label-values-for": "",
-        "description-search-field-values-across-selected-labels": "",
-        "select-multiple-values-for-your-labels": ""
+        "aria-label-filter-expression-for-label-values": "Expressão de filtro para valores de etiqueta",
+        "aria-label-values-for": "Valores para {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Utilizar o campo de pesquisa para encontrar valores nas etiquetas selecionadas.",
+        "select-multiple-values-for-your-labels": "3. Selecionar (vários) valores para as suas etiquetas"
       }
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-allow-as-recording-rules-target": "",
-        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "Permitir como destino de regras de gravação",
+        "label-manage-alerts-via-alerting-ui": "Gerir alertas através da interface do utilizador Alerting",
         "title-alerting": "Alerta",
-        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-allow-as-recording-rules-target": "Permitir que esta origem de dados seja selecionada como destino para escrever regras de gravação.",
         "tooltip-manage-alerts-via-alerting-ui": "Gerir regras de alerta para esta origem de dados. Para gerir outros recursos do Alerting, adicione uma origem de dados do Alertmanager."
       },
       "config-editor": {
-        "browser-access-mode-error": "",
-        "description-advanced-settings": "",
+        "browser-access-mode-error": "O modo de acesso do navegador na origem de dados do Prometheus já não está disponível. Mude para o modo de acesso ao servidor.",
+        "description-advanced-settings": "As definições adicionais são definições opcionais que podem ser configuradas para obter mais controlo sobre a sua origem de dados.",
         "title-advanced-settings": "Definições avançadas",
         "title-error": "Erro"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "O seu método de acesso é <1>Navegador</1>, isto significa que o URL tem de estar acessível a partir do navegador.",
-        "tooltip-http-url": "",
+        "tooltip-http-url": "Especifique um URL HTTP completo (por exemplo, {{exampleURL}})",
         "tooltip-server-access-mode": "O seu método de acesso é <1>Servidor</1>, isto significa que o URL tem de estar acessível a partir do backend/servidor da Grafana."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": ""
+        "visit-docs-for-more-details-here": "Visite os documentos para obter mais detalhes aqui."
       },
       "exemplar-setting": {
         "label-data-source": "Origem dos dados",
-        "label-internal-link": "",
+        "label-internal-link": "Link interno",
         "label-label-name": "Nome da etiqueta",
-        "label-remove-exemplar-link": "",
+        "label-remove-exemplar-link": "Remover link exemplar",
         "label-url": "URL",
-        "label-url-label": "",
-        "placeholder-go-to-examplecom": "",
-        "placeholder-httpsexamplecomvalueraw": "",
-        "placeholder-trace-id": "",
-        "title-remove-exemplar-link": "",
-        "tooltip-data-source": "",
-        "tooltip-internal-link": "",
-        "tooltip-label-name": "",
-        "tooltip-url": "",
-        "tooltip-url-label": ""
+        "label-url-label": "Etiqueta de URL",
+        "placeholder-go-to-examplecom": "Ir para example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "ID de rastreamento",
+        "title-remove-exemplar-link": "Remover link exemplar",
+        "tooltip-data-source": "A origem de dados para a qual o exemplar vai navegar.",
+        "tooltip-internal-link": "Ative esta opção se tiver um link interno. Quando ativado, isto revela o seletor de origem de dados. Selecionar o armazenamento de dados de rastreamento de backend para os seus dados exemplares.",
+        "tooltip-label-name": "O nome do campo no objeto de etiquetas que deve ser utilizado para obter a ID de rastreamento.",
+        "tooltip-url": "O URL do backend de rastreio que o utilizador iria utilizar para ver o seu rastreio",
+        "tooltip-url-label": "Utilizar para substituir a etiqueta do botão no campo de ID de rastreamento exemplar."
       },
       "exemplars-settings": {
         "add": "Adicionar",
-        "no-exemplars-configurations": "",
-        "title-exemplars": ""
+        "no-exemplars-configurations": "Sem configurações de exemplares",
+        "title-exemplars": "Exemplares"
       },
       "prom-settings": {
-        "aria-label-default-editor": "",
-        "aria-label-prom-type-type": "",
-        "aria-label-prometheus-type": "",
-        "aria-label-select-http-method": "",
+        "aria-label-default-editor": "Editor predefinido (código ou construtor)",
+        "aria-label-prom-type-type": "Tipo {{promType}}",
+        "aria-label-prometheus-type": "Tipo Prometheus",
+        "aria-label-select-http-method": "Selecionar método HTTP",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Construtor",
+          "label-code": "Cód."
         },
-        "label-cache-level": "",
-        "label-custom-query-parameters": "",
-        "label-default-editor": "",
-        "label-disable-metrics-lookup": "",
-        "label-disable-recording-rules-beta": "",
-        "label-http-method": "",
-        "label-incremental-querying-beta": "",
-        "label-metric-names-suggestion-limit": "",
-        "label-prom-type-version": "",
-        "label-prometheus-type": "",
-        "label-query-overlap-window": "",
-        "label-query-timeout": "",
-        "label-scrape-interval": "",
-        "label-series-limit": "",
-        "label-use-series-endpoint": "",
-        "more-info": "",
-        "placeholder-example-maxsourceresolutionmtimeout": "",
-        "title-interval-behaviour": "",
-        "title-other": "",
+        "label-cache-level": "Nível de cache",
+        "label-custom-query-parameters": "Parâmetros de consulta personalizados",
+        "label-default-editor": "Editor padrão",
+        "label-disable-metrics-lookup": "Desativar pesquisa de métricas",
+        "label-disable-recording-rules-beta": "Desativar regras de gravação (beta)",
+        "label-http-method": "Método HTTP",
+        "label-incremental-querying-beta": "Consulta incremental (beta)",
+        "label-metric-names-suggestion-limit": "Limite de sugestão de nomes de métricas",
+        "label-prom-type-version": "Versão {{promType}}",
+        "label-prometheus-type": "Tipo Prometheus",
+        "label-query-overlap-window": "Janela de sobreposição de consulta",
+        "label-query-timeout": "Tempo limite da consulta",
+        "label-scrape-interval": "Intervalo de raspagem",
+        "label-series-limit": "Limite de série",
+        "label-use-series-endpoint": "Utilizar ponto final da série",
+        "more-info": "Para obter mais informações sobre como configurar o tipo e a versão do Prometheus em origens de dados, consulte a <2>documentação de aprovisionamento</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Exemplo: {{example}}",
+        "title-interval-behaviour": "Comportamento de intervalo",
+        "title-other": "Outro",
         "title-performance": "Desempenho",
-        "title-query-editor": "",
-        "tooltip-cache-level": "",
-        "tooltip-custom-query-parameters": "",
-        "tooltip-default-editor": "",
-        "tooltip-disable-metrics-lookup": "",
-        "tooltip-disable-recording-rules-beta": "",
-        "tooltip-http-method": "",
-        "tooltip-incremental-querying-beta": "",
-        "tooltip-metric-names-suggestion-limit": "",
-        "tooltip-prom-type-version": "",
-        "tooltip-prometheus-type": "",
-        "tooltip-query-overlap-window": "",
-        "tooltip-query-timeout": "",
-        "tooltip-scrape-interval": "",
-        "tooltip-series-limit": "",
-        "tooltip-use-series-endpoint": ""
+        "title-query-editor": "Editor de consultas",
+        "tooltip-cache-level": "Definir o nível de cache do navegador para consultas do editor. São recomendadas definições de cache mais elevadas para origens de dados de elevada cardinalidade.",
+        "tooltip-custom-query-parameters": "Adicionar parâmetros personalizados ao URL de consulta do Prometheus. Por exemplo, {{example1}}, {{example2}}, {{example3}} ou {{example4}}. Os parâmetros múltiplos devem ser concatenados com {{concatenationChar}}.",
+        "tooltip-default-editor": "Definir a opção de editor predefinida para todos os utilizadores desta origem de dados.",
+        "tooltip-disable-metrics-lookup": "Ao selecionar esta opção desativará o seletor de métricas e o suporte de métrica/etiqueta no preenchimento automático do campo de consulta. Isto ajuda se tiver problemas de desempenho com instâncias maiores do Prometheus. ",
+        "tooltip-disable-recording-rules-beta": "Esta funcionalidade desativará as regras de gravação. Ative isto para melhorar o desempenho do painel de controlo",
+        "tooltip-http-method": "Pode utilizar o método HTTP POST ou GET para consultar a sua origem de dados Prometheus. POST é o método recomendado, pois permite consultas maiores. Altere esta opção para GET se tiver uma versão do Prometheus anterior à 2.1 ou se os pedidos POST forem restritos na sua rede.",
+        "tooltip-incremental-querying-beta": "Esta funcionalidade irá alterar o comportamento predefinido das consultas relativas para solicitar sempre dados novos da instância do Prometheus. Em vez disso, os resultados da consulta serão armazenados em cache e apenas serão solicitados novos registos. Ativar isto para diminuir a carga da base de dados e da rede.",
+        "tooltip-metric-names-suggestion-limit": "O número máximo de nomes de métricas que podem aparecer como sugestões de preenchimento automático no modo de Código do editor de consultas.",
+        "tooltip-prom-type-version": "Utilizar isto para definir a versão da sua instância {{promType}} se não estiver configurada automaticamente.",
+        "tooltip-prometheus-type": "Definir isto para o tipo da sua base de dados prometheus, por exemplo, Prometheus, Cortex, Mimir ou Thanos. Alterar este campo irá guardar as suas definições atuais. Certos tipos de Prometheus suportam ou não suportam várias APIs. Por exemplo, alguns tipos suportam correspondência de regex para consultas de etiqueta para melhorar o desempenho. Alguns tipos têm uma API para metadados. Se definir isto incorretamente, poderá experimentar um comportamento estranho ao consultar métricas e etiquetas. Verifique a sua documentação do Prometheus para garantir que introduz o tipo correto.",
+        "tooltip-query-overlap-window": "Definir uma duração como {{example1}} ou {{example2}} ou {{example3}}. Predefinição de {{default}}. Esta duração será adicionada à duração de cada pedido incremental.",
+        "tooltip-query-timeout": "Definir o tempo limite de consulta do Prometheus.",
+        "tooltip-scrape-interval": "Este intervalo é a frequência com que o Prometheus raspa os alvos. Definir isto para o intervalo típico de raspagem e avaliação configurado no seu ficheiro de configuração do Prometheus. Se definir isto para um valor maior do que o intervalo do seu ficheiro de configuração do Prometheus, a Grafana irá avaliar os dados de acordo com este intervalo e verá menos pontos de dados. Predefinições para {{default}}.",
+        "tooltip-series-limit": "O limite aplica-se a todos os recursos (métricas, etiquetas e valores) para ambos os pontos finais (séries e etiquetas). Deixar o campo vazio para utilizar o limite predefinido (40000). Definir para 0 para desativar o limite e obter tudo — isso pode causar problemas de desempenho. O limite predefinido é de 40000.",
+        "tooltip-use-series-endpoint": "A seleção desta opção, favorecerá o ponto final da série com o parâmetro {{exampleParameter}} em relação ao ponto final dos valores da etiqueta com o parâmetro {{exampleParameter}}. Embora o ponto final dos valores de etiqueta seja considerado mais eficiente, alguns utilizadores podem preferir a série, porque tem um método POST, enquanto o ponto final dos valores de etiqueta apenas tem um método GET."
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "(Desativado)",
+      "enabled-label": "Navegador de métricas"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Inclui apenas etiquetas únicas",
+        "description-custom": "Forneça um modelo de nomenclatura",
+        "description-verbose": "Todos os nomes e valores de etiquetas",
+        "label-auto": "Automático",
+        "label-custom": "Personalizar",
+        "label-verbose": "Verboso"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "Calcular a média sobre as dimensões",
+        "documentation-bottomk": "Menores elementos k por valor de amostra",
+        "documentation-count": "Contar o número de elementos no vetor",
+        "documentation-count-values": "Contar o número de elementos com o mesmo valor",
+        "documentation-group": "Todos os valores no vetor resultante são 1",
+        "documentation-max": "Selecionar o máximo sobre as dimensões",
+        "documentation-min": "Selecionar o mínimo sobre as dimensões",
+        "documentation-quantile": "Calcular o quantil φ (0 ≤ φ ≤ 1) sobre as dimensões",
+        "documentation-stddev": "Calcular o desvio-padrão da população sobre as dimensões",
+        "documentation-stdvar": "Calcular a variância padrão da população sobre as dimensões",
+        "documentation-sum": "Calcular a soma sobre as dimensões",
+        "documentation-topk": "Maiores elementos k por valor de amostra"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "Devolve o vetor de entrada com todos os valores de amostra convertidos para o seu valor absoluto.",
+        "documentation-absent": "Devolve um vetor vazio se o vetor passado para o mesmo tiver quaisquer elementos e um vetor de 1 elemento com o valor 1 se o vetor passado para o mesmo não tiver elementos. Isto é útil para alertar quando não existem séries temporais para um determinado nome de métrica e combinação de rótulo.",
+        "documentation-absent-over-time": "Devolve um vetor vazio se o vetor de intervalo passado para o mesmo tiver quaisquer elementos e um vetor de 1 elemento com o valor 1 se o vetor de intervalo passado para o mesmo não tiver elementos.",
+        "documentation-avg-over-time": "O valor médio de todos os pontos no intervalo especificado.",
+        "documentation-ceil": "Arredonda os valores de amostra de todos os elementos em \"v\" para cima até ao número inteiro mais próximo.",
+        "documentation-changes": "Para cada série temporal de entrada, \"changes(v range-vector)\" devolve o número de vezes que o seu valor mudou dentro do intervalo de tempo fornecido como um vetor instantâneo.",
+        "documentation-clamp": "Fixa os valores de amostra de todos os elementos em \"v\" para ter um limite inferior de \"min\" e um limite superior de \"máx\".",
+        "documentation-clamp-max": "Fixa os valores de amostra de todos os elementos em \"v\" para ter um limite superior de \"máx\".",
+        "documentation-clamp-min": "Fixa os valores de amostra de todos os elementos em \"v\" para ter um limite inferior de \"min\".",
+        "documentation-count-over-time": "A contagem de todos os valores no intervalo especificado.",
+        "documentation-count-scalar": "Devolve o número de elementos num vetor de série temporal como um escalar. Isto contrasta com o operador de agregação 'count()', que devolve sempre um vetor (um vetor vazio se o vetor de entrada estiver vazio) e permite o agrupamento por etiquetas através de uma cláusula 'by'.",
+        "documentation-day-of-month": "Devolve o dia do mês para cada uma das horas fornecidas em UTC. Os valores devolvidos são de 1 a 31.",
+        "documentation-day-of-week": "Devolve o dia da semana para cada uma das horas fornecidas em UTC. Os valores devolvidos são de 0 a 6, onde 0 significa domingo, etc.",
+        "documentation-day-of-year": "Devolve o dia do ano para cada uma das horas fornecidas em UTC. Os valores devolvidos são de 1 a 365 para anos não bissextos e de 1 a 366 para anos bissextos.",
+        "documentation-days-in-month": "Devolve o número de dias do mês para cada uma das horas fornecidas em UTC. Os valores devolvidos são de 28 a 31.",
+        "documentation-deg": "Converte radianos em graus para todos os elementos em v",
+        "documentation-delta": "Calcula a diferença entre o primeiro e o último valor de cada elemento da série temporal num vetor de intervalo \"v\", devolvendo um vetor instantâneo com os deltas dados e etiquetas equivalentes. O delta é extrapolado para abranger o intervalo de tempo completo, conforme especificado no seletor de vetor de intervalo, de modo que seja possível obter um resultado não inteiro, mesmo que os valores de amostra sejam todos inteiros.",
+        "documentation-deriv": "Calcula a derivada por segundo da série temporal num vetor de intervalo \"v\", utilizando regressão linear simples.",
+        "documentation-double-exponential-smoothing": "Produz um valor suavizado para séries temporais com base no intervalo em \"v\". Quanto menor o fator de suavização \"sf\", mais importância é dada aos dados antigos. Quanto maior o fator de tendência \"tf\", mais tendências nos dados são consideradas. Tanto \"sf\" quanto \"tf\" devem estar entre 0 e 1.",
+        "documentation-drop-common-labels": "Elimina todas as etiquetas com o mesmo nome e valor em todas as séries no vetor de entrada.",
+        "documentation-exp": "Calcula a função exponencial para todos os elementos em \"v\".\nOs casos especiais são:\n* \"Exp(+Inf) = +Inf\" \n* \"Exp(NaN) = NaN\"",
+        "documentation-floor": "Arredonda os valores de amostra de todos os elementos em \"v\" para cima até ao número inteiro mais próximo.",
+        "documentation-histogram-avg": "Devolve a média aritmética dos valores observados armazenados num histograma nativo. As amostras que não são histogramas nativos são ignoradas e não aparecem no vetor devolvido.",
+        "documentation-histogram-count": "Devolve a contagem de observações armazenadas num histograma nativo.",
+        "documentation-histogram-fraction": "Devolve a fração estimada de observações entre os valores inferior e superior fornecidos.",
+        "documentation-histogram-quantile": "Calcula o quantil φ (0 ≤ φ ≤ 1) a partir dos buckets 'b' de um histograma. As amostras em 'b' são as contagens de observações em cada bucket. Cada amostra deve ter uma etiqueta 'le' onde o valor da etiqueta denota o limite superior inclusivo do bucket. (Amostras sem esta etiqueta são ignoradas silenciosamente.) O tipo de métrica de histograma fornece automaticamente séries temporais com o sufixo '_bucket' e as etiquetas apropriadas.",
+        "documentation-histogram-stddev": "Devolve o desvio-padrão estimado das observações num histograma nativo, com base na média geométrica dos buckets onde as observações se encontram.",
+        "documentation-histogram-stdvar": "Devolve a variância padrão estimada das observações num histograma nativo.",
+        "documentation-histogram-sum": "Devolve a soma de observações armazenadas num histograma nativo.",
+        "documentation-holt-winters": "Renomeado como double_exponential_smoothing no prometheus v3.x. Para versões do prometheus iguais e superiores a v3.0, usar double_exponential_smoothing. \n\nProduz um valor suavizado para séries temporais com base no intervalo em \"v\". Quanto menor o fator de suavização \"sf\", mais importância é dada aos dados antigos. Quanto maior o fator de tendência \"tf\", mais tendências são consideradas nos dados. Tanto \"sf\" quanto \"tf\" devem estar entre 0 e 1.",
+        "documentation-hour": "Devolve a hora do dia para cada uma das horas fornecidas em UTC. Os valores devolvidos são de 0 a 23.",
+        "documentation-idelta": "Calcula a diferença entre as duas últimas amostras no vetor de intervalo \"v\", devolvendo um vetor instantâneo com os deltas dados e etiquetas equivalentes.",
+        "documentation-increase": "Calcula o aumento na série temporal no vetor de intervalo. As quebras na monotonicidade (como redefinições de contador devido a reinícios de alvo) são ajustadas automaticamente. O aumento é extrapolado para abranger o intervalo de tempo completo, conforme especificado no seletor de vetor de intervalo, de modo que seja possível obter um resultado não inteiro, mesmo que um contador aumente apenas por incrementos inteiros.",
+        "documentation-info": "Devolve os detalhes e metadados mais recentes sobre um grupo de métricas, como as respetivas etiquetas e valores atuais, sem fazer quaisquer cálculos.",
+        "documentation-irate": "Calcula a taxa instantânea por segundo de aumento da série temporal no vetor de intervalo. Isto baseia-se nos dois últimos pontos de dados. As quebras na monotonicidade (como redefinições de contador devido a reinícios de alvo) são ajustadas automaticamente.",
+        "documentation-label-join": "Para cada série temporal em \"v\", une todos os valores de todos os \"src_labels\" usando \"separator\" e devolve a série temporal com a etiqueta \"dst_label\" contendo o valor unido. Pode haver qualquer número de \"src_labels\" nesta função.",
+        "documentation-label-replace": "Para cada série temporal em \"v\", \"label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)\" corresponde à expressão regular \"regex\" contra a etiqueta \"src_label\". Se corresponder, a série temporal é devolvida com a etiqueta \"dst_label\" substituída pela expansão de \"replacement\". \"$1\" é substituído pelo primeiro subgrupo correspondente, \"$2\" pelo segundo, etc. Se a expressão regular não corresponder, a série temporal é devolvida inalterada.",
+        "documentation-last-over-time": "O valor do ponto mais recente no intervalo especificado.",
+        "documentation-ln": "Calcula o logaritmo natural para todos os elementos em \"v\".\nOs casos especiais são:\n * \"ln(+Inf) = +Inf\"\n * \"ln(0) = -Inf\"\n * \"ln(x < 0) = NaN\"\n * \"ln(NaN) = NaN\"",
+        "documentation-log10": "Calcula o logaritmo decimal para todos os elementos em \"v\". Os casos especiais são equivalentes aos de \"ln\".",
+        "documentation-log2": "Calcula o logaritmo binário para todos os elementos em \"v\". Os casos especiais são equivalentes aos de \"ln\".",
+        "documentation-max-over-time": "O valor máximo de todos os pontos no intervalo especificado.",
+        "documentation-min-over-time": "O valor mínimo de todos os pontos no intervalo especificado.",
+        "documentation-minute": "Devolve o minuto da hora para cada uma das horas fornecidas em UTC. Os valores devolvidos são de 0 a 59.",
+        "documentation-month": "Devolve o mês do ano para cada uma das data/horas fornecidas em UTC. Os valores devolvidos são de 1 a 12, onde 1 significa janeiro, etc.",
+        "documentation-pi": "Devolve pi",
+        "documentation-predict-linear": "Prevê o valor da série temporal \"t\" segundos a partir de agora, com base no vetor de intervalo \"v\", utilizando regressão linear simples.",
+        "documentation-present-over-time": "O valor 1 para qualquer série no intervalo especificado.",
+        "documentation-quantile-over-time": "O quantil φ (0 ≤ φ ≤ 1) dos valores no intervalo especificado.",
+        "documentation-rad": "Converte graus em radianos para todos os elementos em v",
+        "documentation-rate": "Calcula a taxa média por segundo de aumento da série temporal no vetor de intervalo. As quebras na monotonicidade (como redefinições de contador devido a reinícios de alvo) são ajustadas automaticamente. Além disso, o cálculo extrapola para as extremidades do intervalo de tempo, tendo em conta recolhas perdidas ou alinhamento imperfeito dos ciclos de recolha com o período de tempo do intervalo.",
+        "documentation-resets": "Para cada série temporal de entrada, \"resets(v range-vector)\" devolve o número de redefinições do contador dentro do intervalo de tempo fornecido como um vetor instantâneo. Qualquer diminuição no valor entre duas amostras consecutivas é interpretada como uma redefinição do contador.",
+        "documentation-round": "Arredonda os valores de amostra de todos os elementos em \"v\" para o número inteiro mais próximo. Os empates são resolvidos arredondando para cima. O argumento opcional \"to_nearest\" permite especificar o múltiplo mais próximo para o qual os valores de amostra devem ser arredondados. Este múltiplo também pode ser uma fração.",
+        "documentation-scalar": "Dado um vetor de entrada de elemento único, \"scalar(v instant-vector)\" devolve o valor de amostra desse elemento único como um escalar. Se o vetor de entrada não tiver exatamente um elemento, \"scalar\" devolverá \"NaN\".",
+        "documentation-sgn": "Devolve um vetor com todos os valores de amostra convertidos para o seu sinal, definido como este: 1 se v for positivo, -1 se v for negativo e 0 se v for igual a zero.",
+        "documentation-sort": "Devolve elementos vetoriais ordenados pelos seus valores de amostra, por ordem ascendente.",
+        "documentation-sort-desc": "Devolve elementos vetoriais ordenados pelos seus valores de amostra, por ordem descendente.",
+        "documentation-sqrt": "Calcula a raiz quadrada de todos os elementos em \"v\".",
+        "documentation-stddev-over-time": "O desvio-padrão da população dos valores no intervalo especificado.",
+        "documentation-stdvar-over-time": "A variância padrão da população dos valores no intervalo especificado.",
+        "documentation-sum-over-time": "A soma de todos os valores no intervalo especificado.",
+        "documentation-time": "Devolve o número de segundos desde 1 de janeiro de 1970 UTC. Tenha em atenção que isto não devolve realmente a hora atual, mas a hora em que a expressão deve ser avaliada.",
+        "documentation-timestamp": "Devolve o carimbo de data/hora de cada uma das amostras do vetor fornecido como o número de segundos desde 1 de janeiro de 1970 UTC.",
+        "documentation-vector": "Devolve o escalar \"s\" como um vetor sem etiquetas.",
+        "documentation-year": "Devolve o ano para cada uma das horas fornecidas em UTC."
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "calcula o arco cosseno de todos os elementos em {{argument}}",
+        "documentation-acosh": "calcula o cosseno hiperbólico inverso de todos os elementos em {{argument}}",
+        "documentation-asin": "calcula o arco seno de todos os elementos em {{argument}}",
+        "documentation-asinh": "calcula o seno hiperbólico inverso de todos os elementos em {{argument}}",
+        "documentation-atan": "calcula o arco tangente de todos os elementos em {{argument}}",
+        "documentation-atanh": "calcula a tangente hiperbólica inversa de todos os elementos em {{argument}}",
+        "documentation-cos": "calcula o cosseno de todos os elementos em {{argument}}",
+        "documentation-cosh": "calcula o cosseno hiperbólico de todos os elementos em {{argument}}",
+        "documentation-sin": "calcula o seno de todos os elementos em {{argument}}",
+        "documentation-sinh": "calcula o seno hiperbólico inverso de todos os elementos em {{argument}}",
+        "documentation-tan": "calcula a tangente de todos os elementos em {{argument}}",
+        "documentation-tanh": "calcula a tangente hiperbólica de todos os elementos em {{argument}}"
       }
     },
     "querybuilder": {
       "feedback-link": {
         "give-feedback": "Dar feedback",
-        "title-give-feedback": ""
+        "title-give-feedback": "O explorador de métricas é novo, diga-nos como podemos melhorá-lo"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Exemplares: {{value}}",
+        "format": "Formato: {{value}}",
+        "legend": "Legenda: {{value}}",
+        "step": "Passo: {{value}}",
+        "type": "Tipo: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "type": ""
+        "browse": "Pesquisar métricas por nome",
+        "type": "Filtrar por tipo"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Uma métrica cumulativa que representa um único contador monotonicamente crescente cujo valor só pode aumentar ou ser redefinido para zero ao reiniciar.",
+        "description-gauge": "Uma métrica que representa um único valor numérico que pode subir e descer arbitrariamente.",
+        "description-histogram": "Um histograma recolhe amostras de observações (geralmente aspetos como durações de solicitações ou tamanhos de resposta) e conta-as em buckets configuráveis.",
+        "description-native-histogram": "Os histogramas nativos são diferentes dos histogramas clássicos do Prometheus de várias maneiras: os limites do bucket do histograma nativo são calculados por uma fórmula que depende da escala (resolução) do histograma nativo e não são definidos pelo utilizador.",
+        "description-no-type": "Estas métricas não têm tipo definido nos metadados.",
+        "description-summary": "Um resumo recolhe amostras de observações (geralmente aspetos como durações de solicitações e tamanhos de resposta) e pode calcular quantis configuráveis ao longo de uma janela de tempo deslizante.",
+        "description-unknown": "Estas métricas receberam o tipo desconhecido nos metadados.",
+        "label-counter": "Contador",
+        "label-gauge": "Medidor",
+        "label-histogram": "Histograma",
+        "label-native-histogram": "Histograma nativo",
+        "label-no-type": "Sem tipo",
+        "label-summary": "Resumo",
+        "label-unknown": "Desconhecido"
       },
       "handle-function": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "A análise da consulta é ambígua."
         }
       },
       "label-filter-item": {
-        "aria-label-remove": "",
-        "placeholder-select-label": "",
+        "aria-label-remove": "Remover {{name}}",
+        "placeholder-select-label": "Selecione etiqueta",
         "placeholder-select-value": "Selecionar valor"
       },
       "label-filters": {
-        "label-filters": "",
-        "label-label-filters": "",
-        "tooltip-label-filters": ""
+        "label-filters": "Filtros de etiquetas",
+        "label-label-filters": "Filtros de etiquetas",
+        "tooltip-label-filters": "Opcional: utilizado para filtrar a métrica selecionada para este tipo de consulta."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "A carregar etiquetas",
+        "noOptionsMessage-no-labels-found": "Nenhuma etiqueta encontrada"
       },
       "metric-combobox": {
         "async-select": {
-          "aria-label-open-metrics-explorer": "",
-          "placeholder-select-metric": "",
-          "tooltip-open-metrics-explorer": ""
+          "aria-label-open-metrics-explorer": "Abrir explorador de métricas",
+          "placeholder-select-metric": "Selecionar métrica",
+          "tooltip-open-metrics-explorer": "Abrir explorador de métricas"
         },
         "label-metric": "Métrica",
-        "tooltip-metric": ""
+        "tooltip-metric": "Opcional: devolve uma lista de valores de etiqueta para o nome da etiqueta na métrica especificada."
       },
       "metrics-modal": {
-        "aria-label-browse-metrics": "",
-        "currently-selected": "",
-        "metrics-pre-filtered": "",
-        "title-metrics-explorer": ""
+        "aria-label-browse-metrics": "Procurar métricas",
+        "currently-selected": "Atualmente selecionado: {{selected}}",
+        "metrics-pre-filtered": "Estas métricas foram pré-filtradas por etiquetas escolhidas nos filtros de etiquetas.",
+        "title-metrics-explorer": "Explorador de métricas"
       },
       "nested-query": {
         "label": {
-          "ignoring": "",
+          "ignoring": "Ignorando",
           "on": "Em "
         },
         "operator": "Operador",
-        "tooltip-remove-match": "",
-        "vector-matches": ""
+        "tooltip-remove-match": "Remover correspondência",
+        "vector-matches": "Correspondências de vetores"
       },
       "operation-editor": {
-        "not-found": "",
-        "title-remove": ""
+        "not-found": "Operação {{id}} não encontrada",
+        "title-remove": "Remover {{name}}"
       },
       "operation-header": {
         "placeholder-replace-with": "Substituir por",
-        "title-click-to-view-alternative-operations": "",
-        "title-remove-operation": ""
+        "title-click-to-view-alternative-operations": "Clicar para ver operações alternativas",
+        "title-remove-operation": "Remover operação"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "",
-        "title-remove-operation": ""
+        "title-click-to-show-description": "Clicar para mostrar a descrição",
+        "title-remove-operation": "Remover operação"
       },
       "operation-list": {
-        "operations": "",
+        "operations": "Operações",
         "placeholder-search": "Pesquisar",
-        "title-add-operation": ""
+        "title-add-operation": "Adicionar operação"
       },
       "operation-param-editor": {
-        "title-add": "",
-        "title-remove": ""
+        "title-add": "Adicionar {{name}}",
+        "title-remove": "Remover {{name}}"
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "Calcula {{aggregationName}} sobre as dimensões enquanto preserva {{labelWord}} {{labels}}.",
+          "label-default": "Calcula {{aggregationName}} sobre as dimensões.",
+          "label-without": "Calcula {{aggregationName}} sobre as dimensões {{labels}}. Todas as outras etiquetas são preservadas."
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "",
-        "aria-label-select-resolution": "",
+        "aria-label-lower-limit-parameter": "Definir limite inferior para o parâmetro de passos",
+        "aria-label-select-resolution": "Selecionar resolução",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Mapa de calor",
+          "label-table": "Tabela",
+          "label-time-series": "Série temporal"
         },
-        "label-exemplars": "",
+        "label-exemplars": "Exemplares",
         "label-format": "Formato",
-        "label-min-step": "",
-        "label-resolution": "",
+        "label-min-step": "Passo mín.",
+        "label-resolution": "Resolução",
         "label-type": "Tipo",
-        "placeholder-auto": "",
+        "placeholder-auto": "auto",
         "title-options": "Opções",
-        "tooltip-min-step": ""
+        "tooltip-min-step": "Um limite inferior adicional para o parâmetro de etapa da consulta Prometheus e para as variáveis <2>{{interval}}</2> e <4>{{rateInterval}}</4>."
       },
       "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "",
-        "tooltip-autocomplete-suggestions-limited": ""
+        "autocomplete-suggestions-limited": "Sugestões de preenchimento automático limitadas",
+        "tooltip-autocomplete-suggestions-limited": "O número de nomes de métricas excede o limite de preenchimento automático. Apenas são exibidas as métricas mais relevantes para {{autocompleteLimit}}. Pode ajustar o limite nas definições da origem de dados."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Há um erro de sintaxe ou a estrutura da consulta não pode ser visualizada ao mudar para o modo de construtor. Partes da consulta podem ser perdidas.",
+        "confirmText-continue": "Continuar",
         "kick-start-your-query": "Dê início à sua consulta",
-        "label-explain": "",
-        "run-queries": "",
-        "title-parsing-error-switch-builder": ""
+        "label-explain": "Explicar",
+        "run-queries": "Executar consultas",
+        "title-parsing-error-switch-builder": "Erro de análise: mudar para o modo de construtor?"
       },
       "prom-query-legend-editor": {
-        "label-legend": "",
-        "placeholder-select-legend-mode": "",
-        "tooltip-legend": ""
+        "label-legend": "Legenda",
+        "placeholder-select-legend-mode": "Selecionar modo de legenda",
+        "tooltip-legend": "Substituição ou modelo do nome da série. Ex. {{templateExample}} será substituído pelo valor da etiqueta para{{labelName}}."
       },
       "query-builder-hints": {
-        "hint-details": ""
+        "hint-details": "dica: {{hintDetails}}"
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Construtor",
+          "label-code": "Cód."
         }
       },
       "query-pattern": {
-        "apply-query": "",
-        "aria-label-apply-query-starter-button": "",
-        "aria-label-back-button": "",
-        "aria-label-create-new-query-button": "",
-        "aria-label-raw-query": "",
-        "aria-label-use-this-query-button": "",
+        "apply-query": "Aplicar consulta",
+        "aria-label-apply-query-starter-button": "botão de início de aplicação de consulta",
+        "aria-label-back-button": "botão voltar",
+        "aria-label-create-new-query-button": "botão criar nova consulta",
+        "aria-label-raw-query": "Consulta bruta {{patternName}}",
+        "aria-label-use-this-query-button": "utilizar este botão de consulta",
         "back": "Voltar",
-        "create-new-query": "",
+        "create-new-query": "Criar uma nova consulta",
         "use-this-query": "Utilizar esta consulta"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-close-kick-start-your-query-modal": "fechar Iniciar o seu modal de consulta",
         "aria-label-kick-start-your-query-modal": "Dê início ao seu modal de consulta",
-        "aria-label-toggle-query-starter": "",
+        "aria-label-toggle-query-starter": "abrir e fechar cartão de início de consulta {{patternType}}",
         "close": "Fechar",
-        "description-kick-start-your-query": "",
-        "label-toggle-query-starter": "",
+        "description-kick-start-your-query": "Dê início à sua consulta selecionando uma destas consultas. Pode então continuar a completar a sua consulta.",
+        "label-toggle-query-starter": "Iniciadores de consulta {{patternType}}",
         "title-kick-start-your-query": "Dê início à sua consulta"
       },
       "raw-query": {
-        "aria-label-selector": ""
+        "aria-label-selector": "seletor"
       },
       "results-table": {
-        "content-descriptive-type": "",
+        "content-descriptive-type": "Ao criar um {{descriptiveType}}, o Prometheus expõe várias séries com o contador de tipos. ",
         "description": "Descrição",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Não foram encontradas métricas. Tente expandir os seus filtros de etiquetas.",
+        "message-expand-search": "Não foram encontradas métricas. Tente expandir a sua pesquisa e filtros.",
+        "message-no-metrics-found": "Não foram encontradas métricas na origem de dados.",
         "name": "Nome",
         "type": "Tipo"
       },
       "update-function-args": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "A análise da consulta é ambígua."
         }
       }
     }

@@ -52,7 +52,7 @@
       "button-use-query": "Diese Abfrage nutzen",
       "label-categories": "Kategorien",
       "label-query-results": "Abfrageergebnisse: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Es können nicht alle Kategorien aufgelistet werden",
       "placeholder-all-categories": "Alle Kategorien",
       "placeholder-search-logs": "Logs-Abfragen durchsuchen",
       "text-loading": "Wird geladen ..."
@@ -166,8 +166,8 @@
       "tooltip-limit": "Beschränken Sie die Zahl der zurückgegebenen Zeilen (Standard ist 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Sind Sie sicher, dass Sie zu Basic-Logs wechseln möchten?",
+      "confirmText-confirm": "Bestätigen",
       "description-basic-logs-queries": "Für Abfragen von Basis-Logs fallen Kosten an, je nach der Menge der gescannten Daten.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Abfragen von Basis-Logs",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure-Logs starten Ihre Abfrage-Schaltfläche",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Wenn Sie zum Builder wechseln, wird Ihre aktuelle KQL-Abfrage verworfen und der KQL-Editor gelöscht. Sind Sie sicher?",
+      "body-switching-to-kql": "Wenn Sie zu KQL wechseln, werden Ihre aktuellen Builder-Einstellungen verworfen. Sind Sie sicher?",
       "button-kick-start-your-query": "Starten Sie Ihre Abfrage",
       "button-run-query": "Abfrage ausführen",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Wechseln zu {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Builder",
+        "label-kql": "KQL"
       },
       "label-service": "Dienst",
       "placeholder-service": "Dienst …",

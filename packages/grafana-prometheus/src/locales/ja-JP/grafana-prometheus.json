@@ -158,8 +158,8 @@
         "aria-label-prometheus-type": "Prometheusタイプ",
         "aria-label-select-http-method": "HTTPメソッドを選択",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "ビルダー",
+          "label-code": "コード"
         },
         "label-cache-level": "キャッシュレベル",
         "label-custom-query-parameters": "カスタムクエリパラメーター",
@@ -200,114 +200,114 @@
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "(無効化)",
+      "enabled-label": "メトリックブラウザ"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "一意のラベルのみを含む",
+        "description-custom": "命名テンプレートを提供する",
+        "description-verbose": "すべてのラベル名と値",
+        "label-auto": "自動",
+        "label-custom": "カスタム",
+        "label-verbose": "詳細"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "次元間の平均を計算",
+        "documentation-bottomk": "サンプル値が最小のk個の要素",
+        "documentation-count": "ベクトル内の要素数をカウント",
+        "documentation-count-values": "同じ値を持つ要素の数をカウントする",
+        "documentation-group": "結果のベクトルのすべての値は1です",
+        "documentation-max": "次元での最大値を選択",
+        "documentation-min": "次元での最小値を選択",
+        "documentation-quantile": "次元間でφ分位数 (0 ≤ φ ≤ 1) を計算します",
+        "documentation-stddev": "次元にわたる母集団標準偏差を計算",
+        "documentation-stdvar": "次元にわたる母集団標準分散を計算",
+        "documentation-sum": "次元の合計を計算",
+        "documentation-topk": "サンプル値が最大のk個の要素"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "すべてのサンプル値が絶対値に変換された入力ベクトルを返します。",
+        "documentation-absent": "渡されたベクトルに要素がある場合は空のベクトルを返し、渡されたベクトルに要素がない場合は値1の1要素ベクトルを返します。これは、指定されたメトリック名とラベルの組み合わせに時系列が存在しない場合に警告するのに役立ちます。",
+        "documentation-absent-over-time": "渡された範囲ベクトルに要素がある場合は空のベクトルを返し、渡された範囲ベクトルに要素がない場合は値1の1要素ベクトルを返します。",
+        "documentation-avg-over-time": "指定された間隔内のすべてのポイントの平均値。",
+        "documentation-ceil": "「v」のすべての要素のサンプル値を最も近い整数に切り上げます。",
+        "documentation-changes": "入力時系列ごとに、'changes(v range-vector)'は、指定された時間範囲内でその値が変更された回数をインスタントベクトルとして返します。",
+        "documentation-clamp": "「v」のすべての要素のサンプル値を「min」の下限と「max」の上限に固定します。",
+        "documentation-clamp-max": "「v」のすべての要素のサンプル値を「max」の上限に固定します。",
+        "documentation-clamp-min": "「v」のすべての要素のサンプル値を「min」の下限に固定します。",
+        "documentation-count-over-time": "指定された間隔のすべての値の個数。",
+        "documentation-count-scalar": "時系列ベクトルの要素数をスカラーとして返します。これは、常にベクトル (入力ベクトルが空の場合は空のベクトル) を返し、「by」句を介してラベルでグループ化できる「count()」集計演算子とは対照的です。",
+        "documentation-day-of-month": "UTCで指定された各時間の月の日を返します。返される値は1から31です。",
+        "documentation-day-of-week": "UTCで指定された各時間の曜日を返します。返される値は0から6までで、0は日曜日などを意味します。",
+        "documentation-day-of-year": "指定された各時刻の1年の日をUTCで返します。返される値は、非うるう年では1から365、うるう年では1から366です。",
+        "documentation-days-in-month": "UTCで指定された時間ごとに、その月の日数を返します。返される値は28から31です。",
+        "documentation-deg": "vのすべての要素のラジアンを度に変換します",
+        "documentation-delta": "範囲ベクトル「v」の各時系列要素の最初と最後の値の差を計算し、指定されたデルタと同等のラベルを持つインスタントベクトルを返します。デルタは、範囲ベクトルセレクターで指定されたフルタイム範囲をカバーするように外挿されるため、サンプル値がすべて整数であっても、非整数の結果を得ることができます。",
+        "documentation-deriv": "単純な線形回帰を使用して、範囲ベクトル「v」の時系列の秒単位の導関数を計算します。",
+        "documentation-double-exponential-smoothing": "「v」の範囲に基づいて、時系列の平滑化された値を生成します。平滑化係数「sf」が小さいほど、古いデータが重要になります。トレンド係数「tf」が高いほど、データのトレンドが考慮されます。「sf」と「tf」の両方が0と1の間でなければなりません。",
+        "documentation-drop-common-labels": "入力ベクトルのすべての系列にわたって、同じ名前と値を持つすべてのラベルをドロップします。",
+        "documentation-exp": "「v」のすべての要素の指数関数を計算します。\n特殊なケースは次のとおりです。\n* 'Exp(+Inf) = +Inf' \n* 'Exp(NaN) = NaN'",
+        "documentation-floor": "「v」のすべての要素のサンプル値を最も近い整数に切り下げます。",
+        "documentation-histogram-avg": "ネイティブヒストグラムに保存されている観測値の算術平均を返します。ネイティブヒストグラムではないサンプルは無視され、返されるベクトルには表示されません。",
+        "documentation-histogram-count": "ネイティブヒストグラムに保存されている観測値の数を返します。",
+        "documentation-histogram-fraction": "指定された下限値と上限値の間の観測値の推定割合を返します。",
+        "documentation-histogram-quantile": "ヒストグラムのバケット「b」からφ分位数 (0 ≤ φ ≤ 1) を計算します。「b」のサンプルは、各バケットの観測値の数です。各サンプルにはラベル「le」が必要です。ラベル値は、バケットの上限を含むことを示します。(そのようなラベルのないサンプルは、黙って無視されます。) ヒストグラムメトリックタイプは、自動的に「_bucket」サフィックスと適切なラベルを持つ時系列を提供します。",
+        "documentation-histogram-stddev": "観測値が存在するバケットの幾何平均に基づいて、ネイティブヒストグラムの観測値の推定標準偏差を返します。",
+        "documentation-histogram-stdvar": "ネイティブヒストグラムの観測値の推定標準分散を返します。",
+        "documentation-histogram-sum": "ネイティブヒストグラムに保存されている観測値の数を返します。",
+        "documentation-holt-winters": "Prometheus v3.xでdouble_exponential_smoothingに名前が変更されました。v3.0以降のPrometheusバージョンでは、double_exponential_smoothingを使用してください。「v」の範囲に基づいて、時系列の平滑化された値を生成します。平滑化係数「sf」が小さいほど、古いデータが重要になります。トレンド係数「tf」が高いほど、データのトレンドが考慮されます。「sf」と「tf」の両方が0と1の間でなければなりません。",
+        "documentation-hour": "UTCで指定された各時刻の時間を返します。返される値は0から23です。",
+        "documentation-idelta": "範囲ベクトル「v」の最後の2つのサンプルの差を計算し、指定されたデルタと同等のラベルを持つインスタントベクトルを返します。",
+        "documentation-increase": "範囲ベクトルの時系列の増加を計算します。単調性の破れ (ターゲットの再起動によるカウンターのリセットなど) は自動的に調整されます。増加は、範囲ベクトルセレクターで指定された全時間範囲をカバーするように外挿されるため、カウンターが整数だけ増加する場合でも、非整数の結果を得ることができます。",
+        "documentation-info": "計算を行わずに、ラベルや現在の値など、メトリックのグループに関する最新の詳細とメタデータを返します",
+        "documentation-irate": "範囲ベクトル内の時系列の1秒あたりの瞬間的な増加率を計算します。これは、最後の2つのデータポイントに基づいています。単調性の破れ (ターゲットの再起動によるカウンターのリセットなど) は自動的に調整されます。",
+        "documentation-label-join": "「v」の各時系列について、「separator」を使用してすべての「src_labels」のすべての値を結合し、結合された値を含むラベル「dst_label」を持つ時系列を返します。この関数には任意の数の「src_labels」を含めることができます。",
+        "documentation-label-replace": "「v」の各時系列について、「label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)」は、ラベル「src_label」に対して正規表現「regex」と一致します。一致する場合、時系列はラベル「dst_label」を「replacement」の拡張に置き換えて返されます。「$1」は最初の一致するサブグループに置き換えられ、「$2」は2番目などに置き換えられます。正規表現が一致しない場合、時系列は変更されずに返されます。",
+        "documentation-last-over-time": "指定された間隔の最新のポイント値。",
+        "documentation-ln": "「v」のすべての要素の自然対数を計算します。\n特殊なケースは次のとおりです。\n* 'ln(+Inf) = +Inf'\n * 'ln(0) = -Inf'\n * 'ln(x < 0) = NaN'\n * 'ln(NaN) = NaN'",
+        "documentation-log10": "「v」のすべての要素の10進対数を計算します。特殊なケースは「ln」のケースと同等です。",
+        "documentation-log2": "「v」のすべての要素の二進対数を計算します。特殊なケースは「ln」のケースと同等です。",
+        "documentation-max-over-time": "指定された間隔内のすべてのポイントの最大値。",
+        "documentation-min-over-time": "指定された間隔内のすべてのポイントの最小値。",
+        "documentation-minute": "UTCで指定された各時間の分を返します。返される値は0から59です。",
+        "documentation-month": "UTCで指定された各時間の年の月を返します。返される値は1から12までで、1は1月などを意味します。",
+        "documentation-pi": "π (パイ) を返します",
+        "documentation-predict-linear": "単純な線形回帰を使用して、範囲ベクトル「v」に基づいて、今から「t」秒後の時系列の値を予測します。",
+        "documentation-present-over-time": "指定された間隔内の任意の系列の値1。",
+        "documentation-quantile-over-time": "指定された間隔の値のφ分位数 (0 ≤ φ ≤ 1)。",
+        "documentation-rad": "vのすべての要素の度数をラジアンに変換します",
+        "documentation-rate": "範囲ベクトル内の時系列について、秒あたりの平均増加率を計算します。単調性の破れ (ターゲットの再起動によるカウンターのリセットなど) は自動的に調整されます。また、計算では時間範囲の端まで外挿を行い、スクレイプの見逃しや、スクレイプサイクルと範囲の期間との不完全なアライメントに対応します。",
+        "documentation-resets": "入力時系列ごとに、'resets(v range-vector)'は、指定された時間範囲内のカウンターリセットの数をインスタントベクトルとして返します。2つの連続するサンプル間の値の減少は、カウンターリセットとして解釈されます。",
+        "documentation-round": "「v」のすべての要素のサンプル値を最も近い整数に丸めます。端数は切り上げられます。オプションの「to_nearest」引数を使用すると、サンプル値を丸める最も近い倍数を指定できます。この倍数は分数でもかまいません。",
+        "documentation-scalar": "単一要素の入力ベクトルを指定すると、'scalar(v instant-vector)'はその単一要素のサンプル値をスカラーとして返します。要素がちょうど1つでない場合、'scalar'は'NaN'を返します。",
+        "documentation-sgn": "すべてのサンプル値が符号に変換されたベクトルを返します。これは次のように定義されます。vが正の場合は1、vが負の場合は-1、vがゼロの場合は0。",
+        "documentation-sort": "サンプル値でソートされたベクトル要素を昇順で返します。",
+        "documentation-sort-desc": "サンプル値で並べ替えたベクトル要素を降順で返します。",
+        "documentation-sqrt": "「v」のすべての要素の平方根を計算します。",
+        "documentation-stddev-over-time": "指定された間隔の値の母集団標準分散。",
+        "documentation-stdvar-over-time": "指定された間隔の値の母集団標準分散。",
+        "documentation-sum-over-time": "指定された間隔のすべての値の合計。",
+        "documentation-time": "1970年1月1日 (UTC) 以降の秒数を返します。これは実際には現在の時刻を返すのではなく、式が評価される時刻を返すことに注意してください。",
+        "documentation-timestamp": "指定されたベクトルの各サンプルのタイムスタンプを、1970年1月1日 (UTC) からの秒数として返します。",
+        "documentation-vector": "スカラー値sをラベルのないベクトルとして返します。",
+        "documentation-year": "UTCで指定された各時間の年を返します。"
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "{{argument}}のすべての要素のアークコサインを計算します",
+        "documentation-acosh": "{{argument}}のすべての要素の逆双曲線コサインを計算します",
+        "documentation-asin": "{{argument}}のすべての要素のアークサインを計算します",
+        "documentation-asinh": "{{argument}}のすべての要素の逆双曲線サインを計算します",
+        "documentation-atan": "{{argument}}のすべての要素のアークタンジェントを計算します",
+        "documentation-atanh": "{{argument}}のすべての要素の逆双曲線タンジェントを計算します",
+        "documentation-cos": "{{argument}}のすべての要素のコサインを計算します",
+        "documentation-cosh": "{{argument}}のすべての要素の双曲線コサインを計算します",
+        "documentation-sin": "{{argument}}のすべての要素のサインを計算します",
+        "documentation-sinh": "{{argument}}のすべての要素の双曲線サインを計算します",
+        "documentation-tan": "{{argument}}のすべての要素のタンジェントを計算します",
+        "documentation-tanh": "{{argument}}のすべての要素の双曲線タンジェントを計算します"
       }
     },
     "querybuilder": {
@@ -316,31 +316,31 @@
         "title-give-feedback": "メトリックエクスプローラーは新機能です。改善点についてお聞かせください"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "例示データ：{{value}}",
+        "format": "フォーマット：{{value}}",
+        "legend": "凡例：{{value}}",
+        "step": "ステップ値：{{value}}",
+        "type": "タイプ：{{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "type": ""
+        "browse": "名前でメトリックを検索",
+        "type": "タイプで絞り込む"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "単一の単調増加カウンターを表す累積メトリックです。その値は増加するか、再起動時にゼロにリセットされるかのみです。",
+        "description-gauge": "任意に増減する単一の数値を表すメトリック。",
+        "description-histogram": "ヒストグラムは、観測値 (通常はリクエスト期間や応答サイズなど) をサンプリングし、設定可能なバケットでカウントします。",
+        "description-native-histogram": "ネイティブヒストグラムは、従来のPrometheusヒストグラムとは多くの点で異なります。ネイティブヒストグラムのバケット境界は、ネイティブヒストグラムのスケール (分解能) に依存する式によって計算され、ユーザー定義ではありません。",
+        "description-no-type": "これらのメトリックには、メタデータで定義されたタイプがありません。",
+        "description-summary": "要約は観測値 (通常はリクエスト期間や応答サイズなど) をサンプリングし、スライディング時間ウィンドウにわたって構成可能な分位数を計算できます。",
+        "description-unknown": "これらのメトリックには、メタデータでunknownタイプが指定されています。",
+        "label-counter": "カウンター",
+        "label-gauge": "ゲージ",
+        "label-histogram": "ヒストグラム",
+        "label-native-histogram": "ネイティブヒストグラム",
+        "label-no-type": "型なし",
+        "label-summary": "概要",
+        "label-unknown": "不明な"
       },
       "handle-function": {
         "text": {
@@ -358,8 +358,8 @@
         "tooltip-label-filters": "オプション: このクエリタイプのメトリック選択をフィルタリングするために使用します。"
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "ラベルを読み込み中",
+        "noOptionsMessage-no-labels-found": "ラベルが見つかりません"
       },
       "metric-combobox": {
         "async-select": {
@@ -409,18 +409,18 @@
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "{{labelWord}}{{labels}}を保持しながら、次元間で{{aggregationName}}を計算します。",
+          "label-default": "次元間で{{aggregationName}}を計算します。",
+          "label-without": "{{labels}}次元間で{{aggregationName}}を計算します。他のすべてのラベルは保持されます。"
         }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "ステップパラメーターの下限を設定",
         "aria-label-select-resolution": "解像度を選択",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "ヒートマップ",
+          "label-table": "テーブル",
+          "label-time-series": "時系列"
         },
         "label-exemplars": "エグゼンプラー",
         "label-format": "形式",
@@ -436,8 +436,8 @@
         "tooltip-autocomplete-suggestions-limited": "メトリック名の数がオートコンプリート制限を超えています。最も関連性の高い{{autocompleteLimit}}個のメトリックのみが表示されます。データソース設定で閾値を調整できます。"
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "構文エラーが発生しているか、ビルダーモードに切り替えたときにクエリ構造を視覚化できません。クエリの一部が失われる可能性があります。",
+        "confirmText-continue": "続行",
         "kick-start-your-query": "クエリを開始",
         "label-explain": "説明",
         "run-queries": "クエリを実行",
@@ -453,8 +453,8 @@
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "ビルダー",
+          "label-code": "コード"
         }
       },
       "query-pattern": {
@@ -483,9 +483,9 @@
       "results-table": {
         "content-descriptive-type": "{{descriptiveType}}を作成する際、Prometheusはタイプカウンターで複数の系列を公開します。",
         "description": "説明",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "メトリックが見つかりません。ラベルフィルターを拡張してみてください。",
+        "message-expand-search": "メトリックが見つかりません。検索とフィルターを拡張してみてください。",
+        "message-no-metrics-found": "データソース内にメトリックが見つかりません。",
         "name": "名前",
         "type": "種類"
       },

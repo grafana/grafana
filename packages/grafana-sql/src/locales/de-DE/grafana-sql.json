@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "Ihre Abfrage ist ungültig. Weitere Informationen finden Sie unten. <1></1>Sie können diese Abfrage aber trotzdem ausführen.",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Builder",
+          "label-code": "Code"
         },
         "label-dataset": "Datensatz",
         "label-filter": "Filter",
