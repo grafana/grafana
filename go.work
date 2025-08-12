@@ -1,4 +1,4 @@
-go 1.24.5
+go 1.24.6
 
 // The `skip:golangci-lint` comment tag is used to exclude the package from the `golangci-lint` GitHub Action.
 // The module at the root of the repo (`.`) is excluded because ./pkg/... is included manually in the `golangci-lint` configuration.
@@ -12,6 +12,7 @@ use (
 	./apps/iam
 	./apps/investigations
 	./apps/playlist
+	./apps/plugins
 	./apps/provisioning
 	./apps/secret
 	./apps/shorturl

@@ -52,7 +52,7 @@
       "button-use-query": "Использовать запрос",
       "label-categories": "Категории",
       "label-query-results": "Результатов запроса: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Невозможно перечислить все категории",
       "placeholder-all-categories": "Все категории",
       "placeholder-search-logs": "Поиск запросов журналов",
       "text-loading": "Загрузка…"
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Включить базовые журналы"
     },
     "config-editor": {
-      "description-additional-settings": "Дополнительные параметры — это необязательные параметры, которые можно настроить для получения большего контроля над источником данных. Сюда входит безопасный Socks-прокси.",
-      "description-request-timeout": "Установите время ожидания запроса (в секундах). Настройка по умолчанию — 30 секунд.",
-      "title-additional-settings": "Дополнительные параметры",
-      "title-request-timeout": "Превышено время ожидания запроса"
+      "description-additional-settings": "",
+      "title-additional-settings": "Дополнительные параметры"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Резервные учетные данные отключены. Поскольку аутентификация на основе пользователей по своей сути поддерживает только запросы, в область действия которых входит пользователь, то такие функции, как оповещение, записанные запросы или создание отчетов, не будут работать должным образом. Подробнее — в <2>документации</2>.",
@@ -168,8 +166,8 @@
       "tooltip-limit": "Установите ограничение по количеству возвращаемых строк (по умолчанию — 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Действительно перейти на базовые журналы?",
+      "confirmText-confirm": "Подтвердить",
       "description-basic-logs-queries": "Запросы базовых журналов являются платными. Затраты зависят от объема сканируемых данных.",
       "label-logs": "Журналы",
       "title-basic-logs-queries": "Запросы базовых журналов",
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Кнопка запуска запроса журналов Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Переключение на конструктор приведет к отмене текущего KQL-запроса и очистке редактора KQL. Вы уверены?",
+      "body-switching-to-kql": "Переключение на KQL приведет к отмене текущих настроек конструктора. Вы уверены?",
       "button-kick-start-your-query": "Запустить запрос",
       "button-run-query": "Выполнить запрос",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Переключиться на {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Конструктор",
+        "label-kql": "KQL"
       },
       "label-service": "Служба",
       "placeholder-service": "Служба...",
@@ -241,7 +239,7 @@
       "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Область"
     },
     "search": {
       "aria-label-resource-search": "Поиск ресурсов",
