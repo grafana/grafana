@@ -21,34 +21,17 @@ type Service struct {
 	logger log.Logger
 }
 
-// Return the file, line, and (full-path) function name of the caller
-func getRunContext() (string, int, string) {
-	pc := make([]uintptr, 10)
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	file, line := f.FileLine(pc[0])
-	return file, line, f.Name()
-}
-
-// Return a formatted string representing the execution context for the logger
-func logEntrypoint() string {
-	file, line, pathToFunction := getRunContext()
-	parts := strings.Split(pathToFunction, "/")
-	functionName := parts[len(parts)-1]
-	return fmt.Sprintf("%s:%d[%s]", file, line, functionName)
+type DatasourceInfo struct {
+	HTTPClient      *http.Client
+	StreamingClient tempopb.StreamingQuerierClient
+	URL             string
 }
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
-		logger: backend.NewLoggerWith("logger", "tsdb.tempo"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		logger: backend.NewLoggerWith("logger", "tsdb.tempo"),
 	}
-}
-
-type Datasource struct {
-	HTTPClient      *http.Client
-	StreamingClient tempopb.StreamingQuerierClient
-	URL             string
 }
 
 func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -72,13 +55,30 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, err
 		}
 
-		model := &Datasource{
+		model := &DatasourceInfo{
 			HTTPClient:      client,
 			StreamingClient: streamingClient,
 			URL:             settings.URL,
 		}
 		return model, nil
 	}
+}
+
+// Return the file, line, and (full-path) function name of the caller
+func getRunContext() (string, int, string) {
+	pc := make([]uintptr, 10)
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	file, line := f.FileLine(pc[0])
+	return file, line, f.Name()
+}
+
+// Return a formatted string representing the execution context for the logger
+func logEntrypoint() string {
+	file, line, pathToFunction := getRunContext()
+	parts := strings.Split(pathToFunction, "/")
+	functionName := parts[len(parts)-1]
+	return fmt.Sprintf("%s:%d[%s]", file, line, functionName)
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -118,13 +118,13 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
 }
 
-func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*Datasource, error) {
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*DatasourceInfo, error) {
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	instance, ok := i.(*Datasource)
+	instance, ok := i.(*DatasourceInfo)
 	if !ok {
 		return nil, fmt.Errorf("failed to cast datsource info")
 	}
