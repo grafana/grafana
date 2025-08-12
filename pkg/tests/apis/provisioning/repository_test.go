@@ -346,15 +346,15 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-	
-	// Helper function to clean up repositories between subtests  
+
+	// Helper function to clean up repositories between subtests
 	cleanupAllRepos := func() {
 		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
 		if err == nil && len(list.Items) > 0 {
 			for _, repo := range list.Items {
-				helper.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
+				_ = helper.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
 			}
-			
+
 			// Wait for repositories to be deleted to ensure clean state
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
@@ -368,16 +368,16 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	t.Run("single instance sync is allowed", func(t *testing.T) {
 		// Ensure clean state
 		cleanupAllRepos()
-		
+
 		repoName := "instance-repo-single"
-		
+
 		// Create the first instance sync repository - should succeed
 		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 			"Name":        repoName,
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
 		})
-		
+
 		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, createOptions)
 		require.NoError(t, err, "first instance sync repository should be created successfully")
 
@@ -388,17 +388,17 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
 		// Ensure clean state
 		cleanupAllRepos()
-		
+
 		existingFolderName := "existing-folder-repo"
 		instanceRepoName := "instance-repo-blocked"
-		
+
 		// Create a folder sync repository first
 		folderRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 			"Name":        existingFolderName,
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
 		})
-		
+
 		_, err := helper.Repositories.Resource.Create(ctx, folderRepo, createOptions)
 		require.NoError(t, err, "folder sync repository should be created successfully")
 
@@ -411,11 +411,11 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 
 		_, err = helper.Repositories.Resource.Create(ctx, instanceRepo, createOptions)
 		require.Error(t, err, "instance sync repository should be rejected when any other repository exists")
-		
+
 		// Verify the error message mentions that instance can only be created when no other repositories exist
 		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 		require.Contains(t, statusError.Message, "Instance repository can only be created when no other repositories exist. Found: "+existingFolderName)
-		
+
 		// Clean up at end of test
 		cleanupAllRepos()
 	})
@@ -423,23 +423,23 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	t.Run("multiple folder syncs are allowed", func(t *testing.T) {
 		// Ensure clean state
 		cleanupAllRepos()
-		
+
 		firstFolderName := "folder-repo-multi-1"
 		secondFolderName := "folder-repo-multi-2"
-		
+
 		// Create first folder sync repository
 		folderRepo1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 			"Name":        firstFolderName,
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
 		})
-		
+
 		_, err := helper.Repositories.Resource.Create(ctx, folderRepo1, createOptions)
 		require.NoError(t, err, "first folder sync repository should be created successfully")
 
 		// Create second folder sync repository - should succeed
 		folderRepo2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        secondFolderName, 
+			"Name":        secondFolderName,
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
 		})
@@ -454,34 +454,34 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	t.Run("folder sync is rejected when instance sync exists", func(t *testing.T) {
 		// Ensure clean state
 		cleanupAllRepos()
-		
+
 		instanceRepoName := "instance-blocking-folder"
 		folderRepoName := "folder-blocked-by-instance"
-		
+
 		// Create instance sync repository first
 		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 			"Name":        instanceRepoName,
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
 		})
-		
+
 		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, createOptions)
 		require.NoError(t, err, "instance sync repository should be created successfully")
 
 		// Try to create folder sync repository - should fail
 		folderRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 			"Name":        folderRepoName,
-			"SyncEnabled": true, 
+			"SyncEnabled": true,
 			"SyncTarget":  "folder",
 		})
 
 		_, err = helper.Repositories.Resource.Create(ctx, folderRepo, createOptions)
 		require.Error(t, err, "folder sync repository should be rejected when instance sync exists")
-		
+
 		// Verify the error message mentions the existing instance repository
 		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 		require.Contains(t, statusError.Message, "Cannot create folder repository when instance repository exists: "+instanceRepoName)
-		
+
 		// Clean up at end of test
 		cleanupAllRepos()
 	})
@@ -489,17 +489,17 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	t.Run("instance sync can only be created when no repositories exist", func(t *testing.T) {
 		// Ensure clean state
 		cleanupAllRepos()
-		
+
 		// This test verifies that instance sync can ONLY be created when there are no other repositories
 		instanceRepoName := "instance-only-when-empty"
-		
+
 		// First, create instance sync repository when no other repositories exist - should succeed
 		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 			"Name":        instanceRepoName,
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
 		})
-		
+
 		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, createOptions)
 		require.NoError(t, err, "instance sync repository should be created when no other repositories exist")
 
@@ -513,7 +513,7 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 
 		_, err = helper.Repositories.Resource.Create(ctx, otherRepo, createOptions)
 		require.Error(t, err, "folder sync repository should be rejected when instance sync exists")
-		
+
 		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 		require.Contains(t, statusError.Message, "Cannot create folder repository when instance repository exists: "+instanceRepoName)
 
@@ -524,22 +524,19 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	t.Run("repository limit validation", func(t *testing.T) {
 		// Ensure clean state
 		cleanupAllRepos()
-		
+
 		// This test verifies the 10 repository limit validation by actually creating 10 repositories
-		
-		var repoNames []string
-		
+
 		// Create 10 repositories - should all succeed
 		for i := 1; i <= 10; i++ {
 			repoName := fmt.Sprintf("limit-test-repo-%d", i)
-			repoNames = append(repoNames, repoName)
-			
+
 			limitTestRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 				"Name":        repoName,
 				"SyncEnabled": true,
 				"SyncTarget":  "folder",
 			})
-			
+
 			_, err := helper.Repositories.Resource.Create(ctx, limitTestRepo, createOptions)
 			require.NoError(t, err, "repository %d should be created successfully", i)
 		}
@@ -551,10 +548,10 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
 		})
-		
+
 		_, err := helper.Repositories.Resource.Create(ctx, eleventhRepo, createOptions)
 		require.Error(t, err, "11th repository should be rejected due to limit")
-		
+
 		// Verify the error message mentions the repository limit
 		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 		require.Contains(t, statusError.Message, "Maximum number of 10 repositories reached")
