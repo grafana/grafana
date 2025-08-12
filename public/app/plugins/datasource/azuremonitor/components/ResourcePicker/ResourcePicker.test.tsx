@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 
 import Datasource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import createMockDatasource, { createMockLocations, createMockMetricsNamespaces } from '../../mocks/datasource';
 import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 import {
@@ -25,6 +26,11 @@ jest.mock('@grafana/runtime', () => ({
       return val;
     },
   }),
+  config: {
+    featureToggles: {
+      azureResourcePickerUpdates: true,
+    },
+  },
 }));
 
 const noResourceURI = '';
@@ -394,6 +400,137 @@ describe('AzureMonitor ResourcePicker', () => {
       });
       const checkboxes = screen.queryAllByRole('checkbox');
       expect(checkboxes.length).toBe(0);
+    });
+  });
+
+  describe('filters', () => {
+    it('should render subscription filter and load subscription options', async () => {
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      await waitFor(() => {
+        expect(defaultProps.datasource.getSubscriptions).toHaveBeenCalled();
+      });
+
+      const subscriptionFilter = screen.getByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.subscription.input
+      );
+      expect(subscriptionFilter).toBeInTheDocument();
+    });
+
+    it('should render resource type filter for metrics query type', async () => {
+      const metricsProps = { ...defaultProps, queryType: 'metrics' as ResourcePickerQueryType };
+      await act(async () => render(<ResourcePicker {...metricsProps} />));
+
+      await waitFor(() => {
+        expect(defaultProps.datasource.getMetricNamespaces).toHaveBeenCalled();
+      });
+
+      const resourceTypeFilter = screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
+      expect(resourceTypeFilter).toBeInTheDocument();
+    });
+
+    it('should not render resource type filter for logs query type', async () => {
+      const logsProps = { ...defaultProps, queryType: 'logs' as ResourcePickerQueryType };
+      await act(async () => render(<ResourcePicker {...logsProps} />));
+
+      const resourceTypeFilter = screen.queryByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.type.input
+      );
+      expect(resourceTypeFilter).not.toBeInTheDocument();
+    });
+
+    it('should render location filter and load location options', async () => {
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      await waitFor(() => {
+        expect(defaultProps.datasource.getLocations).toHaveBeenCalled();
+      });
+
+      const locationFilter = screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.location.input);
+      expect(locationFilter).toBeInTheDocument();
+    });
+
+    it('should call fetchFiltered when subscription filter changes', async () => {
+      const mockFetchFiltered = jest.spyOn(resourcePickerData, 'fetchFiltered');
+
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      await act(async () => {
+        const subscriptionFilter = await screen.getByTestId(
+          selectors.components.queryEditor.resourcePicker.filters.subscription.input
+        );
+
+        await userEvent.click(subscriptionFilter);
+
+        await userEvent.type(subscriptionFilter, 'Primary Subscription{ArrowDown}{ArrowDown}{Enter}');
+      });
+
+      await waitFor(() => {
+        expect(mockFetchFiltered).toHaveBeenCalledWith(
+          'logs',
+          expect.objectContaining({
+            subscriptions: ['def-123'],
+            types: [],
+            locations: [],
+          })
+        );
+      });
+    });
+
+    it('should call fetchFiltered when location filter changes', async () => {
+      const user = userEvent.setup();
+      const mockFetchFiltered = jest.spyOn(resourcePickerData, 'fetchFiltered');
+
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
+
+      await act(async () => {
+        const locationFilter = await screen.getByTestId(
+          selectors.components.queryEditor.resourcePicker.filters.location.input
+        );
+
+        await user.click(locationFilter);
+
+        await userEvent.type(locationFilter, 'North Europe{ArrowDown}{ArrowDown}{Enter}');
+        // await userEvent.keyboard('');
+      });
+
+      await waitFor(() => {
+        expect(mockFetchFiltered).toHaveBeenCalledWith(
+          'logs',
+          expect.objectContaining({
+            subscriptions: [],
+            types: [],
+            locations: ['northeurope'],
+          })
+        );
+      });
+    });
+
+    it('should call fetchFiltered when resource type filter changes for metrics', async () => {
+      const user = userEvent.setup();
+      const metricsProps = { ...defaultProps, queryType: 'metrics' as ResourcePickerQueryType };
+      const mockFetchFiltered = jest.spyOn(resourcePickerData, 'fetchFiltered');
+
+      await act(async () => render(<ResourcePicker {...metricsProps} />));
+
+      await act(async () => {
+        const typeFilter = await screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
+
+        await user.click(typeFilter);
+
+        await userEvent.type(typeFilter, 'Kubernetes services {ArrowDown}{ArrowDown}{Enter}');
+      });
+
+      await waitFor(() => {
+        expect(mockFetchFiltered).toHaveBeenCalledWith(
+          'metrics',
+          expect.objectContaining({
+            subscriptions: [],
+            types: ['microsoft.containerservice/managedclusters'],
+            locations: [],
+          })
+        );
+      });
     });
   });
 });
