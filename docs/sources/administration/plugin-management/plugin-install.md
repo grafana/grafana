@@ -62,10 +62,11 @@ Here's an example based on `grafana-lokiexplore-app` plugins.
 
 ## Install plugins using the Grafana Helm chart
 
-With the Grafana Helm chart, add the plugins you want to install as a list using the `plugins` field in the your values file. For more information about the configuration, refer to [the Helm chart configuration reference](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration).
+With the Grafana Helm chart, you can install plugins using one of the methods described in this section. All the YAML snippets install v1.9.0 of the Grafana OnCall App plugin and the Redis data source plugin. When installation is complete you'll get a confirmation message indicating that the plugins were successfully installed.
 
-The following YAML snippet installs v1.9.0 of the Grafana OnCall App plugin and the Redis data source plugin.
-You must incorporate this snippet within your Helm values file.
+### Method 1: Use the `plugins` field
+
+Add the plugins you want to install as a list in your values file. For more information about the configuration, refer to [the Helm chart configuration reference](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration).
 
 ```yaml
 plugins:
@@ -73,4 +74,30 @@ plugins:
   - redis-datasource
 ```
 
-When the update is complete, a confirmation message will indicate the installation was successful.
+### Method 2: Use `GF_PLUGINS_PREINSTALL_SYNC`
+
+Add the following to your `values.yaml` file:
+
+```yaml
+env:
+  # Format: <plugin ID>@[<plugin version>]@<url to plugin zip>
+  GF_PLUGINS_PREINSTALL_SYNC: grafana-oncall-app@1.9.0@https://grafana.com/api/plugins/grafana-oncall-app/versions/v1.9.0/download
+
+  # Or without version and URL (latest version will be used)
+  # GF_PLUGINS_PREINSTALL_SYNC: grafana-oncall-app
+
+  # Multiple plugins (comma-separated)
+  # GF_PLUGINS_PREINSTALL_SYNC: grafana-oncall-app,redis-datasource
+```
+
+### Method 3: Use `GF_PLUGINS_INSTALL` (Deprecated since v12.1.0)
+
+Add the following to your `values.yaml` file:
+
+```yaml
+env:
+  # Comma-separated list of plugin IDs
+  GF_PLUGINS_INSTALL: grafana-oncall-app,redis-datasource
+```
+
+
