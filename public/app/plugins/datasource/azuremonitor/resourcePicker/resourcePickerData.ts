@@ -190,8 +190,12 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     });
   };
 
-  async getSubscriptions(): Promise<ResourceRowGroup> {
-    const subscriptions = await this.azureResourceGraphDatasource.getSubscriptions();
+  async getSubscriptions(filters?: {
+    subscriptions: string[];
+    types: string[];
+    locations: string[];
+  }): Promise<ResourceRowGroup> {
+    const subscriptions = await this.azureResourceGraphDatasource.getSubscriptions(filters);
 
     if (!subscriptions.length) {
       throw new Error('No subscriptions were found');
@@ -209,11 +213,16 @@ export default class ResourcePickerData extends DataSourceWithBackend<
 
   async getResourceGroupsBySubscriptionId(
     subscriptionId: string,
-    type: ResourcePickerQueryType
+    type: ResourcePickerQueryType,
+    filters?: {
+      subscriptions: string[];
+      types: string[];
+      locations: string[];
+    }
   ): Promise<ResourceRowGroup> {
     const filter = await this.filterByType(type);
 
-    const resourceGroups = await this.azureResourceGraphDatasource.getResourceGroups(subscriptionId, filter);
+    const resourceGroups = await this.azureResourceGraphDatasource.getResourceGroups(subscriptionId, filter, filters);
 
     return resourceGroups.map((r) => {
       const parsedUri = parseResourceURI(r.resourceGroupURI);
@@ -232,8 +241,20 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   }
 
   // Refactor this one out at a later date
-  async getResourcesForResourceGroup(uri: string, type: ResourcePickerQueryType): Promise<ResourceRowGroup> {
-    const resources = await this.azureResourceGraphDatasource.getResourceNames({ uri }, await this.filterByType(type));
+  async getResourcesForResourceGroup(
+    uri: string,
+    type: ResourcePickerQueryType,
+    filters?: {
+      subscriptions: string[];
+      types: string[];
+      locations: string[];
+    }
+  ): Promise<ResourceRowGroup> {
+    const resources = await this.azureResourceGraphDatasource.getResourceNames(
+      { uri },
+      await this.filterByType(type),
+      filters
+    );
 
     return resources.map((resource) => {
       return {
@@ -394,3 +415,13 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     return newSelectedRows;
   }
 }
+export const createFilter = (filters: { subscriptions: string[]; types: string[]; locations: string[] }) => {
+  let filtersQuery = '';
+  if (filters) {
+    if (filters.subscriptions && filters.subscriptions.length > 0) {
+      filtersQuery += `| where subscriptionId in (${filters.subscriptions.map((s) => `"${s.toLowerCase()}"`).join(',')})\n`;
+    }
+  }
+
+  return filtersQuery;
+};

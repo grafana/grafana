@@ -5,6 +5,7 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import { resourceTypes } from '../azureMetadata/resourceTypes';
 import { ARGScope } from '../dataquery.gen';
+import { createFilter } from '../resourcePicker/resourcePickerData';
 import { AzureMonitorQuery, AzureQueryType } from '../types/query';
 import {
   AzureGetResourceNamesQuery,
@@ -107,7 +108,8 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     }
   }
 
-  async getSubscriptions() {
+  async getSubscriptions(filters?: { subscriptions: string[]; types: string[]; locations: string[] }) {
+    const filtersQuery = filters ? createFilter(filters) : '';
     const query = `
         resources
         | join kind=inner (
@@ -115,6 +117,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
                     | where type == 'microsoft.resources/subscriptions'
                     | project subscriptionName=name, subscriptionURI=id, subscriptionId
                   ) on subscriptionId
+        ${filtersQuery}
         | summarize count=count() by subscriptionName, subscriptionURI, subscriptionId
         | order by subscriptionName desc
       `;
@@ -124,7 +127,13 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     return subscriptions;
   }
 
-  async getResourceGroups(subscriptionId: string, metricNamespacesFilter?: string) {
+  async getResourceGroups(
+    subscriptionId: string,
+    metricNamespacesFilter?: string,
+    filters?: { subscriptions: string[]; types: string[]; locations: string[] }
+  ) {
+    // When retrieving resource groups we only need to filter by the input subscription ID
+    const filtersQuery = filters ? createFilter({ ...filters, subscriptions: [subscriptionId] }) : '';
     // We can use subscription ID for the filtering here as they're unique
     // The logic of this query is:
     // Retrieve _all_ resources a user/app registration/identity has access to
@@ -135,6 +144,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     const query = `resources 
     ${metricNamespacesFilter || ''}
     | where subscriptionId == '${subscriptionId}'
+    ${filtersQuery}
     | extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup) 
     | join kind=leftouter (resourcecontainers  
         | where type =~ 'microsoft.resources/subscriptions/resourcegroups'  
@@ -148,7 +158,11 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     return resourceGroups;
   }
 
-  async getResourceNames(query: AzureGetResourceNamesQuery, metricNamespacesFilter?: string) {
+  async getResourceNames(
+    query: AzureGetResourceNamesQuery,
+    metricNamespacesFilter?: string,
+    resourceFilters?: { subscriptions: string[]; types: string[]; locations: string[] }
+  ) {
     const promises = replaceTemplateVariables(this.templateSrv, query).map(
       async ({ metricNamespace, subscriptionId, resourceGroup, region, uri }) => {
         const validMetricNamespace = startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')
@@ -175,11 +189,12 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
           filters.push(`location == '${region}'`);
         }
 
+        const filtersQuery = resourceFilters ? createFilter(resourceFilters) : '';
         // We use URIs for the filtering here because resource group names are not unique across subscriptions
         // We also add a slash at the end of the URI to ensure we do not pull resources from a resource group
         // that has a similar naming prefix e.g. resourceGroup1 and resourceGroup10
         const query = `resources${metricNamespacesFilter ? '\n' + metricNamespacesFilter : ''}
-        | where id hasprefix "${prefix}/"
+        | where id hasprefix "${prefix}/"${filtersQuery !== '' ? `\n${filtersQuery}` : ''}
         ${filters.length > 0 ? `| where ${filters.join(' and ')}` : ''}
         | order by tolower(name) asc`;
 

@@ -236,7 +236,8 @@
       "result-limit": "Showing first {{numResults}} results",
       "text-loading": "Loading...",
       "text-no-resources": "No resources found",
-      "title-error-occurred": "An error occurred while requesting resources from Azure Monitor"
+      "title-error-occurred": "An error occurred while requesting resources from Azure Monitor",
+      "subscriptions-filter": "Subscriptions",
     },
     "scope-selector": {
       "label": "Scope"
