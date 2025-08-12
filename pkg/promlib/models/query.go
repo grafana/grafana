@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -36,11 +37,6 @@ const (
 	QueryEditorModeBuilder QueryEditorMode = "builder"
 	QueryEditorModeCode    QueryEditorMode = "code"
 )
-
-// NumDDTargetParts - number of parts to splits time range into ~300 since
-// DD does something similar.
-const NumDDTargetParts = 300
-const NumLargeIntervalParts = 100
 
 // PrometheusQueryProperties defines the specific properties used for prometheus
 type PrometheusQueryProperties struct {
@@ -346,12 +342,12 @@ func calculatePrometheusInterval(
 		resInterval := calculateRateInterval(adjustedInterval, dsScrapeInterval)
 		return resInterval, nil
 	} else if originalQueryInterval == varDDInterval {
-		resInterval := CalculateInterval(NumDDTargetParts, timeRange, calculateRateInterval(adjustedInterval, dsScrapeInterval), true)
+		resInterval := CalculateIntervalDatadogDefault(timeRange)
 		// The below fix is only applied to DD interval to avoid changing behavior of default grafana.
 		*queryIntervalIn = resInterval.String()
 		return resInterval, nil
 	} else if originalQueryInterval == varLargeInterval {
-		resInterval := CalculateInterval(NumLargeIntervalParts, timeRange, calculateRateInterval(adjustedInterval, dsScrapeInterval), false)
+		resInterval := CalculateIntervalDatadogBarChart(timeRange)
 		return resInterval, nil
 	} else {
 		queryIntervalFactor := intervalFactor
@@ -434,46 +430,54 @@ func roundDownPromInterval(
 	return roundIntervalNearest(interval, time.Hour)
 }
 
-func CalculateInterval(
-	numParts int64,
-	timeRange time.Duration,
-	promRateInterval time.Duration,
-	roundUp bool,
-) time.Duration {
-	// Round up to number of minutes.
-	newInterval := (timeRange / time.Duration(numParts))
-	if roundUp {
-		newInterval = (newInterval / time.Minute) * time.Minute
-	}
+type timeRangeToInterval struct {
+	timeRange             time.Duration
+	intervalUpToTimeRange time.Duration
+}
 
-	if newInterval < promRateInterval {
-		roundedPromInterval := roundDownPromInterval(promRateInterval)
-		if newInterval < roundedPromInterval {
-			return roundedPromInterval
+// Reference: https://docs.datadoghq.com/dashboards/functions/rollup/#rollup-interval-enforced-vs-custom
+var defaultMaxInterval = 4 * time.Hour
+var defaultTimeRangeToIntervalSorted = []timeRangeToInterval{
+	{timeRange: time.Hour, intervalUpToTimeRange: time.Second * 20},
+	{timeRange: time.Hour * 4, intervalUpToTimeRange: time.Minute},
+	{timeRange: time.Hour * 24, intervalUpToTimeRange: time.Minute * 5},
+	{timeRange: time.Hour * 24 * 2, intervalUpToTimeRange: time.Minute * 10},
+	{timeRange: time.Hour * 24 * 7, intervalUpToTimeRange: time.Hour},
+	{timeRange: time.Hour * 24 * 31, intervalUpToTimeRange: time.Hour * 4},
+}
+
+var barChartMaxInterval = 12 * time.Hour
+var barChartTimeRangeToIntervalSorted = []timeRangeToInterval{
+	{timeRange: time.Hour, intervalUpToTimeRange: time.Minute},
+	{timeRange: time.Hour * 4, intervalUpToTimeRange: time.Minute * 2},
+	{timeRange: time.Hour * 24, intervalUpToTimeRange: time.Minute * 20},
+	{timeRange: time.Hour * 24 * 2, intervalUpToTimeRange: time.Minute * 30},
+	{timeRange: time.Hour * 24 * 7, intervalUpToTimeRange: time.Hour * 2},
+	{timeRange: time.Hour * 24 * 31, intervalUpToTimeRange: time.Hour * 12},
+}
+
+func CalculateIntervalDatadogDefault(
+	timeRange time.Duration,
+) time.Duration {
+	for _, rangeToInterval := range defaultTimeRangeToIntervalSorted {
+		if timeRange <= rangeToInterval.timeRange {
+			return rangeToInterval.intervalUpToTimeRange
 		}
 	}
 
-	if !roundUp {
-		// At least round up to nearest minute.
-		return roundIntervalUp(newInterval, time.Minute)
+	return defaultMaxInterval
+}
+
+func CalculateIntervalDatadogBarChart(
+	timeRange time.Duration,
+) time.Duration {
+	for _, rangeToInterval := range barChartTimeRangeToIntervalSorted {
+		if timeRange <= rangeToInterval.timeRange {
+			return rangeToInterval.intervalUpToTimeRange
+		}
 	}
 
-	if newInterval < 5*time.Minute {
-		// Already rounded to the nearest minute.
-		return newInterval
-	}
-
-	if newInterval < 30*time.Minute {
-		// Round up to the nearest 5 minutes.
-		return roundIntervalUp(newInterval, 5*time.Minute)
-	}
-
-	if newInterval < 2*time.Hour {
-		// Round up to the nearest 10 minutes.
-		return roundIntervalUp(newInterval, 30*time.Minute)
-	}
-
-	return roundIntervalUp(newInterval, time.Hour)
+	return barChartMaxInterval
 }
 
 // InterpolateVariables interpolates built-in variables
@@ -514,8 +518,8 @@ func InterpolateVariables(
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
 	expr = strings.ReplaceAll(expr, varRateIntervalMs, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
-	expr = strings.ReplaceAll(expr, varDDInterval, CalculateInterval(NumDDTargetParts, timeRange, rateInterval, true).String())
-	expr = strings.ReplaceAll(expr, varLargeInterval, CalculateInterval(NumLargeIntervalParts, timeRange, rateInterval, false).String())
+	expr = strings.ReplaceAll(expr, varDDInterval, CalculateIntervalDatadogDefault(timeRange).String())
+	expr = strings.ReplaceAll(expr, varLargeInterval, CalculateIntervalDatadogBarChart(timeRange).String())
 
 	// Repetitive code, we should have functionality to unify these
 	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
@@ -561,4 +565,10 @@ var f embed.FS
 // QueryTypeDefinitionsJSON returns the query type definitions
 func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
 	return f.ReadFile("query.types.json")
+}
+
+func init() {
+	sort.Slice(defaultTimeRangeToIntervalSorted, func(i, j int) bool {
+		return defaultTimeRangeToIntervalSorted[i].timeRange < defaultTimeRangeToIntervalSorted[j].timeRange
+	})
 }
