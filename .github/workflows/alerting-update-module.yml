@@ -123,6 +123,10 @@ jobs:
           title:  'Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
           branch: alerting/update-alerting-module
           delete-branch: true
+          team-reviewers: 'grafana/alerting-backend'
+          labels: |
+            no-changelog
+            no-backport
           body: |
             Updates Grafana Alerting module to latest version.
 
