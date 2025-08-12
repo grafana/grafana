@@ -55,13 +55,6 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
           new Map([['northeurope', { displayName: 'North Europe', name: 'northeurope', supportsLogs: false }]])
         ),
     },
-
-    getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
-
-    getSubscriptions: jest.fn().mockResolvedValue([]),
-    getResourceGroups: jest.fn().mockResolvedValueOnce([]),
-    getResourceNames: jest.fn().mockResolvedValueOnce([]),
-
     azureLogAnalyticsDatasource: {
       getKustoSchema: () => Promise.resolve(),
       getDeprecatedDefaultWorkSpace: () => 'defaultWorkspaceId',
@@ -74,12 +67,17 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
       getResourceURIFromWorkspace: jest.fn().mockReturnValue(''),
       getResourceURIDisplayProperties: jest.fn().mockResolvedValue({}),
     },
-
     azureResourceGraphDatasource: {
       pagedResourceGraphRequest: jest.fn().mockResolvedValue([]),
       ...overrides?.azureResourceGraphDatasource,
     },
     getVariablesRaw: jest.fn().mockReturnValue([]),
+    getDefaultSubscriptionId: jest.fn().mockReturnValue('defaultSubscriptionId'),
+    getMetricNamespaces: jest.fn().mockResolvedValueOnce([]),
+    getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
+    getSubscriptions: jest.fn().mockResolvedValue([]),
+    getResourceGroups: jest.fn().mockResolvedValueOnce([]),
+    getResourceNames: jest.fn().mockResolvedValueOnce([]),
     currentUserAuth: false,
     ...overrides,
   };
