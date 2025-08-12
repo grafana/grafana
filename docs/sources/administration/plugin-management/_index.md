@@ -22,7 +22,7 @@ Read on for an overview on how to get started with plugins:
 
 - Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
 - There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
-- [Manage your plugins](#manage-your-plugins). Learn [how to install](#install-a-plugin), [update](#update-a-plugin) and [verify](#verify-your-plugins) your plugins.
+- Learn [how to install](#install-a-plugin), [update](#update-a-plugin) and [verify](#verify-your-plugins) your plugins.
 
 Additionally, you can also:
 
