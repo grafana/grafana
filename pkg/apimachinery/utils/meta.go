@@ -924,15 +924,23 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 	f := m.r.FieldByName("Secure")
 	if f.IsValid() && f.CanSet() {
 		if f.Kind() == reflect.Struct {
-			// TODO! error if you write an unknown field
+			keys := make(map[string]bool, len(vals))
+			for k := range vals {
+				keys[k] = true
+			}
 			for i := 0; i < f.NumField(); i++ {
 				val := f.Field(i)
 				if val.IsValid() && val.CanInterface() && val.CanSet() {
-					sv := vals[getJSONFieldName(f, i)]
+					k := getJSONFieldName(f, i)
+					sv := vals[k]
 					val.Set(reflect.ValueOf(sv))
+					delete(keys, k)
 				} else {
 					return fmt.Errorf("invalid secure value: %v", val)
 				}
+			}
+			if len(keys) > 0 {
+				return fmt.Errorf("invalid secure value key: %v", keys)
 			}
 			return
 		}
