@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { RoutingTree, alertingAPI } from '../../api/v0alpha1/api.gen';
 import { Label } from '../../matchers/types';
+import { USER_DEFINED_TREE_NAME } from '../consts';
 import { Route } from '../types';
 import { RouteMatchResult, RouteWithID, convertRoutingTreeToRoute, matchAlertInstancesToPolicyTree } from '../utils';
 
@@ -22,8 +23,6 @@ export type InstanceMatchResult = {
   // The routes that matched the labels where the key is a route and the value is an array of instances that match that route
   matchedRoutes: RouteMatch[];
 };
-
-const USER_DEFINED_TREE_NAME = 'user-defined';
 
 /**
  * React hook that finds notification policy routes in all routing trees that match the provided set of alert instances.
