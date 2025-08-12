@@ -1,14 +1,15 @@
+import { LabelMatcherFactory, RouteFactory } from '../api/v0alpha1/mocks/fakes/Routes';
 import { Label } from '../matchers/types';
 import { LabelMatchDetails } from '../matchers/utils';
+
 import { Route } from './types';
-import { findMatchingRoutes, RouteMatchResult } from './utils';
-import { LabelMatcherFactory, RouteFactory } from '../api/v0alpha1/mocks/fakes/Routes';
+import { RouteMatchResult, findMatchingRoutes } from './utils';
 
 describe('findMatchingRoutes', () => {
   describe('basic matching', () => {
     it('should return empty array when route does not match', () => {
       const route = RouteFactory.build({
-        matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })]
+        matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
       });
       const labels: Label[] = [['service', 'api']];
 
@@ -20,7 +21,7 @@ describe('findMatchingRoutes', () => {
     it('should match route with exact label match', () => {
       const route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
-        receiver: 'web-receiver'
+        receiver: 'web-receiver',
       });
       const labels: Label[] = [['service', 'web']];
 
@@ -37,7 +38,7 @@ describe('findMatchingRoutes', () => {
         matchers: [
           LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' }),
           LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' }),
-        ]
+        ],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -57,7 +58,7 @@ describe('findMatchingRoutes', () => {
         matchers: [
           LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' }),
           LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' }),
-        ]
+        ],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -72,7 +73,7 @@ describe('findMatchingRoutes', () => {
     it('should match route with no matchers (catch-all)', () => {
       const route = RouteFactory.build({
         matchers: [],
-        receiver: 'default-receiver'
+        receiver: 'default-receiver',
       });
       const labels: Label[] = [['service', 'web']];
 
@@ -88,12 +89,12 @@ describe('findMatchingRoutes', () => {
     it('should return child route when child matches', () => {
       const childRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
-        receiver: 'prod-receiver'
+        receiver: 'prod-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute]
+        routes: [childRoute],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -110,12 +111,12 @@ describe('findMatchingRoutes', () => {
     it('should return parent route when parent matches but child does not', () => {
       const childRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'staging' })],
-        receiver: 'staging-receiver'
+        receiver: 'staging-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute]
+        routes: [childRoute],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -132,12 +133,12 @@ describe('findMatchingRoutes', () => {
     it('should return empty array when parent does not match', () => {
       const childRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
-        receiver: 'prod-receiver'
+        receiver: 'prod-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'api' })],
         receiver: 'api-receiver',
-        routes: [childRoute]
+        routes: [childRoute],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -152,22 +153,22 @@ describe('findMatchingRoutes', () => {
     it('should handle deeply nested routes', () => {
       const grandChildRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'region', type: '=', value: 'us-east' })],
-        receiver: 'us-east-receiver'
+        receiver: 'us-east-receiver',
       });
       const grandChildRoute2 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'region', type: '=', value: 'us-west' })],
-        receiver: 'us-west-receiver'
+        receiver: 'us-west-receiver',
       });
-      
+
       const childRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
         receiver: 'prod-receiver',
-        routes: [grandChildRoute, grandChildRoute2]
+        routes: [grandChildRoute, grandChildRoute2],
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute]
+        routes: [childRoute],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -188,16 +189,16 @@ describe('findMatchingRoutes', () => {
       const childRoute1 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
         receiver: 'prod-receiver',
-        continue: false
+        continue: false,
       });
       const childRoute2 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'team', type: '=', value: 'backend' })],
-        receiver: 'backend-receiver'
+        receiver: 'backend-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute1, childRoute2]
+        routes: [childRoute1, childRoute2],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -216,16 +217,16 @@ describe('findMatchingRoutes', () => {
       const childRoute1 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
         receiver: 'prod-receiver',
-        continue: true
+        continue: true,
       });
       const childRoute2 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'team', type: '=', value: 'backend' })],
-        receiver: 'backend-receiver'
+        receiver: 'backend-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute1, childRoute2]
+        routes: [childRoute1, childRoute2],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -246,20 +247,20 @@ describe('findMatchingRoutes', () => {
       const childRoute1 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
         receiver: 'prod-receiver',
-        continue: true
+        continue: true,
       });
       const childRoute2 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'team', type: '=', value: 'frontend' })],
-        receiver: 'frontend-receiver'
+        receiver: 'frontend-receiver',
       });
       const childRoute3 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'priority', type: '=', value: 'high' })],
-        receiver: 'high-receiver'
+        receiver: 'high-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute1, childRoute2, childRoute3]
+        routes: [childRoute1, childRoute2, childRoute3],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -282,11 +283,11 @@ describe('findMatchingRoutes', () => {
     it('should track route path with initial path provided', () => {
       const initialRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'app', type: '=', value: 'grafana' })],
-        receiver: 'grafana-receiver'
+        receiver: 'grafana-receiver',
       });
       const route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
-        receiver: 'web-receiver'
+        receiver: 'web-receiver',
       });
       const labels: Label[] = [['service', 'web']];
 
@@ -305,7 +306,7 @@ describe('findMatchingRoutes', () => {
     it('should handle empty initial route path', () => {
       const route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
-        receiver: 'web-receiver'
+        receiver: 'web-receiver',
       });
       const labels: Label[] = [['service', 'web']];
 
@@ -318,22 +319,22 @@ describe('findMatchingRoutes', () => {
     it('should preserve route path through multiple levels', () => {
       const level3Route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'instance', type: '=', value: 'i-123' })],
-        receiver: 'instance-receiver'
+        receiver: 'instance-receiver',
       });
       const level2Route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
         receiver: 'prod-receiver',
-        routes: [level3Route]
+        routes: [level3Route],
       });
       const level1Route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [level2Route]
+        routes: [level2Route],
       });
       const rootRoute = RouteFactory.build({
         matchers: [],
         receiver: 'root-receiver',
-        routes: [level1Route]
+        routes: [level1Route],
       });
 
       const labels: Label[] = [
@@ -356,7 +357,7 @@ describe('findMatchingRoutes', () => {
         matchers: [
           LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' }),
           LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' }),
-        ]
+        ],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -383,7 +384,7 @@ describe('findMatchingRoutes', () => {
     it('should handle regex positive matching', () => {
       const route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=~', value: 'web.*' })],
-        receiver: 'web-receiver'
+        receiver: 'web-receiver',
       });
       const labels: Label[] = [['service', 'web-api']];
 
@@ -396,7 +397,7 @@ describe('findMatchingRoutes', () => {
     it('should handle regex negative matching', () => {
       const route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '!~', value: 'web.*' })],
-        receiver: 'non-web-receiver'
+        receiver: 'non-web-receiver',
       });
       const labels: Label[] = [['service', 'api-backend']];
 
@@ -408,7 +409,7 @@ describe('findMatchingRoutes', () => {
 
     it('should not match when regex positive match fails', () => {
       const route = RouteFactory.build({
-        matchers: [LabelMatcherFactory.build({ label: 'service', type: '=~', value: 'web.*' })]
+        matchers: [LabelMatcherFactory.build({ label: 'service', type: '=~', value: 'web.*' })],
       });
       const labels: Label[] = [['service', 'api-backend']];
 
@@ -422,7 +423,7 @@ describe('findMatchingRoutes', () => {
     it('should track matching journey for single route', () => {
       const route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
-        receiver: 'web-receiver'
+        receiver: 'web-receiver',
       });
       const labels: Label[] = [['service', 'web']];
 
@@ -438,12 +439,12 @@ describe('findMatchingRoutes', () => {
     it('should track matching journey through nested routes', () => {
       const childRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
-        receiver: 'prod-receiver'
+        receiver: 'prod-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute]
+        routes: [childRoute],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -454,7 +455,7 @@ describe('findMatchingRoutes', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].route).toBe(childRoute);
-      
+
       // Should track journey through parent and child
       expect(result[0].matchingJourney).toHaveLength(2);
       expect(result[0].matchingJourney[0].route).toBe(parentRoute);
@@ -469,12 +470,12 @@ describe('findMatchingRoutes', () => {
           LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' }),
           LabelMatcherFactory.build({ label: 'region', type: '=', value: 'us-east' }),
         ],
-        receiver: 'prod-receiver'
+        receiver: 'prod-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute]
+        routes: [childRoute],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -486,7 +487,7 @@ describe('findMatchingRoutes', () => {
       const result = findMatchingRoutes(parentRoute, labels);
 
       expect(result).toHaveLength(1);
-      
+
       // Parent route matching details
       const parentMatchInfo = result[0].matchingJourney[0];
       expect(parentMatchInfo.route).toBe(parentRoute);
@@ -511,17 +512,17 @@ describe('findMatchingRoutes', () => {
     it('should track journey for deeply nested routes', () => {
       const grandChildRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'region', type: '=', value: 'us-east' })],
-        receiver: 'us-east-receiver'
+        receiver: 'us-east-receiver',
       });
       const childRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
         receiver: 'prod-receiver',
-        routes: [grandChildRoute]
+        routes: [grandChildRoute],
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute]
+        routes: [childRoute],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -533,7 +534,7 @@ describe('findMatchingRoutes', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].route).toBe(grandChildRoute);
-      
+
       // Should track journey through all three levels
       expect(result[0].matchingJourney).toHaveLength(3);
       expect(result[0].matchingJourney[0].route).toBe(parentRoute);
@@ -548,16 +549,16 @@ describe('findMatchingRoutes', () => {
       const childRoute1 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
         receiver: 'prod-receiver',
-        continue: true
+        continue: true,
       });
       const childRoute2 = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'team', type: '=', value: 'backend' })],
-        receiver: 'backend-receiver'
+        receiver: 'backend-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [childRoute1, childRoute2]
+        routes: [childRoute1, childRoute2],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -568,7 +569,7 @@ describe('findMatchingRoutes', () => {
       const result = findMatchingRoutes(parentRoute, labels);
 
       expect(result).toHaveLength(2);
-      
+
       // First result (childRoute1)
       expect(result[0].matchingJourney).toHaveLength(2);
       expect(result[0].matchingJourney[0].route).toBe(parentRoute);
@@ -590,7 +591,7 @@ describe('findMatchingRoutes', () => {
       const route = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: []
+        routes: [],
       });
       const labels: Label[] = [['service', 'web']];
 
@@ -603,7 +604,7 @@ describe('findMatchingRoutes', () => {
     it('should handle empty labels array', () => {
       const route = RouteFactory.build({
         matchers: [],
-        receiver: 'default-receiver'
+        receiver: 'default-receiver',
       });
       const labels: Label[] = [];
 
@@ -638,16 +639,16 @@ describe('findMatchingRoutes', () => {
     it('should handle mixed matching and non-matching children', () => {
       const matchingChild = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'prod' })],
-        receiver: 'prod-receiver'
+        receiver: 'prod-receiver',
       });
       const nonMatchingChild = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'env', type: '=', value: 'staging' })],
-        receiver: 'staging-receiver'
+        receiver: 'staging-receiver',
       });
       const parentRoute = RouteFactory.build({
         matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: 'web' })],
         receiver: 'web-receiver',
-        routes: [nonMatchingChild, matchingChild]
+        routes: [nonMatchingChild, matchingChild],
       });
       const labels: Label[] = [
         ['service', 'web'],
@@ -664,7 +665,7 @@ describe('findMatchingRoutes', () => {
 });
 
 function getRoutePath<T extends Route>(result: RouteMatchResult<T>): T[] {
-  return result.matchingJourney.map(step => step.route);
+  return result.matchingJourney.map((step) => step.route);
 }
 
 function getMatchDetails<T extends Route>(result: RouteMatchResult<T>): LabelMatchDetails[] {

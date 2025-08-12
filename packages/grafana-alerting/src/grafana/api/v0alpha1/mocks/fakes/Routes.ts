@@ -5,8 +5,8 @@ import { LabelMatcher } from '../../../../matchers/types';
 import { Route } from '../../../../notificationPolicies/types';
 
 export const LabelMatcherFactory = Factory.define<LabelMatcher>(() => {
-  const operators: LabelMatcher['type'][] = ['=', '!=', '=~', '!~'];
-  
+  const operators: Array<LabelMatcher['type']> = ['=', '!=', '=~', '!~'];
+
   return {
     label: faker.helpers.arrayElement(['service', 'env', 'team', 'severity', 'region', 'instance']),
     type: faker.helpers.arrayElement(operators),

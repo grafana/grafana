@@ -19,6 +19,7 @@ export {
   type RouteMatchResult,
   matchAlertInstancesToPolicyTree,
 } from './grafana/notificationPolicies/utils';
+export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
 export * from './grafana/notificationPolicies/types';
 
 // Matchers

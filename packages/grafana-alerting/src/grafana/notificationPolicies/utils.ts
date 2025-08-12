@@ -16,7 +16,7 @@ export type RouteMatchInfo<T extends Route> = {
   matchDetails: LabelMatchDetails[];
   matched: boolean;
 };
- 
+
 export interface RouteMatchResult<T extends Route> {
   route: T;
   labels: Label[];
@@ -26,22 +26,22 @@ export interface RouteMatchResult<T extends Route> {
 
 // Normalization should have happened earlier in the code
 export function findMatchingRoutes<T extends Route>(
-  route: T, 
-  labels: Label[], 
+  route: T,
+  labels: Label[],
   matchingJourney: Array<RouteMatchInfo<T>> = []
 ): Array<RouteMatchResult<T>> {
   let childMatches: Array<RouteMatchResult<T>> = [];
 
   // Check if the current node matches
   const matchResult = matchLabels(route.matchers ?? [], labels);
-  
+
   // Create matching info for this route
   const currentMatchInfo: RouteMatchInfo<T> = {
     route,
     matchDetails: matchResult.details,
     matched: matchResult.matches,
   };
-  
+
   // Add current route's matching info to the journey
   const currentMatchingJourney = [...matchingJourney, currentMatchInfo];
 
@@ -66,10 +66,10 @@ export function findMatchingRoutes<T extends Route>(
 
   // If no child nodes were matches, the current node itself is a match.
   if (childMatches.length === 0) {
-    childMatches.push({ 
-      route, 
-      labels, 
-      matchingJourney: currentMatchingJourney
+    childMatches.push({
+      route,
+      labels,
+      matchingJourney: currentMatchingJourney,
     });
   }
 
@@ -180,21 +180,25 @@ export function matchAlertInstancesToPolicyTree(instances: Label[][], routingTre
 
 /**
  * Converts a RoutingTree to a Route by merging defaults with routes.
- * 
+ *
  * @param routingTree - The RoutingTree from the API
  * @returns A Route that can be used with the matching functions
  */
 export function convertRoutingTreeToRoute(routingTree: RoutingTree): Route {
   const convertRoutingTreeRoutes = (routes: RoutingTreeRoute[]): Route[] => {
-    return routes.map((route): Route => ({
-      ...route,
-      matchers: route.matchers?.map((matcher): LabelMatcher => ({
-        ...matcher,
-        // sadly we use type narrowing for this on Route but the codegen has it as a string
-        type: matcher.type as LabelMatcher['type'],
-      })),
-      routes: route.routes ? convertRoutingTreeRoutes(route.routes) : [],
-    }));
+    return routes.map(
+      (route): Route => ({
+        ...route,
+        matchers: route.matchers?.map(
+          (matcher): LabelMatcher => ({
+            ...matcher,
+            // sadly we use type narrowing for this on Route but the codegen has it as a string
+            type: matcher.type as LabelMatcher['type'],
+          })
+        ),
+        routes: route.routes ? convertRoutingTreeRoutes(route.routes) : [],
+      })
+    );
   };
 
   // Create the root route by merging defaults with the route structure
