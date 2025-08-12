@@ -1,4 +1,5 @@
-import { CSSProperties, ReactElement, useMemo, useState, useRef, useEffect } from 'react';
+import { CSSProperties, ReactElement, useMemo, useState, useRef, useEffect, RefObject } from 'react';
+import { DataGridHandle } from 'react-data-grid';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,11 +8,13 @@ import { TableCellTooltipPlacement } from '@grafana/schema';
 import { Popover } from '../../../Tooltip/Popover';
 import { TableCellOptions } from '../../types';
 import { TABLE } from '../constants';
+import { getTooltipStyles } from '../styles';
 import { TableCellRenderer, TableCellRendererProps } from '../types';
 
 export interface Props {
   cellOptions: TableCellOptions;
   children: ReactElement;
+  classes: ReturnType<typeof getTooltipStyles>;
   className?: string;
   data: DataFrame;
   disableSanitizeHtml?: boolean;
@@ -21,39 +24,35 @@ export interface Props {
   placement?: TableCellTooltipPlacement;
   popoverRef: React.MutableRefObject<HTMLElement | null>;
   renderer: TableCellRenderer;
-  root?: HTMLElement;
+  gridRef: RefObject<DataGridHandle>;
   rowIdx: number;
   style?: CSSProperties;
   theme: GrafanaTheme2;
-  tooltipCaretClassName: string;
-  tooltipWrapperClass: string;
   width?: number;
 }
 
 export function TableCellTooltip({
   cellOptions,
   children,
+  classes,
   className,
   data,
   disableSanitizeHtml,
   field,
   getActions,
+  gridRef,
   height: _height,
   placement,
   popoverRef,
   renderer,
-  root,
   rowIdx,
   style,
   theme,
-  tooltipCaretClassName,
-  tooltipWrapperClass,
   width = 300,
 }: Props) {
   const rawValue = field.values[rowIdx];
   const height = _height ?? TABLE.MAX_CELL_HEIGHT;
   const tooltipCaretRef = useRef<HTMLDivElement>(null);
-  const tooltipContentRef = useRef<HTMLDivElement>(null);
 
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);
@@ -62,37 +61,26 @@ export function TableCellTooltip({
 
   useEffect(() => {
     if (pinned) {
-      const clickListener = (event: MouseEvent) => {
-        const clickTarget = event.target;
-        if (!(clickTarget instanceof HTMLElement)) {
-          return;
-        }
+      const gridRoot = gridRef.current?.element;
 
-        if (!tooltipContentRef.current?.contains(clickTarget) && !tooltipCaretRef.current?.contains(clickTarget)) {
-          setPinned(false);
-          window.removeEventListener('click', clickListener);
-        }
+      const listener = () => {
+        setPinned(false);
       };
 
+      window.addEventListener('click', listener, { once: true });
       // right now, we kill the pinned tooltip on any form of scrolling to avoid awkward rendering
       // where the tooltip bumps up against the edge of the scrollable container. we could try to
       // kill the tooltip when it hits these boundaries rather than when scrolling starts.
-      const scrollListener = () => {
-        setPinned(false);
-        root?.removeEventListener('scroll', scrollListener);
-      };
-
-      window.addEventListener('click', clickListener);
-      root?.addEventListener('scroll', scrollListener);
+      gridRoot?.addEventListener('scroll', listener, { once: true });
 
       return () => {
-        window.removeEventListener('click', clickListener);
-        root?.removeEventListener('scroll', scrollListener);
+        window.removeEventListener('click', listener);
+        gridRoot?.removeEventListener('scroll', listener);
       };
     }
 
     return;
-  }, [pinned, root]);
+  }, [pinned, gridRef]);
 
   const rendererProps = useMemo(
     () =>
@@ -118,7 +106,11 @@ export function TableCellTooltip({
   }
 
   const body = (
-    <div ref={tooltipContentRef} data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper}>
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div
+      onClick={(ev) => ev.stopPropagation()} // prevent click from bubbling to the global click listener for un-pinning
+      data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper}
+    >
       {renderer(rendererProps)}
     </div>
   );
@@ -133,9 +125,8 @@ export function TableCellTooltip({
           content={body}
           show={show}
           placement={placement}
-          wrapperClassName={tooltipWrapperClass}
+          wrapperClassName={classes.tooltipWrapper}
           className={className}
-          root={root}
           style={{ ...style, width, height }}
           referenceElement={popoverRef.current}
           onMouseLeave={onMouseLeave}
@@ -143,14 +134,17 @@ export function TableCellTooltip({
         />
       )}
 
-      {/* a11y is handled by connecting this tooltip with the selection system. */}
+      {/* TODO: figure out an accessible way to trigger the tooltip. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className={tooltipCaretClassName}
+        className={classes.tooltipCaret}
         ref={tooltipCaretRef}
         data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Caret}
         aria-pressed={pinned}
-        onClick={() => setPinned((prev) => !prev)}
+        onClick={(ev) => {
+          ev.stopPropagation(); // prevent click from bubbling to the global click listener for un-pinning
+          setPinned((prev) => !prev);
+        }}
         onMouseLeave={onMouseLeave}
         onMouseEnter={onMouseEnter}
         onBlur={onMouseLeave}

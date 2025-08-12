@@ -190,17 +190,26 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
     padding: theme.spacing(1),
   }),
   tooltipCaret: css({
-    width: 0,
-    height: 0,
-    borderTop: '10px solid transparent',
-    borderBottom: '10px solid transparent',
-    borderRight: `10px solid ${theme.colors.border.medium}`,
-    transform: `rotate(${textAlign === 'right' ? '135deg' : '45deg'})`,
     position: 'absolute',
     top: -4,
+    width: 20,
+    height: 20,
+    cursor: 'pointer',
     [textAlign === 'right' ? 'right' : 'left']: 1,
+    '::after': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      [textAlign === 'right' ? 'right' : 'left']: 0,
+      borderTop: '10px solid transparent',
+      borderBottom: '10px solid transparent',
+      borderRight: `10px solid ${theme.colors.border.medium}`,
+      transform: `rotate(${textAlign === 'right' ? '135deg' : '45deg'})`,
+    },
     '&:hover, &[aria-pressed=true]': {
-      borderRightColor: theme.colors.border.strong,
+      '::after': {
+        borderRightColor: theme.colors.border.strong,
+      },
     },
   }),
 });
