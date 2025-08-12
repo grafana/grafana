@@ -1,4 +1,4 @@
-import { set, get } from 'lodash';
+import { get, set } from 'lodash';
 
 import { CustomVariableModel } from '@grafana/data';
 
@@ -174,6 +174,150 @@ describe('AzureResourceGraphDatasource', () => {
       const secondCall = postResource.mock.calls[1];
       const [_, postBody] = secondCall;
       expect(postBody.options.$skipToken).toEqual('skipToken');
+    });
+  });
+
+  describe('getSubscriptions', () => {
+    let datasource: AzureResourceGraphDatasource;
+    let pagedResourceGraphRequest: jest.SpyInstance;
+
+    beforeEach(() => {
+      const instanceSettings = createMockInstanceSetttings();
+      datasource = new AzureResourceGraphDatasource(instanceSettings);
+      pagedResourceGraphRequest = jest.spyOn(datasource, 'pagedResourceGraphRequest');
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should return subscriptions without filters', async () => {
+      const mockSubscriptions = [
+        {
+          subscriptionId: '1',
+          subscriptionName: 'Primary Subscription',
+          subscriptionURI: '/subscriptions/1',
+          count: 5,
+        },
+        {
+          subscriptionId: '2',
+          subscriptionName: 'Dev Subscription',
+          subscriptionURI: '/subscriptions/2',
+          count: 3,
+        },
+      ];
+
+      pagedResourceGraphRequest.mockResolvedValue(mockSubscriptions);
+
+      const result = await datasource.getSubscriptions();
+
+      expect(result).toEqual(mockSubscriptions);
+      expect(pagedResourceGraphRequest).toHaveBeenCalledWith(expect.stringContaining('resources'), 1);
+      expect(pagedResourceGraphRequest).toHaveBeenCalledWith(
+        expect.not.stringContaining('| where subscriptionId in'),
+        1
+      );
+      expect(pagedResourceGraphRequest).toHaveBeenCalledWith(expect.not.stringContaining('| where type in'), 1);
+      expect(pagedResourceGraphRequest).toHaveBeenCalledWith(expect.not.stringContaining('| where location in'), 1);
+    });
+
+    it('should generate correct query structure', async () => {
+      pagedResourceGraphRequest.mockResolvedValue([]);
+
+      await datasource.getSubscriptions();
+
+      const query = pagedResourceGraphRequest.mock.calls[0][0];
+
+      expect(query).toContain('resources');
+      expect(query).toContain('join kind=inner');
+      expect(query).toContain('ResourceContainers');
+      expect(query).toContain("type == 'microsoft.resources/subscriptions'");
+      expect(query).toContain('project subscriptionName=name, subscriptionURI=id, subscriptionId');
+      expect(query).toContain('summarize count=count() by subscriptionName, subscriptionURI, subscriptionId');
+      expect(query).toContain('order by subscriptionName desc');
+    });
+
+    it('should apply filters when provided', async () => {
+      const filters = {
+        subscriptions: ['sub1', 'sub2'],
+        types: ['microsoft.compute/virtualmachines', 'microsoft.storage/storageaccounts'],
+        locations: ['eastus', 'westus'],
+      };
+
+      pagedResourceGraphRequest.mockResolvedValue([]);
+
+      await datasource.getSubscriptions(filters);
+
+      const query = pagedResourceGraphRequest.mock.calls[0][0];
+
+      expect(query).toContain('| where subscriptionId in ("sub1","sub2")');
+      expect(query).toContain(
+        '| where type in ("microsoft.compute/virtualmachines","microsoft.storage/storageaccounts")'
+      );
+      expect(query).toContain('| where location in ("eastus","westus")');
+    });
+
+    it('should apply partial filters', async () => {
+      const filters = {
+        subscriptions: ['sub1'],
+        types: [],
+        locations: ['eastus'],
+      };
+
+      pagedResourceGraphRequest.mockResolvedValue([]);
+
+      await datasource.getSubscriptions(filters);
+
+      const query = pagedResourceGraphRequest.mock.calls[0][0];
+
+      expect(query).toContain('| where subscriptionId in ("sub1")');
+      expect(query).not.toContain('| where type in');
+      expect(query).toContain('| where location in ("eastus")');
+    });
+
+    it('should handle empty filters gracefully', async () => {
+      const filters = {
+        subscriptions: [],
+        types: [],
+        locations: [],
+      };
+
+      pagedResourceGraphRequest.mockResolvedValue([]);
+
+      await datasource.getSubscriptions(filters);
+
+      const query = pagedResourceGraphRequest.mock.calls[0][0];
+
+      expect(query).not.toContain('| where subscriptionId in');
+      expect(query).not.toContain('| where type in');
+      expect(query).not.toContain('| where location in');
+    });
+
+
+    it('should return empty array when no subscriptions found', async () => {
+      pagedResourceGraphRequest.mockResolvedValue([]);
+
+      const result = await datasource.getSubscriptions();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should lowercase filter values', async () => {
+      const filters = {
+        subscriptions: ['SUB1', 'Sub2'],
+        types: ['Microsoft.Compute/VirtualMachines'],
+        locations: ['EastUS'],
+      };
+
+      pagedResourceGraphRequest.mockResolvedValue([]);
+
+      await datasource.getSubscriptions(filters);
+
+      const query = pagedResourceGraphRequest.mock.calls[0][0];
+
+      expect(query).toContain('"sub1","sub2"');
+      expect(query).toContain('"microsoft.compute/virtualmachines"');
+      expect(query).toContain('"eastus"');
     });
   });
 });
