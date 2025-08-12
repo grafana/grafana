@@ -296,6 +296,11 @@ docker in case you don't have one:
 docker run -d --name db -e "MYSQL_DATABASE=grafana" -e "MYSQL_USER=grafana" -e "MYSQL_PASSWORD=grafana" -e "MYSQL_ROOT_PASSWORD=root" -p 3306:3306 docker.io/bitnami/mysql:8.0.31
 ```
 
+or use our mysql docker block:
+```sh
+make devenv sources=mysql
+```
+
 ### 2. Create dedicated ini files for every service
 
 Example distributor ini file:
@@ -304,7 +309,7 @@ Example distributor ini file:
 * Bind and join `memberlist` on `127.0.0.1:7946` (default memberlist port)
 
 ```ini
-target = distributor
+target = search-server-distributor
 
 [server]
 http_port = 3000
@@ -404,6 +409,7 @@ path = grafana1.db
 [grafana-apiserver]
 address = 127.0.0.1:10000
 storage_type = unified-grpc
+search_server_address = 127.0.0.1:10000
 
 [server]
 protocol = http
@@ -443,9 +449,9 @@ Repeat for the other services.
 ./bin/grafana server target --config conf/storage-api-2.ini
 ./bin/grafana server target --config conf/storage-api-3.ini
 
-./bin/grafana server target --config conf/grafana1.ini
-./bin/grafana server target --config conf/grafana2.ini
-./bin/grafana server target --config conf/grafana3.ini
+./bin/grafana server --config conf/grafana1.ini
+./bin/grafana server --config conf/grafana2.ini
+./bin/grafana server --config conf/grafana3.ini
 ```
 
 etc

@@ -94,6 +94,9 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	} else {
 		dbCfg.Type = sec.Key("type").String()
 		dbCfg.Host = sec.Key("host").String()
+		if port := sec.Key("port").String(); port != "" {
+			dbCfg.Host = dbCfg.Host + ":" + port
+		}
 		dbCfg.Name = sec.Key("name").String()
 		dbCfg.User = sec.Key("user").String()
 		dbCfg.ConnectionString = sec.Key("connection_string").String()
