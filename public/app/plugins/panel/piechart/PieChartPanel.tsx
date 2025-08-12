@@ -82,25 +82,12 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   if (legendOptions.showLegend === false) {
     return undefined;
   }
+
+  const sortedDisplayValues = displayValues.sort(comparePieChartItemsByValue(props.options.pieSorting));
+
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
-  const legendItems: VizLegendItem[] = displayValues
-    .sort((a, b) => {
-      if (isNaN(a.display.numeric)) {
-        return 1;
-      }
-      if (isNaN(b.display.numeric)) {
-        return -1;
-      }
-
-      if (props.options.pieSorting === PieChartSortOptions.Descending) {
-        return b.display.numeric - a.display.numeric;
-      }
-      if (props.options.pieSorting === PieChartSortOptions.Ascending) {
-        return a.display.numeric - b.display.numeric;
-      }
-      return 0;
-    })
+  const legendItems: VizLegendItem[] = sortedDisplayValues
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
       const hideFrom: HideSeriesConfig = value.field.custom?.hideFrom ?? {};
 
@@ -156,6 +143,28 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       />
     </VizLayout.Legend>
   );
+}
+
+export function comparePieChartItemsByValue(
+  pieSorting: PieChartSortOptions
+): (a: FieldDisplay, b: FieldDisplay) => number {
+  return function (a: FieldDisplay, b: FieldDisplay) {
+    if (isNaN(a.display.numeric)) {
+      return 1;
+    }
+    if (isNaN(b.display.numeric)) {
+      return -1;
+    }
+
+    if (pieSorting === PieChartSortOptions.Descending) {
+      return b.display.numeric - a.display.numeric;
+    }
+    if (pieSorting === PieChartSortOptions.Ascending) {
+      return a.display.numeric - b.display.numeric;
+    }
+
+    return 0;
+  };
 }
 
 function hasFrames(fieldDisplayValues: FieldDisplay[]) {
