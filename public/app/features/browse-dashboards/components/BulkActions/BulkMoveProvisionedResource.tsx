@@ -26,7 +26,7 @@ import { useSelector } from 'app/types/store';
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
 import { findItem } from '../../state/utils';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
-import { useRepositoryValidation } from '../BrowseActions/useRepositoryValidation';
+import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
 import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 
 import { MoveResultFailed } from './BulkActionFailureBanner';
@@ -282,9 +282,9 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
   // Check if we're on the root browser dashboards page
   const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
-  const { commonRepositoryUID } = useRepositoryValidation(selectedItems);
+  const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
   const { repository, folder } = useGetResourceRepositoryView({
-    folderName: isRootPage ? commonRepositoryUID : folderUid,
+    folderName: isRootPage ? selectedItemsRepoUID : folderUid,
   });
 
   const workflowOptions = getWorkflowOptions(repository);

@@ -54,6 +54,10 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
   useGetResourceRepositoryView: jest.fn(),
 }));
 
+jest.mock('../BrowseActions/useSelectionRepoValidation', () => ({
+  useSelectionRepoValidation: jest.fn(),
+}));
+
 describe('BulkDeleteProvisionedResource', () => {
   const defaultRepository: RepositoryView = {
     name: 'test-folder', // This must match the folderUid passed to the component
@@ -92,6 +96,11 @@ describe('BulkDeleteProvisionedResource', () => {
       },
       isInstanceManaged: false,
     });
+
+    const { useSelectionRepoValidation } = jest.requireMock('../BrowseActions/useSelectionRepoValidation');
+    useSelectionRepoValidation.mockReturnValue({
+      selectedItemsRepoUID: 'test-folder',
+    });
   });
 
   afterEach(() => {
@@ -116,6 +125,11 @@ describe('BulkDeleteProvisionedResource', () => {
           }
         : null,
       isInstanceManaged: false,
+    });
+
+    const { useSelectionRepoValidation } = jest.requireMock('../BrowseActions/useSelectionRepoValidation');
+    useSelectionRepoValidation.mockReturnValue({
+      selectedItemsRepoUID: repository?.name || 'test-folder',
     });
 
     const renderResult = render(

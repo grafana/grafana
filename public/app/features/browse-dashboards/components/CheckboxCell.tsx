@@ -8,11 +8,10 @@ import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
 
-import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
 import { DashboardsTreeCellProps, SelectionState, DashboardViewItemWithUIItems } from '../types';
 
-import { useRepositoryValidation } from './BrowseActions/useRepositoryValidation';
-import { isSharedWithMe, canEditItemType, getItemRepositoryUid } from './utils';
+import { useSelectionRepoValidation } from './BrowseActions/useSelectionRepoValidation';
+import { isSharedWithMe, canEditItemType } from './utils';
 
 export default function CheckboxCell({
   row: { original: row },
@@ -24,11 +23,7 @@ export default function CheckboxCell({
 
   // Get current selection state for repository validation
   const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
-  const { commonRepositoryUID } = useRepositoryValidation(selectedItems);
-
-  // Get browse state for repository detection
-  const childrenByParentUID = useChildrenByParentUIDState();
-  const rootItems = useSelector(rootItemsSelector);
+  const { selectedItemsRepoUID, isInLockedRepo } = useSelectionRepoValidation(selectedItems);
 
   // Type guard to check if item is a DashboardViewItem (not UI item)
   const isDashboardViewItem = (item: DashboardViewItemWithUIItems): item is DashboardViewItem => {
@@ -62,17 +57,7 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  const itemParentNotMatchedSelectedItems = (): boolean => {
-    // If there's a repository selection, check if this item matches
-    if (commonRepositoryUID && isDashboardViewItem(item)) {
-      const itemRepositoryUID = getItemRepositoryUid(item, rootItems?.items || [], childrenByParentUID);
-      return itemRepositoryUID !== commonRepositoryUID;
-    }
-
-    return false;
-  };
-
-  if (itemParentNotMatchedSelectedItems()) {
+  if (isDashboardViewItem(item) && selectedItemsRepoUID && !isInLockedRepo(item.uid)) {
     return (
       <Tooltip
         content={t(
