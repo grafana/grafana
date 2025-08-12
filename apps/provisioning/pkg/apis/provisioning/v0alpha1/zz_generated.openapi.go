@@ -2126,6 +2126,25 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 							},
 						},
 					},
+					"unmanaged": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount"),
+									},
+								},
+							},
+						},
+					},
 					"managed": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
