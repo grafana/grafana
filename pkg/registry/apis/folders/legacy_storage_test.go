@@ -136,7 +136,6 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 		result, err := storage.List(ctx, options)
 		require.NoError(t, err)
 
-		// assert we return the default page limit for the first page
 		list, ok := result.(*folderv1.FolderList)
 		require.True(t, ok)
 
