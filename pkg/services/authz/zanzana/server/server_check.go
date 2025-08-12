@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -19,6 +20,9 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	span.SetAttributes(
 		attribute.String("namespace", r.GetNamespace()),
 	)
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("server.Check", r.GetNamespace()).Observe(time.Since(t).Seconds())
+	}(time.Now())
 
 	res, err := s.check(ctx, r)
 	if err != nil {
