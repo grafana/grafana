@@ -580,7 +580,7 @@ export function TableNG(props: TableNGProps) {
               if (tooltipCanBeColorized) {
                 const tooltipDisplayName = getDisplayName(tooltipField);
                 const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
-                let { textColor, bgColor } = getCellColors(theme, tooltipCellOptions, tooltipDisplayValue);
+                const { textColor, bgColor } = getCellColors(theme, tooltipCellOptions, tooltipDisplayValue);
                 tooltipStyle = {
                   color: textColor,
                   background: bgColor,

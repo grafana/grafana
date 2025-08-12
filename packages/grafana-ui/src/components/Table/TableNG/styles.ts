@@ -177,6 +177,9 @@ export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
     },
   });
 
+const caretTriangle = (direction: 'left' | 'right', bgColor: string) =>
+  `linear-gradient(to top ${direction}, transparent 62.5%, ${bgColor} 50%)`;
+
 export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => ({
   tooltipContent: css({
     height: '100%',
@@ -193,25 +196,14 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
   }),
   tooltipCaret: css({
     position: 'absolute',
-    top: -4,
-    width: 20,
-    height: 20,
+    top: theme.spacing(0.25),
+    [textAlign === 'right' ? 'right' : 'left']: theme.spacing(0.25),
+    width: theme.spacing(1.75),
+    height: theme.spacing(1.75),
     cursor: 'pointer',
-    [textAlign === 'right' ? 'right' : 'left']: 1,
-    '::after': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      [textAlign === 'right' ? 'right' : 'left']: 0,
-      borderTop: '10px solid transparent',
-      borderBottom: '10px solid transparent',
-      borderRight: `10px solid ${theme.colors.border.medium}`,
-      transform: `rotate(${textAlign === 'right' ? '135deg' : '45deg'})`,
-    },
+    background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.medium),
     '&:hover, &[aria-pressed=true]': {
-      '::after': {
-        borderRightColor: theme.colors.border.strong,
-      },
+      background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
     },
   }),
 });
