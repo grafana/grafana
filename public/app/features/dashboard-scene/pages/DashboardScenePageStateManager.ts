@@ -1,4 +1,4 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { dateMath, getDefaultTimeRange, getTimeZone, locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
@@ -447,7 +447,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
+          // If reloadDashboardsOnParamsChange is on, we need to process query params for dashboard load
+          // Since the scene is not yet there, we need to process whatever came through URL
+          if (config.featureToggles.reloadDashboardsOnParamsChange) {
+            const queryParamsObject = processQueryParamsForDashboardLoad();
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
+          } else {
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
+          }
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
@@ -898,4 +905,50 @@ export function getDashboardScenePageStateManager(v?: 'v1' | 'v2') {
   }
 
   return managers.unified;
+}
+
+/**
+ * Processes query parameters for dashboard loading, normalizing time range and filtering allowed parameters
+ */
+function processQueryParamsForDashboardLoad(): UrlQueryMap {
+  const queryParams = locationService.getSearch();
+  const queryParamsObject = locationService.getSearchObject();
+
+  queryParamsObject.timezone = queryParams.get('timezone') ?? undefined;
+  const now = Date.now();
+  const timeZone = getTimeZone({
+    timeZone: queryParams.get('timezone') ?? undefined,
+  });
+  const defaultTimeRange = getDefaultTimeRange();
+
+  const fromQP = queryParams.get('from');
+  const toQP = queryParams.get('to');
+
+  const to = toQP
+    ? dateMath.toDateTime(toQP, {
+        roundUp: true,
+        timezone: timeZone,
+        now: now,
+      })
+    : undefined;
+
+  const from = fromQP
+    ? dateMath.toDateTime(fromQP, {
+        roundUp: false,
+        timezone: timeZone,
+        now: now,
+      })
+    : undefined;
+
+  queryParamsObject.from = from?.toISOString() ?? defaultTimeRange.from.toISOString();
+  queryParamsObject.to = to?.toISOString() ?? defaultTimeRange.to.toISOString();
+
+  // Remove all properties that are not from, to, scopes, version or start with var-
+  Object.keys(queryParamsObject).forEach((key) => {
+    if (key !== 'from' && key !== 'to' && key !== 'scopes' && key !== 'version' && !key.startsWith('var-')) {
+      delete queryParamsObject[key];
+    }
+  });
+
+  return queryParamsObject;
 }
