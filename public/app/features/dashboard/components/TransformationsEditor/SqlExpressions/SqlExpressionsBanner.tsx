@@ -2,7 +2,7 @@ import { LocalStorageValueProvider } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, TextLink } from '@grafana/ui';
 
-const LOCAL_STORAGE_KEY = 'dashboard.sql-expressions-banner.dismissed';
+const LOCAL_STORAGE_KEY = 'grafana.dashboard.sql-expressions-banner.dismissed';
 
 export const SqlExpressionsBanner = () => (
   <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
