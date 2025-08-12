@@ -1142,7 +1142,9 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "default": {}
+                        "default": {
+
+                        }
                       },
                       "x-kubernetes-list-type": "atomic"
                     },
@@ -1151,7 +1153,9 @@
                       "type": "string"
                     },
                     "metadata": {
-                      "default": {}
+                      "default": {
+
+                      }
                     }
                   }
                 }
@@ -1285,7 +1289,7 @@
           {
             "name": "originalPath",
             "in": "query",
-            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003e 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003e 'new/')",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003E 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003E 'new/')",
             "schema": {
               "type": "string"
             }
@@ -1397,7 +1401,7 @@
           {
             "name": "originalPath",
             "in": "query",
-            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003e 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003e 'new/')",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003E 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003E 'new/')",
             "schema": {
               "type": "string"
             }
@@ -1509,7 +1513,7 @@
           {
             "name": "originalPath",
             "in": "query",
-            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003e 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003e 'new/')",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003E 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003E 'new/')",
             "schema": {
               "type": "string"
             }
@@ -1909,7 +1913,9 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "default": {}
+                        "default": {
+
+                        }
                       },
                       "x-kubernetes-list-type": "atomic"
                     },
@@ -1918,7 +1924,9 @@
                       "type": "string"
                     },
                     "metadata": {
-                      "default": {}
+                      "default": {
+
+                      }
                     }
                   }
                 }
@@ -2373,13 +2381,19 @@
                     "type": "string"
                   },
                   "metadata": {
-                    "default": {}
+                    "default": {
+
+                    }
                   },
                   "spec": {
-                    "default": {}
+                    "default": {
+
+                    }
                   },
                   "status": {
-                    "default": {}
+                    "default": {
+
+                    }
                   }
                 }
               }
@@ -5746,7 +5760,7 @@
         }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
-        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
+        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003Cname\u003E', where \u003Cname\u003E is the name of a field in a struct, or key in a map 'v:\u003Cvalue\u003E', where \u003Cvalue\u003E is the exact json formatted value of a list item 'i:\u003Cindex\u003E', where \u003Cindex\u003E is position of a item in a list 'k:\u003Ckeys\u003E', where \u003Ckeys\u003E is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta": {

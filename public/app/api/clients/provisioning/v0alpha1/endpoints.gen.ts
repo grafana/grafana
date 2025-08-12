@@ -1310,6 +1310,8 @@ export type ResourceStats = {
   /** Stats for each manager */
   managed?: ManagerStats[];
   metadata?: any;
+  /** Stats across all unified storage When legacy storage is still used, this will offer a shim */
+  unmanaged?: any[];
 };
 export const {
   useListJobQuery,

@@ -69,6 +69,13 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
   const newSchemas: Record<string, unknown> = {};
   for (const schemaKey of Object.keys(newSpec.components.schemas)) {
     const newKey = simplifySchemaName(schemaKey);
+    if (newSchemas[newKey]) {
+      // This fixes an issue with provisioning where there are keys from both:
+      // * com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1
+      // * com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1
+      console.log('Ignoring duplicate entry for', newKey, schemaKey);
+      continue;
+    }
 
     const schemaObject = newSpec.components.schemas[schemaKey];
     updateRefs(schemaObject);
