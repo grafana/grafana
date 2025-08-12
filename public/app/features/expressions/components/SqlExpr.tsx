@@ -47,9 +47,12 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, on
     formatter: formatSQL,
   };
 
-  const initialQuery = `SELECT *
-  FROM ${vars[0]}
-  LIMIT 10`;
+  const initialQuery = `SELECT
+  *
+FROM
+  ${vars[0]}
+LIMIT
+  10`;
 
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
