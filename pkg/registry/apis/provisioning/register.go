@@ -608,7 +608,14 @@ func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Reposit
 		}
 	}
 
-	if len(all) >= 10 {
+	// Count repositories excluding the current one being created/updated
+	count := 0
+	for _, v := range all {
+		if v.Name != cfg.Name {
+			count++
+		}
+	}
+	if count >= 10 {
 		return field.Forbidden(field.NewPath("spec"),
 			"Maximum number of 10 repositories reached")
 	}
