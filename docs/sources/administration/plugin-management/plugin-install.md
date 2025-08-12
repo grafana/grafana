@@ -37,7 +37,7 @@ Download the archive containing the plugin assets, and install it by extracting 
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 ```
 
-The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration](./setup-grafana/configure-grafana/#plugins).
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#plugins).
 
 ## Install a plugin using Grafana configuration
 
@@ -45,7 +45,7 @@ The path to the plugin directory is defined in the configuration file. For more 
 This feature requires Grafana 11.5.0 or later.
 {{< /admonition >}}
 
-You can install plugins by adding the plugin ID to the `plugins.preinstall` section in the Grafana configuration file. This prevents the plugin from being accidentally uninstalled and can be auto-updated. For more information, refer to [Configuration](/setup-grafana/configure-grafana/#plugins).
+You can install plugins by adding the plugin ID to the `plugins.preinstall` section in the Grafana configuration file. This prevents the plugin from being accidentally uninstalled and can be auto-updated. For more information, refer to [Configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#plugins).
 
 ## Install a plugin in air-gapped environment
 
