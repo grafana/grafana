@@ -74,9 +74,12 @@ export function TableCellTooltip({
         }
       };
 
+      // right now, we kill the pinned tooltip on any form of scrolling to avoid awkward rendering
+      // where the tooltip bumps up against the edge of the scrollable container. we could try to
+      // kill the tooltip when it hits these boundaries rather than when scrolling starts.
       const scrollListener = () => {
         setPinned(false);
-        window.removeEventListener('scroll', scrollListener);
+        root?.removeEventListener('scroll', scrollListener);
       };
 
       window.addEventListener('click', clickListener);

@@ -7,7 +7,7 @@ import { MarkdownCellProps, TableCellStyles } from '../types';
 
 export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCellProps) {
   const rawValue = field.values[rowIdx];
-  if (rawValue === null || rawValue === undefined) {
+  if (rawValue == null) {
     return null;
   }
 
