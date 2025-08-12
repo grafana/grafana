@@ -2,7 +2,6 @@
 labels:
   products:
     - cloud
-    - enterprise
     - oss
   stage:
     - experimental
@@ -158,6 +157,14 @@ To create a dashboard, follow these steps:
 1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
 1. Toggle off the edit mode switch.
 
+{{< admonition type="caution" >}}
+
+Dynamic dashboards is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
+
 ## Group panels
 
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
@@ -287,6 +294,14 @@ To configure show/hide rules, follow these steps:
 1. Click **Save**.
 1. Toggle off the edit mode switch.
 
+{{< admonition type="caution" >}}
+
+Dynamic dashboards is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
+
 ## Edit dashboards
 
 When the dashboard is in edit mode, the edit pane that opens displays options associated with the part of the dashboard that it's in focus.
@@ -326,7 +341,7 @@ When a dashboard is in edit mode, you can undo and redo changes you've made usin
 When you've made a change and hover the cursor over the buttons, the tooltip displays the change you're about to undo or redo.
 Also, you can continue undoing or redoing as many changes as you need:
 
-{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-undo-redo-v12.0.mp4" >}}
+{{< video-embed src="/media/docs/grafana/dashboards/screen-record-undo-redo-v12.0.mp4" >}}
 
 The undo and redo buttons are only available at the dashboard level and only apply to changes made there, such as dashboard layout and grouping and high-level dashboard or panel updates.
 They aren't visible and don't apply when you're configuring a panel or making changes in the dashboard settings.
@@ -388,3 +403,11 @@ To make a copy of a dashboard, follow these steps:
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
 
 1. Click **Save**.
+
+{{< admonition type="caution" >}}
+
+Dynamic dashboards is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}

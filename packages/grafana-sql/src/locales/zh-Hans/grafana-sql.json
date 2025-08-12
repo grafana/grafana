@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "您的查询无效。请查看下方详情。<1></1>但是，您仍然可以运行此查询。",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "构建器",
+          "label-code": "代码"
         },
         "label-dataset": "数据集",
         "label-filter": "筛选条件",
