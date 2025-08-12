@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { FolderPicker } from '@grafana/runtime';
-import { Alert, Box, Button, Field, Stack } from '@grafana/ui';
+import { Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   CreateRepositoryFilesWithPathApiArg,
