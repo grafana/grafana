@@ -42,13 +42,17 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const dispatch = useDispatch();
 
   const onJobSuccess = useCallback(() => {
-    const selectedUIDs = [
-      ...Object.keys(selectedItems.folder || {}).filter((id) => selectedItems.folder[id]),
-      ...Object.keys(selectedItems.dashboard || {}).filter((id) => selectedItems.dashboard[id]),
-    ];
-    // refresh necessary parents
-    dispatch(refreshParents(selectedUIDs));
-  }, [dispatch, selectedItems]);
+    // only refresh parent folders if workflow is write
+    // push to branch flow doesn't require a folder refresh since changes is not merged into configured branch yet
+    if (workflow === 'write') {
+      const selectedUIDs = [
+        ...Object.keys(selectedItems.folder || {}).filter((id) => selectedItems.folder[id]),
+        ...Object.keys(selectedItems.dashboard || {}).filter((id) => selectedItems.dashboard[id]),
+      ];
+      // refresh necessary parents
+      dispatch(refreshParents(selectedUIDs));
+    }
+  }, [dispatch, selectedItems, workflow]);
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setHasSubmitted(true);
