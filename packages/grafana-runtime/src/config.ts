@@ -225,6 +225,8 @@ export interface GrafanaBootConfig {
    * This is the regionalFormat that is used for date formatting and other locale-specific features.
    */
   regionalFormat: string;
+  listDashboardScopesEndpoint: string;
+  listScopesEndpoint: string;
 }
 
 const defaults = {
