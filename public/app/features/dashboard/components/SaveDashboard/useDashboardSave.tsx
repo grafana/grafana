@@ -66,7 +66,7 @@ export const useDashboardSave = (isCopy = false) => {
             url: result.url,
           });
         } else {
-          reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
+          reportInteraction(`grafana_dashboard_${dashboard.uid ? 'saved' : 'created'}`, {
             name: dashboard.title,
             url: result.url,
           });
