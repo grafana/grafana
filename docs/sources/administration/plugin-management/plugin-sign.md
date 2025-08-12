@@ -77,4 +77,4 @@ If you're developing a plugin, then you can enable development mode to allow all
 
 ## Sign a plugin you've developed
 
-If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin](/developers/plugin-tools/publish-a-plugin/sign-a-plugin).
+If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin).
