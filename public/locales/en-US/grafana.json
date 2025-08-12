@@ -6806,6 +6806,7 @@
       }
     }
   },
+  "exemplar-tooltip-header": "Exemplar",
   "explore": {
     "accordian-logs": {
       "events": "Events",
@@ -10941,6 +10942,9 @@
       "label-plugin-id": "Plugin Id",
       "label-severity": "Severity"
     },
+    "no-updates-available": {
+      "message": "All plugins are up to date"
+    },
     "not-found-plugin": {
       "body-plugin-not-found": "That plugin cannot be found. Please check the url is correct or <1></1>go to the <3>plugin catalog</3>.",
       "title-plugin-not-found": "Plugin not found"
@@ -13639,9 +13643,14 @@
     "regression-transformer-editor": {
       "label": {
         "cubic": "Cubic",
+        "decic": "Decic",
+        "nonic": "Nonic",
+        "octic": "Octic",
         "quadratic": "Quadratic",
         "quartic": "Quartic",
-        "quintic": "Quintic"
+        "quintic": "Quintic",
+        "septic": "Septic",
+        "sextic": "Sextic"
       },
       "label-degree": "Degree",
       "label-model-type": "Model type",
@@ -13658,6 +13667,7 @@
       "tags": {
         "regression-analysis": "Regression analysis"
       },
+      "tooltip-high-degree-polynomial": "Higher-degree polynomials (e.g., degree 4 or higher) can result in misleading trends and unstable fits. Proceed with caution.",
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {
