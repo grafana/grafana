@@ -22,7 +22,7 @@ weight: 400
 # Isolate plugin code with the Plugin Frontend Sandbox
 
 {{< admonition type="caution" >}}
-Plugin Frontend Sandbox is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+Plugin Frontend Sandbox is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{< /admonition >}}
 
 The Plugin Frontend Sandbox is a security feature that isolates plugin frontend code from the main Grafana application. When enabled, plugins run in a separate JavaScript context, which provides several security benefits:
