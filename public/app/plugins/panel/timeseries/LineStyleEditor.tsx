@@ -91,6 +91,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
         }}
       />
       {value?.fill && value?.fill !== 'solid' && (
+        // @ts-expect-error This should have a label of some kind
         <>
           <Select
             allowCustomValue={true}
