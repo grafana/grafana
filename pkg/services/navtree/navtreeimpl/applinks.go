@@ -104,6 +104,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					link.Id = "standalone-plugin-page-" + include.Path
 					link.SortWeight = pathConfig.SortWeight
 
+					if len(pathConfig.SubTitle) > 0 {
+						link.SubTitle = pathConfig.SubTitle
+					}
+
 					// Check if the section already has a page with the same URL, and in that case override it
 					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
 					isOverridingCorePage := false
@@ -348,7 +352,11 @@ func (s *ServiceImpl) readNavigationSettings() {
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
-		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfgAccess, SortWeight: 2},
+		"/a/grafana-auth-app": {
+			SectionID:  navtree.NavIDCfgAccess,
+			SortWeight: 2,
+			SubTitle:   "Use policies to control automated access to metrics, logs, traces, and other Grafana Cloud services",
+		},
 	}
 
 	appSections := s.cfg.Raw.Section("navigation.app_sections")
