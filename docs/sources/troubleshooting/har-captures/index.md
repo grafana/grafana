@@ -47,10 +47,10 @@ To generate a HAR capture, follow the steps for your browser:
 ## Safari
 
 1. In your Safari browser, go to the page where the issue is occurring.
-2. Open the **Develop** menu option and select **Show Web Inspector**. 
-{{< admonition type="note" >}}
-The "Show features for web developers" will need to be enabled for the Develop option to appear. More information, refer to [Use the developer tools in the Develop menu in Safari on Mac](https://support.apple.com/en-ie/guide/safari/sfri20948/mac).
-{{< /admonition >}}
+2. Open the **Develop** menu option and select **Show Web Inspector**.
+   {{< admonition type="note" >}}
+   The "Show features for web developers" will need to be enabled for the Develop option to appear. More information, refer to [Use the developer tools in the Develop menu in Safari on Mac](https://support.apple.com/en-ie/guide/safari/sfri20948/mac).
+   {{< /admonition >}}
 3. In the panel that appears, click the **Network** tab.
 4. In the upper right corner of the panel, click the trash can icon to clear any existing requests from the recording.
 5. Reproduce the issue while the network requests are recorded.
