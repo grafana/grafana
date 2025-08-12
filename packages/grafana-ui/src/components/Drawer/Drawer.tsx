@@ -17,6 +17,7 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
 import 'rc-drawer/assets/index.css';
+import { Stack } from '../Layout/Stack/Stack';
 
 export interface Props {
   children: ReactNode;
@@ -154,16 +155,16 @@ export function Drawer({
               />
             </div>
             {typeof title === 'string' ? (
-              <div className={styles.titleWrapper}>
-                <Text element="h3" {...titleProps}>
+              <Stack direction="column">
+                <Text element="h3" truncate {...titleProps}>
                   {title}
                 </Text>
                 {subtitle && (
-                  <div className={styles.subtitle} data-testid={selectors.components.Drawer.General.subtitle}>
+                  <Text element="p" color="secondary" truncate>
                     {subtitle}
-                  </div>
+                  </Text>
                 )}
-              </div>
+              </Stack>
             ) : (
               title
             )}
@@ -324,15 +325,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       right: theme.spacing(1),
       top: theme.spacing(1),
-    }),
-    titleWrapper: css({
-      label: 'drawer-title',
-      overflowWrap: 'break-word',
-    }),
-    subtitle: css({
-      label: 'drawer-subtitle',
-      color: theme.colors.text.secondary,
-      paddingTop: theme.spacing(1),
     }),
     content: css({
       padding: theme.spacing(theme.components.drawer?.padding ?? 2),
