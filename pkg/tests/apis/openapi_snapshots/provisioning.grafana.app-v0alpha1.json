@@ -3135,6 +3135,14 @@
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobResourceSummary"
             }
+          },
+          "url": {
+            "description": "URLs contains URLs for the reference branch or commit if applicable.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryURLs"
+              }
+            ]
           }
         }
       },
@@ -3516,6 +3524,27 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryURLs": {
+        "type": "object",
+        "properties": {
+          "compareURL": {
+            "description": "Compare this version to the target branch",
+            "type": "string"
+          },
+          "newPullRequestURL": {
+            "description": "A URL that will create a new pull request for this branch",
+            "type": "string"
+          },
+          "repositoryURL": {
+            "description": "A URL pointing to the repository this lives in",
+            "type": "string"
+          },
+          "sourceURL": {
+            "description": "A URL pointing to the file or ref in the repository",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCount": {
         "type": "object",
         "required": [
@@ -3767,27 +3796,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceURLs": {
-        "type": "object",
-        "properties": {
-          "compareURL": {
-            "description": "Compare this version to the target branch",
-            "type": "string"
-          },
-          "newPullRequestURL": {
-            "description": "A URL that will create a new pull requeset for this branch",
-            "type": "string"
-          },
-          "repositoryURL": {
-            "description": "A URL pointing to the repository this lives in",
-            "type": "string"
-          },
-          "sourceURL": {
-            "description": "A URL pointing to the this file in the repository",
-            "type": "string"
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceWrapper": {
         "description": "This is a container type for any resource type",
         "type": "object",
@@ -3855,7 +3863,7 @@
             "description": "Typed links for this file (only supported by external systems, github etc)",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceURLs"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryURLs"
               }
             ]
           }
@@ -4666,6 +4674,9 @@
             "description": "Summary of processed actions",
             "type": "array",
             "items": {}
+          },
+          "url": {
+            "description": "URLs contains URLs for the reference branch or commit if applicable."
           }
         }
       },
@@ -4960,6 +4971,27 @@
           },
           "webhook": {
             "description": "Webhook Information (if applicable)"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryURLs": {
+        "type": "object",
+        "properties": {
+          "compareURL": {
+            "description": "Compare this version to the target branch",
+            "type": "string"
+          },
+          "newPullRequestURL": {
+            "description": "A URL that will create a new pull request for this branch",
+            "type": "string"
+          },
+          "repositoryURL": {
+            "description": "A URL pointing to the repository this lives in",
+            "type": "string"
+          },
+          "sourceURL": {
+            "description": "A URL pointing to the file or ref in the repository",
+            "type": "string"
           }
         }
       },
@@ -5289,6 +5321,14 @@
           },
           "metadata": {
             "default": {}
+          },
+          "unmanaged": {
+            "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+            "type": "array",
+            "items": {
+              "default": {}
+            },
+            "x-kubernetes-list-type": "atomic"
           }
         }
       },
@@ -5315,27 +5355,6 @@
             "type": "string"
           },
           "version": {
-            "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceURLs": {
-        "type": "object",
-        "properties": {
-          "compareURL": {
-            "description": "Compare this version to the target branch",
-            "type": "string"
-          },
-          "newPullRequestURL": {
-            "description": "A URL that will create a new pull requeset for this branch",
-            "type": "string"
-          },
-          "repositoryURL": {
-            "description": "A URL pointing to the repository this lives in",
-            "type": "string"
-          },
-          "sourceURL": {
-            "description": "A URL pointing to the this file in the repository",
             "type": "string"
           }
         }
