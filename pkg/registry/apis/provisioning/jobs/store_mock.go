@@ -182,6 +182,112 @@ func (_c *MockStore_Complete_Call) RunAndReturn(run func(context.Context, *v0alp
 	return _c
 }
 
+// Get provides a mock function with given fields: ctx, name
+func (_m *MockStore) Get(ctx context.Context, name string) (*v0alpha1.Job, error) {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Get")
+	}
+
+	var r0 *v0alpha1.Job
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v0alpha1.Job, error)); ok {
+		return rf(ctx, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v0alpha1.Job); ok {
+		r0 = rf(ctx, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v0alpha1.Job)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockStore_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type MockStore_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - ctx context.Context
+//   - name string
+func (_e *MockStore_Expecter) Get(ctx interface{}, name interface{}) *MockStore_Get_Call {
+	return &MockStore_Get_Call{Call: _e.mock.On("Get", ctx, name)}
+}
+
+func (_c *MockStore_Get_Call) Run(run func(ctx context.Context, name string)) *MockStore_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_Get_Call) Return(_a0 *v0alpha1.Job, _a1 error) *MockStore_Get_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockStore_Get_Call) RunAndReturn(run func(context.Context, string) (*v0alpha1.Job, error)) *MockStore_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RenewLease provides a mock function with given fields: ctx, job
+func (_m *MockStore) RenewLease(ctx context.Context, job *v0alpha1.Job) error {
+	ret := _m.Called(ctx, job)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenewLease")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Job) error); ok {
+		r0 = rf(ctx, job)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockStore_RenewLease_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RenewLease'
+type MockStore_RenewLease_Call struct {
+	*mock.Call
+}
+
+// RenewLease is a helper method to define mock.On call
+//   - ctx context.Context
+//   - job *v0alpha1.Job
+func (_e *MockStore_Expecter) RenewLease(ctx interface{}, job interface{}) *MockStore_RenewLease_Call {
+	return &MockStore_RenewLease_Call{Call: _e.mock.On("RenewLease", ctx, job)}
+}
+
+func (_c *MockStore_RenewLease_Call) Run(run func(ctx context.Context, job *v0alpha1.Job)) *MockStore_RenewLease_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*v0alpha1.Job))
+	})
+	return _c
+}
+
+func (_c *MockStore_RenewLease_Call) Return(_a0 error) *MockStore_RenewLease_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockStore_RenewLease_Call) RunAndReturn(run func(context.Context, *v0alpha1.Job) error) *MockStore_RenewLease_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, job
 func (_m *MockStore) Update(ctx context.Context, job *v0alpha1.Job) (*v0alpha1.Job, error) {
 	ret := _m.Called(ctx, job)

@@ -113,7 +113,7 @@ describe('Backend / Frontend result comparison', () => {
   const jsonInputs = readdirSync(inputDir);
 
   jsonInputs.forEach((inputFile) => {
-    it.skip(`should migrate ${inputFile} correctly`, async () => {
+    it(`should migrate ${inputFile} correctly`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
       const backendOutput = JSON.parse(readFileSync(path.join(outputDir, inputFile), 'utf8'));
 

@@ -410,6 +410,9 @@
       "id": 1,
       "options": {
         "cellHeight": "sm",
+        "frozenColumns": {
+          "left": 1
+        },
         "footer": {
           "countRows": false,
           "enablePagination": false,
@@ -1670,5 +1673,5 @@
   "timezone": "",
   "title": "Panel Tests - Table - Kitchen Sink",
   "uid": "dcb9f5e9-8066-4397-889e-864b99555dbb",
-  "version": 7
+  "version": 8
 }
