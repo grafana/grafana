@@ -29,11 +29,11 @@ composableKinds: PanelCfg: {
 			{
 				// Select the pie chart display style.
 				PieChartType: "pie" | "donut" @cuetsy(kind="enum")
-				// Select the sorting of the pie slices.
-				//  - Clockwise - The slices are sorted descending by value in the clockwise direction.
-				//  - Counterclockwise - The slices are sorted ascending by value in the clockwise direction.
+				// Select how to sort the pie slices.
+				//  - Descending - The slices are sorted in descending value going clockwise (default).
+				//  - Ascending - The slices are sorted in ascending value going clockwise.
 				//  - None - The slices are not sorted and the order of the query/transform is maintained.
-				PieSortOption: "clockwise" | "counterclockwise" | "none" @cuetsy(kind="enum")
+				PieChartSortOptions: "descending" | "ascending" | "none" @cuetsy(kind="enum")
 				// Select labels to display on the pie chart.
 				//  - Name - The series or field name.
 				//  - Percent - The percentage of the whole.
@@ -51,7 +51,7 @@ composableKinds: PanelCfg: {
 					common.OptionsWithTooltip
 					common.SingleStatBaseOptions
 					pieType: PieChartType
-					pieSorting: PieSortOption
+					pieSorting: PieChartSortOptions
 					displayLabels: [...PieChartLabels]
 					legend: PieChartLegendOptions
 				} @cuetsy(kind="interface")

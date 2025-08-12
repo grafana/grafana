@@ -21,12 +21,12 @@ export enum PieChartType {
 }
 
 /**
- * Select the sorting of the pie slices.
- *  - Clockwise - The slices are sorted descending by value in the clockwise direction.
- *  - Counterclockwise - The slices are sorted ascending by value in the clockwise direction.
+ * Select how to sort the pie slices.
+ *  - Descending - The slices are sorted in descending value going clockwise (default).
+ *  - Ascending - The slices are sorted in ascending value going clockwise.
  *  - None - The slices are not sorted and the order of the query/transform is maintained.
  */
-export enum PieSortOption {
+export enum PieChartSortOptions {
   Clockwise = 'clockwise',
   Counterclockwise = 'counterclockwise',
   None = 'none',
@@ -65,7 +65,7 @@ export const defaultPieChartLegendOptions: Partial<PieChartLegendOptions> = {
 export interface Options extends common.OptionsWithTooltip, common.SingleStatBaseOptions {
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
-  pieSorting: PieSortOption;
+  pieSorting: PieChartSortOptions;
   pieType: PieChartType;
 }
 

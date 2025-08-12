@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieSortOption, PieChartLegendValues, Options } from './panelcfg.gen';
+import { PieChartLegendOptions, PieChartSortOptions, PieChartLegendValues, Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -68,7 +68,7 @@ export function PieChartPanel(props: Props) {
             tooltipOptions={options.tooltip}
             pieType={options.pieType}
             pieSorting={options.pieSorting}
-	    displayLabels={options.displayLabels}
+            displayLabels={options.displayLabels}
           />
         );
       }}
@@ -87,14 +87,14 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const legendItems: VizLegendItem[] = displayValues
     // Sort the legend according to the pie slice sorting.
     .sort((a, b) => {
-      if(props.options.pieSorting === PieSortOption.None){
-	return 1;
-      } else if (props.options.pieSorting === PieSortOption.Counterclockwise){
-	// Reverse compared objects so that the clockwise sorting (default)
-	// is inverted.
-	let tmp = a;
-	a = b;
-	b = tmp;
+      if (props.options.pieSorting === PieChartSortOptions.None) {
+        return 1;
+      } else if (props.options.pieSorting === PieChartSortOptions.Ascending) {
+        // Reverse compared objects so that the clockwise sorting (default)
+        // is inverted.
+        let tmp = a;
+        a = b;
+        b = tmp;
       }
 
       if (isNaN(a.display.numeric)) {

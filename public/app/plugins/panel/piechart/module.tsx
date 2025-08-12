@@ -7,7 +7,14 @@ import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';
-import { Options, FieldConfig, PieChartType, PieSortOption, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
+import {
+  Options,
+  FieldConfig,
+  PieChartType,
+  PieChartSortOptions,
+  PieChartLabels,
+  PieChartLegendValues,
+} from './panelcfg.gen';
 import { PieChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
@@ -49,17 +56,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
         defaultValue: PieChartType.Pie,
       })
       .addSelect({
-        name: 'Piechart sorting',
-	description: 'How shall the slices be sorted',
-	path: 'pieSorting',
-	settings: {
-	  options: [
-		  {value: PieSortOption.Clockwise, label: 'Clockwise'},
-		  {value: PieSortOption.Counterclockwise, label: 'Counterclockwise'},
-		  {value: PieSortOption.None, label:'None'}
-	  ],
-	},
-	defaultValue: PieSortOption.Clockwise,
+        name: 'Slice sorting',
+        description: 'Select how to sort the pie slices.',
+        path: 'pieSorting',
+        settings: {
+          options: [
+            { value: PieChartSortOptions.Descending, label: 'Descending' },
+            { value: PieChartSortOptions.Ascending, label: 'Ascending' },
+            { value: PieChartSortOptions.None, label: 'None' },
+          ],
+        },
+        defaultValue: PieChartSortOptions.Descending,
       })
       .addMultiSelect({
         name: t('piechart.name-labels', 'Labels'),
