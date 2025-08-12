@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
@@ -6,8 +5,6 @@ import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps, SQLDialect, toOption } from '../types';
-
-import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 
 export interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;
@@ -37,13 +34,11 @@ export const DatasetSelector = ({
   const hasPreconfigCondition = !!preconfiguredDataset || dialect === 'postgres';
 
   const state = useAsync(async () => {
-    if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
-      // If a default database is already configured for a MSSQL or MySQL data source, OR the data source is Postgres, no need to fetch other databases.
-      if (hasPreconfigCondition) {
-        // Set the current database to the preconfigured database.
-        onChange(toOption(preconfiguredDataset));
-        return [toOption(preconfiguredDataset)];
-      }
+    // If a default database is already configured for a MSSQL or MySQL data source, OR the data source is Postgres, no need to fetch other databases.
+    if (hasPreconfigCondition) {
+      // Set the current database to the preconfigured database.
+      onChange(toOption(preconfiguredDataset));
+      return [toOption(preconfiguredDataset)];
     }
 
     // If there is no preconfigured database, but there is a selected dataset, set the current database to the selected dataset.
@@ -55,24 +50,6 @@ export const DatasetSelector = ({
     const datasets = await db.datasets();
     return datasets.map(toOption);
   }, []);
-
-  useEffect(() => {
-    if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
-      // Set default dataset when values are fetched
-      if (!dataset) {
-        if (state.value && state.value[0]) {
-          onChange(state.value[0]);
-        }
-      } else {
-        if (state.value && state.value.find((v) => v.value === dataset) === undefined) {
-          // if value is set and newly fetched values does not contain selected value
-          if (state.value.length > 0) {
-            onChange(state.value[0]);
-          }
-        }
-      }
-    }
-  }, [state.value, onChange, dataset]);
 
   return (
     <Select

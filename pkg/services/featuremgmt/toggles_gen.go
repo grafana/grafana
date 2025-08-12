@@ -139,10 +139,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagSqlDatasourceDatabaseSelection
-	// Enables previous SQL data source dataset dropdown behavior
-	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
