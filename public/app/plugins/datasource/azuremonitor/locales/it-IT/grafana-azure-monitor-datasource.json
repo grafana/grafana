@@ -52,7 +52,7 @@
       "button-use-query": "Utilizza questa query",
       "label-categories": "Categorie",
       "label-query-results": "Risultati della query: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Impossibile elencare tutte le categorie",
       "placeholder-all-categories": "Tutte le categorie",
       "placeholder-search-logs": "Cerca query dei registri",
       "text-loading": "Caricamento in corso..."
@@ -166,8 +166,8 @@
       "tooltip-limit": "Limita il numero di righe restituite (il valore predefinito è 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Vuoi davvero passare ai registri di base?",
+      "confirmText-confirm": "Conferma",
       "description-basic-logs-queries": "Le query dei registri di base comportano un costo in base alla quantità di dati analizzati.",
       "label-logs": "Registri",
       "title-basic-logs-queries": "Query sui registri di base",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "I registri di Azure avviano il pulsante della query",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Il passaggio a Builder eliminerà la query KQL corrente e cancellerà l'editor KQL. Vuoi davvero continuare?",
+      "body-switching-to-kql": "Il passaggio a KQL annullerà le impostazioni correnti del generatore. Vuoi davvero continuare?",
       "button-kick-start-your-query": "Avvia la query",
       "button-run-query": "Esegui query",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Passa a {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Builder",
+        "label-kql": "KQL"
       },
       "label-service": "Servizio",
       "placeholder-service": "Servizio...",
@@ -239,7 +239,7 @@
       "title-error-occurred": "Si è verificato un errore durante la richiesta di risorse da Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Ambito"
     },
     "search": {
       "aria-label-resource-search": "Ricerca delle risorse",
