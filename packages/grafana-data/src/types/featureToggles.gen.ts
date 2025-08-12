@@ -161,10 +161,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables previous SQL data source dataset dropdown behavior
-  */
-  sqlDatasourceDatabaseSelection?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
@@ -447,7 +443,7 @@ export interface FeatureToggles {
   alertingSaveStatePeriodic?: boolean;
   /**
   * Enables the compressed protobuf-based alert state storage
-  * @default false
+  * @default true
   */
   alertingSaveStateCompressed?: boolean;
   /**

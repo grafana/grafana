@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "All resources have been deleted successfully",
-      "all-moved": "All resources have been moved successfully",
-      "button-done": "Done",
-      "failed-alert_one": "{{count}} items failed",
-      "failed-alert_other": "{{count}} items failed",
-      "progress-title": "Success"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-path-not-found": "Path not found"
+      "error-deleting-resources": "Error deleting resources"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
-      "deleting": "Deleting",
+      "button-tooltip": "Please select a target folder",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
         "repository-not-found-title": "Repository not found"
       },
-      "error-file-content-not-found": "File content not found",
-      "error-path-not-found": "Path not found",
-      "error-target-folder-path-missing": "Target folder path is missing",
-      "error-title": "Target Folder Error",
+      "error-moving-resources": "Error moving resources",
+      "error-no-target-folder-path": "Target folder path in repository is invalid, please select another folder.",
       "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
-      "moving": "Moving",
-      "progress": "Progress: {{current}} of {{total}}",
       "target-folder": "Target Folder"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} item"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
+      },
       "collapse-folder-button": "Collapse folder {{title}}",
       "expand-folder-button": "Expand folder {{title}}",
       "name-column": "Name",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": "Invalid regex"
+          },
           "info": "Show or hide the {{type}} dynamically based on the variable value.",
           "label": "Template variable",
           "name": "Name",
           "operator": {
             "equals": "Equals",
-            "not-equals": "Not equals"
+            "matches": "Matches",
+            "not-equals": "Not equals",
+            "not-matches": "Not matches"
           },
           "value": "Value"
         }
@@ -6806,6 +6802,7 @@
       }
     }
   },
+  "exemplar-tooltip-header": "Exemplar",
   "explore": {
     "accordian-logs": {
       "events": "Events",
@@ -10941,6 +10938,9 @@
       "label-plugin-id": "Plugin Id",
       "label-severity": "Severity"
     },
+    "no-updates-available": {
+      "message": "All plugins are up to date"
+    },
     "not-found-plugin": {
       "body-plugin-not-found": "That plugin cannot be found. Please check the url is correct or <1></1>go to the <3>plugin catalog</3>.",
       "title-plugin-not-found": "Plugin not found"
@@ -11438,8 +11438,13 @@
       "title-repository-is-unhealthy": "Repository is unhealthy"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": "View repository"
+      },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
-      "view-repository": "View repository"
+      "sync-job": {
+        "view-repository": "View repository"
+      }
     },
     "repository-overview": {
       "checked": "Checked:",
@@ -13639,9 +13644,14 @@
     "regression-transformer-editor": {
       "label": {
         "cubic": "Cubic",
+        "decic": "Decic",
+        "nonic": "Nonic",
+        "octic": "Octic",
         "quadratic": "Quadratic",
         "quartic": "Quartic",
-        "quintic": "Quintic"
+        "quintic": "Quintic",
+        "septic": "Septic",
+        "sextic": "Sextic"
       },
       "label-degree": "Degree",
       "label-model-type": "Model type",
@@ -13658,6 +13668,7 @@
       "tags": {
         "regression-analysis": "Regression analysis"
       },
+      "tooltip-high-degree-polynomial": "Higher-degree polynomials (e.g., degree 4 or higher) can result in misleading trends and unstable fits. Proceed with caution.",
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {

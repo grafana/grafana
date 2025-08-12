@@ -400,6 +400,20 @@ func TestMetaAccessor(t *testing.T) {
 		secure, err := meta.GetSecureValues()
 		require.NoError(t, err)
 		require.JSONEq(t, `{"v1": {"name": "hello"}}`, asJSON(secure, true))
+
+		// Check that we can write
+		err = meta.SetSecureValues(common.InlineSecureValues{
+			"v2": {Name: "bbb"},
+		})
+		require.NoError(t, err)
+		secure, err = meta.GetSecureValues()
+		require.NoError(t, err)
+		require.JSONEq(t, `{"v2": {"name": "bbb"}}`, asJSON(secure, true)) // NOTE: v1 was removed
+
+		err = meta.SetSecureValues(common.InlineSecureValues{
+			"UNKNOWN": {Name: "bbb"}, // not a valid name
+		})
+		require.Error(t, err)
 	})
 
 	t.Run("test reading old repo fields (now manager+source)", func(t *testing.T) {
