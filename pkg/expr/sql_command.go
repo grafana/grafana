@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -114,13 +115,15 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	rsp := mathexp.Results{}
 
 	defer func() {
-		span.End()
 		duration := float64(time.Since(start).Milliseconds())
 
 		statusLabel := "ok"
 		if rsp.Error != nil {
 			statusLabel = "error"
+			span.RecordError(rsp.Error)
+			span.SetStatus(codes.Error, rsp.Error.Error())
 		}
+		span.End()
 
 		metrics.SqlCommandCount.WithLabelValues(statusLabel).Inc()
 		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
@@ -154,7 +157,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	db := sql.DB{}
 	frame, err := db.QueryFrames(ctx, tracer, gr.refID, gr.query, allFrames, sql.WithMaxOutputCells(gr.outputLimit), sql.WithTimeout(gr.timeout))
-
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err

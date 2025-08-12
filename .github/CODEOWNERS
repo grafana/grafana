@@ -43,8 +43,8 @@
 /docs/sources/datasources/                                                        @lwandz13
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @irenerl24 @GrafanaWriter
-/docs/sources/upgrade-guide/                                                      @imatwawana
-/docs/sources/whatsnew/                                                           @imatwawana
+/docs/sources/upgrade-guide/                                                      @jtvdez
+/docs/sources/whatsnew/                                                           @jtvdez
 
 /docs/sources/developers/plugins/                                                 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 
@@ -115,6 +115,7 @@
 /pkg/components/loki/ @grafana/grafana-backend-group
 /pkg/components/null/ @grafana/grafana-backend-group
 /pkg/components/simplejson/ @grafana/grafana-backend-group
+/pkg/configprovider/ @grafana/grafana-backend-services-squad
 /pkg/events/ @grafana/grafana-backend-group
 /pkg/extensions/ @grafana/grafana-backend-group
 /pkg/ifaces/ @grafana/grafana-backend-group
@@ -737,7 +738,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/GraphNG/ @grafana/dataviz-squad
 /public/app/core/components/help/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Indent/ @grafana/grafana-search-navigate-organise
-/public/app/core/components/InviteUserButton/ @grafana/sharing-squad
 /public/app/core/components/Layers/ @grafana/dataviz-squad
 /public/app/core/components/Login/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/NativeScrollbar.tsx @grafana/grafana-search-navigate-organise
@@ -1134,6 +1134,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/setup-grafana-bench/ @Proximyst
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
 /.github/actions/change-detection @grafana/grafana-developer-enablement-squad
+/.github/actions/setup-node @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-developer-enablement-squad
 /.github/workflows/actionlint.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
