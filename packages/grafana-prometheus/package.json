@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "AGPL-3.0-only",
   "name": "@grafana/prometheus",
-  "version": "11.5.8",
+  "version": "11.5.9",
   "description": "Grafana Prometheus Library",
   "keywords": [
     "typescript"
@@ -38,12 +38,12 @@
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@floating-ui/react": "0.27.3",
-    "@grafana/data": "11.5.8",
+    "@grafana/data": "11.5.9",
     "@grafana/experimental": "2.1.6",
     "@grafana/faro-web-sdk": "1.12.2",
-    "@grafana/runtime": "11.5.8",
-    "@grafana/schema": "11.5.8",
-    "@grafana/ui": "11.5.8",
+    "@grafana/runtime": "11.5.9",
+    "@grafana/schema": "11.5.9",
+    "@grafana/ui": "11.5.9",
     "@hello-pangea/dnd": "17.0.0",
     "@leeoniya/ufuzzy": "1.0.18",
     "@lezer/common": "1.2.3",
@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@emotion/eslint-plugin": "11.12.0",
-    "@grafana/e2e-selectors": "11.5.8",
+    "@grafana/e2e-selectors": "11.5.9",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-image": "3.0.3",
     "@rollup/plugin-node-resolve": "16.0.0",
