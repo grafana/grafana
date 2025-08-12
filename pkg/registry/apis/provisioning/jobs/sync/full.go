@@ -127,6 +127,11 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			Group:    gvk.Group,
 		}
 
+		// Resolve resource name from kind for accurate progress recording
+		if _, gvr, gvrErr := clients.ForKind(gvk); gvrErr == nil {
+			result.Resource = gvr.Resource
+		}
+
 		if err != nil {
 			result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 		}

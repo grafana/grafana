@@ -211,7 +211,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Action:   repository.FileActionCreated,
 					Path:     "dashboards/one.json",
 					Name:     "test-dashboard",
-					Resource: "Dashboard",
+					Resource: resources.DashboardResource.Resource,
 					Group:    "dashboards",
 				}).Return()
 			},
@@ -236,7 +236,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Action:   repository.FileActionCreated,
 					Path:     "dashboards/test.json",
 					Name:     "test-dashboard",
-					Resource: "Dashboard",
+					Resource: resources.DashboardResource.Resource,
 					Group:    "dashboards",
 				}).Return()
 			},
@@ -286,7 +286,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Action:   repository.FileActionUpdated,
 					Path:     "dashboards/test.json",
 					Name:     "test-dashboard",
-					Resource: "Dashboard",
+					Resource: resources.DashboardResource.Resource,
 					Group:    "dashboards",
 				}).Return()
 			},
@@ -377,7 +377,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "dashboards/test.json",
 					Existing: &provisioning.ResourceListItem{
 						Name:     "test-dashboard",
-						Resource: "Dashboard",
+						Resource: resources.DashboardResource.Resource,
 						Group:    "dashboards",
 					},
 				},
@@ -410,7 +410,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 				clients.On("ForResource", schema.GroupVersionResource{
 					Group:    "dashboards",
-					Resource: "Dashboard",
+					Resource: resources.DashboardResource.Resource,
 				}).Return(fakeDynamicClient.Resource(resources.DashboardResource), schema.GroupVersionKind{
 					Kind:    "Dashboard",
 					Group:   "dashboards",
@@ -421,7 +421,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Action:   repository.FileActionDeleted,
 					Path:     "dashboards/test.json",
 					Name:     "test-dashboard",
-					Resource: "Dashboard",
+					Resource: resources.DashboardResource.Resource,
 					Group:    "dashboards",
 					Error:    nil,
 				}).Return()
@@ -436,7 +436,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "dashboards/test.json",
 					Existing: &provisioning.ResourceListItem{
 						Name:     "test-dashboard",
-						Resource: "Dashboard",
+						Resource: resources.DashboardResource.Resource,
 						Group:    "dashboards",
 					},
 				},
@@ -469,7 +469,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 				clients.On("ForResource", schema.GroupVersionResource{
 					Group:    "dashboards",
-					Resource: "Dashboard",
+					Resource: resources.DashboardResource.Resource,
 				}).Return(fakeDynamicClient.Resource(resources.DashboardResource), schema.GroupVersionKind{
 					Kind:    "Dashboard",
 					Group:   "dashboards",
@@ -480,7 +480,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return result.Action == repository.FileActionDeleted &&
 						result.Path == "dashboards/test.json" &&
 						result.Name == "test-dashboard" &&
-						result.Resource == "Dashboard" &&
+						result.Resource == resources.DashboardResource.Resource &&
 						result.Group == "dashboards" &&
 						result.Error != nil &&
 						result.Error.Error() == "deleting resource dashboards/Dashboard test-dashboard: delete failed"
@@ -537,7 +537,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Existing: &provisioning.ResourceListItem{
 						Name:     "test-dashboard",
 						Group:    "dashboards",
-						Resource: "Dashboard",
+						Resource: resources.DashboardResource.Resource,
 					},
 				},
 			},
@@ -546,13 +546,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 				clients.On("ForResource", schema.GroupVersionResource{
 					Group:    "dashboards",
-					Resource: "Dashboard",
+					Resource: resources.DashboardResource.Resource,
 				}).Return(nil, schema.GroupVersionKind{}, errors.New("didn't work"))
 
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
 					Name:     "test-dashboard",
 					Group:    "dashboards",
-					Resource: "Dashboard",
+					Resource: resources.DashboardResource.Resource,
 					Action:   repository.FileActionDeleted,
 					Path:     "dashboards/test.json",
 					Error:    fmt.Errorf("get client for deleted object: %w", errors.New("didn't work")),

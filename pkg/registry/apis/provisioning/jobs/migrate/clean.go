@@ -37,11 +37,12 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 			return fmt.Errorf("get resource client: %w", err)
 		}
 
+		kindCopy := kind
 		if err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 			result := jobs.JobResourceResult{
 				Name:     item.GetName(),
-				Resource: item.GetKind(),
-				Group:    item.GroupVersionKind().Group,
+				Resource: kindCopy.Resource,
+				Group:    kindCopy.Group,
 				Action:   repository.FileActionDeleted,
 			}
 

@@ -8,7 +8,20 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+// resourceNameForGVK returns the REST resource name for supported provisioning kinds
+func resourceNameForGVK(gvk schema.GroupVersionKind) string {
+	if gvk.Group == resources.FolderResource.Group && gvk.Kind == "Folder" {
+		return resources.FolderResource.Resource
+	}
+	if gvk.Group == resources.DashboardResource.Group && gvk.Kind == "Dashboard" {
+		return resources.DashboardResource.Resource
+	}
+	// Fallback to Kind if unknown (should not happen for supported provisioning resources)
+	return gvk.Kind
+}
 
 // Convert git changes into resource file changes
 func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
@@ -81,7 +94,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 			}
 			result.Name = name
-			result.Resource = gvk.Kind
+			result.Resource = resourceNameForGVK(gvk)
 			result.Group = gvk.Group
 		case repository.FileActionDeleted:
 			name, gvk, err := repositoryResources.RemoveResourceFromFile(ctx, change.Path, change.PreviousRef)
@@ -89,7 +102,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				result.Error = fmt.Errorf("removing resource from file %s: %w", change.Path, err)
 			}
 			result.Name = name
-			result.Resource = gvk.Kind
+			result.Resource = resourceNameForGVK(gvk)
 			result.Group = gvk.Group
 		case repository.FileActionRenamed:
 			name, gvk, err := repositoryResources.RenameResourceFile(ctx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
@@ -97,7 +110,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				result.Error = fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err)
 			}
 			result.Name = name
-			result.Resource = gvk.Kind
+			result.Resource = resourceNameForGVK(gvk)
 			result.Group = gvk.Group
 		case repository.FileActionIgnored:
 			// do nothing
