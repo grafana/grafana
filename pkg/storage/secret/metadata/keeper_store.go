@@ -100,7 +100,6 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv1beta
 	}
 
 	s.metrics.KeeperMetadataCreateDuration.WithLabelValues(string(createdKeeper.Spec.GetType())).Observe(time.Since(start).Seconds())
-	s.metrics.KeeperMetadataCreateCount.WithLabelValues(string(createdKeeper.Spec.GetType())).Inc()
 
 	return createdKeeper, nil
 }
@@ -125,7 +124,6 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	}
 
 	s.metrics.KeeperMetadataGetDuration.WithLabelValues(string(keeper.Spec.GetType())).Observe(time.Since(start).Seconds())
-	s.metrics.KeeperMetadataGetCount.WithLabelValues(string(keeper.Spec.GetType())).Inc()
 
 	return keeper, nil
 }
@@ -240,7 +238,6 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv1b
 	}
 
 	s.metrics.KeeperMetadataUpdateDuration.WithLabelValues(string(keeper.Spec.GetType())).Observe(time.Since(start).Seconds())
-	s.metrics.KeeperMetadataUpdateCount.WithLabelValues(string(keeper.Spec.GetType())).Inc()
 
 	return keeper, nil
 }
@@ -280,7 +277,6 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 	}
 
 	s.metrics.KeeperMetadataDeleteDuration.Observe(time.Since(start).Seconds())
-	s.metrics.KeeperMetadataDeleteCount.Inc()
 
 	return nil
 }
@@ -337,7 +333,6 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	}
 
 	s.metrics.KeeperMetadataListDuration.Observe(time.Since(start).Seconds())
-	s.metrics.KeeperMetadataListCount.Inc()
 
 	return keepers, nil
 }

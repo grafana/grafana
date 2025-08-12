@@ -90,7 +90,6 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 		logging.FromContext(ctx).Info("SecureValueService.Create finished", args...)
 
 		s.metrics.SecureValueCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueCreateCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	return s.createNewVersion(ctx, sv, actorUID)
@@ -126,7 +125,6 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		logging.FromContext(ctx).Info("SecureValueService.Update finished", args...)
 
 		s.metrics.SecureValueUpdateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueUpdateCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	if newSecureValue.Spec.Value == nil {
@@ -245,7 +243,6 @@ func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace
 		logging.FromContext(ctx).Info("SecureValueService.Read finished", args...)
 
 		s.metrics.SecureValueReadDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueReadCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	defer span.End()
@@ -281,7 +278,6 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		logging.FromContext(ctx).Info("SecureValueService.List finished", args...)
 
 		s.metrics.SecureValueListDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueListCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -353,7 +349,6 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 		logging.FromContext(ctx).Info("SecureValueService.Delete finished", args...)
 
 		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueDeleteCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	// TODO: does this need to be for update?

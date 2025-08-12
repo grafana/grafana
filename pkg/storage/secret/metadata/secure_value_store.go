@@ -72,7 +72,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Create", args...)
 
 		s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueMetadataCreateCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	// Set inside the transaction callback
@@ -268,7 +267,6 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", "namespace", namespace, "name", name, "success", readErr == nil, "error", readErr)
 
 		s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueMetadataGetCount.Inc()
 	}()
 
 	secureValue, err := s.readActiveVersion(ctx, namespace, name, opts)
@@ -345,7 +343,6 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	}
 
 	s.metrics.SecureValueMetadataListDuration.Observe(time.Since(start).Seconds())
-	s.metrics.SecureValueMetadataListCount.Inc()
 
 	return secureValues, nil
 }
