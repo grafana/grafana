@@ -38,6 +38,7 @@ import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAler
 import { EventDetails } from './EventDetails';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { useRuleHistoryRecords } from './useRuleHistoryRecords';
+import { parseBackendLabelFilters } from './utils';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 const PAGE_SIZE = 100;
@@ -65,6 +66,8 @@ export const HistoryEventsList = ({
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
+  const labelFilters = parseBackendLabelFilters(valueInLabelFilter.toString());
+
   const {
     data: stateHistory,
     isLoading,
@@ -74,6 +77,7 @@ export const HistoryEventsList = ({
     from: from,
     to: to,
     limit: LIMIT_EVENTS,
+    labels: labelFilters,
   });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
@@ -102,7 +106,7 @@ export const HistoryEventsList = ({
         >
           {t(
             'alerting.central-alert-history.too-many-events.text',
-            'The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.'
+            'The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.'
           )}
         </Alert>
       )}

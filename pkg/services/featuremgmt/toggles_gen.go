@@ -895,6 +895,10 @@ const (
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
+	// FlagKubernetesAuthzResourcePermissionApis
+	// Registers AuthZ resource permission /apis endpoints
+	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
+
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
@@ -974,6 +978,10 @@ const (
 	// FlagAdhocFiltersInTooltips
 	// Enable adhoc filter buttons in visualization tooltips
 	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
+
+	// FlagFavoriteDatasources
+	// Enable favorite datasources
+	FlagFavoriteDatasources = "favoriteDatasources"
 
 	// FlagNewLogContext
 	// New Log Context component

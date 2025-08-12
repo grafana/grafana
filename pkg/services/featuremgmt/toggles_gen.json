@@ -444,14 +444,17 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-27T17:47:33Z"
+        "resourceVersion": "1754657532777",
+        "creationTimestamp": "2025-01-27T17:47:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-08 12:52:12.777935 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1318,6 +1321,19 @@
     },
     {
       "metadata": {
+        "name": "favoriteDatasources",
+        "resourceVersion": "1754648387873",
+        "creationTimestamp": "2025-08-08T10:19:47Z"
+      },
+      "spec": {
+        "description": "Enable favorite datasources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "featureHighlights",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2022-02-03T11:53:23Z"
@@ -1736,6 +1752,20 @@
       },
       "spec": {
         "description": "Registers AuthZ /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzResourcePermissionApis",
+        "resourceVersion": "1754668670559",
+        "creationTimestamp": "2025-08-08T15:57:50Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ resource permission /apis endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
