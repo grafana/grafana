@@ -184,7 +184,7 @@ export function setAllSelection(
           continue;
         }
 
-        // Skip entire provisioned repository tree during "select all"
+        // Skip all provisioned resources during "select all" on root level
         if (child.managedBy === ManagerKind.Repo && !child.parentUID) {
           continue;
         }

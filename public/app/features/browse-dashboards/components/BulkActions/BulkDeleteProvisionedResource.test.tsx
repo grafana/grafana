@@ -7,6 +7,8 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
+
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 
 // Set up backendSrv as recommended in the PR comment
@@ -58,6 +60,10 @@ jest.mock('../BrowseActions/useSelectionRepoValidation', () => ({
   useSelectionRepoValidation: jest.fn(),
 }));
 
+const mockUseSelectionRepoValidation = useSelectionRepoValidation as jest.MockedFunction<
+  typeof useSelectionRepoValidation
+>;
+
 describe('BulkDeleteProvisionedResource', () => {
   const defaultRepository: RepositoryView = {
     name: 'test-folder', // This must match the folderUid passed to the component
@@ -97,9 +103,10 @@ describe('BulkDeleteProvisionedResource', () => {
       isInstanceManaged: false,
     });
 
-    const { useSelectionRepoValidation } = jest.requireMock('../BrowseActions/useSelectionRepoValidation');
-    useSelectionRepoValidation.mockReturnValue({
+    mockUseSelectionRepoValidation.mockReturnValue({
       selectedItemsRepoUID: 'test-folder',
+      isInLockedRepo: jest.fn().mockReturnValue(false),
+      isCrossRepo: false,
     });
   });
 
@@ -127,9 +134,10 @@ describe('BulkDeleteProvisionedResource', () => {
       isInstanceManaged: false,
     });
 
-    const { useSelectionRepoValidation } = jest.requireMock('../BrowseActions/useSelectionRepoValidation');
-    useSelectionRepoValidation.mockReturnValue({
+    mockUseSelectionRepoValidation.mockReturnValue({
       selectedItemsRepoUID: repository?.name || 'test-folder',
+      isInLockedRepo: jest.fn().mockReturnValue(false),
+      isCrossRepo: false,
     });
 
     const renderResult = render(
