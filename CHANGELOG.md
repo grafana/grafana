@@ -1,3 +1,16 @@
+<!-- 11.4.8 START -->
+
+# 11.4.8 (2025-08-12)
+
+### Features and enhancements
+
+- **Go:** Update to 1.24.6 [#109316](https://github.com/grafana/grafana/pull/109316), [@Proximyst](https://github.com/Proximyst)
+
+### Bug fixes
+
+- **Dashboards:** Panel react for `timeFrom` and `timeShift` changes using variables [#98659](https://github.com/grafana/grafana/pull/98659), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+
+<!-- 11.4.8 END -->
 <!-- 12.1.0 START -->
 
 # 12.1.0 (2025-07-23)
