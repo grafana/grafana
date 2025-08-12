@@ -439,6 +439,11 @@ type ResourceStats struct {
 	// +listType=atomic
 	Instance []ResourceCount `json:"instance,omitempty"`
 
+	// Stats across all unified storage
+	// When legacy storage is still used, this will offer a shim
+	// +listType=atomic
+	Unmanaged []ResourceCount `json:"unmanaged,omitempty"`
+
 	// Stats for each manager
 	// +listType=atomic
 	Managed []ManagerStats `json:"managed,omitempty"`

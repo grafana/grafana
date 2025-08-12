@@ -20,6 +20,7 @@ import { FolderDTO } from 'app/types/folders';
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
 import { DescendantCount } from './BrowseActions/DescendantCount';
+import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
 import { getFolderURL } from './utils';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
@@ -150,14 +151,23 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'delete',
     title: parentFolder?.title,
   });
 
-  if (!initialValues) {
-    return null;
+  if (isReadOnlyRepo || !initialValues) {
+    return (
+      <RepoInvalidStateBanner
+        noRepository={!initialValues}
+        isReadOnlyRepo={isReadOnlyRepo}
+        readOnlyMessage={t(
+          'browse-dashboards.delete-folder.read-only-message',
+          'To delete this folder, please remove the folder from your repository.'
+        )}
+      />
+    );
   }
 
   return (

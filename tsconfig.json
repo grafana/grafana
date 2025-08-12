@@ -1,4 +1,5 @@
 {
+  "extends": "./scripts/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
     "baseUrl": "public/",
@@ -22,7 +23,6 @@
       "moduleResolution": "Node"
     }
   },
-  "extends": "@grafana/tsconfig/base.json",
   "include": [
     "public/app/**/*.ts*",
     "public/swagger/**/*.ts*",
