@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { useStyles2, Stack, Button } from '@grafana/ui';
