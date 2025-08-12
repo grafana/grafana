@@ -175,7 +175,7 @@ func (dp *DataPipeline) GetCommandTypes() []string {
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
-func (s *Service) buildPipeline(ctx context.Context,req *Request) (DataPipeline, error) {
+func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
 	}
