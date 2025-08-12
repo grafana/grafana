@@ -64,6 +64,65 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 	}
 }
 
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger.Debug("Processing queries", "queryLength", len(req.Queries), "function", logEntrypoint())
+
+	// create response struct
+	response := backend.NewQueryDataResponse()
+
+	// loop over queries and execute them individually.
+	for i, q := range req.Queries {
+		ctxLogger.Debug("Processing query", "counter", i, "function", logEntrypoint())
+
+		var res *backend.DataResponse
+		var err error
+
+		switch q.QueryType {
+		case string(dataquery.TempoQueryTypeTraceId):
+			res, err = s.getTrace(ctx, req.PluginContext, q)
+			if err != nil {
+				ctxLogger.Error("Error processing query", "error", err)
+				return response, err
+			}
+
+		case string(dataquery.TempoQueryTypeTraceql):
+			res, err = s.runTraceQlQuery(ctx, req.PluginContext, q)
+			if err != nil {
+				ctxLogger.Error("Error processing query", "error", err)
+				return response, err
+			}
+
+		default:
+			return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", q.QueryType, q.RefID)
+		}
+
+		if res != nil {
+			ctxLogger.Debug("Query processed", "counter", i, "function", logEntrypoint())
+			response.Responses[q.RefID] = *res
+		} else {
+			ctxLogger.Debug("Query resulted in empty response", "counter", i, "function", logEntrypoint())
+		}
+	}
+
+	ctxLogger.Debug("All queries processed", "function", logEntrypoint())
+	return response, nil
+}
+
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*DatasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	instance, ok := i.(*DatasourceInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast datsource info")
+	}
+
+	return instance, nil
+}
+
 // Return the file, line, and (full-path) function name of the caller
 func getRunContext() (string, int, string) {
 	pc := make([]uintptr, 10)
@@ -79,55 +138,4 @@ func logEntrypoint() string {
 	parts := strings.Split(pathToFunction, "/")
 	functionName := parts[len(parts)-1]
 	return fmt.Sprintf("%s:%d[%s]", file, line, functionName)
-}
-
-func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	ctxLogger := s.logger.FromContext(ctx)
-	ctxLogger.Debug("Processing queries", "queryLength", len(req.Queries), "function", logEntrypoint())
-
-	// create response struct
-	response := backend.NewQueryDataResponse()
-
-	// loop over queries and execute them individually.
-	for i, q := range req.Queries {
-		ctxLogger.Debug("Processing query", "counter", i, "function", logEntrypoint())
-		if res, err := s.query(ctx, req.PluginContext, q); err != nil {
-			ctxLogger.Error("Error processing query", "error", err)
-			return response, err
-		} else {
-			if res != nil {
-				ctxLogger.Debug("Query processed", "counter", i, "function", logEntrypoint())
-				response.Responses[q.RefID] = *res
-			} else {
-				ctxLogger.Debug("Query resulted in empty response", "counter", i, "function", logEntrypoint())
-			}
-		}
-	}
-
-	ctxLogger.Debug("All queries processed", "function", logEntrypoint())
-	return response, nil
-}
-
-func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	switch query.QueryType {
-	case string(dataquery.TempoQueryTypeTraceId):
-		return s.getTrace(ctx, pCtx, query)
-	case string(dataquery.TempoQueryTypeTraceql):
-		return s.runTraceQlQuery(ctx, pCtx, query)
-	}
-	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
-}
-
-func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*DatasourceInfo, error) {
-	i, err := s.im.Get(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	instance, ok := i.(*DatasourceInfo)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast datsource info")
-	}
-
-	return instance, nil
 }
