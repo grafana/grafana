@@ -190,6 +190,137 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 	}
 }
 
+// BuildIndexNG returns an empty bleve index and saves it in the cache
+func (b *bleveBackend) BuildIndexNG(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	size int64,
+	resourceVersion int64,
+	fields resource.SearchableDocumentFields,
+	indexBuildReason string,
+	builder func(index resource.ResourceIndex) (int64, error),
+) (resource.ResourceIndex, error) {
+	// like BuildIndex. But with search-after-write support in mind
+	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndexNG")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+		attribute.Int64("size", size),
+		attribute.Int64("rv", resourceVersion),
+		attribute.String("reason", indexBuildReason),
+	)
+
+	mapper, err := GetBleveMappings(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	standardSearchFields := resource.StandardSearchFields()
+	allFields, err := getAllFields(standardSearchFields, fields)
+	if err != nil {
+		return nil, err
+	}
+
+	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion, "reason", indexBuildReason)
+	resourceDir := b.getResourceDir(key)
+
+	cachedIndex := b.getCachedIndex(key)
+	if cachedIndex != nil {
+		if b.indexMetrics != nil {
+			b.indexMetrics.OpenIndexes.WithLabelValues(cachedIndex.indexStorage).Dec()
+		}
+
+		err := cachedIndex.index.Close()
+		if err != nil {
+			logWithDetails.Error("failed to close cached index", "key", key, "err", err)
+		}
+
+		delete(b.cache, key)
+	}
+	b.cleanOldIndexes(resourceDir, "")
+
+	var index bleve.Index
+	newIndexType := indexStorageMemory
+
+	if size > b.opts.FileThreshold {
+		newIndexType = indexStorageFile
+
+		if !isPathWithinRoot(resourceDir, b.opts.Root) {
+			return nil, fmt.Errorf("invalid path %s", resourceDir)
+		}
+
+		index, err = bleve.New(resourceDir, mapper)
+		if err != nil {
+			return nil, fmt.Errorf("error creating new bleve index: %s %w", resourceDir, err)
+		}
+	} else {
+		index, err = bleve.NewMemOnly(mapper)
+		if err != nil {
+			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
+		}
+		logWithDetails.Info("Building index using memory")
+	}
+
+	idx := &bleveIndex{
+		key:             key,
+		index:           index,
+		indexStorage:    newIndexType,
+		fields:          fields,
+		allFields:       allFields,
+		standard:        standardSearchFields,
+		features:        b.features,
+		tracing:         b.tracer,
+		resourceVersion: resourceVersion,
+		indexDir:        resourceDir,
+	}
+
+	if newIndexType == indexStorageFile {
+		idx.SaveResourceVersionToDisk()
+	}
+
+	if b.indexMetrics != nil {
+		b.indexMetrics.IndexBuilds.WithLabelValues(indexBuildReason).Inc()
+	}
+
+	start := time.Now()
+	_, err = builder(idx)
+	if err != nil {
+		logWithDetails.Error("Failed to build index", "err", err)
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexBuildFailures.Inc()
+		}
+		return nil, fmt.Errorf("failed to build index: %w", err)
+	}
+	elapsed := time.Since(start)
+	logWithDetails.Info("Finished building index", "elapsed", elapsed)
+	if b.indexMetrics != nil {
+		b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
+	}
+
+	if newIndexType == indexStorageMemory {
+		idx.expiration = time.Now().Add(b.opts.IndexCacheTTL)
+	}
+
+	if idx.expiration.IsZero() {
+		logWithDetails.Info("Storing index in cache, with no expiration", "key", key)
+	} else {
+		logWithDetails.Info("Storing index in cache", "key", key, "expiration", idx.expiration)
+	}
+
+	b.cacheMx.Lock()
+	b.cache[key] = idx
+	b.cacheMx.Unlock()
+
+	if b.indexMetrics != nil {
+		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
+	}
+
+	return idx, nil
+}
+
 // BuildIndex builds an index from scratch.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 func (b *bleveBackend) BuildIndex(
@@ -201,6 +332,11 @@ func (b *bleveBackend) BuildIndex(
 	indexBuildReason string,
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
+	// TODO feature flag this
+	if 1 == 2 {
+		return b.BuildIndexNG(ctx, key, size, resourceVersion, fields, indexBuildReason, builder)
+	}
+
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
@@ -550,6 +686,9 @@ type bleveIndex struct {
 	key   resource.NamespacedResource
 	index bleve.Index
 
+	resourceVersion int64
+	indexDir string
+
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
 
@@ -590,6 +729,15 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	}
 
 	return b.index.Batch(batch)
+}
+
+func (b *bleveIndex) SaveResourceVersionToDisk() error {
+	err := os.WriteFile(filepath.Join(b.indexDir, "rv"), []byte(strconv.FormatInt(b.resourceVersion, 10)), 0644)
+	if err != nil {
+		return fmt.Errorf("error saving resourceVersion to disk: %s", err)
+	}
+
+	return nil
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {

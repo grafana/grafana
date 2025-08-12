@@ -640,8 +640,18 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	}
 
 	if idx != nil {
+		// probably also want to do the single flight thing here
+		// check latest rv in db with "fetchLatestRV" in unified/sql/backend.go
+		// if matches the index, all good
+		// if doesn't match:
+		// query diff from resource_history table: select one, two, three from resource_history where namespace = ns ...
+		// etc and rv > rv_from_index
+		// call BulkIndex with delta
+		// on success save latest rv in index folder
 		return idx, nil
 	}
+
+	// index not found, build it from scratch
 
 	ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
 		// We want to finish building of the index even if original context is canceled.
