@@ -100,7 +100,6 @@ export function TableCellTooltip({
         };
 
         const unpinPopper = () => {
-          console.log('unpin');
           setPinned(false);
           _hidePopper();
         };
@@ -127,6 +126,7 @@ export function TableCellTooltip({
             {popoverRef.current && (
               <Popover
                 {...popperProps}
+                show={popperProps.show || pinned}
                 wrapperClassName={tooltipWrapperClass}
                 className={className}
                 root={root}
