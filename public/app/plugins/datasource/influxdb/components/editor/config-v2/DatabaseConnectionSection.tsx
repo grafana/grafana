@@ -1,4 +1,4 @@
-import { Box, CollapsableSection, Alert, Space, Text, TextLink } from '@grafana/ui';
+import { Box, CollapsableSection, Alert, Space, Text } from '@grafana/ui';
 
 import { InfluxVersion } from '../../../types';
 
