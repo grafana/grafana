@@ -81,6 +81,54 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     return resources;
   }
 
+  async fetchFiltered(
+    type: ResourcePickerQueryType,
+    filters: { subscriptions: string[]; types: string[]; locations: string[] },
+    currentSelection?: AzureMonitorResource[]
+  ): Promise<ResourceRowGroup> {
+    try {
+      const subscriptions = await this.getSubscriptions(filters);
+
+      if (!currentSelection) {
+        return subscriptions;
+      }
+
+      let resources = subscriptions;
+      const promises = currentSelection.map((selection) => async () => {
+        if (selection.subscription) {
+          const resourceGroupURI = `/subscriptions/${selection.subscription}/resourceGroups/${selection.resourceGroup}`;
+
+          if (selection.resourceGroup && !findRow(resources, resourceGroupURI)) {
+            const resourceGroups = await this.getResourceGroupsBySubscriptionId(selection.subscription, type);
+            resources = addResources(resources, `/subscriptions/${selection.subscription}`, resourceGroups);
+          }
+
+          const resourceURI = resourceToString(selection);
+          if (selection.resourceName && !findRow(resources, resourceURI)) {
+            const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
+            resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
+          }
+        }
+      });
+
+      for (const promise of promises) {
+        // Fetch resources one by one, avoiding re-fetching the same resource
+        // and race conditions updating the resources array
+        await promise();
+      }
+
+      return resources;
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message !== 'No subscriptions were found') {
+          throw err;
+        }
+        return [];
+      }
+      throw err;
+    }
+  }
+
   async fetchAndAppendNestedRow(
     rows: ResourceRowGroup,
     parentRow: ResourceRow,
