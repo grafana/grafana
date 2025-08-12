@@ -204,6 +204,9 @@ type JobStatus struct {
 
 	// Summary of processed actions
 	Summary []*JobResourceSummary `json:"summary,omitempty"`
+
+	// URLs contains URLs for the reference branch or commit if applicable.
+	URLs *RepositoryURLs `json:"url,omitempty"`
 }
 
 // Convert a JOB to a
@@ -234,4 +237,29 @@ type JobResourceSummary struct {
 	// Report errors for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info
 	Errors []string `json:"errors,omitempty"`
+}
+
+// HistoricJob is an append only log, saving all jobs that have been processed.
+//
+// NOTE: This should not be used directly by any external consumer.
+// When there is a more stable integration with loki (an appropriate append only store)
+// this may be removed without notice.
+//
+// The repository name and type are stored as labels.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +genclient
+type HistoricJob struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   JobSpec   `json:"spec,omitempty"`
+	Status JobStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type HistoricJobList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []HistoricJob `json:"items,omitempty"`
 }
