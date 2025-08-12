@@ -2188,6 +2188,64 @@
         }
       }
     },
+    "/anonymous/devices": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "devices"
+        ],
+        "summary": "Lists all devices within the last 30 days",
+        "operationId": "listDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/devicesResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/anonymous/search": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "devices"
+        ],
+        "summary": "Lists all devices within the last 30 days",
+        "operationId": "SearchDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/devicesSearchResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/cloudmigration/migration": {
       "get": {
         "tags": [
@@ -9252,33 +9310,6 @@
             "$ref": "#/responses/internalServerError"
           }
         }
-      },
-      "post": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "devices"
-        ],
-        "summary": "Lists all devices within the last 30 days",
-        "operationId": "SearchDevices",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/devicesSearchResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
       }
     },
     "/search/sorting": {
@@ -9790,35 +9821,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/stats": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "devices"
-        ],
-        "summary": "Lists all devices within the last 30 days",
-        "operationId": "listDevices",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/devicesResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
@@ -14538,14 +14540,6 @@
         "status": {
           "type": "string"
         }
-      }
-    },
-    "CookiePreferences": {
-      "type": "object",
-      "properties": {
-        "analytics": {},
-        "functional": {},
-        "performance": {}
       }
     },
     "CookieType": {
@@ -19273,12 +19267,43 @@
         }
       }
     },
-    "Preferences": {
-      "description": "Spec defines user, team or org Grafana preferences",
+    "PreferencesCookiePreferences": {
+      "description": "+k8s:openapi-gen=true",
+      "type": "object",
+      "properties": {
+        "analytics": {},
+        "functional": {},
+        "performance": {}
+      }
+    },
+    "PreferencesNavbarPreference": {
+      "description": "+k8s:openapi-gen=true",
+      "type": "object",
+      "properties": {
+        "bookmarkUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PreferencesQueryHistoryPreference": {
+      "description": "+k8s:openapi-gen=true",
+      "type": "object",
+      "properties": {
+        "homeTab": {
+          "description": "one of: '' | 'query' | 'starred';",
+          "type": "string"
+        }
+      }
+    },
+    "PreferencesSpec": {
+      "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
         "cookiePreferences": {
-          "$ref": "#/definitions/CookiePreferences"
+          "$ref": "#/definitions/PreferencesCookiePreferences"
         },
         "homeDashboardUID": {
           "description": "UID for the home dashboard",
@@ -19289,10 +19314,10 @@
           "type": "string"
         },
         "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
+          "$ref": "#/definitions/PreferencesNavbarPreference"
         },
         "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
+          "$ref": "#/definitions/PreferencesQueryHistoryPreference"
         },
         "regionalFormat": {
           "description": "Selected locale (beta)",
@@ -19858,7 +19883,6 @@
       "type": "object",
       "properties": {
         "homeTab": {
-          "description": "one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -24941,7 +24965,7 @@
     "getPreferencesResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/Preferences"
+        "$ref": "#/definitions/PreferencesSpec"
       }
     },
     "getPublicAnnotationsResponse": {

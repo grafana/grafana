@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "기본 로그 활성화"
     },
     "config-editor": {
-      "description-additional-settings": "추가 설정은 데이터 소스를 보다 세부적으로 제어하기 위해 구성할 수 있는 선택적 설정입니다. 여기에는 보안 SOCKS 프록시가 포함됩니다.",
-      "description-request-timeout": "요청 타임아웃을 초 단위로 설정합니다. 기본값은 30초입니다.",
-      "title-additional-settings": "추가 설정",
-      "title-request-timeout": "요청 타임아웃"
+      "description-additional-settings": "",
+      "title-additional-settings": "추가 설정"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "예비 자격 증명이 비활성화되었습니다. 사용자 기반 인증은 본질적으로 적용 범위 내의 사용자가 있는 요청만 지원하므로 알림, 기록된 쿼리 또는 보고와 같은 기능은 예상대로 작동하지 않습니다. 자세한 내용은 <2>문서</2>를 참고하세요.",
@@ -115,9 +113,12 @@
       "aria-label-column": "열",
       "aria-label-column-value": "열 값",
       "aria-label-operator": "작업 수행자",
+      "aria-label-remove-filter": "",
       "label-or": "또는"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "그룹 추가",
       "label-and": "그리고",
       "label-filters": "필터",
@@ -130,6 +131,8 @@
       "label-format-as": "형식:"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "열 선택",
       "label-fuzzy-search": "퍼지 검색",
       "placeholder-search-team": "검색어 입력",
@@ -144,6 +147,7 @@
       "aria-label-remove": "제거"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "그룹화 기준",
       "tooltip-group-by": "지정된 열을 기준으로 결과를 카테고리별로 분류합니다. 그룹화 기준은 선택한 열의 고유 값을 나열하는 데 독립적으로 사용하거나 집계 함수와 결합하여 각 그룹에 대한 요약 통계를 생성하는 데 사용할 수 있습니다. 단독으로 사용하면 지정된 열의 고유한 조합을 반환합니다."
     },
@@ -186,8 +190,10 @@
       "text-loading": "로딩 중..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "열을 기준으로 정렬",
       "aria-label-order-direction": "정렬 방향",
+      "aria-label-remove-order-by": "",
       "label-by": "기준",
       "label-order-by": "정렬 기준",
       "tooltip-order-by": "하나 이상의 열을 기준으로 결과를 오름차순 또는 내림차순으로 정렬합니다."
@@ -249,7 +255,8 @@
       "label-columns": "열",
       "label-table": "표",
       "placeholder-select-columns": "열 선택",
-      "placeholder-select-table": "테이블 선택"
+      "placeholder-select-table": "테이블 선택",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "시간 단위"

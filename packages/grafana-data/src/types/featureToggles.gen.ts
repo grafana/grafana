@@ -80,11 +80,6 @@ export interface FeatureToggles {
   */
   mysqlAnsiQuotes?: boolean;
   /**
-  * Enable folder nesting
-  * @default true
-  */
-  nestedFolders?: boolean;
-  /**
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
@@ -286,6 +281,10 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
+  * Routes short url requests from /api to the /apis endpoint
+  */
+  kubernetesShortURLs?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -448,7 +447,7 @@ export interface FeatureToggles {
   alertingSaveStatePeriodic?: boolean;
   /**
   * Enables the compressed protobuf-based alert state storage
-  * @default false
+  * @default true
   */
   alertingSaveStateCompressed?: boolean;
   /**
@@ -456,6 +455,11 @@ export interface FeatureToggles {
   * @default false
   */
   scopeApi?: boolean;
+  /**
+  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+  * @default false
+  */
+  useScopeSingleNodeEndpoint?: boolean;
   /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
@@ -675,11 +679,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
-  * Enable permission filtering on unified storage search
-  * @default true
-  */
-  unifiedStorageSearchPermissionFiltering?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -815,11 +814,6 @@ export interface FeatureToggles {
   * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
-  /**
-  * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
-  * @default true
-  */
-  teamHttpHeadersMimir?: boolean;
   /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
@@ -994,6 +988,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Registers AuthZ resource permission /apis endpoints
+  */
+  kubernetesAuthzResourcePermissionApis?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
@@ -1086,4 +1084,17 @@ export interface FeatureToggles {
   * Enable adhoc filter buttons in visualization tooltips
   */
   adhocFiltersInTooltips?: boolean;
+  /**
+  * Enable favorite datasources
+  */
+  favoriteDatasources?: boolean;
+  /**
+  * New Log Context component
+  */
+  newLogContext?: boolean;
+  /**
+  * Enables new design for the Clickhouse data source configuration page
+  * @default false
+  */
+  newClickhouseConfigPageDesign?: boolean;
 }

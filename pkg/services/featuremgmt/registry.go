@@ -119,13 +119,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:        "nestedFolders",
-			Description: "Enable folder nesting",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -477,6 +470,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "kubernetesShortURLs",
+			Description:     "Routes short url requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -759,7 +759,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:              "scopeApi",
@@ -768,6 +768,16 @@ var (
 			Owner:             grafanaAppPlatformSquad,
 			HideFromAdminPage: true,
 			Expression:        "false",
+		},
+		{
+			Name:              "useScopeSingleNodeEndpoint",
+			Description:       "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaOperatorExperienceSquad,
+			Expression:        "false",
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "promQLScope",
@@ -1160,15 +1170,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "unifiedStorageSearchPermissionFiltering",
-			Description:       "Enable permission filtering on unified storage search",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaSearchAndStorageSquad,
-			Expression:        "true",
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "managedDualWriter",
 			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
@@ -1393,15 +1394,6 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          identityAccessTeam,
 			AllowSelfServe: true,
-		},
-		{
-			Name:           "teamHttpHeadersMimir",
-			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   false,
-			AllowSelfServe: true,
-			Owner:          identityAccessTeam,
-			Expression:     "true",
 		},
 		{
 			Name:         "teamHttpHeadersTempo",
@@ -1714,6 +1706,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzResourcePermissionApis",
+			Description:       "Registers AuthZ resource permission /apis endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthnMutation",
 			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
@@ -1879,6 +1879,28 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "favoriteDatasources",
+			Description:  "Enable favorite datasources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newLogContext",
+			Description:  "New Log Context component",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newClickhouseConfigPageDesign",
+			Description:  "Enables new design for the Clickhouse data source configuration page",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
 		},
 	}
 )
