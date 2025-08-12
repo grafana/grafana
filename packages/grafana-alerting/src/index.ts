@@ -7,5 +7,7 @@
  * Breaking changes should be avoided to maintain backwards compatibility for consumers of this package.
  */
 
-// This is a dummy export so typescript doesn't error importing an "empty module"
-export const index = {};
+export {
+  useContactPointEvents,
+  useProvideContactPointEvents,
+} from './grafana/contactPoints/hooks/v0alpha1/useContactPointEvents';

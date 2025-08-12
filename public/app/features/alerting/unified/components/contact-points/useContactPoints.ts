@@ -5,6 +5,7 @@
 
 import { useMemo } from 'react';
 
+import { useProvideContactPointEvents } from '@grafana/alerting';
 import { receiversApi } from 'app/features/alerting/unified/api/receiversK8sApi';
 import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
@@ -266,6 +267,8 @@ export function useContactPointsWithStatus({
 type DeleteContactPointArgs = { name: string; resourceVersion?: string };
 export function useDeleteContactPoint({ alertmanager }: BaseAlertmanagerArgs) {
   const useK8sApi = shouldUseK8sApi(alertmanager);
+  const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const { publishDeleted } = useProvideContactPointEvents();
 
   const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
   const [deleteReceiver] = useDeleteNamespacedReceiverMutation();
@@ -277,11 +280,23 @@ export function useDeleteContactPoint({ alertmanager }: BaseAlertmanagerArgs) {
       namespace,
       ioK8SApimachineryPkgApisMetaV1DeleteOptions: { preconditions: { resourceVersion } },
     }).unwrap();
+
+    // Publish delete event only for Grafana alertmanager
+    if (isGrafanaAlertmanager) {
+      publishDeleted(name);
+    }
   });
 
   const deleteFromAlertmanagerConfiguration = useAsync(async ({ name }: DeleteContactPointArgs) => {
     const action = deleteReceiverAction(name);
-    return produceNewAlertmanagerConfiguration(action);
+    const result = await produceNewAlertmanagerConfiguration(action);
+
+    // Publish delete event only for Grafana alertmanager
+    if (isGrafanaAlertmanager) {
+      publishDeleted(name);
+    }
+
+    return result;
   });
 
   return useK8sApi ? deleteFromK8sAPI : deleteFromAlertmanagerConfiguration;
@@ -312,6 +327,7 @@ type CreateContactPointArgs = ContactPointOperationArgs;
 
 export const useCreateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const { publishAdded } = useProvideContactPointEvents();
 
   const { createOnCallIntegrations } = useOnCallIntegration();
   const [createGrafanaContactPoint] = useCreateNamespacedReceiverMutation();
@@ -323,15 +339,29 @@ export const useCreateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
     const namespace = getAPINamespace();
     const contactPointToUse = grafanaContactPointToK8sReceiver(contactPointWithMaybeOnCall);
 
-    return createGrafanaContactPoint({
+    const result = await createGrafanaContactPoint({
       namespace,
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver: contactPointToUse,
     }).unwrap();
+
+    // Publish create event only for Grafana alertmanager
+    if (isGrafanaAlertmanager) {
+      publishAdded(result);
+    }
+
+    return result;
   });
 
   const updateAlertmanagerConfiguration = useAsync(async ({ contactPoint }: CreateContactPointArgs) => {
     const action = addReceiverAction(contactPoint);
-    return produceNewAlertmanagerConfiguration(action);
+    const result = await produceNewAlertmanagerConfiguration(action);
+
+    // Publish create event only for Grafana alertmanager
+    if (isGrafanaAlertmanager) {
+      publishAdded(contactPoint);
+    }
+
+    return result;
   });
 
   return isGrafanaAlertmanager ? updateK8sAPI : updateAlertmanagerConfiguration;
@@ -351,6 +381,7 @@ type UpdateContactpointArgs = UpdateContactPointArgsK8s | UpdateContactPointArgs
 export const useUpdateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
   const useK8sApi = shouldUseK8sApi(alertmanager);
+  const { publishUpdated } = useProvideContactPointEvents();
 
   const { createOnCallIntegrations } = useOnCallIntegration();
   const [replaceGrafanaContactPoint] = useReplaceNamespacedReceiverMutation();
@@ -367,11 +398,18 @@ export const useUpdateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
       const namespace = getAPINamespace();
       const contactPointToUse = grafanaContactPointToK8sReceiver(receiverWithPotentialOnCall, id, resourceVersion);
 
-      return replaceGrafanaContactPoint({
+      const result = await replaceGrafanaContactPoint({
         name: id,
         namespace,
         comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver: contactPointToUse,
       }).unwrap();
+
+      // Publish update event only for Grafana alertmanager
+      if (isGrafanaAlertmanager) {
+        publishUpdated(result);
+      }
+
+      return result;
     } else if ('originalName' in args) {
       const { contactPoint, originalName } = args;
       const receiverWithPotentialOnCall = isGrafanaAlertmanager
@@ -379,7 +417,14 @@ export const useUpdateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
         : contactPoint;
 
       const action = updateReceiverAction({ name: originalName, receiver: receiverWithPotentialOnCall });
-      return produceNewAlertmanagerConfiguration(action);
+      const result = await produceNewAlertmanagerConfiguration(action);
+
+      // Publish update event only for Grafana alertmanager
+      if (isGrafanaAlertmanager) {
+        publishUpdated(receiverWithPotentialOnCall);
+      }
+
+      return result;
     }
   });
 
