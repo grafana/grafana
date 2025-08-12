@@ -1,8 +1,16 @@
 import { SceneObject, VizPanel, sceneGraph, LocalValueVariable } from '@grafana/scenes';
 
+import { getVizPanelKeyForPanelId } from './utils';
+
 const PATH_ID_SEPARATOR = '$';
 
 export function findVizPanelByPathId(scene: SceneObject, pathId: string): VizPanel | null {
+  // Check if pathId is just an old legacy panel id
+  const id = parseInt(pathId, 10);
+  if (!isNaN(id)) {
+    pathId = getVizPanelKeyForPanelId(id);
+  }
+
   const panel = sceneGraph.findObject(scene, (obj) => {
     if (!(obj instanceof VizPanel)) {
       return false;
@@ -27,7 +35,7 @@ export function findVizPanelByPathId(scene: SceneObject, pathId: string): VizPan
  * This is used to create a unique URL key identifiers for panels and repeated panels.
  */
 export function getVizPanelPathId(panel: VizPanel): string {
-  let pathId = `${panel.getLegacyPanelId()}`;
+  let pathId = `panel-${panel.getLegacyPanelId()}`;
   let sceneObj: SceneObject | undefined = panel;
   let lastName: string | undefined;
 
