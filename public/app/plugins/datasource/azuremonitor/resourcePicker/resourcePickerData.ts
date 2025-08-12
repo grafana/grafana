@@ -132,12 +132,13 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   async fetchAndAppendNestedRow(
     rows: ResourceRowGroup,
     parentRow: ResourceRow,
-    type: ResourcePickerQueryType
+    type: ResourcePickerQueryType,
+    filters?: { subscriptions: string[]; types: string[]; locations: string[] }
   ): Promise<ResourceRowGroup> {
     const nestedRows =
       parentRow.type === ResourceRowType.Subscription
-        ? await this.getResourceGroupsBySubscriptionId(parentRow.id, type)
-        : await this.getResourcesForResourceGroup(parentRow.uri, type);
+        ? await this.getResourceGroupsBySubscriptionId(parentRow.id, type, filters)
+        : await this.getResourcesForResourceGroup(parentRow.uri, type, filters);
 
     return addResources(rows, parentRow.uri, nestedRows);
   }
