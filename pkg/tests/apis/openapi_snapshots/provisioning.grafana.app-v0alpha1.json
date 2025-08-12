@@ -4076,7 +4076,11 @@
             "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
             "type": "array",
             "items": {
-              "default": {}
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCount"
+                }
+              ]
             },
             "x-kubernetes-list-type": "atomic"
           }

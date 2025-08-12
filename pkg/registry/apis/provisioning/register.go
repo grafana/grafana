@@ -1128,6 +1128,10 @@ spec:
 	schema.Items = countSpec
 	oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"] = schema
 
+	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["unmanaged"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["unmanaged"] = schema
+
 	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"]
 	schema.Items = managerSpec
 	oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"] = schema
