@@ -1,0 +1,81 @@
+# .github/workflows/ui-testing.yaml
+name: Selenium UI Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test against'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      browser:
+        description: 'Browser to run tests on'
+        required: true
+        default: 'chrome'
+        type: choice
+        options:
+          - chrome
+          - firefox
+
+jobs:
+  selenium-tests:
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
+      BROWSER: ${{ github.event.inputs.browser || 'chrome' }}
+      HEADLESS: "true"
+      GRAFANA_URL: 'http://34.254.113.76:3000'  # 🔧 Replace this IP manually
+
+    steps:
+    - name: Checkout UI testing repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+        repository: MarwanHalabi/GrafanaUITesting
+        token: ${{ secrets.UI_TESTING_GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12.6'
+
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install latest Chrome & matching ChromeDriver
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip curl gnupg jq
+
+        # Install Chrome
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
+
+        # Get matching ChromeDriver
+        DRIVER_URL=$(curl -s https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json | jq -r ".channels.Stable.downloads.chromedriver[] | select(.platform == \"linux64\") | .url")
+        wget "$DRIVER_URL" -O chromedriver.zip
+        unzip chromedriver.zip
+        sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+        sudo chmod +x /usr/local/bin/chromedriver
+      
+    - name: Kill Chrome & clean locks
+      run: |
+        pkill -f chrome || true
+        rm -rf /tmp/Singleton* /tmp/.org.chromium*
+
+    - name: Run Selenium tests
+      run: |
+        set -e
+        pytest tests/ -v
