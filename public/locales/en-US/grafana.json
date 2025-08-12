@@ -1677,6 +1677,10 @@
     "inspector-yaml-tab": {
       "apply": "Apply"
     },
+    "instance-match": {
+      "non-matching-labels": "Non-matching labels",
+      "notification-policy": "View journey"
+    },
     "irm-integration": {
       "connection-method": "How to connect to IRM",
       "disabled-description": "Enable IRM through a Webhook integration",
@@ -1824,6 +1828,10 @@
           "use-notification-policy": "Use notification policy"
         }
       }
+    },
+    "match-details": {
+      "matched": "matched",
+      "no-matchers-matched": "No labels matched the route matchers"
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filter alerts using label querying without braces, ex:",
@@ -1990,6 +1998,9 @@
       "label-notification-policies": "Notification Policies",
       "label-time-intervals": "Time intervals"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": "View notification policy tree"
+    },
     "notification-policy-matchers": {
       "no-matchers": "No matchers"
     },
@@ -2007,7 +2018,7 @@
     },
     "notification-route": {
       "no-labels": "No labels",
-      "no-matching-labels": "No matching labels"
+      "notification-policy": "Notification policy"
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Expand policy route",

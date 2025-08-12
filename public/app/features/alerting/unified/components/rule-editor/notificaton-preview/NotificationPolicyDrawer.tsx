@@ -104,7 +104,9 @@ export function NotificationPolicyDrawer({
             </Stack>
 
             <TextLink href={createRelativeUrl('/alerting/routes')} external inline={false}>
-              View notification policy tree
+              <Trans i18nKey="alerting.notification-policy-drawer.view-notification-policy-tree">
+                View notification policy tree
+              </Trans>
             </TextLink>
           </Stack>
         </Drawer>
