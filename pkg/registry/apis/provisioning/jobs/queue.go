@@ -25,6 +25,7 @@ type JobProgressRecorder interface {
 	SetTotal(ctx context.Context, total int)
 	TooManyErrors() error
 	StrictMaxErrors(maxErrors int)
+	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)
 	Complete(ctx context.Context, err error) provisioning.JobStatus
 }
 

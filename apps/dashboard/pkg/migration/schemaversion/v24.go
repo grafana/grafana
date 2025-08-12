@@ -514,23 +514,23 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 		"mappings": []interface{}{},
 	}
 
-	// Only add default thresholds if we have prevDefaults (meaning this is a table panel being migrated)
-	// and no specific thresholds exist in prevDefaults
+	// Add default thresholds for all table panels to match frontend behavior
+	// The frontend applies the table panel's default field config which includes thresholds
 	hasThresholds := false
 	if prevDefaults != nil {
 		if thresholds, ok := prevDefaults["thresholds"].([]interface{}); ok && len(thresholds) > 0 {
 			hasThresholds = true
 		}
+	}
 
-		// Only add default thresholds for table panels (when prevDefaults exists) without existing thresholds
-		if !hasThresholds {
-			defaults["thresholds"] = map[string]interface{}{
-				"mode": "absolute",
-				"steps": []interface{}{
-					map[string]interface{}{"color": "green"},
-					map[string]interface{}{"color": "red", "value": 80},
-				},
-			}
+	// Add default thresholds for all table panels (when prevDefaults exists) without existing thresholds
+	if !hasThresholds {
+		defaults["thresholds"] = map[string]interface{}{
+			"mode": "absolute",
+			"steps": []interface{}{
+				map[string]interface{}{"color": "green"},
+				map[string]interface{}{"color": "red", "value": 80},
+			},
 		}
 	}
 

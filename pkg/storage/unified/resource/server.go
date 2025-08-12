@@ -21,8 +21,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/ring"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -208,6 +208,9 @@ type ResourceServerOptions struct {
 	// Link RBAC
 	AccessClient claims.AccessClient
 
+	// Manage secure values
+	SecureValues secrets.InlineSecureValueSupport
+
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
 
@@ -297,6 +300,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		blob:             blobstore,
 		diagnostics:      opts.Diagnostics,
 		access:           opts.AccessClient,
+		secure:           opts.SecureValues,
 		writeHooks:       opts.WriteHooks,
 		lifecycle:        opts.Lifecycle,
 		now:              opts.Now,
@@ -333,6 +337,7 @@ type server struct {
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
+	secure         secrets.InlineSecureValueSupport
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient
@@ -444,16 +449,6 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
-	// Verify that this resource can reference secure values
-	secure, err := obj.GetSecureValues()
-	if err != nil {
-		return nil, AsErrorResult(err)
-	}
-	if len(secure) > 0 {
-		// See: https://github.com/grafana/grafana/pull/107803
-		return nil, NewBadRequestError("Saving secure values is not yet supported")
-	}
-
 	event := &WriteEvent{
 		Value:  value,
 		Key:    key,
@@ -475,6 +470,20 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
+	}
+
+	// Verify that this resource can reference secure values
+	secure, err := obj.GetSecureValues()
+	if err != nil {
+		return nil, AsErrorResult(err)
+	}
+	if len(secure) > 0 {
+		if s.secure == nil {
+			return nil, NewBadRequestError("secure storage not configured")
+		}
+
+		// See: https://github.com/grafana/grafana/pull/107803
+		return nil, NewBadRequestError("Saving secure values is not yet supported")
 	}
 
 	if key.Namespace != obj.GetNamespace() {
