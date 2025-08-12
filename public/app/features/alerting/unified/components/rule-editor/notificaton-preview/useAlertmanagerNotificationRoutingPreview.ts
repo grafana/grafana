@@ -28,7 +28,7 @@ export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, 
 
   // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
   const {
-    value: treeMatchingResults,
+    value: treeMatchingResults = [],
     loading: matchingLoading,
     error: matchingError,
   } = useAsync(async () => {

@@ -2,15 +2,15 @@ import { Fragment, useState } from 'react';
 
 import { RouteMatchResult, RouteWithID } from '@grafana/alerting/unstable';
 import { Trans } from '@grafana/i18n';
-import { Button, Drawer, LinkButton, Text, TextLink } from '@grafana/ui';
+import { Button, Drawer, Text, TextLink } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
+import { createRelativeUrl } from '../../../utils/url'; 
 import { Label } from '../../Label';
 
 import { ConnectionLine } from './ConnectionLine';
 import { JourneyPolicyCard } from './JourneyPolicyCard';
 import { MatchDetails } from './MatchDetails';
-import { createRelativeUrl } from '../../../utils/url';
 
 type NotificationPolicyDrawerProps = {
   policyName?: string;

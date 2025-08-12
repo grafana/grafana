@@ -1,9 +1,10 @@
-import { InstanceMatchResult, Route, RouteMatch, matchAlertInstancesToPolicyTree } from '@grafana/alerting/unstable';
+import { InstanceMatchResult, RouteMatch, matchAlertInstancesToPolicyTree } from '@grafana/alerting/unstable';
+
 
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
 
-import { findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './utils/notification-policies';
+import { convertRouteWithIDToAlertingFormat, findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './utils/notification-policies';
 
 export interface MatchOptions {
   unquoteMatchers?: boolean;
@@ -33,29 +34,32 @@ export const routeGroupsMatcher = {
   matchInstancesToRoutes(routeTree: RouteWithID, instances: Labels[], options?: MatchOptions): InstanceMatchResult[] {
     const normalizedRootRoute = getNormalizedRoute(routeTree, options);
 
-    // the routing trees are returned as an array of items because there can be several
-    const trees = [normalizedRootRoute];
+    // construct a single tree, external Alertmanagers only support one tree
+    const trees = [normalizedRootRoute] as const;
 
-    return instances.map<InstanceMatchResult>((labels) => {
-      // Array to collect all matched policies from all trees
-      const allMatchedPolicies: RouteMatch[] = [];
-      const labelsArray = Object.entries(labels);
+    return instances.map<InstanceMatchResult>((instance) => {
+      const labels = Object.entries(instance);
+      // Collect all matched routes from all trees
+      const allMatchedRoutes: RouteMatch[] = [];
 
-      // Process all trees for this instance
-      trees.forEach((rootPolicy) => {
+      // Process each tree for this instance
+      trees.forEach((tree) => {
         const treeName = 'user-defined';
+        // We have to convert the RoutingTree structure to a Route structure to be able to use the matching functions
+        const rootRoute = trees[0];
 
-        // Match this single instance against the policy tree
-        // @TODO make sure we update the "matchers" to be compatible with the data structure from the Alerting package
-        const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree([labelsArray], rootPolicy as Route);
+        // Match this single instance against the route tree
+        // Convert the RouteWithID to the alerting package format to ensure compatibility
+        const convertedRoute = convertRouteWithIDToAlertingFormat(rootRoute);
+        const { expandedTree, matchedPolicies } = matchAlertInstancesToPolicyTree([labels], convertedRoute);
 
-        // Process each matched policy from the tree
-        matchedPolicies.forEach((results, policy) => {
+        // Process each matched route from the tree
+        matchedPolicies.forEach((results, route) => {
           // For each match result, create a RouteMatch object
           results.forEach((matchDetails) => {
-            allMatchedPolicies.push({
-              policy,
-              policyTree: {
+            allMatchedRoutes.push({
+              route,
+              routeTree: {
                 metadata: { name: treeName },
                 expandedSpec: expandedTree,
               },
@@ -66,8 +70,8 @@ export const routeGroupsMatcher = {
       });
 
       return {
-        labels: labelsArray,
-        matchedPolicies: allMatchedPolicies,
+        labels,
+        matchedRoutes: allMatchedRoutes,
       };
     });
   },
@@ -78,3 +82,4 @@ function getNormalizedRoute(route: RouteWithID, options?: MatchOptions): RouteWi
 }
 
 export type RouteGroupsMatcher = typeof routeGroupsMatcher;
+
