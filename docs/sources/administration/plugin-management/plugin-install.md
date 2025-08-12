@@ -99,5 +99,3 @@ env:
   # Comma-separated list of plugin IDs
   GF_PLUGINS_INSTALL: grafana-oncall-app,redis-datasource
 ```
-
-
