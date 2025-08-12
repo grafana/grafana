@@ -685,7 +685,7 @@ const AllMatchesIndicator: FC = () => {
   );
 };
 
-function DefaultPolicyIndicator() {
+export function DefaultPolicyIndicator() {
   const styles = useStyles2(getStyles);
   return (
     <>

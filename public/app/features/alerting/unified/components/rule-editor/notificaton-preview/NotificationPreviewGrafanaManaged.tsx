@@ -46,15 +46,15 @@ function NotificationPreviewByAlertManager({
   }
 
   const treeMatchingResults = matchInstancesToPolicies(instances.map((instance) => Object.entries(instance)));
-  const matchingPoliciesFound = treeMatchingResults.some((result) => result.matchedPolicies.length > 0);
+  const matchingPoliciesFound = treeMatchingResults.some((result) => result.matchedRoutes.length > 0);
 
   // Group results by receiver name
   // We need to flatten the structure first to group by receiver
-  const flattenedResults = treeMatchingResults.flatMap(({ labels, matchedPolicies }) => {
-    return Array.from(matchedPolicies).map(({ policy, policyTree, matchDetails }) => ({
+  const flattenedResults = treeMatchingResults.flatMap(({ labels, matchedRoutes }) => {
+    return Array.from(matchedRoutes).map(({ route, routeTree, matchDetails }) => ({
       labels,
-      receiver: policy.receiver || UNKNOWN_RECEIVER,
-      policyTree,
+      receiver: route.receiver || UNKNOWN_RECEIVER,
+      routeTree,
       matchDetails,
     }));
   });
@@ -67,8 +67,8 @@ function NotificationPreviewByAlertManager({
         {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) => (
           <GrafanaContactPointGroup key={receiver} name={receiver} matchedInstancesCount={resultsForReceiver.length}>
             <Stack direction="column" gap={0}>
-              {resultsForReceiver.map(({ policyTree, matchDetails }) => (
-                <InstanceMatch key={matchDetails.labels.join(',')} matchedInstance={matchDetails} policyTreeSpec={policyTree.expandedSpec} policyTreeMetadata={policyTree.metadata} />
+              {resultsForReceiver.map(({ routeTree, matchDetails }) => (
+                <InstanceMatch key={matchDetails.labels.join(',')} matchedInstance={matchDetails} policyTreeSpec={routeTree.expandedSpec} policyTreeMetadata={routeTree.metadata} />
               ))}
             </Stack>
           </GrafanaContactPointGroup>
