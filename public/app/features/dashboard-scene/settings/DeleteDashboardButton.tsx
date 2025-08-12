@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
 
-import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
+import { useDeleteDashboardsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DeleteProvisionedDashboardDrawer } from './DeleteProvisionedDashboardDrawer';
@@ -27,7 +27,7 @@ interface DeleteModalProps {
 
 export function DeleteDashboardButton({ dashboard }: ButtonProps) {
   const [showModal, toggleModal] = useToggle(false);
-  const [deleteItems] = useDeleteItemsMutation();
+  const [deleteDashboards] = useDeleteDashboardsMutation();
 
   const [, onConfirm] = useAsyncFn(async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -39,14 +39,7 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
     });
     toggleModal();
     if (dashboard.state.uid) {
-      await deleteItems({
-        selectedItems: {
-          dashboard: {
-            [dashboard.state.uid]: true,
-          },
-          folder: {},
-        },
-      });
+      await deleteDashboards({ dashboardUIDs: [dashboard.state.uid] });
     }
     await dashboard.onDashboardDelete();
   }, [dashboard, toggleModal]);

@@ -6,9 +6,11 @@ import { config, getAppEvents } from '@grafana/runtime';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
   useGetFolderQuery as useGetFolderQueryLegacy,
+  useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
 
+import appEvents from '../../../../core/app_events';
 import kbn from '../../../../core/utils/kbn';
 import {
   AnnoKeyCreatedBy,
@@ -19,15 +21,21 @@ import {
   DeprecatedInternalId,
   ManagerKind,
 } from '../../../../features/apiserver/types';
+import { isProvisionedFolder } from '../../../../features/browse-dashboards/api/isProvisioned';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
-import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
+import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
 import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
 import { useDispatch } from '../../../../types/store';
 import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
 import { rootFolder, sharedWithMeFolder } from './virtualFolders';
 
-import { useGetFolderQuery, useGetFolderParentsQuery, useDeleteFolderMutation } from './index';
+import {
+  useGetFolderQuery,
+  useGetFolderParentsQuery,
+  useDeleteFolderMutation,
+  folderAPIv1beta1 as folderAPI,
+} from './index';
 
 function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
@@ -187,6 +195,50 @@ export function useDeleteFolderMutationFacade() {
     } else {
       return deleteFolderLegacy(folder);
     }
+  };
+}
+
+export function useDeleteMultipleFoldersMutationFacade() {
+  if (config.featureToggles.foldersAppPlatformAPI) {
+    const [deleteFolders] = useDeleteFoldersMutationLegacy();
+    return deleteFolders;
+  }
+
+  const [deleteFolder] = useDeleteFolderMutation();
+  const dispatch = useDispatch();
+
+  return async function deleteFolders({ folderUIDs }: { folderUIDs: string[] }) {
+    // Delete all the folders sequentially
+    // TODO error handling here
+    for (const folderUID of folderUIDs) {
+      if (config.featureToggles.provisioning) {
+        const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
+        // TODO: taken from browseDashboardAPI as it is, but this error handling should be moved up to UI code.
+        if (folder.data && isProvisionedFolder(folder.data)) {
+          appEvents.publish({
+            type: AppEvents.alertWarning.name,
+            payload: [
+              t(
+                'folders.api.folder-delete-error-provisioned',
+                'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.'
+              ),
+            ],
+          });
+          continue;
+        }
+      }
+      const result = await deleteFolder({ name: folderUID });
+      if (!result.error) {
+        // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
+        // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+        getAppEvents().publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [t('folders.api.folder-deleted-success', 'Folder deleted')],
+        });
+        dispatch(refreshParents([...folderUIDs]));
+      }
+    }
+    return { data: undefined };
   };
 }
 
