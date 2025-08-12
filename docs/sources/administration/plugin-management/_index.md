@@ -28,7 +28,7 @@ Additionally, you can also:
 
 - [Customize](/customize-navigation-placement-of-plugin-pages) where app plugin pages appear in the navigation menu).
 - [Allow the frontends of installed plugins to communicate locally with the backends](#integrate-plugins) of other installed plugins.
-- Isolate plugin code with the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox).
+- Improve security by isolating plugins with the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox).
 
 ## Plugin catalog
 
