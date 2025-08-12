@@ -238,6 +238,7 @@
       "text-no-resources": "No resources found",
       "title-error-occurred": "An error occurred while requesting resources from Azure Monitor",
       "subscriptions-filter": "Subscriptions",
+      "types-filter": "Resource Types",
     },
     "scope-selector": {
       "label": "Scope"

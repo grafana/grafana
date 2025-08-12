@@ -415,11 +415,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     return newSelectedRows;
   }
 }
+
 export const createFilter = (filters: { subscriptions: string[]; types: string[]; locations: string[] }) => {
   let filtersQuery = '';
   if (filters) {
     if (filters.subscriptions && filters.subscriptions.length > 0) {
       filtersQuery += `| where subscriptionId in (${filters.subscriptions.map((s) => `"${s.toLowerCase()}"`).join(',')})\n`;
+    }
+    if (filters.types && filters.types.length > 0) {
+      filtersQuery += `| where type in (${filters.types.map((t) => `"${t.toLowerCase()}"`).join(',')})\n`;
     }
   }
 
