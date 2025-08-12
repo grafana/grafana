@@ -85,25 +85,21 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
   const legendItems: VizLegendItem[] = displayValues
-    // Sort the legend according to the pie slice sorting.
     .sort((a, b) => {
-      if (props.options.pieSorting === PieChartSortOptions.None) {
-        return 1;
-      } else if (props.options.pieSorting === PieChartSortOptions.Ascending) {
-        // Reverse compared objects so that the clockwise sorting (default)
-        // is inverted.
-        let tmp = a;
-        a = b;
-        b = tmp;
-      }
-
       if (isNaN(a.display.numeric)) {
         return 1;
-      } else if (isNaN(b.display.numeric)) {
+      }
+      if (isNaN(b.display.numeric)) {
         return -1;
-      } else {
+      }
+
+      if (props.options.pieSorting === PieChartSortOptions.Descending) {
         return b.display.numeric - a.display.numeric;
       }
+      if (props.options.pieSorting === PieChartSortOptions.Ascending) {
+        return a.display.numeric - b.display.numeric;
+      }
+      return 0;
     })
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
       const hideFrom: HideSeriesConfig = value.field.custom?.hideFrom ?? {};
