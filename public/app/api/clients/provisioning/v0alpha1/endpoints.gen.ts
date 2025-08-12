@@ -853,6 +853,16 @@ export type JobResourceSummary = {
   update?: number;
   write?: number;
 };
+export type RepositoryUrLs = {
+  /** Compare this version to the target branch */
+  compareURL?: string;
+  /** A URL that will create a new pull request for this branch */
+  newPullRequestURL?: string;
+  /** A URL pointing to the repository this lives in */
+  repositoryURL?: string;
+  /** A URL pointing to the file or ref in the repository */
+  sourceURL?: string;
+};
 export type JobStatus = {
   errors?: string[];
   finished?: number;
@@ -869,6 +879,8 @@ export type JobStatus = {
   state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
+  /** URLs contains URLs for the reference branch or commit if applicable. */
+  url?: RepositoryUrLs;
 };
 export type Job = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1176,16 +1188,6 @@ export type ResourceObjects = {
   /** For write events, this will return the value that was added or updated */
   upsert?: Unstructured;
 };
-export type ResourceUrLs = {
-  /** Compare this version to the target branch */
-  compareURL?: string;
-  /** A URL that will create a new pull requeset for this branch */
-  newPullRequestURL?: string;
-  /** A URL pointing to the repository this lives in */
-  repositoryURL?: string;
-  /** A URL pointing to the this file in the repository */
-  sourceURL?: string;
-};
 export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -1206,7 +1208,7 @@ export type ResourceWrapper = {
   /** The modified time in the remote file system */
   timestamp?: Time;
   /** Typed links for this file (only supported by external systems, github etc) */
-  urls?: ResourceUrLs;
+  urls?: RepositoryUrLs;
 };
 export type ResourceListItem = {
   folder?: string;
@@ -1310,6 +1312,8 @@ export type ResourceStats = {
   /** Stats for each manager */
   managed?: ManagerStats[];
   metadata?: any;
+  /** Stats across all unified storage When legacy storage is still used, this will offer a shim */
+  unmanaged?: ResourceCount[];
 };
 export const {
   useListJobQuery,

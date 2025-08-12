@@ -371,6 +371,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <>
+        <MaybeQueryLibrarySaveButton query={query} app={this.props.app} onSelectQuery={this.onSelectQueryFromLibrary} />
+        <ReplaceQueryFromLibrary
+          datasourceFilters={datasource?.name ? [datasource.name] : []}
+          onSelectQuery={this.onSelectQueryFromLibrary}
+          app={this.props.app}
+        />
+
         {hasEditorHelp && (
           <QueryOperationToggleAction
             title={t('query-operation.header.datasource-help', 'Show data source help')}
@@ -380,16 +387,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        <MaybeQueryLibrarySaveButton query={query} app={this.props.app} onSelectQuery={this.onSelectQueryFromLibrary} />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
           onClick={this.onCopyQuery}
-        />
-        <ReplaceQueryFromLibrary
-          datasourceFilters={datasource?.name ? [datasource.name] : []}
-          onSelectQuery={this.onSelectQueryFromLibrary}
-          app={this.props.app}
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
@@ -557,6 +558,8 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
       title={t('query-operation.header.replace-query-from-library', 'Replace with query from library')}
       icon="book"
       onClick={onReplaceQueryFromLibrary}
+      isGroupEnd
+      isHighlighted
     />
   ) : null;
 }

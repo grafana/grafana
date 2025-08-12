@@ -139,10 +139,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagSqlDatasourceDatabaseSelection
-	// Enables previous SQL data source dataset dropdown behavior
-	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -898,6 +894,10 @@ const (
 	// FlagKubernetesAuthzApis
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
+
+	// FlagKubernetesAuthzResourcePermissionApis
+	// Registers AuthZ resource permission /apis endpoints
+	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
 
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
