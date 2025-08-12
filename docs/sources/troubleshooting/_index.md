@@ -110,8 +110,7 @@ Generating a HAR capture in Edge:
 7. Reproduce the issue while the network requests are recorded.
 8. Click the "Export HAR" button to save the HAR file:
    <img width="916" height="305" alt="image" src="https://github.com/user-attachments/assets/54dfd40d-751f-47b4-9824-bc5be1f027fa" />
-10. Upload the HAR file to your Grafana Support ticket for investigation.
-
+9. Upload the HAR file to your Grafana Support ticket for investigation.
 
 ## More help
 
