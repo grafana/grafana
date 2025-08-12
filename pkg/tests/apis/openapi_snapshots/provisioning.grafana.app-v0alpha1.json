@@ -5334,6 +5334,14 @@
           },
           "metadata": {
             "default": {}
+          },
+          "unmanaged": {
+            "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+            "type": "array",
+            "items": {
+              "default": {}
+            },
+            "x-kubernetes-list-type": "atomic"
           }
         }
       },
