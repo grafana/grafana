@@ -1,4 +1,4 @@
-import { render, waitFor, fireEvent, act } from '@testing-library/react';
+import { render, waitFor, fireEvent, act } from 'test/test-utils';
 
 import { ExpressionQuery, ExpressionQueryType } from '../types';
 
@@ -70,13 +70,15 @@ describe('SqlExpr', () => {
     expect(updatedQuery.expression.toUpperCase()).toContain('SELECT');
   });
 
-  it('preserves existing expressions when mounted', () => {
+  it('preserves existing expressions when mounted', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const existingExpression = 'SELECT 1 AS foo';
     const query = { refId: 'expr1', type: 'sql', expression: existingExpression } as ExpressionQuery;
 
-    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+    await act(async () => {
+      render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+    });
 
     // Check if onChange was called
     if (onChange.mock.calls.length > 0) {
@@ -89,12 +91,14 @@ describe('SqlExpr', () => {
     expect(query.expression).toBe(existingExpression);
   });
 
-  it('adds alerting format when alerting prop is true', () => {
+  it('adds alerting format when alerting prop is true', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql' } as ExpressionQuery;
 
-    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} alerting queries={[]} />);
+    await act(async () => {
+      render(<SqlExpr onChange={onChange} refIds={refIds} query={query} alerting queries={[]} />);
+    });
 
     const updatedQuery = onChange.mock.calls[0][0];
     expect(updatedQuery.format).toBe('alerting');
