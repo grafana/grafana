@@ -1,72 +1,58 @@
-import { ManagerKind } from 'app/features/apiserver/types';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
 import { findItem } from '../../state/utils';
 import { DashboardTreeSelection } from '../../types';
+import { getItemRepositoryUid } from '../utils';
+
+type ItemKind = 'folder' | 'dashboard';
 
 export function useRepositoryValidation(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
   const childrenByParentUID = useChildrenByParentUIDState();
   const rootItems = useSelector(rootItemsSelector);
+  const items = rootItems?.items || [];
 
-  // Get repository for any item (folder or dashboard)
-  const getRepositoryForItem = (uid: string, kind: 'folder' | 'dashboard'): string | null => {
-    const item = findItem(rootItems?.items || [], childrenByParentUID, uid);
-    if (!item) {
-      return null;
-    }
-
-    // If it's a root provisioned folder, the UID is the repository name
-    if (item.managedBy === ManagerKind.Repo && !item.parentUID && kind === 'folder') {
-      return uid;
-    }
-
-    // If it's a nested item, traverse up to find root provisioned folder
-    if (item.parentUID) {
-      let currentUID: string | undefined = item.parentUID;
-      while (currentUID) {
-        const parent = findItem(rootItems?.items || [], childrenByParentUID, currentUID);
-        if (!parent) {
-          break;
-        }
-
-        if (parent.managedBy === ManagerKind.Repo && !parent.parentUID) {
-          return currentUID; // Found root provisioned folder
-        }
-        currentUID = parent.parentUID;
-      }
-    }
-
-    return null; // Non-provisioned item
+  // Find repository for an item using the shared utility
+  const findRepositoryUidForItem = (uid: string, kind: ItemKind): string | null => {
+    const item = findItem(items, childrenByParentUID, uid);
+    return item ? getItemRepositoryUid(item, items, childrenByParentUID) : null;
   };
 
-  // Validate repository consistency
-  const selectedFolderUids = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-  const selectedDashboardUids = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+  // Extract selected UIDs and create unified list with their types
+  const getSelectedItems = () => {
+    const folders = Object.entries(selectedItems?.folder)
+      .filter(([, isSelected]) => isSelected)
+      .map(([uid]) => ({ uid, kind: 'folder' as const }));
 
-  let commonRepository: string | null = null;
-  let allFromSameRepo = true;
+    const dashboards = Object.entries(selectedItems?.dashboard)
+      .filter(([, isSelected]) => isSelected)
+      .map(([uid]) => ({ uid, kind: 'dashboard' as const }));
 
-  // Check all selected items
-  const allSelectedItems = [
-    ...selectedFolderUids.map((uid) => ({ uid, kind: 'folder' as const })),
-    ...selectedDashboardUids.map((uid) => ({ uid, kind: 'dashboard' as const })),
-  ];
+    return [...folders, ...dashboards];
+  };
 
-  for (const { uid, kind } of allSelectedItems) {
-    const itemRepo = getRepositoryForItem(uid, kind);
-
-    if (commonRepository === null) {
-      commonRepository = itemRepo;
-    } else if (commonRepository !== itemRepo) {
-      allFromSameRepo = false;
-      break;
+  // Validate that all selected items belong to the same repository
+  const validateRepositoryConsistency = (selectedItems: Array<{ uid: string; kind: ItemKind }>) => {
+    if (selectedItems.length === 0) {
+      return { allFromSameRepo: true, commonRepository: undefined };
     }
-  }
+
+    const repositoryUIDs = selectedItems.map(({ uid, kind }) => findRepositoryUidForItem(uid, kind));
+    const firstRepositoryUID = repositoryUIDs[0];
+    const allFromSameRepo = repositoryUIDs.every((repo) => repo === firstRepositoryUID);
+
+    return {
+      allFromSameRepo,
+      commonRepositoryUID: firstRepositoryUID || undefined,
+    };
+  };
+
+  const allSelectedItems = getSelectedItems();
+  const { allFromSameRepo, commonRepositoryUID } = validateRepositoryConsistency(allSelectedItems);
 
   return {
     allFromSameRepo,
-    commonRepository: commonRepository || undefined,
+    commonRepositoryUID,
     selectedCount: allSelectedItems.length,
     hasSelection: allSelectedItems.length > 0,
   };

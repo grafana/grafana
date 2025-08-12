@@ -5,14 +5,14 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
-import { findItem } from '../state/utils';
-import { DashboardsTreeCellProps, SelectionState } from '../types';
+import { DashboardsTreeCellProps, SelectionState, DashboardViewItemWithUIItems } from '../types';
 
 import { useRepositoryValidation } from './BrowseActions/useRepositoryValidation';
-import { isSharedWithMe, canEditItemType } from './utils';
+import { isSharedWithMe, canEditItemType, getItemRepository } from './utils';
 
 export default function CheckboxCell({
   row: { original: row },
@@ -30,6 +30,12 @@ export default function CheckboxCell({
   const childrenByParentUID = useChildrenByParentUIDState();
   const rootItems = useSelector(rootItemsSelector);
 
+  // Type guard to check if item is a DashboardViewItem (not UI item)
+  const isDashboardViewItem = (item: DashboardViewItemWithUIItems): item is DashboardViewItem => {
+    return item.kind !== 'ui';
+  };
+
+  // Early returns for cases where we should show a spacer instead of checkbox
   if (!isSelected) {
     return <CheckboxSpacer />;
   }
@@ -47,8 +53,7 @@ export default function CheckboxCell({
   }
 
   // We don't want to select root provisioned folder
-  const isRootProvisionedFolder = item.managedBy === ManagerKind.Repo && !item.parentUID;
-  if (isRootProvisionedFolder) {
+  if (isDashboardViewItem(item) && item.managedBy === ManagerKind.Repo && !item.parentUID) {
     return <CheckboxSpacer />;
   }
 
@@ -57,51 +62,29 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  // Check if this item conflicts with existing selection
-  let shouldDisable = false;
-  if (hasSelection && !allFromSameRepo) {
-    // If there's already a mixed selection, disable everything except already selected items
-    const currentState = isSelected(item);
-    shouldDisable = currentState === SelectionState.Unselected;
-  } else if (hasSelection && commonRepository) {
-    // If there's a repository selection, check if this item matches
-    const getItemRepository = (): string | null => {
-      // Root provisioned folder - UID is the repository name
-      if (item.managedBy === ManagerKind.Repo && !item.parentUID && item.kind === 'folder') {
-        return item.uid;
-      }
-
-      // For nested items, traverse up to find root provisioned folder
-      if (item.parentUID) {
-        let currentUID: string | undefined = item.parentUID;
-        while (currentUID) {
-          const parent = findItem(rootItems?.items || [], childrenByParentUID, currentUID);
-          if (!parent) {
-            break;
-          }
-
-          if (parent.managedBy === ManagerKind.Repo && !parent.parentUID) {
-            return currentUID; // Found root provisioned folder
-          }
-          currentUID = parent.parentUID;
-        }
-      }
-
-      return null; // Non-provisioned item
-    };
-
-    const itemRepository = getItemRepository();
-    shouldDisable = itemRepository !== commonRepository;
-
-    // Debug log for UX demonstration
-    if (shouldDisable) {
-      console.log('Checkbox disabled:', {
-        itemUid: item.uid,
-        itemRepository,
-        commonRepository,
-        reason: 'Repository mismatch',
-      });
+  const shouldDisableCheckbox = (): boolean => {
+    if (!hasSelection) {
+      return false;
     }
+
+    // If there's already a mixed selection, disable unselected items
+    if (!allFromSameRepo) {
+      const currentState = isSelected(item);
+      return currentState === SelectionState.Unselected;
+    }
+
+    // If there's a repository selection, check if this item matches
+    if (commonRepository && isDashboardViewItem(item)) {
+      const itemRepository = getItemRepository(item, rootItems?.items || [], childrenByParentUID);
+      return itemRepository !== commonRepository;
+    }
+
+    return false;
+  };
+
+  // At this point we know it's a valid item to show a checkbox for
+  if (!isDashboardViewItem(item)) {
+    return <CheckboxSpacer />;
   }
 
   const state = isSelected(item);
@@ -112,7 +95,7 @@ export default function CheckboxCell({
       aria-label={t('browse-dashboards.dashboards-tree.select-checkbox', 'Select')}
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
-      disabled={shouldDisable}
+      disabled={shouldDisableCheckbox()}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}
     />
   );

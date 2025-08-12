@@ -1,12 +1,17 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { useChildrenByParentUIDState } from '../state/hooks';
 import { findItem } from '../state/utils';
-import { DashboardTreeSelection, DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
+import {
+  DashboardTreeSelection,
+  DashboardViewItemWithUIItems,
+  BrowseDashboardsPermissions,
+  BrowseDashboardsState,
+} from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
   return baseId + item.uid;
@@ -119,4 +124,36 @@ export function canSelectItems(permissions: BrowseDashboardsPermissions) {
   const canSelectFolders = canEditFolders || canDeleteFolders;
   const canSelectDashboards = canEditDashboards || canDeleteDashboards;
   return Boolean(canSelectFolders || canSelectDashboards);
+}
+
+/**
+ * Finds the repository name for an item by traversing up the tree to find
+ * the root provisioned folder (managed by ManagerKind.Repo)
+ */
+export function getItemRepositoryUid(
+  item: DashboardViewItem,
+  rootItems: DashboardViewItem[],
+  childrenByParentUID: BrowseDashboardsState['childrenByParentUID']
+): string | null {
+  // For root provisioned folders, the UID is the repository name
+  if (item.managedBy === ManagerKind.Repo && !item.parentUID && item.kind === 'folder') {
+    return item.uid;
+  }
+
+  // Traverse up the tree to find the root provisioned folder
+  let currentItem = item;
+  while (currentItem.parentUID) {
+    const parent = findItem(rootItems, childrenByParentUID, currentItem.parentUID);
+    if (!parent) {
+      break;
+    }
+
+    if (parent.managedBy === ManagerKind.Repo && !parent.parentUID) {
+      return currentItem.parentUID;
+    }
+
+    currentItem = parent;
+  }
+
+  return null; // Item is not in a provisioned repository
 }

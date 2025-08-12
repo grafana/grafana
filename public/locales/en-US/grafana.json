@@ -3533,8 +3533,8 @@
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
       "error-path-not-found": "Path not found",
-      "error-repository-not-found": "Repository not found",
-      "error-repository-not-same": "All selected items must be from the same repository"
+      "error-repository-not-found-message": "Repository not found. Please ensure the repository exists, contact admin for assistance.",
+      "error-repository-not-found-title": "Repository not found"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
@@ -3550,6 +3550,8 @@
       },
       "error-file-content-not-found": "File content not found",
       "error-path-not-found": "Path not found",
+      "error-repository-not-found-message": "Repository not found. Please ensure the repository exists, contact admin for assistance.",
+      "error-repository-not-found-title": "Repository not found",
       "error-target-folder-path-missing": "Target folder path is missing",
       "error-title": "Target Folder Error",
       "move-warning": "This will move selected folders and their descendants. In total, this will affect:",

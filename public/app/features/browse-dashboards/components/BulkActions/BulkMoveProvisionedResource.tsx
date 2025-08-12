@@ -32,6 +32,7 @@ import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 import { MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
+import { useBulkActionRequest } from './useBulkActionRequest';
 import {
   BulkActionFormData,
   BulkActionProvisionResourceProps,
@@ -281,14 +282,10 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
   // Check if we're on the root browser dashboards page
   const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
-
-  // Validate repository consistency using reusable hook
-  const { allFromSameRepo, commonRepository } = useRepositoryValidation(selectedItems);
-
-  // If no folderUid, use the common repository name
-  const selectedFolderUid = isRootPage ? commonRepository : undefined;
-
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid || selectedFolderUid });
+  const { commonRepositoryUID } = useRepositoryValidation(selectedItems);
+  const { repository, folder } = useGetResourceRepositoryView({
+    folderName: isRootPage ? commonRepositoryUID : folderUid,
+  });
 
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
@@ -302,19 +299,12 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
 
   if (!repository) {
     return (
-      <Alert title="Repository not found" severity="error">
-        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.error-repository-not-found">
-          Repository not found
-        </Trans>
-      </Alert>
-    );
-  }
-
-  if (!allFromSameRepo) {
-    return (
-      <Alert title="Error" severity="error">
-        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.error-repository-not-same">
-          All selected items must be from the same repository
+      <Alert
+        title={t('browse-dashboards.bulk-move-resources-form.error-repository-not-found-title', 'Repository not found')}
+        severity="error"
+      >
+        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.error-repository-not-found-message">
+          Repository not found. Please ensure the repository exists, contact admin for assistance.
         </Trans>
       </Alert>
     );
