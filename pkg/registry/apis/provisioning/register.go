@@ -275,7 +275,28 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				// A Grafana sub-system should have full access. We trust them to make wise decisions.
 				return authorizer.DecisionAllow, "", nil
 			}
+			
+			info, ok := authlib.AuthInfoFrom(ctx)
+			if ok && authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) {
+				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
+					Verb:        a.GetVerb(),
+					Group:       a.GetAPIGroup(),
+					Resource:    a.GetResource(),
+					Name:        a.GetName(),
+					Namespace:   a.GetNamespace(),
+					Subresource: a.GetSubresource(),
+				})
 
+				if err != nil {
+					return authorizer.DecisionDeny, "failed to perform authorization", err
+				}
+
+				if !res.Allowed {
+					return authorizer.DecisionDeny, "permission denied", nil
+				}
+
+				return authorizer.DecisionAllow, "", nil
+			}
 			// Different routes may need different permissions.
 			// * Reading and modifying a repository's configuration requires administrator privileges.
 			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
@@ -615,18 +636,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			// When starting with an empty instance -- swith to "mode 4+"
-			err = b.tryRunningOnlyUnifiedStorage()
-			if err != nil {
-				return err
-			}
-
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
-			go repoInformer.Informer().Run(postStartHookCtx.Done())
-			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
 			b.client = c.ProvisioningV0alpha1()
 
@@ -636,6 +649,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.repositoryLister = repoInformer.Lister()
+	
+			// if running solely CRUD, skip the rest of the setup
+			if b.localFileResolver == nil {
+				return nil
+			}
+	
+			go repoInformer.Informer().Run(postStartHookCtx.Done())
+			go jobInformer.Informer().Run(postStartHookCtx.Done())
+
+			// When starting with an empty instance -- swith to "mode 4+"
+			err = b.tryRunningOnlyUnifiedStorage()
+			if err != nil {
+				return err
+			}
 
 			// Create the repository resources factory
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.repositoryLister, b.unified)
