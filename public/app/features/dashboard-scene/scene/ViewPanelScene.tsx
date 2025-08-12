@@ -1,5 +1,6 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 
+import { getVizPanelPathId } from '../utils/pathId';
 import { activateSceneObjectAndParentTree } from '../utils/utils';
 
 interface ViewPanelSceneState extends SceneObjectState {
@@ -19,7 +20,7 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
   }
 
   public getUrlKey() {
-    return this.state.panelRef.resolve().state.key;
+    return getVizPanelPathId(this.state.panelRef.resolve());
   }
 
   public static Component = ({ model }: SceneComponentProps<ViewPanelScene>) => {
