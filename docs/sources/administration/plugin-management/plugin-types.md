@@ -55,10 +55,10 @@ Use app plugins when you want an out-of-the-box monitoring experience.
 
 ### Managing access for app plugins
 
-Customize access to app plugins with [RBAC](../roles-and-permissions/access-control/rbac-for-app-plugins/).
+Customize access to app plugins with [RBAC](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-for-app-plugins/).
 
 By default, the Viewer, Editor and Admin roles have access to all app plugins that their Organization role allows them to access. Access is granted by the `fixed:plugins.app:reader` role.
 
 {{< admonition type="note" >}}
-To prevent users from seeing an app plugin, refer to [these permissions scenarios](../roles-and-permissions/access-control/plan-rbac-rollout-strategy/#prevent-viewers-from-accessing-an-app-plugin).
+To prevent users from seeing an app plugin, refer to [these permissions scenarios](/docs/grafana/<GRAFANA_VERSION>/roles-and-permissions/access-control/plan-rbac-rollout-strategy/#prevent-viewers-from-accessing-an-app-plugin).
 {{< /admonition >}}
