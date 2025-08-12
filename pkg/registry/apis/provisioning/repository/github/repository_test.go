@@ -688,7 +688,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 		name          string
 		file          *repository.FileInfo
 		config        *provisioning.Repository
-		expectedURLs  *provisioning.ResourceURLs
+		expectedURLs  *provisioning.RepositoryURLs
 		expectedError error
 	}{
 		{
@@ -705,7 +705,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 					},
 				},
 			},
-			expectedURLs: &provisioning.ResourceURLs{
+			expectedURLs: &provisioning.RepositoryURLs{
 				RepositoryURL:     "https://github.com/grafana/grafana",
 				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/test.json",
 				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
@@ -726,7 +726,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 					},
 				},
 			},
-			expectedURLs: &provisioning.ResourceURLs{
+			expectedURLs: &provisioning.RepositoryURLs{
 				RepositoryURL: "https://github.com/grafana/grafana",
 				SourceURL:     "https://github.com/grafana/grafana/blob/main/dashboards/test.json",
 			},
@@ -771,6 +771,92 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			}
 
 			urls, err := repo.ResourceURLs(context.Background(), tt.file)
+
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedURLs, urls)
+			}
+		})
+	}
+}
+
+func TestGitHubRepositoryRefURLs(t *testing.T) {
+	tests := []struct {
+		name          string
+		ref           string
+		config        *provisioning.Repository
+		expectedURLs  *provisioning.RepositoryURLs
+		expectedError error
+	}{
+		{
+			name: "ref different from branch",
+			ref:  "feature-branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
+			name: "ref same as branch",
+			ref:  "main",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				SourceURL: "https://github.com/grafana/grafana/tree/main",
+			},
+		},
+		{
+			name: "empty ref returns nil",
+			ref:  "",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: nil,
+		},
+		{
+			name: "nil github config returns nil",
+			ref:  "feature-branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: nil,
+				},
+			},
+			expectedURLs: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &githubRepository{
+				config: tt.config,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			urls, err := repo.RefURLs(context.Background(), tt.ref)
 
 			if tt.expectedError != nil {
 				require.Error(t, err)

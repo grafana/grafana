@@ -87,7 +87,7 @@ type ParsedResource struct {
 	Repo provisioning.ResourceRepositoryInfo
 
 	// Resource URLs
-	URLs *provisioning.ResourceURLs
+	URLs *provisioning.RepositoryURLs
 
 	// Check for classic file types (dashboard.json, etc)
 	Classic provisioning.ClassicFileType

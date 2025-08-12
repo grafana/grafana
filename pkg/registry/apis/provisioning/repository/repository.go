@@ -119,17 +119,19 @@ type Writer interface {
 	Move(ctx context.Context, oldPath, newPath, ref, message string) error
 }
 
+//go:generate mockery --name ReaderWriter --structname MockReaderWriter --inpackage --filename reader_writer_mock.go --with-expecter
 type ReaderWriter interface {
 	Reader
 	Writer
 }
 
-// Hooks called after the repository has been created, updated or deleted
+//go:generate mockery --name RepositoryWithURLs --structname MockRepositoryWithURLs --inpackage --filename repository_with_urls_mock.go --with-expecter
 type RepositoryWithURLs interface {
 	Repository
 
 	// Get resource URLs for a file inside a repository
-	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.ResourceURLs, error)
+	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.RepositoryURLs, error)
+	RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted

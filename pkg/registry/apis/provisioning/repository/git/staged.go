@@ -31,13 +31,9 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 		branch = repo.gitConfig.Branch
 	}
 
-	ref, err := repo.client.GetRef(ctx, "refs/heads/"+branch)
+	ref, err := repo.ensureBranchExists(ctx, branch)
 	if err != nil {
-		// TODO: opts.CreateIfNotExists doesn't make sense in the context of the staged repository
-		// because we only support the branch that is passed in.
-		// we should probably add branch to the repository.CloneOptions which should be repurposed
-		// as some kind of branch creation options.
-		return nil, err
+		return nil, fmt.Errorf("ensure branch exists: %w", err)
 	}
 
 	writer, err := repo.client.NewStagedWriter(ctx, ref)

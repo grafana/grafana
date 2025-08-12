@@ -576,7 +576,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 	return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo)
 }
 
-func getFolderURLs(ctx context.Context, path, ref string, repo repository.Repository) (*provisioning.ResourceURLs, error) {
+func getFolderURLs(ctx context.Context, path, ref string, repo repository.Repository) (*provisioning.RepositoryURLs, error) {
 	if urlRepo, ok := repo.(repository.RepositoryWithURLs); ok && ref != "" {
 		urls, err := urlRepo.ResourceURLs(ctx, &repository.FileInfo{Path: path, Ref: ref})
 		if err != nil {

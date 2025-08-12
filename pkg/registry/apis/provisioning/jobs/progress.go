@@ -53,6 +53,7 @@ type jobProgressRecorder struct {
 	resultCount         int
 	errorCount          int
 	errors              []string
+	refURLs             *provisioning.RepositoryURLs
 	notifyImmediatelyFn ProgressFn
 	maybeNotifyFn       ProgressFn
 	summaries           map[string]*provisioning.JobResourceSummary
@@ -115,6 +116,18 @@ func (r *jobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
 	r.mu.Unlock()
 
 	logging.FromContext(ctx).Info("job final message", "message", msg)
+}
+
+func (r *jobProgressRecorder) SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs) {
+	r.mu.Lock()
+	r.refURLs = refURLs
+	r.mu.Unlock()
+
+	if refURLs != nil {
+		logging.FromContext(ctx).Debug("job ref URLs set", "sourceURL", refURLs.SourceURL, "compareURL", refURLs.CompareURL, "newPullRequestURL", refURLs.NewPullRequestURL)
+	} else {
+		logging.FromContext(ctx).Debug("job ref URLs cleared")
+	}
 }
 
 func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
@@ -253,6 +266,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 
 	jobStatus.Summary = r.summary()
 	jobStatus.Errors = r.errors
+	jobStatus.URLs = r.refURLs
 
 	// Check for errors during execution
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
