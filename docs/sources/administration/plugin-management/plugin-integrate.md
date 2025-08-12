@@ -1,5 +1,5 @@
 ---
-title: Integrate your plugins
+title: Plugin backend communication
 description: Allow plugin frontends to communicate locally with the backends of other installed plugins.
 labels:
   products:
@@ -19,29 +19,30 @@ keywords:
 weight: 350
 ---
 
-# Integrate your plugins
+# Allow plugin backend communication
 
-You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins.
+By default, you can only communicate with plugin backends remotely. 
 
-By default, you can only communicate with plugin backends remotely. You can use this configuration to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
+However, you can configure your Grafana instance to let the frontends of installed plugins to directly communicate with the backends of other plugins installed locally. You can use this configuration to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
 
-To enable backend communication between plugins:
+## Integrate your plugins
 
-1. Set the plugins you want to communicate with. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable and then set the following configuration option:
+To enable backend communication between plugins, set the plugins you want to communicate with. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system), remove the semicolon to enable and then set the following configuration option:
 
-   ```
-   actions_allow_post_url=
-   ```
+```
+  actions_allow_post_url=
+```
 
-   This is a comma-separated list that uses glob matching.
-   - To allow access to all plugins that have a backend:
+This is a comma-separated list that uses glob matching.
 
-     ```
-     actions_allow_post_url=/api/plugins/*
-     ```
+- To allow access to all plugins that have a backend, use:
 
-   - To access to the backend of only one plugin:
+```
+actions_allow_post_url=/api/plugins/*
+```
 
-     ```
-     actions_allow_post_url=/api/plugins/<GRAFANA_SPECIAL_APP>
-     ```
+- To access the backend of only one plugin, use:
+
+```
+actions_allow_post_url=/api/plugins/<GRAFANA_SPECIAL_APP>
+```

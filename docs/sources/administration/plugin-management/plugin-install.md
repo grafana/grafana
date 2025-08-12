@@ -37,7 +37,7 @@ Download the archive containing the plugin assets, and install it by extracting 
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 ```
 
-The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration](../../setup-grafana/configure-grafana/#plugins).
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration](../setup-grafana/configure-grafana/#plugins).
 
 ## Install a plugin using Grafana configuration
 

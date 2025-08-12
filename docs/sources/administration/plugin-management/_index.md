@@ -24,10 +24,10 @@ Read on for an overview on how to get started with plugins:
 - There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
 - Learn [how to install](#install-a-plugin), [update](#update-a-plugin) and [verify](#verify-your-plugins) your plugins.
 
-Additionally, you can also:
+Advanced functionalities allow you to:
 
-- [Customize](/customize-navigation-placement-of-plugin-pages) where app plugin pages appear in the navigation menu).
-- [Allow the frontends of installed plugins to communicate locally with the backends](#integrate-plugins) of other installed plugins.
+- [Customize where app plugin pages appear](/customize-navigation-placement-of-plugin-pages) in the navigation menu.
+- [Configure backend communication](#integrate-plugins) between installed plugins.
 - Improve security by isolating plugins with the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox).
 
 ## Plugin catalog
