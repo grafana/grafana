@@ -115,6 +115,7 @@
 /pkg/components/loki/ @grafana/grafana-backend-group
 /pkg/components/null/ @grafana/grafana-backend-group
 /pkg/components/simplejson/ @grafana/grafana-backend-group
+/pkg/configprovider/ @grafana/grafana-backend-services-squad
 /pkg/events/ @grafana/grafana-backend-group
 /pkg/extensions/ @grafana/grafana-backend-group
 /pkg/ifaces/ @grafana/grafana-backend-group

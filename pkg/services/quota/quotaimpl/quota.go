@@ -7,11 +7,11 @@ import (
 	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // tracer is the global tracer for the quota service. Tracer pulls the globally
@@ -46,8 +46,8 @@ func (s *serviceDisabled) RegisterQuotaReporter(e *quota.NewUsageReporter) error
 
 type service struct {
 	store  store
-	Cfg    *setting.Cfg
-	Logger log.Logger
+	cfg    configprovider.ConfigProvider
+	logger log.Logger
 
 	mutex     sync.RWMutex
 	reporters map[quota.TargetSrv]quota.UsageReporterFunc
@@ -57,26 +57,26 @@ type service struct {
 	targetToSrv *quota.TargetToSrv
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) quota.Service {
+func ProvideService(ctx context.Context, db db.DB, configProvider configprovider.ConfigProvider) quota.Service {
 	logger := log.New("quota_service")
 	s := service{
 		store:         &sqlStore{db: db, logger: logger},
-		Cfg:           cfg,
-		Logger:        logger,
+		cfg:           configProvider,
+		logger:        logger,
 		reporters:     make(map[quota.TargetSrv]quota.UsageReporterFunc),
 		defaultLimits: &quota.Map{},
 		targetToSrv:   quota.NewTargetToSrv(),
 	}
 
-	if s.IsDisabled() {
+	if s.IsDisabled(ctx) {
 		return &serviceDisabled{}
 	}
 
 	return &s
 }
 
-func (s *service) IsDisabled() bool {
-	return !s.Cfg.Quota.Enabled
+func (s *service) IsDisabled(ctx context.Context) bool {
+	return !s.cfg.Get(ctx).Quota.Enabled
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context

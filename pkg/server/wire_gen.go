@@ -6,6 +6,7 @@
 package server
 
 import (
+	"context"
 	"github.com/google/wire"
 	httpclient2 "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -281,7 +283,7 @@ import (
 
 // Injectors from wire.go:
 
-func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
+func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
 	routeRegisterImpl := routing.ProvideRegister()
 	tracingConfig, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -388,7 +390,11 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -851,7 +857,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	return server, nil
 }
 
-func InitializeForTest(t sqlutil.ITestDB, testingT interface {
+func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interface {
 	Cleanup(func())
 	mock.TestingT
 }, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
@@ -961,7 +967,11 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -1430,7 +1440,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	return testEnv, nil
 }
 
-func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
+func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
 		return Runner{}, err
@@ -1471,7 +1481,11 @@ func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	secretsMigrator := migrator.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return Runner{}, err
+	}
+	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return Runner{}, err
@@ -1523,7 +1537,7 @@ func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 
 // InitializeForCLITarget is a simplified set of dependencies for the CLI, used
 // by the server target subcommand to launch specific dskit modules.
-func InitializeForCLITarget(cfg *setting.Cfg) (ModuleRunner, error) {
+func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (ModuleRunner, error) {
 	ossImpl := setting.ProvideProvider(cfg)
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
