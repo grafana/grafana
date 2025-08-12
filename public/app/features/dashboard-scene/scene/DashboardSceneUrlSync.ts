@@ -205,7 +205,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _handleViewRepeatClone(viewPanel: string) {
     if (!this._viewEventSub) {
       this._viewEventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
-        const panel = findVizPanelByKey(this._scene, viewPanel);
+        const panel = findVizPanelByPathId(this._scene, viewPanel);
         if (panel) {
           this._viewEventSub?.unsubscribe();
           this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });
