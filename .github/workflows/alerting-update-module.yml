@@ -52,7 +52,7 @@ jobs:
           TO_COMMIT="$(gh api repos/grafana/alerting/commits/"$BRANCH" --jq '.sha')"
            if [ -z "$TO_COMMIT" ]; then
             echo "Branch $BRANCH not found in alerting repo, falling back to main branch"
-            exit 1
+            TO_COMMIT="$(gh api repos/grafana/alerting/commits/main --jq '.sha')"
           fi
           echo "to_commit=$TO_COMMIT" >> "$GITHUB_OUTPUT"
 
