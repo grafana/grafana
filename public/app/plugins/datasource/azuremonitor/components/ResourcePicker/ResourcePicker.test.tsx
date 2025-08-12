@@ -61,7 +61,6 @@ function createMockResourcePickerData(
 }
 
 const queryType: ResourcePickerQueryType = 'logs';
-
 const resourcePickerData = createMockResourcePickerData();
 const defaultProps = {
   templateVariables: [],
@@ -72,6 +71,8 @@ const defaultProps = {
     getSubscriptions: jest
       .fn()
       .mockResolvedValue(createMockSubscriptions().map((sub) => ({ label: sub.name, value: sub.id }))),
+    getLocations: jest.fn().mockResolvedValue(createMockLocations()),
+    getMetricNamespaces: jest.fn().mockResolvedValue(createMockMetricsNamespaces()),
   }),
   onCancel: noop,
   onApply: noop,
