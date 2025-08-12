@@ -9,9 +9,6 @@ export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_in
 export type InheritableKeys = typeof INHERITABLE_KEYS;
 export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
-<<<<<<< HEAD
-export interface RouteMatchResult<T> {
-=======
 // Represents matching information for a single route in the traversal path
 export type RouteMatchInfo<T extends Route> = {
   route: T;
@@ -20,7 +17,6 @@ export type RouteMatchInfo<T extends Route> = {
 };
 
 export interface RouteMatchResult<T extends Route> {
->>>>>>> alerting/pkg-add-route-matching-hook
   route: T;
   labels: Label[];
   // Track matching information for each route in the traversal path
