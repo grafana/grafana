@@ -387,7 +387,7 @@ lists of links, or other dynamic cases.
 For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize
 dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
 also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
-Dynamic height disables table virtualization.
+Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
 
 By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
 in these cells if the [`disable_sanitize_html`](../../../setup-grafana/configure-grafana/_index.md#disable_sanitize_html) option is set to true for your Grafana instance.
