@@ -274,7 +274,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		}
 
 		if !success {
-			span.SetStatus(codes.Error, "KeeperMetadataStorage.List failed")
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Read failed")
 			span.RecordError(readErr)
 			args = append(args, "error", readErr)
 		}
