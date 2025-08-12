@@ -47,6 +47,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     maxWidth,
     isClearable,
     createCustomValue = false,
+    'aria-labelledby': ariaLabelledBy,
+    'data-testid': dataTestId,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -116,7 +118,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             break;
         }
       },
-      stateReducer: (state, actionAndChanges) => {
+      stateReducer: (_state, actionAndChanges) => {
         const { changes } = actionAndChanges;
         return {
           ...changes,
@@ -218,7 +220,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             }
             setSelectedItems(newSelectedItems);
           } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
-            removeSelectedItem(newSelectedItem);
+            // Find the actual selected item object that matches the clicked item by value
+            // This is necessary because the clicked item (from async options) may be a different
+            // object reference than the selected item, and useMultipleSelection uses object equality
+            const itemToRemove = selectedItems.find((item) => item.value === newSelectedItem.value);
+            if (itemToRemove) {
+              removeSelectedItem(itemToRemove);
+            }
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }
@@ -285,15 +293,17 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           )}
           <input
             className={multiStyles.input}
-            {...getInputProps(
-              getDropdownProps({
+            {...getInputProps({
+              ...getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
                 placeholder: visibleItems.length === 0 ? placeholder : '',
                 ref: inputRef,
                 style: { width: inputWidth },
-              })
-            )}
+              }),
+              'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+              'data-testid': dataTestId,
+            })}
           />
 
           <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>
