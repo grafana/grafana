@@ -7,7 +7,6 @@ import { TableCellTooltipPlacement } from '@grafana/schema';
 
 import { Popover } from '../../../Tooltip/Popover';
 import { TableCellOptions } from '../../types';
-import { TABLE } from '../constants';
 import { getTooltipStyles } from '../styles';
 import { TableCellRenderer, TableCellRendererProps } from '../types';
 
@@ -20,13 +19,14 @@ export interface Props {
   disableSanitizeHtml?: boolean;
   field: Field;
   getActions: (field: Field, rowIdx: number) => ActionModel[];
-  height?: number;
+  gridRef: RefObject<DataGridHandle>;
+  height: number;
   placement?: TableCellTooltipPlacement;
   popoverRef: React.MutableRefObject<HTMLElement | null>;
   renderer: TableCellRenderer;
-  gridRef: RefObject<DataGridHandle>;
   rowIdx: number;
   style?: CSSProperties;
+  tooltipField: Field;
   theme: GrafanaTheme2;
   width?: number;
 }
@@ -41,23 +41,24 @@ export function TableCellTooltip({
   field,
   getActions,
   gridRef,
-  height: _height,
+  height,
   placement,
   popoverRef,
   renderer,
   rowIdx,
   style,
   theme,
+  tooltipField,
   width = 300,
 }: Props) {
   const rawValue = field.values[rowIdx];
-  const height = _height ?? TABLE.MAX_CELL_HEIGHT;
   const tooltipCaretRef = useRef<HTMLDivElement>(null);
 
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);
 
   const show = hovered || pinned;
+  const dynamicHeight = tooltipField.config.custom?.cellOptions?.dynamicHeight;
 
   useEffect(() => {
     if (pinned) {
@@ -119,7 +120,7 @@ export function TableCellTooltip({
           placement={placement}
           wrapperClassName={classes.tooltipWrapper}
           className={className}
-          style={{ ...style, minWidth: width, [typeof _height === 'number' ? 'height' : 'minHeight']: height }}
+          style={{ ...style, minWidth: width, ...(!dynamicHeight && { height }) }}
           referenceElement={popoverRef.current}
           onMouseLeave={onMouseLeave}
           onMouseEnter={onMouseEnter}
