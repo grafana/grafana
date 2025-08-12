@@ -170,14 +170,15 @@ func TestIntegrationShortURLService(t *testing.T) {
 
 		cmd := &dtos.CreateShortURLCmd{
 			Path: "mock/path?test=true",
-			UID:  "custom-uid",
+			UID:  "custom-uid-2",
 		}
 		newShortURL1, err := service.CreateShortURL(ctx, user, cmd)
 		require.NoError(t, err)
 		require.NotNil(t, newShortURL1)
 		require.Equal(t, cmd.UID, newShortURL1.Uid)
 
-		_, err = service.CreateShortURL(ctx, user, cmd)
-		require.Error(t, err)
+		newShortURL2, err := service.CreateShortURL(ctx, user, cmd)
+		require.ErrorIs(t, err, shorturls.ErrShortURLConflict)
+		require.Nil(t, newShortURL2)
 	})
 }
