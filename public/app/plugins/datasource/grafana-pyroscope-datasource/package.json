@@ -2,13 +2,13 @@
   "name": "@grafana-plugins/grafana-pyroscope-datasource",
   "description": "Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.",
   "private": true,
-  "version": "11.4.8",
+  "version": "11.4.9",
   "dependencies": {
     "@emotion/css": "11.13.4",
-    "@grafana/data": "11.4.8",
-    "@grafana/runtime": "11.4.8",
-    "@grafana/schema": "11.4.8",
-    "@grafana/ui": "11.4.8",
+    "@grafana/data": "11.4.9",
+    "@grafana/runtime": "11.4.9",
+    "@grafana/schema": "11.4.9",
+    "@grafana/ui": "11.4.9",
     "fast-deep-equal": "^3.1.3",
     "lodash": "4.17.21",
     "monaco-editor": "0.34.1",
@@ -20,7 +20,7 @@
     "tslib": "2.7.0"
   },
   "devDependencies": {
-    "@grafana/plugin-configs": "11.4.8",
+    "@grafana/plugin-configs": "11.4.9",
     "@testing-library/dom": "10.0.0",
     "@testing-library/jest-dom": "6.4.2",
     "@testing-library/react": "15.0.2",
