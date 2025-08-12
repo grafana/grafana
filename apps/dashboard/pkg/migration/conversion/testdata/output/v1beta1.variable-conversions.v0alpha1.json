@@ -274,9 +274,7 @@
           "current": {
             "selected": false,
             "text": "legacy_value",
-            "value": {
-              "__legacyStringValue": "legacy_string_content"
-            }
+            "value": "legacy_string_content"
           },
           "datasource": {
             "type": "prometheus",

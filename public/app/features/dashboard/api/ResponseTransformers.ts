@@ -1,5 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
-import { MetricFindValue } from '@grafana/data';
+import { MetricFindValue, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AnnotationQuery,
@@ -21,7 +20,6 @@ import {
   DataLink,
   DatasourceVariableKind,
   defaultSpec as defaultDashboardV2Spec,
-  defaultFieldConfigSource,
   defaultTimeSettingsSpec,
   PanelQueryKind,
   QueryVariableKind,
@@ -828,10 +826,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           ...commonProperties,
           current: {
             text: v.spec.current.text,
-            value:
-              LEGACY_STRING_VALUE_KEY in v.spec.current.value
-                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-                : v.spec.current.value,
+            value: v.spec.current.value,
           },
           options: v.spec.options,
           query:
@@ -871,14 +866,8 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
         const cv: VariableModel = {
           ...commonProperties,
           current: {
-            text:
-              LEGACY_STRING_VALUE_KEY in v.spec.current.value
-                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-                : v.spec.current.value,
-            value:
-              LEGACY_STRING_VALUE_KEY in v.spec.current.value
-                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-                : v.spec.current.value,
+            text: v.spec.current.value,
+            value: v.spec.current.value,
           },
           options: v.spec.options,
           query: v.spec.query,
@@ -892,21 +881,12 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
         const constant: VariableModel = {
           ...commonProperties,
           current: {
-            text:
-              LEGACY_STRING_VALUE_KEY in v.spec.current.value
-                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-                : v.spec.current.value,
-            value:
-              LEGACY_STRING_VALUE_KEY in v.spec.current.value
-                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-                : v.spec.current.value,
+            text: v.spec.current.value,
+            value: v.spec.current.value,
           },
           hide: transformVariableHideToEnumV1(v.spec.hide),
           // @ts-expect-error
-          query:
-            LEGACY_STRING_VALUE_KEY in v.spec.current.value
-              ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-              : v.spec.current.value,
+          query: v.spec.current.value,
         };
         variables.push(constant);
         break;
@@ -914,14 +894,8 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
         const iv: VariableModel = {
           ...commonProperties,
           current: {
-            text:
-              LEGACY_STRING_VALUE_KEY in v.spec.current.value
-                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-                : v.spec.current.value,
-            value:
-              LEGACY_STRING_VALUE_KEY in v.spec.current.value
-                ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-                : v.spec.current.value,
+            text: v.spec.current.value,
+            value: v.spec.current.value,
           },
           hide: transformVariableHideToEnumV1(v.spec.hide),
           query: v.spec.query,
@@ -935,21 +909,16 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
         variables.push(iv);
         break;
       case 'TextVariable':
-        const currentValue =
-          LEGACY_STRING_VALUE_KEY in v.spec.current.value
-            ? v.spec.current.value[LEGACY_STRING_VALUE_KEY]
-            : v.spec.current.value;
-
         const current = {
-          text: currentValue,
-          value: currentValue,
+          text: v.spec.current.value,
+          value: v.spec.current.value,
         };
 
         const tv: VariableModel = {
           ...commonProperties,
           current: {
-            text: currentValue,
-            value: currentValue,
+            text: v.spec.current.value,
+            value: v.spec.current.value,
           },
           options: [{ ...current, selected: true }],
           query: v.spec.query,

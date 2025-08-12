@@ -1,7 +1,6 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
