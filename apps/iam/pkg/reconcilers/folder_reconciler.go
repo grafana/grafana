@@ -130,7 +130,7 @@ func (r *FolderReconciler) reconcile(ctx context.Context, req operator.TypedReco
 func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *foldersKind.Folder) (operator.ReconcileResult, error) {
 	logger := logging.FromContext(ctx)
 
-	folderUID := folder.Spec.Title
+	folderUID := folder.ObjectMeta.Name
 	namespace := folder.Namespace
 
 	parentUID, err := r.folderStore.GetFolderParent(ctx, namespace, folderUID)
@@ -163,7 +163,7 @@ func (r *FolderReconciler) handleDeleteFolder(ctx context.Context, folder *folde
 	logger := logging.FromContext(ctx)
 
 	namespace := folder.Namespace
-	folderUID := folder.Spec.Title
+	folderUID := folder.ObjectMeta.Name
 
 	err := r.permissionStore.DeleteFolder(ctx, namespace, folderUID)
 	if err != nil {
@@ -179,8 +179,8 @@ func validateFolder(folder *foldersKind.Folder) error {
 	if folder == nil {
 		return fmt.Errorf("folder is nil")
 	}
-	if folder.Spec.Title == "" {
-		return fmt.Errorf("folder UID (Spec.Title) is empty")
+	if folder.ObjectMeta.Name == "" {
+		return fmt.Errorf("folder UID (ObjectMeta.Name) is empty")
 	}
 	if folder.Namespace == "" {
 		return fmt.Errorf("folder namespace is empty")
