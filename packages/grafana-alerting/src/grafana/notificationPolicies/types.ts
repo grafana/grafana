@@ -12,8 +12,8 @@ export type Route = OverrideProperties<
   }
 >;
 
-// a route, but with an identifier – we use this to modify or identify individual routes. 
+// a route, but with an identifier – we use this to modify or identify individual routes.
 // Mostly used for searching / filtering.
-export interface RouteWithID extends Route { 
-  id: string 
-};
+export interface RouteWithID extends Route {
+  id: string;
+}
