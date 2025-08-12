@@ -79,7 +79,6 @@ export const GenAISQLExplainButton = ({
 
   return (
     <GenAIButton
-      iconVisible={false}
       disabled={!hasQuery}
       eventTrackingSrc={EventTrackingSrc.sqlExpressions}
       messages={messages}
@@ -91,7 +90,10 @@ export const GenAISQLExplainButton = ({
       tooltip={
         !hasQuery
           ? t('sql-expressions.explain-empty-query-tooltip', 'Enter a SQL expression to get an explanation')
-          : undefined
+          : t(
+              'expressions.sql-expr.tooltip-experimental',
+              'SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team.'
+            )
       }
     />
   );

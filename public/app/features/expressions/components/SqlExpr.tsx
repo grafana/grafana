@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
 import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
-import { useStyles2, Stack, Button, Tooltip, Icon } from '@grafana/ui';
-import { useLLMStream } from 'app/features/dashboard/components/GenAI/hooks';
+import { useStyles2, Stack, Button } from '@grafana/ui';
 
 import { ExpressionQueryEditorProps } from '../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../types';
@@ -85,7 +83,6 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });
-  const { value } = useLLMStream();
 
   const { handleApplySuggestion, handleHistoryUpdate, handleCloseDrawer, handleOpenDrawer, isDrawerOpen, suggestions } =
     useSQLSuggestions();
@@ -180,20 +177,8 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   return (
     <>
       <Stack direction="column" gap={1.5}>
-        <div className={cx({ [styles.sqlButtons]: value?.enabled })}>
+        <div className={styles.sqlButtons}>
           <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-            {value?.enabled && (
-              <Tooltip
-                content={t(
-                  'expressions.sql-expr.tooltip-experimental',
-                  'SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team.'
-                )}
-                placement="top"
-                interactive={true}
-              >
-                <Icon name="ai-sparkle" />
-              </Tooltip>
-            )}
             <Suspense fallback={null}>
               {shouldShowViewExplanation ? (
                 <Button

@@ -40,7 +40,6 @@ export interface GenAIButtonProps {
   onHistoryChange?: (history: string[]) => void;
   // Optional timeout for the LLM stream. Default is 10 seconds
   timeout?: number;
-  iconVisible?: boolean;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
 
@@ -57,7 +56,6 @@ export const GenAIButton = ({
   tooltip,
   onHistoryChange,
   timeout = TIMEOUT,
-  iconVisible = true,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
@@ -139,7 +137,7 @@ export const GenAIButton = ({
   };
 
   const getIcon = () => {
-    if (isGenerating || !iconVisible) {
+    if (isGenerating) {
       return undefined;
     }
 
