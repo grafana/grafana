@@ -32,6 +32,7 @@ import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 import { MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
+import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { useBulkActionRequest } from './useBulkActionRequest';
 import {
   BulkActionFormData,
@@ -283,7 +284,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   // Check if we're on the root browser dashboards page
   const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
-  const { repository, folder } = useGetResourceRepositoryView({
+  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
     folderName: isRootPage ? selectedItemsRepoUID : folderUid,
   });
 
@@ -297,17 +298,8 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository) {
-    return (
-      <Alert
-        title={t('browse-dashboards.bulk-move-resources-form.error-repository-not-found-title', 'Repository not found')}
-        severity="error"
-      >
-        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.error-repository-not-found-message">
-          Repository not found. Please ensure the repository exists, contact admin for assistance.
-        </Trans>
-      </Alert>
-    );
+  if (!repository || isReadOnlyRepo) {
+    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
   }
 
   return (

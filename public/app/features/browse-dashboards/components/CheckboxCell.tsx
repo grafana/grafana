@@ -5,10 +5,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
 
-import { DashboardsTreeCellProps, SelectionState, DashboardViewItemWithUIItems } from '../types';
+import { DashboardsTreeCellProps, SelectionState } from '../types';
 
 import { useSelectionRepoValidation } from './BrowseActions/useSelectionRepoValidation';
 import { isSharedWithMe, canEditItemType } from './utils';
@@ -24,11 +23,6 @@ export default function CheckboxCell({
   // Get current selection state for repository validation
   const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
   const { selectedItemsRepoUID, isInLockedRepo } = useSelectionRepoValidation(selectedItems);
-
-  // Type guard to check if item is a DashboardViewItem (not UI item)
-  const isDashboardViewItem = (item: DashboardViewItemWithUIItems): item is DashboardViewItem => {
-    return item.kind !== 'ui';
-  };
 
   // Early returns for cases where we should show a spacer instead of checkbox
   if (!isSelected) {
@@ -48,7 +42,7 @@ export default function CheckboxCell({
   }
 
   // Disable checkbox for root provisioned folder itself
-  if (isDashboardViewItem(item) && item.managedBy === ManagerKind.Repo && !item.parentUID) {
+  if (item.managedBy === ManagerKind.Repo && !item.parentUID) {
     return <CheckboxSpacer />;
   }
 
@@ -57,7 +51,7 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  if (isDashboardViewItem(item) && selectedItemsRepoUID && !isInLockedRepo(item.uid)) {
+  if (selectedItemsRepoUID && !isInLockedRepo(item.uid)) {
     return (
       <Tooltip
         content={t(
@@ -70,11 +64,6 @@ export default function CheckboxCell({
         </span>
       </Tooltip>
     );
-  }
-
-  // At this point we know it's a valid item to show a checkbox for
-  if (!isDashboardViewItem(item)) {
-    return <CheckboxSpacer />;
   }
 
   const state = isSelected(item);

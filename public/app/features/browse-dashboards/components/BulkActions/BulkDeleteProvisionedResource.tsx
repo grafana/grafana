@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { Box, Button, Stack } from '@grafana/ui';
 import {
   DeleteRepositoryFilesWithPathApiArg,
   DeleteRepositoryFilesWithPathApiResponse,
@@ -27,6 +27,7 @@ import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 import { MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
+import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { useBulkActionRequest } from './useBulkActionRequest';
 import {
   BulkActionFormData,
@@ -209,7 +210,7 @@ export function BulkDeleteProvisionedResource({
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
 
   // For root provisioned folders, the folder UID is the repository name
-  const { repository, folder } = useGetResourceRepositoryView({
+  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
     folderName: isRootPage ? selectedItemsRepoUID : folderUid,
   });
   const workflowOptions = getWorkflowOptions(repository);
@@ -222,20 +223,8 @@ export function BulkDeleteProvisionedResource({
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository) {
-    return (
-      <Alert
-        title={t(
-          'browse-dashboards.bulk-delete-resources-form.error-repository-not-found-title',
-          'Repository not found'
-        )}
-        severity="error"
-      >
-        <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.error-repository-not-found-message">
-          Repository not found. Please ensure the repository exists, contact admin for assistance.
-        </Trans>
-      </Alert>
-    );
+  if (!repository || isReadOnlyRepo) {
+    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
   }
 
   return (

@@ -134,7 +134,7 @@ export function getItemRepositoryUid(
   item: DashboardViewItem,
   rootItems: DashboardViewItem[],
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID']
-): string | null {
+): string {
   // For root provisioned folders, the UID is the repository name
   if (item.managedBy === ManagerKind.Repo && !item.parentUID && item.kind === 'folder') {
     return item.uid;
@@ -155,5 +155,5 @@ export function getItemRepositoryUid(
     currentItem = parent;
   }
 
-  return null; // Item is not in a provisioned repository
+  return 'non_provisioned';
 }

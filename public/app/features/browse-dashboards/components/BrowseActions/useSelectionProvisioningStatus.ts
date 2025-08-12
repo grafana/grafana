@@ -12,6 +12,8 @@ import { useSelector } from 'app/types/store';
 import { findItem } from '../../state/utils';
 import { DashboardTreeSelection } from '../../types';
 
+// TODO: This will soon be remove after bulk action is merged in
+
 // This hook can be remove once searching endpoint returns provisioning status
 // It is used to determine if the selected items are provisioned or not, which is currently missing from the search API
 export function useSelectionProvisioningStatus(
