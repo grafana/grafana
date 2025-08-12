@@ -1,6 +1,4 @@
-import { render, waitFor, fireEvent } from '@testing-library/react';
-
-import { config } from '@grafana/runtime';
+import { render, waitFor, fireEvent, act } from '@testing-library/react';
 
 import { ExpressionQuery, ExpressionQueryType } from '../types';
 
@@ -55,12 +53,14 @@ jest.mock('./GenAI/hooks/useSQLExplanations', () => ({
 // Note: Add more mocks if needed for other lazy components
 
 describe('SqlExpr', () => {
-  it('initializes new expressions with default query', () => {
+  it('initializes new expressions with default query', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
 
-    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+    await act(async () => {
+      render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+    });
 
     // Verify onChange was called
     expect(onChange).toHaveBeenCalled();
@@ -102,8 +102,6 @@ describe('SqlExpr', () => {
 });
 
 describe('SqlExpr with GenAI features', () => {
-  beforeEach(() => (config.featureToggles.sqlExpressions = true));
-
   const defaultProps: SqlExprProps = {
     onChange: jest.fn(),
     refIds: [{ value: 'A' }],
@@ -111,14 +109,14 @@ describe('SqlExpr with GenAI features', () => {
     queries: [],
   };
 
-  it('renders GenAI buttons when feature toggle is enabled and expression is empty', async () => {
+  it('renders GenAI buttons with empty expression', async () => {
     const customProps = { ...defaultProps, query: { ...defaultProps.query, expression: '' } };
     const { findByText } = render(<SqlExpr {...customProps} />);
     expect(await findByText('Generate suggestion')).toBeInTheDocument();
     expect(await findByText('Explain query')).toBeInTheDocument();
   });
 
-  it('renders GenAI buttons when feature toggle is enabled and expression is not empty', async () => {
+  it('renders GenAI buttons with non-empty expression', async () => {
     const { findByText } = render(<SqlExpr {...defaultProps} />);
     expect(await findByText('Improve query')).toBeInTheDocument();
     expect(await findByText('Explain query')).toBeInTheDocument();
@@ -131,15 +129,6 @@ describe('SqlExpr with GenAI features', () => {
     };
     const { findByText } = render(<SqlExpr {...customProps} />);
     expect(await findByText('Improve query')).toBeInTheDocument();
-  });
-
-  it('does not render GenAI buttons when feature toggle is disabled', async () => {
-    config.featureToggles.sqlExpressions = false;
-    const { queryByTestId } = render(<SqlExpr {...defaultProps} />);
-    await waitFor(() => {
-      expect(queryByTestId('suggestions-button')).not.toBeInTheDocument();
-      expect(queryByTestId('explain-button')).not.toBeInTheDocument();
-    });
   });
 
   it('renders View explanation button when shouldShowViewExplanation is true', async () => {

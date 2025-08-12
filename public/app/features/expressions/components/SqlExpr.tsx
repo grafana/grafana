@@ -4,7 +4,6 @@ import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { useStyles2, Stack, Button, Tooltip, Icon } from '@grafana/ui';
 
@@ -12,39 +11,9 @@ import { ExpressionQueryEditorProps } from '../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../types';
 import { fetchSQLFields } from '../utils/metaSqlExpr';
 
+import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
+import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
-
-// Conditionally import GenAI features only when feature flag is enabled
-const getGenAIFeatures = () => {
-  if (config.featureToggles.sqlExpressions) {
-    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
-    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
-    return {
-      useSQLSuggestions,
-      useSQLExplanations,
-    };
-  }
-  // When feature flag is off, return no-op functions that don't render anything
-  return {
-    useSQLSuggestions: () => ({
-      handleApplySuggestion: () => {},
-      handleHistoryUpdate: () => {},
-      handleCloseDrawer: () => {},
-      handleOpenDrawer: () => {},
-      isDrawerOpen: false,
-      suggestions: [],
-    }),
-    useSQLExplanations: () => ({
-      explanation: '',
-      handleCloseExplanation: () => {},
-      handleOpenExplanation: () => {},
-      handleExplain: () => {},
-      isExplanationOpen: false,
-      shouldShowViewExplanation: true, // Hide the explain button when feature is off
-      updatePrevExpression: () => {},
-    }),
-  };
-};
 
 // Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
@@ -114,9 +83,6 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });
-
-  // Conditionally use GenAI features based on feature flag
-  const { useSQLSuggestions, useSQLExplanations } = getGenAIFeatures();
 
   const { handleApplySuggestion, handleHistoryUpdate, handleCloseDrawer, handleOpenDrawer, isDrawerOpen, suggestions } =
     useSQLSuggestions();
@@ -211,60 +177,58 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   return (
     <>
       <Stack direction="column" gap={1.5}>
-        {config.featureToggles.sqlExpressions && (
-          <div className={styles.sqlButtons}>
-            <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-              <Tooltip
-                content={t(
-                  'expressions.sql-expr.tooltip-experimental',
-                  'SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team.'
-                )}
-                placement="top"
-                interactive={true}
-              >
-                <Icon name="ai-sparkle" />
-              </Tooltip>
-              <Suspense fallback={null}>
-                {shouldShowViewExplanation ? (
-                  <Button
-                    fill="outline"
-                    icon="gf-movepane-right"
-                    onClick={handleOpenExplanation}
-                    size="sm"
-                    variant="secondary"
-                  >
-                    <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
-                  </Button>
-                ) : (
-                  <GenAISQLExplainButton
-                    currentQuery={query.expression || ''}
-                    onExplain={handleExplain}
-                    queryContext={queryContext}
-                    refIds={vars}
-                    // schemas={schemas} // Will be added when schema extraction is implemented
-                  />
-                )}
-              </Suspense>
-              <Suspense fallback={null}>
-                <GenAISQLSuggestionsButton
+        <div className={styles.sqlButtons}>
+          <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+            <Tooltip
+              content={t(
+                'expressions.sql-expr.tooltip-experimental',
+                'SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team.'
+              )}
+              placement="top"
+              interactive={true}
+            >
+              <Icon name="ai-sparkle" />
+            </Tooltip>
+            <Suspense fallback={null}>
+              {shouldShowViewExplanation ? (
+                <Button
+                  fill="outline"
+                  icon="gf-movepane-right"
+                  onClick={handleOpenExplanation}
+                  size="sm"
+                  variant="secondary"
+                >
+                  <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
+                </Button>
+              ) : (
+                <GenAISQLExplainButton
                   currentQuery={query.expression || ''}
-                  initialQuery={initialQuery}
-                  onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
-                  onHistoryUpdate={handleHistoryUpdate}
+                  onExplain={handleExplain}
                   queryContext={queryContext}
                   refIds={vars}
-                  errorContext={errorContext} // Will be added when error tracking is implemented
                   // schemas={schemas} // Will be added when schema extraction is implemented
                 />
-              </Suspense>
-            </Stack>
-            {suggestions.length > 0 && (
-              <Suspense fallback={null}>
-                <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
-              </Suspense>
-            )}
-          </div>
-        )}
+              )}
+            </Suspense>
+            <Suspense fallback={null}>
+              <GenAISQLSuggestionsButton
+                currentQuery={query.expression || ''}
+                initialQuery={initialQuery}
+                onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
+                onHistoryUpdate={handleHistoryUpdate}
+                queryContext={queryContext}
+                refIds={vars}
+                errorContext={errorContext} // Will be added when error tracking is implemented
+                // schemas={schemas} // Will be added when schema extraction is implemented
+              />
+            </Suspense>
+          </Stack>
+          {suggestions.length > 0 && (
+            <Suspense fallback={null}>
+              <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
+            </Suspense>
+          )}
+        </div>
 
         <div ref={containerRef} className={styles.editorContainer}>
           <SQLEditor
@@ -275,25 +239,23 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
           />
         </div>
       </Stack>
-      {config.featureToggles.sqlExpressions && (
-        <>
-          <Suspense fallback={null}>
-            <GenAISuggestionsDrawer
-              isOpen={isDrawerOpen}
-              onApplySuggestion={onApplySuggestion}
-              onClose={handleCloseDrawer}
-              suggestions={suggestions}
-            />
-          </Suspense>
-          <Suspense fallback={null}>
-            <GenAIExplanationDrawer
-              isOpen={isExplanationOpen}
-              onClose={handleCloseExplanation}
-              explanation={explanation}
-            />
-          </Suspense>
-        </>
-      )}
+      <>
+        <Suspense fallback={null}>
+          <GenAISuggestionsDrawer
+            isOpen={isDrawerOpen}
+            onApplySuggestion={onApplySuggestion}
+            onClose={handleCloseDrawer}
+            suggestions={suggestions}
+          />
+        </Suspense>
+        <Suspense fallback={null}>
+          <GenAIExplanationDrawer
+            isOpen={isExplanationOpen}
+            onClose={handleCloseExplanation}
+            explanation={explanation}
+          />
+        </Suspense>
+      </>
     </>
   );
 };
