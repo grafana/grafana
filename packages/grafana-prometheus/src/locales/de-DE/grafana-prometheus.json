@@ -158,8 +158,8 @@
         "aria-label-prometheus-type": "Prometheus-Typ",
         "aria-label-select-http-method": "HTTP-Methode auswählen",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Builder",
+          "label-code": "Code"
         },
         "label-cache-level": "Cache-Level",
         "label-custom-query-parameters": "Benutzerdefinierte Abfrageparameter",
@@ -200,114 +200,114 @@
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "(Deaktiviert)",
+      "enabled-label": "Metriken-Browser"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Enthält nur eindeutige Labels",
+        "description-custom": "Namensvorlage bereitstellen",
+        "description-verbose": "Alle Label-Namen und -Werte",
+        "label-auto": "Auto",
+        "label-custom": "Benutzerdefiniert",
+        "label-verbose": "Ausführlich"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "Durchschnitt über Dimensionen berechnen",
+        "documentation-bottomk": "Kleinste k-Elemente nach Probenwert",
+        "documentation-count": "Anzahl der Elemente im Vektor zählen",
+        "documentation-count-values": "Anzahl der Elemente mit selbem Wert zählen",
+        "documentation-group": "Alle Werte im resultierenden Vektor sind 1",
+        "documentation-max": "Maximum über Dimensionen auswählen",
+        "documentation-min": "Minimum über Dimensionen auswählen",
+        "documentation-quantile": "φ-Quantil (0 ≤ φ ≤ 1) über Dimensionen berechnen",
+        "documentation-stddev": "Populationsstandardabweichung über Dimensionen berechnen",
+        "documentation-stdvar": "Populationsstandardvarianz über Dimensionen berechnen",
+        "documentation-sum": "Summe über Dimensionen berechnen",
+        "documentation-topk": "Größte k-Elemente nach Stichprobenwert"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "Gibt den Eingabevektor mit allen Probenwerten zurück, die zu ihrem Absolutwert umgerechnet wurden.",
+        "documentation-absent": "Gibt einen leeren Vektor zurück, wenn der übergebene Vektor Elemente enthält, und einen 1-Element-Vektor mit dem Wert 1, wenn der übergebene Vektor keine Elemente enthält. Dies ist nützlich, um zu warnen, wenn für eine bestimmte Kombination aus Metrikname und Label keine Zeitreihen vorhanden sind.",
+        "documentation-absent-over-time": "Gibt einen leeren Vektor zurück, wenn der übergebene Bereichsvektor Elemente enthält, und einen 1-Element-Vektor mit dem Wert 1, wenn der übergebene Bereichsvektor keine Elemente enthält.",
+        "documentation-avg-over-time": "Der Durchschnittswert aller Punkte im angegebenen Intervall.",
+        "documentation-ceil": "Rundet die Probenwerte aller Elemente in „v“ auf die nächste ganze Zahl auf.",
+        "documentation-changes": "Für jede Eingabezeitreihe gibt „changes(v range-vector)“ die Anzahl der Änderungen seines Werts innerhalb des angegebenen Zeitbereichs als Momentanvektor zurück.",
+        "documentation-clamp": "Begrenzt die Probenwerte aller Elemente in „v“ auf eine Untergrenze von „min“ und eine Obergrenze von „max“.",
+        "documentation-clamp-max": "Begrenzt die Probenwerte aller Elemente in „v“ auf eine Obergrenze von „max“.",
+        "documentation-clamp-min": "Begrenzt die Probenwerte aller Elemente in „v“ auf eine Untergrenze von „min“.",
+        "documentation-count-over-time": "Die Anzahl aller Werte im angegebenen Intervall.",
+        "documentation-count-scalar": "Gibt die Anzahl der Elemente in einem Zeitreihenvektor als Skalar zurück. Dies steht im Gegensatz zum Aggregationsoperator „count()“, der immer einen Vektor zurückgibt (einen leeren, wenn der Eingabevektor leer ist) und die Gruppierung nach Labels über eine „by“-Klausel ermöglicht.",
+        "documentation-day-of-month": "Gibt den Tag des Monats für jede der angegebenen Zeiten in UTC zurück. Die zurückgegebenen Werte liegen zwischen 1 und 31.",
+        "documentation-day-of-week": "Gibt den Tag der Woche für jede der angegebenen Zeiten in UTC zurück. Die zurückgegebenen Werte liegen zwischen 0 und 6, wobei 0 für Sonntag steht usw.",
+        "documentation-day-of-year": "Gibt den Tag des Jahres für jede der angegebenen Zeiten in UTC zurück. Die zurückgegebenen Werte liegen zwischen 1 und 365 für Nicht-Schaltjahre und zwischen 1 und 366 für Schaltjahre.",
+        "documentation-days-in-month": "Gibt die Anzahl der Tage im Monat für jede der angegebenen Zeiten in UTC zurück. Die zurückgegebenen Werte liegen zwischen 28 und 31.",
+        "documentation-deg": "Rechnet Radianten in Grad um, bei allen Elementen in v",
+        "documentation-delta": "Berechnet die Differenz zwischen dem ersten und dem letzten Wert jedes Zeitreihenelements in einem Bereichsvektor „v“ und gibt einen Momentanvektor mit den angegebenen Deltas und äquivalenten Labels zurück. Das Delta wird extrapoliert, um den gesamten Zeitbereich zu umfassen, wie im Bereichsvektor-Selektor angegeben, sodass es möglich ist, ein nicht ganzzahliges Ergebnis zu erhalten, auch wenn die Probenwerte alle ganze Zahlen sind.",
+        "documentation-deriv": "Berechnet die Ableitung pro Sekunde der Zeitreihe in einem Bereichsvektor „v“ mithilfe einer einfachen linearen Regression.",
+        "documentation-double-exponential-smoothing": "Erzeugt einen geglätteten Wert für Zeitreihen basierend auf dem Bereich in „v“. Je niedriger der Glättungsfaktor „sf“ ist, desto mehr Bedeutung kommt alten Daten zu. Je höher der Trendfaktor „tf“ ist, desto mehr Trends in den Daten werden berücksichtigt. Sowohl „sf“ als auch „tf“ müssen zwischen 0 und 1 liegen.",
+        "documentation-drop-common-labels": "Löscht alle Labels, die den gleichen Namen und Wert über alle Reihen im Eingabevektor aufweisen.",
+        "documentation-exp": "Berechnet die Exponentialfunktion für alle Elemente in „v“.\nSonderfälle sind:\n* „Exp(+Inf) = +Inf“ \n* „Exp(NaN) = NaN“",
+        "documentation-floor": "Rundet die Probenwerte aller Elemente in „v“ auf die nächste ganze Zahl ab.",
+        "documentation-histogram-avg": "Gibt den arithmetischen Mittelwert der beobachteten Werte zurück, die in einem nativen Histogramm gespeichert sind. Proben, die keine nativen Histogramme sind, werden ignoriert und nicht im zurückgegebenen Vektor angezeigt.",
+        "documentation-histogram-count": "Gibt die Anzahl der in einem nativen Histogramm gespeicherten Beobachtungen zurück.",
+        "documentation-histogram-fraction": "Gibt den geschätzten Anteil der Beobachtungen zwischen den angegebenen unteren und oberen Werten zurück.",
+        "documentation-histogram-quantile": "Berechnet das φ-Quantil (0 ≤ φ ≤ 1) von den Buckets „b“ eines Histogramms. Die Proben in „b“ sind die Anzahl der Beobachtungen in jedem Bucket. Jede Probe muss ein Label „le“ haben, wobei der Labelwert die inklusive obere Grenze des Buckets angibt. (Proben ohne ein solches Label werden still ignoriert.) Der Histogramm-Metriktyp stellt automatisch Zeitreihen mit dem Suffix „_bucket“ und den entsprechenden Labels bereit.",
+        "documentation-histogram-stddev": "Gibt die geschätzte Standardabweichung der Beobachtungen in einem nativen Histogramm zurück, basierend auf dem geometrischen Mittel der Buckets, wo die Beobachtungen liegen.",
+        "documentation-histogram-stdvar": "Gibt die geschätzte Standardabweichung von Beobachtungen in einem nativen Histogramm zurück.",
+        "documentation-histogram-sum": "Gibt die Summe der in einem nativen Histogramm gespeicherten Beobachtungen zurück.",
+        "documentation-holt-winters": "Umbenannt in double_exponential_smoothing in Prometheus v3.x. Bitte verwenden Sie für Prometheus-Versionen gleich und höher als v3.0 double_exponential_smoothing. \n\nErzeugt einen geglätteten Wert für Zeitreihen, basierend auf dem Bereich in „v“. Je niedriger der Glättungsfaktor „sf“ ist, desto mehr Bedeutung kommt alten Daten zu. Je höher der Trendfaktor „tf“ ist, desto mehr Trends in den Daten werden berücksichtigt. Sowohl „sf“ als auch „tf“ müssen zwischen 0 und 1 liegen.",
+        "documentation-hour": "Gibt die Stunde des Tages für jede der angegebenen Zeiten in UTC zurück. Die zurückgegebenen Werte liegen zwischen 0 und 23.",
+        "documentation-idelta": "Berechnet die Differenz zwischen den letzten beiden Proben im Bereichsvektor „v“ und gibt einen Momentanvektor mit den angegebenen Deltas und äquivalenten Labels zurück.",
+        "documentation-increase": "Berechnet die Zunahme der Zeitreihe im Bereichsvektor. Brüche in der Monotonie (z. B. Zählerzurücksetzungen aufgrund von Zielneustarts) werden automatisch angepasst. Die Zunahme wird extrapoliert, um den gesamten Zeitbereich zu umfassen, wie im Bereichsvektor-Selektor angegeben, sodass es möglich ist, ein nicht ganzzahliges Ergebnis zu erhalten, auch wenn ein Zähler nur um ganzzahlige Inkremente zunimmt.",
+        "documentation-info": "Gibt die neuesten Details und Metadaten zu einer Gruppe von Metriken zurück, z. B. ihre Labels und aktuellen Werte, ohne Berechnungen durchzuführen",
+        "documentation-irate": "Berechnet die momentane Anstiegsrate (pro Sekunde) der Zeitreihe im Bereichsvektor. Dies basiert auf den letzten beiden Datenpunkten. Brüche in der Monotonie (z. B. Zählerzurücksetzungen aufgrund von Zielneustarts) werden automatisch angepasst.",
+        "documentation-label-join": "Verbindet für jede Zeitreihe in „v“ alle Werte aller „src_labels“ mit „separator“ und gibt die Zeitreihe mit dem Label „dst_label“ zurück, das den verbundenen Wert enthält. Es kann eine beliebige Anzahl von „src_labels“ in dieser Funktion geben.",
+        "documentation-label-replace": "Für jede Zeitreihe in „v“ gleicht „label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)“ den regulären Ausdruck „regex“ mit dem Label „src_label“ ab. Bei einer Übereinstimmung wird die Zeitreihe mit dem Label „dst_label“ zurückgegeben, das durch die Erweiterung von „replacement“ ersetzt wird. „$1“ wird durch die erste übereinstimmende Untergruppe ersetzt, „$2“ durch die zweite usw. Wenn der reguläre Ausdruck nicht übereinstimmt, wird die Zeitreihe unverändert zurückgegeben.",
+        "documentation-last-over-time": "Der letzte Punktwert im angegebenen Intervall.",
+        "documentation-ln": "Berechnet den natürlichen Logarithmus für alle Elemente in „v“.\nSonderfälle sind:\n * „ln(+Inf) = +Inf“\n * „ln(0) = -Inf“\n * „ln(x < 0) = NaN“\n * „ln(NaN) = NaN“",
+        "documentation-log10": "Berechnet den Dezimal-Logarithmus für alle Elemente in „v“. Die Sonderfälle entsprechen denen in „ln“.",
+        "documentation-log2": "Berechnet den binären Logarithmus für alle Elemente in „v“. Die Sonderfälle entsprechen denen in „ln“.",
+        "documentation-max-over-time": "Der Maximalwert aller Punkte im angegebenen Intervall.",
+        "documentation-min-over-time": "Der Minimalwert aller Punkte im angegebenen Intervall.",
+        "documentation-minute": "Gibt die Minute der Stunde für jede der angegebenen Zeiten in UTC zurück. Die zurückgegebenen Werte liegen zwischen 0 und 59.",
+        "documentation-month": "Gibt den Monat des Jahres für jede der angegebenen Zeiten in UTC zurück. Die zurückgegebenen Werte liegen zwischen 1 und 12, wobei 1 für Januar steht usw.",
+        "documentation-pi": "Gibt pi zurück",
+        "documentation-predict-linear": "Prognostiziert den Wert der Zeitreihe „t“ Sekunden ab jetzt, basierend auf dem Bereichsvektor „v“, mithilfe einer einfachen linearen Regression.",
+        "documentation-present-over-time": "Der Wert 1 für jede Reihe im angegebenen Intervall.",
+        "documentation-quantile-over-time": "Das φ-Quantil (0 ≤ φ ≤ 1) der Werte im angegebenen Intervall.",
+        "documentation-rad": "Rechnet Grad in Radianten um, bei allen Elementen in v",
+        "documentation-rate": "Berechnet die durchschnittliche Anstiegsrate (pro Sekunde) der Zeitreihe im Bereichsvektor. Brüche in der Monotonie (z. B. Zählerzurücksetzungen aufgrund von Zielneustarts) werden automatisch angepasst. Außerdem extrapoliert die Berechnung zu den Enden des Zeitbereichs, um ausgelassene Scrapes oder eine unvollkommene Ausrichtung der Scrape-Zyklen mit dem Zeitraum des Bereichs zu ermöglichen.",
+        "documentation-resets": "Für jede Eingabezeitreihe gibt „resets(v range-vector)“ die Anzahl der Zählerzurücksetzungen innerhalb des angegebenen Zeitbereichs als Momentanvektor zurück. Jede Abnahme des Werts zwischen zwei aufeinanderfolgenden Proben wird als Zählerzurücksetzung interpretiert.",
+        "documentation-round": "Rundet die Probenwerte aller Elemente in „v“ auf die nächste ganze Zahl. Gleichstände werden durch Aufrunden gelöst. Mit dem optionalen Argument „to_nearest“ können Sie das nächste Vielfache angeben, auf das die Probenwerte gerundet werden sollen. Dieses Vielfache kann auch ein Bruch sein.",
+        "documentation-scalar": "Bei einem Eingabevektor mit einem einzelnen Element gibt „scalar(v instant-vector)“ den Probenwert dieses einzelnen Elements als Skalar zurück. Wenn der Eingabevektor nicht genau ein Element hat, gibt „scalar“ „NaN“ zurück.",
+        "documentation-sgn": "Gibt einen Vektor mit allen Probenwerten zurück, die in ihr Vorzeichen umgewandelt wurden, wie folgt definiert: 1, wenn v positiv ist, -1, wenn v negativ ist und 0, wenn v gleich Null ist.",
+        "documentation-sort": "Gibt Vektorelemente zurück, die in aufsteigender Reihenfolge nach ihren Probenwerten sortiert sind.",
+        "documentation-sort-desc": "Gibt Vektorelemente zurück, die in absteigender Reihenfolge nach ihren Probenwerten sortiert sind.",
+        "documentation-sqrt": "Berechnet die Quadratwurzel aller Elemente in „v“.",
+        "documentation-stddev-over-time": "Die Populationsstandardabweichung der Werte im angegebenen Intervall.",
+        "documentation-stdvar-over-time": "Die Populationsstandardvarianz der Werte im angegebenen Intervall.",
+        "documentation-sum-over-time": "Die Summe aller Werte im angegebenen Intervall.",
+        "documentation-time": "Gibt die Anzahl der Sekunden seit dem 1. Januar 1970 UTC zurück. Beachten Sie, dass dies nicht tatsächlich die aktuelle Zeit wiedergibt, sondern den Zeitpunkt, zu dem der Ausdruck ausgewertet werden soll.",
+        "documentation-timestamp": "Gibt den Zeitstempel jeder der Proben des angegebenen Vektors als Anzahl der Sekunden seit dem 1. Januar 1970 UTC zurück.",
+        "documentation-vector": "Gibt den Skalar „s“ als Vektor ohne Labels zurück.",
+        "documentation-year": "Gibt das Jahr für jede der angegebenen Zeiten in UTC zurück."
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "berechnet den Arkuskosinus aller Elemente in {{argument}}",
+        "documentation-acosh": "berechnet den inversen hyperbolischen Kosinus aller Elemente in {{argument}}",
+        "documentation-asin": "berechnet den Arkussinus aller Elemente in {{argument}}",
+        "documentation-asinh": "berechnet den inversen hyperbolischen Sinus aller Elemente in {{argument}}",
+        "documentation-atan": "berechnet den Arkustangens aller Elemente in {{argument}}",
+        "documentation-atanh": "berechnet den inversen hyperbolischen Tangens aller Elemente in {{argument}}",
+        "documentation-cos": "berechnet den Kosinus aller Elemente in {{argument}}",
+        "documentation-cosh": "berechnet den hyperbolischen Kosinus aller Elemente in {{argument}}",
+        "documentation-sin": "berechnet den Sinus aller Elemente in {{argument}}",
+        "documentation-sinh": "berechnet den hyperbolischen Sinus aller Elemente in {{argument}}",
+        "documentation-tan": "berechnet den Tangens aller Elemente in {{argument}}",
+        "documentation-tanh": "berechnet den hyperbolischen Tangens aller Elemente in {{argument}}"
       }
     },
     "querybuilder": {
@@ -316,31 +316,31 @@
         "title-give-feedback": "Der Metrik-Explorer ist neu. Bitte teilen Sie uns mit, wie wir ihn verbessern können."
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Exemplare: {{value}}",
+        "format": "Format: {{value}}",
+        "legend": "Legende: {{value}}",
+        "step": "Schritt: {{value}}",
+        "type": "Typ: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "type": ""
+        "browse": "Metriken nach Namen suchen",
+        "type": "Nach Typ filtern"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Eine kumulative Metrik, die einen einzelnen monoton ansteigenden Zähler darstellt, dessen Wert nur ansteigen oder beim Neustart auf Null zurückgesetzt werden kann.",
+        "description-gauge": "Eine Metrik, die einen einzelnen numerischen Wert darstellt, der beliebig nach oben und unten verlaufen kann.",
+        "description-histogram": "Ein Histogramm fragt Beobachtungen ab (in der Regel Dinge wie Anfragedauer oder Antwortgrößen) und zählt sie in konfigurierbaren Buckets.",
+        "description-native-histogram": "Native Histogramme unterscheiden sich in mehrerer Hinsicht von klassischen Prometheus-Histogrammen: Die Grenzen der nativen Histogramm-Buckets werden durch eine Formel berechnet, die von der Skala (Auflösung) des nativen Histogramms abhängt, und sind nicht benutzerdefiniert.",
+        "description-no-type": "Diese Metriken haben keinen festgelegten Typ in den Metadaten.",
+        "description-summary": "Eine Zusammenfassung fragt Beobachtungen ab (in der Regel Dinge wie Anfragedauer und Antwortgrößen) und kann konfigurierbare Quantile über ein gleitendes Zeitfenster berechnen.",
+        "description-unknown": "Diesen Metriken wurde in den Metadaten der Typ „unbekannt“ zugewiesen.",
+        "label-counter": "Zähler",
+        "label-gauge": "Anzeige",
+        "label-histogram": "Histogramm",
+        "label-native-histogram": "Natives Histogramm",
+        "label-no-type": "Kein Typ",
+        "label-summary": "Zusammenfassung",
+        "label-unknown": "Unbekannt"
       },
       "handle-function": {
         "text": {
@@ -358,8 +358,8 @@
         "tooltip-label-filters": "Optional: wird verwendet, um die Metrikauswahl für diesen Abfragetyp zu filtern."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Labels werden geladen",
+        "noOptionsMessage-no-labels-found": "Keine Labels gefunden"
       },
       "metric-combobox": {
         "async-select": {
@@ -409,18 +409,18 @@
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "Berechnet {{aggregationName}} über Dimensionen unter Beibehaltung von {{labelWord}} {{labels}}.",
+          "label-default": "Berechnet {{aggregationName}} über die Dimensionen.",
+          "label-without": "Berechnet {{aggregationName}} über die Dimensionen {{labels}}. Alle anderen Labels werden beibehalten."
         }
       },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Untergrenze für den Schrittparameter festlegen",
         "aria-label-select-resolution": "Auflösung auswählen",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Heatmap",
+          "label-table": "Tabelle",
+          "label-time-series": "Zeitreihen"
         },
         "label-exemplars": "Exemplare",
         "label-format": "Format",
@@ -436,8 +436,8 @@
         "tooltip-autocomplete-suggestions-limited": "Die Anzahl der Metriknamen überschreitet die Grenze der Autovervollständigung. Es werden nur die für {{autocompleteLimit}} relevantesten Metriken angezeigt. Sie können die Grenze in den Datenquelleneinstellungen anpassen."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Es liegt ein Syntaxfehler vor oder die Abfragestruktur kann beim Wechsel in den Builder-Modus nicht visualisiert werden. Teile der Abfrage können verlorengehen.",
+        "confirmText-continue": "Fortfahren",
         "kick-start-your-query": "Starten Sie Ihre Abfrage",
         "label-explain": "Erklären",
         "run-queries": "Abfragen ausführen",
@@ -453,8 +453,8 @@
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Builder",
+          "label-code": "Code"
         }
       },
       "query-pattern": {
@@ -483,9 +483,9 @@
       "results-table": {
         "content-descriptive-type": "Bei der Erstellung von {{descriptiveType}} zeigt Prometheus mehrere Reihen mit dem Typ Counter. ",
         "description": "Beschreibung",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Es wurden keine Metriken gefunden. Versuchen Sie, Ihre Label-Filter zu erweitern.",
+        "message-expand-search": "Es wurden keine Metriken gefunden. Versuchen Sie, Ihre Suche und Ihre Filter zu erweitern.",
+        "message-no-metrics-found": "Es wurden keine Metriken in der Datenquelle gefunden.",
         "name": "Name",
         "type": "Typ"
       },

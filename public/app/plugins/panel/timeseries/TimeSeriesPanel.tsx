@@ -160,6 +160,7 @@ export const TimeSeriesPanel = ({
                     exemplars={data.annotations}
                     timeZone={timeZone}
                     maxHeight={options.tooltip.maxHeight}
+                    maxWidth={options.tooltip.maxWidth}
                   />
                 )}
                 {((canEditThresholds && onThresholdsChange) || showThresholds) && (
