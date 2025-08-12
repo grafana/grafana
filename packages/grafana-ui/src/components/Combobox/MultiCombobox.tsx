@@ -47,6 +47,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     maxWidth,
     isClearable,
     createCustomValue = false,
+    'aria-labelledby': ariaLabelledBy,
+    'data-testid': dataTestId,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -285,15 +287,17 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           )}
           <input
             className={multiStyles.input}
-            {...getInputProps(
-              getDropdownProps({
+            {...getInputProps({
+              ...getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
                 placeholder: visibleItems.length === 0 ? placeholder : '',
                 ref: inputRef,
                 style: { width: inputWidth },
-              })
-            )}
+              }),
+              'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+              'data-testid': dataTestId,
+            })}
           />
 
           <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>

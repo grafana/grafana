@@ -316,7 +316,7 @@ type ResourceWrapper struct {
 	Repository ResourceRepositoryInfo `json:"repository"`
 
 	// Typed links for this file (only supported by external systems, github etc)
-	URLs *ResourceURLs `json:"urls,omitempty"`
+	URLs *RepositoryURLs `json:"urls,omitempty"`
 
 	// The modified time in the remote file system
 	Timestamp *metav1.Time `json:"timestamp,omitempty"`
@@ -374,14 +374,14 @@ type ResourceRepositoryInfo struct {
 	Name string `json:"name"`
 }
 
-type ResourceURLs struct {
-	// A URL pointing to the this file in the repository
-	SourceURL string `json:"sourceURL,omitempty"`
-
+type RepositoryURLs struct {
 	// A URL pointing to the repository this lives in
 	RepositoryURL string `json:"repositoryURL,omitempty"`
 
-	// A URL that will create a new pull requeset for this branch
+	// A URL pointing to the file or ref in the repository
+	SourceURL string `json:"sourceURL,omitempty"`
+
+	// A URL that will create a new pull request for this branch
 	NewPullRequestURL string `json:"newPullRequestURL,omitempty"`
 
 	// Compare this version to the target branch
@@ -438,6 +438,11 @@ type ResourceStats struct {
 	// When legacy storage is still used, this will offer a shim
 	// +listType=atomic
 	Instance []ResourceCount `json:"instance,omitempty"`
+
+	// Stats across all unified storage
+	// When legacy storage is still used, this will offer a shim
+	// +listType=atomic
+	Unmanaged []ResourceCount `json:"unmanaged,omitempty"`
 
 	// Stats for each manager
 	// +listType=atomic
