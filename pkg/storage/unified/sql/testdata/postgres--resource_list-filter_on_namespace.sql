@@ -10,5 +10,5 @@ SELECT
     FROM "resource"
     WHERE 1 = 1
             AND "namespace" = 'ns'
-    ORDER BY "resource_version" ASC
+    ORDER BY "namespace" ASC, "name" ASC
 ;

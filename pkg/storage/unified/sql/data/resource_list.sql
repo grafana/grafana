@@ -23,5 +23,5 @@ SELECT
             AND {{ .Ident "name" }}      = {{ .Arg .Request.Options.Key.Name }}
             {{ end }}
         {{ end }}
-    ORDER BY {{ .Ident "resource_version" }} ASC
+    ORDER BY {{ .Ident "namespace" }} ASC, {{ .Ident "name" }} ASC
 ;
