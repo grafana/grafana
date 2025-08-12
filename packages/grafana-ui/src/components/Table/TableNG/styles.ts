@@ -138,18 +138,18 @@ export const getGridStyles = (
     tooltipCaret: css({
       width: 0,
       height: 0,
-      borderTop: '12px solid transparent',
-      borderBottom: '12px solid transparent',
-      borderRight: `12px solid ${theme.colors.secondary.main}`,
+      borderTop: '10px solid transparent',
+      borderBottom: '10px solid transparent',
+      borderRight: `10px solid ${theme.colors.border.weak}`,
       transform: 'rotate(45deg)',
       position: 'absolute',
-      top: -8,
-      left: -2,
+      top: -4,
+      left: 1,
       ':hover': {
-        borderRightColor: theme.colors.secondary.shade,
+        borderRightColor: theme.colors.border.medium,
       },
       '&[aria-pressed=true]': {
-        borderRightColor: theme.colors.border.medium,
+        borderRightColor: theme.colors.border.strong,
       },
     }),
   };
