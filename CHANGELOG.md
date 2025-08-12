@@ -1,3 +1,12 @@
+<!-- 11.5.8 START -->
+
+# 11.5.8 (2025-08-12)
+
+### Features and enhancements
+
+- **Go:** Update to 1.24.6 [#109315](https://github.com/grafana/grafana/pull/109315), [@Proximyst](https://github.com/Proximyst)
+
+<!-- 11.5.8 END -->
 <!-- 11.5.7 START -->
 
 # 11.5.7 (2025-07-23)
