@@ -421,6 +421,12 @@ export const createFilter = (filters: { subscriptions: string[]; types: string[]
     if (filters.subscriptions && filters.subscriptions.length > 0) {
       filtersQuery += `| where subscriptionId in (${filters.subscriptions.map((s) => `"${s.toLowerCase()}"`).join(',')})\n`;
     }
+    if (filters.types && filters.types.length > 0) {
+      filtersQuery += `| where type in (${filters.types.map((t) => `"${t.toLowerCase()}"`).join(',')})\n`;
+    }
+    if (filters.locations && filters.locations.length > 0) {
+      filtersQuery += `| where location in (${filters.locations.map((l) => `"${l.toLowerCase()}"`).join(',')})\n`;
+    }
   }
 
   return filtersQuery;

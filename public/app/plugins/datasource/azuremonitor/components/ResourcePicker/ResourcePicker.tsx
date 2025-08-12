@@ -84,7 +84,7 @@ const ResourcePicker = ({
     const subscriptions = await datasource.getSubscriptions();
     setSubscriptions(subscriptions.map((sub) => ({ label: sub.text, value: sub.value })));
     setIsLoadingSubscriptions(false);
-  }, [datasource, queryType]);
+  }, [datasource]);
 
   const loadInitialData = useCallback(async () => {
     if (!isLoading) {
