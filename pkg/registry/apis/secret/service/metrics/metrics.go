@@ -9,6 +9,8 @@ import (
 const (
 	namespace = "grafana_secrets_manager"
 	subsystem = "service"
+	// labels
+	successLabel = "success"
 )
 
 // SecureValueServiceMetrics is a struct that contains all the metrics for SecureValue.
@@ -28,35 +30,35 @@ func newSecureValueServiceMetrics() *SecureValueServiceMetrics {
 			Name:      "secure_value_create_duration_seconds",
 			Help:      "Duration of Secure Value create operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"success"}),
+		}, []string{successLabel}),
 		SecureValueReadDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_read_duration_seconds",
 			Help:      "Duration of Secure Value read operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"success"}),
+		}, []string{successLabel}),
 		SecureValueUpdateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_update_duration_seconds",
 			Help:      "Duration of Secure Value update operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"success"}),
+		}, []string{successLabel}),
 		SecureValueListDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_list_duration_seconds",
 			Help:      "Duration of Secure Value list operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"success"}),
+		}, []string{successLabel}),
 		SecureValueDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_delete_duration_seconds",
 			Help:      "Duration of Secure Value delete operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"success"}),
+		}, []string{successLabel}),
 	}
 }
 

@@ -229,7 +229,7 @@ func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace
 	defer func() {
 		args := []any{
 			"name", name,
-			"namespace", namespace,
+			"namespace", namespace.String(),
 		}
 
 		success := readErr == nil

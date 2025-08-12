@@ -9,22 +9,24 @@ import (
 const (
 	namespace = "grafana_secrets_manager"
 	subsystem = "storage"
+	// labels
+	successLabel = "success"
 )
 
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
 type StorageMetrics struct {
 	KeeperMetadataCreateDuration          *prometheus.HistogramVec
 	KeeperMetadataUpdateDuration          *prometheus.HistogramVec
-	KeeperMetadataDeleteDuration          prometheus.Histogram
+	KeeperMetadataDeleteDuration          *prometheus.HistogramVec
 	KeeperMetadataGetDuration             *prometheus.HistogramVec
-	KeeperMetadataListDuration            prometheus.Histogram
-	KeeperMetadataGetKeeperConfigDuration prometheus.Histogram
+	KeeperMetadataListDuration            *prometheus.HistogramVec
+	KeeperMetadataGetKeeperConfigDuration *prometheus.HistogramVec
 
 	SecureValueMetadataCreateDuration *prometheus.HistogramVec
-	SecureValueMetadataGetDuration    prometheus.Histogram
-	SecureValueMetadataListDuration   prometheus.Histogram
-	SecureValueSetExternalIDDuration  prometheus.Histogram
-	SecureValueSetStatusDuration      prometheus.Histogram
+	SecureValueMetadataGetDuration    *prometheus.HistogramVec
+	SecureValueMetadataListDuration   *prometheus.HistogramVec
+	SecureValueSetExternalIDDuration  *prometheus.HistogramVec
+	SecureValueSetStatusDuration      *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -38,42 +40,42 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "keeper_metadata_create_duration_seconds",
 			Help:      "Duration of keeper metadata create operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"keeper_type"}),
+		}, []string{successLabel}),
 		KeeperMetadataUpdateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_update_duration_seconds",
 			Help:      "Duration of keeper metadata update operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"keeper_type"}),
-		KeeperMetadataDeleteDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		KeeperMetadataDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_delete_duration_seconds",
 			Help:      "Duration of keeper metadata delete operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
+		}, []string{successLabel}),
 		KeeperMetadataGetDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_get_duration_seconds",
 			Help:      "Duration of keeper metadata get operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"keeper_type"}),
-		KeeperMetadataListDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		KeeperMetadataListDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_list_duration_seconds",
 			Help:      "Duration of keeper metadata list operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		KeeperMetadataGetKeeperConfigDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		KeeperMetadataGetKeeperConfigDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "keeper_metadata_get_keeper_config_duration_seconds",
 			Help:      "Duration of keeper metadata get keeper config operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
+		}, []string{successLabel}),
 
 		// Secure value metrics
 		SecureValueMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -82,36 +84,35 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "secure_value_metadata_create_duration_seconds",
 			Help:      "Duration of secure value metadata create operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"successful"}),
-		SecureValueMetadataGetDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		SecureValueMetadataGetDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_get_duration_seconds",
 			Help:      "Duration of secure value metadata get operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-
-		SecureValueMetadataListDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		SecureValueMetadataListDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_list_duration_seconds",
 			Help:      "Duration of secure value metadata list operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueSetExternalIDDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		SecureValueSetExternalIDDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_set_external_id_duration_seconds",
 			Help:      "Duration of secure value set external id operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueSetStatusDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		}, []string{successLabel}),
+		SecureValueSetStatusDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_set_status_duration_seconds",
 			Help:      "Duration of secure value set status operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
+		}, []string{successLabel}),
 
 		// Decrypt metrics
 		DecryptDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -120,7 +121,7 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "decrypt_duration_seconds",
 			Help:      "Duration of decrypt operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"successful"}),
+		}, []string{successLabel}),
 	}
 }
 
