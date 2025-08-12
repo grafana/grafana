@@ -20,7 +20,10 @@ func NewZanzanaPermissionStore(zanzanaClient zanzana.Client) PermissionStore {
 }
 
 func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace, folderUID, parentUID string) error {
-	c.DeleteFolder(ctx, namespace, folderUID)
+	err := c.DeleteFolder(ctx, namespace, folderUID)
+	if err != nil {
+		return err
+	}
 
 	user, err := toFolderTuple(parentUID)
 	if err != nil {
