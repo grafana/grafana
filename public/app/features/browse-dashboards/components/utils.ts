@@ -127,8 +127,8 @@ export function canSelectItems(permissions: BrowseDashboardsPermissions) {
 }
 
 /**
- * Finds the repository name for an item by traversing up the tree to find
- * the root provisioned folder (managed by ManagerKind.Repo)
+ * Finds the repository name for an item by traversing up the tree to find the root provisioned folder (managed by ManagerKind.Repo)
+ * This should be an edge case where user have multiple provisioned folders and try to managing resources on root folder
  */
 export function getItemRepositoryUid(
   item: DashboardViewItem,

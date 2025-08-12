@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Checkbox, useStyles2 } from '@grafana/ui';
+import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
@@ -12,7 +12,7 @@ import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
 import { DashboardsTreeCellProps, SelectionState, DashboardViewItemWithUIItems } from '../types';
 
 import { useRepositoryValidation } from './BrowseActions/useRepositoryValidation';
-import { isSharedWithMe, canEditItemType, getItemRepository } from './utils';
+import { isSharedWithMe, canEditItemType, getItemRepositoryUid } from './utils';
 
 export default function CheckboxCell({
   row: { original: row },
@@ -24,7 +24,7 @@ export default function CheckboxCell({
 
   // Get current selection state for repository validation
   const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
-  const { allFromSameRepo, commonRepository, hasSelection } = useRepositoryValidation(selectedItems);
+  const { commonRepositoryUID } = useRepositoryValidation(selectedItems);
 
   // Get browse state for repository detection
   const childrenByParentUID = useChildrenByParentUIDState();
@@ -52,7 +52,7 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  // We don't want to select root provisioned folder
+  // Disable checkbox for root provisioned folder itself
   if (isDashboardViewItem(item) && item.managedBy === ManagerKind.Repo && !item.parentUID) {
     return <CheckboxSpacer />;
   }
@@ -62,25 +62,30 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  const shouldDisableCheckbox = (): boolean => {
-    if (!hasSelection) {
-      return false;
-    }
-
-    // If there's already a mixed selection, disable unselected items
-    if (!allFromSameRepo) {
-      const currentState = isSelected(item);
-      return currentState === SelectionState.Unselected;
-    }
-
+  const itemParentNotMatchedSelectedItems = (): boolean => {
     // If there's a repository selection, check if this item matches
-    if (commonRepository && isDashboardViewItem(item)) {
-      const itemRepository = getItemRepository(item, rootItems?.items || [], childrenByParentUID);
-      return itemRepository !== commonRepository;
+    if (commonRepositoryUID && isDashboardViewItem(item)) {
+      const itemRepositoryUID = getItemRepositoryUid(item, rootItems?.items || [], childrenByParentUID);
+      return itemRepositoryUID !== commonRepositoryUID;
     }
 
     return false;
   };
+
+  if (itemParentNotMatchedSelectedItems()) {
+    return (
+      <Tooltip
+        content={t(
+          'browse-dashboards.dashboards-tree.checkbox.disabled-not-in-same-repo',
+          'This item is not in the same repository as the selected items.'
+        )}
+      >
+        <span>
+          <Checkbox disabled value={false} />
+        </span>
+      </Tooltip>
+    );
+  }
 
   // At this point we know it's a valid item to show a checkbox for
   if (!isDashboardViewItem(item)) {
@@ -95,7 +100,6 @@ export default function CheckboxCell({
       aria-label={t('browse-dashboards.dashboards-tree.select-checkbox', 'Select')}
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
-      disabled={shouldDisableCheckbox()}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}
     />
   );

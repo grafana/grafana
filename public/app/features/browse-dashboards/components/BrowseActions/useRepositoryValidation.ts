@@ -34,26 +34,22 @@ export function useRepositoryValidation(selectedItems: Omit<DashboardTreeSelecti
   // Validate that all selected items belong to the same repository
   const validateRepositoryConsistency = (selectedItems: Array<{ uid: string; kind: ItemKind }>) => {
     if (selectedItems.length === 0) {
-      return { allFromSameRepo: true, commonRepository: undefined };
+      return { commonRepository: undefined };
     }
 
     const repositoryUIDs = selectedItems.map(({ uid, kind }) => findRepositoryUidForItem(uid, kind));
     const firstRepositoryUID = repositoryUIDs[0];
-    const allFromSameRepo = repositoryUIDs.every((repo) => repo === firstRepositoryUID);
 
     return {
-      allFromSameRepo,
       commonRepositoryUID: firstRepositoryUID || undefined,
     };
   };
 
   const allSelectedItems = getSelectedItems();
-  const { allFromSameRepo, commonRepositoryUID } = validateRepositoryConsistency(allSelectedItems);
+  const { commonRepositoryUID } = validateRepositoryConsistency(allSelectedItems);
 
   return {
-    allFromSameRepo,
     commonRepositoryUID,
-    selectedCount: allSelectedItems.length,
     hasSelection: allSelectedItems.length > 0,
   };
 }
