@@ -105,15 +105,7 @@ export function TableCellTooltip({
     return children;
   }
 
-  const body = (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div
-      onClick={(ev) => ev.stopPropagation()} // prevent click from bubbling to the global click listener for un-pinning
-      data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper}
-    >
-      {renderer(rendererProps)}
-    </div>
-  );
+  const body = <>{renderer(rendererProps)}</>;
 
   const onMouseLeave = () => setHovered(false);
   const onMouseEnter = () => setHovered(true);
@@ -127,10 +119,12 @@ export function TableCellTooltip({
           placement={placement}
           wrapperClassName={classes.tooltipWrapper}
           className={className}
-          style={{ ...style, width, height }}
+          style={{ ...style, minWidth: width, [typeof _height === 'number' ? 'height' : 'minHeight']: height }}
           referenceElement={popoverRef.current}
           onMouseLeave={onMouseLeave}
           onMouseEnter={onMouseEnter}
+          onClick={(ev) => ev.stopPropagation()} // prevent click from bubbling to the global click listener for un-pinning
+          data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper}
         />
       )}
 

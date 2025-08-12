@@ -180,6 +180,7 @@ export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
 export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => ({
   tooltipContent: css({
     height: '100%',
+    width: '100%',
   }),
   tooltipWrapper: css({
     background: theme.colors.background.primary,
@@ -188,6 +189,7 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
     boxShadow: theme.shadows.z3,
     overflow: 'hidden',
     padding: theme.spacing(1),
+    width: 'inherit',
   }),
   tooltipCaret: css({
     position: 'absolute',

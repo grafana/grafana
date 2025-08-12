@@ -570,7 +570,7 @@ export function TableNG(props: TableNGProps) {
                   field={tooltipField}
                   getActions={getCellActions}
                   gridRef={gridRef}
-                  height={height}
+                  height={typeof rowHeight === 'string' ? undefined : height}
                   placement={placement}
                   popoverRef={cellRefsMatrix[props.row.__index][props.column.idx]}
                   renderer={tooltipFieldRenderer}
