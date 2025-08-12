@@ -85,7 +85,7 @@ jobs:
           printf "%s\n" "$ALERTING_COMMITS"
 
           # make the list for markdown and replace PR numbers with links
-          ALERTING_COMMITS_FORMATTED="$(echo "$ALERTING_COMMITS" | while read -r line; do echo "- $line" | sed -E 's/\(#([0-9]+)\)/[#\1](https:\/\/github.com\/grafana\/grafana\/pull\/\1)/g'; done)"
+          ALERTING_COMMITS_FORMATTED="$(echo "$ALERTING_COMMITS" | while read -r line; do echo "- $line" | sed -E 's/\(#([0-9]+)\)/[#\1](https:\/\/github.com\/grafana\/alerting\/pull\/\1)/g'; done)"
 
           {
             echo "alerting_commits<<EOF"
