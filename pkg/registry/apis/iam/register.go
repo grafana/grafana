@@ -50,6 +50,7 @@ func RegisterAPIService(
 	accessClient types.AccessClient,
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
+	resourcePermissionsStorage ResourcePermissionStorageBackend,
 	rolesStorage RoleStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
@@ -57,18 +58,19 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:               store,
-		coreRolesStorage:    coreRolesStorage,
-		rolesStorage:        rolesStorage,
-		sso:                 ssoService,
-		authorizer:          authorizer,
-		legacyAccessClient:  legacyAccessClient,
-		accessClient:        accessClient,
-		display:             user.NewLegacyDisplayREST(store),
-		reg:                 reg,
-		enableAuthZApis:     features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		enableAuthnMutation: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter:    true,
+		store:                      store,
+		coreRolesStorage:           coreRolesStorage,
+		resourcePermissionsStorage: resourcePermissionsStorage,
+		rolesStorage:               rolesStorage,
+		sso:                        ssoService,
+		authorizer:                 authorizer,
+		legacyAccessClient:         legacyAccessClient,
+		accessClient:               accessClient,
+		display:                    user.NewLegacyDisplayREST(store),
+		reg:                        reg,
+		enableAuthZApis:            features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		enableAuthnMutation:        features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
+		enableDualWriter:           true,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -164,6 +166,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
+
+		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
 
 		roleStore, err := NewLocalStore(iamv0.RoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.rolesStorage)
 		if err != nil {
