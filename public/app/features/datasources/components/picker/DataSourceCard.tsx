@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Card, TagList, useTheme2, IconButton } from '@grafana/ui';
+import { Card, TagList, useTheme2, IconButton, Icon } from '@grafana/ui';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
@@ -40,7 +40,7 @@ export function DataSourceCard({
           <div className={styles.rightSection}>
             <small className={styles.type}>{description || ds.meta.name}</small>
             {onToggleFavorite && !ds.meta.builtIn && (
-              <IconButton
+              <Icon
                 name={isFavorite ? 'favorite' : 'star'}
                 aria-label={
                   isFavorite

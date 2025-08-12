@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
@@ -76,12 +76,22 @@ export function DataSourceList(props: DataSourceListProps) {
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
 
   const favoriteDataSourcesHook = config.featureToggles.favoriteDatasources ? useFavoriteDatasources() : null;
-  const { storedFavoriteDataSources, toggleFavoriteDatasource, isFavoriteDatasource } = useMemo(
-    () => ({
-      storedFavoriteDataSources: favoriteDataSourcesHook?.initialFavoriteDataSources,
-      toggleFavoriteDatasource: favoriteDataSourcesHook?.toggleFavoriteDatasource,
-      isFavoriteDatasource: favoriteDataSourcesHook?.isFavoriteDatasource,
-    }),
+  const storedFavoriteDataSources = favoriteDataSourcesHook?.initialFavoriteDataSources;
+  const isFavoriteDatasource = favoriteDataSourcesHook?.isFavoriteDatasource;
+
+  const toggleFavoriteDatasource = useCallback(
+    (ds: DataSourceInstanceSettings) => {
+      if (!favoriteDataSourcesHook) {
+        return;
+      }
+      const { isFavoriteDatasource, addFavoriteDatasource, removeFavoriteDatasource } = favoriteDataSourcesHook;
+
+      if (isFavoriteDatasource(ds.uid)) {
+        removeFavoriteDatasource(ds);
+      } else {
+        addFavoriteDatasource(ds);
+      }
+    },
     [favoriteDataSourcesHook]
   );
 

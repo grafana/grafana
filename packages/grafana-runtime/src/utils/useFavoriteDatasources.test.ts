@@ -268,44 +268,4 @@ describe('useFavoriteDatasources', () => {
       expect(result.current.isFavoriteDatasource('prometheus-uid')).toBe(false);
     });
   });
-
-  describe('toggleFavoriteDatasource', () => {
-    it('should add a datasource to favorites when not favorited', async () => {
-      mockGetItem.mockResolvedValue(JSON.stringify([]));
-      mockSetItem.mockResolvedValue(undefined);
-
-      const { result } = renderHook(() => useFavoriteDatasources());
-
-      await waitFor(() => {
-        expect(result.current.favoriteDatasources).toEqual([]);
-      });
-
-      act(() => {
-        result.current.toggleFavoriteDatasource(mockDS1);
-      });
-
-      await waitFor(() => {
-        expect(result.current.favoriteDatasources).toEqual(['prometheus-uid']);
-      });
-    });
-
-    it('should remove a datasource from favorites when favorited', async () => {
-      mockGetItem.mockResolvedValue(JSON.stringify(['prometheus-uid']));
-      mockSetItem.mockResolvedValue(undefined);
-
-      const { result } = renderHook(() => useFavoriteDatasources());
-
-      await waitFor(() => {
-        expect(result.current.favoriteDatasources).toEqual(['prometheus-uid']);
-      });
-
-      act(() => {
-        result.current.toggleFavoriteDatasource(mockDS1);
-      });
-
-      await waitFor(() => {
-        expect(result.current.favoriteDatasources).toEqual([]);
-      });
-    });
-  });
 });

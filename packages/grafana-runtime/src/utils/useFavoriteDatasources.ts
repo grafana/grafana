@@ -17,7 +17,6 @@ const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
  * - A function to add a data source to favorites
  * - A function to remove a data source from favorites
  * - A function to check if a data source is favorited
- * - A function to toggle a data source's favorite status
  * @public
  */
 export function useFavoriteDatasources(): {
@@ -26,7 +25,6 @@ export function useFavoriteDatasources(): {
   addFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
   removeFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
   isFavoriteDatasource: (dsUid: string) => boolean;
-  toggleFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
 } {
   const [userStorage] = useState(() => new UserStorage('grafana-runtime'));
   const [favoriteDatasources, setFavoriteDatasources] = useState<string[]>([]);
@@ -35,18 +33,11 @@ export function useFavoriteDatasources(): {
   // Load favorites from storage on mount
   useEffect(() => {
     const loadFavorites = async () => {
-      try {
-        const stored = await userStorage.getItem(FAVORITE_DATASOURCES_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            setFavoriteDatasources(parsed);
-            setInitialFavoriteDataSources(parsed);
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to load favorite data sources:', error);
-        setFavoriteDatasources([]);
+      const stored = await userStorage.getItem(FAVORITE_DATASOURCES_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setFavoriteDatasources(parsed);
+        setInitialFavoriteDataSources(parsed);
       }
     };
 
@@ -56,12 +47,8 @@ export function useFavoriteDatasources(): {
   // Helper function to save favorites to storage
   const saveFavorites = useCallback(
     async (newFavorites: string[]) => {
-      try {
-        await userStorage.setItem(FAVORITE_DATASOURCES_KEY, JSON.stringify(newFavorites));
-        setFavoriteDatasources(newFavorites);
-      } catch (error) {
-        console.warn('Failed to save favorite data sources:', error);
-      }
+      await userStorage.setItem(FAVORITE_DATASOURCES_KEY, JSON.stringify(newFavorites));
+      setFavoriteDatasources(newFavorites);
     },
     [userStorage]
   );
@@ -98,23 +85,11 @@ export function useFavoriteDatasources(): {
     [favoriteDatasources]
   );
 
-  const toggleFavoriteDatasource = useCallback(
-    (ds: DataSourceInstanceSettings) => {
-      if (isFavoriteDatasource(ds.uid)) {
-        removeFavoriteDatasource(ds);
-      } else {
-        addFavoriteDatasource(ds);
-      }
-    },
-    [isFavoriteDatasource, addFavoriteDatasource, removeFavoriteDatasource]
-  );
-
   return {
     favoriteDatasources,
     addFavoriteDatasource,
     removeFavoriteDatasource,
     isFavoriteDatasource,
     initialFavoriteDataSources,
-    toggleFavoriteDatasource,
   };
 }
