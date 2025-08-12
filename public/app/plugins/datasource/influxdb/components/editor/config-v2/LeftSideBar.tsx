@@ -10,7 +10,7 @@ export const LeftSideBar = ({ pdcInjected }: LeftSideBarProps) => {
   const headers = pdcInjected ? CONFIG_SECTION_HEADERS_WITH_PDC : CONFIG_SECTION_HEADERS;
   return (
     <Stack>
-      <Box flex={1} marginY={5}>
+      <Box flex={1} marginY={10}>
         <Text element="h4">InfluxDB</Text>
         <Box paddingTop={2}>
           {headers.map((header, index) => (

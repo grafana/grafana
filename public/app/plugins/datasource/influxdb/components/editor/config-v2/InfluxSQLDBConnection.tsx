@@ -5,6 +5,7 @@ import {
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
+import { DB_SETTINGS_LABEL_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2SQLDBDetailsTokenInputField,
@@ -18,7 +19,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Database" labelWidth={30} grow>
+        <InlineField label="Database" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
           <Input
             id="database"
             placeholder="mydb"
@@ -29,7 +30,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField labelWidth={30} label="Token" grow>
+        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token" grow>
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}

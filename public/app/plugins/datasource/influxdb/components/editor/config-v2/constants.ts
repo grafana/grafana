@@ -50,8 +50,11 @@ export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, 
       marginRight: theme.spacing(0.5),
       borderRadius: theme.shape.radius.default,
       border: 'none',
-      width: '240px',
+      width: '220px',
       color: theme.colors.text.primary,
     }),
   };
 };
+
+export const DB_SETTINGS_LABEL_WIDTH = 18;
+export const CONTAINER_MIN_WIDTH = '450px';
