@@ -47,7 +47,7 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
 			Name:     folder.ID,
-			Resource: resources.FolderResource.Resource,
+			Resource: "Folder",
 			Group:    resources.FolderResource.Group,
 			Path:     folder.Path,
 		}

@@ -99,7 +99,7 @@ func exportResource(ctx context.Context,
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
 			Name:     item.GetName(),
-			Resource: resource,
+			Resource: gvk.Kind,
 			Group:    gvk.Group,
 			Action:   repository.FileActionCreated,
 		}

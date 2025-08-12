@@ -192,7 +192,7 @@ func TestIncrementalSync(t *testing.T) {
 					Action:   repository.FileActionDeleted,
 					Path:     "dashboards/old.json",
 					Name:     "old-dashboard",
-					Resource: resources.DashboardResource.Resource,
+					Resource: "Dashboard",
 					Group:    "dashboards",
 				}).Return()
 
@@ -228,7 +228,7 @@ func TestIncrementalSync(t *testing.T) {
 					Action:   repository.FileActionRenamed,
 					Path:     "dashboards/new.json",
 					Name:     "renamed-dashboard",
-					Resource: resources.DashboardResource.Resource,
+					Resource: "Dashboard",
 					Group:    "dashboards",
 				}).Return()
 
