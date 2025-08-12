@@ -234,10 +234,10 @@
       "header-type": "Type",
       "heading-selection": "Selection",
       "result-limit": "Showing first {{numResults}} results",
+      "subscriptions-filter": "Subscriptions",
       "text-loading": "Loading...",
       "text-no-resources": "No resources found",
-      "title-error-occurred": "An error occurred while requesting resources from Azure Monitor",
-      "subscriptions-filter": "Subscriptions",
+      "title-error-occurred": "An error occurred while requesting resources from Azure Monitor"
     },
     "scope-selector": {
       "label": "Scope"
