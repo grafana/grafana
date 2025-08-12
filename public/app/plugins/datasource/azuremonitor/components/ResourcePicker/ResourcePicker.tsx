@@ -6,6 +6,7 @@ import { useEffectOnce } from 'react-use';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LoadingPlaceholder, Modal, useStyles2, Space } from '@grafana/ui';
 
+import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMonitorResource } from '../../types/query';
@@ -23,6 +24,7 @@ interface ResourcePickerProps<T> {
   resources: T[];
   selectableEntryTypes: ResourceRowType[];
   queryType: ResourcePickerQueryType;
+  datasource: Datasource;
 
   onApply: (resources: T[]) => void;
   onCancel: () => void;
@@ -34,6 +36,7 @@ interface ResourcePickerProps<T> {
 const ResourcePicker = ({
   resourcePickerData,
   resources,
+  datasource,
   onApply,
   onCancel,
   selectableEntryTypes,
