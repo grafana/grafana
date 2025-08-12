@@ -4,24 +4,33 @@
 
 package v0alpha1
 
-// RefURLsApplyConfiguration represents a declarative configuration of the RefURLs type for use
+// RepositoryURLsApplyConfiguration represents a declarative configuration of the RepositoryURLs type for use
 // with apply.
-type RefURLsApplyConfiguration struct {
+type RepositoryURLsApplyConfiguration struct {
+	RepositoryURL     *string `json:"repositoryURL,omitempty"`
 	SourceURL         *string `json:"sourceURL,omitempty"`
 	NewPullRequestURL *string `json:"newPullRequestURL,omitempty"`
 	CompareURL        *string `json:"compareURL,omitempty"`
 }
 
-// RefURLsApplyConfiguration constructs a declarative configuration of the RefURLs type for use with
+// RepositoryURLsApplyConfiguration constructs a declarative configuration of the RepositoryURLs type for use with
 // apply.
-func RefURLs() *RefURLsApplyConfiguration {
-	return &RefURLsApplyConfiguration{}
+func RepositoryURLs() *RepositoryURLsApplyConfiguration {
+	return &RepositoryURLsApplyConfiguration{}
+}
+
+// WithRepositoryURL sets the RepositoryURL field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RepositoryURL field is set to the value of the last call.
+func (b *RepositoryURLsApplyConfiguration) WithRepositoryURL(value string) *RepositoryURLsApplyConfiguration {
+	b.RepositoryURL = &value
+	return b
 }
 
 // WithSourceURL sets the SourceURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SourceURL field is set to the value of the last call.
-func (b *RefURLsApplyConfiguration) WithSourceURL(value string) *RefURLsApplyConfiguration {
+func (b *RepositoryURLsApplyConfiguration) WithSourceURL(value string) *RepositoryURLsApplyConfiguration {
 	b.SourceURL = &value
 	return b
 }
@@ -29,7 +38,7 @@ func (b *RefURLsApplyConfiguration) WithSourceURL(value string) *RefURLsApplyCon
 // WithNewPullRequestURL sets the NewPullRequestURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the NewPullRequestURL field is set to the value of the last call.
-func (b *RefURLsApplyConfiguration) WithNewPullRequestURL(value string) *RefURLsApplyConfiguration {
+func (b *RepositoryURLsApplyConfiguration) WithNewPullRequestURL(value string) *RepositoryURLsApplyConfiguration {
 	b.NewPullRequestURL = &value
 	return b
 }
@@ -37,7 +46,7 @@ func (b *RefURLsApplyConfiguration) WithNewPullRequestURL(value string) *RefURLs
 // WithCompareURL sets the CompareURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the CompareURL field is set to the value of the last call.
-func (b *RefURLsApplyConfiguration) WithCompareURL(value string) *RefURLsApplyConfiguration {
+func (b *RepositoryURLsApplyConfiguration) WithCompareURL(value string) *RepositoryURLsApplyConfiguration {
 	b.CompareURL = &value
 	return b
 }

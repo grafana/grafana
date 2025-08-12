@@ -204,7 +204,7 @@ func (_c *MockJobProgressRecorder_SetMessage_Call) RunAndReturn(run func(context
 }
 
 // SetRefURLs provides a mock function with given fields: ctx, refURLs
-func (_m *MockJobProgressRecorder) SetRefURLs(ctx context.Context, refURLs *v0alpha1.RefURLs) {
+func (_m *MockJobProgressRecorder) SetRefURLs(ctx context.Context, refURLs *v0alpha1.RepositoryURLs) {
 	_m.Called(ctx, refURLs)
 }
 
@@ -215,14 +215,14 @@ type MockJobProgressRecorder_SetRefURLs_Call struct {
 
 // SetRefURLs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - refURLs *v0alpha1.RefURLs
+//   - refURLs *v0alpha1.RepositoryURLs
 func (_e *MockJobProgressRecorder_Expecter) SetRefURLs(ctx interface{}, refURLs interface{}) *MockJobProgressRecorder_SetRefURLs_Call {
 	return &MockJobProgressRecorder_SetRefURLs_Call{Call: _e.mock.On("SetRefURLs", ctx, refURLs)}
 }
 
-func (_c *MockJobProgressRecorder_SetRefURLs_Call) Run(run func(ctx context.Context, refURLs *v0alpha1.RefURLs)) *MockJobProgressRecorder_SetRefURLs_Call {
+func (_c *MockJobProgressRecorder_SetRefURLs_Call) Run(run func(ctx context.Context, refURLs *v0alpha1.RepositoryURLs)) *MockJobProgressRecorder_SetRefURLs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*v0alpha1.RefURLs))
+		run(args[0].(context.Context), args[1].(*v0alpha1.RepositoryURLs))
 	})
 	return _c
 }
@@ -232,7 +232,7 @@ func (_c *MockJobProgressRecorder_SetRefURLs_Call) Return() *MockJobProgressReco
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_SetRefURLs_Call) RunAndReturn(run func(context.Context, *v0alpha1.RefURLs)) *MockJobProgressRecorder_SetRefURLs_Call {
+func (_c *MockJobProgressRecorder_SetRefURLs_Call) RunAndReturn(run func(context.Context, *v0alpha1.RepositoryURLs)) *MockJobProgressRecorder_SetRefURLs_Call {
 	_c.Run(run)
 	return _c
 }

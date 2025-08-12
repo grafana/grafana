@@ -19,7 +19,7 @@ func TestJobProgressRecorderSetRefURLs(t *testing.T) {
 	recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
 
 	// Test setting RefURLs
-	expectedRefURLs := &provisioning.RefURLs{
+	expectedRefURLs := &provisioning.RepositoryURLs{
 		SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
 		CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
 		NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
@@ -69,7 +69,7 @@ func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
 	recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
 
 	// Set some RefURLs
-	refURLs := &provisioning.RefURLs{
+	refURLs := &provisioning.RepositoryURLs{
 		SourceURL: "https://github.com/grafana/grafana/tree/test-branch",
 	}
 	recorder.SetRefURLs(ctx, refURLs)

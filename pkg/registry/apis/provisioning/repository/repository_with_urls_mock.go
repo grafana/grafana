@@ -72,23 +72,23 @@ func (_c *MockRepositoryWithURLs_Config_Call) RunAndReturn(run func() *v0alpha1.
 }
 
 // RefURLs provides a mock function with given fields: ctx, ref
-func (_m *MockRepositoryWithURLs) RefURLs(ctx context.Context, ref string) (*v0alpha1.RefURLs, error) {
+func (_m *MockRepositoryWithURLs) RefURLs(ctx context.Context, ref string) (*v0alpha1.RepositoryURLs, error) {
 	ret := _m.Called(ctx, ref)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefURLs")
 	}
 
-	var r0 *v0alpha1.RefURLs
+	var r0 *v0alpha1.RepositoryURLs
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*v0alpha1.RefURLs, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v0alpha1.RepositoryURLs, error)); ok {
 		return rf(ctx, ref)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *v0alpha1.RefURLs); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v0alpha1.RepositoryURLs); ok {
 		r0 = rf(ctx, ref)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v0alpha1.RefURLs)
+			r0 = ret.Get(0).(*v0alpha1.RepositoryURLs)
 		}
 	}
 
@@ -120,34 +120,34 @@ func (_c *MockRepositoryWithURLs_RefURLs_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockRepositoryWithURLs_RefURLs_Call) Return(_a0 *v0alpha1.RefURLs, _a1 error) *MockRepositoryWithURLs_RefURLs_Call {
+func (_c *MockRepositoryWithURLs_RefURLs_Call) Return(_a0 *v0alpha1.RepositoryURLs, _a1 error) *MockRepositoryWithURLs_RefURLs_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepositoryWithURLs_RefURLs_Call) RunAndReturn(run func(context.Context, string) (*v0alpha1.RefURLs, error)) *MockRepositoryWithURLs_RefURLs_Call {
+func (_c *MockRepositoryWithURLs_RefURLs_Call) RunAndReturn(run func(context.Context, string) (*v0alpha1.RepositoryURLs, error)) *MockRepositoryWithURLs_RefURLs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ResourceURLs provides a mock function with given fields: ctx, file
-func (_m *MockRepositoryWithURLs) ResourceURLs(ctx context.Context, file *FileInfo) (*v0alpha1.ResourceURLs, error) {
+func (_m *MockRepositoryWithURLs) ResourceURLs(ctx context.Context, file *FileInfo) (*v0alpha1.RepositoryURLs, error) {
 	ret := _m.Called(ctx, file)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ResourceURLs")
 	}
 
-	var r0 *v0alpha1.ResourceURLs
+	var r0 *v0alpha1.RepositoryURLs
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *FileInfo) (*v0alpha1.ResourceURLs, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *FileInfo) (*v0alpha1.RepositoryURLs, error)); ok {
 		return rf(ctx, file)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *FileInfo) *v0alpha1.ResourceURLs); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *FileInfo) *v0alpha1.RepositoryURLs); ok {
 		r0 = rf(ctx, file)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v0alpha1.ResourceURLs)
+			r0 = ret.Get(0).(*v0alpha1.RepositoryURLs)
 		}
 	}
 
@@ -179,12 +179,12 @@ func (_c *MockRepositoryWithURLs_ResourceURLs_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockRepositoryWithURLs_ResourceURLs_Call) Return(_a0 *v0alpha1.ResourceURLs, _a1 error) *MockRepositoryWithURLs_ResourceURLs_Call {
+func (_c *MockRepositoryWithURLs_ResourceURLs_Call) Return(_a0 *v0alpha1.RepositoryURLs, _a1 error) *MockRepositoryWithURLs_ResourceURLs_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepositoryWithURLs_ResourceURLs_Call) RunAndReturn(run func(context.Context, *FileInfo) (*v0alpha1.ResourceURLs, error)) *MockRepositoryWithURLs_ResourceURLs_Call {
+func (_c *MockRepositoryWithURLs_ResourceURLs_Call) RunAndReturn(run func(context.Context, *FileInfo) (*v0alpha1.RepositoryURLs, error)) *MockRepositoryWithURLs_ResourceURLs_Call {
 	_c.Call.Return(run)
 	return _c
 }

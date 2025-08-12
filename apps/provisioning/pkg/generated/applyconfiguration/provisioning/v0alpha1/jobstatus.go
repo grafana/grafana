@@ -18,7 +18,7 @@ type JobStatusApplyConfiguration struct {
 	Errors   []string                                   `json:"errors,omitempty"`
 	Progress *float64                                   `json:"progress,omitempty"`
 	Summary  []*provisioningv0alpha1.JobResourceSummary `json:"summary,omitempty"`
-	RefURLs  *RefURLsApplyConfiguration                 `json:"refURLs,omitempty"`
+	URLs     *RepositoryURLsApplyConfiguration          `json:"url,omitempty"`
 }
 
 // JobStatusApplyConfiguration constructs a declarative configuration of the JobStatus type for use with
@@ -90,10 +90,10 @@ func (b *JobStatusApplyConfiguration) WithSummary(values ...**provisioningv0alph
 	return b
 }
 
-// WithRefURLs sets the RefURLs field in the declarative configuration to the given value
+// WithURLs sets the URLs field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the RefURLs field is set to the value of the last call.
-func (b *JobStatusApplyConfiguration) WithRefURLs(value *RefURLsApplyConfiguration) *JobStatusApplyConfiguration {
-	b.RefURLs = value
+// If called multiple times, the URLs field is set to the value of the last call.
+func (b *JobStatusApplyConfiguration) WithURLs(value *RepositoryURLsApplyConfiguration) *JobStatusApplyConfiguration {
+	b.URLs = value
 	return b
 }

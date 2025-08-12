@@ -688,7 +688,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 		name          string
 		file          *repository.FileInfo
 		config        *provisioning.Repository
-		expectedURLs  *provisioning.ResourceURLs
+		expectedURLs  *provisioning.RepositoryURLs
 		expectedError error
 	}{
 		{
@@ -705,7 +705,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 					},
 				},
 			},
-			expectedURLs: &provisioning.ResourceURLs{
+			expectedURLs: &provisioning.RepositoryURLs{
 				RepositoryURL:     "https://github.com/grafana/grafana",
 				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/test.json",
 				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
@@ -726,7 +726,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 					},
 				},
 			},
-			expectedURLs: &provisioning.ResourceURLs{
+			expectedURLs: &provisioning.RepositoryURLs{
 				RepositoryURL: "https://github.com/grafana/grafana",
 				SourceURL:     "https://github.com/grafana/grafana/blob/main/dashboards/test.json",
 			},
@@ -788,7 +788,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 		name          string
 		ref           string
 		config        *provisioning.Repository
-		expectedURLs  *provisioning.RefURLs
+		expectedURLs  *provisioning.RepositoryURLs
 		expectedError error
 	}{
 		{
@@ -802,7 +802,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 					},
 				},
 			},
-			expectedURLs: &provisioning.RefURLs{
+			expectedURLs: &provisioning.RepositoryURLs{
 				SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
 				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
 				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
@@ -819,7 +819,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 					},
 				},
 			},
-			expectedURLs: &provisioning.RefURLs{
+			expectedURLs: &provisioning.RepositoryURLs{
 				SourceURL: "https://github.com/grafana/grafana/tree/main",
 			},
 		},

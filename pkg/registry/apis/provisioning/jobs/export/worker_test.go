@@ -576,7 +576,7 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	})
 
 	// Mock RefURLs method to return expected URLs
-	expectedRefURLs := &v0alpha1.RefURLs{
+	expectedRefURLs := &v0alpha1.RepositoryURLs{
 		SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
 		CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
 		NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",

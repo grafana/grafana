@@ -848,7 +848,7 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
 
 	// Mock RefURLs method to return expected URLs
-	expectedRefURLs := &provisioning.RefURLs{
+	expectedRefURLs := &provisioning.RepositoryURLs{
 		SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
 		CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
 		NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",

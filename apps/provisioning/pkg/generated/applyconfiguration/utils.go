@@ -50,14 +50,14 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.MoveJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("PullRequestJobOptions"):
 		return &provisioningv0alpha1.PullRequestJobOptionsApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("RefURLs"):
-		return &provisioningv0alpha1.RefURLsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Repository"):
 		return &provisioningv0alpha1.RepositoryApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositorySpec"):
 		return &provisioningv0alpha1.RepositorySpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryStatus"):
 		return &provisioningv0alpha1.RepositoryStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryURLs"):
+		return &provisioningv0alpha1.RepositoryURLsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ResourceCount"):
 		return &provisioningv0alpha1.ResourceCountApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ResourceRef"):

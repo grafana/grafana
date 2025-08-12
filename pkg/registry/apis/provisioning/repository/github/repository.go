@@ -198,7 +198,7 @@ func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem
 }
 
 // ResourceURLs implements RepositoryWithURLs.
-func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.ResourceURLs, error) {
+func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
 	cfg := r.config.Spec.GitHub
 	if file.Path == "" || cfg == nil {
 		return nil, nil
@@ -209,7 +209,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 		ref = cfg.Branch
 	}
 
-	urls := &provisioning.ResourceURLs{
+	urls := &provisioning.RepositoryURLs{
 		RepositoryURL: cfg.URL,
 		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
 	}
@@ -225,13 +225,13 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 }
 
 // RefURLs implements RepositoryWithURLs.
-func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioning.RefURLs, error) {
+func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error) {
 	cfg := r.config.Spec.GitHub
 	if cfg == nil || ref == "" {
 		return nil, nil
 	}
 
-	urls := &provisioning.RefURLs{
+	urls := &provisioning.RepositoryURLs{
 		SourceURL: fmt.Sprintf("%s/tree/%s", cfg.URL, ref),
 	}
 

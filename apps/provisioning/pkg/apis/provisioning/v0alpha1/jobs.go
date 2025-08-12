@@ -205,17 +205,8 @@ type JobStatus struct {
 	// Summary of processed actions
 	Summary []*JobResourceSummary `json:"summary,omitempty"`
 
-	// RefURLs contains URLs for the reference branch or commit if applicable.
-	RefURLs *RefURLs `json:"refURLs,omitempty"`
-}
-
-type RefURLs struct {
-	// A URL pointing to the ref in the repository
-	SourceURL string `json:"sourceURL,omitempty"`
-	// A URL that will create a new pull request for this branch
-	NewPullRequestURL string `json:"newPullRequestURL,omitempty"`
-	// Compare this version to the target branch
-	CompareURL string `json:"compareURL,omitempty"`
+	// URLs contains URLs for the reference branch or commit if applicable.
+	URLs *RepositoryURLs `json:"url,omitempty"`
 }
 
 // Convert a JOB to a
