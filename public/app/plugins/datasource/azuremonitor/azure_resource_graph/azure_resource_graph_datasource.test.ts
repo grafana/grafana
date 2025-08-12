@@ -293,7 +293,6 @@ describe('AzureResourceGraphDatasource', () => {
       expect(query).not.toContain('| where location in');
     });
 
-
     it('should return empty array when no subscriptions found', async () => {
       pagedResourceGraphRequest.mockResolvedValue([]);
 
