@@ -31,7 +31,7 @@ export function getWeekStart(override?: string): WeekStart {
     return override;
   }
 
-  const preference = window.grafanaBootData?.user?.weekStart;
+  const preference = window?.grafanaBootData?.user?.weekStart;
   if (preference && isWeekStart(preference)) {
     return preference;
   }
