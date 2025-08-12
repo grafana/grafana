@@ -28,26 +28,28 @@ export function MatchDetails({ matchDetails, labels, routeMatched }: MatchDetail
   const styles = useStyles2(getStyles);
   const matchingLabels = matchDetails.filter((detail) => detail.match);
 
+  const noMatchingLabels = matchingLabels.length === 0;
+
   return (
     <div className={styles.container}>
-      {matchingLabels.map((detail) => (
-        <div key={detail.labelIndex} className={styles.matchPill}>
-          <Label label={labels[detail.labelIndex][0]} value={labels[detail.labelIndex][1]} />
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="alerting.match-details.matched">matched</Trans>
-          </Text>
-          {detail.matcher && (
-            <MatcherBadge
-              matcher={[detail.matcher.label, detail.matcher.type as MatcherOperator, detail.matcher.value]}
-            />
-          )}
-        </div>
-      ))}
-
-      {matchingLabels.length === 0 && !routeMatched && (
+      {noMatchingLabels ? (
         <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="alerting.match-details.no-matchers-matched">No labels matched the route matchers</Trans>
+          <Trans i18nKey="alerting.match-details.no-matchers-matched">Policy matches all labels</Trans>
         </Text>
+      ) : (
+        matchingLabels.map((detail) => (
+          <div key={detail.labelIndex} className={styles.matchPill}>
+            <Label label={labels[detail.labelIndex][0]} value={labels[detail.labelIndex][1]} />
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="alerting.match-details.matched">matched</Trans>
+            </Text>
+            {detail.matcher && (
+              <MatcherBadge
+                matcher={[detail.matcher.label, detail.matcher.type as MatcherOperator, detail.matcher.value]}
+              />
+            )}
+          </div>
+        ))
       )}
     </div>
   );

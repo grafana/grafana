@@ -31,10 +31,10 @@ export function JourneyPolicyCard({ route, isRoot = false, level, isFinalRoute =
       {continueMatching && <ContinueMatchingIndicator />}
       <Stack direction="column" gap={0.5}>
         {/* root route indicator */}
-        {isRoot ? (
-          <DefaultPolicyIndicator />
-        ) : /* Matchers */
-        hasMatchers ? (
+        {isRoot && <DefaultPolicyIndicator />}
+
+        {/* Matchers */}
+        {hasMatchers ? (
           <Matchers matchers={matchers} formatter={undefined} />
         ) : (
           <Text variant="bodySmall" color="secondary">
@@ -82,6 +82,7 @@ const ContinueMatchingIndicator = () => {
 const getStyles = (theme: GrafanaTheme2) => ({
   policyWrapper: (hasFocus = false) =>
     css({
+      position: 'relative',
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       border: `solid 1px ${theme.colors.border.weak}`,
@@ -93,16 +94,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }),
   gutterIcon: css({
     position: 'absolute',
-    top: 0,
-    transform: 'translateY(50%)',
-    left: `-${theme.spacing(2)}`,
+    left: `-${theme.spacing(3.5)}`,
+    top: theme.spacing(2.25),
+
     color: theme.colors.text.secondary,
     background: theme.colors.background.primary,
+
     width: '20px',
     height: '20px',
+
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+
     border: `solid 1px ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
   }),

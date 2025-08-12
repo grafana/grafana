@@ -1831,7 +1831,7 @@
     },
     "match-details": {
       "matched": "matched",
-      "no-matchers-matched": "No labels matched the route matchers"
+      "no-matchers-matched": "Policy matches all labels"
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filter alerts using label querying without braces, ex:",
