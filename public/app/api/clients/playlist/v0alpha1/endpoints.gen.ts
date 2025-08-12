@@ -261,43 +261,43 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type PlaylistItem = {
+  /** type of the item. */
+  type: string;
+  /** Value depends on type and describes the playlist item.
+     - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
+     is not portable as the numerical identifier is non-deterministic between different instances.
+     Will be replaced by dashboard_by_uid in the future. (deprecated)
+     - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
+     dashboards behind the tag will be added to the playlist.
+     - dashboard_by_uid: The value is the dashboard UID */
+  value: string;
+};
 export type PlaylistSpec = {
   interval: string;
-  items: {
-    /** type of the item. */
-    type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id';
-    /** Value depends on type and describes the playlist item.
-         - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
-         is not portable as the numerical identifier is non-deterministic between different instances.
-         Will be replaced by dashboard_by_uid in the future. (deprecated)
-         - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
-         dashboards behind the tag will be added to the playlist.
-         - dashboard_by_uid: The value is the dashboard UID */
-    value: string;
-  }[];
+  items: PlaylistItem[];
   title: string;
+};
+export type PlayliststatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
 };
 export type PlaylistStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: object;
   };
-  /** operatorStates is a map of operator ID to operator state evaluations.
-    Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
-    [key: string]: {
-      /** descriptiveState is an optional more descriptive state field which has no requirements on format */
-      descriptiveState?: string;
-      /** details contains any extra information that is operator-specific */
-      details?: {
-        [key: string]: any;
-      };
-      /** lastEvaluation is the ResourceVersion last evaluated */
-      lastEvaluation: string;
-      /** state describes the state of the lastEvaluation.
-            It is limited to three possible states for machine evaluation. */
-      state: 'success' | 'in_progress' | 'failed';
-    };
+    [key: string]: PlayliststatusOperatorState;
   };
 };
 export type Playlist = {
@@ -305,9 +305,10 @@ export type Playlist = {
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  metadata?: ObjectMeta;
-  spec?: PlaylistSpec;
-  status?: PlaylistStatus;
+  metadata: ObjectMeta;
+  /** Spec is the spec of the Playlist */
+  spec: PlaylistSpec;
+  status: PlaylistStatus;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
