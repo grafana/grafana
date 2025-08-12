@@ -394,7 +394,6 @@ function isScopeLocalStorageV1(obj: unknown): obj is { scope: Scope } {
 }
 
 function isScopeObj(obj: unknown): obj is Scope {
-  console.log(obj.spec);
   return ScopeSchema.safeParse(obj).success;
 }
 
