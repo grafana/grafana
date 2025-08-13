@@ -484,7 +484,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 	watchctx := context.Background() // new context?
 	// don't start watcher when SearchAfterWrite changes are enabled
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI) {
+	if s.features == nil || !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI) {
 		// Now start listening for new events
 		events, err := s.storage.WatchWriteEvents(watchctx)
 		if err != nil {
