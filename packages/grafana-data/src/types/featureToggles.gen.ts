@@ -1098,4 +1098,9 @@ export interface FeatureToggles {
   * @default false
   */
   unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
+  /**
+  * Enables team folders functionality
+  * @default false
+  */
+  teamFolders?: boolean;
 }

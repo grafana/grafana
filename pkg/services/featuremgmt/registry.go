@@ -1904,6 +1904,14 @@ var (
 			RequiresRestart:   true,
 			Expression:        "false",
 		},
+		{
+			Name:         "teamFolders",
+			Description:  "Enables team folders functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendSearchNavOrganise,
+			Expression:   "false",
+		},
 	}
 )
 
