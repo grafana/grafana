@@ -51,7 +51,7 @@ jobs:
         run: |
           TO_COMMIT="$(gh api repos/grafana/alerting/commits/"$BRANCH" --jq '.sha')"
            if [ -z "$TO_COMMIT" ]; then
-            echo "Branch $BRANCH not found in alerting repo, falling back to main branch"
+            echo "Branch $BRANCH not found in alerting repo"
             exit 1
           fi
           echo "to_commit=$TO_COMMIT" >> "$GITHUB_OUTPUT"
@@ -85,7 +85,7 @@ jobs:
           printf "%s\n" "$ALERTING_COMMITS"
 
           # make the list for markdown and replace PR numbers with links
-          ALERTING_COMMITS_FORMATTED="$(echo "$ALERTING_COMMITS" | while read -r line; do echo "- $line" | sed -E 's/\(#([0-9]+)\)/[#\1](https:\/\/github.com\/grafana\/grafana\/pull\/\1)/g'; done)"
+          ALERTING_COMMITS_FORMATTED="$(echo "$ALERTING_COMMITS" | while read -r line; do echo "- $line" | sed -E 's/\(#([0-9]+)\)/[#\1](https:\/\/github.com\/grafana\/alerting\/pull\/\1)/g'; done)"
 
           {
             echo "alerting_commits<<EOF"
@@ -123,6 +123,9 @@ jobs:
           title:  'Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
           branch: alerting/update-alerting-module
           delete-branch: true
+          labels: |
+            no-changelog
+            no-backport
           body: |
             Updates Grafana Alerting module to latest version.
 
@@ -144,3 +147,14 @@ jobs:
             echo "## Pull Request Created"
             echo "🔗 [View Pull Request]($PR_URL)"
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Send Slack Message
+        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.3
+        with:
+          method: 'chat.postMessage'
+          # send to alerting-reviews channel
+          payload-templated: true
+          payload:  |
+            {
+              "channel": "C076RNRRZ2N",
+              "text": "Update alerting module in Grafana ${{ steps.create-pr.outputs.pull-request-url }}"
+            }
