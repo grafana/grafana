@@ -136,10 +136,10 @@ Select the pie chart display style. Choose from **Pie** or **Donut**.
 
 ![Pie chart types](/media/docs/grafana/panels-visualizations/screenshot-pie-chart-types.png)
 
-#### Pie chart sorting
+#### Slice sorting
 
 By default, the pie chart is sorted so that the slices decrease in size clockwise around the circle.
-You can configure the sorting of the slices and the legend, and by extension the legend, with the following options:
+You can configure the sorting of the slices, and by extension the legend, with the following options:
 
 - **Descending** - The slices decrease in size, clockwise (default).
 - **Ascending** - The slices increase in size, clockwise.
