@@ -110,6 +110,7 @@ func TestSecureValues_Decrypt(t *testing.T) {
 			}
 			require.NotNil(t, decrypted, "decrypted values should not be nil")
 			require.Equal(t, tt.expect, decrypted, "decrypted values do not match expected output")
+			decryptSvc.AssertExpectations(t)
 		})
 	}
 }

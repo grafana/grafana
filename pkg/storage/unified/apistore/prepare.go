@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -47,11 +48,11 @@ type objectForStorage struct {
 	hasChanged bool
 }
 
-func (v *objectForStorage) finish(ctx context.Context, err error, store *Storage) error {
+func (v *objectForStorage) finish(ctx context.Context, err error, secrets secrets.InlineSecureValueSupport) error {
 	if err != nil {
 		// Remove the secure values that were created
 		for _, s := range v.createdSecureValues {
-			if e := store.opts.SecureValues.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
+			if e := secrets.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
 				logging.FromContext(ctx).Warn("unable to clean up new secure value", "name", s, "err", e)
 			}
 		}
@@ -61,7 +62,7 @@ func (v *objectForStorage) finish(ctx context.Context, err error, store *Storage
 	// Delete secure values after successfully saving the object
 	if len(v.deleteSecureValues) > 0 {
 		for _, s := range v.deleteSecureValues {
-			if e := store.opts.SecureValues.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
+			if e := secrets.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
 				logging.FromContext(ctx).Warn("unable to clean up new secure value", "name", s, "err", e)
 			}
 		}
@@ -129,7 +130,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(info.GetUID())
 	obj.SetGeneration(1) // the first time we write
 
-	err = handleSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
 	if err != nil {
 		return v, err
 	}
@@ -189,7 +190,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
-	err = handleSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
 	if err != nil {
 		return v, err
 	}

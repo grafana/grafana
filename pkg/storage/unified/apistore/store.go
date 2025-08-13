@@ -206,14 +206,14 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
-		return v.finish(ctx, resource.GetError(resource.AsErrorResult(err)), s)
+		return v.finish(ctx, resource.GetError(resource.AsErrorResult(err)), s.opts.SecureValues)
 	}
 	if rsp.Error != nil {
 		err = resource.GetError(rsp.Error)
 		if rsp.Error.Code == http.StatusConflict {
 			err = storage.NewKeyExistsError(key, 0)
 		}
-		return v.finish(ctx, err, s)
+		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
 	if _, err := s.convertToObject(req.Value, out); err != nil {
@@ -235,7 +235,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		})
 	}
 
-	return v.finish(ctx, nil, s)
+	return v.finish(ctx, nil, s.opts.SecureValues)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -609,7 +609,7 @@ func (s *Storage) GuaranteedUpdate(
 		}
 
 		// Cleanup secure values
-		if err = v.finish(ctx, err, s); err != nil {
+		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
 			return err
 		}
 
