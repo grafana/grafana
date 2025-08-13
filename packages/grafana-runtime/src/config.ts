@@ -1,3 +1,5 @@
+import { merge } from 'lodash';
+
 import {
   AppPluginConfig as AppPluginConfigGrafanaData,
   AuthSettings,
@@ -74,143 +76,158 @@ export type PreinstalledPlugin = {
   version: string;
 };
 
-export interface GrafanaBootConfig {
+export class GrafanaBootConfig {
   publicDashboardAccessToken?: string;
-  publicDashboardsEnabled: boolean;
-  snapshotEnabled: boolean;
-  datasources: { [str: string]: DataSourceInstanceSettings };
-  panels: { [key: string]: PanelPluginMeta };
-  apps: Record<string, AppPluginConfigGrafanaData>;
-  auth: AuthSettings;
-  minRefreshInterval: string;
-  appUrl: string;
-  appSubUrl: string;
-  namespace: string;
-  windowTitlePrefix: string;
-  buildInfo: BuildInfo;
+  publicDashboardsEnabled = true;
+  snapshotEnabled = true;
+  datasources: { [str: string]: DataSourceInstanceSettings } = {};
+  panels: { [key: string]: PanelPluginMeta } = {};
+  apps: Record<string, AppPluginConfigGrafanaData> = {};
+  auth: AuthSettings = {};
+  minRefreshInterval = '';
+  appUrl = '';
+  appSubUrl = '';
+  namespace = 'default';
+  windowTitlePrefix = 'Grafana - ';
+  buildInfo: BuildInfo = {
+    version: '1.0',
+    commit: '1',
+    env: 'production',
+  } as BuildInfo;
   bootData: BootData;
-  externalUserMngLinkUrl: string;
-  externalUserMngLinkName: string;
-  externalUserMngInfo: string;
-  externalUserMngAnalytics: boolean;
-  externalUserMngAnalyticsParams: string;
-  allowOrgCreate: boolean;
-  feedbackLinksEnabled: boolean;
-  disableLoginForm: boolean;
-  defaultDatasource: string; // UID
-  authProxyEnabled: boolean;
-  exploreEnabled: boolean;
-  queryHistoryEnabled: boolean;
-  helpEnabled: boolean;
-  profileEnabled: boolean;
-  newsFeedEnabled: boolean;
-  ldapEnabled: boolean;
-  jwtHeaderName: string;
-  jwtUrlLogin: boolean;
-  sigV4AuthEnabled: boolean;
-  azureAuthEnabled: boolean;
-  secureSocksDSProxyEnabled: boolean;
-  samlEnabled: boolean;
-  samlName: string;
-  autoAssignOrg: boolean;
-  verifyEmailEnabled: boolean;
-  oauth: OAuthSettings;
-  rbacEnabled: boolean;
-  disableUserSignUp: boolean;
-  loginHint: string;
-  passwordHint: string;
+  externalUserMngLinkUrl = '';
+  externalUserMngLinkName = '';
+  externalUserMngInfo = '';
+  externalUserMngAnalytics = false;
+  externalUserMngAnalyticsParams = '';
+  allowOrgCreate = false;
+  feedbackLinksEnabled = true;
+  disableLoginForm = false;
+  defaultDatasource = ''; // UID
+  authProxyEnabled = false;
+  exploreEnabled = false;
+  queryHistoryEnabled = false;
+  helpEnabled = false;
+  profileEnabled = false;
+  newsFeedEnabled = true;
+  ldapEnabled = false;
+  jwtHeaderName = '';
+  jwtUrlLogin = false;
+  sigV4AuthEnabled = false;
+  azureAuthEnabled = false;
+  secureSocksDSProxyEnabled = false;
+  samlEnabled = false;
+  samlName = '';
+  autoAssignOrg = true;
+  verifyEmailEnabled = false;
+  oauth: OAuthSettings = {};
+  rbacEnabled = true;
+  disableUserSignUp = false;
+  loginHint = '';
+  passwordHint = '';
   loginError?: string;
-  viewersCanEdit: boolean;
-  disableSanitizeHtml: boolean;
-  trustedTypesDefaultPolicyEnabled: boolean;
-  cspReportOnlyEnabled: boolean;
-  liveEnabled: boolean;
-  liveMessageSizeLimit: number;
+  viewersCanEdit = false;
+  disableSanitizeHtml = false;
+  trustedTypesDefaultPolicyEnabled = false;
+  cspReportOnlyEnabled = false;
+  liveEnabled = true;
+  liveMessageSizeLimit = 65536;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  featureToggles: FeatureToggles;
-  anonymousEnabled: boolean;
+  featureToggles: FeatureToggles = {};
+  anonymousEnabled = false;
   anonymousDeviceLimit?: number;
-  licenseInfo: LicenseInfo;
-  rendererAvailable: boolean;
-  rendererVersion: string;
-  rendererDefaultImageWidth: number;
-  rendererDefaultImageHeight: number;
-  rendererDefaultImageScale: number;
-  supportBundlesEnabled: boolean;
-  http2Enabled: boolean;
+  licenseInfo: LicenseInfo = {} as LicenseInfo;
+  rendererAvailable = false;
+  rendererVersion = '';
+  rendererDefaultImageWidth = 1000;
+  rendererDefaultImageHeight = 500;
+  rendererDefaultImageScale = 1;
+  supportBundlesEnabled = false;
+  http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  grafanaJavascriptAgent: {
-    enabled: boolean;
-    customEndpoint: string;
-    apiKey: string;
-    allInstrumentationsEnabled: boolean;
-    errorInstrumentalizationEnabled: boolean;
-    consoleInstrumentalizationEnabled: boolean;
-    webVitalsInstrumentalizationEnabled: boolean;
-    tracingInstrumentalizationEnabled: boolean;
+  grafanaJavascriptAgent = {
+    enabled: false,
+    customEndpoint: '',
+    apiKey: '',
+    allInstrumentationsEnabled: false,
+    errorInstrumentalizationEnabled: true,
+    consoleInstrumentalizationEnabled: false,
+    webVitalsInstrumentalizationEnabled: false,
+    tracingInstrumentalizationEnabled: false,
   };
-  pluginCatalogURL: string;
-  pluginAdminEnabled: boolean;
-  pluginAdminExternalManageEnabled: boolean;
-  pluginCatalogHiddenPlugins: string[];
-  pluginCatalogManagedPlugins: string[];
-  pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[];
-  pluginsCDNBaseURL: string;
-  expressionsEnabled: boolean;
-  awsAllowedAuthProviders: string[];
-  awsAssumeRoleEnabled: boolean;
-  azure: AzureSettingsGrafanaData;
-  caching: {
-    enabled: boolean;
+  pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
+  pluginAdminEnabled = true;
+  pluginAdminExternalManageEnabled = false;
+  pluginCatalogHiddenPlugins: string[] = [];
+  pluginCatalogManagedPlugins: string[] = [];
+  pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
+  pluginsCDNBaseURL = '';
+  expressionsEnabled = false;
+  awsAllowedAuthProviders: string[] = [];
+  awsAssumeRoleEnabled = false;
+  azure: AzureSettingsGrafanaData = {
+    managedIdentityEnabled: false,
+    workloadIdentityEnabled: false,
+    userIdentityEnabled: false,
+    userIdentityFallbackCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
+  };
+  caching = {
+    enabled: false,
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
-  unifiedAlertingEnabled: boolean;
-  unifiedAlerting: UnifiedAlertingConfig;
+  unifiedAlertingEnabled = false;
+  unifiedAlerting: UnifiedAlertingConfig = {
+    minInterval: '',
+    alertStateHistoryBackend: undefined,
+    alertStateHistoryPrimary: undefined,
+    recordingRulesEnabled: false,
+    defaultRecordingRulesTargetDatasourceUID: undefined,
+  };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
-  recordedQueries: {
-    enabled: boolean;
+  recordedQueries = {
+    enabled: true,
   };
-  featureHighlights: {
-    enabled: boolean;
+  featureHighlights = {
+    enabled: false,
   };
-  reporting: {
-    enabled: boolean;
+  reporting = {
+    enabled: true,
   };
-  analytics: {
-    enabled: boolean;
+  analytics = {
+    enabled: true,
   };
   googleAnalyticsId?: string;
   googleAnalytics4Id?: string;
-  googleAnalytics4SendManualPageViews: boolean;
+  googleAnalytics4SendManualPageViews = false;
   rudderstackWriteKey?: string;
   rudderstackDataPlaneUrl?: string;
   rudderstackSdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
-  analyticsConsoleReporting: boolean;
-  dashboardPerformanceMetrics: string[];
-  panelSeriesLimit: number;
-  sqlConnectionLimits: {
-    maxOpenConns: number;
-    maxIdleConns: number;
-    connMaxLifetime: number;
+  analyticsConsoleReporting = false;
+  dashboardPerformanceMetrics: string[] = [];
+  panelSeriesLimit = 0;
+  sqlConnectionLimits = {
+    maxOpenConns: 100,
+    maxIdleConns: 100,
+    connMaxLifetime: 14400,
   };
-  defaultDatasourceManageAlertsUiToggle: boolean;
-  defaultAllowRecordingRulesTargetAlertsUiToggle: boolean;
-
+  defaultDatasourceManageAlertsUiToggle = true;
+  defaultAllowRecordingRulesTargetAlertsUiToggle = true;
   tokenExpirationDayLimit?: number;
-  enableFrontendSandboxForPlugins: string[];
+  enableFrontendSandboxForPlugins: string[] = [];
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
   cloudMigrationIsTarget?: boolean;
-  cloudMigrationPollIntervalMs: number;
+  cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
-  exploreDefaultTimeOffset: string;
+  exploreDefaultTimeOffset = '1h';
   exploreHideLogsDownload?: boolean;
   quickRanges?: TimeOption[];
 
@@ -225,160 +242,31 @@ export interface GrafanaBootConfig {
    * This is the regionalFormat that is used for date formatting and other locale-specific features.
    */
   regionalFormat: string;
-  listDashboardScopesEndpoint: string;
-  listScopesEndpoint: string;
-}
+  listDashboardScopesEndpoint = '';
+  listScopesEndpoint = '';
 
-const defaults = {
-  buildInfo: {
-    version: '1.0',
-    commit: '1',
-    env: 'production',
-  } as BuildInfo,
-  publicDashboardsEnabled: true,
-  snapshotEnabled: true,
-  datasources: {},
-  panels: {},
-  apps: {},
-  auth: {},
-  minRefreshInterval: '',
-  appUrl: '',
-  appSubUrl: '',
-  namespace: 'default',
-  windowTitlePrefix: 'Grafana - ',
-  externalUserMngLinkUrl: '',
-  externalUserMngLinkName: '',
-  externalUserMngInfo: '',
-  externalUserMngAnalytics: false,
-  externalUserMngAnalyticsParams: '',
-  allowOrgCreate: false,
-  feedbackLinksEnabled: true,
-  disableLoginForm: false,
-  defaultDatasource: '',
-  authProxyEnabled: false,
-  exploreEnabled: false,
-  queryHistoryEnabled: false,
-  helpEnabled: false,
-  profileEnabled: false,
-  newsFeedEnabled: true,
-  ldapEnabled: false,
-  jwtHeaderName: '',
-  jwtUrlLogin: false,
-  sigV4AuthEnabled: false,
-  azureAuthEnabled: false,
-  secureSocksDSProxyEnabled: false,
-  samlEnabled: false,
-  samlName: '',
-  autoAssignOrg: true,
-  verifyEmailEnabled: false,
-  oauth: {},
-  rbacEnabled: true,
-  disableUserSignUp: false,
-  loginHint: '',
-  passwordHint: '',
-  viewersCanEdit: false,
-  disableSanitizeHtml: false,
-  trustedTypesDefaultPolicyEnabled: false,
-  cspReportOnlyEnabled: false,
-  liveEnabled: true,
-  liveMessageSizeLimit: 65536,
-  featureToggles: {},
-  anonymousEnabled: false,
-  licenseInfo: {} as LicenseInfo,
-  rendererAvailable: false,
-  rendererVersion: '',
-  rendererDefaultImageWidth: 1000,
-  rendererDefaultImageHeight: 500,
-  rendererDefaultImageScale: 1,
-  supportBundlesEnabled: false,
-  http2Enabled: false,
-  grafanaJavascriptAgent: {
-    enabled: false,
-    customEndpoint: '',
-    apiKey: '',
-    allInstrumentationsEnabled: false,
-    errorInstrumentalizationEnabled: true,
-    consoleInstrumentalizationEnabled: false,
-    webVitalsInstrumentalizationEnabled: false,
-    tracingInstrumentalizationEnabled: false,
-  },
-  pluginCatalogURL: 'https://grafana.com/grafana/plugins/',
-  pluginAdminEnabled: true,
-  pluginAdminExternalManageEnabled: false,
-  pluginCatalogHiddenPlugins: [],
-  pluginCatalogManagedPlugins: [],
-  pluginCatalogPreinstalledPlugins: [],
-  pluginsCDNBaseURL: '',
-  expressionsEnabled: false,
-  awsAllowedAuthProviders: [],
-  awsAssumeRoleEnabled: false,
-  azure: {
-    managedIdentityEnabled: false,
-    workloadIdentityEnabled: false,
-    userIdentityEnabled: false,
-    userIdentityFallbackCredentialsEnabled: false,
-    azureEntraPasswordCredentialsEnabled: false,
-  },
-  caching: {
-    enabled: false,
-  },
-  unifiedAlertingEnabled: false,
-  unifiedAlerting: {
-    minInterval: '',
-    recordingRulesEnabled: false,
-  },
-  recordedQueries: {
-    enabled: true,
-  },
-  featureHighlights: {
-    enabled: false,
-  },
-  reporting: {
-    enabled: true,
-  },
-  analytics: {
-    enabled: true,
-  },
-  googleAnalytics4SendManualPageViews: false,
-  analyticsConsoleReporting: false,
-  dashboardPerformanceMetrics: [],
-  panelSeriesLimit: 0,
-  sqlConnectionLimits: {
-    maxOpenConns: 100,
-    maxIdleConns: 100,
-    connMaxLifetime: 14400,
-  },
-  defaultDatasourceManageAlertsUiToggle: true,
-  defaultAllowRecordingRulesTargetAlertsUiToggle: true,
-  enableFrontendSandboxForPlugins: [],
-  cloudMigrationPollIntervalMs: 2000,
-  exploreDefaultTimeOffset: '1h',
-} satisfies Partial<GrafanaBootConfig>;
+  constructor(
+    options: BootData['settings'] & {
+      bootData: BootData;
+    }
+  ) {
+    this.bootData = options.bootData;
 
-function makeGrafanaBootConfig(bootData: BootData): GrafanaBootConfig {
-  const theme2 = getThemeById(bootData.user.theme);
-  const result: GrafanaBootConfig = {
-    ...defaults,
-    ...bootData.settings,
-    bootData,
-    grafanaJavascriptAgent: {
-      ...defaults.grafanaJavascriptAgent,
-      ...bootData.settings.grafanaJavascriptAgent,
-    },
-    theme2,
-    theme: theme2.v1,
-    language: bootData.user.language,
-    regionalFormat: bootData.user.regionalFormat,
-  };
+    merge(this, options);
 
-  if (result.dateFormats) {
-    systemDateFormats.update(result.dateFormats);
+    if (this.dateFormats) {
+      systemDateFormats.update(this.dateFormats);
+    }
+
+    overrideFeatureTogglesFromUrl(this);
+    overrideFeatureTogglesFromLocalStorage(this);
+
+    // Creating theme after applying feature toggle overrides in case we need to toggle anything
+    this.theme2 = getThemeById(this.bootData.user.theme);
+    this.bootData.user.lightTheme = this.theme2.isLight;
+    this.theme = this.theme2.v1;
+    this.regionalFormat = options.bootData.user.regionalFormat;
   }
-
-  overrideFeatureTogglesFromUrl(result);
-  overrideFeatureTogglesFromLocalStorage(result);
-
-  return result;
 }
 
 // localstorage key: grafana.featureToggles
@@ -452,4 +340,7 @@ if (!bootData) {
  *
  * @public
  */
-export const config = makeGrafanaBootConfig(bootData);
+export const config = new GrafanaBootConfig({
+  ...bootData.settings,
+  bootData,
+});
