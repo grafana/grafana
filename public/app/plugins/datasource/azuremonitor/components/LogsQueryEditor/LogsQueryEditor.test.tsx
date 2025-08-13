@@ -2,12 +2,11 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, LoadingState } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 
 import { ResultFormat } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { EngineSchema } from '../../types';
+import { EngineSchema } from '../../types/types';
 
 import LogsQueryEditor from './LogsQueryEditor';
 import { createMockResourcePickerData } from './mocks';
