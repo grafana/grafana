@@ -395,7 +395,7 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
 		// Ensure clean state
 		cleanupAllRepos()
-		
+
 		// Double-check that we have a clean state before proceeding
 		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "should be able to list repositories")
@@ -413,7 +413,7 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 
 		_, err = helper.Repositories.Resource.Create(ctx, folderRepo, createOptions)
 		require.NoError(t, err, "folder sync repository should be created successfully")
-		
+
 		// Verify the folder repository was created
 		list, err = helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "should be able to list repositories")
