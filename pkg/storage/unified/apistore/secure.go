@@ -11,8 +11,6 @@ import (
 
 // prepareSecureValues will create any new secure values and register changes inside the provided objectForStorage
 // any call to this function MUST be followed by a call to info.finish(ctx, nil, store) to ensure that the secure values are cleaned up
-//
-// nolint:gocyclo
 func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor, previousObject utils.GrafanaMetaAccessor, v *objectForStorage) (err error) {
 	secure, err := obj.GetSecureValues()
 	if err != nil {
@@ -102,6 +100,11 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		}
 	}
 
+	return cleanupSecureValues(v, obj, secure)
+}
+
+// make sure the registered changes are unique and valid
+func cleanupSecureValues(v *objectForStorage, obj utils.GrafanaMetaAccessor, secure common.InlineSecureValues) error {
 	// Make sure the deleted list is unique and does not contain any referenced values
 	if len(v.deleteSecureValues) > 0 && len(secure) > 0 {
 		confirm := v.deleteSecureValues
