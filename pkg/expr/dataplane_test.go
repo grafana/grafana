@@ -92,7 +92,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		User:    &user.SignedInUser{},
 	}
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)

@@ -1,25 +1,58 @@
 import { css } from '@emotion/css';
-import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
+import { useMemo, useRef, useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { formatSQL } from '@grafana/sql';
-import { Button, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { useStyles2, Stack, Button, Modal } from '@grafana/ui';
 
+import { ExpressionQueryEditorProps } from '../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../types';
 import { fetchSQLFields } from '../utils/metaSqlExpr';
 
+import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
+import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { QueryToolbox } from './QueryToolbox';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 
+// Lazy load the GenAI components to avoid circular dependencies
+const GenAISQLSuggestionsButton = lazy(() =>
+  import('./GenAI/GenAISQLSuggestionsButton').then((module) => ({
+    default: module.GenAISQLSuggestionsButton,
+  }))
+);
+
+const GenAISQLExplainButton = lazy(() =>
+  import('./GenAI/GenAISQLExplainButton').then((module) => ({
+    default: module.GenAISQLExplainButton,
+  }))
+);
+
+const SuggestionsDrawerButton = lazy(() =>
+  import('./GenAI/SuggestionsDrawerButton').then((module) => ({
+    default: module.SuggestionsDrawerButton,
+  }))
+);
+
+const GenAISuggestionsDrawer = lazy(() =>
+  import('./GenAI/GenAISuggestionsDrawer').then((module) => ({
+    default: module.GenAISuggestionsDrawer,
+  }))
+);
+
+const GenAIExplanationDrawer = lazy(() =>
+  import('./GenAI/GenAIExplanationDrawer').then((module) => ({
+    default: module.GenAIExplanationDrawer,
+  }))
+);
+
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
-
-interface SqlExprProps {
+export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
   query: SqlExpressionQuery;
   queries: DataQuery[] | undefined;
@@ -27,9 +60,10 @@ interface SqlExprProps {
   onRunQuery?: () => void;
   /** Should the `format` property be set to `alerting`? */
   alerting?: boolean;
+  metadata?: ExpressionQueryEditorProps;
 }
 
-export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, onRunQuery }: SqlExprProps) => {
+export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const completionProvider = useMemo(
     () =>
@@ -60,12 +94,70 @@ LIMIT
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const { handleApplySuggestion, handleHistoryUpdate, handleCloseDrawer, handleOpenDrawer, isDrawerOpen, suggestions } =
+    useSQLSuggestions();
+
+  const {
+    explanation,
+    handleCloseExplanation,
+    handleOpenExplanation,
+    handleExplain,
+    isExplanationOpen,
+    shouldShowViewExplanation,
+    updatePrevExpression,
+  } = useSQLExplanations(query.expression || '');
+
+  const queryContext = useMemo(
+    () => ({
+      alerting,
+      panelId: metadata?.data?.request?.panelPluginId,
+      queries: metadata?.queries,
+      dashboardContext: {
+        dashboardTitle: metadata?.data?.request?.dashboardTitle ?? '',
+        panelName: metadata?.data?.request?.panelName ?? '',
+      },
+      datasources: metadata?.queries?.map((query) => query.datasource?.type ?? '') ?? [],
+      totalRows: metadata?.data?.series.reduce((sum, frame) => sum + frame.length, 0),
+      requestTime: metadata?.data?.request?.endTime
+        ? metadata?.data?.request?.endTime - metadata?.data?.request?.startTime
+        : -1,
+      numberOfQueries: metadata?.data?.request?.targets?.length ?? 0,
+      seriesData: metadata?.data?.series,
+    }),
+    [alerting, metadata]
+  );
+
+  const errorContext = useMemo(() => {
+    if (!metadata?.data) {
+      return [];
+    }
+
+    const errors: string[] = [];
+
+    // Handle multiple errors (preferred)
+    if (metadata.data.errors?.length) {
+      errors.push(...metadata.data.errors.map((err) => err.message).filter((msg): msg is string => Boolean(msg)));
+    }
+    // Handle legacy single error
+    else if (metadata.data.error?.message) {
+      errors.push(metadata.data.error.message);
+    }
+
+    return errors;
+  }, [metadata?.data]);
+
   const onEditorChange = (expression: string) => {
     onChange({
       ...query,
       expression,
       format: alerting ? 'alerting' : undefined,
     });
+    updatePrevExpression(expression);
+  };
+
+  const onApplySuggestion = (suggestion: string) => {
+    onEditorChange(suggestion);
+    handleApplySuggestion(suggestion);
   };
 
   const executeQuery = useCallback(() => {
@@ -122,58 +214,135 @@ LIMIT
   );
 
   const renderSQLEditor = (width?: number, height?: number) => (
-    <SQLEditor
-      query={query.expression || initialQuery}
-      onChange={onEditorChange}
-      width={width}
-      height={height ?? dimensions.height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
-      language={EDITOR_LANGUAGE_DEFINITION}
-    >
-      {({ formatQuery }) => renderToolbox(formatQuery)}
-    </SQLEditor>
+    <>
+      <div className={styles.sqlContainer}>
+        <div className={styles.sqlButtons}>
+          <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+            <Button icon="play" onClick={executeQuery} size="sm">
+              {t('expressions.sql-expr.button-run-query', 'Run query')}
+            </Button>
+            <Suspense fallback={null}>
+              {shouldShowViewExplanation ? (
+                <Button
+                  fill="outline"
+                  icon="gf-movepane-right"
+                  onClick={handleOpenExplanation}
+                  size="sm"
+                  variant="secondary"
+                >
+                  <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
+                </Button>
+              ) : (
+                <GenAISQLExplainButton
+                  currentQuery={query.expression || ''}
+                  onExplain={handleExplain}
+                  queryContext={queryContext}
+                  refIds={vars}
+                  // schemas={schemas} // Will be added when schema extraction is implemented
+                />
+              )}
+            </Suspense>
+            <Suspense fallback={null}>
+              <GenAISQLSuggestionsButton
+                currentQuery={query.expression || ''}
+                initialQuery={initialQuery}
+                onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
+                onHistoryUpdate={handleHistoryUpdate}
+                queryContext={queryContext}
+                refIds={vars}
+                errorContext={errorContext} // Will be added when error tracking is implemented
+                // schemas={schemas} // Will be added when schema extraction is implemented
+              />
+            </Suspense>
+          </Stack>
+          {suggestions.length > 0 && (
+            <Suspense fallback={null}>
+              <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
+            </Suspense>
+          )}
+        </div>
+
+        <div ref={containerRef} className={styles.editorContainer}>
+          <SQLEditor
+            query={query.expression || initialQuery}
+            onChange={onEditorChange}
+            width={width}
+            height={height ?? dimensions.height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+            language={EDITOR_LANGUAGE_DEFINITION}
+          >
+            {({ formatQuery }) => renderToolbox(formatQuery)}
+          </SQLEditor>
+        </div>
+      </div>
+      <>
+        <Suspense fallback={null}>
+          <GenAISuggestionsDrawer
+            isOpen={isDrawerOpen}
+            onApplySuggestion={onApplySuggestion}
+            onClose={handleCloseDrawer}
+            suggestions={suggestions}
+          />
+        </Suspense>
+        <Suspense fallback={null}>
+          <GenAIExplanationDrawer
+            isOpen={isExplanationOpen}
+            onClose={handleCloseExplanation}
+            explanation={explanation}
+          />
+        </Suspense>
+      </>
+    </>
   );
 
   const renderStandaloneEditor = () => (
     <AutoSizer>
-      {({ width, height }) =>
-        renderSQLEditor(width, height ? height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height : undefined)
-      }
+      {({ width, height }) => (
+        <SQLEditor
+          query={query.expression || initialQuery}
+          onChange={onEditorChange}
+          width={width}
+          height={height ? height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height : undefined}
+          language={EDITOR_LANGUAGE_DEFINITION}
+        >
+          {({ formatQuery }) => renderToolbox(formatQuery)}
+        </SQLEditor>
+      )}
     </AutoSizer>
   );
 
   return (
     <>
-      <Stack direction="column" gap={1.5}>
-        <div className={styles.sqlButtons}>
-          <Button icon="play" onClick={executeQuery} size="sm">
-            {t('expressions.sql-expr.button-run-query', 'Run query')}
-          </Button>
-        </div>
-      </Stack>
-      <div ref={containerRef} className={styles.editorContainer}>
-        {renderSQLEditor()}
-        {isExpanded && (
-          <Modal
-            title={t('expressions.sql-expr.modal-title', 'SQL Editor')}
-            closeOnBackdropClick={false}
-            closeOnEscape={false}
-            className={styles.modal}
-            contentClassName={styles.modalContent}
-            isOpen={isExpanded}
-            onDismiss={() => setIsExpanded(false)}
-          >
-            {renderStandaloneEditor()}
-          </Modal>
-        )}
-      </div>
+      {renderSQLEditor()}
+      {isExpanded && (
+        <Modal
+          title={t('expressions.sql-expr.modal-title', 'SQL Editor')}
+          closeOnBackdropClick={false}
+          closeOnEscape={false}
+          className={styles.modal}
+          contentClassName={styles.modalContent}
+          isOpen={isExpanded}
+          onDismiss={() => setIsExpanded(false)}
+        >
+          {renderStandaloneEditor()}
+        </Modal>
+      )}
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  sqlContainer: css({
+    display: 'grid',
+    gridTemplateRows: 'auto 1fr',
+    gridTemplateAreas: `
+      "buttons"
+      "editor"
+    `,
+    gap: theme.spacing(0.5),
+  }),
   editorContainer: css({
-    height: '180px',
-    width: '100%',
+    gridArea: 'editor',
+    height: '240px',
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
@@ -186,15 +355,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     paddingTop: 0,
   }),
+  // This is NOT ideal. The alternative is to expose SQL buttons as a separate component,
+  // Then consume them in ExpressionQueryEditor. This requires a lot of refactoring and
+  // can be prioritized later.
   sqlButtons: css({
-    // This is NOT ideal. The alternative is to expose SQL buttons as a separate component,
-    // Then consume them in ExpressionQueryEditor. This requires a lot of refactoring and
-    // can be prioritized later.
-    marginTop: theme.spacing(-4),
-    gap: theme.spacing(1),
+    gridArea: 'buttons',
+    justifySelf: 'end',
+    transform: `translateY(${theme.spacing(-4)})`,
+    marginBottom: theme.spacing(-4), // Prevent affecting editor position
+    zIndex: 10, // Ensure buttons appear above other elements
+    position: 'relative', // Required for z-index to work
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    gap: theme.spacing(1),
   }),
 });
 

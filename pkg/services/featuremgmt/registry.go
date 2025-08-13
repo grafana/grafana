@@ -1749,6 +1749,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingImportAlertmanagerUI",
+			Description:       "Enables the UI to see imported Alertmanager configuration",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:         "sharingDashboardImage",
 			Description:  "Enables image sharing functionality for dashboards",
 			Stage:        FeatureStageExperimental,
@@ -1893,6 +1902,16 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:              "unifiedStorageSearchAfterWriteExperimentalAPI",
+			Description:       "Enable experimental search-after-write guarantees to unified-storage search endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "false",
 		},
 	}
 )
