@@ -15,7 +15,7 @@ import { Threshold } from './components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
-type Props = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
+export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 
 const labelWidth = 15;
 
@@ -78,7 +78,7 @@ function useExpressionsCache() {
   return { getCachedExpression, setCachedExpression };
 }
 
-export function ExpressionQueryEditor(props: Props) {
+export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const { query, queries, onRunQuery, onChange, app } = props;
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
 
@@ -118,7 +118,7 @@ export function ExpressionQueryEditor(props: Props) {
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
 
       case ExpressionQueryType.sql:
-        return <SqlExpr onChange={onChange} query={query} refIds={refIds} queries={queries} />;
+        return <SqlExpr onChange={onChange} query={query} refIds={refIds} queries={queries} metadata={props} />;
     }
   };
 
