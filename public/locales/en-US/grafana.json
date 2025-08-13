@@ -8286,9 +8286,10 @@
         "action-title": "Title",
         "action-title-placeholder": "Action title",
         "action-variables": "Variables",
+        "connection": "Connection",
+        "connection-placeholder": "Select a connection",
         "one-click-description": "Only one link or action can have one click enabled at a time",
-        "request-type": "Request type",
-        "connection": "Connection"
+        "request-type": "Request type"
       }
     },
     "alert": {

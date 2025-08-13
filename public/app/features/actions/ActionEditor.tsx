@@ -25,7 +25,6 @@ import {
   JSONFormatter,
   RadioButtonGroup,
   Select,
-  Stack,
   Switch,
   useStyles2,
   useTheme2,
@@ -72,12 +71,16 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     return value[ActionType.Fetch] || DEFAULT_HTTP_CONFIG;
   };
 
-  const updateActionConfig = (updates: Partial<any>) => {
+  const updateActionConfig = (updates: Partial<FetchOptions | ProxyOptions>) => {
     const configKey = value.type === ActionType.Proxy ? ActionType.Proxy : ActionType.Fetch;
     const baseConfig = getActionConfig();
 
-    if (configKey === ActionType.Proxy) {
-      const proxyConfig = baseConfig as ProxyOptions;
+    // @TODO revisit
+    const isProxyConfig = (config: FetchOptions | ProxyOptions): config is ProxyOptions =>
+      configKey === ActionType.Proxy && 'datasourceUid' in config;
+
+    if (isProxyConfig(baseConfig)) {
+      const proxyConfig = baseConfig;
       const updatedConfig = {
         ...proxyConfig,
         ...updates,
@@ -278,37 +281,32 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         </Field>
       )}
 
-      <Stack direction="row">
-        <Field
-          label={t('grafana-ui.action-editor.modal.request-type', 'Request type')}
-          className={styles.fieldGap}
-          noMargin
-        >
+      <InlineFieldRow>
+        <InlineField label={t('grafana-ui.action-editor.modal.request-type', 'Request type')} labelWidth={LABEL_WIDTH}>
           <Select
             value={value.type}
             options={requestMethodOptions}
             onChange={(selected) => onActionTypeChange(selected.value!)}
           />
-        </Field>
-      </Stack>
+        </InlineField>
+      </InlineFieldRow>
 
       {config.featureToggles.vizActionsAuth && value.type === ActionType.Proxy && (
-        <Field label={t('grafana-ui.action-editor.modal.connection', 'Connection')} noMargin>
-          <DataSourcePicker
-            filter={(ds) => ds.type === SupportedDataSourceTypes.Infinity}
-            current={value?.[ActionType.Proxy]?.datasourceUid ?? undefined}
-            onChange={(ds) => onDatasourceChange(ds)}
-            // onClear={onDatasourceChange}
-          />
-        </Field>
+        <InlineFieldRow>
+          <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
+            <DataSourcePicker
+              filter={(ds) => ds.type === SupportedDataSourceTypes.Infinity}
+              current={value?.[ActionType.Proxy]?.datasourceUid ?? undefined}
+              onChange={(ds) => onDatasourceChange(ds)}
+              noDefault={true}
+              placeholder={t('grafana-ui.action-editor.modal.connection-placeholder', 'Select a connection')}
+            />
+          </InlineField>
+        </InlineFieldRow>
       )}
 
       <InlineFieldRow>
-        <InlineField
-          label={t('grafana-ui.action-editor.modal.action-method', 'Method')}
-          labelWidth={LABEL_WIDTH}
-          grow={true}
-        >
+        <InlineField label={t('grafana-ui.action-editor.modal.action-method', 'Method')} labelWidth={LABEL_WIDTH}>
           <RadioButtonGroup<HttpRequestMethod>
             value={actionConfig.method}
             options={httpMethodOptions}

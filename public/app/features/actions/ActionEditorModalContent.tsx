@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Action, DataFrame, VariableSuggestion } from '@grafana/data';
+import { Action, ActionType, DataFrame, VariableSuggestion } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
@@ -45,7 +45,11 @@ export const ActionEditorModalContent = ({
           onClick={() => {
             onSave(index, dirtyAction);
           }}
-          disabled={dirtyAction.title.trim() === '' || !dirtyAction[dirtyAction.type]?.url?.trim()}
+          disabled={
+            dirtyAction.title.trim() === '' ||
+            !dirtyAction[dirtyAction.type]?.url?.trim() ||
+            (dirtyAction.type === ActionType.Proxy && !dirtyAction[ActionType.Proxy]?.datasourceUid)
+          }
         >
           <Trans i18nKey="action-editor.modal.save-button">Save</Trans>
         </Button>
