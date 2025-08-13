@@ -9,7 +9,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
+import { Alert, Stack, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/joinByLabels.svg';
@@ -136,7 +136,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
               error="Unable to join by the value label"
               invalid={v === options.value}
             >
-              <HorizontalGroup>
+              <Stack>
                 <Select
                   options={info.joinOptions}
                   value={info.joinOptions.find((o) => o.value === v)}
@@ -153,7 +153,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                     variant="secondary"
                   />
                 )}
-              </HorizontalGroup>
+              </Stack>
             </InlineField>
           </InlineFieldRow>
         ))
