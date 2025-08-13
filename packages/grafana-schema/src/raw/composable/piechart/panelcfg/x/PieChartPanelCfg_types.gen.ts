@@ -27,8 +27,8 @@ export enum PieChartType {
  *  - None - The slices are not sorted and the order of the query/transform is maintained.
  */
 export enum PieChartSortOptions {
-  Clockwise = 'clockwise',
-  Counterclockwise = 'counterclockwise',
+  Ascending = 'ascending',
+  Descending = 'descending',
   None = 'none',
 }
 
