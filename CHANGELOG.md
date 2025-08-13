@@ -1,3 +1,19 @@
+<!-- 12.0.4 START -->
+
+# 12.0.4 (2025-08-13)
+
+### Features and enhancements
+
+- **Go:** Update to 1.24.6 [#109317](https://github.com/grafana/grafana/pull/109317), [@Proximyst](https://github.com/Proximyst)
+
+### Bug fixes
+
+- **Azure:** Fix time management field [#108481](https://github.com/grafana/grafana/pull/108481), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix time management field [#108481](https://github.com/grafana/grafana/pull/108481), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix time management field [#108481](https://github.com/grafana/grafana/pull/108481), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix time management field [#108481](https://github.com/grafana/grafana/pull/108481), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 12.0.4 END -->
 <!-- 11.6.5 START -->
 
 # 11.6.5 (2025-08-13)
