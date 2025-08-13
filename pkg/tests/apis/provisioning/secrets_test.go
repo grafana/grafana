@@ -9,13 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
@@ -203,7 +202,7 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	helper := runGrafana(t)
+	helper := runGrafana(t, useAppPlatformSecrets)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
@@ -291,7 +290,7 @@ func TestIntegrationProvisioning_Secrets_Update(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 	ctx := context.Background()
-	helper := runGrafana(t)
+	helper := runGrafana(t, useAppPlatformSecrets)
 	secretsService := helper.GetEnv().RepositorySecrets
 	createOptions := metav1.CreateOptions{}
 	updateOptions := metav1.UpdateOptions{}
@@ -421,7 +420,7 @@ func TestIntegrationProvisioning_Secrets_Removal(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	helper := runGrafana(t)
+	helper := runGrafana(t, useAppPlatformSecrets)
 	secretsService := helper.GetEnv().RepositorySecrets
 	createOptions := metav1.CreateOptions{}
 

@@ -47,21 +47,13 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
 
-			// Move encrypted token mutation (legacy)
+			// Move encrypted token mutation
 			token, found, err := unstructured.NestedString(output.Object, "spec", "github", "encryptedToken")
 			require.NoError(t, err, "encryptedToken is not a string")
 			if found {
 				unstructured.RemoveNestedField(input.Object, "spec", "github", "token")
 				err = unstructured.SetNestedField(input.Object, token, "spec", "github", "encryptedToken")
 				require.NoError(t, err, "unable to copy encrypted token")
-			}
-
-			// Apply inline secure value mutations
-			token, found, err = unstructured.NestedString(output.Object, "secure", "token", "name")
-			require.NoError(t, err, "secure token is not a string")
-			if found {
-				err = unstructured.SetNestedField(input.Object, map[string]any{"name": token}, "secure", "token")
-				require.NoError(t, err, "unable to replace secure value with name")
 			}
 
 			// Marshal as real objects to ",omitempty" values are tested properly
@@ -178,27 +170,6 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				"stats.repository.local.count":  1.0,
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
-	})
-
-	t.Run("check inline secret", func(t *testing.T) {
-		input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
-			"Name":              "github-with-inline-secure-value",
-			"InlineCreateToken": "XXX",
-		})
-		obj, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
-		require.NoError(t, err, "failed to create resource")
-
-		token, found, err := unstructured.NestedString(obj.Object, "secure", "token", "name")
-		require.NoError(t, err, "encryptedToken is not a string")
-		require.True(t, found, "secure value should exist")
-		require.True(t, strings.HasPrefix(token, "inline-"), "inline name")
-
-		rsp := helper.AdminREST.Delete().
-			Namespace("default").
-			Resource("repositories").
-			Name("github-with-inline-secure-value").
-			Do(context.Background())
-		require.NoError(t, rsp.Error())
 	})
 }
 

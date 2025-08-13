@@ -1309,15 +1309,6 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		}
 	}
 
-	// TODO: these values are not yet used
-	// After https://github.com/grafana/grafana/pull/107803 is merged, we can
-	// replace the custom secure value handling with this function
-	// This is included to make sure we have a full e2e integration test included
-	_, err := decrypt(ctx, r, b.decryptSvc)
-	if err != nil {
-		return nil, err
-	}
-
 	switch r.Spec.Type {
 	case provisioning.BitbucketRepositoryType:
 		return nil, errors.New("repository type bitbucket is not available")

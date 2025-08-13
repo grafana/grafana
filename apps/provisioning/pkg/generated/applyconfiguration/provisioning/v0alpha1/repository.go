@@ -16,7 +16,6 @@ type RepositoryApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *RepositorySpecApplyConfiguration   `json:"spec,omitempty"`
-	Secure                           *SecureValuesApplyConfiguration     `json:"secure,omitempty"`
 	Status                           *RepositoryStatusApplyConfiguration `json:"status,omitempty"`
 }
 
@@ -194,14 +193,6 @@ func (b *RepositoryApplyConfiguration) ensureObjectMetaApplyConfigurationExists(
 // If called multiple times, the Spec field is set to the value of the last call.
 func (b *RepositoryApplyConfiguration) WithSpec(value *RepositorySpecApplyConfiguration) *RepositoryApplyConfiguration {
 	b.Spec = value
-	return b
-}
-
-// WithSecure sets the Secure field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Secure field is set to the value of the last call.
-func (b *RepositoryApplyConfiguration) WithSecure(value *SecureValuesApplyConfiguration) *RepositoryApplyConfiguration {
-	b.Secure = value
 	return b
 }
 

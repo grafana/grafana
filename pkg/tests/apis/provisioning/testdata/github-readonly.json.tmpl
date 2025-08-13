@@ -21,8 +21,5 @@
             "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
         },
         "workflows": []
-    },
-    "secure": {
-        "token": { "create": "{{ or .InlineCreateToken "" }}" }
     }
 }

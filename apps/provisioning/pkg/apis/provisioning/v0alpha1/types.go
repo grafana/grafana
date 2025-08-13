@@ -17,17 +17,7 @@ type Repository struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   RepositorySpec   `json:"spec,omitempty"`
-	Secure SecureValues     `json:"secure,omitempty"`
 	Status RepositoryStatus `json:"status,omitempty"`
-}
-
-// NOT YET USED FOR REAL -- testing secure value workflow
-type SecureValues struct {
-	// Token used to connect the configured repository
-	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
-
-	// Some webhooks (github) require a secret key value
-	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
 }
 
 type LocalRepositoryConfig struct {
