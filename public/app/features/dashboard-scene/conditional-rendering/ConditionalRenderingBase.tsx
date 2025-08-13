@@ -24,8 +24,10 @@ export interface ConditionalRenderingBaseState<V = ConditionValues> extends Scen
 export abstract class ConditionalRenderingBase<
   S extends ConditionalRenderingBaseState = ConditionalRenderingBaseState,
 > extends SceneObjectBase<S> {
-  public constructor(state: S) {
-    super({ ...state, result: true });
+  private _conditionalRenderingRoot: ConditionalRendering | undefined;
+
+  protected constructor(state: S) {
+    super({ ...state, result: undefined });
 
     this.addActivationHandler(() => this._baseActivationHandler());
   }
@@ -45,6 +47,10 @@ export abstract class ConditionalRenderingBase<
 
   public abstract readonly title: string;
 
+  // Property that controls if a hidden element should still be rendered in the DOM
+  // Useful for cases like data conditions
+  public readonly renderHidden: boolean = false;
+
   public abstract get info(): string | undefined;
 
   public abstract serialize(): ConditionalRenderingKindTypes;
@@ -56,14 +62,14 @@ export abstract class ConditionalRenderingBase<
 
     if (result !== this.state.result) {
       this.setState({ ...this.state, result });
-      this._getConditionalLogicRoot().recalculateResult();
+      this.getConditionalLogicRoot().recalculateResult();
     }
 
     return result;
   }
 
   public onDelete() {
-    this._getConditionalLogicRoot().deleteItem(this);
+    this.getConditionalLogicRoot().deleteItem(this);
   }
 
   public render(withWrapper = true): ReactElement {
@@ -71,11 +77,11 @@ export abstract class ConditionalRenderingBase<
   }
 
   public getItem(): SceneObject {
-    return this._getConditionalLogicRoot().getItem();
+    return this.getConditionalLogicRoot().getItem();
   }
 
   public getItemType(): ItemsWithConditionalRendering {
-    return this._getConditionalLogicRoot().getItemType();
+    return this.getConditionalLogicRoot().getItemType();
   }
 
   public isItemSupported(): boolean {
@@ -104,11 +110,13 @@ export abstract class ConditionalRenderingBase<
 
   private getRenderingGroup(): ConditionalRenderingGroup {
     // TODO: Adjust once nested rules are introduced to get relevant ConditionalRenderingGroup
-    return this._getConditionalLogicRoot().state.rootGroup;
+    return this.getConditionalLogicRoot().state.rootGroup;
   }
 
-  private _getConditionalLogicRoot(): ConditionalRendering {
-    return sceneGraph.getAncestor(this, ConditionalRendering);
+  private getConditionalLogicRoot(): ConditionalRendering {
+    this._conditionalRenderingRoot =
+      this._conditionalRenderingRoot ?? sceneGraph.getAncestor(this, ConditionalRendering);
+    return this._conditionalRenderingRoot;
   }
 }
 

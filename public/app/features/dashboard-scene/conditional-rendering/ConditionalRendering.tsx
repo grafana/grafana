@@ -12,6 +12,7 @@ import { getItemType, translatedItemType } from './utils';
 export interface ConditionalRenderingState extends SceneObjectState {
   rootGroup: ConditionalRenderingGroup;
   result: boolean;
+  renderHidden: boolean;
 }
 
 export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingState> {
@@ -43,9 +44,10 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
 
   public recalculateResult(): ConditionEvaluationResult {
     const result = this.state.rootGroup.recalculateResult();
+    const renderHidden = this.state.renderHidden;
 
-    if (this.state.result !== result) {
-      this.setState({ result });
+    if (this.state.result !== result || this.state.renderHidden !== renderHidden) {
+      this.setState({ result, renderHidden });
       this.parent?.publishEvent(new ConditionalRenderingChangedEvent(this), true);
     }
 
@@ -53,7 +55,7 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
   }
 
   public deleteItem<T extends ConditionalRenderingBase>(item: T) {
-    sceneGraph.getAncestor(item, ConditionalRenderingGroup).deleteItem(item.state.key!);
+    sceneGraph.getAncestor(item, ConditionalRenderingGroup).removeItem(item.state.key!);
   }
 
   public serialize(): ConditionalRenderingGroupKind {
@@ -69,7 +71,11 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
   }
 
   public static createEmpty(): ConditionalRendering {
-    return new ConditionalRendering({ rootGroup: ConditionalRenderingGroup.createEmpty(), result: true });
+    return new ConditionalRendering({
+      rootGroup: ConditionalRenderingGroup.createEmpty(),
+      result: true,
+      renderHidden: false,
+    });
   }
 }
 

@@ -30,6 +30,8 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 
   public readonly supportedItemTypes: ItemsWithConditionalRendering[] = ['panel'];
 
+  public readonly renderHidden = true;
+
   public get title(): string {
     return t('dashboard.conditional-rendering.conditions.data.label', 'Query result');
   }
@@ -43,6 +45,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   private _dataProvider: SceneDataProvider | undefined = undefined;
+  private _isItemSupported = true;
 
   public constructor(state: ConditionalRenderingDataState) {
     super(state);
@@ -51,7 +54,9 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   private _activationHandler() {
-    if (!this.isItemSupported()) {
+    this._isItemSupported = this.isItemSupported();
+
+    if (!this._isItemSupported) {
       return;
     }
 
@@ -66,7 +71,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 
   public evaluate(): ConditionEvaluationResult {
     if (
-      !this.isItemSupported() ||
+      !this._isItemSupported ||
       !this._dataProvider ||
       !this._dataProvider.state.data ||
       this._dataProvider.state.data.state === LoadingState.Loading ||
@@ -76,6 +81,10 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     }
 
     const hasData = this._hasData();
+
+    // The logic here is pretty simple:
+    // If value is true (meaning "has data"), then we check if the item has data
+    // If value is false (meaning "no data"), then we check if the item doesn't have data
     return this.state.value === hasData;
   }
 
@@ -86,11 +95,20 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   private _getItemDataProvider(): SceneDataProvider | undefined {
     const item = this.getItem();
 
-    if ('body' in item.state && item.state.body instanceof VizPanel) {
-      return sceneGraph.getData(item.state.body);
+    let panel: VizPanel | undefined;
+
+    for (const val of Object.values(item.state)) {
+      if (val instanceof VizPanel) {
+        panel = val;
+        break;
+      }
     }
 
-    return undefined;
+    if (!panel) {
+      return undefined;
+    }
+
+    return sceneGraph.getData(panel) ?? undefined;
   }
 
   private _hasData(): boolean {
@@ -106,11 +124,11 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   public static deserialize(model: ConditionalRenderingDataKind): ConditionalRenderingData {
-    return new ConditionalRenderingData({ value: model.spec.value, result: true });
+    return new ConditionalRenderingData({ value: model.spec.value, result: undefined });
   }
 
   public static createEmpty(): ConditionalRenderingData {
-    return new ConditionalRenderingData({ value: true, result: true });
+    return new ConditionalRenderingData({ value: true, result: undefined });
   }
 }
 
