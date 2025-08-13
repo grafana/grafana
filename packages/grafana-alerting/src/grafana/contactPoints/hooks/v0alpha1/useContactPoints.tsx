@@ -17,7 +17,11 @@ type ListContactPointsHookResult = TypedUseQueryHookResult<
 
 // Type for the options that can be passed to the hook
 // Based on the pattern used for mutation options in this file
-type UseListContactPointsOptions = Parameters<
+type ListContactPointsQueryArgs = Parameters<
+  typeof alertingAPI.endpoints.listReceiver.useQuery<ListContactPointsHookResult>
+>[0];
+
+type ListContactPointsQueryOptions = Parameters<
   typeof alertingAPI.endpoints.listReceiver.useQuery<ListContactPointsHookResult>
 >[1];
 
@@ -32,8 +36,11 @@ type UseListContactPointsOptions = Parameters<
  * @param queryOptions - Optional query options that will be passed to the underlying useListReceiverQuery hook.
  *                      These options can include refetchOnFocus, refetchOnMountOrArgChange, skip, etc.
  */
-export function useListContactPoints(queryOptions: UseListContactPointsOptions = {}) {
-  return alertingAPI.useListReceiverQuery<ListContactPointsHookResult>({}, queryOptions);
+export function useListContactPoints(
+  queryArgs: ListContactPointsQueryArgs = {},
+  queryOptions: ListContactPointsQueryOptions = {}
+) {
+  return alertingAPI.useListReceiverQuery<ListContactPointsHookResult>(queryArgs, queryOptions);
 }
 
 // type narrowing mutations requires us to define a few helper types
