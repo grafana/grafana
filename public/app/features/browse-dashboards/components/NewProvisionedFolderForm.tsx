@@ -110,8 +110,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     }
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
 
-    // Convert folder title to filename format (lowercase, replace spaces with hyphens)
-    const titleInFilenameFormat = formatFolderName(title); // TODO: this is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
+    const titleInFilenameFormat = formatFolderName(title);
 
     const prefix = basePath ? `${basePath}/` : '';
     const path = `${prefix}${titleInFilenameFormat}/`;

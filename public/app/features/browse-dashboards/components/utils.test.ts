@@ -5,24 +5,23 @@ describe('formatFolderName', () => {
     expect(formatFolderName('')).toBe('');
   });
 
-  it('should convert uppercase to lowercase', () => {
-    expect(formatFolderName('MyFolder')).toBe('myfolder');
-    expect(formatFolderName('UPPERCASE')).toBe('uppercase');
-    expect(formatFolderName('MiXeD cAsE')).toBe('mixed-case');
+  it('should handle uppercase and lowercase properly', () => {
+    expect(formatFolderName('MyFolder')).toBe('MyFolder');
+    expect(formatFolderName('UPPERCASE')).toBe('UPPERCASE');
+    expect(formatFolderName('MiXeD cAsE')).toBe('MiXeD cAsE');
   });
 
-  it('should replace whitespace with hyphens', () => {
-    expect(formatFolderName('folder name')).toBe('folder-name');
-    expect(formatFolderName('folder  name')).toBe('folder-name'); // multiple spaces
-    expect(formatFolderName('folder\tname')).toBe('folder-name'); // tab
-    expect(formatFolderName('folder\nname')).toBe('folder-name'); // newline
-    expect(formatFolderName('  folder name  ')).toBe('folder-name'); // leading/trailing spaces
+  it('should replace whitespace properly', () => {
+    expect(formatFolderName('folder name')).toBe('folder name');
+    expect(formatFolderName('folder  name')).toBe('folder name'); // multiple spaces convert to one space
+    expect(formatFolderName('folder\tname')).toBe('foldername'); // tab
+    expect(formatFolderName('folder\nname')).toBe('foldername'); // newline
+    expect(formatFolderName('  folder name  ')).toBe('folder name'); // leading/trailing spaces
   });
 
   it('should remove special characters', () => {
     expect(formatFolderName('folder@name')).toBe('foldername');
     expect(formatFolderName('folder!@#$%^&*()name')).toBe('foldername');
-    expect(formatFolderName('folder_name')).toBe('foldername');
     expect(formatFolderName('folder.name')).toBe('foldername');
     expect(formatFolderName('folder/name')).toBe('foldername');
   });
@@ -35,15 +34,14 @@ describe('formatFolderName', () => {
   });
 
   it('should handle complex mixed cases', () => {
-    expect(formatFolderName('My Folder @2023!')).toBe('my-folder-2023');
-    expect(formatFolderName('  FOLDER_NAME  with-123  ')).toBe('foldername-with-123');
-    expect(formatFolderName('Test@Folder#Name$123')).toBe('testfoldername123');
-    expect(formatFolderName('Multiple   Spaces   Between')).toBe('multiple-spaces-between');
+    expect(formatFolderName('My Folder @2023!')).toBe('My Folder 2023');
+    expect(formatFolderName('  FOLDER_NAME  with-123  ')).toBe('FOLDER_NAME with-123');
+    expect(formatFolderName('Test@Folder#Name$123')).toBe('TestFolderName123');
+    expect(formatFolderName('Multiple   Spaces   Between')).toBe('Multiple Spaces Between');
   });
 
   it('should handle strings with only special characters', () => {
     expect(formatFolderName('!@#$%^&*()')).toBe('');
-    expect(formatFolderName('___')).toBe('');
     expect(formatFolderName('...')).toBe('');
   });
 
@@ -87,8 +85,8 @@ describe('hasFolderNameCharactersToReplace', () => {
     expect(hasFolderNameCharactersToReplace('1')).toBe(false);
   });
 
-  it('should return true for names with whitespace', () => {
-    expect(hasFolderNameCharactersToReplace('folder name')).toBe(true);
+  it('should return true for names with trailing whitespace', () => {
+    expect(hasFolderNameCharactersToReplace('folder name')).toBe(false);
     expect(hasFolderNameCharactersToReplace('folder  name')).toBe(true);
     expect(hasFolderNameCharactersToReplace('folder\tname')).toBe(true);
     expect(hasFolderNameCharactersToReplace('folder\nname')).toBe(true);
@@ -97,17 +95,14 @@ describe('hasFolderNameCharactersToReplace', () => {
     expect(hasFolderNameCharactersToReplace('   ')).toBe(true);
   });
 
-  it('should return true for names with uppercase letters', () => {
-    expect(hasFolderNameCharactersToReplace('FolderName')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('UPPERCASE')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('MiXeD')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder-Name')).toBe(true);
+  it('should return false for names with uppercase letters', () => {
+    expect(hasFolderNameCharactersToReplace('FolderName')).toBe(false);
+    expect(hasFolderNameCharactersToReplace('MiXeD')).toBe(false);
   });
 
   it('should return true for names with special characters', () => {
     expect(hasFolderNameCharactersToReplace('folder@name')).toBe(true);
     expect(hasFolderNameCharactersToReplace('folder!name')).toBe(true);
-    expect(hasFolderNameCharactersToReplace('folder_name')).toBe(true);
     expect(hasFolderNameCharactersToReplace('folder.name')).toBe(true);
     expect(hasFolderNameCharactersToReplace('folder/name')).toBe(true);
     expect(hasFolderNameCharactersToReplace('folder#name')).toBe(true);
