@@ -52,6 +52,7 @@ const GenAIExplanationDrawer = lazy(() =>
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
+
 export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
   query: SqlExpressionQuery;
@@ -213,55 +214,58 @@ LIMIT
     </div>
   );
 
+  const renderSQLButtons = () => (
+    <div className={styles.sqlButtons}>
+      <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+        <Button icon="play" onClick={executeQuery} size="sm">
+          {t('expressions.sql-expr.button-run-query', 'Run query')}
+        </Button>
+        <Suspense fallback={null}>
+          {shouldShowViewExplanation ? (
+            <Button
+              fill="outline"
+              icon="gf-movepane-right"
+              onClick={handleOpenExplanation}
+              size="sm"
+              variant="secondary"
+            >
+              <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
+            </Button>
+          ) : (
+            <GenAISQLExplainButton
+              currentQuery={query.expression || ''}
+              onExplain={handleExplain}
+              queryContext={queryContext}
+              refIds={vars}
+              // schemas={schemas} // Will be added when schema extraction is implemented
+            />
+          )}
+        </Suspense>
+        <Suspense fallback={null}>
+          <GenAISQLSuggestionsButton
+            currentQuery={query.expression || ''}
+            initialQuery={initialQuery}
+            onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
+            onHistoryUpdate={handleHistoryUpdate}
+            queryContext={queryContext}
+            refIds={vars}
+            errorContext={errorContext} // Will be added when error tracking is implemented
+            // schemas={schemas} // Will be added when schema extraction is implemented
+          />
+        </Suspense>
+      </Stack>
+      {suggestions.length > 0 && (
+        <Suspense fallback={null}>
+          <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
+        </Suspense>
+      )}
+    </div>
+  );
+
   const renderSQLEditor = (width?: number, height?: number) => (
     <>
       <div className={styles.sqlContainer}>
-        <div className={styles.sqlButtons}>
-          <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-            <Button icon="play" onClick={executeQuery} size="sm">
-              {t('expressions.sql-expr.button-run-query', 'Run query')}
-            </Button>
-            <Suspense fallback={null}>
-              {shouldShowViewExplanation ? (
-                <Button
-                  fill="outline"
-                  icon="gf-movepane-right"
-                  onClick={handleOpenExplanation}
-                  size="sm"
-                  variant="secondary"
-                >
-                  <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
-                </Button>
-              ) : (
-                <GenAISQLExplainButton
-                  currentQuery={query.expression || ''}
-                  onExplain={handleExplain}
-                  queryContext={queryContext}
-                  refIds={vars}
-                  // schemas={schemas} // Will be added when schema extraction is implemented
-                />
-              )}
-            </Suspense>
-            <Suspense fallback={null}>
-              <GenAISQLSuggestionsButton
-                currentQuery={query.expression || ''}
-                initialQuery={initialQuery}
-                onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
-                onHistoryUpdate={handleHistoryUpdate}
-                queryContext={queryContext}
-                refIds={vars}
-                errorContext={errorContext} // Will be added when error tracking is implemented
-                // schemas={schemas} // Will be added when schema extraction is implemented
-              />
-            </Suspense>
-          </Stack>
-          {suggestions.length > 0 && (
-            <Suspense fallback={null}>
-              <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
-            </Suspense>
-          )}
-        </div>
-
+        {renderSQLButtons()}
         <div ref={containerRef} className={styles.editorContainer}>
           <SQLEditor
             query={query.expression || initialQuery}
@@ -274,23 +278,17 @@ LIMIT
           </SQLEditor>
         </div>
       </div>
-      <>
-        <Suspense fallback={null}>
-          <GenAISuggestionsDrawer
-            isOpen={isDrawerOpen}
-            onApplySuggestion={onApplySuggestion}
-            onClose={handleCloseDrawer}
-            suggestions={suggestions}
-          />
-        </Suspense>
-        <Suspense fallback={null}>
-          <GenAIExplanationDrawer
-            isOpen={isExplanationOpen}
-            onClose={handleCloseExplanation}
-            explanation={explanation}
-          />
-        </Suspense>
-      </>
+      <Suspense fallback={null}>
+        <GenAISuggestionsDrawer
+          isOpen={isDrawerOpen}
+          onApplySuggestion={onApplySuggestion}
+          onClose={handleCloseDrawer}
+          suggestions={suggestions}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <GenAIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
+      </Suspense>
     </>
   );
 
