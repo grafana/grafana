@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/rest"
-	k8srest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
 
@@ -76,7 +75,7 @@ func runJobController(c *cli.Context) error {
 		return fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	config := &k8srest.Config{
+	config := &rest.Config{
 		APIPath: "/apis",
 		Host:    *provisioningServerURL,
 		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
