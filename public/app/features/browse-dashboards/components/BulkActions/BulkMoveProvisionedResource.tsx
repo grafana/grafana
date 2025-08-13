@@ -47,7 +47,11 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
 
   const setupMoveOperation = () => {
-    const targetFolderPathInRepo = getTargetFolderPathInRepo({ targetFolder });
+    const targetFolderPathInRepo = getTargetFolderPathInRepo({
+      targetFolderUID,
+      targetFolder,
+      repoName: repository.name,
+    });
     const resources = collectSelectedItems(selectedItems);
 
     return { targetFolderPathInRepo, resources };
@@ -58,6 +62,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
     // 1. Setup
     const { targetFolderPathInRepo, resources } = setupMoveOperation();
+    console.log('targetFolderPathInRepo', targetFolderPathInRepo);
 
     if (!targetFolderPathInRepo) {
       throw new Error(
@@ -73,7 +78,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       action: 'move',
       move: {
         ref: data.workflow === 'write' ? undefined : data.ref,
-        targetPath: `${targetFolderPathInRepo}/`,
+        targetPath: targetFolderPathInRepo,
         resources,
       },
     };
@@ -111,7 +116,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
             <>
               {/* Target folder selection */}
               <Field noMargin label={t('browse-dashboards.bulk-move-resources-form.target-folder', 'Target Folder')}>
-                <FolderPicker value={targetFolderUID} onChange={setTargetFolderUID} />
+                <FolderPicker value={targetFolderUID} onChange={(uid) => setTargetFolderUID(uid || '')} />
               </Field>
               <ResourceEditFormSharedFields
                 resourceType="folder"
@@ -130,7 +135,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                       : undefined
                   }
                   type="submit"
-                  disabled={!!job || isCreatingJob || hasSubmitted || !targetFolder}
+                  disabled={!!job || isCreatingJob || hasSubmitted || targetFolderUID === undefined}
                 >
                   {isCreatingJob
                     ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')

@@ -16,12 +16,61 @@ export interface BulkActionProvisionResourceProps {
   onDismiss?: () => void;
 }
 
-export function getTargetFolderPathInRepo({ targetFolder }: { targetFolder?: Folder }): string | undefined {
-  if (!targetFolder) {
-    return undefined;
+/**
+ * @example
+ * // Whole instance provisioned (root)
+ * getTargetFolderPathInRepo({ targetFolderUID: '' }) // returns "/"
+ *
+ * // Repository root folder
+ * getTargetFolderPathInRepo({ targetFolder: { name: 'my-repo' }, repoName: 'my-repo' }) // returns "/"
+ *
+ * // Nested folder
+ * getTargetFolderPathInRepo({ targetFolder: { annotations: { sourcePath: 'path/to/folder' } } }) // returns "path/to/folder/"
+ */
+export function getTargetFolderPathInRepo({
+  targetFolderUID,
+  targetFolder,
+  repoName,
+  hidePrependSlash = false,
+}: {
+  targetFolderUID?: string;
+  targetFolder?: Folder;
+  repoName?: string;
+  hidePrependSlash?: boolean;
+}): string {
+  const ROOT_PATH = '/';
+  const EMPTY_PATH = '';
+
+  // Case 1: Whole instance is provisioned and no folder uid passed in (empty UID indicates root)
+  if (targetFolderUID === '') {
+    return hidePrependSlash ? EMPTY_PATH : ROOT_PATH;
   }
-  const folderAnnotations = targetFolder.metadata.annotations || {};
-  return folderAnnotations[AnnoKeySourcePath] || targetFolder.metadata.name || '';
+
+  // Case 2: Target folder is the repository root folder
+  if (isRepositoryRootFolder(targetFolder, repoName)) {
+    return ROOT_PATH;
+  }
+
+  // Case 3: Regular folder with source path annotation
+  return getNestedFolderPath(targetFolder);
+}
+
+/**
+ * Checks if the target folder is the repository root folder
+ */
+function isRepositoryRootFolder(targetFolder?: Folder, repoName?: string): boolean {
+  return Boolean(targetFolder?.metadata.name === repoName && repoName);
+}
+
+/**
+ * Gets the path for a nested folder from its annotations
+ */
+function getNestedFolderPath(targetFolder?: Folder): string {
+  const folderAnnotations = targetFolder?.metadata.annotations || {};
+  const sourcePath = folderAnnotations[AnnoKeySourcePath] || '';
+
+  // Ensure path ends with slash
+  return sourcePath ? `${sourcePath}/` : '/';
 }
 
 export function getResourceTargetPath(currentPath: string, targetFolderPath: string): string {

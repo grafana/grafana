@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -62,7 +63,7 @@ export function MoveProvisionedDashboardForm({
     path: defaultValues.path,
   });
 
-  const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
+  const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID! } : skipToken);
 
   const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
@@ -71,17 +72,20 @@ export function MoveProvisionedDashboardForm({
 
   useEffect(() => {
     const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
-    if (!targetFolderUID || !targetFolder || !currentSourcePath) {
+    if (!currentSourcePath || targetFolderUID === undefined) {
       return;
     }
 
-    const targetFolderPath = getTargetFolderPathInRepo({ targetFolder });
-
     const filename = currentSourcePath.split('/').pop();
-    const newPath = `${targetFolderPath}/${filename}`;
-
+    const targetFolderPath = getTargetFolderPathInRepo({
+      targetFolderUID,
+      targetFolder,
+      repoName: repository?.name,
+      hidePrependSlash: true,
+    });
+    const newPath = `${targetFolderPath}${filename}`;
     setTargetPath(newPath);
-  }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle]);
+  }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle, repository]);
 
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
     if (!currentFileData?.resource?.file) {
@@ -99,6 +103,7 @@ export function MoveProvisionedDashboardForm({
 
     const branchRef = workflow === 'write' ? loadedFromRef : ref;
     const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
+    console.log('move file target path', targetPath);
 
     try {
       await moveFile({

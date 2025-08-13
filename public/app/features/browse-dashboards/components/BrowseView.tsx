@@ -1,7 +1,11 @@
-import { useCallback } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useCallback, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types/store';
 
@@ -34,6 +38,20 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
+  const isProvisionedInstance = useIsProvisionedInstance();
+  const provisioningEnabled = config.featureToggles.provisioning;
+  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
+
+  const excludeUIDs = useMemo(() => {
+    if (isProvisionedInstance || !provisioningEnabled) {
+      return [];
+    }
+    if (provisioningEnabled) {
+      return settingsData?.items.map((repo) => repo.name);
+    }
+
+    return [];
+  }, [isProvisionedInstance, settingsData, provisioningEnabled]);
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
@@ -164,7 +182,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID }))}
+      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID, excludeUIDs }))}
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
