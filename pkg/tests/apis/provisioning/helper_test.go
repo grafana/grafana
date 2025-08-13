@@ -451,7 +451,6 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 	}
 }
 
-
 type TestRepo struct {
 	Name               string
 	Target             string
