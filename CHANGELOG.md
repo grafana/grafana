@@ -1,3 +1,20 @@
+<!-- 12.1.1 START -->
+
+# 12.1.1 (2025-08-13)
+
+### Features and enhancements
+
+- **Alerting:** Add rule group name validation to the Prometheus conversion API [#108767](https://github.com/grafana/grafana/pull/108767), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **CloudWatch:** Update grafana/aws-sdk-go with STS endpo… [#109357](https://github.com/grafana/grafana/pull/109357), [@iwysiu](https://github.com/iwysiu)
+- **Go:** Update to 1.24.6 [#109318](https://github.com/grafana/grafana/pull/109318), [@Proximyst](https://github.com/Proximyst)
+
+### Bug fixes
+
+- **Alerting:** Fix active time intervals when time interval is renamed [#108547](https://github.com/grafana/grafana/pull/108547), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Fix subpath handling in the alerting package [#109505](https://github.com/grafana/grafana/pull/109505), [@konrad147](https://github.com/konrad147)
+- **Config:** Fix date_formats options being moved to a different section [#109366](https://github.com/grafana/grafana/pull/109366), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 12.1.1 END -->
 <!-- 12.1.0 START -->
 
 # 12.1.0 (2025-07-23)

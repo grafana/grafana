@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "12.1.0",
+  "version": "12.1.2",
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js",
