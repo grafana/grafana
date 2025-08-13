@@ -79,7 +79,6 @@ func upgradePanelLinks(links []interface{}) []interface{} {
 	return result
 }
 
-
 func upgradePanelLink(link map[string]interface{}) map[string]interface{} {
 	url := buildPanelLinkURL(link)
 
@@ -140,7 +139,6 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 
 	return url
 }
-
 
 var reNonWordOrSpace = regexp.MustCompile(`[^a-z0-9_ ]+`)
 var reSpaces = regexp.MustCompile(` +`)
