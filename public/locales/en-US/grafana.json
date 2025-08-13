@@ -493,7 +493,9 @@
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-manager-picker": {
-      "noOptionsMessage-no-datasources-found": "No datasources found"
+      "external-alertmanagers-group": "External Alertmanagers",
+      "noOptionsMessage-no-datasources-found": "No datasources found",
+      "selected-converted-tooltip": "This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI."
     },
     "alert-menu": {
       "copy-link": "Copy link",
