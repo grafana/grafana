@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "Esta pasta está vazia"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Todos os recursos foram eliminados com sucesso",
-      "all-moved": "Todos os recursos foram movidos com sucesso",
-      "button-done": "Concluído",
-      "progress-title": "Sucesso",
-      "failed-alert_one": "{{count}} elementos falharam",
-      "failed-alert_other": "{{count}} elementos falharam"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "A eliminar...",
       "delete-warning": "Isto eliminará as pastas selecionadas e as suas descendentes. No total, isto afetará:",
-      "error-path-not-found": "Caminho não encontrado"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "A mover...",
-      "deleting": "A eliminar",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Conteúdo do ficheiro não encontrado",
-      "error-path-not-found": "Caminho não encontrado",
-      "error-target-folder-path-missing": "O caminho da pasta de destino está em falta",
-      "error-title": "Erro de pasta de destino",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Isto eliminará as pastas selecionadas e as suas descendentes. No total, isto afetará:",
-      "moving": "Mudança de local",
-      "progress": "Progresso: {{current}} de {{total}}",
       "target-folder": "Pasta de destino"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Recolher pasta {{title}}",
       "expand-folder-button": "Expandir pasta {{title}}",
       "name-column": "Nome",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Mostrar ou ocultar o elemento {{type}} de forma dinâmica com base no valor da variável.",
           "label": "Variável do modelo",
           "name": "Nome",
           "operator": {
             "equals": "Igual a",
-            "not-equals": "Não é igual a"
+            "matches": "",
+            "not-equals": "Não é igual a",
+            "not-matches": ""
           },
           "value": "Valor"
         }
@@ -5399,6 +5395,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Pesquisar por transformação",
       "show-images": "Mostrar imagens",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Adicionar outra transformação",
       "view-all": "Ver tudo"
     },
@@ -11442,8 +11441,13 @@
       "title-repository-is-unhealthy": "O repositório não está em bom estado"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Os seus recursos estão agora no seu armazenamento externo e aprovisionados na sua instância. A partir de agora, a sua instância e o armazenamento externo serão sincronizados.",
-      "view-repository": "Ver repositório"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Verificado:",

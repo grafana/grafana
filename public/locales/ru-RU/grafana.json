@@ -3545,28 +3545,18 @@
     "browse-view": {
       "this-folder-is-empty": "Папка пуста"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Все ресурсы удалены",
-      "all-moved": "Все ресурсы перемещены",
-      "button-done": "Готово",
-      "progress-title": "Выполнено",
-      "failed-alert_one": "Ошибка при обработке {{count}} элемента",
-      "failed-alert_few": "Ошибка при обработке {{count}} элементов",
-      "failed-alert_many": "Ошибка при обработке {{count}} элементов",
-      "failed-alert_other": "Ошибка при обработке {{count}} элемента"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Отмена",
       "button-delete": "Удалить",
       "button-deleting": "Удаление...",
       "delete-warning": "Будут удалены выбранные папки и их дочерние элементы. В общей сложности будет удалено:",
-      "error-path-not-found": "Путь не найден"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Отмена",
       "button-move": "Переместить",
       "button-moving": "Перемещение...",
-      "deleting": "Удаление",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3574,13 +3564,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Содержимое файла не найдено",
-      "error-path-not-found": "Путь не найден",
-      "error-target-folder-path-missing": "Путь к целевой папке отсутствует",
-      "error-title": "Ошибка в целевой папке",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Будут перемещены выбранные папки и их дочерние элементы. В общей сложности будет перемещено:",
-      "moving": "Перемещение",
-      "progress": "Прогресс: {{current}} из {{total}}",
       "target-folder": "Целевая папка"
     },
     "counts": {
@@ -3606,6 +3592,9 @@
       "total_other": "{{count}} элемента"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Свернуть папку {{title}}",
       "expand-folder-button": "Развернуть папку {{title}}",
       "name-column": "Имя",
@@ -4547,12 +4536,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Динамически показывать или скрывать {{type}} в зависимости от значения переменной.",
           "label": "Переменная шаблона",
           "name": "Имя",
           "operator": {
             "equals": "Равно",
-            "not-equals": "Не равно"
+            "matches": "",
+            "not-equals": "Не равно",
+            "not-matches": ""
           },
           "value": "Значение"
         }
@@ -5439,6 +5433,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Поиск преобразования",
       "show-images": "Показать изображения",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Добавление другого преобразования",
       "view-all": "Просмотреть все"
     },
@@ -11514,8 +11511,13 @@
       "title-repository-is-unhealthy": "Репозиторий неисправен"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Теперь ваши ресурсы находятся во внешнем хранилище и подготовлены для вашего экземпляра. С этого момента ваш экземпляр и внешнее хранилище будут синхронизироваться.",
-      "view-repository": "Просмотр репозитория"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Проверено:",

@@ -3545,28 +3545,18 @@
     "browse-view": {
       "this-folder-is-empty": "Ten folder jest pusty"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Wszystkie zasoby zostały usunięte",
-      "all-moved": "Wszystkie zasoby zostały przeniesione",
-      "button-done": "Gotowe",
-      "progress-title": "Powodzenie",
-      "failed-alert_one": "{{count}} element zakończył się niepowodzeniem",
-      "failed-alert_few": "{{count}} elementy zakończyły się niepowodzeniem",
-      "failed-alert_many": "{{count}} elementów zakończyło się niepowodzeniem",
-      "failed-alert_other": "{{count}} elementu zakończyło się niepowodzeniem"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Anuluj",
       "button-delete": "Usuń",
       "button-deleting": "Usuwanie…",
       "delete-warning": "Spowoduje to usunięcie wybranych folderów i ich elementów podrzędnych. Wpłynie to na następujące elementy:",
-      "error-path-not-found": "Nie znaleziono ścieżki"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Anuluj",
       "button-move": "Przenieś",
       "button-moving": "Przenoszenie…",
-      "deleting": "Usuwanie",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3574,13 +3564,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Nie znaleziono treści pliku",
-      "error-path-not-found": "Nie znaleziono ścieżki",
-      "error-target-folder-path-missing": "Brak ścieżki do folderu docelowego",
-      "error-title": "Błąd folderu docelowego",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Spowoduje to przeniesienie wybranych folderów i ich elementów podrzędnych. Wpłynie to na następujące elementy:",
-      "moving": "Przenoszenie",
-      "progress": "Postęp: {{current}} z {{total}}",
       "target-folder": "Folder docelowy"
     },
     "counts": {
@@ -3606,6 +3592,9 @@
       "total_other": "{{count}} elementu"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Zwiń folder {{title}}",
       "expand-folder-button": "Rozwiń folder {{title}}",
       "name-column": "Nazwa",
@@ -4547,12 +4536,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Pokaż lub ukryj elementy {{type}} dynamicznie na podstawie wartości zmiennej.",
           "label": "Zmienna szablonu",
           "name": "Imię",
           "operator": {
             "equals": "Równa",
-            "not-equals": "Nie równa się"
+            "matches": "",
+            "not-equals": "Nie równa się",
+            "not-matches": ""
           },
           "value": "Wartość"
         }
@@ -5439,6 +5433,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Szukaj transformacji",
       "show-images": "Pokaż obrazki",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Dodaj inną transformację",
       "view-all": "Wyświetl wszystko"
     },
@@ -11514,8 +11511,13 @@
       "title-repository-is-unhealthy": "Repozytorium jest niesprawne"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Zasoby znajdują się teraz w zewnętrznej pamięci masowej i są udostępniane w instancji. Od teraz Twoja instancja i zewnętrzna pamięć masowa będą zsynchronizowane.",
-      "view-repository": "Wyświetl repozytorium"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Sprawdzone:",

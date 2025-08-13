@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "Denna mapp är tom"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Alla resurser har raderats",
-      "all-moved": "Alla resurser flyttades korrekt",
-      "button-done": "Klar",
-      "progress-title": "Lyckades",
-      "failed-alert_one": "{{count}} objekt misslyckades",
-      "failed-alert_other": "{{count}} objekt misslyckades"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Avbryt",
       "button-delete": "Radera",
       "button-deleting": "Tar bort …",
       "delete-warning": "Detta kommer att radera valda mappar och alla underordnade mappar. Totalt kommer detta att påverka:",
-      "error-path-not-found": "Sökvägen hittades inte"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Avbryt",
       "button-move": "Flytta",
       "button-moving": "Flyttar …",
-      "deleting": "Raderar",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Filinnehåll hittades inte",
-      "error-path-not-found": "Sökvägen hittades inte",
-      "error-target-folder-path-missing": "Sökväg till målmappen saknas",
-      "error-title": "Fel i målmappen",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Detta kommer att flytta valda mappar och alla underordnade mappar. Totalt kommer detta att påverka:",
-      "moving": "Flyttar",
-      "progress": "Förlopp: {{current}} av {{total}}",
       "target-folder": "Målkatalog"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} objekt"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Dölj mapp {{title}}",
       "expand-folder-button": "Expandera mapp {{title}}",
       "name-column": "Namn",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Visa eller dölj {{type}} dynamiskt baserat på variabelvärdet.",
           "label": "Mallvariabel",
           "name": "Namn",
           "operator": {
             "equals": "Är lika med",
-            "not-equals": "Inte lika med"
+            "matches": "",
+            "not-equals": "Inte lika med",
+            "not-matches": ""
           },
           "value": "Värde"
         }
@@ -5399,6 +5395,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Sök efter transformering",
       "show-images": "Visa bilder",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Lägg till ytterligare en transformering",
       "view-all": "Visa alla"
     },
@@ -11442,8 +11441,13 @@
       "title-repository-is-unhealthy": "Lagringsplatsen är ohälsosam"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Dina resurser finns nu i din externa lagring och provisioneras till din instans. Från och med nu kommer din instans och den externa lagringen att synkroniseras.",
-      "view-repository": "Visa lagringsplats"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Kontrollerad:",
