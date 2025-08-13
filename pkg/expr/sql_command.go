@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -116,15 +118,22 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	sqlLogger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
 	tc := int64(0)
 	rsp := mathexp.Results{}
+	var cat string
 
 	defer func() {
 		duration := float64(time.Since(start).Milliseconds())
-
 		statusLabel := "ok"
 		if rsp.Error != nil {
+			if ce, ok := rsp.Error.(sql.ErrorWithType); ok {
+				cat = ce.ErrorType()
+			}
 			statusLabel = "error"
 			span.RecordError(rsp.Error)
 			span.SetStatus(codes.Error, rsp.Error.Error())
+			span.SetAttributes(
+				attribute.String("error.type", cat),
+			)
+			spew.Dump(cat, rsp.Error)
 			sqlLogger.Error("SQL command execution failed", "error", rsp.Error.Error())
 		}
 		span.End()
@@ -149,11 +158,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	// limit of 0 or less means no limit (following convention)
 	if gr.inputLimit > 0 && tc > gr.inputLimit {
-		rsp.Error = fmt.Errorf(
-			"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
-			gr.inputLimit,
-			tc,
-		)
+		rsp.Error = sql.MakeInputLimitExceededError(gr.refID, gr.inputLimit)
 		return rsp, nil
 	}
 
@@ -293,7 +298,7 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 	}
 
 	if len(duplicates) > 0 {
-		return nil, makeDuplicateStringColumnError(duplicates)
+		return nil, sql.MakeDuplicateStringColumnError(duplicates)
 	}
 
 	// Build final result

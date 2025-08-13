@@ -1,0 +1,166 @@
+package sql
+
+import (
+	"errors"
+	"fmt"
+	"sort"
+	"strings"
+
+	mysql "github.com/dolthub/go-mysql-server/sql"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+)
+
+// GoMySQLServerError represents an error from the underlying Go MySQL Server
+type GoMySQLServerError struct {
+	err       error
+	errorType string
+}
+
+type ErrorWithType interface {
+	error
+	ErrorType() string
+}
+
+type et struct {
+	errorType string
+	err       error
+}
+
+func (e *et) Error() string {
+	return e.err.Error()
+}
+
+func (e *et) ErrorType() string {
+	return e.errorType
+}
+
+// Error implements the error interface
+func (e *GoMySQLServerError) Error() string {
+	return e.err.Error()
+}
+
+// Unwrap provides the original error for errors.Is/As
+func (e *GoMySQLServerError) Unwrap() error {
+	return e.err
+}
+
+func (e *GoMySQLServerError) ErrorType() string {
+	return e.errorType
+}
+
+// WrapGoMySQLServerError wraps errors from Go MySQL Server with additional context
+func WrapGoMySQLServerError(err error) error {
+	// Don't wrap nil errors
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case mysql.ErrFunctionNotFound.Is(err):
+		return &GoMySQLServerError{err: err, errorType: "function_not_found"}
+	case mysql.ErrTableNotFound.Is(err):
+		return &GoMySQLServerError{err: err, errorType: "table_not_found"}
+	case mysql.ErrColumnNotFound.Is(err):
+		return &GoMySQLServerError{err: err, errorType: "column_not_found"}
+	}
+
+	// Return original error if it's not one we want to wrap
+	return err
+}
+
+func MakeSqlErrorType(refID string, err error) error {
+	err = WrapGoMySQLServerError(err)
+
+	gmsError := &GoMySQLServerError{}
+	if errors.As(err, &gmsError) {
+		return MakeGeneralGMSError(gmsError, refID)
+	}
+
+	return err
+}
+
+var sqlParseErrStr = "there was an error parsing the sql query [{{ .Public.query }}]: {{ .Error }}"
+
+var SQLParseError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.sql.ParseError").MustTemplate(
+	sqlParseErrStr,
+	errutil.WithPublic(sqlParseErrStr))
+
+func MakeSQLParseError(refID string, err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+		},
+		Error: err,
+	}
+
+	return SQLParseError.Build(data)
+}
+
+var inputLimitExceededStr = "input limit exceeded for query [{{ .Public.refId }}]: {{ .Public.inputLimit }}"
+
+var InputLimitExceededError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.sql.inputLimitExceeded").MustTemplate(
+	inputLimitExceededStr,
+	errutil.WithPublic(inputLimitExceededStr))
+
+func MakeInputLimitExceededError(refID string, inputLimit int64) ErrorWithType {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":      refID,
+			"inputLimit": inputLimit,
+		},
+	}
+
+	return &et{errorType: "limit_exceeded", err: InputLimitExceededError.Build(data)}
+}
+
+var DuplicateStringColumnError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.duplicateStringColumns").MustTemplate(
+	"your SQL query returned {{ .Public.count }} rows with duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination.",
+	errutil.WithPublic("SQL query returned duplicate combinations of string column values. Use GROUP BY or aggregation to return one row per combination."),
+)
+
+func MakeDuplicateStringColumnError(examples []string) ErrorWithType {
+	const limit = 5
+	sort.Strings(examples)
+	exampleStr := strings.Join(truncateExamples(examples, limit), ", ")
+
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"examples": exampleStr,
+			"count":    len(examples),
+		},
+	}
+
+	return &et{
+		errorType: "duplicate_string_columns",
+		err:       DuplicateStringColumnError.Build(data),
+	}
+}
+
+func truncateExamples(examples []string, limit int) []string {
+	if len(examples) <= limit {
+		return examples
+	}
+	truncated := examples[:limit]
+	truncated = append(truncated, fmt.Sprintf("... and %d more", len(examples)-limit))
+	return truncated
+}
+
+var generalGMSErrorStr = "error from GMS engine: {{ .Error }}"
+
+var generalGMSError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.sql.generalGMSError").MustTemplate(
+	generalGMSErrorStr,
+	errutil.WithPublic(generalGMSErrorStr))
+
+func MakeGeneralGMSError(err *GoMySQLServerError, refID string) ErrorWithType {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+		},
+	}
+
+	return &et{errorType: err.ErrorType(), err: generalGMSError.Build(data)}
+}
