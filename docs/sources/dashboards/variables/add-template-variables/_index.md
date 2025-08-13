@@ -139,7 +139,9 @@ To create a variable, follow these steps:
    - [Interval](#add-an-interval-variable)
    - [Ad hoc filters](#add-ad-hoc-filters)
 
+-->
 
+{{< collapse title="Title of hidden content" >}}
 
 ## Add a query variable
 
@@ -153,43 +155,62 @@ Query expressions can contain references to other variables and in effect create
 Query expressions are different for each data source. For more information, refer to the documentation for your [data source](ref:data-source).
 {{< /admonition >}}
 
-1. [Enter general options](#enter-general-options).
-1. Under the **Query options** section of the page, select a target data source in the **Data source** drop-down list.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click **Settings**.
+1. Go to the **Variables** tab.
+1. Click **Add variable**, or if there are already existing variables, **+ New variable**.
+1. In the **Select variable type** drop-down list, select **Query**.
+1. Set the fields:
 
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
-   For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+| Option | Description |
+| ------ | ----------- |
+| Name |  |
+| Label | Optional display name for the variable drop-down list. If you don't enter a display name, then the drop-down list label is the variable name. |
+| Description |  |
+| Hide | <ul><li>**Nothing** - The variable drop-down list is displayed on the dashboard.</li><li>**Variable** - The variable drop-down list only displays the selected variable value and a down arrow.</li><li>**Label** - The variable drop-down list displays the variable **Name** or **Label** value. This is the default.</li></ul> |
+| Data source | Select a target data source. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source).  |
+| Query type & query | Select one of the following options: <ul><li>Label names</li><li>Label values</li><li>Metrics</li><li>Query result</li><li>Series query</li><li>Classic query</li></ul> [Make the relevant selections or enter a query based on the selected query type.](#query)  |
+| Regex | type a regular expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](#filter-variables-with-regex). |
+| Sort | Select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query is used. |
+| Refresh | Select when the variable should update options: <ul><li>**On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.</li><li>**On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.</li></ul> |
+| Use static options | Add custom options in addition to query results. For each option, enter a label and value. Then select one of the following options in the **Static options sort** drop-down list: <ul><li>Before query values</li><li>After query values</li><li>Sorted with query values</li></ul> |
+| Multi-value | Enables multiple values to be selected at the same time. |
+| Allow custom values |  |
+| Inclue All option | Enables an option to include all variables. |
 
-1. In the **Query type** drop-down list, select one of the following options:
 
-   - **Label names**
-   - **Label values**
-   - **Metrics**
-   - **Query result**
-   - **Series query**
-   - **Classic query**
 
-1. In the **Query** field, enter a query.
+1. Under ****, 
 
-   - The query field varies according to your data source. Some data sources have custom query editors.
-   - Each data source defines how the variable values are extracted. The typical implementation uses every string value returned from the data source response as a variable value. Make sure to double-check the documentation for the data source.
-   - Some data sources let you provide custom "display names" for the values. For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result. Other data sources may look for `text` and `value` or use a different approach. Always remember to double-check the documentation for the data source.
-   - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
-
-1. (Optional) In the **Regex** field, type a regular expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](#filter-variables-with-regex).
-1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query is used.
-1. Under **Refresh**, select when the variable should update options:
-
-   - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
-   - **On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
+   - **** - 
+   - 
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
 
-   - **Multi-value** - Enables multiple values to be selected at the same time.
-   - **Include All option** - Enables an option to include all variables.
+   - **Multi-value** - 
+   - **Include All option** - 
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
+
+### Query
+
+The query field varies according to your data source.
+Some data sources have custom query editors.
+
+Each data source defines how the variable values are extracted.
+The typical implementation uses every string value returned from the data source response as a variable value.
+Make sure to double-check the documentation for the data source.
+
+Some data sources let you provide custom "display names" for the values.
+For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result.
+Other data sources may look for `text` and `value` or use a different approach.
+Always remember to double-check the documentation for the data source.
+
+If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
+
+{{< /collapse >}}
 
 ## Add a custom variable
 
