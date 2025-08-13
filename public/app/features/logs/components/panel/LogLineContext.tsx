@@ -18,6 +18,8 @@ import {
   AbsoluteTimeRange,
   EventBusSrv,
   store,
+  getValueFormat,
+  formattedValueToString,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -84,7 +86,11 @@ export const LogLineContext = memo(
     const [aboveState, setAboveState] = useState(LoadingState.NotStarted);
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
-    const [timeWindow, setTimeWindow] = useState(100);
+    const defaultTimeWindow = logOptionsStorageKey
+      ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? '7200000')
+      : '7200000';
+    const [timeWindow, setTimeWindow] = useState(parseInt(defaultTimeWindow, 10));
+
     const eventBusRef = useRef(new EventBusSrv());
 
     const dispatch = useDispatch();
@@ -246,12 +252,21 @@ export const LogLineContext = memo(
       });
     }, [contextQuery, dispatch, log.dataFrame.refId, log.datasourceType, log.uid, onClose, timeRange]);
 
-    const handleIntervalChange = useCallback((windowSize: string) => {
-      setTimeWindow(parseInt(windowSize, 10));
-      setAboveLogs([]);
-      setBelowLogs([]);
-      setInitialized(false);
-    }, []);
+    const handleTimeWindowChange = useCallback(
+      (windowSize: string) => {
+        if (logOptionsStorageKey) {
+          store.set(`${logOptionsStorageKey}.contextTimeWindow`, windowSize);
+        }
+        setTimeWindow(parseInt(windowSize, 10));
+        setAboveLogs([]);
+        setBelowLogs([]);
+        setInitialized(false);
+        reportInteraction('logs_log_line_context_time_window_change', {
+          windowSize,
+        });
+      },
+      [logOptionsStorageKey]
+    );
 
     const handleClose = useCallback(() => {
       reportInteraction('logs_log_line_context_closed', {
@@ -300,11 +315,13 @@ export const LogLineContext = memo(
           <LogLineDetailsLog log={logListModel} syntaxHighlighting={syntaxHighlighting} />
         </Collapse>
         <div className={styles.controls}>
-          <RadioButtonGroup
-            options={getIntervalOptions()}
-            value={timeWindow.toString()}
-            onChange={handleIntervalChange}
-          />
+          {log.datasourceType === 'loki' && (
+            <RadioButtonGroup
+              options={getTimeWindowOptions()}
+              value={timeWindow.toString()}
+              onChange={handleTimeWindowChange}
+            />
+          )}
           <Button variant="secondary" onClick={onScrollCenterClick}>
             <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
           </Button>
@@ -480,10 +497,10 @@ const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
   return rows.some((r) => r.entry === row.entry && r.timeEpochNs === row.timeEpochNs);
 };
 
-function getIntervalOptions() {
-  const intervals = [100, 500, 1000, 5000, 30000, 60000, 90000, 1800000, 3600000, 10800000];
+function getTimeWindowOptions() {
+  const intervals = [100, 500, 1000, 5000, 30000, 60000, 30000, 1800000, 3600000, 7200000];
   return intervals.map((interval) => ({
-    label: interval.toString(),
+    label: formattedValueToString(getValueFormat('ms')(interval)),
     value: interval.toString(),
   }));
 }
