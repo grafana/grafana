@@ -608,7 +608,7 @@ describe('AzureMonitor ResourcePicker', () => {
           location: 'eastus2',
         },
       ];
-      window.localStorage.setItem(RECENT_RESOURCES_KEY, JSON.stringify(recentResources));
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(defaultProps.queryType), JSON.stringify(recentResources));
       await act(async () => render(<ResourcePicker {...defaultProps} />));
 
       const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
@@ -647,9 +647,10 @@ describe('AzureMonitor ResourcePicker', () => {
           location: 'eastus2',
         },
       ];
-      window.localStorage.setItem(RECENT_RESOURCES_KEY, JSON.stringify(recentResources));
+      const queryType = 'metrics';
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
       const onApply = jest.fn();
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" onApply={onApply} />));
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
 
       const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
       await userEvent.click(recent);
@@ -700,9 +701,10 @@ describe('AzureMonitor ResourcePicker', () => {
           location: 'eastus2',
         },
       ];
-      window.localStorage.setItem(RECENT_RESOURCES_KEY, JSON.stringify(recentResources));
+      const queryType = 'metrics';
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
       const onApply = jest.fn();
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" onApply={onApply} />));
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
 
       const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
       await userEvent.click(recent);
@@ -763,9 +765,10 @@ describe('AzureMonitor ResourcePicker', () => {
           location: 'eastus2',
         },
       ];
-      window.localStorage.setItem(RECENT_RESOURCES_KEY, JSON.stringify(recentResources));
+      const queryType = 'metrics';
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
       const onApply = jest.fn();
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" onApply={onApply} />));
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
 
       const recent = await screen.getByTestId(e2eSelectors.components.Tab.title('Recent'));
       await userEvent.click(recent);
@@ -786,8 +789,10 @@ describe('AzureMonitor ResourcePicker', () => {
           subscription: 'def-123',
         },
       ]);
-      expect(window.localStorage.getItem(RECENT_RESOURCES_KEY)).not.toBeNull();
-      const recentResourcesFromStorage = JSON.parse(window.localStorage.getItem(RECENT_RESOURCES_KEY) || '[]');
+      expect(window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType))).not.toBeNull();
+      const recentResourcesFromStorage = JSON.parse(
+        window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType)) || '[]'
+      );
       expect(recentResourcesFromStorage.length).toBe(3);
     });
 
@@ -803,11 +808,12 @@ describe('AzureMonitor ResourcePicker', () => {
           location: 'eastus2',
         });
       }
-      window.localStorage.setItem(RECENT_RESOURCES_KEY, JSON.stringify(recentResources));
-      expect(JSON.parse(window.localStorage.getItem(RECENT_RESOURCES_KEY) || '[]')).toHaveLength(30);
+      const queryType = 'metrics';
+      window.localStorage.setItem(RECENT_RESOURCES_KEY(queryType), JSON.stringify(recentResources));
+      expect(JSON.parse(window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType)) || '[]')).toHaveLength(30);
 
       const onApply = jest.fn();
-      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" onApply={onApply} />));
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType={queryType} onApply={onApply} />));
 
       const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
       expect(subscriptionButton).toBeInTheDocument();
@@ -832,9 +838,9 @@ describe('AzureMonitor ResourcePicker', () => {
           subscription: 'def-456',
         },
       ]);
-      expect(window.localStorage.getItem(RECENT_RESOURCES_KEY)).not.toBeNull();
+      expect(window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType))).not.toBeNull();
       const recentResourcesFromStorage: ResourceRowGroup = JSON.parse(
-        window.localStorage.getItem(RECENT_RESOURCES_KEY) || '[]'
+        window.localStorage.getItem(RECENT_RESOURCES_KEY(queryType)) || '[]'
       );
       expect(recentResourcesFromStorage.length).toBe(30);
       expect(recentResourcesFromStorage.find((resource) => resource.id === 'web-server')).toBeDefined();

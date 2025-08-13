@@ -51,7 +51,8 @@ interface ResourcePickerProps<T> {
   selectionNotice?: (selectedRows: ResourceRowGroup) => string;
 }
 
-export const RECENT_RESOURCES_KEY = 'grafana.datasources.azuremonitor.recent-resources';
+export const RECENT_RESOURCES_KEY = (queryType: ResourcePickerQueryType) =>
+  `grafana.datasources.azuremonitor.recent-resources.${queryType}`;
 
 const ResourcePicker = ({
   resourcePickerData,
@@ -517,7 +518,7 @@ const ResourcePicker = ({
   // Once the azureResourcePickerUpdates feature toggle is removed, baseResourcePicker can be merged into this function
   const tabbedResourcePicker = () => {
     return (
-      <LocalStorageValueProvider<ResourceRowGroup> storageKey={RECENT_RESOURCES_KEY} defaultValue={[]}>
+      <LocalStorageValueProvider<ResourceRowGroup> storageKey={RECENT_RESOURCES_KEY(queryType)} defaultValue={[]}>
         {(recentResources, onRecentResourcesSave) => {
           return (
             <>
