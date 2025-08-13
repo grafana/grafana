@@ -43,14 +43,17 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 	// Now for the repository.
 	const repo = "local-repository"
-	// FIXME: use the same helper to create the repository
-	createBody := helper.RenderObject(t, "exportunifiedtorepository/repository.json.tmpl", map[string]any{"Name": repo})
-	_, err = helper.Repositories.Resource.Create(ctx, createBody, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create repository")
+	testRepo := TestRepo{
+		Name:               repo,
+		Copies:             map[string]string{}, // No initial files needed for export test
+		ExpectedDashboards: 4,                   // 4 dashboards created above (v0, v1, v2alpha1, v2beta1)
+		ExpectedFolders:    0,                   // No folders expected after sync
+	}
+	helper.CreateRepo(t, testRepo)
 
 	// Now export
 	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
-	
+
 	spec := provisioning.JobSpec{
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
@@ -58,7 +61,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
-	
+
 	helper.DebugState(t, repo, "AFTER EXPORT TO REPOSITORY")
 
 	type props struct {
@@ -121,28 +124,23 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err, "should be able to create second dashboard")
 	dashboard2Name := dashboard2Obj.GetName()
 
-	// FIXME: use same helper to create repository
 	// Create the first repository with sync enabled
 	const repo1 = "first-repository"
-	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
-	err = os.MkdirAll(repo1Path, 0750)
-	require.NoError(t, err, "should be able to create repository path")
-
-	createBody1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo1,
-		"SyncEnabled": true,
-		"SyncTarget":  "folder",
-		"Path":        repo1Path,
-	})
-	_, err = helper.Repositories.Resource.Create(ctx, createBody1, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create first repository")
+	testRepo1 := TestRepo{
+		Name:               repo1,
+		Target:             "folder",
+		Copies:             map[string]string{}, // No initial files needed for export test
+		ExpectedDashboards: 2,                   // 2 dashboards created above (dashboard1, dashboard2)
+		ExpectedFolders:    1,                   // 1 folder for repo1 (Target: "folder")
+	}
+	helper.CreateRepo(t, testRepo1)
 
 	// Print file tree before export
 	printFileTree(t, helper.ProvisioningPath)
 
 	// Initial export
 	helper.DebugState(t, repo1, "BEFORE INITIAL EXPORT")
-	
+
 	spec := provisioning.JobSpec{
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
@@ -151,7 +149,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	}
 
 	helper.TriggerJobAndWaitForSuccess(t, repo1, spec)
-	
+
 	helper.DebugState(t, repo1, "AFTER INITIAL EXPORT")
 	helper.SyncAndWait(t, repo1, nil)
 
@@ -165,27 +163,18 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err)
 	require.Equal(t, repo1, managedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard2 should be managed by first repo")
 
-	// FIXME: use helper to create repository
 	// Create second repository - enable sync and set different target
 	const repo2 = "second-repository"
-	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
-	err = os.MkdirAll(repo2Path, 0750)
-	require.NoError(t, err, "should be able to create seconrd repository path")
+	testRepo2 := TestRepo{
+		Name:               repo2,
+		Target:             "folder",
+		Copies:             map[string]string{}, // No initial files needed for export test
+		ExpectedDashboards: 3,                   // 3 dashboards total (dashboard1, dashboard2, dashboard3)
+		ExpectedFolders:    2,                   // 2 folders total (repo1 and repo2 folders)
+	}
+	helper.CreateRepo(t, testRepo2)
 
 	printFileTree(t, helper.ProvisioningPath)
-
-	createBody2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo2,
-		"SyncEnabled": true,
-		"SyncTarget":  "folder",
-		"Path":        repo2Path,
-	})
-
-	_, err = helper.Repositories.Resource.Create(ctx, createBody2, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create second repository")
-
-	// Wait for second repository to sync
-	helper.SyncAndWait(t, repo2, nil)
 
 	// FIXME: use helpers to check status
 	// Validate that folders for both repositories exist
@@ -218,12 +207,13 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 
 	printFileTree(t, helper.ProvisioningPath)
 	// Count files in first repo before second export
+	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
 	files1Before, err := countFilesInDir(repo1Path)
 	require.NoError(t, err)
 
 	// Export from second repository - this should only export the unmanaged dashboard3
 	helper.DebugState(t, repo2, "BEFORE SECOND EXPORT")
-	
+
 	spec = provisioning.JobSpec{
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
@@ -231,7 +221,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo2, spec)
-	
+
 	helper.DebugState(t, repo2, "AFTER SECOND EXPORT")
 
 	// Wait for both repositories to sync
@@ -248,6 +238,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		0, actualNewFiles)
 
 	// Verify files in the second repository
+	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
 	files2After, err := countFilesInDir(repo2Path)
 	require.NoError(t, err)
 	require.Equal(t, 1, files2After,

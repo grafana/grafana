@@ -63,7 +63,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		// FIXME: create a helper to verify repository files
 
 		// Verify file is deleted from repository
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
 		require.Error(t, err, "file should be deleted from repository")
 		require.True(t, apierrors.IsNotFound(err), "should be not found error")
 
