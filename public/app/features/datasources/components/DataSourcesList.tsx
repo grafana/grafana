@@ -62,8 +62,8 @@ export type ViewProps = {
   hasCreateRights: boolean;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
-  showFavoritesOnly: boolean;
-  handleFavoritesCheckboxChange: (value: boolean) => void;
+  showFavoritesOnly?: boolean;
+  handleFavoritesCheckboxChange?: (value: boolean) => void;
   isFavoriteDatasource?: (uid: string) => boolean;
 };
 
@@ -80,13 +80,14 @@ export function DataSourcesListView({
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
-  const favoritesCheckbox = config.featureToggles.favoriteDatasources
-    ? {
-        onChange: handleFavoritesCheckboxChange,
-        value: showFavoritesOnly,
-        label: t('datasources.list.starred', 'Starred'),
-      }
-    : undefined;
+  const favoritesCheckbox =
+    config.featureToggles.favoriteDatasources && handleFavoritesCheckboxChange && showFavoritesOnly
+      ? {
+          onChange: handleFavoritesCheckboxChange,
+          value: showFavoritesOnly,
+          label: t('datasources.list.starred', 'Starred'),
+        }
+      : undefined;
 
   // Filter data sources based on favorites when enabled
   const dataSources = useMemo(() => {
