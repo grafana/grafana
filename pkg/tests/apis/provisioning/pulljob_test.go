@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -36,7 +35,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	_, err := helper.Repositories.Resource.Create(ctx, localTmp1, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// Create second repository with folder target  
+	// Create second repository with folder target
 	localTmp2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo2,
 		"SyncEnabled": true,
@@ -56,7 +55,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		originalDashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "dashboard should exist after repo1 sync")
 		require.Equal(t, repo1, originalDashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "should be owned by repo1")
-		
+
 		// Get original title for comparison
 		originalTitle, _, err := unstructured.NestedString(originalDashboard.Object, "spec", "title")
 		require.NoError(t, err)
@@ -65,28 +64,28 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// Step 2: Try to add the same resource (same UID) to repo2's files
 		// This simulates a scenario where repo2 tries to manage a resource that repo1 already owns
 		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "conflicting-dashboard.json")
-		
+
 		// Modify the text-options.json to have the same UID as all-panels.json to create conflict
 		conflictingDashboard := helper.LoadFile("testdata/text-options.json")
 		// We need to manually create a file with the same UID to test ownership conflict
-		
+
 		// Step 3: Try to sync repo2 - it should fail or skip the conflicting resource
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},
 		})
-		
+
 		// The sync might complete but with errors, or it might complete successfully by skipping conflicts
 		// Let's check that the original resource is still owned by repo1 and unchanged
 		updatedDashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "dashboard should still exist")
 		require.Equal(t, repo1, updatedDashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should not change")
-		
+
 		// Verify the content hasn't been replaced by repo2's version
 		updatedTitle, _, err := unstructured.NestedString(updatedDashboard.Object, "spec", "title")
 		require.NoError(t, err)
 		require.Equal(t, originalTitle, updatedTitle, "title should not change - resource should not be replaced")
-		
+
 		// Verify that resource versions/generations haven't changed unexpectedly
 		require.Equal(t, originalDashboard.GetResourceVersion(), updatedDashboard.GetResourceVersion(), "resource should not be modified by repo2 sync")
 	})
@@ -109,12 +108,12 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},
 		})
-		
+
 		// The sync should complete successfully
 		jobObj := &provisioning.Job{}
 		err = helper.Runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
-		
+
 		// Step 3: Verify that repo1's exclusive resource still exists and wasn't deleted by repo2's sync
 		persistentDashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo1's dashboard should still exist after repo2 sync")
@@ -134,7 +133,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 		require.NoError(t, result.Error())
-		
+
 		helper.SyncAndWait(t, repo1, nil)
 
 		// Step 2: Try to add the same file to repo2 and sync
@@ -153,7 +152,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},
 		}
-		
+
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, spec)
 		jobObj := &provisioning.Job{}
 		err = helper.Runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
@@ -193,14 +192,14 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 		require.NoError(t, result.Error())
-		
+
 		helper.SyncAndWait(t, repo1, nil)
 
 		// Step 2: Manually set AllowsEdits=true on the created resource
 		const timelineUID = "mIJjFy8Kz"
 		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
 		require.NoError(t, err)
-		
+
 		// Add the AllowsEdits annotation
 		annotations := dashboard.GetAnnotations()
 		if annotations == nil {
@@ -208,7 +207,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		}
 		annotations[utils.AnnoKeyManagerAllowsEdits] = "true"
 		dashboard.SetAnnotations(annotations)
-		
+
 		_, err = helper.DashboardsV1.Resource.Update(ctx, dashboard, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
@@ -222,19 +221,19 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 		require.NoError(t, result.Error())
-		
+
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},
 		})
-		
+
 		jobObj := &provisioning.Job{}
 		err = helper.Runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
-		
+
 		// Should complete successfully due to AllowsEdits=true
 		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State, "sync should succeed when AllowsEdits=true")
-		
+
 		// Verify the resource was updated and is now owned by repo2
 		updatedDashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
 		require.NoError(t, err)
@@ -246,7 +245,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	require.NoError(t, err)
 	err = helper.Repositories.Resource.Delete(ctx, repo2, metav1.DeleteOptions{})
 	require.NoError(t, err)
-	
+
 	// Wait for cleanup
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
@@ -254,3 +253,4 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		assert.Equal(collect, 0, len(dashboards.Items), "all dashboards should be cleaned up")
 	}, time.Second*30, time.Millisecond*100, "expected cleanup to complete")
 }
+
