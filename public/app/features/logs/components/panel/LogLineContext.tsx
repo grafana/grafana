@@ -84,7 +84,7 @@ export const LogLineContext = memo(
     const [aboveState, setAboveState] = useState(LoadingState.NotStarted);
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
-    const [interval, setInterval] = useState(0);
+    const [timeWindow, setTimeWindow] = useState(100);
     const eventBusRef = useRef(new EventBusSrv());
 
     const dispatch = useDispatch();
@@ -142,6 +142,7 @@ export const LogLineContext = memo(
         const result = await getRowContext(normalizeLogRefId(refLog), {
           limit: PAGE_SIZE,
           direction: getLoadMoreDirection(place, sortOrder),
+          timeWindowMs: timeWindow,
         });
 
         const newLogs = dataFrameToLogsModel(result.data).rows;
@@ -150,7 +151,7 @@ export const LogLineContext = memo(
         }
         return newLogs.filter((r) => !containsRow(allLogs, r));
       },
-      [allLogs, getRowContext, sortOrder]
+      [allLogs, getRowContext, sortOrder, timeWindow]
     );
 
     const loadMore = useCallback(
@@ -245,8 +246,8 @@ export const LogLineContext = memo(
       });
     }, [contextQuery, dispatch, log.dataFrame.refId, log.datasourceType, log.uid, onClose, timeRange]);
 
-    const handleIntervalChange = useCallback((newInterval: string) => {
-      setInterval(parseInt(newInterval, 10));
+    const handleIntervalChange = useCallback((windowSize: string) => {
+      setTimeWindow(parseInt(windowSize, 10));
       setAboveLogs([]);
       setBelowLogs([]);
       setInitialized(false);
@@ -301,7 +302,7 @@ export const LogLineContext = memo(
         <div className={styles.controls}>
           <RadioButtonGroup
             options={getIntervalOptions()}
-            value={interval.toString()}
+            value={timeWindow.toString()}
             onChange={handleIntervalChange}
           />
           <Button variant="secondary" onClick={onScrollCenterClick}>
@@ -480,19 +481,9 @@ const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
 };
 
 function getIntervalOptions() {
-  const options = [
-    {
-      label: t('logs.log-line-context.interval-auto', 'Auto'),
-      value: '0',
-    },
-  ];
-  const intervals = [100, 500, 1000, 5000, 30000, 60000, 90000];
-  intervals.forEach((interval) => {
-    options.push({
-      label: interval.toString(),
-      value: interval.toString(),
-    });
-  });
-
-  return options;
+  const intervals = [100, 500, 1000, 5000, 30000, 60000, 90000, 1800000, 3600000, 10800000];
+  return intervals.map((interval) => ({
+    label: interval.toString(),
+    value: interval.toString(),
+  }));
 }
