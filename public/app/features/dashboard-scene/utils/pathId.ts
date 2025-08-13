@@ -6,9 +6,8 @@ const PATH_ID_SEPARATOR = '$';
 
 export function findVizPanelByPathId(scene: SceneObject, pathId: string): VizPanel | null {
   // Check if pathId is just an old legacy panel id
-  const id = parseInt(pathId, 10);
-  if (!isNaN(id)) {
-    pathId = getVizPanelKeyForPanelId(id);
+  if (/^\d+$/.test(pathId)) {
+    pathId = getVizPanelKeyForPanelId(parseInt(pathId, 10));
   }
 
   const panel = sceneGraph.findObject(scene, (obj) => {

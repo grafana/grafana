@@ -30,8 +30,15 @@ describe('findVizPanelByPathId', () => {
     const { scene, panel1, repeatedPanel } = buildTestScene();
 
     expect(findVizPanelByPathId(scene, 'panel-1')).toBe(panel1);
-    expect(findVizPanelByPathId(scene, '1')).toBe(panel1);
     expect(findVizPanelByPathId(scene, 'US$pod1$panel-2')).toBe(repeatedPanel);
+  });
+
+  it('should find correct pane with legacy number only', () => {
+    const { scene, panel1 } = buildTestScene();
+
+    expect(findVizPanelByPathId(scene, '1')).toBe(panel1);
+    // This should not find anything
+    expect(findVizPanelByPathId(scene, '1$panel-1')).toBe(null);
   });
 
   it('should include local and parent local variable value', () => {
