@@ -23,7 +23,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	var previous common.InlineSecureValues
 	if previousObject == nil {
 		if len(secure) == 0 {
-			return nil // create
+			return nil // nothing needs to change
 		}
 		if store == nil {
 			return fmt.Errorf("secure value support is not configured (create)")

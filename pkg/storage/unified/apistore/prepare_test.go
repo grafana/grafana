@@ -313,6 +313,14 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "updated object must have a name")
 
+		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name: "test-name",
+		}}, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name: "not-the-same-name",
+		}})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "name mismatch between")
+
 		_, err = s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
 			Name:            "test-name",
 			ResourceVersion: "123", // RV must not be set
