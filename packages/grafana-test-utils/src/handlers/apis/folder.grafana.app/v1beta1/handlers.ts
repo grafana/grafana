@@ -62,8 +62,18 @@ const getFolderParentsHandler = () =>
       const folder = mockTree.find(({ item }) => {
         return item.kind === 'folder' && item.uid === folderUid;
       });
+      if (!folder || folder.item.kind !== 'folder') {
+        return HttpResponse.json({
+          kind: 'Status',
+          apiVersion: 'v1',
+          metadata: {},
+          status: 'Failure',
+          message: 'folder not found',
+          code: 404,
+        });
+      }
 
-      const findParents = (parents: any[], folderUid?: string) => {
+      const findParents = (parents: Array<(typeof mockTree)[number]>, folderUid?: string) => {
         if (!folderUid) {
           return parents;
         }
@@ -74,7 +84,7 @@ const getFolderParentsHandler = () =>
 
         if (parent) {
           parents.push(parent);
-          return findParents(parents, parent.item.parentUID);
+          return findParents(parents, parent.item.kind === 'folder' ? parent.item.parentUID : undefined);
         }
         return parents;
       };
@@ -84,7 +94,7 @@ const getFolderParentsHandler = () =>
       const mapped = parents.map((parent) => ({
         name: parent.item.uid,
         title: parent.item.title,
-        parentUid: parent.item.parentUID,
+        parentUid: parent.item.kind === 'folder' ? parent.item.parentUID : undefined,
       }));
 
       if (folder) {
@@ -95,7 +105,6 @@ const getFolderParentsHandler = () =>
         });
       }
 
-      // TODO: Implement mock parent search logic
       return HttpResponse.json({
         kind: 'FolderInfoList',
         apiVersion: 'folder.grafana.app/v1beta1',
