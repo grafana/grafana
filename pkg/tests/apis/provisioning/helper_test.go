@@ -422,7 +422,7 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 		}
 
 		// Calculate new path for nested objects
-		newPath := path
+		var newPath string
 		if path != "" {
 			newPath = path + "/" + key
 		} else {
