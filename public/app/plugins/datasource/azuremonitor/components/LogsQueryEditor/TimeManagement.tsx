@@ -21,7 +21,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       const timeColumnsSet: Set<string> = new Set();
       const defaultColumnsMap: Map<string, SelectableValue> = new Map();
       const db = schema.database;
-      if (db) {
+      if (db && db.tables && db.tables.length > 0) {
         for (const table of db.tables) {
           const cols = table.columns.reduce<SelectableValue[]>((prev, curr, i) => {
             if (curr.type === 'datetime') {
@@ -40,28 +40,27 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
             });
           }
         }
-      }
-      setTimeColumns(timeColumnOptions);
-      const defaultColumns = Array.from(defaultColumnsMap.values());
-      setDefaultTimeColumns(defaultColumns);
-
-      // Set default value
-      if (
-        !query.azureLogAnalytics.timeColumn ||
-        (query.azureLogAnalytics.timeColumn &&
-          !timeColumnsSet.has(query.azureLogAnalytics.timeColumn) &&
-          !defaultColumnsMap.has(query.azureLogAnalytics.timeColumn))
-      ) {
-        if (defaultColumns && defaultColumns.length) {
-          setDefaultColumn(defaultColumns[0].value);
-          setDefaultColumn(defaultColumns[0].value);
-          return;
-        } else if (timeColumnOptions && timeColumnOptions.length) {
-          setDefaultColumn(timeColumnOptions[0].value);
-          return;
-        } else {
-          setDefaultColumn('TimeGenerated');
-          return;
+        setTimeColumns(timeColumnOptions);
+        const defaultColumns = Array.from(defaultColumnsMap.values());
+        setDefaultTimeColumns(defaultColumns);
+        // Set default value
+        if (
+          !query.azureLogAnalytics.timeColumn ||
+          (query.azureLogAnalytics.timeColumn &&
+            !timeColumnsSet.has(query.azureLogAnalytics.timeColumn) &&
+            !defaultColumnsMap.has(query.azureLogAnalytics.timeColumn))
+        ) {
+          if (defaultColumns && defaultColumns.length) {
+            setDefaultColumn(defaultColumns[0].value);
+            setDefaultColumn(defaultColumns[0].value);
+            return;
+          } else if (timeColumnOptions && timeColumnOptions.length) {
+            setDefaultColumn(timeColumnOptions[0].value);
+            return;
+          } else {
+            setDefaultColumn('TimeGenerated');
+            return;
+          }
         }
       }
     }
