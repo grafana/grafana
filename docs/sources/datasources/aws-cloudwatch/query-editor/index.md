@@ -17,7 +17,7 @@ labels:
     - oss
 menuTitle: Query editor
 title: Amazon CloudWatch query editor
-weight: 300
+weight: 200
 refs:
   query-transform-data:
     - pattern: /docs/grafana/

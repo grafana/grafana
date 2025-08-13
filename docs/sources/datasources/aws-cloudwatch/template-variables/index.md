@@ -16,7 +16,7 @@ labels:
     - oss
 menuTitle: Template variables
 title: CloudWatch template variables
-weight: 400
+weight: 300
 refs:
   variable-syntax:
     - pattern: /docs/grafana/

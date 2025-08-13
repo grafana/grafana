@@ -59,13 +59,15 @@ refs:
 
 # Configure the Amazon CloudWatch data source
 
-This document provides instructions for configuring the Amazon CLoudWatch data source and explains available configuration options. For general information on adding and managing data sources, refer to [Data source management](ref:data-source-management).
+This document provides instructions for configuring the Amazon CloudWatch data source and explains available configuration options. For general information on adding and managing data sources, refer to [Data source management](ref:data-source-management).
 
 ## Before you begin
 
-You must have the `Organization administrator` role to configure the Postgres data source. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+- You must have the `Organization administrator` role to configure the Postgres data source. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
-Grafana comes with a built-in CloudWatch data source plugin, eliminating the need to install a plugin.
+- Grafana comes with a built-in CloudWatch data source plugin, eliminating the need to install a plugin.
+
+- Familiarize yourself with your CloudWatch security configuration and gather any necessary security certificates, client certificates, and client keys.
 
 ## Add the CloudWatch data source
 
@@ -93,13 +95,10 @@ The IAM user or IAM role must have the associated policies to perform certain AP
 
 For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
 
-<!-- **Authentication:** - Specify which AWS credentials chain to use. A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
-The IAM user or IAM role must have the associated policies to perform certain API actions. -->
 
 | Setting         | Description                                                                                                                                     |
 |-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Authentication** | Specify which AWS credentials chain to use. A Grafana plugin's requests to AWS are made on behalf of an IAM role or IAM user. The IAM user or IAM role must have the necessary policies to perform the required API actions. |
-
 
 **Access & secret key:**
 
@@ -119,19 +118,7 @@ You must use both an access key ID AND secret access key to authenticate.
 | **Assume Role ARN** | _Optional._ Specify the ARN of an IAM role to assume. This ensures the selected authentication method is used to assume the role, not used directly. |
 | **External ID**     | If you're assuming a role in another AWS account that requires an external ID, specify it here.                                                      |
 
-<!-- Assume Role ARN:  *Optional*. Specifying the ARN of a role ensures that the selected authentication provider is used to assume the role rather than the credentials directly.
-
-External ID:  If you are assuming a role in another account that has been created with an external ID, specify it here.
-
-Enter the external ID if you're assuming a role in another AWS account that was configured to require one.  -->
-
 **Additional Settings:**
-
-<!-- Endpoint - _Optional_. Specify a custom endpoint for the AWS service.
-
-Default Region - Specify the AWS region. Example: If the region is US West (Oregon) use ` us-west-2 `.
-
-Namespaces of Custom Metrics - Add any namespace or namespaces. -->
 
 | Setting                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -156,8 +143,6 @@ Namespaces of Custom Metrics - Add any namespace or namespaces. -->
 
 To automatically create links in your logs when they include the `@xrayTraceId` field, connect an X-Ray data source in the "X-Ray trace link" section of the data source settings.
 
-<!-- To automatically add links in your logs when the log contains the `@xrayTraceId` field, link an X-Ray data source in the "X-Ray trace link" section of the data source configuration. -->
-
 {{< figure src="/static/img/docs/cloudwatch/xray-trace-link-configuration-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link configuration" >}}
 
 The data source select contains only existing data source instances of type X-Ray.
@@ -172,12 +157,7 @@ To provide the field to Grafana, your log queries must also contain the `@xrayTr
 
 {{< figure src="/static/img/docs/cloudwatch/xray-link-log-details-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link in log details" >}}
 
-<!-- ## Configure AWS authentication
 
-A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
-The IAM user or IAM role must have the associated policies to perform certain API actions.
-
-For authentication options and configuration details, refer to [AWS authentication](aws-authentication/). -->
 
 ### IAM policy examples
 
