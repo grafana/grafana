@@ -35,10 +35,7 @@ export class OptionsPaneItemDescriptor {
   props: OptionsPaneItemInfo;
 
   constructor(props: OptionsPaneItemInfo) {
-    this.props = { ...props, id: props.id ?? props.title };
-    if (this.props.id === '') {
-      this.props.id = uniqueId();
-    }
+    this.props = { ...props, id: props.id ?? uniqueId() };
   }
 
   render(searchQuery?: string) {
