@@ -151,6 +151,88 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 
+	t.Run("Resource ownership protection", func(t *testing.T) {
+		const firstRepo = "ownership-test-repo-1"
+		const secondRepo = "ownership-test-repo-2"
+		const testDashboard = "ownership-test-dashboard"
+		
+		// Create first repository  
+		firstRepoObj := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+			"Name":        firstRepo,
+			"SyncEnabled": false,
+			"SyncTarget":  "instance", 
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepoObj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		
+		// Create second repository
+		secondRepoObj := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+			"Name":        secondRepo,
+			"SyncEnabled": false,
+			"SyncTarget":  "instance",
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, secondRepoObj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		
+		// Create a test dashboard file and copy it to provisioning path
+		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "ownership-test-dashboard.json")
+		
+		t.Run("first repository can create dashboard", func(t *testing.T) {
+			// First repository creates the dashboard
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(firstRepo).
+				SubResource("files", "ownership-test-dashboard.json").
+				Body(helper.LoadFile("testdata/all-panels.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.NoError(t, result.Error(), "first repository should be able to create dashboard")
+		})
+		
+		t.Run("second repository cannot modify dashboard owned by first", func(t *testing.T) {
+			// Try to update the dashboard from the second repository - this should fail
+			result := helper.AdminREST.Put().
+				Namespace("default").
+				Resource("repositories").
+				Name(secondRepo).
+				SubResource("files", "ownership-test-dashboard.json").
+				Body(helper.LoadFile("testdata/all-panels.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			
+			require.Error(t, result.Error(), "second repository should not be able to modify dashboard owned by first")
+			
+			// Verify it's a BadRequest error with ownership message
+			var statusCode int
+			result.StatusCode(&statusCode)
+			require.Equal(t, http.StatusBadRequest, statusCode)
+			
+			errMsg := result.Error().Error()
+			require.Contains(t, errMsg, "is managed by")
+			require.Contains(t, errMsg, firstRepo)
+			require.Contains(t, errMsg, "cannot be modified by")
+			require.Contains(t, errMsg, secondRepo)
+		})
+		
+		t.Run("first repository can still modify its own dashboard", func(t *testing.T) {
+			// First repository should still be able to modify its own dashboard
+			result := helper.AdminREST.Put().
+				Namespace("default").
+				Resource("repositories").
+				Name(firstRepo).
+				SubResource("files", "ownership-test-dashboard.json").
+				Body(helper.LoadFile("testdata/all-panels.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.NoError(t, result.Error(), "first repository should still be able to modify its own dashboard")
+		})
+		
+		// Clean up
+		helper.Repositories.Resource.Delete(ctx, firstRepo, metav1.DeleteOptions{})
+		helper.Repositories.Resource.Delete(ctx, secondRepo, metav1.DeleteOptions{})
+	})
+
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{

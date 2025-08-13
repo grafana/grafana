@@ -121,6 +121,50 @@ type ParsedResource struct {
 	Errors []string
 }
 
+// checkOwnership validates that the requesting manager can modify the existing resource
+// This is a standalone function that can be used without a ResourcesManager instance
+func checkOwnership(existingResource *unstructured.Unstructured, resourceName string, requestingManager utils.ManagerProperties) error {
+	if existingResource == nil {
+		// Resource doesn't exist, so no ownership conflict
+		return nil
+	}
+
+	// Check if the existing resource has manager properties
+	existingMeta, err := utils.MetaAccessor(existingResource)
+	if err != nil {
+		// If we can't get metadata, allow the operation
+		return nil
+	}
+
+	currentManager, hasManager := existingMeta.GetManagerProperties()
+	if !hasManager {
+		// No manager information, so no ownership conflict
+		return nil
+	}
+
+	// Check if this is the same manager
+	if currentManager.Kind == requestingManager.Kind && currentManager.Identity == requestingManager.Identity {
+		// Same manager, no conflict
+		return nil
+	}
+
+	// Check if the current manager allows edits
+	if currentManager.AllowsEdits {
+		// Manager allows edits from others, no conflict
+		return nil
+	}
+
+	// Different manager and edits not allowed - return ownership conflict error
+	message := fmt.Sprintf("resource '%s' is managed by %s '%s' and cannot be modified by %s '%s'",
+		resourceName,
+		currentManager.Kind,
+		currentManager.Identity,
+		requestingManager.Kind,
+		requestingManager.Identity)
+	
+	return apierrors.NewBadRequest(message)
+}
+
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
 	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
@@ -211,6 +255,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	return parsed, nil
 }
 
+
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
 		return nil // this already ran (and helpful for testing)
@@ -235,6 +280,18 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	// FIXME: shouldn't we check for the specific error?
 	// Dry run CREATE or UPDATE
 	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+	
+	// Check for ownership conflicts after fetching existing resource
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: f.Repo.Name,
+	}
+	
+	// Check for ownership conflicts after fetching existing resource
+	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		return err
+	}
+	
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
@@ -257,6 +314,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to find client")
 	}
 
+
 	// Always use the provisioning identity when writing
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
 	if err != nil {
@@ -266,6 +324,22 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	fieldValidation := "Strict"
 	if f.GVR == DashboardResource {
 		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
+	// Check for ownership conflicts
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: f.Repo.Name,
+	}
+	
+	// If we don't have existing resource from DryRun, fetch it now
+	if f.DryRunResponse == nil {
+		f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+	}
+	
+	// Check ownership with the existing resource (if any)
+	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		return err
 	}
 
 	// If we have already tried loading existing, start with create

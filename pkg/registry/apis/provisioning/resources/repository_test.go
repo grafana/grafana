@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 func TestRepositoryResources_FindResourcePath(t *testing.T) {
@@ -435,3 +437,166 @@ func (m *MockDynamicResourceInterface) ApplyStatus(ctx context.Context, name str
 
 // Ensure MockDynamicResourceInterface implements dynamic.ResourceInterface
 var _ dynamic.ResourceInterface = (*MockDynamicResourceInterface)(nil)
+
+func TestResourcesManager_checkResourceOwnership(t *testing.T) {
+	tests := []struct {
+		name             string
+		existingResource *unstructured.Unstructured
+		requestingManager utils.ManagerProperties
+		getError         error
+		expectError      bool
+		expectedMessage  string
+	}{
+		{
+			name: "no existing resource - allow operation",
+			getError: apierrors.NewNotFound(schema.GroupResource{
+				Group: "dashboard.grafana.app",
+				Resource: "dashboards",
+			}, "test-resource"),
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "existing resource with no manager - allow operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "same manager - allow operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     "repo",
+							utils.AnnoKeyManagerIdentity: "repo-1",
+						},
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "different manager but allows edits - allow operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:        "repo",
+							utils.AnnoKeyManagerIdentity:    "repo-1",
+							utils.AnnoKeyManagerAllowsEdits: "true",
+						},
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-2",
+			},
+			expectError: false,
+		},
+		{
+			name: "different manager and doesn't allow edits - deny operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     "repo",
+							utils.AnnoKeyManagerIdentity: "repo-1",
+						},
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-2",
+			},
+			expectError: true,
+			expectedMessage: "resource 'test-resource' is managed by repo 'repo-1' and cannot be modified by repo 'repo-2'",
+		},
+		{
+			name: "different manager types - deny operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     "terraform",
+							utils.AnnoKeyManagerIdentity: "tf-stack-1",
+						},
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: true,
+			expectedMessage: "resource 'test-resource' is managed by terraform 'tf-stack-1' and cannot be modified by repo 'repo-1'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mocks
+			mockClients := NewMockResourceClients(t)
+			mockClient := &MockDynamicResourceInterface{}
+			
+			// Create test object
+			obj := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "dashboard.grafana.app/v1alpha1",
+					"kind":       "Dashboard",
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+					},
+				},
+			}
+
+			// Set up mock expectations
+			mockClients.EXPECT().ForKind(mock.AnythingOfType("schema.GroupVersionKind")).Return(
+				mockClient, schema.GroupVersionResource{}, nil)
+			
+			mockClient.On("Get", mock.Anything, "test-resource", mock.Anything, mock.Anything).Return(
+				tt.existingResource, tt.getError)
+
+			// Create simple mock repository (no Config() expectation needed for this test)
+			mockRepo := repository.NewMockReaderWriter(t) 
+			manager := NewResourcesManager(mockRepo, nil, nil, mockClients)
+
+			// Test the ownership check directly
+			ctx := context.Background()
+			err := manager.checkResourceOwnership(ctx, obj, tt.requestingManager)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedMessage)
+				assert.True(t, apierrors.IsBadRequest(err))
+			} else {
+				require.NoError(t, err)
+			}
+			
+			// Assert mock expectations
+			mockClient.AssertExpectations(t)
+		})
+	}
+}

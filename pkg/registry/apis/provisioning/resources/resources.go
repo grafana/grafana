@@ -25,6 +25,19 @@ var (
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
 
+// NewResourceOwnershipConflictError creates a BadRequest error for when a resource
+// is owned by a different repository or manager and cannot be modified
+func NewResourceOwnershipConflictError(resourceName string, currentManager utils.ManagerProperties, requestingManager utils.ManagerProperties) error {
+	message := fmt.Sprintf("resource '%s' is managed by %s '%s' and cannot be modified by %s '%s'",
+		resourceName,
+		currentManager.Kind,
+		currentManager.Identity,
+		requestingManager.Kind,
+		requestingManager.Identity)
+	
+	return apierrors.NewBadRequest(message)
+}
+
 type WriteOptions struct {
 	Path string
 	Ref  string
@@ -54,6 +67,46 @@ func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, p
 	}
 }
 
+// CheckResourceOwnership validates that the requesting manager can modify the existing resource
+// Returns an error if the existing resource is owned by a different manager that doesn't allow edits
+// If existingResource is nil, no ownership conflict exists (new resource)
+// This is a package-level function that can be used without a ResourcesManager instance
+func CheckResourceOwnership(existingResource *unstructured.Unstructured, resourceName string, requestingManager utils.ManagerProperties) error {
+	if existingResource == nil {
+		// Resource doesn't exist, so no ownership conflict
+		return nil
+	}
+
+	// Check if the existing resource has manager properties
+	existingMeta, err := utils.MetaAccessor(existingResource)
+	if err != nil {
+		// If we can't get metadata, allow the operation
+		return nil
+	}
+
+	currentManager, hasManager := existingMeta.GetManagerProperties()
+	if !hasManager {
+		// No manager information, so no ownership conflict
+		return nil
+	}
+
+	// Check if this is the same manager
+	if currentManager.Kind == requestingManager.Kind && currentManager.Identity == requestingManager.Identity {
+		// Same manager, no conflict
+		return nil
+	}
+
+	// Check if the current manager allows edits
+	if currentManager.AllowsEdits {
+		// Manager allows edits from others, no conflict
+		return nil
+	}
+
+	// Different manager and edits not allowed - return ownership conflict error
+	return NewResourceOwnershipConflictError(resourceName, currentManager, requestingManager)
+}
+
+
 // CreateResource writes an object to the repository
 func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
 	if err := ctx.Err(); err != nil {
@@ -80,6 +133,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	if name == "" {
 		return "", ErrMissingName
 	}
+
 
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how should we handle this?
@@ -154,6 +208,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, ErrMissingName
 	}
+
 
 	// Check if the resource already exists
 	id := resourceID{
