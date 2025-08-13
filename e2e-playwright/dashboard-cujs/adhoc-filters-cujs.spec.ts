@@ -47,6 +47,8 @@ test.describe(
       await test.step('1.Apply filtering to a whole dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
+        await page.waitForTimeout(500);
+
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
         if (!USE_LIVE_DATA) {
