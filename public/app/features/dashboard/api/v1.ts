@@ -18,6 +18,7 @@ import {
   AnnoKeySourcePath,
   AnnoKeyManagerAllowsEdits,
   ManagerKind,
+  AnnoReloadOnParamsChange,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -140,6 +141,12 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
         },
       };
+
+      /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
+      /** Not intended to be used in production, we will be removing this in short-term future */
+      if (dash.metadata.annotations?.[AnnoReloadOnParamsChange]) {
+        result.meta.reloadOnParamsChange = true;
+      }
 
       const annotations = dash.metadata.annotations ?? {};
       const managerKind = annotations[AnnoKeyManagerKind];
