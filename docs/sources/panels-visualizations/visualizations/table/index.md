@@ -155,7 +155,7 @@ To filter column values, follow these steps:
 
    Grafana displays the filter options for that column.
 
-   {{< figure src="/static/img/docs/tables/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" class="docs-image--no-shadow" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
 
 1. Click the checkbox next to the values that you want to display or click **Select all**.
 1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
