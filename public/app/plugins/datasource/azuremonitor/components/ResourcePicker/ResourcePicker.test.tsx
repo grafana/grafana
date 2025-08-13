@@ -450,26 +450,28 @@ describe('AzureMonitor ResourcePicker', () => {
       expect(locationFilter).toBeInTheDocument();
     });
 
+    // Combobox tests seem to be quite finnicky when it comes to selecting options
+    // I've had to add multiple {ArrowDown} key-presses as sometimes the expected option isn't
+    // at the top of the list
     it('should call fetchFiltered when subscription filter changes', async () => {
+      const user = userEvent.setup();
       const mockFetchFiltered = jest.spyOn(resourcePickerData, 'fetchFiltered');
 
       await act(async () => render(<ResourcePicker {...defaultProps} />));
 
+      const subscriptionFilter = await screen.getByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.subscription.input
+      );
       await act(async () => {
-        const subscriptionFilter = await screen.getByTestId(
-          selectors.components.queryEditor.resourcePicker.filters.subscription.input
-        );
-
-        await userEvent.click(subscriptionFilter);
-
-        await userEvent.type(subscriptionFilter, 'Primary Subscription{ArrowDown}{ArrowDown}{Enter}');
+        await user.click(subscriptionFilter);
+        await user.type(subscriptionFilter, 'Primary Subscription {ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
       });
 
       await waitFor(() => {
         expect(mockFetchFiltered).toHaveBeenCalledWith(
           'logs',
           expect.objectContaining({
-            subscriptions: ['def-123'],
+            subscriptions: ['def-456'],
             types: [],
             locations: [],
           })
@@ -483,16 +485,13 @@ describe('AzureMonitor ResourcePicker', () => {
 
       await act(async () => render(<ResourcePicker {...defaultProps} />));
 
+      const locationFilter = await screen.getByTestId(
+        selectors.components.queryEditor.resourcePicker.filters.location.input
+      );
       await act(async () => {
-        const locationFilter = await screen.getByTestId(
-          selectors.components.queryEditor.resourcePicker.filters.location.input
-        );
-
         await user.click(locationFilter);
-
-        await userEvent.type(locationFilter, 'North Europe{ArrowDown}{ArrowDown}{Enter}');
-        // await userEvent.keyboard('');
       });
+      await user.type(locationFilter, 'North Europe{ArrowDown}{Enter}');
 
       await waitFor(() => {
         expect(mockFetchFiltered).toHaveBeenCalledWith(
@@ -513,14 +512,12 @@ describe('AzureMonitor ResourcePicker', () => {
 
       await act(async () => render(<ResourcePicker {...metricsProps} />));
 
+      const typeFilter = await screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
       await act(async () => {
-        const typeFilter = await screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
-
         await user.click(typeFilter);
-
-        await userEvent.type(typeFilter, 'Kubernetes services {ArrowDown}{ArrowDown}{Enter}');
       });
 
+      await user.type(typeFilter, 'Kubernetes services {ArrowDown}{Enter}');
       await waitFor(() => {
         expect(mockFetchFiltered).toHaveBeenCalledWith(
           'metrics',
