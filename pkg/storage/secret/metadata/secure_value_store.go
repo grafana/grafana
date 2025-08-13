@@ -55,13 +55,14 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 	defer span.End()
 
 	defer func() {
+		success := svmCreateErr == nil
+
 		args := []any{
 			"name", name,
 			"namespace", namespace,
 			"actorUID", actorUID,
 		}
 
-		success := svmCreateErr == nil
 		args = append(args, "success", success)
 		if !success {
 			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Create failed")
@@ -72,7 +73,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Create", args...)
 
 		s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueMetadataCreateCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	// Set inside the transaction callback
@@ -265,10 +265,22 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	defer span.End()
 
 	defer func() {
-		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", "namespace", namespace, "name", name, "success", readErr == nil, "error", readErr)
+		success := readErr == nil
 
-		s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
-		s.metrics.SecureValueMetadataGetCount.Inc()
+		args := []any{
+			"name", name,
+			"namespace", namespace.String(),
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Read failed")
+			span.RecordError(readErr)
+			args = append(args, "error", readErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", args...)
+		s.metrics.SecureValueMetadataGetDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	secureValue, err := s.readActiveVersion(ctx, namespace, name, opts)
@@ -284,7 +296,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	return secureValueKub, nil
 }
 
-func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv1beta1.SecureValue, error error) {
+func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv1beta1.SecureValue, listErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.List", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -292,7 +304,23 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	defer span.End()
 
 	defer func() {
+		success := listErr == nil
 		span.SetAttributes(attribute.Int("returnedList.count", len(svList)))
+
+		args := []any{
+			"namespace", namespace.String(),
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.List failed")
+			span.RecordError(listErr)
+			args = append(args, "error", listErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.List", args...)
+
+		s.metrics.SecureValueMetadataListDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	req := listSecureValue{
@@ -343,9 +371,6 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
-
-	s.metrics.SecureValueMetadataListDuration.Observe(time.Since(start).Seconds())
-	s.metrics.SecureValueMetadataListCount.Inc()
 
 	return secureValues, nil
 }
@@ -423,7 +448,7 @@ func (s *secureValueMetadataStorage) SetVersionToInactive(ctx context.Context, n
 	return nil
 }
 
-func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID contracts.ExternalID) error {
+func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID contracts.ExternalID) (setExtIDErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetExternalID", trace.WithAttributes(
 		attribute.String("name", name),
@@ -431,7 +456,28 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 		attribute.String("externalID", externalID.String()),
 		attribute.Int64("version", version),
 	))
+
 	defer span.End()
+
+	defer func() {
+		success := setExtIDErr == nil
+		args := []any{
+			"name", name,
+			"namespace", namespace.String(),
+			"success", success,
+			"version", strconv.FormatInt(version, 10),
+			"externalID", externalID.String(),
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.SetExternalID failed")
+			span.RecordError(setExtIDErr)
+			args = append(args, "error", setExtIDErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.SetExternalID", args...)
+		s.metrics.SecureValueSetExternalIDDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
 
 	req := updateExternalIdSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
@@ -459,7 +505,6 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	if modifiedCount > 1 {
 		return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
 	}
-	s.metrics.SecureValueSetExternalIDDuration.Observe(time.Since(start).Seconds())
 
 	return nil
 }
