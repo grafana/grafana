@@ -91,7 +91,7 @@ The most common way to install a plugin is through the Grafana UI.
 1. Click **Install**.
 
 {{< admonition type="note" >}}
-To see additional ways to install plugins refer to [Install a plugin](/plugin-install).
+To see additional ways to install plugins refer to [Install a plugin](plugin-install).
 {{< /admonition >}}
 
 ### Update a plugin
@@ -118,21 +118,21 @@ When the update is complete, a confirmation message will indicate the installati
 
 ### Verify your plugins
 
-Plugin signature verification, also known as _signing_, is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned. Read more in [Plugin signatures](/plugin-sign).
+Plugin signature verification, also known as _signing_, is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned. Read more in [Plugin signatures](plugin-sign).
 
 ## Advanced options
 
 ### Customize navigation placement of plugin pages
 
-You can relocate app plugin pages to customize the navigation menu structure, as explained in [Customize navigation placement of plugin pages](/customize-navigation-placement-of-plugin-pages).
+You can relocate app plugin pages to customize the navigation menu structure, as explained in [Customize navigation placement of plugin pages](customize-navigation-placement-of-plugin-pages).
 
 ### Integrate plugins
 
-You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. See how in [Integrate your plugins](/plugin-integrate).
+You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. See how in [Integrate your plugins](plugin-integrate).
 
 ### Isolate plugin code with the Frontend Sandbox
 
-You can use the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox) to securely isolate plugin frontend code from the main Grafana application.
+You can use the [Plugin Frontend Sandbox](isolate-plugin-code-with-the-plugin-frontend-sandbox) to securely isolate plugin frontend code from the main Grafana application.
 
 ### Learn more
 
