@@ -24,11 +24,11 @@ Read on for an overview on how to get started with plugins:
 - There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
 - Learn [how to install](#install-a-plugin), [update](#update-a-plugin) and [verify](#verify-your-plugins) your plugins.
 
-Advanced functionalities allow you to:
+[Advanced options](#advanced-options) allow you to:
 
-- [Customize where app plugin pages appear](/customize-navigation-placement-of-plugin-pages) in the navigation menu.
-- [Configure backend communication](#integrate-plugins) between installed plugins.
-- Improve security by isolating plugins with the [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox).
+- Customize where app plugin pages appear in the navigation menu.
+- Configure backend communication between installed plugins.
+- Improve security by isolating plugins with the Plugin Frontend Sandbox.
 
 ## Plugin catalog
 
@@ -67,7 +67,7 @@ Grafana supports three types of plugins:
 - [Data sources](/grafana/plugins/data-source-plugins) - These plugins allow you to pull data from various data sources such as databases, APIs, log files, and so on, and display it in the form of graphs, charts, and dashboards in Grafana.
 - [Apps](/grafana/plugins/app-plugins) - These plugins enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
 
-Read more in [Types of plugins](/plugin-types).
+Read more in [Types of plugins](plugin-types).
 
 ### Browse plugins
 
