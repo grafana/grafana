@@ -998,4 +998,8 @@ const (
 	// FlagUnifiedStorageSearchAfterWriteExperimentalAPI
 	// Enable experimental search-after-write guarantees to unified-storage search endpoints
 	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
+
+	// FlagTeamFolders
+	// Enables team folders functionality
+	FlagTeamFolders = "teamFolders"
 )
