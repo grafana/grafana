@@ -227,6 +227,7 @@
       "select-resource": "Select a resource"
     },
     "resource-picker": {
+      "browse-tab": "Browse",
       "button-apply": "Apply",
       "button-cancel": "Cancel",
       "header-location": "Location",
@@ -234,6 +235,7 @@
       "header-type": "Type",
       "heading-selection": "Selection",
       "locations-filter": "Locations",
+      "recent-tab": "Recent",
       "result-limit": "Showing first {{numResults}} results",
       "subscriptions-filter": "Subscriptions",
       "text-loading": "Loading...",

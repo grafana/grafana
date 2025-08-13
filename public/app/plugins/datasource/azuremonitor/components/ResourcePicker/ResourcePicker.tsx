@@ -517,13 +517,13 @@ const ResourcePicker = ({
               <TabsBar>
                 <Tab
                   key={'picker'}
-                  label={t('test', 'Browse')}
+                  label={t('components.resource-picker.browse-tab', 'Browse')}
                   active={view === 'picker'}
                   onChangeTab={() => setView('picker')}
                 />
                 <Tab
                   key={'recent'}
-                  label={t('test', 'Recent')}
+                  label={t('components.resource-picker.recent-tab', 'Recent')}
                   active={view === 'recent'}
                   onChangeTab={() => {
                     reportInteraction('grafana_ds_azuremonitor_resource_picker_recent_used', {
