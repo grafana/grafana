@@ -39,7 +39,7 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
   };
 
   if (job) {
-    return <JobStatus watch={job} />;
+    return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" />;
   }
 
   return (

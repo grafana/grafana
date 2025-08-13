@@ -8,15 +8,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretV1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 )
 
 type decryptedValues struct {
-	token         *secretv1beta1.ExposedSecureValue
-	webhookSecret *secretv1beta1.ExposedSecureValue
+	token         *secretV1beta1.ExposedSecureValue
+	webhookSecret *secretV1beta1.ExposedSecureValue
 }
 
+// decrypt resolves the inline names into decrypted values for token+webhookSecret.
+// eventually this will be supplied by the app-sdk so that each consumer does not need to manage decryption explicitly
 func decrypt(ctx context.Context, r *provisioning.Repository, decryptSvc secret.DecryptService) (*decryptedValues, error) {
 	results, err := decryptSvc.Decrypt(ctx, provisioning.GROUP, r.Namespace,
 		r.Secure.Token.Name,
@@ -27,7 +29,7 @@ func decrypt(ctx context.Context, r *provisioning.Repository, decryptSvc secret.
 	}
 
 	// Get the
-	getValue := func(path, name string) (*secretv1beta1.ExposedSecureValue, error) {
+	getValue := func(path, name string) (*secretV1beta1.ExposedSecureValue, error) {
 		if name == "" {
 			return nil, nil
 		}
@@ -49,7 +51,7 @@ func decrypt(ctx context.Context, r *provisioning.Repository, decryptSvc secret.
 			Status:  metav1.StatusFailure,
 			Code:    http.StatusPreconditionFailed,
 			Reason:  metav1.StatusReasonStoreReadError,
-			Message: "Error reading secret",
+			Message: "Unable to read secret: " + path,
 			Details: &metav1.StatusDetails{
 				Causes: []metav1.StatusCause{cause},
 			},

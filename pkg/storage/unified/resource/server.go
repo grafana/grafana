@@ -481,9 +481,12 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 	if len(secure) > 0 {
-		found := make(map[string]bool, len(secure))
+		if s.secure == nil {
+			return nil, NewBadRequestError("secure storage not configured")
+		}
 
 		// Make sure the secure values are safe to save (just in case)
+		found := make(map[string]bool, len(secure))
 		for _, v := range secure {
 			if !v.Create.IsZero() {
 				return nil, NewBadRequestError("unable to create values in unified storage")
@@ -495,9 +498,6 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 				return nil, NewBadRequestError("secure value requires name")
 			}
 			found[v.Name] = true
-		}
-		if s.secure == nil {
-			return nil, AsErrorResult(fmt.Errorf("secure value store not configured"))
 		}
 
 		// The "CanReference" check exists to avoid writing references to secrets
