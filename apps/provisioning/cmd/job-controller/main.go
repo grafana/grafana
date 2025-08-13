@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -112,7 +113,21 @@ func runJobController(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create job controller: %w", err)
 	}
-	_ = jobController // notifications are consumed by the in-process driver in monolith; here we only emit
+
+	// TODO: Wire notifications into a ConcurrentJobDriver when a client-backed Store and Workers are available.
+	// For now, just log notifications to verify events end-to-end.
+	logger := logging.DefaultLogger.With("logger", "provisioning-job-controller")
+	notifications := jobController.InsertNotifications()
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-notifications:
+				logger.Info("job create notification received")
+			}
+		}
+	}()
 
 	// Optionally enable history cleanup if a positive expiration is provided
 	historyExpiration := c.Duration("history-expiration")
@@ -132,6 +147,7 @@ func runJobController(c *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to create history job controller: %w", err)
 		}
+		logger.Info("history cleanup enabled", "expiration", historyExpiration.String())
 		startHistoryInformers = func() { historyInformerFactory.Start(ctx.Done()) }
 	} else {
 		startHistoryInformers = func() {}

@@ -1,5 +1,10 @@
 # Jobs Controller
 
+> [!WARNING]
+> This controller has current limitations:
+> - This binary does not start the ConcurrentJobDriver yet. Notifications are logged but not consumed by workers here.
+> - Job processing (claim/renew/update/complete) isn't implemented yet as it requires refactoring of some components.
+
 ### Behavior
 - Watches provisioning `Jobs` and emits notifications on job creation.
 - Optionally cleans up `HistoricJobs` after a configurable expiration. Disable when job history is stored in Loki.
