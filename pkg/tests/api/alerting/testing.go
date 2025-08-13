@@ -287,8 +287,7 @@ func (a apiClient) ReloadCachedPermissions(t *testing.T) {
 		_ = resp.Body.Close()
 	}()
 	require.NoErrorf(t, err, "failed to reload permissions cache")
-	require.Equalf(t, http.StatusOK, resp.StatusCode,
-		"failed to reload permissions cache")
+	require.Equalf(t, http.StatusOK, resp.StatusCode, "failed to reload permissions cache")
 }
 
 // AssignReceiverPermission sends a request to access control API to assign permissions to a user, role, or team on a receiver.
@@ -330,6 +329,10 @@ func (a apiClient) AssignReceiverPermission(t *testing.T, receiverUID string, cm
 // CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
 func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUID ...string) {
 	t.Helper()
+
+	// Ensure permissions are loaded before attempting folder creation
+	a.ReloadCachedPermissions(t)
+
 	cmd := folder.CreateFolderCommand{
 		UID:   uID,
 		Title: title,
@@ -343,41 +346,14 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUI
 
 	payload := string(blob)
 	u := fmt.Sprintf("%s/api/folders", a.url)
-
-	// Retry logic to handle permission cache race conditions
-	maxRetries := 3
-	baseDelay := 100 * time.Millisecond
-
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		r := strings.NewReader(payload)
-		// nolint:gosec
-		resp, err := http.Post(u, "application/json", r)
-		if err != nil {
-			require.NoError(t, err) // Fail immediately on network errors
-		}
-
-		defer func() {
-			require.NoError(t, resp.Body.Close())
-		}()
-
-		if resp.StatusCode == http.StatusOK {
-			// Success! Reload cache and return
-			a.ReloadCachedPermissions(t)
-			return
-		}
-
-		if resp.StatusCode == http.StatusForbidden && attempt < maxRetries-1 {
-			// 403 error, likely a cache race condition - retry after delay
-			t.Logf("CreateFolder attempt %d failed with 403, retrying after delay...", attempt+1)
-			a.ReloadCachedPermissions(t)                      // Force cache reload
-			time.Sleep(baseDelay * time.Duration(1<<attempt)) // Exponential backoff
-			continue
-		}
-
-		// For any other error or final attempt, fail the test
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		return
-	}
+	r := strings.NewReader(payload)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", r)
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func (a apiClient) ReloadAlertingFileProvisioning(t *testing.T) {
