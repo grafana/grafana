@@ -1,7 +1,9 @@
 package search
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -340,6 +342,13 @@ func (b *bleveBackend) BuildIndex(
 		}
 	} else {
 		logWithDetails.Info("Skipping index build, using existing index")
+
+		idx.resourceVersion, err = getRV(index)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to get RV from bleve index: %w", err)
+		}
+
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexBuildSkipped.Inc()
 		}
@@ -580,7 +589,47 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		}
 	}
 
-	return b.index.Batch(batch)
+	err := b.index.Batch(batch)
+	if err != nil {
+		return err
+	}
+
+	err = b.updateResourceVersion(req.ResourceVersion)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var internalRVKey = []byte("rv")
+
+func (b *bleveIndex) updateResourceVersion(rv int64) error {
+	b.resourceVersion = rv
+
+	return setRV(b.index, rv)
+}
+
+func setRV(index bleve.Index, rv int64) error {
+	var buf bytes.Buffer
+	err := binary.Write(&buf, binary.BigEndian, rv)
+	if err != nil {
+		return err
+	}
+	return index.SetInternal(internalRVKey, buf.Bytes())
+}
+
+func getRV(index bleve.Index) (int64, error) {
+	raw, err := index.GetInternal(internalRVKey)
+	if err != nil {
+		return 0, err
+	}
+	var rv int64
+	count, err := binary.Decode(raw, binary.BigEndian, &rv)
+	if count == 8 && err == nil {
+		return rv, nil
+	}
+	return 0, err
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
