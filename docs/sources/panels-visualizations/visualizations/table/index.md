@@ -197,7 +197,6 @@ This option is only available when you're editing the panel.
 
 ### Table options
 
-<!-- prettier-ignore-start -->
 | Option               | Description                                               |
 | -------------------- | --------------------------------------------------------- |
 | Show table header    | Show or hide column names imported from your data source. |
@@ -207,7 +206,7 @@ This option is only available when you're editing the panel.
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**. |
 | Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
-<!-- prettier-ignore-end -->
+
 
 ### Table footer options
 
