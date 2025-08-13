@@ -383,13 +383,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const {
-      query,
-      hideHideQueryButton: hideHideQueryButton = false,
-      onReplace,
-      onQueryReplacedFromLibrary,
-      queryLibraryRef,
-    } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -612,7 +606,13 @@ function MaybeQueryLibrarySaveButton(props: {
   onSelectQuery: (query: DataQuery) => void;
 }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app, props.queryLibraryRef, props.onUpdateSuccess, props.onSelectQuery);
+  return renderSaveQueryButton(
+    props.query,
+    props.app,
+    props.queryLibraryRef,
+    props.onUpdateSuccess,
+    props.onSelectQuery
+  );
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {

@@ -107,9 +107,12 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
 
     // Open drawer with the original query highlighted
     if (originalQueryRef) {
-      openDrawer([], () => {}, {
-        context: 'explore',
-        highlightQuery: originalQueryRef,
+      openDrawer({
+        datasourceFilters: [],
+        options: {
+          context: 'explore',
+          highlightQuery: originalQueryRef,
+        },
       });
     }
   };
