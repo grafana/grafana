@@ -195,6 +195,7 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
     width: 'inherit',
   }),
   tooltipCaret: css({
+    cursor: 'pointer',
     position: 'absolute',
     top: theme.spacing(0.25),
     [textAlign === 'right' ? 'right' : 'left']: theme.spacing(0.25),
