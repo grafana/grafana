@@ -3,8 +3,9 @@ import { byRole, byTestId } from 'testing-library-selector';
 
 import { ComponentTypeWithExtensionMeta, PluginExtensionComponentMeta, PluginExtensionTypes } from '@grafana/data';
 import { config, locationService, setPluginComponentsHook } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../Analytics';
@@ -12,8 +13,8 @@ import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
-// Mock contextSrv before importing the component since permission check happens at module level
-jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+// Grant permission before importing the component since permission check happens at module level
+grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
 
 let mockFilterState: RulesFilterType = {
   ruleName: '',
