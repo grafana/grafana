@@ -1,10 +1,11 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks } from '@grafana/runtime';
-import { Button, Dropdown, LinkButton, Menu, Icon } from '@grafana/ui';
+import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv } from '@grafana/runtime';
+import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
+import { useToggleFavoriteDatasource } from '../hooks';
 import { useDataSource } from '../state/hooks';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
@@ -15,7 +16,15 @@ interface Props {
 
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
+  const dataSourceInstance = getDataSourceSrv().getInstanceSettings(uid);
   const hasExploreRights = contextSrv.hasAccessToExplore();
+
+  // Favorite datasources functionality
+  const favoriteDataSourcesHook = config.featureToggles.favoriteDatasources ? useFavoriteDatasources() : null;
+  const isFavoriteDatasource = favoriteDataSourcesHook?.isFavoriteDatasource;
+  const toggleFavoriteDatasource = favoriteDataSourcesHook
+    ? useToggleFavoriteDatasource(favoriteDataSourcesHook)
+    : undefined;
 
   // Fetch plugin extension links
   const { links: allLinks, isLoading } = usePluginLinks({
@@ -62,6 +71,17 @@ export function EditDataSourceActions({ uid }: Props) {
 
   return (
     <>
+      {toggleFavoriteDatasource && dataSourceInstance && !dataSourceInstance.meta.builtIn && (
+        <IconButton
+          name={isFavoriteDatasource?.(dataSourceInstance.uid) ? 'favorite' : 'star'}
+          onClick={() => toggleFavoriteDatasource(dataSourceInstance)}
+          tooltip={
+            isFavoriteDatasource?.(dataSourceInstance.uid)
+              ? t('datasources.edit-data-source-actions.remove-favorite', 'Remove from favorites')
+              : t('datasources.edit-data-source-actions.add-favorite', 'Add to favorites')
+          }
+        />
+      )}
       {hasExploreRights && (
         <>
           {!hasActions ? (

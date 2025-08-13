@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useRef } from 'react';
+import { useRef } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
@@ -9,7 +9,12 @@ import { Trans } from '@grafana/i18n';
 import { config, getTemplateSrv, useFavoriteDatasources } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
+import {
+  useDatasources,
+  useKeyboardNavigatableList,
+  useRecentlyUsedDataSources,
+  useToggleFavoriteDatasource,
+} from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
@@ -78,22 +83,9 @@ export function DataSourceList(props: DataSourceListProps) {
   const favoriteDataSourcesHook = config.featureToggles.favoriteDatasources ? useFavoriteDatasources() : null;
   const storedFavoriteDataSources = favoriteDataSourcesHook?.initialFavoriteDataSources;
   const isFavoriteDatasource = favoriteDataSourcesHook?.isFavoriteDatasource;
-
-  const toggleFavoriteDatasource = useCallback(
-    (ds: DataSourceInstanceSettings) => {
-      if (!favoriteDataSourcesHook) {
-        return;
-      }
-      const { isFavoriteDatasource, addFavoriteDatasource, removeFavoriteDatasource } = favoriteDataSourcesHook;
-
-      if (isFavoriteDatasource(ds.uid)) {
-        removeFavoriteDatasource(ds);
-      } else {
-        addFavoriteDatasource(ds);
-      }
-    },
-    [favoriteDataSourcesHook]
-  );
+  const toggleFavoriteDatasource = favoriteDataSourcesHook
+    ? useToggleFavoriteDatasource(favoriteDataSourcesHook)
+    : undefined;
 
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
