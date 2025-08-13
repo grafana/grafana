@@ -1,7 +1,8 @@
 import { PureComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { LinkButton, FilterInput, InlineField } from '@grafana/ui';
+import { LinkButton, FilterInput, InlineField, Checkbox } from '@grafana/ui';
+import { FavoritesCheckbox } from 'app/features/datasources/components/DataSourcesList';
 
 import { SortPicker } from '../Select/SortPicker';
 
@@ -16,6 +17,7 @@ export interface Props {
     value?: string;
     getSortOptions?: () => Promise<SelectableValue[]>;
   };
+  favoritesCheckbox?: FavoritesCheckbox;
 }
 
 export default class PageActionBar extends PureComponent<Props> {
@@ -27,6 +29,7 @@ export default class PageActionBar extends PureComponent<Props> {
       target,
       placeholder = 'Search by name or type',
       sortPicker,
+      favoritesCheckbox,
     } = this.props;
     const linkProps: Omit<Parameters<typeof LinkButton>[0], 'children'> = {
       href: linkButton?.href,
@@ -38,10 +41,17 @@ export default class PageActionBar extends PureComponent<Props> {
     }
 
     return (
-      <div className="page-action-bar">
+      <div className="page-action-bar" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <InlineField grow>
           <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={placeholder} />
         </InlineField>
+        {favoritesCheckbox && (
+          <Checkbox
+            label={favoritesCheckbox.label}
+            value={favoritesCheckbox.value}
+            onChange={(event) => favoritesCheckbox.onChange(event.currentTarget.checked)}
+          />
+        )}
         {sortPicker && (
           <SortPicker
             onChange={sortPicker.onChange}

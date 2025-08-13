@@ -9,6 +9,8 @@ import { setDataSourcesSearchQuery, setIsSortAscending } from '../state/reducers
 import { getDataSourcesSearchQuery, getDataSourcesSort } from '../state/selectors';
 import { trackDsSearched } from '../tracking';
 
+import { FavoritesCheckbox } from './DataSourcesList';
+
 const ascendingSortValue = 'alpha-asc';
 const descendingSortValue = 'alpha-desc';
 
@@ -20,8 +22,13 @@ const sortOptions = [
   { label: 'Sort by Z–A', value: descendingSortValue },
 ];
 
-export function DataSourcesListHeader() {
+export interface DataSourcesListHeaderProps {
+  favoritesCheckbox?: FavoritesCheckbox;
+}
+
+export function DataSourcesListHeader({ favoritesCheckbox }: DataSourcesListHeaderProps = {}) {
   const dispatch = useDispatch();
+
   const debouncedTrackSearch = useMemo(
     () =>
       debounce((q) => {
@@ -54,6 +61,12 @@ export function DataSourcesListHeader() {
   };
 
   return (
-    <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} key="action-bar" sortPicker={sortPicker} />
+    <PageActionBar
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      key="action-bar"
+      sortPicker={sortPicker}
+      favoritesCheckbox={favoritesCheckbox}
+    />
   );
 }
