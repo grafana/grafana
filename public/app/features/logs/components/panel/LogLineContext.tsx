@@ -102,8 +102,7 @@ export const LogLineContext = memo(
         sortOrder === LogsSortOrder.Ascending ? allLogs[0].timeEpochMs : allLogs[allLogs.length - 1].timeEpochMs;
       let toMs =
         sortOrder === LogsSortOrder.Ascending ? allLogs[allLogs.length - 1].timeEpochMs : allLogs[0].timeEpochMs;
-      // In case we have a lot of logs and from and to have same millisecond
-      // we add 1 millisecond to toMs to make sure we have a range
+      // Add one second to get a range when from and to are equal.
       if (fromMs === toMs) {
         toMs += 1;
       }
