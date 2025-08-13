@@ -21,7 +21,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       const timeColumnsSet: Set<string> = new Set();
       const defaultColumnsMap: Map<string, SelectableValue> = new Map();
       const db = schema.database;
-      if (db && db.tables && db.tables.length > 0) {
+      if (db?.tables?.length > 0) {
         for (const table of db.tables) {
           const cols = table.columns.reduce<SelectableValue[]>((prev, curr, i) => {
             if (curr.type === 'datetime') {
