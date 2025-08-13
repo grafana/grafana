@@ -1,7 +1,9 @@
 import { cx } from '@emotion/css';
+import { debounce } from 'lodash';
 import { FC, useCallback, useEffect, useState } from 'react';
 
-import { config } from '@grafana/runtime';
+import { PanelProps } from '@grafana/data';
+import { config, RefreshEvent } from '@grafana/runtime';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { CheckService } from 'app/percona/check/Check.service';
 import { FailedCheckSummary } from 'app/percona/check/types';
@@ -17,7 +19,7 @@ import { Messages } from './Failed.messages';
 import { getStyles } from './Failed.styles';
 import { TooltipText } from './TooltipText';
 
-export const Failed: FC = () => {
+export const Failed: FC<PanelProps> = ({ eventBus }) => {
   const [failedChecks, setFailedChecks] = useState<FailedCheckSummary[]>([]);
   const { isAuthorized } = useSelector(getPerconaUser);
   const { result: settings, loading: settingsLoading } = useSelector(getPerconaSettings);
@@ -36,12 +38,25 @@ export const Failed: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedFetchAlerts = useCallback(debounce(fetchAlerts, 300), [fetchAlerts]);
+
   useEffect(() => {
     if (isPmmAdmin(config.bootData.user) || isEditor(config.bootData.user)) {
-      fetchAlerts();
+      debouncedFetchAlerts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const subscriber = eventBus.getStream(RefreshEvent).subscribe((event) => {
+      debouncedFetchAlerts();
+    });
+
+    return () => {
+      subscriber.unsubscribe();
+    };
+  }, [eventBus, debouncedFetchAlerts]);
 
   if (settingsLoading) {
     return <Spinner />;

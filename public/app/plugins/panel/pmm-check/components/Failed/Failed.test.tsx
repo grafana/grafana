@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
+import { PanelProps, dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CheckService } from 'app/percona/check/Check.service';
 import { configureStore } from 'app/store/configureStore';
@@ -11,6 +12,49 @@ import { Failed } from './Failed';
 jest.mock('app/percona/check/Check.service');
 
 const spyGetAllFailedChecks = jest.spyOn(CheckService, 'getAllFailedChecks');
+
+const mockPanelProps: PanelProps<any> = {
+  id: 1,
+  options: {
+    showTitle: true,
+    threshold: 50,
+  },
+  data: {
+    series: [],
+    timeRange: {
+      from: dateTime(new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()),
+      to: dateTime(new Date().toISOString()),
+      raw: { from: 'now-6h', to: 'now' },
+    },
+    state: LoadingState.NotStarted,
+  },
+  width: 800,
+  height: 600,
+  renderCounter: 1,
+  fieldConfig: {
+    defaults: {},
+    overrides: [],
+  },
+  onOptionsChange: jest.fn(),
+  onFieldConfigChange: jest.fn(),
+  replaceVariables: jest.fn((x) => x),
+  onChangeTimeRange: jest.fn(),
+  eventBus: {
+    getStream: jest.fn(() => ({
+      subscribe: jest.fn(() => ({
+        unsubscribe: jest.fn(),
+      })),
+    })),
+  } as any,
+  timeRange: {
+    from: dateTime(new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()),
+    to: dateTime(new Date().toISOString()),
+    raw: { from: 'now-6h', to: 'now' },
+  },
+  timeZone: '',
+  transparent: false,
+  title: '',
+};
 
 describe('Failed::', () => {
   beforeEach(() => {
@@ -60,7 +104,7 @@ describe('Failed::', () => {
           },
         } as StoreState)}
       >
-        <Failed />
+        <Failed {...mockPanelProps} />
       </Provider>
     );
 
@@ -115,7 +159,7 @@ describe('Failed::', () => {
           },
         } as StoreState)}
       >
-        <Failed />
+        <Failed {...mockPanelProps} />
       </Provider>
     );
 
@@ -168,7 +212,7 @@ describe('Failed::', () => {
           },
         } as StoreState)}
       >
-        <Failed />
+        <Failed {...mockPanelProps} />
       </Provider>
     );
 
@@ -218,7 +262,7 @@ describe('Failed::', () => {
           },
         } as StoreState)}
       >
-        <Failed />
+        <Failed {...mockPanelProps} />
       </Provider>
     );
 
@@ -238,7 +282,7 @@ describe('Failed::', () => {
           },
         } as StoreState)}
       >
-        <Failed />
+        <Failed {...mockPanelProps} />
       </Provider>
     );
 
