@@ -245,3 +245,4 @@ adhocFiltersInTooltips,experimental,@grafana/datapro,false,false,true
 favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
 newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
+unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
