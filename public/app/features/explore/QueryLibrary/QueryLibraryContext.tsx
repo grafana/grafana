@@ -3,7 +3,7 @@ import { createContext, ReactNode, useContext } from 'react';
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { OnSelectQueryType } from './types';
+import { OnSelectQueryType, QueryLibraryEventsPropertyMap } from './types';
 
 /**
  * Context with state and action to interact with Query Library. The Query Library feature consists of a drawer
@@ -59,6 +59,11 @@ export type QueryLibraryContextType = {
   ) => ReactNode;
   queryLibraryEnabled: boolean;
   context: string;
+  triggerAnalyticsEvent: (
+    handleAnalyticEvent: (properties?: QueryLibraryEventsPropertyMap) => void,
+    properties?: QueryLibraryEventsPropertyMap,
+    contextOverride?: string
+  ) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -75,6 +80,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
 
   queryLibraryEnabled: false,
   context: 'unknown',
+  triggerAnalyticsEvent: () => {},
 });
 
 export function useQueryLibraryContext() {

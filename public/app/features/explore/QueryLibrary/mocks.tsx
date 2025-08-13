@@ -18,6 +18,7 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         renderSaveQueryButton: jest.fn(),
         queryLibraryEnabled: Boolean(props.queryLibraryEnabled),
         context: 'explore',
+        triggerAnalyticsEvent: jest.fn(),
       }}
     >
       {props.children}
