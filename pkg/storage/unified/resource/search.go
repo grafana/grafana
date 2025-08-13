@@ -24,6 +24,7 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -110,6 +111,7 @@ type searchSupport struct {
 	initWorkers  int
 	initMinSize  int
 	initMaxSize  int
+	features     featuremgmt.FeatureToggles
 
 	ring           *ring.Ring
 	ringLifecycler *ring.BasicLifecycler
@@ -133,7 +135,7 @@ var (
 	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ring *ring.Ring, ringLifecycler *ring.BasicLifecycler) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ring *ring.Ring, ringLifecycler *ring.BasicLifecycler, features featuremgmt.FeatureToggles) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -155,6 +157,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		initWorkers:           opts.WorkerThreads,
 		initMinSize:           opts.InitMinCount,
 		initMaxSize:           opts.InitMaxCount,
+		features:              features,
 		indexMetrics:          indexMetrics,
 		clientIndexEventsChan: opts.IndexEventsChan,
 		indexEventsChan:       make(chan *IndexEvent),
@@ -479,26 +482,29 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
 
-	// Now start listening for new events
 	watchctx := context.Background() // new context?
-	events, err := s.storage.WatchWriteEvents(watchctx)
-	if err != nil {
-		return err
-	}
-	go func() {
-		for {
-			v := <-events
-
-			// Skip events during batch updates
-			if v.PreviousRV < 0 {
-				continue
-			}
-
-			s.dispatchEvent(watchctx, v)
+	// don't start watcher when SearchAfterWrite changes are enabled
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI) {
+		// Now start listening for new events
+		events, err := s.storage.WatchWriteEvents(watchctx)
+		if err != nil {
+			return err
 		}
-	}()
+		go func() {
+			for {
+				v := <-events
 
-	go s.monitorIndexEvents(ctx)
+				// Skip events during batch updates
+				if v.PreviousRV < 0 {
+					continue
+				}
+
+				s.dispatchEvent(watchctx, v)
+			}
+		}()
+
+		go s.monitorIndexEvents(ctx)
+	}
 
 	// since usage insights is not in unified storage, we need to periodically rebuild the index
 	// to make sure these data points are up to date.

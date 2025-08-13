@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -232,6 +233,9 @@ type ResourceServerOptions struct {
 
 	Ring           *ring.Ring
 	RingLifecycler *ring.BasicLifecycler
+
+	// Feature toggles
+	Features featuremgmt.FeatureToggles
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -315,7 +319,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler, opts.Features)
 		if err != nil {
 			return nil, err
 		}
