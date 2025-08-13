@@ -6,6 +6,7 @@ import { dateTime, LoadingState } from '@grafana/data';
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
 import { ResultFormat } from '../../dataquery.gen';
+import { EngineSchema } from '../../types/types';
 import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
 
 import LogsQueryEditor from './LogsQueryEditor';
@@ -626,6 +627,129 @@ describe('LogsQueryEditor', () => {
         azureLogAnalytics: { resultFormat: ResultFormat.Logs },
       };
       expect(onChange).toHaveBeenCalledWith(newQuery);
+    });
+  });
+
+  describe('schema loading and auto-completion', () => {
+    it('loads schema and table plans when resources change and builder mode is set', async () => {
+      const mockSchema: EngineSchema = {
+        clusterType: 'Engine',
+        cluster: {
+          connectionString:
+            '/subscriptions/subscriptionId/resourceGroups/resourceGroup/providers/Microsoft.OperationalInsights/workspaces/la-workspace',
+          databases: [
+            {
+              name: '/subscriptions/subscriptionId/resourceGroups/resourceGroup/providers/Microsoft.OperationalInsights/workspaces/la-workspace',
+              tables: [
+                {
+                  columns: [
+                    {
+                      description: '',
+                      isPreferredFacet: false,
+                      name: 'TenantId',
+                      type: 'string',
+                    },
+                    {
+                      description: 'Date and time when dependency call was recorded.',
+                      isPreferredFacet: false,
+                      name: 'TimeGenerated',
+                      type: 'datetime',
+                    },
+                  ],
+                  description: 'Application Insights dependencies.',
+                  id: 'AppDependencies',
+                  name: 'AppDependencies',
+                  timespanColumn: 'TimeGenerated',
+                  hasData: true,
+                  related: {
+                    solutions: [],
+                    functions: [],
+                    categories: [],
+                  },
+                },
+              ],
+              functions: [],
+              majorVersion: 0,
+              minorVersion: 0,
+              entityGroups: [],
+            },
+          ],
+        },
+        database: {
+          name: '/subscriptions/subscriptionId/resourceGroups/resourceGroup/providers/Microsoft.OperationalInsights/workspaces/la-workspace',
+          tables: [
+            {
+              columns: [
+                {
+                  description: '',
+                  isPreferredFacet: false,
+                  name: 'TenantId',
+                  type: 'string',
+                },
+                {
+                  description: 'Date and time when dependency call was recorded.',
+                  isPreferredFacet: false,
+                  name: 'TimeGenerated',
+                  type: 'datetime',
+                },
+              ],
+              description: 'Application Insights dependencies.',
+              id: 'AppDependencies',
+              name: 'AppDependencies',
+              timespanColumn: 'TimeGenerated',
+              hasData: true,
+              related: {
+                solutions: [],
+                functions: [],
+                categories: [],
+              },
+            },
+          ],
+          functions: [],
+          majorVersion: 0,
+          minorVersion: 0,
+          entityGroups: [],
+        },
+      };
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(mockSchema);
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn().mockResolvedValue('plan');
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+
+      await act(async () => {
+        render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockDatasource.azureLogAnalyticsDatasource.getKustoSchema).toHaveBeenCalledWith(
+          query.azureLogAnalytics?.resources?.[0]
+        );
+      });
+      expect(mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan).toHaveBeenCalledTimes(1);
+      expect(mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan).toHaveBeenCalledWith(
+        query.azureLogAnalytics?.resources,
+        'AppDependencies'
+      );
     });
   });
 });
