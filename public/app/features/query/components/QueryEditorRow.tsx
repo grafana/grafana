@@ -415,7 +415,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         {isEditingQueryLibrary && (
           <>
             <QueryOperationAction
-              title={t('query-operation.header.cancel-query-library-edit', 'Cancel editing from library')}
+              title={t(
+                'query-operation.header.cancel-query-library-edit',
+                'Discard changes and return to query library'
+              )}
               icon="times"
               onClick={this.onCancelQueryLibraryEdit}
             />

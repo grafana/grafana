@@ -11851,7 +11851,7 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "Cancel editing from library",
+      "cancel-query-library-edit": "Discard changes and return to query library",
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
