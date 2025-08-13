@@ -155,7 +155,7 @@ To filter column values, follow these steps:
 
    Grafana displays the filter options for that column.
 
-   {{< figure src="/static/img/docs/tables/filter-column-values.png" max-width="300px" alt="Filter column values" class="docs-image--no-shadow" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
 
 1. Click the checkbox next to the values that you want to display or click **Select all**.
 1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
@@ -178,7 +178,8 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 
 Click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle.
-You can sort multiple columns by holding the `Shift` key and clicking the column name.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key
+and clicking the column name.
 
 {{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
