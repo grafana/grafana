@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { LocalStorageValueProvider } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
@@ -17,6 +18,9 @@ import {
   Field,
   ComboboxOption,
   MultiCombobox,
+  TabsBar,
+  TabContent,
+  Tab,
 } from '@grafana/ui';
 
 import { resourceTypeDisplayNames } from '../../azureMetadata/resourceTypes';
@@ -79,6 +83,8 @@ const ResourcePicker = ({
     types: [],
     locations: [],
   });
+  const [view, setView] = useState<'picker' | 'recent'>('picker');
+  const RECENT_RESOURCES_KEY = 'grafana.datasources.azuremonitor.recent-resources';
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
@@ -291,181 +297,195 @@ const ResourcePicker = ({
     loadFilteredRows(updatedFilters);
   };
 
-  return (
-    <>
-      <Search searchFn={handleSearch} />
-      {config.featureToggles.azureResourcePickerUpdates && (
-        <Stack direction={'row'} alignItems="flex-start" justifyContent={'space-between'} gap={1}>
-          <Field
-            label={t('components.resource-picker.subscriptions-filter', 'Subscriptions')}
-            noMargin
-            className={styles.filterInput(queryType)}
-          >
-            <MultiCombobox
-              aria-label={t('components.resource-picker.subscriptions-filter', 'Subscriptions')}
-              value={filters.subscriptions}
-              options={subscriptions}
-              onChange={(value) => updateFilters(value, 'subscriptions')}
-              isClearable
-              enableAllOption
-              loading={isLoadingSubscriptions}
-              data-testid={selectors.components.queryEditor.resourcePicker.filters.subscription.input}
+  const resourceTable = (resourceRows: ResourceRowGroup) => {
+    return (
+      <>
+        <table className={styles.table}>
+          <thead>
+            <tr className={cx(styles.row, styles.header)}>
+              <td className={styles.cell}>
+                <Trans i18nKey="components.resource-picker.header-scope">Scope</Trans>
+              </td>
+              <td className={styles.cell}>
+                <Trans i18nKey="components.resource-picker.header-type">Type</Trans>
+              </td>
+              <td className={styles.cell}>
+                <Trans i18nKey="components.resource-picker.header-location">Location</Trans>
+              </td>
+            </tr>
+          </thead>
+        </table>
+
+        <div className={cx(styles.scrollableTable, styles.tableScroller)}>
+          <table className={styles.table}>
+            <tbody>
+              {isLoading && (
+                <tr className={cx(styles.row)}>
+                  <td className={styles.cell}>
+                    <LoadingPlaceholder text={t('components.resource-picker.text-loading', 'Loading...')} />
+                  </td>
+                </tr>
+              )}
+              {!isLoading && resourceRows?.length === 0 && (
+                <tr className={cx(styles.row)}>
+                  <td className={styles.cell} aria-live="polite">
+                    <Trans i18nKey="components.resource-picker.text-no-resources">No resources found</Trans>
+                  </td>
+                </tr>
+              )}
+              {!isLoading &&
+                resourceRows?.map((row) => (
+                  <NestedRow
+                    key={row.uri}
+                    row={row}
+                    selectedRows={selectedRows}
+                    level={0}
+                    requestNestedRows={requestNestedRows}
+                    onRowSelectedChange={handleSelectionChanged}
+                    selectableEntryTypes={selectableEntryTypes}
+                    scrollIntoView={true}
+                    disableRow={disableRow}
+                  />
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        <footer className={styles.selectionFooter}>
+          {selectedRows.length > 0 && (
+            <>
+              <h5>
+                <Trans i18nKey="components.resource-picker.heading-selection">Selection</Trans>
+              </h5>
+
+              <div className={cx(styles.scrollableTable, styles.selectedTableScroller)}>
+                <table className={styles.table}>
+                  <tbody>
+                    {selectedRows.map((row) => (
+                      <NestedRow
+                        key={row.uri}
+                        row={row}
+                        selectedRows={selectedRows}
+                        level={0}
+                        requestNestedRows={requestNestedRows}
+                        onRowSelectedChange={handleSelectionChanged}
+                        selectableEntryTypes={selectableEntryTypes}
+                        disableRow={() => false}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Space v={2} />
+              {selectionNoticeText?.length ? (
+                <Alert title="" severity="info">
+                  {selectionNoticeText}
+                </Alert>
+              ) : null}
+            </>
+          )}
+
+          {view === 'picker' && (
+            <AdvancedMulti
+              resources={internalSelected}
+              onChange={(r) => setInternalSelected(r)}
+              renderAdvanced={renderAdvanced}
             />
-          </Field>
-          {queryType === 'metrics' && (
+          )}
+          {errorMessage && (
+            <>
+              <Space v={2} />
+              <Alert
+                severity="error"
+                title={t(
+                  'components.resource-picker.title-error-occurred',
+                  'An error occurred while requesting resources from Azure Monitor'
+                )}
+              >
+                {errorMessage}
+              </Alert>
+            </>
+          )}
+        </footer>
+      </>
+    );
+  };
+
+  const baseResourcePicker = (
+    recentResources?: ResourceRowGroup,
+    localStorageSave?: (value: ResourceRowGroup) => void
+  ) => {
+    return (
+      <>
+        <Search searchFn={handleSearch} />
+        {config.featureToggles.azureResourcePickerUpdates && (
+          <Stack direction={'row'} alignItems="flex-start" justifyContent={'space-between'} gap={1}>
             <Field
-              label={t('components.resource-picker.types-filter', 'Resource Types')}
+              label={t('components.resource-picker.subscriptions-filter', 'Subscriptions')}
               noMargin
               className={styles.filterInput(queryType)}
             >
               <MultiCombobox
-                aria-label={t('components.resource-picker.types-filter', 'Resource Types')}
-                value={filters.types}
-                options={namespaces}
-                onChange={(value) => updateFilters(value, 'types')}
+                aria-label={t('components.resource-picker.subscriptions-filter', 'Subscriptions')}
+                value={filters.subscriptions}
+                options={subscriptions}
+                onChange={(value) => updateFilters(value, 'subscriptions')}
                 isClearable
                 enableAllOption
-                loading={isLoadingNamespaces}
-                data-testid={selectors.components.queryEditor.resourcePicker.filters.type.input}
+                loading={isLoadingSubscriptions}
+                data-testid={selectors.components.queryEditor.resourcePicker.filters.subscription.input}
               />
             </Field>
-          )}
-          <Field
-            label={t('components.resource-picker.locations-filter', 'Locations')}
-            noMargin
-            className={styles.filterInput(queryType)}
-          >
-            <MultiCombobox
-              aria-label={t('components.resource-picker.locations-filter', 'Locations')}
-              value={filters.locations}
-              options={locations}
-              onChange={(value) => updateFilters(value, 'locations')}
-              isClearable
-              enableAllOption
-              loading={isLoadingLocations}
-              data-testid={selectors.components.queryEditor.resourcePicker.filters.location.input}
-            />
-          </Field>
-        </Stack>
-      )}
-      {shouldShowLimitFlag ? (
-        <p className={styles.resultLimit}>
-          <Trans
-            i18nKey="components.resource-picker.result-limit"
-            values={{ numResults: resourcePickerData.resultLimit }}
-          >
-            Showing first {'{{numResults}}'} results
-          </Trans>
-        </p>
-      ) : (
-        <Space v={2} />
-      )}
-
-      <table className={styles.table}>
-        <thead>
-          <tr className={cx(styles.row, styles.header)}>
-            <td className={styles.cell}>
-              <Trans i18nKey="components.resource-picker.header-scope">Scope</Trans>
-            </td>
-            <td className={styles.cell}>
-              <Trans i18nKey="components.resource-picker.header-type">Type</Trans>
-            </td>
-            <td className={styles.cell}>
-              <Trans i18nKey="components.resource-picker.header-location">Location</Trans>
-            </td>
-          </tr>
-        </thead>
-      </table>
-
-      <div className={cx(styles.scrollableTable, styles.tableScroller)}>
-        <table className={styles.table}>
-          <tbody>
-            {isLoading && (
-              <tr className={cx(styles.row)}>
-                <td className={styles.cell}>
-                  <LoadingPlaceholder text={t('components.resource-picker.text-loading', 'Loading...')} />
-                </td>
-              </tr>
-            )}
-            {!isLoading && rows.length === 0 && (
-              <tr className={cx(styles.row)}>
-                <td className={styles.cell} aria-live="polite">
-                  <Trans i18nKey="components.resource-picker.text-no-resources">No resources found</Trans>
-                </td>
-              </tr>
-            )}
-            {!isLoading &&
-              rows.map((row) => (
-                <NestedRow
-                  key={row.uri}
-                  row={row}
-                  selectedRows={selectedRows}
-                  level={0}
-                  requestNestedRows={requestNestedRows}
-                  onRowSelectedChange={handleSelectionChanged}
-                  selectableEntryTypes={selectableEntryTypes}
-                  scrollIntoView={true}
-                  disableRow={disableRow}
+            {queryType === 'metrics' && (
+              <Field
+                label={t('components.resource-picker.types-filter', 'Resource Types')}
+                noMargin
+                className={styles.filterInput(queryType)}
+              >
+                <MultiCombobox
+                  aria-label={t('components.resource-picker.types-filter', 'Resource Types')}
+                  value={filters.types}
+                  options={namespaces}
+                  onChange={(value) => updateFilters(value, 'types')}
+                  isClearable
+                  enableAllOption
+                  loading={isLoadingNamespaces}
+                  data-testid={selectors.components.queryEditor.resourcePicker.filters.type.input}
                 />
-              ))}
-          </tbody>
-        </table>
-      </div>
-
-      <footer className={styles.selectionFooter}>
-        {selectedRows.length > 0 && (
-          <>
-            <h5>
-              <Trans i18nKey="components.resource-picker.heading-selection">Selection</Trans>
-            </h5>
-
-            <div className={cx(styles.scrollableTable, styles.selectedTableScroller)}>
-              <table className={styles.table}>
-                <tbody>
-                  {selectedRows.map((row) => (
-                    <NestedRow
-                      key={row.uri}
-                      row={row}
-                      selectedRows={selectedRows}
-                      level={0}
-                      requestNestedRows={requestNestedRows}
-                      onRowSelectedChange={handleSelectionChanged}
-                      selectableEntryTypes={selectableEntryTypes}
-                      disableRow={() => false}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <Space v={2} />
-            {selectionNoticeText?.length ? (
-              <Alert title="" severity="info">
-                {selectionNoticeText}
-              </Alert>
-            ) : null}
-          </>
-        )}
-
-        <AdvancedMulti
-          resources={internalSelected}
-          onChange={(r) => setInternalSelected(r)}
-          renderAdvanced={renderAdvanced}
-        />
-
-        {errorMessage && (
-          <>
-            <Space v={2} />
-            <Alert
-              severity="error"
-              title={t(
-                'components.resource-picker.title-error-occurred',
-                'An error occurred while requesting resources from Azure Monitor'
-              )}
+              </Field>
+            )}
+            <Field
+              label={t('components.resource-picker.locations-filter', 'Locations')}
+              noMargin
+              className={styles.filterInput(queryType)}
             >
-              {errorMessage}
-            </Alert>
-          </>
+              <MultiCombobox
+                aria-label={t('components.resource-picker.locations-filter', 'Locations')}
+                value={filters.locations}
+                options={locations}
+                onChange={(value) => updateFilters(value, 'locations')}
+                isClearable
+                enableAllOption
+                loading={isLoadingLocations}
+                data-testid={selectors.components.queryEditor.resourcePicker.filters.location.input}
+              />
+            </Field>
+          </Stack>
         )}
+        {shouldShowLimitFlag ? (
+          <p className={styles.resultLimit}>
+            <Trans
+              i18nKey="components.resource-picker.result-limit"
+              values={{ numResults: resourcePickerData.resultLimit }}
+            >
+              Showing first {'{{numResults}}'} results
+            </Trans>
+          </p>
+        ) : (
+          <Space v={2} />
+        )}
+
+        {resourceTable(rows)}
 
         <Modal.ButtonRow>
           <Button onClick={onCancel} variant="secondary" fill="outline">
@@ -473,15 +493,75 @@ const ResourcePicker = ({
           </Button>
           <Button
             disabled={!!errorMessage || !internalSelected.every(isValid)}
-            onClick={handleApply}
+            onClick={
+              localStorageSave && recentResources
+                ? () => handleApplyWithLocalStorage(recentResources, localStorageSave)
+                : handleApply
+            }
             data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
           >
             <Trans i18nKey="components.resource-picker.button-apply">Apply</Trans>
           </Button>
         </Modal.ButtonRow>
-      </footer>
-    </>
-  );
+      </>
+    );
+  };
+
+  // Once the azureResourcePickerUpdates feature toggle is removed, baseResourcePicker can be merged into this function
+  const tabbedResourcePicker = () => {
+    return (
+      <LocalStorageValueProvider<ResourceRowGroup> storageKey={RECENT_RESOURCES_KEY} defaultValue={[]}>
+        {(recentResources, onRecentResourcesSave) => {
+          return (
+            <>
+              <TabsBar>
+                <Tab
+                  key={'picker'}
+                  label={t('test', 'Browse')}
+                  active={view === 'picker'}
+                  onChangeTab={() => setView('picker')}
+                />
+                <Tab
+                  key={'recent'}
+                  label={t('test', 'Recent')}
+                  active={view === 'recent'}
+                  onChangeTab={() => {
+                    reportInteraction('grafana_ds_azuremonitor_resource_picker_recent_used', {
+                      recentResourcesCount: recentResources.length,
+                    });
+                    setView('recent');
+                  }}
+                />
+              </TabsBar>
+              <TabContent style={{ margin: '10px' }}>
+                {view === 'picker' && baseResourcePicker(recentResources, onRecentResourcesSave)}
+                {view === 'recent' && (
+                  <>
+                    {resourceTable(recentResources)}
+
+                    <Modal.ButtonRow>
+                      <Button onClick={onCancel} variant="secondary" fill="outline">
+                        <Trans i18nKey="components.resource-picker.button-cancel">Cancel</Trans>
+                      </Button>
+                      <Button
+                        disabled={!!errorMessage || !internalSelected.every(isValid)}
+                        onClick={handleApply}
+                        data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
+                      >
+                        <Trans i18nKey="components.resource-picker.button-apply">Apply</Trans>
+                      </Button>
+                    </Modal.ButtonRow>
+                  </>
+                )}
+              </TabContent>
+            </>
+          );
+        }}
+      </LocalStorageValueProvider>
+    );
+  };
+
+  return config.featureToggles.azureResourcePickerUpdates ? tabbedResourcePicker() : baseResourcePicker();
 };
 
 export default ResourcePicker;
