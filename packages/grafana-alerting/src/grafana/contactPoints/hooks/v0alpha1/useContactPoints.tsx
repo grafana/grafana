@@ -24,7 +24,10 @@ type ListContactPointsHookResult = TypedUseQueryHookResult<
  * It automatically uses the configured namespace for the query.
  */
 export function useListContactPoints() {
-  return alertingAPI.useListReceiverQuery<ListContactPointsHookResult>({});
+  return alertingAPI.useListReceiverQuery<ListContactPointsHookResult>(
+    {},
+    { refetchOnFocus: true, refetchOnMountOrArgChange: true }
+  );
 }
 
 // type narrowing mutations requires us to define a few helper types
