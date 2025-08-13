@@ -1,3 +1,13 @@
+<!-- 11.6.5 START -->
+
+# 11.6.5 (2025-08-13)
+
+### Features and enhancements
+
+- **Alerting:** Bump alerting package to include change to NewTLSClient [#108817](https://github.com/grafana/grafana/pull/108817), [@rwwiv](https://github.com/rwwiv)
+- **Go:** Update to 1.24.6 [#109314](https://github.com/grafana/grafana/pull/109314), [@Proximyst](https://github.com/Proximyst)
+
+<!-- 11.6.5 END -->
 <!-- 12.1.0 START -->
 
 # 12.1.0 (2025-07-23)
