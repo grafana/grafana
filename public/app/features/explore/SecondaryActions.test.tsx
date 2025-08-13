@@ -64,6 +64,23 @@ describe('SecondaryActions', () => {
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
   });
 
+  it('should disable both add query buttons when addQueryRowButtonDisabled=true and query library is enabled', () => {
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+        <SecondaryActions
+          addQueryRowButtonDisabled={true}
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.getByRole('button', { name: /Add query$/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Add query from library/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
+  });
+
   it('should map click handlers correctly', async () => {
     const user = userEvent.setup();
 
