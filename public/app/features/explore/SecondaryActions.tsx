@@ -84,6 +84,7 @@ export function SecondaryActions({
                 })
               }
               icon="plus"
+              disabled={addQueryRowButtonDisabled}
             >
               <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add query from library</Trans>
             </ToolbarButton>
