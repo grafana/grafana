@@ -3506,25 +3506,18 @@
     "browse-view": {
       "this-folder-is-empty": "このフォルダは空です"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "すべてのリソースが正常に削除されました",
-      "all-moved": "すべてのリソースが正常に移動されました",
-      "button-done": "完了",
-      "progress-title": "成功",
-      "failed-alert_other": "{{count}}件の項目が失敗しました"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "キャンセル",
       "button-delete": "削除",
       "button-deleting": "削除中…",
       "delete-warning": "これにより、選択したフォルダとその子フォルダが削除されます。影響のある項目は次のとおりです。",
-      "error-path-not-found": "パスが見つかりませんでした"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "キャンセル",
       "button-move": "移動",
       "button-moving": "移動中…",
-      "deleting": "削除しています",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3532,13 +3525,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "ファイルコンテンツが見つかりません。",
-      "error-path-not-found": "パスが見つかりませんでした",
-      "error-target-folder-path-missing": "ターゲットフォルダパスが見つかりません",
-      "error-title": "ターゲットフォルダエラー",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "これにより、選択したフォルダとその子フォルダが移動されます。影響のある項目は次のとおりです。",
-      "moving": "移動中…",
-      "progress": "進捗状況：{{current}}/{{total}}",
       "target-folder": "移動先フォルダ"
     },
     "counts": {
@@ -3549,6 +3538,9 @@
       "total_other": "{{count}}個のアイテム"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "フォルダ{{title}}を折りたたむ",
       "expand-folder-button": "フォルダ{{title}}を展開する",
       "name-column": "名前",
@@ -4490,12 +4482,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "変数の値に基づいて{{type}}を動的に表示または非表示にします。",
           "label": "テンプレート変数",
           "name": "名前",
           "operator": {
             "equals": "等しい",
-            "not-equals": "等しくない"
+            "matches": "",
+            "not-equals": "等しくない",
+            "not-matches": ""
           },
           "value": "値"
         }
@@ -5379,6 +5376,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "変換を検索",
       "show-images": "画像を表示",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "別の変換を追加",
       "view-all": "すべて表示"
     },
@@ -11406,8 +11406,13 @@
       "title-repository-is-unhealthy": "リポジトリに問題があります"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "リソースが外部ストレージに保存され、インスタンスにプロビジョニングされました。今後、インスタンスと外部ストレージは同期されます。",
-      "view-repository": "リポジトリを表示"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "確認済み：",
