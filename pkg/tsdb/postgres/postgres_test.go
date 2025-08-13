@@ -21,7 +21,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	_ "github.com/lib/pq"
+	//_ "github.com/lib/pq"
+	_ "gitcode.com/opengauss/openGauss-connector-go-pq"
 )
 
 // Test generateConnectionString.

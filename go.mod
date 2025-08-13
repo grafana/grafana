@@ -13,6 +13,9 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
+require "gitcode.com/opengauss/openGauss-connector-go-pq" v5.0.0
+replace gitcode.com/opengauss/openGauss-connector-go-pq => openGauss-connector-go-pq-v5.0.0
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.4.0

@@ -5,7 +5,8 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	//_ "github.com/lib/pq"
+	_ "gitcode.com/opengauss/openGauss-connector-go-pq"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/atomic"
 	"xorm.io/xorm"

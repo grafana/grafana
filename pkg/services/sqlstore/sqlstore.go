@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	//_ "github.com/lib/pq"
+	_ "gitcode.com/opengauss/openGauss-connector-go-pq"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
