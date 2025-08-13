@@ -51,6 +51,8 @@ interface ResourcePickerProps<T> {
   selectionNotice?: (selectedRows: ResourceRowGroup) => string;
 }
 
+export const RECENT_RESOURCES_KEY = 'grafana.datasources.azuremonitor.recent-resources';
+
 const ResourcePicker = ({
   resourcePickerData,
   resources,
@@ -84,7 +86,6 @@ const ResourcePicker = ({
     locations: [],
   });
   const [view, setView] = useState<'picker' | 'recent'>('picker');
-  const RECENT_RESOURCES_KEY = 'grafana.datasources.azuremonitor.recent-resources';
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
