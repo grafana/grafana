@@ -440,7 +440,7 @@ export function getDefaultDatasource(): DataSourceRef {
 
   if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
     // get api version from config
-    const dsInstance = config.bootData.settings.datasources[configDefaultDS.uid];
+    const dsInstance = config.datasources[configDefaultDS.uid];
     configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
   }
 
