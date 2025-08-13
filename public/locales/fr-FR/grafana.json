@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "Ce dossier est vide"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Toutes les ressources ont été supprimées avec succès",
-      "all-moved": "Toutes les ressources ont été déplacées avec succès",
-      "button-done": "Terminé",
-      "progress-title": "Succès",
-      "failed-alert_one": "{{count}} éléments ont échoué",
-      "failed-alert_other": "{{count}} éléments ont échoué"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
       "delete-warning": "Cette opération supprimera les dossiers sélectionnés ainsi que leur contenu. Au total, cela affectera :",
-      "error-path-not-found": "Chemin introuvable"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Annuler",
       "button-move": "Déplacer",
       "button-moving": "Déplacement en cours…",
-      "deleting": "Suppression en cours",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Contenu du fichier introuvable",
-      "error-path-not-found": "Chemin introuvable",
-      "error-target-folder-path-missing": "Le chemin du dossier de destination est manquant",
-      "error-title": "Erreur de dossier de destination",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Cette opération déplacera les dossiers sélectionnés ainsi que leur contenu. Au total, cela affectera :",
-      "moving": "Déplacement en cours",
-      "progress": "Progression : {{current}} sur {{total}}",
       "target-folder": "Dossier de destination"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} objets"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Réduire le dossier {{title}}",
       "expand-folder-button": "Développer le dossier {{title}}",
       "name-column": "Nom",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Afficher ou masquer le {{type}} de manière dynamique en fonction de la valeur de la variable.",
           "label": "Variable de modèle",
           "name": "Nom",
           "operator": {
             "equals": "Égal à",
-            "not-equals": "Inégaux"
+            "matches": "",
+            "not-equals": "Inégaux",
+            "not-matches": ""
           },
           "value": "Valeur"
         }
@@ -5399,6 +5395,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Rechercher une transformation",
       "show-images": "Afficher les images",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Ajouter une autre transformation",
       "view-all": "Tout afficher"
     },
@@ -11442,8 +11441,13 @@
       "title-repository-is-unhealthy": "Le référentiel est en mauvais état"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Vos ressources sont maintenant dans votre stockage externe et mises en service dans votre instance. À partir de maintenant, votre instance et le stockage externe seront synchronisés.",
-      "view-repository": "Afficher le référentiel"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Vérifié :",
