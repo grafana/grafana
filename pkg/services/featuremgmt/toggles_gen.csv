@@ -227,6 +227,7 @@ restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,fa
 skipTokenRotationIfRecent,GA,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
+alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
 sharingDashboardImage,experimental,@grafana/sharing-squad,false,false,true
 preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
