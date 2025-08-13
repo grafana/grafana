@@ -327,24 +327,8 @@ func (h *provisioningTestHelper) DebugState(t *testing.T, repo string, label str
 
 	ctx := context.Background()
 
-	// Log filesystem contents
-	t.Logf("Filesystem contents in %s:", h.ProvisioningPath)
-	err := filepath.Walk(h.ProvisioningPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			t.Logf("  ERROR walking %s: %v", path, err)
-			return nil
-		}
-		relPath, _ := filepath.Rel(h.ProvisioningPath, path)
-		if info.IsDir() {
-			t.Logf("  DIR:  %s/", relPath)
-		} else {
-			t.Logf("  FILE: %s (size: %d)", relPath, info.Size())
-		}
-		return nil
-	})
-	if err != nil {
-		t.Logf("  ERROR walking filesystem: %v", err)
-	}
+	// Log filesystem contents using existing tree function
+	printFileTree(t, h.ProvisioningPath)
 
 	// Log all repositories first
 	t.Logf("All repositories:")
@@ -357,28 +341,18 @@ func (h *provisioningTestHelper) DebugState(t *testing.T, repo string, label str
 			t.Logf("  Repository %d: name=%s", i+1, repository.GetName())
 		}
 	}
-	
+
 	// Log repository files for the specific repo
 	t.Logf("Repository '%s' files:", repo)
-	files, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files")
-	if err != nil {
-		t.Logf("  ERROR getting repository files: %v", err)
-	} else {
-		h.logRepositoryContents(t, files.Object, "")
-	}
-	
+	h.logRepositoryFiles(t, ctx, repo, "  ")
+
 	// Log files for all other repositories too
 	if repos != nil && len(repos.Items) > 1 {
 		t.Logf("Files in other repositories:")
 		for _, repository := range repos.Items {
 			if repository.GetName() != repo {
 				t.Logf("  Repository '%s' files:", repository.GetName())
-				otherFiles, err := h.Repositories.Resource.Get(ctx, repository.GetName(), metav1.GetOptions{}, "files")
-				if err != nil {
-					t.Logf("    ERROR getting files: %v", err)
-				} else {
-					h.logRepositoryContents(t, otherFiles.Object, "    ")
-				}
+				h.logRepositoryFiles(t, ctx, repository.GetName(), "    ")
 			}
 		}
 	}
@@ -408,6 +382,70 @@ func (h *provisioningTestHelper) DebugState(t *testing.T, repo string, label str
 	}
 
 	t.Logf("=== END DEBUG STATE ===")
+}
+
+// logRepositoryFiles logs repository file structure using the files API
+func (h *provisioningTestHelper) logRepositoryFiles(t *testing.T, ctx context.Context, repoName string, prefix string) {
+	t.Helper()
+	
+	// Try to list files at root level
+	files, err := h.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files")
+	if err != nil {
+		t.Logf("%sERROR getting repository files: %v", prefix, err)
+		return
+	}
+	
+	// The API returns a structured response, we need to extract the actual file data
+	if files.Object != nil {
+		h.logRepositoryObject(t, files.Object, prefix, "")
+	} else {
+		t.Logf("%s(empty repository)", prefix)
+	}
+}
+
+// logRepositoryObject recursively logs repository file structure from API response
+func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[string]interface{}, prefix string, path string) {
+	t.Helper()
+	
+	if obj == nil {
+		return
+	}
+	
+	// Skip metadata fields and focus on actual content
+	for key, value := range obj {
+		// Skip Kubernetes metadata fields
+		if key == "kind" || key == "apiVersion" || key == "metadata" {
+			continue
+		}
+		
+		switch v := value.(type) {
+		case map[string]interface{}:
+			fullPath := path
+			if path != "" {
+				fullPath = path + "/" + key
+			} else {
+				fullPath = key
+			}
+			t.Logf("%s├── %s/", prefix, key)
+			h.logRepositoryObject(t, v, prefix+"  ", fullPath)
+		case []interface{}:
+			// Handle lists (like items array)
+			if key == "items" && len(v) > 0 {
+				t.Logf("%s%d items:", prefix, len(v))
+				for i, item := range v {
+					if itemMap, ok := item.(map[string]interface{}); ok {
+						t.Logf("%s├── item %d:", prefix, i+1)
+						h.logRepositoryObject(t, itemMap, prefix+"  ", path)
+					}
+				}
+			}
+		default:
+			// This could be file content or metadata
+			if key != "kind" && key != "apiVersion" {
+				t.Logf("%s├── %s", prefix, key)
+			}
+		}
+	}
 }
 
 // logRepositoryContents recursively logs repository file structure

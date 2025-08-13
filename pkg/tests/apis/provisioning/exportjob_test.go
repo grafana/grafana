@@ -55,6 +55,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
 
 	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
 			Path:   "", // no prefix necessary for testing
@@ -142,6 +143,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	helper.DebugState(t, repo1, "BEFORE INITIAL EXPORT")
 
 	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
 			Path:   "", // no prefix necessary for testing
@@ -215,6 +217,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	helper.DebugState(t, repo2, "BEFORE SECOND EXPORT")
 
 	spec = provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
 			Path:   "", // no prefix necessary for testing
