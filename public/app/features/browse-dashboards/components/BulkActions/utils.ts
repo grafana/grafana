@@ -22,10 +22,10 @@ export interface BulkActionProvisionResourceProps {
  * getTargetFolderPathInRepo({ targetFolderUID: '' }) // returns "/"
  *
  * // Repository root folder
- * getTargetFolderPathInRepo({ targetFolder: { name: 'my-repo' }, repoName: 'my-repo' }) // returns "/"
+ * getTargetFolderPathInRepo(...) // returns "/"
  *
  * // Nested folder
- * getTargetFolderPathInRepo({ targetFolder: { annotations: { sourcePath: 'path/to/folder' } } }) // returns "path/to/folder/"
+ * getTargetFolderPathInRepo(...) // returns "path/to/folder/"
  */
 export function getTargetFolderPathInRepo({
   targetFolderUID,
@@ -37,7 +37,7 @@ export function getTargetFolderPathInRepo({
   targetFolder?: Folder;
   repoName?: string;
   hidePrependSlash?: boolean;
-}): string {
+}): string | undefined {
   const ROOT_PATH = '/';
   const EMPTY_PATH = '';
 
@@ -48,7 +48,7 @@ export function getTargetFolderPathInRepo({
 
   // Case 2: Target folder is the repository root folder
   if (isRepositoryRootFolder(targetFolder, repoName)) {
-    return ROOT_PATH;
+    return hidePrependSlash ? EMPTY_PATH : ROOT_PATH;
   }
 
   // Case 3: Regular folder with source path annotation
@@ -59,14 +59,17 @@ export function getTargetFolderPathInRepo({
  * Checks if the target folder is the repository root folder
  */
 function isRepositoryRootFolder(targetFolder?: Folder, repoName?: string): boolean {
-  return Boolean(targetFolder?.metadata.name === repoName && repoName);
+  return Boolean(targetFolder?.metadata?.name === repoName && repoName);
 }
 
 /**
  * Gets the path for a nested folder from its annotations
  */
-function getNestedFolderPath(targetFolder?: Folder): string {
-  const folderAnnotations = targetFolder?.metadata.annotations || {};
+export function getNestedFolderPath(targetFolder?: Folder): string | undefined {
+  if (!targetFolder) {
+    return undefined;
+  }
+  const folderAnnotations = targetFolder?.metadata?.annotations || {};
   const sourcePath = folderAnnotations[AnnoKeySourcePath] || '';
 
   // Ensure path ends with slash

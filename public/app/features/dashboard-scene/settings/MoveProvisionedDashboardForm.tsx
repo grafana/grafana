@@ -103,7 +103,6 @@ export function MoveProvisionedDashboardForm({
 
     const branchRef = workflow === 'write' ? loadedFromRef : ref;
     const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
-    console.log('move file target path', targetPath);
 
     try {
       await moveFile({

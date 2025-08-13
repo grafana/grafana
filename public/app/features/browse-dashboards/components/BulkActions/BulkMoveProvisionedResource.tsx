@@ -62,7 +62,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
     // 1. Setup
     const { targetFolderPathInRepo, resources } = setupMoveOperation();
-    console.log('targetFolderPathInRepo', targetFolderPathInRepo);
 
     if (!targetFolderPathInRepo) {
       throw new Error(
