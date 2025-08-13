@@ -986,6 +986,7 @@ export type SyncOptions = {
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
 };
+export type RepoType = 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
   bitbucket?: BitbucketRepositoryConfig;
@@ -1004,14 +1005,14 @@ export type RepositorySpec = {
   /** The repository display name (shown in the UI) */
   title: string;
   /** The repository type.  When selected oneOf the values below should be non-nil
-    
-    Possible enum values:
+
+    Possible values:
      - `"bitbucket"`
      - `"git"`
      - `"github"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: RepoType;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: RepoWorkflows;
 };
@@ -1149,7 +1150,7 @@ export type ResourceRepositoryInfo = {
      - `"github"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: RepoType;
 };
 export type Unstructured = {
   [key: string]: any;
@@ -1280,7 +1281,7 @@ export type RepositoryView = {
      - `"github"`
      - `"gitlab"`
      - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  type: RepoType;
   /** The supported workflows */
   workflows: RepoWorkflows;
 };
@@ -1288,7 +1289,7 @@ export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
-  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'gitlab' | 'local')[];
+  availableRepositoryTypes?: RepoType[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;

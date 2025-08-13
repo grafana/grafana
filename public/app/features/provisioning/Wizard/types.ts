@@ -1,10 +1,8 @@
-import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
+import { RepoType, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusInfo, RepositoryFormData } from '../types';
 
 export type WizardStep = 'connection' | 'bootstrap' | 'finish' | 'synchronize';
-
-export type RepoType = RepositorySpec['type'];
 
 export interface MigrateFormData {
   history: boolean;

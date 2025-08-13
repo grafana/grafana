@@ -23,6 +23,9 @@ export function RepositoryResources({ repo }: RepoProps) {
     Resource.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // hide history button when repo type is pure git as it won't be implemented.
+  const showHistoryBtn = repo.spec?.type !== 'git';
+
   const columns: Array<Column<ResourceListItem>> = useMemo(
     () => [
       {
@@ -98,15 +101,17 @@ export function RepositoryResources({ repo }: RepoProps) {
                   <Trans i18nKey="provisioning.repository-resources.columns.view-folder">View</Trans>
                 </LinkButton>
               )}
-              <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>
-                <Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans>
-              </LinkButton>
+              {showHistoryBtn && (
+                <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>
+                  <Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans>
+                </LinkButton>
+              )}
             </Stack>
           );
         },
       },
     ],
-    [repo.metadata?.name]
+    [repo.metadata?.name, showHistoryBtn]
   );
 
   if (query.isLoading) {
