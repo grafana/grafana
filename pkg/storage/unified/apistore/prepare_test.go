@@ -295,6 +295,31 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			require.Equal(t, int64(1), out.GetGeneration()) // still 1
 		})
 	})
+
+	t.Run("should fail invalid input", func(t *testing.T) {
+		_, err := s.prepareObjectForStorage(context.Background(), &dashv1.Dashboard{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "missing auth info")
+
+		_, err = s.prepareObjectForUpdate(context.Background(), &dashv1.Dashboard{}, &dashv1.Dashboard{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "missing auth info")
+
+		_, err = s.prepareObjectForStorage(ctx, &dashv1.Dashboard{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "missing name")
+
+		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{}, &dashv1.Dashboard{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "updated object must have a name")
+
+		_, err = s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name:            "test-name",
+			ResourceVersion: "123", // RV must not be set
+		}})
+		require.Error(t, err)
+		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
+	})
 }
 
 func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtime.Object, old runtime.Object) utils.GrafanaMetaAccessor {

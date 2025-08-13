@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -56,15 +55,15 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	}
 
 	for k, val := range secure {
-		before, exists := previous[k]
+		before := previous[k]
 		if val.Name == "" {
-			if exists {
+			if before.Name != "" {
 				v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
 				delete(previous, k)
 			}
 			if val.Remove {
-				if !exists {
-					return fmt.Errorf("cannot remove secure value %s, it did not exist in the previous value", k)
+				if before.Name == "" {
+					return fmt.Errorf("cannot remove secure value '%s', it did not exist in the previous value", k)
 				}
 				delete(secure, k)
 				v.hasChanged = true
@@ -77,16 +76,17 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				}
 				v.createdSecureValues = append(v.createdSecureValues, n)
 				v.hasChanged = true
-				secure[k] = v0alpha1.InlineSecureValue{Name: n}
+				secure[k] = common.InlineSecureValue{Name: n}
 				continue
 			}
 			return fmt.Errorf("invalid secure value state: %s", k)
 		}
 
 		// The name changed from the previously stored value
-		if exists && before.Name != val.Name {
+		if before.Name != "" && before.Name != val.Name {
 			// This can happen when explicitly shifting from an inline value to a shared secret
 			v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
+			v.hasChanged = true
 		}
 
 		delete(previous, k)
@@ -115,6 +115,10 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 			used[name] = true
 			v.deleteSecureValues = append(v.deleteSecureValues, name)
 		}
+	}
+
+	if len(v.deleteSecureValues) > 0 || len(v.createdSecureValues) > 0 {
+		v.hasChanged = true
 	}
 	return obj.SetSecureValues(secure)
 }

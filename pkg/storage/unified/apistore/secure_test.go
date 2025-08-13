@@ -34,7 +34,6 @@ func TestSecureLifecycle(t *testing.T) {
 
 	t.Run("create secure values", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
-		defer secureStore.AssertExpectations(t)
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
 			Return("NameForA", nil).Once()
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB")).
@@ -56,6 +55,24 @@ func TestSecureLifecycle(t *testing.T) {
 			"a": {"name": "NameForA"},
 			"b": {"name": "NameForB"}
 		}`, asJSON(secure, true))
+		secureStore.AssertExpectations(t)
+	})
+
+	t.Run("create secure values with errors", func(t *testing.T) {
+		obj := resourceWithSecureValues(common.InlineSecureValues{
+			"a": common.InlineSecureValue{Create: "SecretAAA"},
+			"b": common.InlineSecureValue{Create: "SecretBBB"},
+		})
+
+		info := &objectForStorage{}
+		expectError := fmt.Errorf("expected error")
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
+			Return("", expectError).Once()
+		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+		require.Error(t, err, "should error when secure value creation fails")
+		require.Equal(t, expectError, err, "error should be propagated")
+		secureStore.AssertExpectations(t)
 	})
 
 	t.Run("change name manually", func(t *testing.T) {
@@ -64,9 +81,13 @@ func TestSecureLifecycle(t *testing.T) {
 		info := &objectForStorage{}
 		previous := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "111"},
+			"b": common.InlineSecureValue{Name: "222"},
+			"c": common.InlineSecureValue{Name: "333"},
 		})
 		obj := resourceWithSecureValues(common.InlineSecureValues{
-			"a": common.InlineSecureValue{Create: "222"},
+			"a": common.InlineSecureValue{Name: "222"},
+			"b": common.InlineSecureValue{Name: "333"}, // no change
+			// "c" will be loaded from the previous object without changes
 		})
 
 		err := prepareSecureValues(context.Background(), secureStore, obj, previous, info)
@@ -78,6 +99,8 @@ func TestSecureLifecycle(t *testing.T) {
 		require.NoError(t, err)
 		require.JSONEq(t, `{
 			"a": {"name": "222"},
+			"b": {"name": "333"},
+			"c": {"name": "333"}
 		}`, asJSON(secure, true))
 	})
 
@@ -147,17 +170,50 @@ func TestSecureLifecycle(t *testing.T) {
 		require.Equal(t, err, outErr, "error should be passed through")
 	})
 
+	t.Run("remove invalid secure values", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		obj := resourceWithSecureValues(common.InlineSecureValues{
+			"b": common.InlineSecureValue{Remove: true},
+		})
+
+		// Previous values must exist for remove to execute
+		info := &objectForStorage{}
+		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
+		require.Error(t, err, "should error when previous secure values does not exist")
+		require.Equal(t, "cannot remove secure value 'b', it did not exist in the previous value", err.Error())
+		secureStore.AssertExpectations(t)
+	})
+
 	t.Run("delete resource", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 		})
+		sv, err := obj.GetSecureValues()
+		require.NoError(t, err)
+		require.Len(t, sv, 1)
+
 		owner := utils.ToObjectReference(obj)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForA").
 			Return(nil).Once()
 
-		err := handleSecureValuesDelete(context.Background(), secureStore, obj)
+		err = handleSecureValuesDelete(context.Background(), secureStore, obj)
 		require.NoError(t, err)
+		secureStore.AssertExpectations(t)
+		sv, err = obj.GetSecureValues()
+		require.NoError(t, err)
+		require.Empty(t, sv, "secure values should be empty after delete")
+
+		// Delete should propagate deletion errors
+		obj = resourceWithSecureValues(common.InlineSecureValues{
+			"a": common.InlineSecureValue{Name: "NameForA"},
+		})
+		expectError := fmt.Errorf("expected error")
+		secureStore = secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForA").
+			Return(expectError).Once()
+		err = handleSecureValuesDelete(context.Background(), secureStore, obj)
+		require.Equal(t, expectError, err, "error should be passed through")
 		secureStore.AssertExpectations(t)
 	})
 
