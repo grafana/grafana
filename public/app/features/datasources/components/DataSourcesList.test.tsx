@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
