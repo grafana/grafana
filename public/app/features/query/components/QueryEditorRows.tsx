@@ -41,6 +41,8 @@ export interface Props {
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
+  queryLibraryRef?: string;
+  onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
 }
 
@@ -178,6 +180,8 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryOpenChanged,
       onQueryReplacedFromLibrary,
       queryRowWrapper,
+      queryLibraryRef,
+      onCancelQueryLibraryEdit,
       isOpen,
     } = this.props;
 
@@ -217,6 +221,8 @@ export class QueryEditorRows extends PureComponent<Props> {
                       range={getTimeSrv().timeRange()}
                       history={history}
                       eventBus={eventBus}
+                      queryLibraryRef={queryLibraryRef}
+                      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
                       isOpen={isOpen}
                     />
                   );
