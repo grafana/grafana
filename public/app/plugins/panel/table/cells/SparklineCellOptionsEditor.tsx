@@ -52,7 +52,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
   const values = { ...defaultSparklineCellConfig, ...cellOptions };
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={0}>
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
         if (item.showIf && !item.showIf(values)) {
           return null;
