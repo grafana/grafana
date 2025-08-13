@@ -235,7 +235,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
           type: AppEvents.alertSuccess.name,
           payload: [t('folders.api.folder-deleted-success', 'Folder deleted')],
         });
-        dispatch(refreshParents([...folderUIDs]));
+        dispatch(refreshParents(folderUIDs));
       }
     }
     return { data: undefined };

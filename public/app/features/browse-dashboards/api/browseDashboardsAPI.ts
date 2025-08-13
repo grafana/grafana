@@ -319,7 +319,7 @@ export const browseDashboardsAPI = createApi({
       },
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents([...folderUIDs]));
+          dispatch(refreshParents(folderUIDs));
         });
       },
     }),
@@ -364,7 +364,7 @@ export const browseDashboardsAPI = createApi({
       },
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents([...dashboardUIDs]));
+          dispatch(refreshParents(dashboardUIDs));
         });
       },
     }),
