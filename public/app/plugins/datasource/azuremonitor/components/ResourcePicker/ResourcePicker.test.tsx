@@ -96,6 +96,7 @@ const defaultProps = {
 describe('AzureMonitor ResourcePicker', () => {
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
+    config.featureToggles.azureResourcePickerUpdates = false;
   });
   it('should pre-load subscriptions when there is no existing selection', async () => {
     render(<ResourcePicker {...defaultProps} resources={[noResourceURI]} />);
