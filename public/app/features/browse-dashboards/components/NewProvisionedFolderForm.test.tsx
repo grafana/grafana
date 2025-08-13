@@ -297,7 +297,7 @@ describe('NewProvisionedFolderForm', () => {
         expect.objectContaining({
           ref: undefined, // write workflow uses undefined ref
           name: 'test-repo',
-          path: '/dashboards/new-test-folder/',
+          path: '/dashboards/New Test Folder/',
           message: 'Creating a new test folder',
           body: {
             title: 'New Test Folder',
@@ -350,7 +350,7 @@ describe('NewProvisionedFolderForm', () => {
         expect.objectContaining({
           ref: 'feature/new-folder',
           name: 'test-repo',
-          path: '/dashboards/branch-folder/',
+          path: '/dashboards/Branch Folder/',
           message: 'Create folder: Branch Folder',
           body: {
             title: 'Branch Folder',
