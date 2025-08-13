@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -69,7 +70,6 @@ func upgradePanelLinks(links []interface{}) []interface{} {
 	for _, link := range links {
 		linkMap, ok := link.(map[string]interface{})
 		if !ok {
-			result = append(result, link)
 			continue
 		}
 
@@ -124,15 +124,14 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 	}
 
 	// Append parameters to URL
+	paramUsed := false
 	for _, param := range params {
 		if param != "" {
-			pos := strings.Index(url, "?")
-			if pos != -1 {
-				if len(url)-pos > 1 {
-					url += "&"
-				}
+			if paramUsed {
+				url += "&"
 			} else {
 				url += "?"
+				paramUsed = true
 			}
 			url += param
 		}
@@ -141,17 +140,15 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 	return url
 }
 
+var reNonWordOrSpace = regexp.MustCompile(`[^a-z0-9_ ]+`)
+var reSpaces = regexp.MustCompile(` +`)
+
 // slugifyForURL converts a dashboard name to a URL-friendly slug
 func slugifyForURL(name string) string {
-	result := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
-	// Remove any non-alphanumeric characters except hyphens
-	result = strings.Map(func(r rune) rune {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
-			return r
-		}
-		return -1
-	}, result)
-	return result
+	name = strings.ToLower(name)
+	name = reNonWordOrSpace.ReplaceAllString(name, "")
+	name = reSpaces.ReplaceAllString(name, "-")
+	return name
 }
 
 func getStringValue(m map[string]interface{}, key string) string {
