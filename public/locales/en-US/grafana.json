@@ -11850,6 +11850,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "Discard changes",
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
@@ -11860,7 +11861,11 @@
       "replace-query-from-library": "Replace with query from library",
       "show-response": "Show response"
     },
-    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+    "query-editor-not-exported": "Data source plugin does not export any Query Editor component",
+    "query-library": {
+      "editing-tooltip": "Updating query from library\nUID: {{queryLibraryRef}}",
+      "from-library": "Updating query from library"
+    }
   },
   "recently-deleted": {
     "buttons": {
