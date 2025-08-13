@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.0.4";
+export const pluginVersion = "12.0.5";
 
 export interface Options extends common.SingleStatBaseOptions {
   minVizHeight: number;
