@@ -238,7 +238,7 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Auto](#auto)                             | A basic text and number cell. |
 | [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the cell text is displayed in the appropriate color. |
 | [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the cell background is displayed in the appropriate color. |
-| Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
+| [Data links](#data-links)                 | The cell text reflects the titles of the configured data links.|
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
@@ -288,6 +288,14 @@ The colored background cell type has the following options:
 <!-- prettier-ignore-end -->
 
 <!-- The wrap text and cell value inspect descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+
+#### Data links
+
+If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable.
+If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
+
+Data links cells also support text wrapping.
+{{< docs/shared lookup="visualizations/datalink-options-4.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Gauge
 
@@ -370,7 +378,9 @@ The **Pill** cell type displays each item in a comma-separated string in a color
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
+
 Pill cells also support text wrapping.
+{{< docs/shared lookup="visualizations/datalink-options-4.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 The following data formats are supported for the pill cell type:
 
