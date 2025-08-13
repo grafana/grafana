@@ -322,7 +322,7 @@ func (b *bleveBackend) BuildIndex(
 		}
 
 		start := time.Now()
-		_, err = builder(idx)
+		rv, err := builder(idx)
 		if err != nil {
 			logWithDetails.Error("Failed to build index", "err", err)
 			if b.indexMetrics != nil {
@@ -332,6 +332,9 @@ func (b *bleveBackend) BuildIndex(
 		}
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
+
+		idx.resourceVersion = rv
+
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
 		}
@@ -532,23 +535,11 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 	return idx, indexName
 }
 
-func (b *bleveBackend) closeAllIndexes() {
-	b.cacheMx.Lock()
-	defer b.cacheMx.Unlock()
-
-	for key, idx := range b.cache {
-		_ = idx.index.Close()
-		delete(b.cache, key)
-
-		if b.indexMetrics != nil {
-			b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
-		}
-	}
-}
-
 type bleveIndex struct {
 	key   resource.NamespacedResource
 	index bleve.Index
+
+	resourceVersion int64
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
