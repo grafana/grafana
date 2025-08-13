@@ -4,6 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
+import { PullRequestButton } from '../Repository/PullRequestButton';
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
 import { StepStatusInfo } from '../Wizard/types';
@@ -26,6 +27,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
 
   const { state, message, progress, summary, errors } = job.status;
   const repoName = job.metadata?.labels?.['provisioning.grafana.app/repository'];
+  const pullRequestURL = job.status?.url?.newPullRequestURL;
 
   // Update step status based on job state
   useEffect(() => {
@@ -95,7 +97,10 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
           </Stack>
         )}
         {state === 'success' ? (
-          <RepositoryLink name={repoName} jobType={jobType} />
+          <Stack direction="row" gap={1}>
+            <RepositoryLink name={repoName} jobType={jobType} />
+            <PullRequestButton pullRequestURL={pullRequestURL} jobType={jobType} />
+          </Stack>
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
             <pre>{JSON.stringify(job, null, 2)}</pre>
