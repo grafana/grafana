@@ -57,7 +57,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
       })
       .addSelect({
         name: 'Slice sorting',
-        description: 'Select how to sort the pie slices.',
+        description: 'Select how to sort the pie slices',
         path: 'pieSorting',
         settings: {
           options: [
