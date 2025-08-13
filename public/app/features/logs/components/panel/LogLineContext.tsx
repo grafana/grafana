@@ -144,11 +144,12 @@ export const LogLineContext = memo(
     }, [updateContextQuery, open, log]);
 
     const getContextLogs = useCallback(
-      async (place: 'above' | 'below', refLog: LogRowModel): Promise<LogRowModel[]> => {
+      async (place: 'above' | 'below', refLog: LogRowModel, timeWindowMs?: number): Promise<LogRowModel[]> => {
         const result = await getRowContext(normalizeLogRefId(refLog), {
           limit: PAGE_SIZE,
           direction: getLoadMoreDirection(place, sortOrder),
-          timeWindowMs: timeWindow,
+          // Only on the initial request
+          timeWindowMs,
         });
 
         const newLogs = dataFrameToLogsModel(result.data).rows;
@@ -157,16 +158,16 @@ export const LogLineContext = memo(
         }
         return newLogs.filter((r) => !containsRow(allLogs, r));
       },
-      [allLogs, getRowContext, sortOrder, timeWindow]
+      [allLogs, getRowContext, sortOrder]
     );
 
     const loadMore = useCallback(
-      async (place: 'above' | 'below', refLog: LogRowModel) => {
+      async (place: 'above' | 'below', refLog: LogRowModel, timeWindow?: number) => {
         const setState = place === 'above' ? setAboveState : setBelowState;
         setState(LoadingState.Loading);
 
         try {
-          const newLogs = (await getContextLogs(place, refLog)).map((r) =>
+          const newLogs = (await getContextLogs(place, refLog, timeWindow)).map((r) =>
             // apply the original row's searchWords to all the rows for highlighting
             !r.searchWords || !r.searchWords?.length ? { ...r, searchWords: log.searchWords } : r
           );
@@ -200,11 +201,10 @@ export const LogLineContext = memo(
         return;
       }
       if (!initialized) {
-        console.log('innitializing');
-        Promise.all([loadMore('above', log), loadMore('below', log)]).then(() => {});
+        Promise.all([loadMore('above', log, timeWindow), loadMore('below', log, timeWindow)]);
         setInitialized(true);
       }
-    }, [initialized, loadMore, log, open]);
+    }, [initialized, loadMore, log, open, timeWindow]);
 
     const handleLoadMore = useCallback(
       (_: AbsoluteTimeRange, direction: ScrollDirection) => {
