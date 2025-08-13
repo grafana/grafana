@@ -5343,6 +5343,7 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-dashboard": {
@@ -7505,7 +7506,8 @@
     "loading": "Loading folders..."
   },
   "folder-repo": {
-    "badge-tooltip": "Provisioned"
+    "provisioned-badge": "Provisioned",
+    "read-only-badge": "Read only"
   },
   "folders": {
     "api": {
@@ -11413,6 +11415,8 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "read-only-local-tooltip": "This folder is read-only and provisioned through file provisioning. To make any changes in the folder, update the connected file repository. To modify the folder settings go to Administration > Provisioning > Repositories.",
+    "read-only-remote-tooltip": "This folder is read-only and provisioned through Git. To make any changes in the folder, update the connected repository. To modify the folder settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
       "active-jobs": "active jobs",
       "column-action": "Action",
@@ -11431,6 +11435,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },

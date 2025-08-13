@@ -6,6 +6,8 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
+import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
@@ -20,9 +22,11 @@ import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
 interface Props {
   folder: FolderDTO;
+  isReadOnlyRepo?: boolean;
+  repoType?: RepoType;
 }
 
-export function FolderActionsButton({ folder }: Props) {
+export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
@@ -137,7 +141,11 @@ export function FolderActionsButton({ folder }: Props) {
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Button variant="secondary">
+        <Button
+          variant="secondary"
+          disabled={isReadOnlyRepo}
+          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
+        >
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
