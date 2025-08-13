@@ -373,7 +373,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     extraActions.push(this.renderWarnings('info'));
     extraActions.push(this.renderWarnings('warning'));
     extraActions.push(<AdaptiveTelemetryQueryActions key="adaptive-telemetry-actions" query={query} />);
-    extraActions.push(this.renderQueryLibraryEditingBadge());
 
     return extraActions;
   };
@@ -394,38 +393,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <>
-        {hasEditorHelp && (
-          <QueryOperationToggleAction
-            title={t('query-operation.header.datasource-help', 'Show data source help')}
-            icon="question-circle"
-            onClick={this.onToggleHelp}
-            active={showingHelp}
-          />
-        )}
-        {this.renderExtraActions()}
+        {isEditingQueryLibrary && this.renderQueryLibraryEditingBadge()}
         <MaybeQueryLibrarySaveButton
           query={query}
           queryLibraryRef={queryLibraryRef}
           app={this.props.app}
           onUpdateSuccess={this.onExitQueryLibraryEditingMode}
         />
-        {isEditingQueryLibrary && (
-          <>
-            <QueryOperationAction
-              title={t('query-operation.header.cancel-query-library-edit', 'Cancel editing from library')}
-              icon="times"
-              onClick={this.onCancelQueryLibraryEdit}
-            />
-            <Divider direction="vertical" spacing={0} />
-          </>
-        )}
-        {!isEditingQueryLibrary && (
-          <QueryOperationAction
-            title={t('query-operation.header.duplicate-query', 'Duplicate query')}
-            icon="copy"
-            onClick={this.onCopyQuery}
-          />
-        )}
+
         {!isEditingQueryLibrary && (
           <ReplaceQueryFromLibrary
             datasourceFilters={datasource?.name ? [datasource.name] : []}
@@ -436,6 +411,35 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             app={this.props.app}
           />
         )}
+
+        {isEditingQueryLibrary && (
+          <>
+            <QueryOperationAction
+              title={t('query-operation.header.cancel-query-library-edit', 'Cancel editing from library')}
+              icon="times"
+              onClick={this.onCancelQueryLibraryEdit}
+            />
+            <Divider direction="vertical" spacing={0} />
+          </>
+        )}
+
+        {hasEditorHelp && (
+          <QueryOperationToggleAction
+            title={t('query-operation.header.datasource-help', 'Show data source help')}
+            icon="question-circle"
+            onClick={this.onToggleHelp}
+            active={showingHelp}
+          />
+        )}
+        {this.renderExtraActions()}
+        {!isEditingQueryLibrary && (
+          <QueryOperationAction
+            title={t('query-operation.header.duplicate-query', 'Duplicate query')}
+            icon="copy"
+            onClick={this.onCopyQuery}
+          />
+        )}
+
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
             dataTestId={selectors.components.QueryEditorRow.actionButton('Hide response')}
@@ -543,10 +547,10 @@ export function QueryLibraryEditingBadge(props: { queryLibraryRef?: string }) {
     <Badge
       color="blue"
       icon="book"
-      text={t('query-operation.query-library.from-library', 'Update query from library')}
+      text={t('query-operation.query-library.from-library', 'Updating query from library')}
       tooltip={t(
         'query-operation.query-library.editing-tooltip',
-        'Update query from library\nUID: {{queryLibraryRef}}',
+        'Updating query from library\nUID: {{queryLibraryRef}}',
         {
           queryLibraryRef,
         }
@@ -629,6 +633,8 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
       title={t('query-operation.header.replace-query-from-library', 'Replace with query from library')}
       icon="book"
       onClick={onReplaceQueryFromLibrary}
+      isGroupEnd
+      isHighlighted
     />
   ) : null;
 }

@@ -242,13 +242,10 @@ func (r *resourceHistoryReadLatestRVResponse) Results() (*resourceHistoryReadLat
 }
 
 type historyListRequest struct {
-	ResourceVersion int64
-	Limit           int64
-	Offset          int64
-	Folder          string
-	Options         *resourcepb.ListOptions
+	ResourceVersion, Limit, Offset int64
+	Folder                         string
+	Options                        *resourcepb.ListOptions
 }
-
 type sqlResourceHistoryListRequest struct {
 	sqltemplate.SQLTemplate
 	Request  *historyListRequest
