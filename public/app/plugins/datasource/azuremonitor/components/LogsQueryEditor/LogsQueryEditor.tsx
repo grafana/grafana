@@ -279,7 +279,7 @@ const LogsQueryEditor = ({
         !!config.featureToggles.azureMonitorLogsBuilderEditor ? (
           <LogsQueryBuilder
             query={query}
-            schema={schema!}
+            schema={schema}
             basicLogsEnabled={basicLogsEnabled}
             onQueryChange={onQueryChange}
             templateVariableOptions={templateVariableOptions}
