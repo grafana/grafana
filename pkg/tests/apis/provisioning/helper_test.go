@@ -189,14 +189,13 @@ func (h *provisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 		result, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(job.GetUID()))
 
-		if apierrors.IsNotFound(err) {
+		if !assert.False(collect, apierrors.IsNotFound(err)) {
 			collect.Errorf("job '%s' not found, still waiting for it to complete", job.GetName())
-			return // continue trying
+			return
 		}
 
+		assert.NoError(collect, err, "failed to get job '%s' to be found", job.GetName())
 		if err != nil {
-			collect.Errorf("failed to get job '%s': %v", job.GetName(), err)
-			collect.FailNow()
 			return
 		}
 
@@ -216,9 +215,11 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 		if assert.NoError(collect, err, "failed to list active jobs") {
 			for _, elem := range list.Items {
 				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
-				require.NoError(t, err)
-				if repo == repoName {
-					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
+				if !assert.NoError(collect, err, "failed to get repository from job spec") {
+					return
+				}
+
+				if !assert.NotEqual(collect, repoName, repo, "there are still remaining jobs for %s: %+v", repoName, elem) {
 					return
 				}
 			}
@@ -251,9 +252,11 @@ func (h *provisioningTestHelper) AwaitJobsWithStates(t *testing.T, repoName stri
 		if assert.NoError(collect, err, "failed to list active jobs") {
 			for _, elem := range list.Items {
 				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
-				require.NoError(t, err)
-				if repo == repoName {
-					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
+				if !assert.NoError(collect, err, "failed to get repository from job spec") {
+					return
+				}
+
+				if !assert.NotEqual(collect, repoName, repo, "there are still remaining jobs for %s: %+v", repoName, elem) {
 					return
 				}
 			}
@@ -387,14 +390,14 @@ func (h *provisioningTestHelper) DebugState(t *testing.T, repo string, label str
 // logRepositoryFiles logs repository file structure using the files API
 func (h *provisioningTestHelper) logRepositoryFiles(t *testing.T, ctx context.Context, repoName string, prefix string) {
 	t.Helper()
-	
+
 	// Try to list files at root level
 	files, err := h.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files")
 	if err != nil {
 		t.Logf("%sERROR getting repository files: %v", prefix, err)
 		return
 	}
-	
+
 	// The API returns a structured response, we need to extract the actual file data
 	if files.Object != nil {
 		h.logRepositoryObject(t, files.Object, prefix, "")
@@ -406,18 +409,18 @@ func (h *provisioningTestHelper) logRepositoryFiles(t *testing.T, ctx context.Co
 // logRepositoryObject recursively logs repository file structure from API response
 func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[string]interface{}, prefix string, path string) {
 	t.Helper()
-	
+
 	if obj == nil {
 		return
 	}
-	
+
 	// Skip metadata fields and focus on actual content
 	for key, value := range obj {
 		// Skip Kubernetes metadata fields
 		if key == "kind" || key == "apiVersion" || key == "metadata" {
 			continue
 		}
-		
+
 		switch v := value.(type) {
 		case map[string]interface{}:
 			fullPath := path
