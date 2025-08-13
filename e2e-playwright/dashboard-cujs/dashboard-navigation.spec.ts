@@ -1,8 +1,5 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import scopesDashboardOne from '../dashboards/scopes-cujs/scopeDashboardOne.json';
-import scopesDashboardThree from '../dashboards/scopes-cujs/scopeDashboardThree.json';
-import scopesDashboardTwo from '../dashboards/scopes-cujs/scopeDashboardTwo.json';
 import { setScopes } from '../utils/scope-helpers';
 
 test.use({
@@ -14,42 +11,16 @@ test.use({
 });
 
 const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
-const LIVE_DASHBOARD_UID = process.env.LIVE_DASHBOARD_UID;
 
-export const DASHBOARD = USE_LIVE_DATA && LIVE_DASHBOARD_UID ? LIVE_DASHBOARD_UID : 'scopes-dashboard-1';
-export const DASHBOARD_TWO = USE_LIVE_DATA && LIVE_DASHBOARD_UID ? LIVE_DASHBOARD_UID : 'scopes-dashboard-2';
+export const DASHBOARD = 'cuj-dashboard-1';
+export const DASHBOARD_TWO = 'cuj-dashboard-2';
 
 test.describe(
   'Dashboard navigation CUJs',
   {
-    tag: ['@dashnav-cujs'],
+    tag: ['@dashboard-cujs'],
   },
   () => {
-    let dashboardUIDs: string[] = [];
-
-    test.beforeAll(async ({ request }) => {
-      // Import the test dashboard
-      for (const dashboard of [scopesDashboardOne, scopesDashboardTwo, scopesDashboardThree]) {
-        let response = await request.post('/api/dashboards/import', {
-          data: {
-            dashboard,
-            folderUid: '',
-            overwrite: true,
-            inputs: [],
-          },
-        });
-        let responseBody = await response.json();
-        dashboardUIDs.push(responseBody.uid);
-      }
-    });
-
-    test.afterAll(async ({ request }) => {
-      // Clean up the imported dashboard
-      for (const dashboardUID of dashboardUIDs) {
-        await request.delete(`/api/dashboards/uid/${dashboardUID}`);
-      }
-    });
-
     test('Navigate between dashboards', async ({ page, gotoDashboardPage, selectors }) => {
       await test.step('1.Search dashboard', async () => {
         await gotoDashboardPage({ uid: DASHBOARD });
@@ -104,7 +75,7 @@ test.describe(
       await test.step('3.See filter/groupby selection persisting when navigating from dashboard to dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_TWO });
 
-        await setScopes(page, USE_LIVE_DATA, { title: 'Scopes Dashboard 3', uid: 'scopes-dashboard-3' });
+        await setScopes(page, USE_LIVE_DATA, { title: 'CUJ Dashboard 3', uid: 'cuj-dashboard-3' });
 
         await page.waitForTimeout(500);
 
@@ -146,7 +117,7 @@ test.describe(
       await test.step('4.See filter/groupby selection persisting when navigating from dashboard to dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
 
-        await setScopes(page, USE_LIVE_DATA, { title: 'Scopes Dashboard 2', uid: 'scopes-dashboard-2' });
+        await setScopes(page, USE_LIVE_DATA, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
 
         await page.waitForTimeout(500);
 

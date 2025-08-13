@@ -283,14 +283,36 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
+    // Setup project for dashboard CUJS tests
+    {
+      name: 'dashboard-cujs-setup',
+      testDir: path.join(testDirRoot, '/dashboard-cujs'),
+      testMatch: ['global-setup.spec.ts'],
+      use: {
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    // Main dashboard CUJS tests
     {
       name: 'dashboard-cujs',
       testDir: path.join(testDirRoot, '/dashboard-cujs'),
+      testIgnore: ['global-setup.spec.ts', 'global-teardown.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
       },
-      dependencies: ['authenticate'],
+      dependencies: ['dashboard-cujs-setup'],
+    },
+    // Teardown project for dashboard CUJS tests
+    {
+      name: 'dashboard-cujs-teardown',
+      testDir: path.join(testDirRoot, '/dashboard-cujs'),
+      testMatch: ['global-teardown.spec.ts'],
+      use: {
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['dashboard-cujs'],
     },
   ],
 });

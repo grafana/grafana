@@ -1,6 +1,5 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import scopesDashboardOne from '../dashboards/scopes-cujs/scopeDashboardOne.json';
 import { setScopes } from '../utils/scope-helpers';
 
 test.use({
@@ -12,9 +11,8 @@ test.use({
 });
 
 const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
-const LIVE_DASHBOARD_UID = process.env.LIVE_DASHBOARD_UID;
 
-export const DASHBOARD = USE_LIVE_DATA && LIVE_DASHBOARD_UID ? LIVE_DASHBOARD_UID : 'scopes-dashboard-1';
+export const DASHBOARD = 'cuj-dashboard-1';
 
 test.describe(
   'AdHoc Filters CUJs',
@@ -22,27 +20,6 @@ test.describe(
     tag: ['@dashboard-cujs'],
   },
   () => {
-    let dashboardUID: string;
-
-    test.beforeAll(async ({ request }) => {
-      // Import the test dashboard
-      let response = await request.post('/api/dashboards/import', {
-        data: {
-          dashboard: scopesDashboardOne,
-          folderUid: '',
-          overwrite: true,
-          inputs: [],
-        },
-      });
-      let responseBody = await response.json();
-      dashboardUID = responseBody.uid;
-    });
-
-    test.afterAll(async ({ request }) => {
-      // Clean up the imported dashboard
-      await request.delete(`/api/dashboards/uid/${dashboardUID}`);
-    });
-
     test('Filter data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
       await test.step('1.Apply filtering to a whole dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });

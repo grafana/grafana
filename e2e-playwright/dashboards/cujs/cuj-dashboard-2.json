@@ -64,7 +64,17 @@
           "type": "prometheus",
           "uid": "gdev-prometheus"
         },
-        "filters": [],
+        "filters": [
+          {
+            "condition": "",
+            "key": "environment",
+            "keyLabel": "environment",
+            "operator": "=",
+            "value": "dev",
+            "valueLabels": ["dev"],
+            "values": ["dev"]
+          }
+        ],
         "name": "adHoc",
         "type": "adhoc"
       },
@@ -85,8 +95,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Scopes Dashboard 3",
-  "uid": "scopes-dashboard-3",
+  "title": "CUJ Dashboard 2",
+  "uid": "cuj-dashboard-2",
   "version": 3,
   "weekStart": ""
 }
