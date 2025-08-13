@@ -125,13 +125,6 @@ export const LogLineContext = memo(
       setContextQuery(contextQuery);
     }, [log, getRowContextQuery]);
 
-    const updateResults = useCallback(async () => {
-      setAboveLogs([]);
-      setBelowLogs([]);
-      await updateContextQuery();
-      setInitialized(false);
-    }, [updateContextQuery]);
-
     useEffect(() => {
       if (open) {
         updateContextQuery();
@@ -275,6 +268,13 @@ export const LogLineContext = memo(
       });
       onClose();
     }, [log.datasourceType, log.uid, onClose]);
+
+    const updateResults = useCallback(async () => {
+      setAboveLogs([]);
+      setBelowLogs([]);
+      await updateContextQuery();
+      setInitialized(false);
+    }, [updateContextQuery]);
 
     const wrapLogMessage = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true;
     const syntaxHighlighting = logOptionsStorageKey
