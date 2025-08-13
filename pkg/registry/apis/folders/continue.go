@@ -14,9 +14,13 @@ type continueToken struct {
 	limit int64
 }
 
+const defaultPageLimit = 100
+const defaultPageNumber = 1
+
 func readContinueToken(options *internalversion.ListOptions) (*continueToken, error) {
 	t := &continueToken{
-		limit: 100, // default page size
+		limit: defaultPageLimit,  // default page size
+		page:  defaultPageNumber, // default page number
 	}
 	if options.Continue == "" {
 		if options.Limit > 0 {
