@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "Esta carpeta está vacía"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Todos los recursos se han eliminado correctamente",
-      "all-moved": "Todos los recursos se han movido correctamente",
-      "button-done": "Hecho",
-      "progress-title": "Completado",
-      "failed-alert_one": "{{count}} elementos fallidos",
-      "failed-alert_other": "{{count}} elementos fallidos"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "Eliminando...",
       "delete-warning": "Esto eliminará las carpetas seleccionadas y sus subcarpetas. En total, esto afectará a:",
-      "error-path-not-found": "Ruta no encontrada"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "Moviendo...",
-      "deleting": "Eliminando",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Contenido de archivo no encontrado",
-      "error-path-not-found": "Ruta no encontrada",
-      "error-target-folder-path-missing": "Falta la ruta de la carpeta de destino",
-      "error-title": "Error de carpeta de destino",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Esto moverá las carpetas seleccionadas y sus subcarpetas. En total, esto afectará a:",
-      "moving": "Moviendo",
-      "progress": "Progreso: {{current}} de {{total}}",
       "target-folder": "Carpeta de destino"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Contraer la carpeta {{title}}",
       "expand-folder-button": "Expandir la carpeta {{title}}",
       "name-column": "Nombre",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Muestra u oculta el {{type}} dinámicamente en función del valor de la variable.",
           "label": "Variable de plantilla",
           "name": "Nombre",
           "operator": {
             "equals": "Igual a",
-            "not-equals": "No es igual a"
+            "matches": "",
+            "not-equals": "No es igual a",
+            "not-matches": ""
           },
           "value": "Valor"
         }
@@ -5399,6 +5395,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Buscar transformación",
       "show-images": "Mostrar imágenes",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Añadir otra transformación",
       "view-all": "Ver todo"
     },
@@ -11442,8 +11441,13 @@
       "title-repository-is-unhealthy": "El repositorio no está en buen estado"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Tus recursos están ahora en tu almacenamiento externo y aprovisionados en tu instancia. A partir de ahora, tu instancia y el almacenamiento externo estarán sincronizados.",
-      "view-repository": "Ver repositorio"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Revisado:",

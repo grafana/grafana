@@ -1093,4 +1093,9 @@ export interface FeatureToggles {
   * @default false
   */
   newClickhouseConfigPageDesign?: boolean;
+  /**
+  * Enable experimental search-after-write guarantees to unified-storage search endpoints
+  * @default false
+  */
+  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
 }
