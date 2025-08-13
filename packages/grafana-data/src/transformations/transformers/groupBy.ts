@@ -146,7 +146,11 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 
 const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
-  return Array.isArray(options?.fields[fieldName]?.aggregations) && options?.fields[fieldName].aggregations.length > 0;
+  return (
+    options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
+    Array.isArray(options?.fields[fieldName]?.aggregations) &&
+    options?.fields[fieldName].aggregations.length > 0
+  );
 };
 
 /**
