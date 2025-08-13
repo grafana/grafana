@@ -317,8 +317,9 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
-					"Name": test.name,
-					"URL":  test.input,
+					"Name":       test.name,
+					"URL":        test.input,
+					"SyncTarget": "instance",
 				})
 
 				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
@@ -333,6 +334,12 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 				err = helper.Repositories.Resource.Delete(ctx, test.name, metav1.DeleteOptions{})
 				require.NoError(t, err, "failed to delete")
+
+				// Wait for repository to be fully deleted before next test
+				require.EventuallyWithT(t, func(collect *assert.CollectT) {
+					_, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
+					assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+				}, time.Second*5, time.Millisecond*50, "repository should be deleted")
 			})
 		}
 	})
@@ -388,6 +395,11 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
 		// Ensure clean state
 		cleanupAllRepos()
+		
+		// Double-check that we have a clean state before proceeding
+		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "should be able to list repositories")
+		require.Equal(t, 0, len(list.Items), "should start with no repositories")
 
 		existingFolderName := "existing-folder-repo"
 		instanceRepoName := "instance-repo-blocked"
@@ -399,8 +411,13 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 			"SyncTarget":  "folder",
 		})
 
-		_, err := helper.Repositories.Resource.Create(ctx, folderRepo, createOptions)
+		_, err = helper.Repositories.Resource.Create(ctx, folderRepo, createOptions)
 		require.NoError(t, err, "folder sync repository should be created successfully")
+		
+		// Verify the folder repository was created
+		list, err = helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "should be able to list repositories")
+		require.Equal(t, 1, len(list.Items), "should have exactly one repository after creating folder repo")
 
 		// Try to create an instance sync repository - should fail because any other repository exists
 		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
