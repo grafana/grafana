@@ -238,7 +238,7 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Auto](#auto)                             | A basic text and number cell. |
 | [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the cell text is displayed in the appropriate color. |
 | [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the cell background is displayed in the appropriate color. |
-| Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
+| [Data links](#data-links)                 | The cell text reflects the titles of the configured data links.|
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
@@ -283,11 +283,22 @@ The colored background cell type has the following options:
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
-| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
+| Wrap text | Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch. |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 <!-- prettier-ignore-end -->
 
 <!-- The wrap text and cell value inspect descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+
+#### Data links
+
+If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable.
+If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
+
+Data links cells also support text wrapping.
+Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
+
+<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Gauge
 
@@ -370,7 +381,12 @@ The **Pill** cell type displays each item in a comma-separated string in a color
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
+
 Pill cells also support text wrapping.
+Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
+
+<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 The following data formats are supported for the pill cell type:
 
