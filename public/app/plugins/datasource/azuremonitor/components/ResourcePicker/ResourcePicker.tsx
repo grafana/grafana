@@ -330,7 +330,13 @@ const ResourcePicker = ({
               {!isLoading && resourceRows?.length === 0 && (
                 <tr className={cx(styles.row)}>
                   <td className={styles.cell} aria-live="polite">
-                    <Trans i18nKey="components.resource-picker.text-no-resources">No resources found</Trans>
+                    {view === 'picker' ? (
+                      <Trans i18nKey="components.resource-picker.text-no-resources">No resources found</Trans>
+                    ) : (
+                      <Trans i18nKey="components.resource-picker.text-no-recent-resources">
+                        No recent resources found
+                      </Trans>
+                    )}
                   </td>
                 </tr>
               )}
