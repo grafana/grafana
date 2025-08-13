@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const extraConfigPrefix = "__grafana-converted-extra-config-"
+const extraConfigPrefix = "~grafana-converted-extra-config-"
 
 type ConvertService interface {
 	RouteConvertPrometheusGetAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response

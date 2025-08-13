@@ -33,14 +33,14 @@ func TestAlertmanagerApiHandler_isExtraConfig(t *testing.T) {
 		},
 		{
 			name:               "extra config when feature enabled",
-			datasourceUID:      "__grafana-converted-extra-config-test-config",
+			datasourceUID:      "~grafana-converted-extra-config-test-config",
 			flagEnabled:        true,
 			expectedIsExtra:    true,
 			expectedIdentifier: "test-config",
 		},
 		{
 			name:               "extra config when feature disabled",
-			datasourceUID:      "__grafana-converted-extra-config-test-config",
+			datasourceUID:      "~grafana-converted-extra-config-test-config",
 			flagEnabled:        false,
 			expectedIsExtra:    false,
 			expectedIdentifier: "",
@@ -101,14 +101,14 @@ func TestAlertmanagerApiHandler_ExtraConfigRouting(t *testing.T) {
 		}
 
 		ctx.Req = web.SetURLParams(req, map[string]string{
-			":DatasourceUID": "__grafana-converted-extra-config-test",
+			":DatasourceUID": "~grafana-converted-extra-config-test",
 		})
 
 		handler := &AlertmanagerApiHandler{
 			FeatureManager: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerUI),
 		}
 
-		resp := handler.handleRouteGetAMStatus(ctx, "__grafana-converted-extra-config-test")
+		resp := handler.handleRouteGetAMStatus(ctx, "~grafana-converted-extra-config-test")
 		require.Equal(t, http.StatusOK, resp.Status())
 	})
 
@@ -124,23 +124,23 @@ func TestAlertmanagerApiHandler_ExtraConfigRouting(t *testing.T) {
 		}
 
 		ctx.Req = web.SetURLParams(req, map[string]string{
-			":DatasourceUID": "__grafana-converted-extra-config-test",
+			":DatasourceUID": "~grafana-converted-extra-config-test",
 		})
 
 		handler := &AlertmanagerApiHandler{
 			FeatureManager: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerUI),
 		}
 
-		resp := handler.handleRouteCreateSilence(ctx, apimodels.PostableSilence{}, "__grafana-converted-extra-config-test")
+		resp := handler.handleRouteCreateSilence(ctx, apimodels.PostableSilence{}, "~grafana-converted-extra-config-test")
 		assert.Equal(t, http.StatusForbidden, resp.Status())
 
-		resp = handler.handleRouteDeleteAlertingConfig(ctx, "__grafana-converted-extra-config-test")
+		resp = handler.handleRouteDeleteAlertingConfig(ctx, "~grafana-converted-extra-config-test")
 		assert.Equal(t, http.StatusForbidden, resp.Status())
 
-		resp = handler.handleRoutePostAlertingConfig(ctx, apimodels.PostableUserConfig{}, "__grafana-converted-extra-config-test")
+		resp = handler.handleRoutePostAlertingConfig(ctx, apimodels.PostableUserConfig{}, "~grafana-converted-extra-config-test")
 		assert.Equal(t, http.StatusForbidden, resp.Status())
 
-		resp = handler.handleRoutePostAMAlerts(ctx, apimodels.PostableAlerts{}, "__grafana-converted-extra-config-test")
+		resp = handler.handleRoutePostAMAlerts(ctx, apimodels.PostableAlerts{}, "~grafana-converted-extra-config-test")
 		assert.Equal(t, http.StatusForbidden, resp.Status())
 	})
 
@@ -158,7 +158,7 @@ func TestAlertmanagerApiHandler_ExtraConfigRouting(t *testing.T) {
 		}
 
 		ctx.Req = web.SetURLParams(req, map[string]string{
-			":DatasourceUID": "__grafana-converted-extra-config-test-identifier",
+			":DatasourceUID": "~grafana-converted-extra-config-test-identifier",
 		})
 
 		mockConvertSvc := &mockConvertService{}
@@ -186,7 +186,7 @@ func TestAlertmanagerApiHandler_ExtraConfigRouting(t *testing.T) {
 			ConvertSvc:     mockConvertSvc,
 		}
 
-		resp := handler.handleRouteGetAlertingConfig(ctx, "__grafana-converted-extra-config-test-identifier")
+		resp := handler.handleRouteGetAlertingConfig(ctx, "~grafana-converted-extra-config-test-identifier")
 		assert.Equal(t, http.StatusOK, resp.Status())
 
 		mockConvertSvc.AssertExpectations(t)
