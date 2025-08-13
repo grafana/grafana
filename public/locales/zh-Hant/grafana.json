@@ -3506,25 +3506,18 @@
     "browse-view": {
       "this-folder-is-empty": "此資料夾為空"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "已成功刪除所有資源",
-      "all-moved": "已成功移動所有資源",
-      "button-done": "完成",
-      "progress-title": "成功",
-      "failed-alert_other": "{{count}} 個項目失敗"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "取消",
       "button-delete": "刪除",
       "button-deleting": "正在刪除…",
       "delete-warning": "這將刪除所選資料夾及其子資料夾。總體而言，這將影響：",
-      "error-path-not-found": "找不到路徑"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "取消",
       "button-move": "移動",
       "button-moving": "正在移動…",
-      "deleting": "正在刪除",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3532,13 +3525,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "找不到檔案內容",
-      "error-path-not-found": "找不到路徑",
-      "error-target-folder-path-missing": "缺少目標資料夾路徑",
-      "error-title": "目標資料夾錯誤",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "這將移動所選資料夾及其子資料夾。總體而言，這將影響：",
-      "moving": "正在移動",
-      "progress": "進度：已完成 {{current}} 個，共 {{total}} 個",
       "target-folder": "目標資料夾"
     },
     "counts": {
@@ -3549,6 +3538,9 @@
       "total_other": "{{count}} 個項目"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "收合資料夾「{{title}}」",
       "expand-folder-button": "展開資料夾「{{title}}」",
       "name-column": "名稱",
@@ -4490,12 +4482,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "根據變數值動態顯示或隱藏{{type}}。",
           "label": "範本變數",
           "name": "名稱（名字）",
           "operator": {
             "equals": "等於",
-            "not-equals": "不等於"
+            "matches": "",
+            "not-equals": "不等於",
+            "not-matches": ""
           },
           "value": "數值"
         }
@@ -5379,6 +5376,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "搜尋轉換",
       "show-images": "顯示圖片",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "新增另一個轉換",
       "view-all": "檢視全部"
     },
@@ -11406,8 +11406,13 @@
       "title-repository-is-unhealthy": "儲存庫狀態不佳"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "您的資源現在位於外部儲存空間中，並佈建到您的執行個體中。從現在開始，您的執行個體和外部儲存空間將會同步。",
-      "view-repository": "檢視儲存庫"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "已選取：",

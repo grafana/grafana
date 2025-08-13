@@ -3245,6 +3245,25 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearchAfterWriteExperimentalAPI",
+        "resourceVersion": "1755089543487",
+        "creationTimestamp": "2025-08-13T12:35:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-13 12:52:23.487521 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable experimental search-after-write guarantees to unified-storage search endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageSearchDualReaderEnabled",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-25T13:06:00Z"
