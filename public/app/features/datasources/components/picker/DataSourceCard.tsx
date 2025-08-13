@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { Card, TagList, useTheme2, Icon } from '@grafana/ui';
 
 interface DataSourceCardProps {
@@ -42,11 +41,6 @@ export function DataSourceCard({
             {onToggleFavorite && !ds.meta.builtIn && (
               <Icon
                 name={isFavorite ? 'favorite' : 'star'}
-                aria-label={
-                  isFavorite
-                    ? t('datasource-card.remove-favorite', 'Remove from favorites')
-                    : t('datasource-card.add-favorite', 'Add to favorites')
-                }
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(ds);
