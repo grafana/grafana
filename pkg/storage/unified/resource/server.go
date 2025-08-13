@@ -237,7 +237,7 @@ type ResourceServerOptions struct {
 	RingLifecycler *ring.BasicLifecycler
 }
 
-func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
 	}
