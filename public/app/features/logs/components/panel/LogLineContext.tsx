@@ -303,7 +303,7 @@ export const LogLineContext = memo(
         onDismiss={handleClose}
       >
         {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
-          <div className={styles.datasourceUi}>{getLogRowContextUi(log, updateResults)}</div>
+          <div>{getLogRowContextUi(log, updateResults)}</div>
         )}
         <Collapse
           collapsible={true}
@@ -421,10 +421,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
-    }),
-    datasourceUi: css({
-      display: 'flex',
-      alignItems: 'center',
     }),
     loadingIndicator: css({
       height: theme.spacing(3),
