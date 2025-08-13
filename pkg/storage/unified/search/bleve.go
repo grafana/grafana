@@ -277,7 +277,7 @@ func (b *bleveBackend) BuildIndex(
 			indexDir := ""
 			now := time.Now()
 			for index == nil {
-				fileIndexName = formatIndexName(time.Now(), resourceVersion)
+				fileIndexName = formatIndexName(now)
 				indexDir = filepath.Join(resourceDir, fileIndexName)
 				if !isPathWithinRoot(indexDir, b.opts.Root) {
 					return nil, fmt.Errorf("invalid path %s", indexDir)
@@ -486,9 +486,9 @@ func (b *bleveBackend) TotalDocs() int64 {
 	return totalDocs
 }
 
-func formatIndexName(now time.Time, resourceVersion int64) string {
+func formatIndexName(now time.Time) string {
 	timestamp := now.Format("20060102-150405")
-	return fmt.Sprintf("%s-%d", timestamp, resourceVersion)
+	return fmt.Sprintf("%s", timestamp)
 }
 
 func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVersion int64, size int64) (bleve.Index, string) {
@@ -497,51 +497,44 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 		return nil, ""
 	}
 
-	indexName := ""
 	for _, ent := range entries {
 		if !ent.IsDir() {
 			continue
 		}
 
-		parts := strings.Split(ent.Name(), "-")
-		if len(parts) != 3 {
-			continue
-		}
-
-		// Last part is resourceVersion
-		indexRv, err := strconv.ParseInt(parts[2], 10, 64)
+		indexName := ent.Name()
+		indexDir := filepath.Join(resourceDir, indexName)
+		idx, err := bleve.Open(indexDir)
 		if err != nil {
 			continue
 		}
-		if indexRv != resourceVersion {
+
+		cnt, err := idx.DocCount()
+		if err != nil {
+			_ = idx.Close()
 			continue
 		}
-		indexName = ent.Name()
-		break
+
+		if uint64(size) != cnt {
+			_ = idx.Close()
+			continue
+		}
+
+		rv, err := getRV(idx)
+		if err != nil {
+			_ = idx.Close()
+			continue
+		}
+
+		if rv != resourceVersion {
+			_ = idx.Close()
+			continue
+		}
+
+		return idx, indexName
 	}
 
-	if indexName == "" {
-		return nil, ""
-	}
-
-	indexDir := filepath.Join(resourceDir, indexName)
-	idx, err := bleve.Open(indexDir)
-	if err != nil {
-		return nil, ""
-	}
-
-	cnt, err := idx.DocCount()
-	if err != nil {
-		_ = idx.Close()
-		return nil, ""
-	}
-
-	if uint64(size) != cnt {
-		_ = idx.Close()
-		return nil, ""
-	}
-
-	return idx, indexName
+	return nil, ""
 }
 
 type bleveIndex struct {
