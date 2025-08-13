@@ -49,6 +49,8 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	require.NoError(t, err, "should be able to create repository")
 
 	// Now export
+	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
+	
 	spec := provisioning.JobSpec{
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
@@ -56,6 +58,8 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+	
+	helper.DebugState(t, repo, "AFTER EXPORT TO REPOSITORY")
 
 	type props struct {
 		title      string
@@ -137,6 +141,8 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	printFileTree(t, helper.ProvisioningPath)
 
 	// Initial export
+	helper.DebugState(t, repo1, "BEFORE INITIAL EXPORT")
+	
 	spec := provisioning.JobSpec{
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
@@ -145,6 +151,8 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	}
 
 	helper.TriggerJobAndWaitForSuccess(t, repo1, spec)
+	
+	helper.DebugState(t, repo1, "AFTER INITIAL EXPORT")
 	helper.SyncAndWait(t, repo1, nil)
 
 	printFileTree(t, helper.ProvisioningPath)
@@ -214,6 +222,8 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err)
 
 	// Export from second repository - this should only export the unmanaged dashboard3
+	helper.DebugState(t, repo2, "BEFORE SECOND EXPORT")
+	
 	spec = provisioning.JobSpec{
 		Push: &provisioning.ExportJobOptions{
 			Folder: "", // export entire instance
@@ -221,6 +231,8 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo2, spec)
+	
+	helper.DebugState(t, repo2, "AFTER SECOND EXPORT")
 
 	// Wait for both repositories to sync
 	helper.SyncAndWait(t, repo1, nil)

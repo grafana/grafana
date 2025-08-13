@@ -40,6 +40,14 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 	t.Run("delete single file", func(t *testing.T) {
 		// FIXME: make the tests in a way that we can simply have a spec and some expectations per scenario.
+
+		// Debug state before delete
+		helper.DebugState(t, repo, "BEFORE DELETE")
+
+		// Verify file exists in repository before attempting delete
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
+		require.NoError(t, err, "dashboard1.json should exist in repository before delete")
+
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
@@ -48,6 +56,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		}
 		// Create delete job for single file
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+		// Debug state after successful delete
+		helper.DebugState(t, repo, "AFTER DELETE")
 
 		// FIXME: create a helper to verify repository files
 

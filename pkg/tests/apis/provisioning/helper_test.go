@@ -164,8 +164,16 @@ func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 	t.Helper()
 	job = h.AwaitJob(t, ctx, job)
 	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
-	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	lastState := mustNestedString(job.Object, "status", "state")
+
+	repo := job.GetLabels()[jobs.LabelRepository]
+
+	// Debug state if job failed
+	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
+	}
+
+	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
 		"historic job '%s' was not successful", job.GetName())
 }
@@ -312,6 +320,115 @@ func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
+func (h *provisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
+	t.Helper()
+	t.Logf("=== DEBUG STATE: %s ===", label)
+
+	ctx := context.Background()
+
+	// Log filesystem contents
+	t.Logf("Filesystem contents in %s:", h.ProvisioningPath)
+	err := filepath.Walk(h.ProvisioningPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			t.Logf("  ERROR walking %s: %v", path, err)
+			return nil
+		}
+		relPath, _ := filepath.Rel(h.ProvisioningPath, path)
+		if info.IsDir() {
+			t.Logf("  DIR:  %s/", relPath)
+		} else {
+			t.Logf("  FILE: %s (size: %d)", relPath, info.Size())
+		}
+		return nil
+	})
+	if err != nil {
+		t.Logf("  ERROR walking filesystem: %v", err)
+	}
+
+	// Log all repositories first
+	t.Logf("All repositories:")
+	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing repositories: %v", err)
+	} else {
+		t.Logf("  Total repositories: %d", len(repos.Items))
+		for i, repository := range repos.Items {
+			t.Logf("  Repository %d: name=%s", i+1, repository.GetName())
+		}
+	}
+	
+	// Log repository files for the specific repo
+	t.Logf("Repository '%s' files:", repo)
+	files, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files")
+	if err != nil {
+		t.Logf("  ERROR getting repository files: %v", err)
+	} else {
+		h.logRepositoryContents(t, files.Object, "")
+	}
+	
+	// Log files for all other repositories too
+	if repos != nil && len(repos.Items) > 1 {
+		t.Logf("Files in other repositories:")
+		for _, repository := range repos.Items {
+			if repository.GetName() != repo {
+				t.Logf("  Repository '%s' files:", repository.GetName())
+				otherFiles, err := h.Repositories.Resource.Get(ctx, repository.GetName(), metav1.GetOptions{}, "files")
+				if err != nil {
+					t.Logf("    ERROR getting files: %v", err)
+				} else {
+					h.logRepositoryContents(t, otherFiles.Object, "    ")
+				}
+			}
+		}
+	}
+
+	// Log Grafana dashboards
+	t.Logf("Grafana dashboards:")
+	dashboards, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing dashboards: %v", err)
+	} else {
+		t.Logf("  Total dashboards: %d", len(dashboards.Items))
+		for i, dashboard := range dashboards.Items {
+			t.Logf("  Dashboard %d: name=%s, UID=%s", i+1, dashboard.GetName(), dashboard.GetUID())
+		}
+	}
+
+	// Log Grafana folders
+	t.Logf("Grafana folders:")
+	folders, err := h.Folders.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing folders: %v", err)
+	} else {
+		t.Logf("  Total folders: %d", len(folders.Items))
+		for i, folder := range folders.Items {
+			t.Logf("  Folder %d: name=%s", i+1, folder.GetName())
+		}
+	}
+
+	t.Logf("=== END DEBUG STATE ===")
+}
+
+// logRepositoryContents recursively logs repository file structure
+func (h *provisioningTestHelper) logRepositoryContents(t *testing.T, obj map[string]interface{}, prefix string) {
+	t.Helper()
+
+	if obj == nil {
+		return
+	}
+
+	for key, value := range obj {
+		switch v := value.(type) {
+		case map[string]interface{}:
+			t.Logf("  %sDIR: %s/", prefix, key)
+			h.logRepositoryContents(t, v, prefix+"  ")
+		default:
+			t.Logf("  %sFILE: %s", prefix, key)
+		}
+	}
+}
+
 type TestRepo struct {
 	Name               string
 	Target             string
@@ -341,6 +458,9 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 
 	// Trigger and wait for initial sync to populate resources
 	h.SyncAndWait(t, repo.Name, nil)
+
+	// Debug state after initial sync
+	h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
 
 	// Verify initial state
 	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
