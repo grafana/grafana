@@ -6579,6 +6579,9 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus, and Loki"
       }
     },
+    "list": {
+      "starred": "Starred"
+    },
     "new-data-source-view": {
       "cancel": "Cancel",
       "placeholder-filter-by-name-or-type": "Filter by name or type"
