@@ -76,6 +76,10 @@ export type PreinstalledPlugin = {
   version: string;
 };
 
+/**
+ * Use to access Grafana config settings in application code.
+ * This takes `window.grafanaBootData.settings` as input and returns a config object.
+ */
 export class GrafanaBootConfig {
   publicDashboardAccessToken?: string;
   publicDashboardsEnabled = true;

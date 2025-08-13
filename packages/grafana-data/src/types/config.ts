@@ -141,8 +141,9 @@ export interface AnalyticsSettings {
   intercomIdentifier?: string;
 }
 
-/** Current user info included in bootData
- *
+/**
+ * Current user info included in bootData.
+ * Corresponds to `window.grafanaBootData.user`
  * @internal
  */
 export interface CurrentUserDTO {
@@ -172,8 +173,9 @@ export interface CurrentUserDTO {
   lightTheme: boolean;
 }
 
-/** Contains essential user and config info
- *
+/**
+ * Contains essential user and config info.
+ * Corresponds to `window.grafanaBootData`.
  * @internal
  */
 export interface BootData {
@@ -188,7 +190,8 @@ export interface BootData {
 
 /**
  * Describes all the different Grafana configuration values available for an instance.
- *
+ * Corresponds to `window.grafanaBootData.settings`.
+ * If you want to access these values, use the `config` object from `@grafana/runtime`.
  * @internal
  */
 export interface GrafanaConfig {
