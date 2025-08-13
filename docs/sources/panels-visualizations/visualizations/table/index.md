@@ -295,7 +295,12 @@ If you've configured data links, when the cell type is **Auto**, the cell text b
 If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
 
 Data links cells also support text wrapping.
-{{< docs/shared lookup="visualizations/datalink-options-4.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
+
+Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.
+
+<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Gauge
 
@@ -380,7 +385,12 @@ The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
 
 Pill cells also support text wrapping.
-{{< docs/shared lookup="visualizations/datalink-options-4.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
+
+Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.
+
+<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 The following data formats are supported for the pill cell type:
 
