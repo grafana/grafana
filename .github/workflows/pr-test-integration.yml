@@ -41,13 +41,14 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Run tests
+      - name: Compile tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d- | ./scripts/ci/backend-tests/compile-tests.sh -c-tags=sqlite
+      - name: Run tests
+        run: ./scripts/ci/backend-tests/run-compiled-tests.sh tests -test.timeout=5m -test.run '^TestIntegration'
   mysql:
     strategy:
       matrix:
@@ -87,13 +88,15 @@ jobs:
           cache: true
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
-      - name: Run tests
+      - name: Compile tests
         env:
           SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: 0
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d- | ./scripts/ci/backend-tests/compile-tests.sh -c-tags=mysql
+      - name: Run tests
+        run: ./scripts/ci/backend-tests/run-compiled-tests.sh tests -test.timeout=5m -test.run '^TestIntegration' -test.parallel=1
   postgres:
     strategy:
       matrix:
@@ -132,13 +135,15 @@ jobs:
           cache: true
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-      - name: Run tests
+      - name: Compile tests
         env:
           SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: 0
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d- | ./scripts/ci/backend-tests/compile-tests.sh -c-tags=postgres
+      - name: Run tests
+        run: ./scripts/ci/backend-tests/run-compiled-tests.sh tests -test.timeout=5m -test.run '^TestIntegration' -test.parallel=1
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests and shards.

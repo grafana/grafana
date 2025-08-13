@@ -71,6 +71,10 @@ for i in "${!PACKAGES[@]}"; do
 done
 
 for pkg in "${PACKAGES[@]}"; do
+    pkg="$(realpath -s --relative-base . "$pkg")"
+    if [ "$pkg" != . ] && [[ "$pkg" != /* ]]; then
+        pkg="./$pkg"
+    fi
     if [ $s -eq 1 ]; then
         printf "%s " "$pkg"
     else
