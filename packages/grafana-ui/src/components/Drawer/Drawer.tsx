@@ -13,11 +13,11 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
+import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
 import 'rc-drawer/assets/index.css';
-import { Stack } from '../Layout/Stack/Stack';
 
 export interface Props {
   children: ReactNode;
@@ -160,9 +160,9 @@ export function Drawer({
                   {title}
                 </Text>
                 {subtitle && (
-                  <Text element="p" color="secondary" truncate>
+                  <div className={styles.subtitle} data-testid={selectors.components.Drawer.General.subtitle}>
                     {subtitle}
-                  </Text>
+                  </div>
                 )}
               </Stack>
             ) : (
@@ -325,6 +325,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       right: theme.spacing(1),
       top: theme.spacing(1),
+    }),
+    subtitle: css({
+      label: 'drawer-subtitle',
+      color: theme.colors.text.secondary,
     }),
     content: css({
       padding: theme.spacing(theme.components.drawer?.padding ?? 2),
