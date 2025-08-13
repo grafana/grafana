@@ -154,16 +154,17 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	t.Run("Resource ownership protection", func(t *testing.T) {
 		const firstRepo = "ownership-test-repo-1"
 		const secondRepo = "ownership-test-repo-2"
-		const testDashboard = "ownership-test-dashboard"
 		
-		// Create first repository  
-		firstRepoObj := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        firstRepo,
-			"SyncEnabled": false,
-			"SyncTarget":  "instance", 
+		// Create first repository using the helper
+		helper.CreateRepo(t, TestRepo{
+			Name:               firstRepo,
+			Target:             "instance",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "ownership-test-dashboard.json",
+			},
+			ExpectedDashboards: 1,
+			ExpectedFolders:    0,
 		})
-		_, err := helper.Repositories.Resource.Create(ctx, firstRepoObj, metav1.CreateOptions{})
-		require.NoError(t, err)
 		
 		// Create second repository
 		secondRepoObj := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
@@ -171,24 +172,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			"SyncEnabled": false,
 			"SyncTarget":  "instance",
 		})
-		_, err = helper.Repositories.Resource.Create(ctx, secondRepoObj, metav1.CreateOptions{})
+		_, err := helper.Repositories.Resource.Create(ctx, secondRepoObj, metav1.CreateOptions{})
 		require.NoError(t, err)
-		
-		// Create a test dashboard file and copy it to provisioning path
-		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "ownership-test-dashboard.json")
-		
-		t.Run("first repository can create dashboard", func(t *testing.T) {
-			// First repository creates the dashboard
-			result := helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(firstRepo).
-				SubResource("files", "ownership-test-dashboard.json").
-				Body(helper.LoadFile("testdata/all-panels.json")).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx)
-			require.NoError(t, result.Error(), "first repository should be able to create dashboard")
-		})
 		
 		t.Run("second repository cannot modify dashboard owned by first", func(t *testing.T) {
 			// Try to update the dashboard from the second repository - this should fail

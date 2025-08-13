@@ -121,49 +121,6 @@ type ParsedResource struct {
 	Errors []string
 }
 
-// checkOwnership validates that the requesting manager can modify the existing resource
-// This is a standalone function that can be used without a ResourcesManager instance
-func checkOwnership(existingResource *unstructured.Unstructured, resourceName string, requestingManager utils.ManagerProperties) error {
-	if existingResource == nil {
-		// Resource doesn't exist, so no ownership conflict
-		return nil
-	}
-
-	// Check if the existing resource has manager properties
-	existingMeta, err := utils.MetaAccessor(existingResource)
-	if err != nil {
-		// If we can't get metadata, allow the operation
-		return nil
-	}
-
-	currentManager, hasManager := existingMeta.GetManagerProperties()
-	if !hasManager {
-		// No manager information, so no ownership conflict
-		return nil
-	}
-
-	// Check if this is the same manager
-	if currentManager.Kind == requestingManager.Kind && currentManager.Identity == requestingManager.Identity {
-		// Same manager, no conflict
-		return nil
-	}
-
-	// Check if the current manager allows edits
-	if currentManager.AllowsEdits {
-		// Manager allows edits from others, no conflict
-		return nil
-	}
-
-	// Different manager and edits not allowed - return ownership conflict error
-	message := fmt.Sprintf("resource '%s' is managed by %s '%s' and cannot be modified by %s '%s'",
-		resourceName,
-		currentManager.Kind,
-		currentManager.Identity,
-		requestingManager.Kind,
-		requestingManager.Identity)
-	
-	return apierrors.NewBadRequest(message)
-}
 
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
 	logger := logging.FromContext(ctx).With("path", info.Path)

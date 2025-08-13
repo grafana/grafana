@@ -17,7 +17,6 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 func TestRepositoryResources_FindResourcePath(t *testing.T) {
@@ -438,21 +437,17 @@ func (m *MockDynamicResourceInterface) ApplyStatus(ctx context.Context, name str
 // Ensure MockDynamicResourceInterface implements dynamic.ResourceInterface
 var _ dynamic.ResourceInterface = (*MockDynamicResourceInterface)(nil)
 
-func TestResourcesManager_checkResourceOwnership(t *testing.T) {
+func TestCheckResourceOwnership(t *testing.T) {
 	tests := []struct {
 		name             string
 		existingResource *unstructured.Unstructured
 		requestingManager utils.ManagerProperties
-		getError         error
 		expectError      bool
 		expectedMessage  string
 	}{
 		{
 			name: "no existing resource - allow operation",
-			getError: apierrors.NewNotFound(schema.GroupResource{
-				Group: "dashboard.grafana.app",
-				Resource: "dashboards",
-			}, "test-resource"),
+			existingResource: nil, // Explicitly nil to represent non-existing resource
 			requestingManager: utils.ManagerProperties{
 				Kind:     utils.ManagerKindRepo,
 				Identity: "repo-1",
@@ -557,35 +552,8 @@ func TestResourcesManager_checkResourceOwnership(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create mocks
-			mockClients := NewMockResourceClients(t)
-			mockClient := &MockDynamicResourceInterface{}
-			
-			// Create test object
-			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "dashboard.grafana.app/v1alpha1",
-					"kind":       "Dashboard",
-					"metadata": map[string]interface{}{
-						"name": "test-resource",
-					},
-				},
-			}
-
-			// Set up mock expectations
-			mockClients.EXPECT().ForKind(mock.AnythingOfType("schema.GroupVersionKind")).Return(
-				mockClient, schema.GroupVersionResource{}, nil)
-			
-			mockClient.On("Get", mock.Anything, "test-resource", mock.Anything, mock.Anything).Return(
-				tt.existingResource, tt.getError)
-
-			// Create simple mock repository (no Config() expectation needed for this test)
-			mockRepo := repository.NewMockReaderWriter(t) 
-			manager := NewResourcesManager(mockRepo, nil, nil, mockClients)
-
-			// Test the ownership check directly
-			ctx := context.Background()
-			err := manager.checkResourceOwnership(ctx, obj, tt.requestingManager)
+			// Test the package-level ownership check function directly
+			err := CheckResourceOwnership(tt.existingResource, "test-resource", tt.requestingManager)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -594,9 +562,6 @@ func TestResourcesManager_checkResourceOwnership(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-			
-			// Assert mock expectations
-			mockClient.AssertExpectations(t)
 		})
 	}
 }
