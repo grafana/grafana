@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -261,14 +261,20 @@ const ResourcePicker = ({
         break;
     }
     setFilters(updatedFilters);
-    loadFilteredRows(updatedFilters);
+    reportInteraction('grafana_ds_azuremonitor_resource_picker_filters', {
+      subscriptionsFilters: updatedFilters.subscriptions.length,
+      typesFilters: updatedFilters.types.length,
+      locationsFilters: updatedFilters.locations.length,
+    });
     if (
       updatedFilters.subscriptions.length === 0 &&
       updatedFilters.types.length === 0 &&
       updatedFilters.locations.length === 0
     ) {
       loadInitialData();
+      return;
     }
+    loadFilteredRows(updatedFilters);
   };
 
   return (
