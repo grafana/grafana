@@ -765,7 +765,6 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
 					if err = index.BulkIndex(&BulkIndexRequest{
 						Items: items,
-						ResourceVersion: rv,
 					}); err != nil {
 						return err
 					}
@@ -780,7 +779,6 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
 				if err = index.BulkIndex(&BulkIndexRequest{
 					Items: items,
-					ResourceVersion: rv,
 				}); err != nil {
 					return err
 				}

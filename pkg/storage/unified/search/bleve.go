@@ -335,7 +335,10 @@ func (b *bleveBackend) BuildIndex(
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
 
-		idx.resourceVersion = rv
+		err = idx.updateResourceVersion(rv)
+		if err != nil {
+			return nil, fmt.Errorf("fail to persist rv to index: %w", err)
+		}
 
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
@@ -598,6 +601,10 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 var internalRVKey = []byte("rv")
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
+	if rv == 0 {
+		return nil
+	}
+
 	b.resourceVersion = rv
 
 	return setRV(b.index, rv)
