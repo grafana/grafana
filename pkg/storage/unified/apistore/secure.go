@@ -37,7 +37,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		}
 		for _, p := range previous {
 			if p.Name == "" || p.Remove || !p.Create.IsZero() {
-				return fmt.Errorf("invalid state, saved values must always have a name")
+				return fmt.Errorf("invalid state, saved values must only have a name")
 			}
 		}
 
