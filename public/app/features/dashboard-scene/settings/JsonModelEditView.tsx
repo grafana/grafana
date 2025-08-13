@@ -92,6 +92,14 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     }
 
     this.setState({ jsonText: this.getJsonText() });
+
+    // Given we clone the state of the new dashboard scene, new objects from the state are not activated
+    // We need to force a dashboard deactivation otherwise we lost the URL sync, and there are probably
+    // Other silent errors we didn't notice yet
+    dashboard.activate();
+
+    // We also need to resume tracking changes since any subsequent edit won't be seen by the change handler
+    dashboard.resumeTrackingChanges();
   };
 
   static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {
