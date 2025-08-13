@@ -23,7 +23,7 @@ export interface Props {
   dsSettings: DataSourceInstanceSettings;
 
   // Query editing
-  onQueriesChange: (queries: DataQuery[]) => void;
+  onQueriesChange: (queries: DataQuery[], options?: { skipAutoImport?: boolean }) => void;
   onAddQuery: (query: DataQuery) => void;
   onRunQueries: () => void;
 
@@ -68,14 +68,14 @@ export class QueryEditorRows extends PureComponent<Props> {
   onReplaceQuery(query: DataQuery, index: number) {
     const { queries, onQueriesChange, onUpdateDatasources, dsSettings } = this.props;
 
-    // Replace old query with new query
+    // Replace old query with new query, preserving the original refId
     const newQueries = queries.map((item, itemIndex) => {
       if (itemIndex === index) {
-        return query;
+        return { ...query, refId: item.refId };
       }
       return item;
     });
-    onQueriesChange(newQueries);
+    onQueriesChange(newQueries, { skipAutoImport: true });
 
     // Update datasources based on the new query set
     if (query.datasource?.uid) {

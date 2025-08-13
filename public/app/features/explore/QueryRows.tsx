@@ -62,8 +62,8 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(
-    (newQueries: DataQuery[]) => {
-      dispatch(changeQueries({ exploreId, queries: newQueries }));
+    (newQueries: DataQuery[], options?: { skipAutoImport?: boolean }) => {
+      dispatch(changeQueries({ exploreId, queries: newQueries, options }));
     },
     [dispatch, exploreId]
   );
