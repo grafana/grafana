@@ -12,7 +12,6 @@ import { getItemType, translatedItemType } from './utils';
 export interface ConditionalRenderingState extends SceneObjectState {
   rootGroup: ConditionalRenderingGroup;
   result: boolean;
-  force: boolean;
 }
 
 export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingState> {
@@ -26,8 +25,8 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
     );
   }
 
-  public constructor(state: Omit<ConditionalRenderingState, 'result' | 'force'>) {
-    super({ ...state, result: true, force: false });
+  public constructor(state: ConditionalRenderingState) {
+    super(state);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -42,23 +41,19 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
     });
   }
 
-  public evaluate(): ConditionEvaluationResult {
-    this.state.rootGroup.recalculateResult();
-    return { result: this.state.rootGroup.state.result, force: this.state.rootGroup.state.force };
-  }
+  public recalculateResult(): ConditionEvaluationResult {
+    const result = this.state.rootGroup.recalculateResult();
 
-  public notifyChange() {
-    const { result, force } = this.evaluate();
-
-    if (this.state.result !== result || this.state.force !== force) {
-      this.setState({ result, force });
-      this.parent?.forceRender();
+    if (this.state.result !== result) {
+      this.setState({ result });
       this.parent?.publishEvent(new ConditionalRenderingChangedEvent(this), true);
     }
+
+    return result;
   }
 
   public deleteItem<T extends ConditionalRenderingBase>(item: T) {
-    sceneGraph.getAncestor(item, ConditionalRenderingGroup).removeItem(item.state.key!);
+    sceneGraph.getAncestor(item, ConditionalRenderingGroup).deleteItem(item.state.key!);
   }
 
   public serialize(): ConditionalRenderingGroupKind {
@@ -74,7 +69,7 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
   }
 
   public static createEmpty(): ConditionalRendering {
-    return new ConditionalRendering({ rootGroup: ConditionalRenderingGroup.createEmpty() });
+    return new ConditionalRendering({ rootGroup: ConditionalRenderingGroup.createEmpty(), result: true });
   }
 }
 

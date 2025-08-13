@@ -18,15 +18,14 @@ import {
 
 export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
   value: V;
-  result: boolean;
-  force: boolean;
+  result: ConditionEvaluationResult;
 }
 
 export abstract class ConditionalRenderingBase<
   S extends ConditionalRenderingBaseState = ConditionalRenderingBaseState,
 > extends SceneObjectBase<S> {
   public constructor(state: S) {
-    super({ ...state, result: true, force: true });
+    super({ ...state, result: true });
 
     this.addActivationHandler(() => this._baseActivationHandler());
   }
@@ -52,24 +51,12 @@ export abstract class ConditionalRenderingBase<
 
   public abstract evaluate(): ConditionEvaluationResult;
 
-  public getForceTrue(): ConditionEvaluationResult {
-    return { result: true, force: true };
-  }
-
-  public getForceFalse(): ConditionEvaluationResult {
-    return { result: false, force: true };
-  }
-
-  public getActualResult(result: boolean): ConditionEvaluationResult {
-    return { result, force: false };
-  }
-
   public recalculateResult(): ConditionEvaluationResult {
     const result = this.evaluate();
 
-    if (result.result !== this.state.result || result.force !== this.state.force) {
-      this.setState({ ...this.state, result: result.result, force: result.force });
-      this._notifyChange();
+    if (result !== this.state.result) {
+      this.setState({ ...this.state, result });
+      this._getConditionalLogicRoot().recalculateResult();
     }
 
     return result;
@@ -122,10 +109,6 @@ export abstract class ConditionalRenderingBase<
 
   private _getConditionalLogicRoot(): ConditionalRendering {
     return sceneGraph.getAncestor(this, ConditionalRendering);
-  }
-
-  private _notifyChange() {
-    this._getConditionalLogicRoot().notifyChange();
   }
 }
 

@@ -11,13 +11,7 @@ import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 
-export interface ConditionEvaluationResult {
-  // Actual result of the condition evaluation
-  result: boolean;
-
-  // When set, this flag will ignore the Show or Hide actions and the result is used as is
-  force: boolean;
-}
+export type ConditionEvaluationResult = boolean | undefined;
 
 export type ItemsWithConditionalRendering = 'panel' | 'row' | 'tab' | 'element';
 

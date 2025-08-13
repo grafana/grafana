@@ -44,8 +44,8 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 
   private _dataProvider: SceneDataProvider | undefined = undefined;
 
-  public constructor(state: Omit<ConditionalRenderingDataState, 'result' | 'force'>) {
-    super({ ...state, result: true, force: true });
+  public constructor(state: ConditionalRenderingDataState) {
+    super(state);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -72,11 +72,11 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
       this._dataProvider.state.data.state === LoadingState.Loading ||
       this._dataProvider.state.data.state === LoadingState.NotStarted
     ) {
-      return this.getForceTrue();
+      return undefined;
     }
 
     const hasData = this._hasData();
-    return this.getActualResult((this.state.value && hasData) || (!this.state.value && !hasData));
+    return this.state.value === hasData;
   }
 
   public serialize(): ConditionalRenderingDataKind {
@@ -106,11 +106,11 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   public static deserialize(model: ConditionalRenderingDataKind): ConditionalRenderingData {
-    return new ConditionalRenderingData({ value: model.spec.value });
+    return new ConditionalRenderingData({ value: model.spec.value, result: true });
   }
 
   public static createEmpty(): ConditionalRenderingData {
-    return new ConditionalRenderingData({ value: true });
+    return new ConditionalRenderingData({ value: true, result: true });
   }
 }
 
