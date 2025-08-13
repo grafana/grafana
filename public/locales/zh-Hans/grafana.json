@@ -3506,25 +3506,18 @@
     "browse-view": {
       "this-folder-is-empty": "此文件夹为空"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "所有资源已成功删除",
-      "all-moved": "所有资源已成功移动",
-      "button-done": "完成",
-      "progress-title": "成功",
-      "failed-alert_other": "{{count}} 个项目失败"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除…",
       "delete-warning": "此操作将删除所选文件夹及其子文件夹。总体而言，这将影响：",
-      "error-path-not-found": "未找到路径"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "取消",
       "button-move": "移动",
       "button-moving": "正在移动…",
-      "deleting": "正在删除",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3532,13 +3525,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "未找到文件内容",
-      "error-path-not-found": "未找到路径",
-      "error-target-folder-path-missing": "缺少目标文件夹路径",
-      "error-title": "目标文件夹错误",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "此操作将移动所选文件夹及其子文件夹。总体而言，这将影响：",
-      "moving": "正在移动",
-      "progress": "进度：{{current}}/{{total}}",
       "target-folder": "目标文件夹"
     },
     "counts": {
@@ -3549,6 +3538,9 @@
       "total_other": "{{count}} 个项目"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "折叠文件夹 {{title}}",
       "expand-folder-button": "展开文件夹 {{title}}",
       "name-column": "名称",
@@ -4490,12 +4482,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "根据变量值动态地显示或隐藏{{type}}。",
           "label": "模板变量",
           "name": "名称",
           "operator": {
             "equals": "等于",
-            "not-equals": "不等于"
+            "matches": "",
+            "not-equals": "不等于",
+            "not-matches": ""
           },
           "value": "值"
         }
@@ -5379,6 +5376,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "搜索转换",
       "show-images": "显示图像",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "添加其他转换",
       "view-all": "查看全部"
     },
@@ -11406,8 +11406,13 @@
       "title-repository-is-unhealthy": "存储库状态不良"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "您的资源现在位于外部存储中，并预配到您的实例中。从现在开始，您的实例和外部存储将被同步。",
-      "view-repository": "查看存储库"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "已检查：",
