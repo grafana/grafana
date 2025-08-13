@@ -81,7 +81,7 @@ export function DataSourcesListView({
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const favoritesCheckbox =
-    config.featureToggles.favoriteDatasources && handleFavoritesCheckboxChange && showFavoritesOnly
+    config.featureToggles.favoriteDatasources && handleFavoritesCheckboxChange && showFavoritesOnly !== undefined
       ? {
           onChange: handleFavoritesCheckboxChange,
           value: showFavoritesOnly,
