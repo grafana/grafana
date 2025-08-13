@@ -473,6 +473,7 @@ func (h *provisioningTestHelper) logRepositoryContents(t *testing.T, obj map[str
 type TestRepo struct {
 	Name               string
 	Target             string
+	Path               string
 	Values             map[string]any
 	Copies             map[string]string
 	ExpectedDashboards int
@@ -484,17 +485,41 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		repo.Target = "instance"
 	}
 
-	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+	// Use custom path if provided, otherwise use default provisioning path
+	repoPath := h.ProvisioningPath
+	if repo.Path != "" {
+		repoPath = repo.Path
+		// Ensure the directory exists
+		err := os.MkdirAll(repoPath, 0750)
+		require.NoError(t, err, "should be able to create repository path")
+	}
+
+	templateVars := map[string]any{
 		"Name":        repo.Name,
 		"SyncEnabled": true,
 		"SyncTarget":  repo.Target,
-	})
+	}
+	if repo.Path != "" {
+		templateVars["Path"] = repoPath
+	}
+
+	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", templateVars)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	for from, to := range repo.Copies {
-		h.CopyToProvisioningPath(t, from, to)
+		if repo.Path != "" {
+			// Copy to custom path
+			fullPath := path.Join(repoPath, to)
+			err := os.MkdirAll(path.Dir(fullPath), 0750)
+			require.NoError(t, err, "failed to create directories for custom path")
+			file := h.LoadFile(from)
+			err = os.WriteFile(fullPath, file, 0600)
+			require.NoError(t, err, "failed to write file to custom path")
+		} else {
+			h.CopyToProvisioningPath(t, from, to)
+		}
 	}
 
 	// Trigger and wait for initial sync to populate resources

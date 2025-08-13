@@ -125,14 +125,16 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err, "should be able to create second dashboard")
 	dashboard2Name := dashboard2Obj.GetName()
 
-	// Create the first repository with sync enabled
+	// Create the first repository with sync enabled and separate filesystem path
 	const repo1 = "first-repository"
+	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
 	testRepo1 := TestRepo{
 		Name:               repo1,
 		Target:             "folder",
+		Path:               repo1Path,
 		Copies:             map[string]string{}, // No initial files needed for export test
-		ExpectedDashboards: 2,                   // 2 dashboards created above (dashboard1, dashboard2)
-		ExpectedFolders:    1,                   // 1 folder for repo1 (Target: "folder")
+		ExpectedDashboards: 2,                   // 2 dashboards created above (v1, v2beta1)
+		ExpectedFolders:    1,                   // One folder expected after sync
 	}
 	helper.CreateRepo(t, testRepo1)
 
@@ -165,16 +167,21 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err)
 	require.Equal(t, repo1, managedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard2 should be managed by first repo")
 
-	// Create second repository - enable sync and set different target
+	// Create second repository - enable sync and set different target with separate filesystem path
 	const repo2 = "second-repository"
+	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
 	testRepo2 := TestRepo{
 		Name:               repo2,
 		Target:             "folder",
+		Path:               repo2Path,
 		Copies:             map[string]string{}, // No initial files needed for export test
-		ExpectedDashboards: 3,                   // 3 dashboards total (dashboard1, dashboard2, dashboard3)
-		ExpectedFolders:    2,                   // 2 folders total (repo1 and repo2 folders)
+		ExpectedDashboards: 2,                   // 2 dashboards exist when second repo syncs
+		ExpectedFolders:    2,                   // Two folders expected after sync (repo1 + repo2)
 	}
 	helper.CreateRepo(t, testRepo2)
+
+	// Wait for second repository to sync
+	helper.SyncAndWait(t, repo2, nil)
 
 	printFileTree(t, helper.ProvisioningPath)
 
@@ -209,7 +216,6 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 
 	printFileTree(t, helper.ProvisioningPath)
 	// Count files in first repo before second export
-	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
 	files1Before, err := countFilesInDir(repo1Path)
 	require.NoError(t, err)
 
@@ -241,7 +247,6 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		0, actualNewFiles)
 
 	// Verify files in the second repository
-	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
 	files2After, err := countFilesInDir(repo2Path)
 	require.NoError(t, err)
 	require.Equal(t, 1, files2After,
