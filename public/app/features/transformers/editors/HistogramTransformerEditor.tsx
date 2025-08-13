@@ -8,10 +8,12 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/histogram.svg';
+import lightImage from '../images/light/histogram.svg';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../utils';
 
@@ -70,8 +72,6 @@ export const HistogramTransformerEditor = ({
       combine: !options.combine,
     });
   }, [onChange, options]);
-
-  const { t } = useTranslate();
 
   const suggestions = getVariableSuggestions();
 
@@ -138,12 +138,17 @@ export const HistogramTransformerEditor = ({
   );
 };
 
-export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTransformerInputs> = {
+export const getHistogramTransformRegistryItem: () => TransformerRegistryItem<HistogramTransformerInputs> = () => ({
   id: DataTransformerID.histogram,
   editor: HistogramTransformerEditor,
   transformation: standardTransformers.histogramTransformer,
-  name: standardTransformers.histogramTransformer.name,
-  description: standardTransformers.histogramTransformer.description,
+  name: t('transformers.histogram-transformer-editor.name.histogram', 'Histogram'),
+  description: t(
+    'transformers.histogram-transformer-editor.description.calculate-histogram-from-input-data',
+    'Calculate a histogram from input data.'
+  ),
   categories: new Set([TransformerCategory.CreateNewVisualization]),
   help: getTransformationContent(DataTransformerID.histogram).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

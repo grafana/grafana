@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
-import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
-import provisioningSvg from 'img/provisioning/provisioning.svg';
+import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+
+import provisioningSvg from '../img/provisioning.svg';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
@@ -45,7 +48,7 @@ HTTP Requests
 const rootUrlExample = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
-const getModalContent = (setupType: SetupType, t: TFunction) => {
+const getModalContent = (setupType: SetupType) => {
   switch (setupType) {
     case 'public-access':
       return {
@@ -121,13 +124,16 @@ interface Props {
 
 export default function GettingStarted({ items }: Props) {
   const styles = useStyles2(getStyles);
-  const settingsQuery = useGetFrontendSettingsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const settingsArg = config.featureToggles.provisioning ? undefined : skipToken;
+  const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
+    refetchOnMountOrArgChange: true,
+  });
   const legacyStorage = settingsQuery.data?.legacyStorage;
   const hasItems = Boolean(settingsQuery.data?.items?.length);
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);
-  const { t } = useTranslate();
+
   return (
     <>
       {legacyStorage && (
@@ -146,17 +152,16 @@ export default function GettingStarted({ items }: Props) {
       )}
       <Stack direction="column" gap={6} wrap="wrap">
         <Stack gap={10} alignItems="center">
+          <div className={styles.imageContainer}>
+            <img src={provisioningSvg} className={styles.image} alt={'Grafana provisioning'} />
+          </div>
           <FeaturesList
-            repos={items}
             hasRequiredFeatures={hasRequiredFeatures}
             onSetupFeatures={() => {
               setSetupType('required-features');
               setShowModal(true);
             }}
           />
-          <div className={styles.imageContainer}>
-            <img src={provisioningSvg} className={styles.image} alt={'Grafana provisioning'} />
-          </div>
         </Stack>
         {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
           <EnhancedFeatures
@@ -171,7 +176,7 @@ export default function GettingStarted({ items }: Props) {
       </Stack>
       {showInstructionsModal && setupType && (
         <SetupModal
-          {...getModalContent(setupType, t)}
+          {...getModalContent(setupType)}
           isOpen={showInstructionsModal}
           onDismiss={() => setShowModal(false)}
         />

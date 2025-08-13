@@ -12,7 +12,7 @@ import {
   QueryHeaderSwitch,
   QueryEditorMode,
 } from '@grafana/plugin-ui';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
@@ -43,13 +43,9 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
   const [explain, setExplain] = useState(window.localStorage.getItem(lokiQueryEditorExplainKey) === 'true');
 
-  const predefinedOperations = datasource.predefinedOperations;
   const previousTimeRange = usePrevious(timeRange);
 
   const query = getQueryWithDefaults(props.query);
-  if (config.featureToggles.lokiPredefinedOperations && !query.expr && predefinedOperations) {
-    query.expr = `{} ${predefinedOperations}`;
-  }
   const previousQueryExpr = usePrevious(query.expr);
   const previousQueryType = usePrevious(query.queryType);
 

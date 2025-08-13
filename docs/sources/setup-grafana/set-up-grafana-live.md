@@ -23,9 +23,9 @@ Grafana Live is a real-time messaging engine you can use to push event data to a
 
 This could be notifications about dashboard changes, new frames for rendered data, and so on. Live features can help eliminate a page reload or polling in many places, it can stream Internet of things (IoT) sensors or any other real-time data to panels.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 By `real-time`, we indicate a soft real-time. Due to network latencies, garbage collection cycles, and so on, the delay of a delivered message can be up to several hundred milliseconds or higher.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Concepts
 
@@ -201,7 +201,7 @@ In a high availability Grafana setup involving several Grafana server instances 
 - Streaming from Telegraf will deliver data only to clients connected to the same instance which received Telegraf data, active stream cache is not shared between different Grafana instances.
 - A separate unidirectional stream between Grafana and backend data source may be opened on different Grafana servers for the same channel.
 
-To bypass these limitations, Grafana v8.1 has an experimental Live HA engine that requires Redis to work.
+To bypass these limitations, Grafana has a Live HA engine that requires Redis to work.
 
 ### Configure Redis Live engine
 
@@ -232,5 +232,10 @@ Live currently does not support Redis Sentinel. We recommend using a Redis Clust
    ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
    ha_engine_password: $__file{/your/redis/password/secret/mount}
 ```
+
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+The Redis Live HA engine does not currently support TLS.
 
 {{< /admonition >}}

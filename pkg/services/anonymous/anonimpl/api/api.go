@@ -55,7 +55,7 @@ func (api *AnonDeviceServiceAPI) RegisterAPIEndpoints() {
 	})
 }
 
-// swagger:route GET /stats devices listDevices
+// swagger:route GET /anonymous/devices devices listDevices
 //
 // # Lists all devices within the last 30 days
 //
@@ -91,7 +91,7 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 	return response.JSON(http.StatusOK, resDevices)
 }
 
-// swagger:route POST /search devices SearchDevices
+// swagger:route GET /anonymous/search devices SearchDevices
 //
 // # Lists all devices within the last 30 days
 //

@@ -2,7 +2,7 @@ import { FormEvent, useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, Box, CodeEditor, Field, Switch } from '@grafana/ui';
@@ -46,7 +46,6 @@ export function GroupByVariableForm({
     },
     [onDefaultOptionsChange]
   );
-  const { t } = useTranslate();
 
   return (
     <>
@@ -120,7 +119,7 @@ export function GroupByVariableForm({
       {datasourceSupported && !inline && onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue}
-          name="Allow custom values"
+          name={t('dashboard-scene.group-by-variable-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.group-by-variable-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'

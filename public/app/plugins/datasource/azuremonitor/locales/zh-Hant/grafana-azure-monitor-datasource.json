@@ -6,286 +6,306 @@
     "advanced-resource-picker": {
       "aria-label-add": "新增",
       "aria-label-remove": "移除",
-      "button-add-resource": "",
-      "button-add-resource-uri": "",
+      "button-add-resource": "新增資源",
+      "button-add-resource-uri": "新增資源 URI",
       "label-namespace": "命名空間",
-      "label-region": "",
-      "label-resource-group": "",
-      "label-resource-name": "",
-      "label-resource-number": "",
-      "label-resource-uri": "",
-      "label-subscription": "",
+      "label-region": "地區",
+      "label-resource-group": "資源群組",
+      "label-resource-name": "資源名稱",
+      "label-resource-number": "資源 {{resourceNum}}",
+      "label-resource-uri": "資源 URI",
+      "label-subscription": "訂閱",
       "placeholder-resource-name": "名稱",
-      "tooltip-region": "",
-      "tooltip-resource-uri": ""
+      "tooltip-region": "資源的代碼區域。對於單一資源為選填，但選取多個資源時為必填。",
+      "tooltip-resource-uri": "手動編輯<2>資源 URI</2>。支援使用多個範本變數（例如：/subscriptions/$subId/resourceGroups/$rg）"
     },
     "aggregate-item": {
-      "aria-label-aggregate-function": "",
+      "aria-label-aggregate-function": "彙總函式",
       "aria-label-column": "欄位",
       "aria-label-remove": "移除",
       "label-percentile": "的"
     },
     "aggregate-section": {
-      "label-aggregate": "",
-      "tooltip-aggregate": ""
+      "label-aggregate": "彙總",
+      "tooltip-aggregate": "跨資料列執行計算，例如計數、總和、平均值、最小值、最大值、標準差或百分位數。"
     },
     "aggregation-field": {
-      "label-aggregation": ""
+      "label-aggregation": "彙總"
     },
     "app-registration-credentials": {
-      "aria-label-azure-cloud": "",
-      "aria-label-client-id": "",
-      "aria-label-client-secret": "",
-      "aria-label-symbol-client-secret": "",
-      "aria-label-tenant-id": "",
-      "label-azure-cloud": "",
-      "label-client-id": "",
-      "label-client-secret": "",
-      "label-symbol-client-secret": "",
-      "label-tenant-id": "",
-      "placeholder-symbol-client-secret": "",
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "用戶端 ID",
+      "aria-label-client-secret": "用戶端機密",
+      "aria-label-symbol-client-secret": "用戶端機密",
+      "aria-label-tenant-id": "租用戶 ID",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "應用程式（用戶端）ID",
+      "label-client-secret": "用戶端機密",
+      "label-symbol-client-secret": "用戶端機密",
+      "label-tenant-id": "目錄（租用戶）ID",
+      "placeholder-symbol-client-secret": "已設定",
       "reset-symbol-client-secret": "重設"
     },
     "azure-cheat-sheet": {
-      "aria-label-raw-query": "",
-      "aria-label-use-query": "",
-      "button-use-query": "",
-      "label-categories": "",
-      "label-query-results": "",
-      "placeholder-all-categories": "",
-      "placeholder-search-logs": "",
+      "aria-label-raw-query": "「{{queryDisplayName}}」原始查詢",
+      "aria-label-use-query": "使用此查詢按鈕",
+      "button-use-query": "使用此查詢",
+      "label-categories": "分類",
+      "label-query-results": "查詢結果：{{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "無法列出所有類別",
+      "placeholder-all-categories": "所有分類",
+      "placeholder-search-logs": "搜尋「紀錄查詢」",
       "text-loading": "正在載入…"
     },
     "azure-cheat-sheet-modal": {
-      "aria-label-kick-start": "",
-      "title-kick-start": ""
+      "aria-label-kick-start": "啟動您的查詢模式",
+      "title-kick-start": "啟動您的查詢"
     },
     "azure-credentials-form": {
-      "description-authentication": "",
+      "description-authentication": "選擇 Azure 服務的驗證類型",
       "label-authentication": "身分驗證",
       "title-authentication": "身分驗證"
     },
     "basic-logs-toggle": {
-      "aria-label-enable-basic-logs": "",
-      "description-basic-logs": "",
-      "label-enable-basic-logs": ""
+      "aria-label-enable-basic-logs": "基本紀錄",
+      "description-basic-logs": "啟用此功能會導致 Azure Monitor 在查詢為<2>基本記錄</2>設定的表格之儀表板面板上，產生每次查詢成本。",
+      "label-enable-basic-logs": "啟用基本紀錄"
     },
     "config-editor": {
       "description-additional-settings": "",
-      "description-request-timeout": "",
-      "title-additional-settings": "附加設定",
-      "title-request-timeout": ""
+      "title-additional-settings": "附加設定"
     },
     "current-user-fallback-credentials": {
-      "alert-fallback-credentials-disabled": "",
-      "body-service-credentials": "",
-      "description-authentication": "",
-      "description-service-credentials": "",
+      "alert-fallback-credentials-disabled": "備用憑證已停用。由於使用者型驗證本質上僅支援範圍內的使用者請求，因此警報、已記錄查詢或報告等功能將無法按預期運作。請查看<2>文件</2>，了解更多詳細資訊。",
+      "body-service-credentials": "使用者型驗證本質上不支援 Grafana 功能，該功能會在沒有使用者詳細資訊的情況下向資料來源提出請求。警報就是一個例子。如果您想確保在請求內容中沒有使用者的功能仍然有效，請在下方提供備用憑證。",
+      "description-authentication": "選擇 Azure 服務的驗證類型",
+      "description-service-credentials": "選擇是否為此資料來源啟用或停用備用服務憑證",
       "label-authentication": "身分驗證",
-      "label-service-credentials": "",
-      "note-service-credentials": "",
-      "title-fallback-credentials-disabled": "",
-      "title-fallback-service-credentials": "",
-      "title-service-credentials": ""
+      "label-service-credentials": "服務憑證",
+      "note-service-credentials": "請注意：警報等功能將限制為備用憑證的存取等級，而非使用者。這可能會讓使用者感到困惑，應加以說明。",
+      "title-fallback-credentials-disabled": "備用憑證已停用",
+      "title-fallback-service-credentials": "備用服務憑證",
+      "title-service-credentials": "服務憑證"
     },
     "default-subscription": {
-      "aria-label-default-subscription": "",
-      "label-default-subscription": "",
-      "load-subscriptions": ""
+      "aria-label-default-subscription": "預設訂閱",
+      "label-default-subscription": "預設訂閱",
+      "load-subscriptions": "載入訂閱"
     },
     "dimension-fields": {
       "aria-label-remove": "移除",
-      "label-dimensions": "",
+      "label-dimensions": "尺寸",
       "placeholder-field": "欄位",
       "placeholder-operation": "操作",
       "placeholder-select-value": "選擇值",
-      "placeholder-select-values": ""
+      "placeholder-select-values": "選取值"
     },
     "editor-for-query-type": {
-      "body-unknown-query-type": "",
-      "title-unknown-query-type": ""
+      "body-unknown-query-type": "{{type}} 已在 Grafana 9 中棄用。請參閱<3>棄用通知</3>，以取得有關查詢移轉方式的更多資訊。這是目前的查詢定義：",
+      "title-unknown-query-type": "未知查詢類型"
     },
     "filter": {
-      "aria-label-remove-filter": "",
-      "placeholder-property": "",
+      "aria-label-remove-filter": "移除篩選條件",
+      "placeholder-property": "物業",
       "placeholder-value": "數值"
     },
     "filter-item": {
       "aria-label-column": "欄位",
-      "aria-label-column-value": "",
+      "aria-label-column-value": "欄值",
       "aria-label-operator": "運算子",
-      "label-or": ""
+      "aria-label-remove-filter": "",
+      "label-or": "或"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "新增群組",
       "label-and": "以及",
-      "label-filters": "",
-      "tooltip-filters": ""
+      "label-filters": "篩選條件",
+      "tooltip-filters": "將條件套用至特定欄位，以縮小結果範圍。"
     },
     "filters": {
-      "label-filters": ""
+      "label-filters": "篩選條件"
     },
     "format-as-field": {
-      "label-format-as": ""
+      "label-format-as": "格式化為"
     },
     "fuzzy-search": {
-      "aria-label-select-column": "",
-      "label-fuzzy-search": "",
-      "placeholder-search-team": "",
-      "tooltip-fuzzy-search": ""
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
+      "aria-label-select-column": "選取欄",
+      "label-fuzzy-search": "模糊搜尋",
+      "placeholder-search-team": "輸入搜尋內容說明",
+      "tooltip-fuzzy-search": "尋找近似文字匹配，並允許拼寫變體。預設情況下，模糊搜尋會掃描整個表格中的所有欄位 (*)，而不僅僅是特定欄位。"
     },
     "grafana-template-variable-fn-input": {
-      "label-grafana-template-variable": "",
-      "placeholder-grafana-template-variable": ""
+      "label-grafana-template-variable": "Grafana 範本變數函式",
+      "placeholder-grafana-template-variable": "輸入 grafana 範本變數函式，例如：{{example}}"
     },
     "group-by-item": {
       "aria-label-column": "欄位",
       "aria-label-remove": "移除"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "分組依據",
-      "tooltip-group-by": ""
+      "tooltip-group-by": "根據指定欄位將結果組織成類別。分組依據可單獨用於列出所選欄中的唯一值，或與彙總函數結合，以產生每個群組的摘要統計資料。單獨使用時，它會傳回指定欄位的不同組合。"
     },
     "kql-preview": {
       "button-hide": "隱藏",
       "button-show": "顯示",
-      "label-query-preview": ""
+      "label-query-preview": "查詢預覽"
     },
     "legend-format-field": {
-      "label-legend-format": "",
-      "placeholder-legend-format": ""
+      "label-legend-format": "圖例格式",
+      "placeholder-legend-format": "別名模式"
     },
     "limit-section": {
       "label-limit": "限制",
-      "placeholder-limit": "",
-      "tooltip-limit": ""
+      "placeholder-limit": "輸入限制",
+      "tooltip-limit": "限制傳回的列數（預設為 1000）。"
     },
     "logs-management": {
-      "description-basic-logs-queries": "",
+      "body-basic-logs-queries": "確定要切換至基本紀錄嗎？",
+      "confirmText-confirm": "確認",
+      "description-basic-logs-queries": "基本紀錄查詢會根據掃描的資料量產生費用。",
       "label-logs": "紀錄",
-      "title-basic-logs-queries": "",
-      "tooltip-logs": ""
+      "title-basic-logs-queries": "基本紀錄查詢",
+      "tooltip-logs": "指定是否執行基本或分析紀錄查詢。"
     },
     "logs-query-builder": {
-      "title-no-tables": ""
+      "title-no-tables": "已成功載入資源，但沒有任何表格"
     },
     "logs-query-editor": {
-      "learn-more": "",
-      "view-query": ""
+      "learn-more": "了解更多",
+      "view-query": "在 Azure Portal 中檢視查詢"
     },
     "metric-name-field": {
       "label-metric": "指標"
     },
     "metric-namespace-field": {
-      "label-metric-namespace": ""
+      "label-metric-namespace": "指標命名空間"
     },
     "nested-row": {
       "text-loading": "正在載入…"
     },
     "order-by-section": {
-      "aria-label-order-by-column": "",
-      "aria-label-order-direction": "",
-      "label-by": "",
-      "label-order-by": "",
-      "tooltip-order-by": ""
+      "aria-label-add-order-by": "",
+      "aria-label-order-by-column": "按欄排序",
+      "aria-label-order-direction": "排序方向",
+      "aria-label-remove-order-by": "",
+      "label-by": "作者",
+      "label-order-by": "排序依據",
+      "tooltip-order-by": "以一或多欄為依據，按遞增或遞減順序將結果排序。"
     },
     "query-editor": {
-      "alert-error-occurred": ""
+      "alert-error-occurred": "從 Azure Monitor 請求中繼資料時發生錯誤"
     },
     "query-header": {
-      "aria-label-kick-start": "",
-      "button-kick-start-your-query": "",
+      "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
+      "body-switching-to-builder": "切換到建立器將捨棄您目前的 KQL 查詢並清除 KQL 編輯器。您確定嗎？",
+      "body-switching-to-kql": "切換到 KQL 將捨棄您目前的建立器設定。您確定嗎？",
+      "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
-      "label-service": "",
-      "placeholder-service": "",
-      "title-switch-mode": ""
+      "confirmText-switch-to": "切換到 {{newMode}}",
+      "editor-modes": {
+        "label-builder": "建立器",
+        "label-kql": "KQL"
+      },
+      "label-service": "服務",
+      "placeholder-service": "服務…",
+      "title-switch-mode": "要切換編輯器模式嗎？"
     },
     "raw-query": {
-      "aria-label-selector": ""
+      "aria-label-selector": "選擇器"
     },
     "resource-field": {
-      "label-resource": "",
-      "title-select-resource": ""
+      "label-resource": "資源",
+      "title-select-resource": "選取資源"
     },
     "resource-label": {
-      "select-resource": ""
+      "select-resource": "選取資源"
     },
     "resource-picker": {
       "button-apply": "套用",
       "button-cancel": "取消",
       "header-location": "位置",
-      "header-scope": "",
+      "header-scope": "範圍",
       "header-type": "類型",
-      "heading-selection": "",
-      "result-limit": "",
+      "heading-selection": "選擇",
+      "result-limit": "顯示前 {{numResults}} 個結果",
       "text-loading": "正在載入…",
-      "text-no-resources": "",
-      "title-error-occurred": ""
+      "text-no-resources": "沒有找到資源",
+      "title-error-occurred": "從 Azure Monitor 請求資源時發生錯誤"
+    },
+    "scope-selector": {
+      "label": "範圍"
     },
     "search": {
-      "aria-label-resource-search": "",
-      "placeholder-resource-search": ""
+      "aria-label-resource-search": "資源搜尋",
+      "placeholder-resource-search": "搜尋資源"
     },
     "subscription-field": {
-      "label-subscriptions": "",
-      "validation-subscriptions": ""
+      "label-subscriptions": "訂閱",
+      "validation-subscriptions": "必須至少選擇一個訂閱。"
     },
     "table-section": {
-      "aria-label-columns": "",
+      "aria-label-columns": "欄",
       "aria-label-table": "表格",
-      "label-columns": "",
+      "label-columns": "欄",
       "label-table": "表格",
-      "placeholder-select-columns": "",
-      "placeholder-select-table": ""
+      "placeholder-select-columns": "選取欄",
+      "placeholder-select-table": "選取表格",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
-      "label-time-grain": ""
+      "label-time-grain": "時間粒度"
     },
     "time-management": {
-      "label-time-column": "",
-      "label-time-range": "",
-      "tooltip-time-column": "",
-      "tooltip-time-range": ""
+      "label-time-column": "時間欄",
+      "label-time-range": "Time-range",
+      "tooltip-time-column": "<0>指定用於篩選的時間欄。預設為第一個表格 <1>timeSpan</1> 欄、第一個找到的 <3>datetime</3> 欄或 <5>TimeGenerated</5>。</0>",
+      "tooltip-time-range": "<0>指定用於查詢的時間範圍。<1>查詢</1>選項僅會使用查詢中指定的時間範圍。<3>儀表板</3>僅會使用 Grafana 時間範圍。在紀錄建立器模式下，僅會使用儀表板時間。</0>"
     },
     "top-field": {
-      "label-top": ""
+      "label-top": "頂端"
     },
     "trace-type-field": {
-      "label-event-type": "",
-      "placeholder-event-type": ""
+      "label-event-type": "事件類型",
+      "placeholder-event-type": "選擇事件類型"
     },
     "traces-query-editor": {
-      "label-operation-id": ""
+      "label-operation-id": "操作 ID"
     },
     "user-auth-alert": {
-      "body-unsupported-auth": "",
-      "title-unsupported-auth": ""
+      "body-unsupported-auth": "使用此資料來源需要透過 Azure Entra（舊稱為 Azure Active Directory）進行驗證。請查看<2>文件</2>，了解更多詳細資訊。",
+      "title-unsupported-auth": "不支援的驗證提供者"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "",
-      "title-no-fallback-credentials": ""
+      "body-no-fallback-credentials": "資料來源後端功能（例如警報）需要服務憑證才能運作。此資料來源設定時沒有服務憑證備用，或備用功能已停用。請查看<2>文件</2>，了解更多詳細資訊。",
+      "title-no-fallback-credentials": "沒有可用的備用憑證"
     },
     "variable-editor": {
-      "aria-label-select-custom-namespace": "",
+      "aria-label-select-custom-namespace": "選取自訂命名空間",
       "aria-label-select-namespace": "選擇命名空間",
-      "aria-label-select-query-type": "",
-      "aria-label-select-region": "",
-      "aria-label-select-resource": "",
-      "aria-label-select-resource-group": "",
-      "aria-label-select-subscription": "",
-      "label-custom-namespace": "",
+      "aria-label-select-query-type": "選取查詢類型",
+      "aria-label-select-region": "選取地區",
+      "aria-label-select-resource": "選取資源",
+      "aria-label-select-resource-group": "選取資源群組",
+      "aria-label-select-subscription": "選取訂閱",
+      "label-custom-namespace": "自訂命名空間",
       "label-namespace": "命名空間",
-      "label-query-type": "",
-      "label-region": "",
-      "label-resource": "",
-      "label-resource-group": "",
-      "label-resource-type": "",
-      "label-subscription": "",
-      "placeholder-custom-namespace": "",
-      "placeholder-namespace": "",
-      "placeholder-region": "",
-      "placeholder-resource-group": "",
-      "title-error-occurred": ""
+      "label-query-type": "查詢類型",
+      "label-region": "地區",
+      "label-resource": "資源",
+      "label-resource-group": "資源群組",
+      "label-resource-type": "資源類型",
+      "label-subscription": "訂閱",
+      "placeholder-custom-namespace": "選填",
+      "placeholder-namespace": "選填",
+      "placeholder-region": "選填",
+      "placeholder-resource-group": "選填",
+      "title-error-occurred": "從 Azure Monitor 請求中繼資料時發生錯誤"
     }
   }
 }

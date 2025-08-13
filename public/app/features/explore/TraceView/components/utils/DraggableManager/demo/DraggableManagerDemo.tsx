@@ -16,7 +16,7 @@ import { PureComponent } from 'react';
 
 import { Trans } from '@grafana/i18n';
 
-import { TNil } from '../../../types';
+import TNil from '../../../types/TNil';
 
 import DividerDemo from './DividerDemo';
 import RegionDemo from './RegionDemo';

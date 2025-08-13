@@ -19,7 +19,8 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { initializeI18n } from '@grafana/i18n/internal';
+import { DEFAULT_LANGUAGE } from '@grafana/i18n';
+import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
   locationService,
   registerEchoBackend,
@@ -49,6 +50,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
+import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -63,7 +65,7 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
-import { NAMESPACES } from './core/internationalization/constants';
+import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
@@ -80,6 +82,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
+import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -127,7 +130,7 @@ export class GrafanaApp {
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
       const regionalFormat = config.featureToggles.localeFormatPreference
-        ? config.locale
+        ? config.regionalFormat
         : config.bootData.user.language;
 
       const initI18nPromise = initializeI18n(
@@ -142,14 +145,19 @@ export class GrafanaApp {
       // This is a placeholder so we can put a 'comment' in the message json files.
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
       // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
-      initI18nPromise.then(({ language }) => updateConfig({ language }));
+      initI18nPromise.then(async ({ language }) => {
+        updateConfig({ language });
+
+        // Initialise scenes translations into the Grafana namespace. Must finish before any scenes UI is rendered.
+        return loadNamespacedResources(GRAFANA_NAMESPACE, language ?? DEFAULT_LANGUAGE, [loadScenesResources]);
+      });
 
       setBackendSrv(backendSrv);
       await initEchoSrv();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.locale);
+      setLocale(config.regionalFormat);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
@@ -206,15 +214,16 @@ export class GrafanaApp {
         getPanelPluginFromCache: syncGetPanelPlugin,
       });
 
-      if (config.featureToggles.useSessionStorageForRedirection) {
-        handleRedirectTo();
-      }
-
+      // Login redirect requires locationUtil to be initialized
       locationUtil.initialize({
         config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });
+
+      if (config.featureToggles.useSessionStorageForRedirection) {
+        handleRedirectTo();
+      }
 
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
@@ -274,6 +283,11 @@ export class GrafanaApp {
 
       if (config.featureToggles.crashDetection) {
         initializeCrashDetection();
+      }
+
+      if (config.featureToggles.dashboardLevelTimeMacros) {
+        sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
+        sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }
 
       const root = createRoot(document.getElementById('reactRoot')!);
@@ -457,7 +471,8 @@ function handleRedirectTo(): void {
     // In this case there should be a request to the backend
     window.location.replace(decodedRedirectTo);
   } else {
-    locationService.replace(decodedRedirectTo);
+    const stripped = locationUtil.stripBaseFromUrl(decodedRedirectTo);
+    locationService.replace(stripped);
   }
 }
 

@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -22,10 +23,11 @@ import (
 type StorageType string
 
 const (
-	StorageTypeFile        StorageType = "file"
-	StorageTypeEtcd        StorageType = "etcd"
-	StorageTypeUnified     StorageType = "unified"
-	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
+	StorageTypeFile          StorageType = "file"
+	StorageTypeEtcd          StorageType = "etcd"
+	StorageTypeUnified       StorageType = "unified"
+	StorageTypeUnifiedGrpc   StorageType = "unified-grpc"
+	StorageTypeUnifiedKVGrpc StorageType = "unified-kv-grpc"
 
 	// Deprecated: legacy is a shim that is no longer necessary
 	StorageTypeLegacy StorageType = "legacy"
@@ -43,6 +45,7 @@ type StorageOptions struct {
 
 	// For unified-grpc
 	Address                                  string
+	SearchServerAddress                      string
 	GrpcClientAuthenticationToken            string
 	GrpcClientAuthenticationTokenExchangeURL string
 	GrpcClientAuthenticationTokenNamespace   string
@@ -60,6 +63,9 @@ type StorageOptions struct {
 	// Optional blob storage field. When an object's size in bytes exceeds the threshold
 	// value, it is considered large and gets partially stored in blob storage.
 	BlobThresholdBytes int
+
+	// Support writing secrets inline
+	InlineSecrets secret.InlineSecureValueSupport
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
@@ -94,6 +100,8 @@ func (o *StorageOptions) Validate() []error {
 	// nolint:staticcheck
 	case StorageTypeLegacy:
 		// no-op
+	case StorageTypeUnifiedKVGrpc:
+		// no-op (enterprise only)
 	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
 		// no-op
 	default:
@@ -136,10 +144,22 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
+	var indexConn *grpc.ClientConn
+	if o.SearchServerAddress != "" {
+		indexConn, err = grpc.NewClient(o.SearchServerAddress,
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		if err != nil {
+			return err
+		}
+	} else {
+		indexConn = conn
+	}
 
 	const resourceStoreAudience = "resourceStore"
 
-	unified, err := resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
+	unified, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resource.RemoteResourceClientConfig{
 		Token:            o.GrpcClientAuthenticationToken,
 		TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
 		Namespace:        o.GrpcClientAuthenticationTokenNamespace,
@@ -148,7 +168,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
-	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig, o.ConfigProvider)
+	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
 	return nil
 }

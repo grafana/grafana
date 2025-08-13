@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import {
@@ -9,7 +9,7 @@ import {
   strongPasswordValidationRegister,
 } from 'app/core/components/ValidationLabels/ValidationLabels';
 import config from 'app/core/config';
-import { UserDTO } from 'app/types';
+import { UserDTO } from 'app/types/user';
 
 import { PasswordField } from '../../core/components/PasswordField/PasswordField';
 
@@ -24,7 +24,7 @@ export interface Props {
 export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
-  const { t } = useTranslate();
+
   const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
 

@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestValidateRepository(t *testing.T) {
@@ -149,6 +149,25 @@ func TestValidateRepository(t *testing.T) {
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
 				require.Contains(t, errors.ToAggregate().Error(), "spec.github: Invalid value")
+			},
+		},
+		{
+			name: "mismatched git config",
+			repository: func() *MockRepository {
+				m := NewMockRepository(t)
+				m.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+						Type:  provisioning.LocalRepositoryType,
+						Git:   &provisioning.GitRepositoryConfig{},
+					},
+				})
+				m.On("Validate").Return(field.ErrorList{})
+				return m
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "spec.git: Invalid value")
 			},
 		},
 		{
@@ -412,7 +431,7 @@ func TestFromFieldError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := fromFieldError(tt.fieldError)
+			result := FromFieldError(tt.fieldError)
 
 			require.NotNil(t, result)
 			require.Equal(t, tt.expectedCode, result.Code)

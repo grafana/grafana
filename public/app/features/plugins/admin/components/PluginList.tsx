@@ -1,6 +1,6 @@
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation, useSearchParams } from 'react-router-dom-v5-compat';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { EmptyState, Grid } from '@grafana/ui';
 
@@ -15,9 +15,18 @@ interface Props {
 
 export const PluginList = ({ plugins, isLoading }: Props) => {
   const { pathname } = useLocation();
-  const { t } = useTranslate();
+  const [searchParams] = useSearchParams();
+
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
+  if (searchParams.get('filterBy') === 'has-update' && !isLoading && plugins.length === 0) {
+    return (
+      <EmptyState
+        variant="not-found"
+        message={t('plugins.no-updates-available.message', 'All plugins are up to date')}
+      />
+    );
+  }
   if (!isLoading && plugins.length === 0) {
     return <EmptyState variant="not-found" message={t('plugins.empty-state.message', 'No plugins found')} />;
   }

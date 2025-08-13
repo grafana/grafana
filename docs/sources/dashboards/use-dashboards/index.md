@@ -174,14 +174,14 @@ The following table provides example relative ranges:
 | This Year              | `now/Y`     | `now/Y`     |
 | Previous fiscal year   | `now-1y/fy` | `now-1y/fy` |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 Grafana Alerting does not support the following syntaxes at this time:
 
 - now+n for future timestamps.
 - now-1n/n for "start of n until end of n" because this is an absolute timestamp.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Common time range controls
 
@@ -229,11 +229,11 @@ This section also displays recently used absolute ranges.
 
 #### Semi-relative time range
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 Grafana Alerting does not support semi-relative time ranges.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can also use the absolute time range settings to set a semi-relative time range. Semi-relative time range dashboards are useful when you need to monitor the progress of something over time, but you also want to see the entire history from a starting point.
 
@@ -304,7 +304,6 @@ To edit or delete filters, follow these steps:
 
 1. On the dashboard, click anywhere on the filter you want to change.
 1. Do one of the following:
-
    - To edit the operator or value of a filter, click anywhere on the filter and update it.
 
      ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)

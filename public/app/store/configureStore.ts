@@ -2,17 +2,19 @@ import { configureStore as reduxConfigureStore, createListenerMiddleware } from 
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
+import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
 
-import { advisorAPI } from '../api/clients/advisor';
-import { folderAPI } from '../api/clients/folder';
-import { iamAPI } from '../api/clients/iam';
-import { playlistAPI } from '../api/clients/playlist';
-import { provisioningAPI } from '../api/clients/provisioning';
+import { advisorAPIv0alpha1 } from '../api/clients/advisor/v0alpha1';
+import { folderAPIv1beta1 } from '../api/clients/folder/v1beta1';
+import { iamAPIv0alpha1 } from '../api/clients/iam/v0alpha1';
+import { playlistAPIv0alpha1 } from '../api/clients/playlist/v0alpha1';
+import { provisioningAPIv0alpha1 } from '../api/clients/provisioning/v0alpha1';
 // Used by the API client generator
 // PLOP_INJECT_IMPORT
 import { buildInitialState } from '../core/reducers/navModel';
@@ -42,15 +44,17 @@ export function configureStore(initialState?: Partial<StoreState>) {
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
         listenerMiddleware.middleware,
         alertingApi.middleware,
+        alertingPackageAPI.middleware,
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
         userPreferencesAPI.middleware,
-        iamAPI.middleware,
-        playlistAPI.middleware,
-        provisioningAPI.middleware,
-        folderAPI.middleware,
-        advisorAPI.middleware,
+        iamAPIv0alpha1.middleware,
+        playlistAPIv0alpha1.middleware,
+        provisioningAPIv0alpha1.middleware,
+        folderAPIv1beta1.middleware,
+        advisorAPIv0alpha1.middleware,
+        dashboardAPIv0alpha1.middleware,
         // PLOP_INJECT_MIDDLEWARE
         // Used by the API client generator
         ...extraMiddleware

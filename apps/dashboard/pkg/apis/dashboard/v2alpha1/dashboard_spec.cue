@@ -696,8 +696,7 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
 // Determine the origin of the adhoc variable filter
-// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
-FilterOrigin: "dashboard" | "scope"
+FilterOrigin: "dashboard"
 
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {
@@ -739,6 +738,8 @@ QueryVariableSpec: {
 	allValue?:    string
 	placeholder?: string
 	allowCustomValue: bool | *true
+	staticOptions?: [...VariableOption]
+	staticOptionsOrder?: "before" | "after" | "sorted"
 }
 
 // Query variable kind
@@ -944,7 +945,7 @@ ConditionalRenderingVariableKind: {
 
 ConditionalRenderingVariableSpec: {
 	variable: string
-	operator: "equals" | "notEquals"
+	operator: "equals" | "notEquals" | "matches" | "notMatches"
 	value:    string
 }
 

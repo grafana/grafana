@@ -1,7 +1,7 @@
 import { Controller } from 'react-hook-form';
 
-import { locationUtil, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { locationUtil, OrgRole, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
@@ -18,7 +18,7 @@ import {
   Stack,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { OrgRole, useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { Form } from '../../core/components/Form/Form';
 import { addInvitee } from '../invites/state/actions';
@@ -62,7 +62,7 @@ const defaultValues: FormModel = {
 
 export const UserInviteForm = () => {
   const dispatch = useDispatch();
-  const { t } = useTranslate();
+
   const onSubmit = async (formData: FormModel) => {
     await dispatch(addInvitee(formData)).unwrap();
     locationService.push('/admin/users/');

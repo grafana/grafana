@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet, TextLink } from '@grafana/ui';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
 import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
@@ -16,6 +16,7 @@ import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
 import { InfluxFluxConfig } from './InfluxFluxConfig';
 import { InfluxInfluxQLConfig } from './InfluxInfluxQLConfig';
 import { InfluxSqlConfig } from './InfluxSQLConfig';
+import { trackInfluxDBConfigV1QueryLanguageSelection } from './trackingv1';
 
 const versionMap: Record<InfluxVersion, SelectableValue<InfluxVersion>> = {
   [InfluxVersion.InfluxQL]: {
@@ -66,6 +67,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
     const { options, onOptionsChange } = this.props;
+
+    if (selected.value) {
+      trackInfluxDBConfigV1QueryLanguageSelection({ version: selected.value });
+    }
 
     const copy: DataSourceSettings<InfluxOptionsV1, {}> = {
       ...options,
@@ -125,9 +130,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
           <Alert severity="info" title={this.versionNotice[options.jsonData.version!]}>
             <p>
               Please report any issues to: <br />
-              <a href="https://github.com/grafana/grafana/issues/new/choose">
+              <TextLink href="https://github.com/grafana/grafana/issues/new/choose" external>
                 https://github.com/grafana/grafana/issues
-              </a>
+              </TextLink>
             </p>
           </Alert>
         )}

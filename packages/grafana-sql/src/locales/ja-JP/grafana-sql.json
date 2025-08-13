@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "ビルダーモードではコードに加えられた変更は反映されません。クエリビルダーはビルダーモードで加えられた最後の変更を表示します。",
+        "cancel": "キャンセル",
+        "clipboard": "コードをクリップボードにコピーしますか？",
+        "copy-code-and-switch": "コードをコピーして切り替え",
+        "discard-code-and-switch": "コードを破棄して切り替え",
+        "warning": "警告"
+      },
+      "connection-limits": {
+        "auto-max-idle": "自動最大アイドル",
+        "content-auto-max-idle": "有効にすると、<1>最大アイドル接続数</1>が<3>最大オープン接続数</3>と同じ値に自動設定されます。最大オープン接続数が設定されていない場合、デフォルト（{{defaultMaxIdle}}）に設定されます。",
+        "content-max-idle": "アイドル接続プールの最大接続数。<1>最大オープン接続数</1>が0より大きく<3>最大アイドル接続数</3>より小さい場合、<5>最大アイドル接続数</5>は<8>最大オープン接続数</8>の制限に合わせて削減されます。0に設定すると、アイドル接続は保持されません。",
+        "content-max-lifetime": "接続を再利用できる最大時間（秒）。0に設定すると、接続は永続的に再利用されます。",
+        "content-max-open": "データベースへの最大オープン接続数。<1>最大アイドル接続数</1>が0より大きく<3>最大オープン接続数</3>が<5>最大アイドル接続数</5>より小さい場合、<7>最大アイドル接続数</7>は<9>最大オープン接続数</9>の制限に合わせて削減されます。0に設定すると、オープン接続数に制限はありません。",
+        "max-idle": "最大アイドル",
+        "max-lifetime": "最大有効期間",
+        "max-open": "最大オープン",
+        "title-connection-limits": "接続制限"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "データセットセレクター"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "エラー"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "マクロ"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "グループ化",
+          "title-remove-group-by-column": "グループ化列を削除"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "並び順",
+        "label-limit": "制限",
+        "label-offset": "オフセット",
+        "label-order-by": "並び順"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "プレビュー",
+          "tooltip-copy-to-clipboard": "クリップボードにコピー"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "クエリが無効です。詳細は下記をご確認ください。<1></1>ただし、このクエリは引き続き実行できます。",
+        "editor-modes": {
+          "label-builder": "ビルダー",
+          "label-code": "コード"
+        },
+        "label-dataset": "データセット",
+        "label-filter": "フィルタリング",
+        "label-format": "形式",
+        "label-group": "グループ",
+        "label-order": "順番",
+        "label-preview": "プレビュー",
+        "label-table": "テーブル",
+        "placeholder-select-format": "フォーマットを選択",
+        "run-query": "クエリの実行"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "CTRL/CMD+Returnでクエリを実行",
+        "tooltip-collapse": "エディターを折りたたむ",
+        "tooltip-expand": "エディターを展開",
+        "tooltip-format-query": "クエリをフォーマット"
+      },
+      "query-validator": {
+        "query-will-process": "<0></0>このクエリは実行時に<2>{{bytes}}</2>を処理します。",
+        "validating-query": "クエリを検証中..."
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "展開されたコードエディターで編集中"
+        },
+        "title-query-num": "{{queryNum}}個のクエリ"
+      },
+      "select-column": {
+        "label-column": "列"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "列{{columnIndex}}のパラメーター{{index}}",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "パラメーターを削除"
+          }
+        },
+        "title-add-parameter": "パラメーターを追加"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "集計",
+              "macros": "マクロ"
+            }
+          }
+        },
+        "label": {
+          "time": "時間",
+          "value": "値"
+        },
+        "label-alias": "エイリアス",
+        "label-data-operations": "データ操作",
+        "title-add-column": "列を追加",
+        "title-remove-column": "列を削除"
+      },
+      "settings": {
+        "aria-label-conjunction": "結合",
+        "aria-label-field": "フィールド",
+        "aria-label-operator": "オペレーター",
+        "title-button-filter": "{{ buttonLabel }}フィルター"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "エディタを読み込んでいます"
+      },
+      "table-selector": {
+        "aria-label-table-selector": "テーブルセレクター",
+        "placeholder-loading": "テーブルを読み込み中...",
+        "placeholder-select-table": "テーブルを選択"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "TLS/SSLクライアント証明書で認証するには、ここにクライアント証明書を入力します。",
+        "content-tlsssl-client-key": "クライアントTLS/SSL証明書で認証するには、ここにキーを入力します。",
+        "content-tlsssl-root-certificate": "選択したTLS/SSLモードでサーバールート証明書が必要な場合は、ここに入力します",
+        "tlsssl-client-certificate": "TLS/SSLクライアント証明書",
+        "tlsssl-client-key": "TLS/SSLクライアントキー",
+        "tlsssl-root-certificate": "TLS/SSLルート証明書"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "列の値でフィルタリング",
+        "label-group-by-column": "列でグループ化"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "マクロ値セレクター"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "選択された列"
+      }
+    }
+  }
+}

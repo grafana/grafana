@@ -1,6 +1,6 @@
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
-import { Job, useListJobQuery } from 'app/api/clients/provisioning';
+import { Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StepStatusInfo } from '../Wizard/types';
 
@@ -9,10 +9,11 @@ import { JobContent } from './JobContent';
 
 export interface JobStatusProps {
   watch: Job;
-  onStatusChange: (status: StepStatusInfo, error?: string) => void;
+  onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  jobType: 'sync' | 'delete' | 'move';
 }
 
-export function JobStatus({ watch, onStatusChange }: JobStatusProps) {
+export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
@@ -36,17 +37,27 @@ export function JobStatus({ watch, onStatusChange }: JobStatusProps) {
   }
 
   if (activeQuery.isError) {
-    onStatusChange({ status: 'error', error: 'Error fetching active job' });
+    onStatusChange?.({
+      status: 'error',
+      error: {
+        title: t('provisioning.job-status.title.error-fetching-active-job', 'Error fetching active job'),
+      },
+    });
     return null;
   }
 
   if (activeJob) {
-    return <JobContent job={activeJob} isFinishedJob={false} />;
+    return <JobContent job={activeJob} isFinishedJob={false} onStatusChange={onStatusChange} jobType={jobType} />;
   }
 
   if (shouldCheckFinishedJobs) {
     return (
-      <FinishedJobStatus jobUid={watch.metadata?.uid!} repositoryName={repoLabel} onStatusChange={onStatusChange} />
+      <FinishedJobStatus
+        jobUid={watch.metadata?.uid!}
+        repositoryName={repoLabel}
+        onStatusChange={onStatusChange}
+        jobType={jobType}
+      />
     );
   }
 

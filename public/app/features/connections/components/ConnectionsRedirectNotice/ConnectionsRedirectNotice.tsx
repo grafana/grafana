@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { contextSrv } from '../../../../core/core';
-import { AccessControlAction } from '../../../../types';
 import { ROUTES } from '../../constants';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -29,7 +29,7 @@ export function ConnectionsRedirectNotice() {
     contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ||
     contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const [showNotice, setShowNotice] = useState(canAccessDataSources);
-  const { t } = useTranslate();
+
   return showNotice ? (
     <Alert severity="info" title="" onRemove={() => setShowNotice(false)}>
       <div className={styles.alertContent}>

@@ -22,11 +22,7 @@ import { formatDate } from 'app/core/internationalization/dates';
 
 import { CatalogPlugin } from '../types';
 
-type Props = {
-  pluginExtentionsInfo: PageInfoItem[];
-  plugin: CatalogPlugin;
-  width?: string;
-};
+type Props = { pluginExtentionsInfo: PageInfoItem[]; plugin: CatalogPlugin; width?: string };
 
 export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const { pluginExtentionsInfo, plugin, width = '250px' } = props;
@@ -36,7 +32,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   const customLinks = plugin.details?.links?.filter((link) => {
     const customLinksFiltered = ![
-      plugin.url,
+      plugin.details?.repositoryUrl,
       plugin.details?.licenseUrl,
       plugin.details?.documentationUrl,
       plugin.details?.raiseAnIssueUrl,
@@ -47,7 +43,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
     return customLinksFiltered;
   });
   const shouldRenderLinks =
-    plugin.url ||
+    plugin.details?.repositoryUrl ||
     plugin.details?.licenseUrl ||
     plugin.details?.documentationUrl ||
     plugin.details?.raiseAnIssueUrl ||
@@ -57,10 +53,18 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   const onClickReportConcern = (pluginId: string) => {
     setReportAbuseModalOpen(true);
-    reportInteraction('plugin_detail_report_concern', {
-      plugin_id: pluginId,
-    });
+    reportInteraction('plugin_detail_report_concern', { plugin_id: pluginId });
   };
+
+  function createTestId(text: string) {
+    // Convert to string and handle null/undefined
+    const str = String(text || '');
+    return str
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '-');
+  }
 
   return (
     <>
@@ -70,32 +74,22 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
             {pluginExtentionsInfo.map((infoItem, index) => {
               return (
                 <Stack key={index} wrap direction="column" gap={0.5}>
-                  <Text color="secondary">{infoItem.label + ':'}</Text>
-                  <div className={styles.pluginVersionDetails}>{infoItem.value}</div>
+                  <Text color="secondary" data-testid={`${createTestId(infoItem.label)}-label`}>
+                    {infoItem.label + ':'}
+                  </Text>
+                  <div data-testid={`${createTestId(infoItem.label)}-value`} className={styles.pluginVersionDetails}>
+                    {infoItem.value}
+                  </div>
                 </Stack>
               );
             })}
             {plugin.updatedAt && (
               <Stack direction="column" gap={0.5}>
-                <Text color="secondary">
+                <Text color="secondary" data-testid="latest-release-date-label">
                   <Trans i18nKey="plugins.details.labels.latestReleaseDate">Latest release date:</Trans>
                 </Text>{' '}
-                <Text>
+                <Text data-testid="latest-release-date-value">
                   {formatDate(new Date(plugin.updatedAt), { day: 'numeric', month: 'short', year: 'numeric' })}
-                </Text>
-              </Stack>
-            )}
-            {plugin?.details?.lastCommitDate && (
-              <Stack direction="column" gap={0.5}>
-                <Text color="secondary">
-                  <Trans i18nKey="plugins.details.labels.lastCommitDate">Last commit date:</Trans>
-                </Text>{' '}
-                <Text>
-                  {formatDate(new Date(plugin.details.lastCommitDate), {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
                 </Text>
               </Stack>
             )}
@@ -105,9 +99,9 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           <>
             <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-regular-links">
               <Stack direction="column" gap={2}>
-                {plugin.url && (
+                {plugin.details?.repositoryUrl && (
                   <LinkButton
-                    href={plugin.url}
+                    href={plugin.details?.repositoryUrl}
                     variant="secondary"
                     fill="solid"
                     icon="code-branch"
@@ -271,9 +265,5 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    pluginVersionDetails: css({
-      wordBreak: 'break-word',
-    }),
-  };
+  return { pluginVersionDetails: css({ wordBreak: 'break-word' }) };
 };

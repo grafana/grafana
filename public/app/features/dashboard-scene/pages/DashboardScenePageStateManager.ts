@@ -1,9 +1,9 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { BASE_URL } from 'app/api/clients/provisioning/baseAPI';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { BASE_URL } from 'app/api/clients/provisioning/v0alpha1/baseAPI';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -15,7 +15,7 @@ import {
 } from 'app/features/apiserver/types';
 import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
@@ -27,7 +27,7 @@ import {
   DashboardRoutes,
   HomeDashboardRedirectDTO,
   isRedirectResponse,
-} from 'app/types';
+} from 'app/types/dashboard';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -204,7 +204,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
-    if (dryRun.apiVersion.split('/')[1] === 'v2alpha1') {
+    if (dryRun.apiVersion.split('/')[1] === 'v2beta1') {
       return {
         ...dryRun,
         kind: 'DashboardWithAccessInfo',
@@ -267,7 +267,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       const queryController = sceneGraph.getQueryController(dashboard);
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
-      queryController?.startProfile('DashboardScene');
+      queryController?.startProfile('dashboard_view');
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
@@ -362,6 +362,10 @@ abstract class DashboardScenePageStateManagerBase<T>
     this.cache[cacheKey] = scene;
   }
 
+  public removeSceneCache(cacheKey: string) {
+    delete this.cache[cacheKey];
+  }
+
   public clearSceneCache() {
     this.cache = {};
   }
@@ -371,7 +375,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
     const fromCache = this.getSceneFromCache(options.uid);
 
-    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+    if (
+      fromCache &&
+      fromCache.state.version === rsp?.dashboard.version &&
+      fromCache.state.meta.created === rsp?.meta.created
+    ) {
       return fromCache;
     }
 
@@ -743,7 +751,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       return await operation(this.activeManager);
     } catch (error) {
       if (error instanceof DashboardVersionError) {
-        const manager = error.data.storedVersion === 'v2alpha1' ? this.v2Manager : this.v1Manager;
+        const manager = isV2StoredVersion(error.data.storedVersion) ? this.v2Manager : this.v1Manager;
         this.activeManager = manager;
         return await operation(manager);
       } else {
@@ -789,7 +797,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     try {
       return await this.v1Manager.loadSnapshotScene(slug);
     } catch (error) {
-      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha1') {
+      if (error instanceof DashboardVersionError && isV2StoredVersion(error.data.storedVersion)) {
         return await this.v2Manager.loadSnapshotScene(slug);
       }
       throw new Error('Snapshot not found');
@@ -797,7 +805,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async loadSnapshot(slug: string) {
-    return this.withVersionHandling((manager) => manager.loadSnapshot(slug));
+    return this.withVersionHandling((manager) => manager.loadSnapshot.call(this, slug));
   }
 
   public clearDashboardCache() {
@@ -817,6 +825,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public setSceneCache(cacheKey: string, scene: DashboardScene): void {
     this.activeManager.setSceneCache(cacheKey, scene);
+  }
+
+  public removeSceneCache(cacheKey: string): void {
+    this.v1Manager.removeSceneCache(cacheKey);
+    this.v2Manager.removeSceneCache(cacheKey);
   }
 
   public getCache() {

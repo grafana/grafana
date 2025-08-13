@@ -37,9 +37,7 @@ def rgm_artifacts_step(
         depends_on = ["yarn-install"],
         tag_format = "{{ .version }}-{{ .arch }}",
         ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}",
-        verify = "false",
-        ubuntu = images["ubuntu"],
-        alpine = images["alpine"]):
+        verify = "false"):
     cmd = artifacts_cmd(artifacts = artifacts)
 
     return {
@@ -57,8 +55,8 @@ def rgm_artifacts_step(
             cmd +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
-            "--ubuntu-base={} ".format(ubuntu) +
-            "--alpine-base={} ".format(alpine) +
+            "--ubuntu-base=ubuntu-base " +
+            "--alpine-base=alpine-base " +
             "--tag-format='{}' ".format(tag_format) +
             "--ubuntu-tag-format='{}' ".format(ubuntu_tag_format) +
             "--verify='{}' ".format(verify) +
@@ -68,13 +66,11 @@ def rgm_artifacts_step(
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-# rgm_build_backend will create compile the grafana backend for various platforms. It's preferred to use
-# 'rgm_package_step' if you creating a "usable" artifact. This should really only be used to verify that the code is
-# compilable.
+# rgm_build_backend will create compile the grafana backend for various platforms.
 def rgm_build_backend_step(artifacts = ["backend:grafana:linux/amd64", "backend:grafana:linux/arm64"]):
     return rgm_artifacts_step(name = "rgm-build-backend", artifacts = artifacts, depends_on = [])
 
-def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = "docker.txt", tag_format = "{{ .version }}-{{ .arch }}", ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}"):
+def rgm_build_docker_step(depends_on = ["yarn-install"], file = "docker.txt", tag_format = "{{ .version }}-{{ .arch }}", ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}"):
     return {
         "name": "rgm-build-docker",
         "image": images["go"],
@@ -95,8 +91,8 @@ def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = 
             "-a docker:grafana:linux/arm/v7:ubuntu " +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
-            "--ubuntu-base={} ".format(ubuntu) +
-            "--alpine-base={} ".format(alpine) +
+            "--ubuntu-base=ubuntu-base " +
+            "--alpine-base=alpine-base " +
             "--tag-format='{}' ".format(tag_format) +
             "--grafana-dir=$$PWD " +
             "--ubuntu-tag-format='{}' > {}".format(ubuntu_tag_format, file),

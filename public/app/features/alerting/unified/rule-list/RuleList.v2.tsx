@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
-import { SupportedView } from '../components/rules/Filter/RulesViewModeSelector';
+import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
+import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
-import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { isAdmin } from '../utils/misc';
 
 import { FilterView } from './FilterView';
@@ -17,23 +17,22 @@ import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
 
 function RuleList() {
-  const [queryParams] = useURLSearchParams();
-  const { filterState, hasActiveFilters } = useRulesFilter();
-
-  const view: SupportedView = queryParams.get('view') === 'list' ? 'list' : 'grouped';
-  const showListView = hasActiveFilters || view === 'list';
+  const { filterState } = useRulesFilter();
+  const { viewMode, handleViewChange } = useListViewMode();
 
   return (
-    <>
-      <RulesFilter onClear={() => {}} />
-      {showListView ? <FilterView filterState={filterState} /> : <GroupedView />}
-    </>
+    <Stack direction="column">
+      <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+      {viewMode === 'list' ? (
+        <FilterView filterState={filterState} />
+      ) : (
+        <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+      )}
+    </Stack>
   );
 }
 
 export function RuleListActions() {
-  const { t } = useTranslate();
-
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
 
@@ -48,7 +47,7 @@ export function RuleListActions() {
       <Menu>
         <Menu.Group>
           <Menu.Item
-            label={t('alerting.rule-list.draft-new-rule', 'Draft a new rule')}
+            label={t('alerting.rule-list.new-rule-for-export', 'New alert rule for export')}
             icon="file-export"
             url="/alerting/export-new-rule"
           />
@@ -78,7 +77,7 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [t, canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA]
+    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA]
   );
 
   return (
@@ -88,6 +87,7 @@ export function RuleListActions() {
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
+      {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
       <Dropdown overlay={moreActionsMenu}>
         <Button variant="secondary">
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />

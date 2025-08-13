@@ -65,12 +65,10 @@ There are different ways you can follow along with this tutorial.
 - **Grafana OSS**
 
   To run a Grafana stack locally, ensure you have the following applications installed:
-
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
   - [Git](https://git-scm.com/)
 
 - **Interactive learning environment**
-
   - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs). It's a fully configured environment with all the dependencies already installed.
 
 ## Set up the Grafana stack
@@ -217,7 +215,7 @@ In this section, we use the default options for Grafana-managed alert rule creat
 
    <!-- INTERACTIVE ignore START -->
 
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
    {{% / admonition %}}
    <!-- INTERACTIVE ignore END -->
@@ -227,7 +225,6 @@ In this section, we use the default options for Grafana-managed alert rule creat
    {{< /docs/ignore >}}
 
 1. In the **Alert condition** section:
-
    - Keep `Last` as the value for the reducer function (`WHEN`), and `0` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the query.

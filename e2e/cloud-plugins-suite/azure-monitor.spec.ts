@@ -5,11 +5,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { selectors as rawSelectors } from '@grafana/e2e-selectors';
 
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
+import { AzureQueryType } from '../../public/app/plugins/datasource/azuremonitor/types/query';
 import {
   AzureMonitorDataSourceJsonData,
   AzureMonitorDataSourceSecureJsonData,
-  AzureQueryType,
-} from '../../public/app/plugins/datasource/azuremonitor/types';
+} from '../../public/app/plugins/datasource/azuremonitor/types/types';
 import { e2e } from '../utils';
 
 const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;
@@ -221,7 +221,7 @@ describe('Azure monitor datasource', () => {
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
-        cy.wait(1000); // Need to wait for code editor to completely load
+        cy.wait(2000); // Need to wait for code editor to completely load
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('[aria-label="Clear value"]').click();
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('input').type('datasources{enter}');
         e2e.components.CodeEditor.container().type(

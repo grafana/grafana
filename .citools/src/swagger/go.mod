@@ -1,6 +1,6 @@
 module swagger
 
-go 1.24.3
+go 1.24.5
 
 tool github.com/go-swagger/go-swagger/cmd/swagger
 
@@ -24,7 +24,7 @@ require (
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/go-swagger/go-swagger v0.30.6-0.20240310114303-db51e79a0e37 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect

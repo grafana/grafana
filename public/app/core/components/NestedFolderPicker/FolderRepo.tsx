@@ -1,20 +1,40 @@
-import { useTranslate } from '@grafana/i18n';
-import { Badge } from '@grafana/ui';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { t } from '@grafana/i18n';
+import { Badge, Stack } from '@grafana/ui';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { NestedFolderDTO } from 'app/features/search/service/types';
-import { FolderDTO, FolderListItemDTO } from 'app/types';
+import { FolderDTO, FolderListItemDTO } from 'app/types/folders';
 
 export interface Props {
   folder?: FolderListItemDTO | NestedFolderDTO | FolderDTO;
 }
 
 export function FolderRepo({ folder }: Props) {
-  const isProvisionedInstance = useIsProvisionedInstance();
-  const { t } = useTranslate();
+  // skip rendering if:
+  // folder is not present
+  // folder have parentUID
+  // folder is not managed
+  const skipRender = !folder || ('parentUID' in folder && folder.parentUID) || !folder.managedBy;
 
-  if (!folder || ('parentUID' in folder && folder.parentUID) || !folder.managedBy || isProvisionedInstance) {
+  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
+    folderName: skipRender ? undefined : folder?.uid,
+  });
+
+  if (skipRender) {
     return null;
   }
 
-  return <Badge text={t('folder-repo.badge-text', 'Provisioned')} color={'darkgrey'} />;
+  return (
+    // badge with text and icon only has different height, we will need to adjust the layout using stretch
+    <Stack direction="row" alignItems="stretch">
+      {isReadOnlyRepo && (
+        <Badge
+          color="darkgrey"
+          text={t('folder-repo.read-only-badge', 'Read only')}
+          tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
+        />
+      )}
+      <Badge color="purple" icon="exchange-alt" tooltip={t('folder-repo.provisioned-badge', 'Provisioned')} />
+    </Stack>
+  );
 }

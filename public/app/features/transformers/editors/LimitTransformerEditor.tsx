@@ -8,10 +8,12 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/limit.svg';
+import lightImage from '../images/light/limit.svg';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../utils';
 
@@ -29,8 +31,6 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
     [onChange, options]
   );
 
-  const { t } = useTranslate();
-
   return (
     <>
       <InlineFieldRow>
@@ -47,12 +47,17 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
   );
 };
 
-export const limitTransformRegistryItem: TransformerRegistryItem<LimitTransformerOptions> = {
+export const getLimitTransformRegistryItem: () => TransformerRegistryItem<LimitTransformerOptions> = () => ({
   id: DataTransformerID.limit,
   editor: LimitTransformerEditor,
   transformation: standardTransformers.limitTransformer,
-  name: standardTransformers.limitTransformer.name,
-  description: `Limit the number of items displayed.`,
+  name: t('transformers.limit-transformer-editor.name.limit', 'Limit'),
+  description: t(
+    'transformers.limit-transformer-editor.description.limit-number-items-displayed',
+    'Limit the number of items displayed.'
+  ),
   categories: new Set([TransformerCategory.Filter]),
   help: getTransformationContent(DataTransformerID.limit).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

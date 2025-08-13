@@ -4,7 +4,7 @@ import {
   ConditionalRenderingGroupKind,
   ConditionalRenderingTimeRangeSizeKind,
   ConditionalRenderingVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
@@ -22,7 +22,7 @@ export type GroupConditionValue = ConditionalRenderingConditions[];
 
 export type TimeRangeSizeConditionValue = string;
 
-export type VariableConditionValueOperator = '=' | '!=';
+export type VariableConditionValueOperator = '=' | '!=' | '=~' | '!~';
 
 export type VariableConditionValue = {
   name: string;

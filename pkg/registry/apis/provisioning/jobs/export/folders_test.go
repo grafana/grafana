@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -189,7 +189,7 @@ func TestExportFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name == "folder-1-uid" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "didn't work"
+					return result.Name == "folder-1-uid" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "creating folder folder-1-uid at path grafana/folder-1: didn't work"
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Name == "folder-2-uid" && result.Action == repository.FileActionCreated
@@ -298,38 +298,21 @@ func TestExportFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name == "parent-uid" && result.Action == repository.FileActionCreated
+					return result.Name == "parent-folder" && result.Action == repository.FileActionCreated
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name == "child-uid" && result.Action == repository.FileActionCreated
+					return result.Name == "child-folder" && result.Action == repository.FileActionCreated
 				})).Return()
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("TooManyErrors").Return(nil)
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources) {
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
-					expectedFolders := []resources.Folder{
-						{ID: "parent-folder", Path: "parent-folder"},
-						{ID: "child-folder", Path: "parent-folder/child-folder"},
-					}
-
-					if tree.Count() != len(expectedFolders) {
-						return false
-					}
-
-					for _, folder := range expectedFolders {
-						dir, ok := tree.DirPath(folder.ID, "")
-						if !ok || dir.Path != folder.Path {
-							return false
-						}
-					}
-
-					return true
+					return tree.Count() == 2
 				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
-					// Parent folder should be processed first
-					require.NoError(t, fn(resources.Folder{ID: "parent-uid", Path: "grafana/parent-folder"}, true, nil))
-					// Then child folder with nested path
-					require.NoError(t, fn(resources.Folder{ID: "child-uid", Path: "grafana/parent-folder/child-folder"}, true, nil))
+					require.NoError(t, fn(resources.Folder{ID: "parent-folder", Path: "grafana/parent-folder"}, true, nil))
+					require.NoError(t, fn(resources.Folder{ID: "child-folder", Path: "grafana/parent-folder/child-folder"}, true, nil))
+
 					return true
 				})).Return(nil)
 			},
@@ -380,7 +363,7 @@ func TestExportFolders(t *testing.T) {
 }
 
 func TestFolderMetaAccessor(t *testing.T) {
-	t.Run("should export folders from another manager", func(t *testing.T) {
+	t.Run("should skip folders from another manager", func(t *testing.T) {
 		obj := &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -405,21 +388,12 @@ func TestFolderMetaAccessor(t *testing.T) {
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
-			return tree.Count() == 1
-		}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
-			require.NoError(t, fn(resources.Folder{ID: "test-folder-uid", Path: "grafana/test-folder"}, true, nil))
-			return true
-		})).Return(nil)
+			return tree.Count() == 0 // Should be 0 since folder is managed by other manager
+		}), mock.Anything).Return(nil)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Action == repository.FileActionCreated &&
-				result.Name == "test-folder-uid" &&
-				result.Error == nil &&
-				result.Path == "grafana/test-folder"
-		})).Return()
-		progress.On("TooManyErrors").Return(nil)
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
+		// No Record calls expected since folder should be skipped
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
 			Path:   "grafana",
 			Branch: "feature/branch",
@@ -430,7 +404,7 @@ func TestFolderMetaAccessor(t *testing.T) {
 		mockRepoResources.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
-	t.Run("should skip if repo is the manager", func(t *testing.T) {
+	t.Run("should skip if current repo is the manager", func(t *testing.T) {
 		obj := &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -489,6 +463,45 @@ func TestFolderMetaAccessor(t *testing.T) {
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "extract meta accessor")
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+	t.Run("should skip if managed by any other manager", func(t *testing.T) {
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test-folder",
+					"annotations": map[string]interface{}{
+						"folder.grafana.app/uid": "test-folder-uid",
+					},
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:        utils.ManagerKindTerraform,
+			Identity:    "terraform-provisioning",
+			AllowsEdits: false,
+			Suspended:   false,
+		})
+		fakeFolderClient := &mockDynamicInterface{
+			items: []unstructured.Unstructured{*obj},
+		}
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
+		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+			return tree.Count() == 0 // Should be empty since folder was skipped
+		}), mock.Anything).Return(nil)
+
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+			Path:   "grafana",
+			Branch: "feature/branch",
+		}, fakeFolderClient, mockRepoResources, progress)
+
+		require.NoError(t, err)
 		mockRepoResources.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})

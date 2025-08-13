@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { Field, GrafanaTheme2, StandardEditorProps } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
@@ -11,7 +11,6 @@ type Settings = { filter: (field: Field) => boolean };
 type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], Settings, NodeGraphOptions, undefined>;
 
 export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorProps) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const addArc = () => {
@@ -61,7 +60,7 @@ export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorP
               icon="minus"
               variant="secondary"
               onClick={() => removeArc(i)}
-              title={t('nodeGraph.arc-options-editor.title-remove-arc', 'Remove arc')}
+              aria-label={t('nodeGraph.arc-options-editor.title-remove-arc', 'Remove arc')}
             />
           </div>
         );

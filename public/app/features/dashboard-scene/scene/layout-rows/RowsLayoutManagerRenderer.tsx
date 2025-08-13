@@ -4,12 +4,15 @@ import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { SceneComponentProps } from '@grafana/scenes';
+import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
+import { isInCloneChain } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
+import { RowItem } from './RowItem';
+import { RowItemRepeater } from './RowItemRepeater';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
 export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayoutManager>) {
@@ -17,6 +20,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
   const { hasCopiedRow } = useClipboardState();
+
+  const isClone = isInCloneChain(rows[0]?.state.key || '');
 
   return (
     <DragDropContext
@@ -37,10 +42,10 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
         {(dropProvided) => (
           <div className={styles.wrapper} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
             {rows.map((row) => (
-              <row.Component model={row} key={row.state.key!} />
+              <RowWrapper row={row} manager={model} key={row.state.key!} />
             ))}
             {dropProvided.placeholder}
-            {isEditing && (
+            {isEditing && !isClone && (
               <div className="dashboard-canvas-add-button">
                 <Button
                   icon="plus"
@@ -69,6 +74,20 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
       </Droppable>
     </DragDropContext>
   );
+}
+
+function RowWrapper({ row, manager }: { row: RowItem; manager: RowsLayoutManager }) {
+  const { repeatByVariable } = useSceneObjectState(row, { shouldActivateOrKeepAlive: true });
+
+  if (repeatByVariable) {
+    const variable = sceneGraph.lookupVariable(repeatByVariable, manager);
+
+    if (variable instanceof MultiValueVariable) {
+      return <RowItemRepeater row={row} key={row.state.key!} manager={manager} variable={variable} />;
+    }
+  }
+
+  return <row.Component model={row} key={row.state.key!} />;
 }
 
 function getStyles(theme: GrafanaTheme2) {

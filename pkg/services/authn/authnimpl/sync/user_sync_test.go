@@ -21,9 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/scimutil"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func ptrString(s string) *string {
@@ -39,10 +43,10 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	authFakeNil := &authinfotest.FakeService{
 		ExpectedError: user.ErrUserNotFound,
-		SetAuthInfoFn: func(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
+		SetAuthInfoFn: func(_ context.Context, _ *login.SetAuthInfoCommand) error {
 			return nil
 		},
-		UpdateAuthInfoFn: func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
+		UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error {
 			return nil
 		},
 	}
@@ -87,7 +91,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	userServiceNil := &usertest.FakeUserService{
 		ExpectedError: user.ErrUserNotFound,
-		CreateFn: func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+		CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 			return &user.User{
 				ID:      2,
 				UID:     "2",
@@ -103,7 +107,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	// mockUpdateFn helps assert the UpdateUserCommand contents.
 	// expectNoUpdateForOtherAttributes is true for SCIM users where only IsGrafanaAdmin should sync from SAML.
 	mockUpdateFn := func(t *testing.T, expectedCmd *user.UpdateUserCommand, expectNoUpdateForOtherAttributes bool, originalUserEmail string) func(context.Context, *user.UpdateUserCommand) error {
-		return func(ctx context.Context, cmd *user.UpdateUserCommand) error {
+		return func(_ context.Context, cmd *user.UpdateUserCommand) error {
 			if expectedCmd == nil {
 				t.Errorf("userService.Update was called unexpectedly")
 				return nil
@@ -183,8 +187,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ExternalUID: externalUID,
 				UserId:      userID,
 			},
-			SetAuthInfoFn:    func(ctx context.Context, cmd *login.SetAuthInfoCommand) error { return nil },
-			UpdateAuthInfoFn: func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error { return nil },
+			SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+			UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
 		}
 	}
 
@@ -895,7 +899,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.NewCfg())
+			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.NewCfg(), nil)
 			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -922,6 +926,7 @@ func TestUserSync_SyncUserRetryFetch(t *testing.T) {
 		tracing.NewNoopTracerService(),
 		featuremgmt.WithFeatures(),
 		setting.NewCfg(),
+		nil,
 	)
 
 	email := "test@test.com"
@@ -1014,7 +1019,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			userSvc := usertest.NewUserServiceFake()
 			called := false
-			userSvc.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
+			userSvc.UpdateFn = func(_ context.Context, _ *user.UpdateUserCommand) error {
 				called = true
 				return nil
 			}
@@ -1087,11 +1092,24 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			},
 		},
 		{
-			desc: "it should skip validation if allowedNonProvisionedUsers is enabled",
+			desc: "it should skip validation if rejectNonProvisionedUsers is disabled",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = true
+				userSyncService.rejectNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: false,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:     1,
+						AuthModule: login.GenericOAuthModule,
+						AuthId:     "1",
+					},
+				}
 				return userSyncService
 			},
 			identity: &authn.Identity{
@@ -1106,7 +1124,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should skip validation if the user is authenticated via GrafanaComAuthModule",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				return userSyncService
 			},
@@ -1122,7 +1140,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the identity with the provisioned user, unexpected error",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedError: errors.New("random error"),
@@ -1143,7 +1161,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the identity with the provisioned user, no user found",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{}
 				return userSyncService
@@ -1162,7 +1180,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - empty ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1193,7 +1211,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - different ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1225,7 +1243,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should successfully validate the provisioned user.ExternalUID with the identity.ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1251,12 +1269,13 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 					SyncUser: true,
 				},
 			},
+			expectedErr: nil,
 		},
 		{
-			desc: "it should failed to validate a non provisioned user when retrieved from the database",
+			desc: "it should fail to validate a non provisioned user when configured to reject non provisioned users",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1283,6 +1302,38 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				},
 			},
 			expectedErr: errUserNotProvisioned.Errorf("user is not provisioned"),
+		},
+		{
+			desc: "it should skip to validate a non provisioned user when configured to allow non provisioned users",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.rejectNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: false,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "random-external-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "different-external-uid",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			expectedErr: nil,
 		},
 		{
 			desc: "ValidateProvisioning: DB ExternalUID is empty, Incoming ExternalUID is empty - expect mismatch (stricter logic)",
@@ -1345,7 +1396,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should skip ExternalUID validation for a SAML-provisioned user accessed by a non-SAML method with an empty incoming ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1374,7 +1425,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail validation when a provisioned user is accessed by SAML with an empty incoming ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -1411,4 +1462,389 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			require.ErrorIs(t, err, tt.expectedErr)
 		})
 	}
+}
+
+func TestUserSync_SCIMUtilIntegration(t *testing.T) {
+	ctx := context.Background()
+	orgID := int64(1)
+
+	// Mock SCIM utility for testing
+	type mockSCIMUtil struct {
+		userSyncEnabled             bool
+		nonProvisionedUsersRejected bool
+		shouldUseDynamicConfig      bool
+		shouldReturnError           bool
+	}
+
+	createMockSCIMUtil := func(mockCfg *mockSCIMUtil) *scimutil.SCIMUtil {
+		if mockCfg == nil {
+			return nil
+		}
+
+		// Create a mock K8s client that returns the expected behavior
+		mockK8sClient := &MockK8sHandler{}
+
+		if mockCfg.shouldReturnError {
+			mockK8sClient.On("Get", ctx, "default", orgID, mock.AnythingOfType("v1.GetOptions"), mock.Anything).
+				Return(nil, errors.New("k8s error"))
+		} else if mockCfg.shouldUseDynamicConfig {
+			// Create a mock SCIM config with the desired settings
+			obj := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "scim.grafana.com/v0alpha1",
+					"kind":       "SCIMConfig",
+					"metadata": map[string]interface{}{
+						"name":      "test-config",
+						"namespace": "default",
+					},
+					"spec": map[string]interface{}{
+						"enableUserSync":            mockCfg.userSyncEnabled,
+						"enableGroupSync":           false, // Not used for this test
+						"rejectNonProvisionedUsers": mockCfg.nonProvisionedUsersRejected,
+					},
+				},
+			}
+			mockK8sClient.On("Get", ctx, "default", orgID, mock.AnythingOfType("v1.GetOptions"), mock.Anything).
+				Return(obj, nil)
+		}
+
+		return scimutil.NewSCIMUtil(mockK8sClient)
+	}
+
+	tests := []struct {
+		name                           string
+		identity                       *authn.Identity
+		staticConfig                   *StaticSCIMConfig
+		mockSCIMUtil                   *mockSCIMUtil
+		expectedUserSyncEnabled        bool
+		expectedNonProvisionedRejected bool
+		expectedError                  error
+	}{
+		{
+			name: "SCIM util nil - uses static config",
+			identity: &authn.Identity{
+				OrgID: orgID,
+				ID:    "test-user",
+			},
+			staticConfig: &StaticSCIMConfig{
+				IsUserProvisioningEnabled: true,
+				RejectNonProvisionedUsers: false,
+			},
+			mockSCIMUtil:                   nil, // No SCIM util
+			expectedUserSyncEnabled:        true,
+			expectedNonProvisionedRejected: false,
+		},
+		{
+			name: "SCIM util with dynamic config - user sync enabled",
+			identity: &authn.Identity{
+				OrgID: orgID,
+				ID:    "test-user",
+			},
+			staticConfig: &StaticSCIMConfig{
+				IsUserProvisioningEnabled: false, // Static disabled
+				RejectNonProvisionedUsers: true,
+			},
+			mockSCIMUtil: &mockSCIMUtil{
+				userSyncEnabled:             true, // Dynamic enabled
+				nonProvisionedUsersRejected: true,
+				shouldUseDynamicConfig:      true,
+			},
+			expectedUserSyncEnabled:        true,
+			expectedNonProvisionedRejected: true,
+		},
+		{
+			name: "SCIM util with dynamic config - user sync disabled",
+			identity: &authn.Identity{
+				OrgID: orgID,
+				ID:    "test-user",
+			},
+			staticConfig: &StaticSCIMConfig{
+				IsUserProvisioningEnabled: true, // Static enabled
+				RejectNonProvisionedUsers: true,
+			},
+			mockSCIMUtil: &mockSCIMUtil{
+				userSyncEnabled:             false, // Dynamic disabled
+				nonProvisionedUsersRejected: false,
+				shouldUseDynamicConfig:      true,
+			},
+			expectedUserSyncEnabled:        false,
+			expectedNonProvisionedRejected: false,
+		},
+		{
+			name: "SCIM util with error - falls back to static config",
+			identity: &authn.Identity{
+				OrgID: orgID,
+				ID:    "test-user",
+			},
+			staticConfig: &StaticSCIMConfig{
+				IsUserProvisioningEnabled: true,
+				RejectNonProvisionedUsers: false,
+			},
+			mockSCIMUtil: &mockSCIMUtil{
+				shouldReturnError: true,
+			},
+			expectedUserSyncEnabled:        true,
+			expectedNonProvisionedRejected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create UserSync service with mock SCIM util
+			userSync := &UserSync{
+				scimUtil: createMockSCIMUtil(tt.mockSCIMUtil),
+			}
+
+			// Test user sync enabled check
+			var userSyncEnabled bool
+			if userSync.scimUtil != nil {
+				userSyncEnabled = userSync.scimUtil.IsUserSyncEnabled(ctx, orgID, tt.staticConfig.IsUserProvisioningEnabled)
+			} else {
+				userSyncEnabled = tt.staticConfig.IsUserProvisioningEnabled
+			}
+			assert.Equal(t, tt.expectedUserSyncEnabled, userSyncEnabled, "User sync enabled mismatch")
+
+			// Test non-provisioned users rejected check
+			var nonProvisionedReject bool
+			if userSync.scimUtil != nil {
+				nonProvisionedReject = userSync.scimUtil.AreNonProvisionedUsersRejected(ctx, orgID, tt.staticConfig.RejectNonProvisionedUsers)
+			} else {
+				nonProvisionedReject = tt.staticConfig.RejectNonProvisionedUsers
+			}
+			assert.Equal(t, tt.expectedNonProvisionedRejected, nonProvisionedReject, "Non-provisioned users rejected mismatch")
+		})
+	}
+}
+
+// MockK8sHandler is a mock implementation for testing
+type MockK8sHandler struct {
+	mock.Mock
+}
+
+func (m *MockK8sHandler) GetNamespace(orgID int64) string {
+	args := m.Called(orgID)
+	return args.String(0)
+}
+
+func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, opts metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, orgID, opts, subresource)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+// Add other required methods with empty implementations for the mock
+func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Delete(ctx context.Context, name string, orgID int64, options metav1.DeleteOptions) error {
+	args := m.Called(ctx, name, orgID, options)
+	return args.Error(0)
+}
+
+func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
+	args := m.Called(ctx, orgID)
+	return args.Error(0)
+}
+
+func (m *MockK8sHandler) List(ctx context.Context, orgID int64, options metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	args := m.Called(ctx, orgID, options)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.UnstructuredList), args.Error(1)
+}
+
+func (m *MockK8sHandler) Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	args := m.Called(ctx, orgID, in)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*resourcepb.ResourceSearchResponse), args.Error(1)
+}
+
+func (m *MockK8sHandler) GetStats(ctx context.Context, orgID int64) (*resourcepb.ResourceStatsResponse, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*resourcepb.ResourceStatsResponse), args.Error(1)
+}
+
+func (m *MockK8sHandler) GetUsersFromMeta(ctx context.Context, userMeta []string) (map[string]*user.User, error) {
+	args := m.Called(ctx, userMeta)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]*user.User), args.Error(1)
+}
+
+func TestUserSync_NamespaceMappingLogic(t *testing.T) {
+	ctx := context.Background()
+
+	// Test the actual namespace mapping logic
+	tests := []struct {
+		name              string
+		stackID           string
+		orgID             int64
+		expectedNamespace string
+		description       string
+	}{
+		{
+			name:              "Cloud instance with valid stackID",
+			stackID:           "75",
+			orgID:             123,
+			expectedNamespace: "stacks-75",
+			description:       "Should use stack-based namespace for cloud instances",
+		},
+		{
+			name:              "Cloud instance with different stackID",
+			stackID:           "99",
+			orgID:             123,
+			expectedNamespace: "stacks-99",
+			description:       "Should use different stack-based namespace for different stackID",
+		},
+		{
+			name:              "Cloud instance with invalid stackID",
+			stackID:           "invalid",
+			orgID:             456,
+			expectedNamespace: "stacks-0",
+			description:       "Should fallback to stacks-0 for invalid stackID",
+		},
+		{
+			name:              "On-prem instance (no stackID)",
+			stackID:           "",
+			orgID:             456,
+			expectedNamespace: "org-456",
+			description:       "Should use org-based namespace for on-prem instances",
+		},
+		{
+			name:              "On-prem instance with different orgID",
+			stackID:           "",
+			orgID:             789,
+			expectedNamespace: "org-789",
+			description:       "Should use correct orgID in namespace",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock K8s client
+			mockK8sClient := &MockK8sHandler{}
+
+			// Mock the GetNamespace method to simulate the actual namespace mapping logic
+			mockK8sClient.On("GetNamespace", tt.orgID).Return(tt.expectedNamespace)
+
+			// Set up a successful SCIM config response
+			obj := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "scim.grafana.com/v0alpha1",
+					"kind":       "SCIMConfig",
+					"metadata": map[string]interface{}{
+						"name":      "default",
+						"namespace": tt.expectedNamespace,
+					},
+					"spec": map[string]interface{}{
+						"enableUserSync":  true,
+						"enableGroupSync": false,
+					},
+				},
+			}
+			mockK8sClient.On("Get", ctx, "default", tt.orgID, mock.AnythingOfType("v1.GetOptions"), mock.Anything).
+				Return(obj, nil)
+
+			// Create SCIM util with the mock client
+			scimUtil := scimutil.NewSCIMUtil(mockK8sClient)
+
+			// Test the namespace mapping
+			actualNamespace := mockK8sClient.GetNamespace(tt.orgID)
+			assert.Equal(t, tt.expectedNamespace, actualNamespace,
+				"Namespace mapping failed: %s", tt.description)
+
+			// Test that the SCIM util works with the mapped namespace
+			userSyncEnabled := scimUtil.IsUserSyncEnabled(ctx, tt.orgID, false)
+			assert.True(t, userSyncEnabled,
+				"SCIM util should work with namespace %s: %s", tt.expectedNamespace, tt.description)
+
+			// Verify that the correct API path would be constructed
+			// This is implicit in the mock setup, but we can verify the components
+			assert.Equal(t, "default", obj.GetName(), "Resource name should be 'default'")
+			assert.Equal(t, tt.expectedNamespace, obj.GetNamespace(), "Namespace should match expected")
+
+			// Verify the mock expectations
+			mockK8sClient.AssertExpectations(t)
+		})
+	}
+}
+
+func TestUserSync_GetUsageStats(t *testing.T) {
+	userSync := initUserSyncService()
+
+	// Test that GetUsageStats returns zero initially
+	stats := userSync.GetUsageStats(context.Background())
+
+	require.NotNil(t, stats)
+	require.Contains(t, stats, "stats.features.scim.has_successful_login.count")
+	require.Equal(t, int(0), stats["stats.features.scim.has_successful_login.count"])
+
+	userSync.scimSuccessfulLogin.Store(true)
+
+	// Test that GetUsageStats returns the updated value
+	stats = userSync.GetUsageStats(context.Background())
+	require.Equal(t, int(1), stats["stats.features.scim.has_successful_login.count"])
+}
+
+func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
+	userSync := initUserSyncService()
+	userSync.rejectNonProvisionedUsers = false
+	userSync.isUserProvisioningEnabled = true
+	userSync.userService = &usertest.FakeUserService{
+		ExpectedUser: &user.User{
+			ID:            1,
+			IsProvisioned: true,
+		},
+	}
+	userSync.authInfoService = &authinfotest.FakeService{
+		ExpectedUserAuth: &login.UserAuth{
+			UserId:      1,
+			AuthModule:  login.SAMLAuthModule,
+			AuthId:      "1",
+			ExternalUID: "test123",
+		},
+	}
+
+	// Check initial counter value
+	initialStats := userSync.GetUsageStats(context.Background())
+	require.Equal(t, int(0), initialStats["stats.features.scim.has_successful_login.count"])
+
+	// Create identity for validation with matching ExternalUID
+	identity := &authn.Identity{
+		AuthID:          "1",
+		AuthenticatedBy: login.SAMLAuthModule,
+		ExternalUID:     "test123",
+		ClientParams:    authn.ClientParams{SyncUser: true},
+	}
+
+	// Call ValidateUserProvisioningHook - this should set the flag to true
+	err := userSync.ValidateUserProvisioningHook(context.Background(), identity, nil)
+	require.NoError(t, err)
+
+	// Check that flag was set to true (count should be 1)
+	finalStats := userSync.GetUsageStats(context.Background())
+	finalCount := finalStats["stats.features.scim.has_successful_login.count"].(int)
+	require.Equal(t, int(1), finalCount)
 }

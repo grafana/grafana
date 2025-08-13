@@ -1,4 +1,5 @@
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -11,16 +12,16 @@ import { TrendSuggestionsSupplier } from './suggestions';
 export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig, false))
   .setPanelOptions((builder) => {
-    const category = ['X axis'];
+    const category = [t('trend.category-x-axis', 'X axis')];
     builder.addFieldNamePicker({
       path: 'xField',
-      name: 'X field',
-      description: 'An increasing numeric value',
+      name: t('trend.name-x-field', 'X field'),
+      description: t('trend.description-x-field', 'An increasing numeric value'),
       category,
       defaultValue: undefined,
       settings: {
         isClearable: true,
-        placeholderText: 'First numeric value',
+        placeholderText: t('trend.placeholder-x-field', 'First numeric value'),
         filter: (field: Field) => field.type === FieldType.number,
       },
     });

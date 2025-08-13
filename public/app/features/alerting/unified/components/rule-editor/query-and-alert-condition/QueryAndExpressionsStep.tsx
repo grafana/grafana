@@ -6,7 +6,7 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   Alert,
@@ -357,7 +357,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   );
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   // Cloud alerts load data from form values
   // whereas Grafana managed alerts load data from reducer
@@ -719,7 +718,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
             <br />
           </div>
         }
-        confirmText="Deactivate"
+        confirmText={t('alerting.query-and-expressions-step.confirmText-deactivate', 'Deactivate')}
         icon="exclamation-triangle"
         onConfirm={() => {
           setValue('editorSettings.simplifiedQueryEditor', true);

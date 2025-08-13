@@ -54,7 +54,7 @@ Query Parameters:
 - `to`: epoch datetime in milliseconds. Optional.
 - `limit`: number. Optional - default is 100. Max limit for results returned.
 - `alertId`: number. Optional. Find annotations for a specified alert.
-- `dashboardId`: number. Optional. Find annotations that are scoped to a specific dashboard
+- `dashboardId`: Deprecated. Use dashboardUID instead.
 - `dashboardUID`: string. Optional. Find annotations that are scoped to a specific dashboard, when dashboardUID presents, dashboardId would be ignored.
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
 - `userId`: number. Optional. Find annotations created by a specific user
@@ -113,7 +113,7 @@ Content-Type: application/json
 
 ## Create Annotation
 
-Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
+Creates an annotation in the Grafana database. The `dashboardUid` and `panelId` fields are optional.
 If they are not specified then an organization annotation is created and can be queried in any dashboard that adds
 the Grafana annotations data source. When creating a region annotation include the timeEnd property.
 

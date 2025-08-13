@@ -97,9 +97,9 @@ Legends are supported for the following visualizations:
 
 You can find the following options under the **Legend** section in the panel edit pane.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Not all of the options listed apply to all visualizations with legends.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Visibility
 
@@ -175,6 +175,6 @@ When you format a legend as a table and add values to it, you can sort series in
 
 ![Legend formatted as a table showing sorted values](/media/docs/grafana/panels-visualizations/screenshot-legend-sorted-10.3-v2.png)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature is only supported for the following visualizations: bar chart, histogram, time series.
-{{% /admonition %}}
+{{< /admonition >}}

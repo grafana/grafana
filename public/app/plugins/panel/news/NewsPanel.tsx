@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
 import { Alert, ScrollContainer, TextLink } from '@grafana/ui';
 
@@ -13,7 +13,6 @@ import { useNewsFeed } from './useNewsFeed';
 interface NewsPanelProps extends PanelProps<Options> {}
 
 export function NewsPanel(props: NewsPanelProps) {
-  const { t } = useTranslate();
   const {
     width,
     options: { feedUrl = DEFAULT_FEED_URL, showImage },

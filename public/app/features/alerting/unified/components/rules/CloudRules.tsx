@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -49,7 +49,6 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const { t } = useTranslate();
   const canMigrateToGMA = hasDataSourcesConfigured && isAdmin() && config.featureToggles.alertingMigrationUI;
 
   return (
@@ -165,7 +164,7 @@ export function CreateRecordingRuleButton() {
 
 function MigrateToGMAButton() {
   const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
-  const { t } = useTranslate();
+
   return (
     <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
       <Stack direction="row" gap={1} alignItems="center">

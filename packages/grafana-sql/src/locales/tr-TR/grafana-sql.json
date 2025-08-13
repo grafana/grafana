@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "Oluşturucu modu, kodda yapılan değişiklikleri görüntülemez. Sorgu oluşturucu, oluşturucu modunda yaptığınız son değişiklikleri görüntüler.",
+        "cancel": "İptal et",
+        "clipboard": "Kodunuzu panoya kopyalamak istiyor musunuz?",
+        "copy-code-and-switch": "Kodu kopyala ve geçiş yap",
+        "discard-code-and-switch": "Kodu sil ve geçiş yap",
+        "warning": "Uyarı"
+      },
+      "connection-limits": {
+        "auto-max-idle": "Otomatik maksimum boşta bağlantı sayısı",
+        "content-auto-max-idle": "Etkinleştirilirse <1>Maksimum boşta bağlantı</1> sayısı, <3>Maksimum açık bağlantı</3> sayısıyla aynı değere otomatik olarak ayarlanır. Maksimum açık bağlantı sayısı ayarlanmamışsa varsayılan değere ayarlanır ({{defaultMaxIdle}}).",
+        "content-max-idle": "Bu, boşta bağlantı havuzundaki maksimum bağlantı sayısını belirtir. <1>Maksimum açık bağlantı</1> değeri 0'dan büyük ancak <3>Maksimum boşta bağlantı</3> değerinden küçükse <5>Maksimum boşta bağlantı</5> sayısı, <8>Maksimum açık bağlantı</8> sınırına uyacak şekilde azaltılır. 0 olarak ayarlanırsa boşta bağlantılar tutulmaz.",
+        "content-max-lifetime": "Saniye cinsinden bir bağlantının yeniden kullanılabileceği maksimum süre. 0 olarak ayarlanırsa bağlantılar süresiz olarak yeniden kullanılır.",
+        "content-max-open": "Veri tabanına açılabilecek maksimum açık bağlantı sayısı. <1>Maksimum boşta bağlantı</1> sayısı 0'dan büyük ve <3>Maksimum açık bağlantı</3> sayısı <5>Maksimum boşta bağlantı</5> sayısından küçükse <7>Maksimum boşta bağlantı</7> değeri, <9>Maksimum açık bağlantı</9> sınırına uyacak şekilde azaltılır. 0 olarak ayarlanırsa açık bağlantı sayısı için bir sınır yoktur.",
+        "max-idle": "Maks. boşta",
+        "max-lifetime": "Maksimum kullanım süresi",
+        "max-open": "Maks. açık",
+        "title-connection-limits": "Bağlantı sınırları"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "Veri kümesi seçici"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Hata"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "Makrolar"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Gruplama ölçütü",
+          "title-remove-group-by-column": "Grubu sütuna göre kaldır"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "Sıralama ölçütü",
+        "label-limit": "Sınırlama",
+        "label-offset": "Ofset",
+        "label-order-by": "Sıralama ölçütü"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Ön izleme",
+          "tooltip-copy-to-clipboard": "Panoya kopyala"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "Sorgunuz geçersiz. Ayrıntılar için aşağıya bakın. <1></1>Ancak yine de bu sorguyu çalıştırabilirsiniz.",
+        "editor-modes": {
+          "label-builder": "Oluşturucu",
+          "label-code": "Kod"
+        },
+        "label-dataset": "Veri kümesi",
+        "label-filter": "Filtreleyin",
+        "label-format": "Biçim",
+        "label-group": "Grup",
+        "label-order": "Sipariş",
+        "label-preview": "Ön izleme",
+        "label-table": "Tablo",
+        "placeholder-select-format": "Biçimi seçin",
+        "run-query": "Sorgu çalıştır"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "Sorguyu çalıştırmak için CTRL/CMD+Return tuşlarına basın",
+        "tooltip-collapse": "Düzenleyiciyi daralt",
+        "tooltip-expand": "Düzenleyiciyi genişlet",
+        "tooltip-format-query": "Sorguyu biçimlendir"
+      },
+      "query-validator": {
+        "query-will-process": "<0></0> Bu sorgu çalıştırıldığında <2>{{bytes}}</2> işlenecek.",
+        "validating-query": "Sorgu doğrulanıyor..."
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "Genişletilmiş kod düzenleyicide düzenleme"
+        },
+        "title-query-num": "{{queryNum}}. sorgu"
+      },
+      "select-column": {
+        "label-column": "Sütun"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "{{columnIndex}} sütunu için {{index}} parametresi ",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "Parametreyi kaldır"
+          }
+        },
+        "title-add-parameter": "Parametre ekle"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "Toplamalar",
+              "macros": "Makrolar"
+            }
+          }
+        },
+        "label": {
+          "time": "zaman",
+          "value": "değer"
+        },
+        "label-alias": "Takma isim",
+        "label-data-operations": "Veri işlemleri",
+        "title-add-column": "Sütun ekle",
+        "title-remove-column": "Sütunu kaldır"
+      },
+      "settings": {
+        "aria-label-conjunction": "Birleşim",
+        "aria-label-field": "Alan",
+        "aria-label-operator": "İşleç",
+        "title-button-filter": "{{ buttonLabel }} filtresi"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Düzenleyici yükleniyor"
+      },
+      "table-selector": {
+        "aria-label-table-selector": "Tablo seçici",
+        "placeholder-loading": "Tablolar yükleniyor",
+        "placeholder-select-table": "Tablo seçin"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "Bir TLS/SSL istemci sertifikasıyla kimlik doğrulamak için istemci sertifikasını burada sağlayın.",
+        "content-tlsssl-client-key": "Bir istemci TLS/SSL sertifikasıyla kimlik doğrulamak için anahtarı burada sağlayın.",
+        "content-tlsssl-root-certificate": "Seçilen TLS/SSL modu bir sunucu kök sertifikası gerektiriyorsa onu da burada sağlayın",
+        "tlsssl-client-certificate": "TLS/SSL İstemci Sertifikası",
+        "tlsssl-client-key": "TLS/SSL İstemci Anahtarı",
+        "tlsssl-root-certificate": "TLS/SSL Kök Sertifikası"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "Sütun değerine göre filtreleyin",
+        "label-group-by-column": "Sütuna göre gruplayın"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "Makro değer seçici"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "Seçilen sütunlar"
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, FilterInput, Select, useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
@@ -55,8 +55,6 @@ export const FolderPickerTab = (props: Props) => {
   );
   const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
-
-  const { t } = useTranslate();
 
   const onChangeSearch = (query: string) => {
     if (query) {

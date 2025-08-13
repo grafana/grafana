@@ -4,11 +4,10 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
@@ -39,7 +38,6 @@ export function PluginDetailsPage({
   notFoundComponent = <NotFoundPlugin />,
   notFoundNavModel,
 }: Props) {
-  const { t } = useTranslate();
   const location = useLocation();
   const notFoundModel = notFoundNavModel ?? {
     text: t('plugins.plugin-details-page.not-found-model.text.unknown-plugin', 'Unknown plugin'),
@@ -84,10 +82,8 @@ export function PluginDetailsPage({
     );
   }
 
-  const conditionalProps = !config.featureToggles.pluginsDetailsRightPanel ? { info: info } : {};
-
   return (
-    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} {...conditionalProps}>
+    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle}>
       <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
         <Page.Contents>
           <TabContent className={styles.tabContent}>
@@ -103,9 +99,7 @@ export function PluginDetailsPage({
             />
           </TabContent>
         </Page.Contents>
-        {!isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel && (
-          <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} />
-        )}
+        {!isNarrowScreen && <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} />}
       </Stack>
     </Page>
   );
@@ -130,8 +124,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 function NotFoundPlugin() {
-  const { t } = useTranslate();
-
   return (
     <Stack justifyContent="center" alignItems="center" height="100%">
       <Box>

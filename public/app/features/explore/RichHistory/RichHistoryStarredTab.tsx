@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
 import {
@@ -12,8 +12,8 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { selectExploreDSMaps } from '../state/selectors';
 
@@ -107,7 +107,6 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const { t } = useTranslate();
 
   const { value: datasourceFilterApis, loading: loadingDs } = useAsync(async () => {
     const datasourcesToGet =

@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { createRelativeUrl } from '../../utils/url';
@@ -9,8 +9,6 @@ import { TemplateForm } from '../receivers/TemplateForm';
 import { ActiveTab } from './ContactPoints';
 
 function NewMessageTemplatePage() {
-  const { t } = useTranslate();
-
   return (
     <AlertmanagerPageWrapper
       navId="receivers"

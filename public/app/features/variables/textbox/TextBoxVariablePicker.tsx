@@ -1,9 +1,9 @@
 import { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
 
 import { TextBoxVariableModel, isEmptyObject } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { variableAdapters } from '../adapters';
 import { VARIABLE_PREFIX } from '../constants';
@@ -55,8 +55,6 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
     (event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value),
     [setUpdatedValue]
   );
-
-  const { t } = useTranslate();
 
   const onBlur = (e: FocusEvent<HTMLInputElement>) => updateVariable();
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {

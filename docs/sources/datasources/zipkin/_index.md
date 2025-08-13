@@ -102,9 +102,9 @@ To configure basic settings for the data source, complete the following steps:
 
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The **Trace to logs** setting configures the [trace to logs feature](ref:trace-integration) that is available when you integrate Grafana with Zipkin.
 

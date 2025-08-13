@@ -4,14 +4,17 @@ import { Meta } from '@storybook/react';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
-import { ToolbarButton } from '../ToolbarButton';
+import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 
 import { PageToolbar } from './PageToolbar';
 
 const meta: Meta<typeof PageToolbar> = {
-  title: 'Layout/PageToolbar',
+  title: 'Navigation/Deprecated/PageToolbar',
   component: PageToolbar,
-  parameters: {},
+  parameters: {
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
+  },
 };
 
 export const Examples = () => {

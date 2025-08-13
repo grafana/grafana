@@ -1,0 +1,499 @@
+{
+  "grafana-prometheus": {
+    "components": {
+      "annotation-query-editor": {
+        "annotation-data-load-error": "Chyba načtení dat vysvětlivky!",
+        "aria-label-lower-limit-parameter": "Nastavit dolní limit pro parametr kroku",
+        "label-min-step": "Min. krok",
+        "label-series-value-as-timestamp": "Hodnota řady jako časové razítko",
+        "label-tags": "Tagy",
+        "label-text": "Text",
+        "label-title": "Název",
+        "placeholder-auto": "auto.",
+        "tooltip-either-pattern-example-instance-replaced-label": "Použijte buď název, nebo vzor. Například {{labelTemplate}} je nahrazeno hodnotou štítku pro štítek {{labelName}}.",
+        "tooltip-min-step": "Dodatečný dolní limit pro parametr kroku dotazu Prometheus a pro proměnné <2>{{intervalVar}}</2> a <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Jednotka časového razítka je milisekunda. Pokud je jednotkou hodnoty řady sekunda, vynásobte její vektor rozsahu 1 000."
+      },
+      "get-query-type-options": {
+        "description": {
+          "instant-query-range": "Spustit okamžitý dotaz a dotaz na rozsah"
+        },
+        "label": {
+          "both": "Oba"
+        },
+        "range-options": {
+          "description": {
+            "query-range": "Spustit dotaz v časovém rozsahu"
+          },
+          "label": {
+            "instant": "Instantní",
+            "range": "Rozsah"
+          }
+        }
+      },
+      "label-selector": {
+        "aria-label-filter-expression-for-label": "Filtrovat výraz pro štítek",
+        "description-select-labels": "Po výběru hodnot štítků se zobrazí pouze možné kombinace štítků.",
+        "select-labels-to-search-in": "2. Vyberte štítky, ve kterých chcete hledat"
+      },
+      "metric-selector": {
+        "aria-label-filter-expression-for-metric": "Filtrovat výraz pro metriku",
+        "aria-label-limit-results-from-series-endpoint": "Omezit výsledky z koncového bodu řady",
+        "description-series-limit": "Limit se vztahuje na všechny metriky, štítky a hodnoty. Ponechte pole prázdné pro použití výchozího limitu. Nastavením na 0 zakážete limit a načtete vše – může to způsobit problémy s výkonem.",
+        "label-select-metric": "Po výběru metriky se zobrazí pouze možné štítky. Štítky jsou omezeny limitem řady níže.",
+        "select-a-metric": "1. Vyberte metriku",
+        "series-limit": "Limit řady"
+      },
+      "prom-cheat-sheet": {
+        "prom-ql-cheat-sheet": "Přehled PromQL"
+      },
+      "prom-exemplar-field": {
+        "exemplars": "Příklady",
+        "tooltip-disable-query": "Zakázat dotaz s příklady",
+        "tooltip-enable-query": "Povolit dotaz s příklady"
+      },
+      "prom-explore-extra-field": {
+        "aria-label-prometheus-extra-field": "Extra pole Prometheus",
+        "aria-label-query-type-field": "Pole typu dotazu",
+        "aria-label-step-field": "Pole kroku",
+        "min-step": "Min. krok",
+        "query-type": "Typ dotazu",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Zde lze použít časové jednotky a vestavěné proměnné, například: {{example1}}, {{example2}}, {{example3}} {{example4}}, {{example5}}, {{example6}}, {{example7}} (výchozí, pokud není zadána žádná jednotka: {{default}})"
+      },
+      "prom-query-field": {
+        "placeholder-enter-a-prom-ql-query": "Zadejte dotaz PromQL…"
+      },
+      "prom-variable-query-editor": {
+        "aria-label-classic-query": "Klasický dotaz",
+        "aria-label-metric-regex": "Metrický regulární výraz",
+        "aria-label-metric-selector": "Volič metriky",
+        "aria-label-prometheus-query": "Dotaz Prometheus",
+        "aria-label-query-type": "Typ dotazu",
+        "aria-label-series-query": "Dotaz na řadu",
+        "label-classic-query": "Klasický dotaz",
+        "label-label": "Štítek",
+        "label-metric-regex": "Metrický regulární výraz",
+        "label-query": "Dotaz",
+        "label-query-type": "Typ dotazu",
+        "label-series-query": "Dotaz na řadu",
+        "placeholder-classic-query": "Klasický dotaz",
+        "placeholder-metric-regex": "Metrický regulární výraz",
+        "placeholder-prometheus-query": "Dotaz Prometheus",
+        "placeholder-select-query-type": "Vyberte typ dotazu",
+        "placeholder-series-query": "Dotaz na řadu",
+        "returns-metrics-matching-specified-metric-regex": "Vrátí seznam metrik odpovídajících zadanému metrickému regulárnímu výrazu.",
+        "tooltip-classic-query": "Původní implementace editoru proměnných dotazů Prometheus. Zadejte řetězec se správným typem dotazu a parametry, jak je popsáno v těchto dokumentech. Například {{exampleQuery}}.",
+        "tooltip-label": "Vrátí seznam hodnot štítků pro název štítku ve všech metrikách, pokud není metrika zadána.",
+        "tooltip-metric-regex": "Vrátí seznam názvů štítků, volitelně filtrování podle zadaného metrického regulárního výrazu.",
+        "tooltip-query": "Vrátí seznam výsledků dotazu Prometheus pro daný dotaz. To může zahrnovat funkce Prometheus, tj. {{exampleQuery}}.",
+        "tooltip-query-type": "Zásuvný modul zdroje dat Prometheus poskytuje následující typy dotazů pro proměnné šablony.",
+        "tooltip-series-query": "Zadejte metriku se štítky, pouze metriku nebo pouze štítky, tj. {{example1}}, {{example2}} nebo {{example3}}. Vrátí seznam časových řad spojených se zadanými daty."
+      },
+      "selector-actions": {
+        "aria-label-selector": "volič",
+        "aria-label-selector-clear-button": "Tlačítko Vymazat volič",
+        "aria-label-use-selector-as-metrics-button": "Tlačítko Použít volič jako metriku",
+        "aria-label-use-selector-for-query-button": "Tlačítko Použít volič pro dotaz",
+        "aria-label-validate-submit-button": "Tlačítko Ověřit odeslání",
+        "clear": "Vymazat",
+        "resulting-selector": "4. Výsledný volič",
+        "use-as-rate-query": "Použít jako dotaz na sazbu",
+        "use-query": "Použít dotaz",
+        "validate-selector": "Ověřit volič"
+      },
+      "value-selector": {
+        "aria-label-filter-expression-for-label-values": "Filtrovat výraz pro hodnoty štítků",
+        "aria-label-values-for": "Hodnoty pro {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Použijte vyhledávací pole pro hledání hodnot napříč vybranými štítky.",
+        "select-multiple-values-for-your-labels": "3. Vyberte (více) hodnot pro štítky"
+      }
+    },
+    "configuration": {
+      "alerting-settings-overhaul": {
+        "label-allow-as-recording-rules-target": "Povolit jako cíl pravidel nahrávání",
+        "label-manage-alerts-via-alerting-ui": "Spravovat výstrahy prostřednictvím uživatelského rozhraní upozorňování",
+        "title-alerting": "Výstrahy",
+        "tooltip-allow-as-recording-rules-target": "Povolit výběr tohoto zdroje dat jako cíle pro zápis pravidel záznamu.",
+        "tooltip-manage-alerts-via-alerting-ui": "Spravovat pravidla výstrah pro tento zdroj dat. Chcete-li spravovat další zdroje Alerting, přidejte zdroj dat Alertmanager."
+      },
+      "config-editor": {
+        "browser-access-mode-error": "Režim přístupu z prohlížeče ve zdroji dat Prometheus již není k dispozici. Přepněte na režim přístupu k serveru.",
+        "description-advanced-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat.",
+        "title-advanced-settings": "Pokročilá nastavení",
+        "title-error": "Chyba"
+      },
+      "data-source-http-settings-overhaul": {
+        "tooltip-browser-access-mode": "Vaše metoda přístupu je <1>Prohlížeč</1>, to znamená, že adresa URL musí být přístupná z prohlížeče.",
+        "tooltip-http-url": "Zadejte úplnou adresu URL HTTP (například {{exampleURL}})",
+        "tooltip-server-access-mode": "Vaše metoda přístupu je <1>Server</1>, to znamená, že adresa URL musí být přístupná z backendu/serveru Grafana."
+      },
+      "docs-tip": {
+        "visit-docs-for-more-details-here": "Další podrobnosti najdete v dokumentaci zde."
+      },
+      "exemplar-setting": {
+        "label-data-source": "Zdroj dat",
+        "label-internal-link": "Interní odkaz",
+        "label-label-name": "Název štítku",
+        "label-remove-exemplar-link": "Odebrat příklad odkazu",
+        "label-url": "URL",
+        "label-url-label": "Štítek adresy URL",
+        "placeholder-go-to-examplecom": "Přejít na example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "ID sledování",
+        "title-remove-exemplar-link": "Odebrat příklad odkazu",
+        "tooltip-data-source": "Zdroj dat, na který bude exemplář odkazovat.",
+        "tooltip-internal-link": "Tuto možnost povolte, pokud máte interní odkaz. Pokud je tato možnost povolena, zobrazí se výběr zdroje dat. Vyberte úložiště dat pro sledování backendu pro vaše vzorová data.",
+        "tooltip-label-name": "Název pole v objektu štítků, které by mělo být použito k získání ID sledování.",
+        "tooltip-url": "Adresa URL backendu trasování pro uživatele za účelem trasování",
+        "tooltip-url-label": "Použijte k přepsání štítku tlačítka v poli traceID exempláře."
+      },
+      "exemplars-settings": {
+        "add": "Přidat",
+        "no-exemplars-configurations": "Žádné příklady konfigurace",
+        "title-exemplars": "Příklady"
+      },
+      "prom-settings": {
+        "aria-label-default-editor": "Výchozí editor (kód nebo nástroj pro tvorbu)",
+        "aria-label-prom-type-type": "{{promType}} typ",
+        "aria-label-prometheus-type": "Typ Prometheus",
+        "aria-label-select-http-method": "Vyberte metodu HTTP",
+        "editor-options": {
+          "label-builder": "Nástroj pro tvorbu",
+          "label-code": "Kód"
+        },
+        "label-cache-level": "Úroveň vyrovnávací paměti",
+        "label-custom-query-parameters": "Vlastní parametry dotazu",
+        "label-default-editor": "Výchozí editor",
+        "label-disable-metrics-lookup": "Zakázat vyhledávání metrik",
+        "label-disable-recording-rules-beta": "Zakázat pravidla nahrávání (beta)",
+        "label-http-method": "Metoda HTTP",
+        "label-incremental-querying-beta": "Přírůstkové dotazování (beta)",
+        "label-metric-names-suggestion-limit": "Limit návrhů názvů metriky",
+        "label-prom-type-version": "{{promType}} verze",
+        "label-prometheus-type": "Typ Prometheus",
+        "label-query-overlap-window": "Okno překrytí dotazu",
+        "label-query-timeout": "Časový limit dotazu",
+        "label-scrape-interval": "Interval scrapingu",
+        "label-series-limit": "Limit řady",
+        "label-use-series-endpoint": "Použít koncový bod řady",
+        "more-info": "Další informace o konfiguraci typu a verze Prometheus ve zdrojích dat najdete v <2>dokumentaci k zajišťování</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Příklad: {{example}}",
+        "title-interval-behaviour": "Chování intervalu",
+        "title-other": "Ostatní",
+        "title-performance": "Výkon",
+        "title-query-editor": "Editor dotazů",
+        "tooltip-cache-level": "Nastaví úroveň ukládání do vyrovnávací paměti prohlížeče pro dotazy editoru. Pro zdroje dat s vysokou kardinalitou se doporučuje nastavit vyšší úroveň vyrovnávací paměti.",
+        "tooltip-custom-query-parameters": "Přidejte vlastní parametry do adresy URL dotazu Prometheus. Například {{example1}}, {{example2}}, {{example3}} nebo {{example4}}. Více parametrů by mělo být pospojováno pomocí {{concatenationChar}}.",
+        "tooltip-default-editor": "Nastavit výchozí možnost editoru pro všechny uživatele tohoto zdroje dat.",
+        "tooltip-disable-metrics-lookup": "Zaškrtnutím této možnosti zakážete výběr metrik a podporu metrik/štítků v automatickém doplňování pole dotazu. Užitečné, pokud máte problémy s výkonem u větších instancí Prometheus. ",
+        "tooltip-disable-recording-rules-beta": "Tato funkce zakáže pravidla nahrávání. Zapněte tuto možnost pro zlepšení výkonu nástěnky",
+        "tooltip-http-method": "K dotazu na zdroj dat Prometheus můžete použít metodu POST nebo GET HTTP. Doporučenou metodou je POST, protože umožňuje větší dotazy. Změňte na GET, pokud máte verzi Prometheus starší než 2.1 nebo pokud jsou požadavky POST ve vaší síti omezeny.",
+        "tooltip-incremental-querying-beta": "Tato funkce změní výchozí chování relativních dotazů tak, aby vždy požadovaly aktuální data z instance Prometheus. Místo toho budou výsledky dotazů uloženy do vyrovnávací paměti a budou požadovány pouze nové záznamy. Povolte tuto možnost pro snížení zatížení databáze a sítě.",
+        "tooltip-metric-names-suggestion-limit": "Maximální počet názvů metrik, které se mohou zobrazit jako návrhy automatického doplňování v režimu kódu editoru dotazů.",
+        "tooltip-prom-type-version": "Tímto nastavíte verzi své instance {{promType}}, pokud není automaticky nakonfigurována.",
+        "tooltip-prometheus-type": "Nastavte hodnotu na typ databáze Prometheus, např. Prometheus, Cortex, Mimir nebo Thanos. Změna tohoto pole uloží aktuální nastavení. Některé typy Prometheus podporují nebo nepodporují různá rozhraní API. Některé typy například podporují shodu regex pro dotazy na štítky za účelem zlepšení výkonu. Některé typy mají API pro metadata. Pokud toto nastavíte nesprávně, při dotazování na metriky a štítky můžete zaznamenat neobvyklé chování. Zkontrolujte dokumentaci Prometheus a ujistěte se, že zadáváte správný typ.",
+        "tooltip-query-overlap-window": "Nastavte dobu trvání, například {{example1}} nebo {{example2}} nebo {{example3}}. Výchozí hodnota: {{default}}. Tato doba trvání bude přidána k době trvání každého přírůstkového požadavku.",
+        "tooltip-query-timeout": "Nastavte časový limit dotazu Prometheus.",
+        "tooltip-scrape-interval": "Tento interval udává, jak často Prometheus shromažďuje cíle. Nastavte hodnotu na typický interval shromažďování a vyhodnocování nakonfigurovaný v konfiguračním souboru Prometheus. Pokud nastavíte hodnotu vyšší než interval konfiguračního souboru Prometheus, Grafana vyhodnotí data podle tohoto intervalu a uvidíte méně datových bodů. Výchozí nastavení je {{default}}.",
+        "tooltip-series-limit": "Limit se vztahuje na všechny zdroje (metriky, štítky a hodnoty) pro oba koncové body (řady a štítky). Ponechte pole prázdné pro použití výchozího limitu (40 000). Nastavením na 0 zakážete limit a načtete vše – může to způsobit problémy s výkonem. Výchozí limit je 40 000.",
+        "tooltip-use-series-endpoint": "Zaškrtnutím této možnosti upřednostníte koncový bod řady s parametrem {{exampleParameter}} před koncovým bodem hodnot štítků s parametrem {{exampleParameter}}. Zatímco koncový bod hodnot štítků je považován za výkonnější, někteří uživatelé mohou upřednostňovat řady kvůli metodě POST, zatímco koncový bod hodnot štítků má pouze metodu GET."
+      }
+    },
+    "metrics-browser": {
+      "disabled-label": "(Deaktivováno)",
+      "enabled-label": "Prohlížeč metrik"
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "Zahrnuje pouze jedinečné štítky",
+        "description-custom": "Zadejte šablonu pro pojmenování",
+        "description-verbose": "Všechny názvy a hodnoty štítků",
+        "label-auto": "Auto.",
+        "label-custom": "Vlastní",
+        "label-verbose": "Podrobný"
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "Vypočítat průměr z rozměrů",
+        "documentation-bottomk": "Nejmenší k prvky podle hodnoty vzorku",
+        "documentation-count": "Spočítat prvky ve vektoru",
+        "documentation-count-values": "Spočítat počet prvků se stejnou hodnotou",
+        "documentation-group": "Všechny hodnoty ve výsledném vektoru jsou 1",
+        "documentation-max": "Vybrat maximum nad rozměry",
+        "documentation-min": "Vybrat minimum podle rozměrů",
+        "documentation-quantile": "Vypočítat φ-kvantil (0 ≤ φ ≤ 1) podle rozměrů",
+        "documentation-stddev": "Vypočítat populační směrodatnou odchylku podle rozměrů",
+        "documentation-stdvar": "Vypočítat standardní rozptyl populace podle rozměrů",
+        "documentation-sum": "Vypočítat součet podle rozměrů",
+        "documentation-topk": "Největší k prvky podle hodnoty vzorku"
+      },
+      "getFunctions": {
+        "documentation-abs": "Vrátí vstupní vektor se všemi hodnotami vzorku převedenými na jejich absolutní hodnotu.",
+        "documentation-absent": "Vrátí prázdný vektor, pokud vektor, který mu byl předán, obsahuje nějaké prvky, a vektor s jedním prvkem s hodnotou 1, pokud vektor, který mu byl předán, neobsahuje žádné prvky. To je užitečné pro upozorňování, když pro danou kombinaci názvu metriky a štítku neexistuje žádná časová řada.",
+        "documentation-absent-over-time": "Vrátí prázdný vektor, pokud vektor rozsahu, který mu byl předán, obsahuje nějaké prvky, a vektor s jedním prvkem s hodnotou 1, pokud vektor rozsahu, který mu byl předán, neobsahuje žádné prvky.",
+        "documentation-avg-over-time": "Průměrná hodnota všech bodů v zadaném intervalu.",
+        "documentation-ceil": "Zaokrouhlí vzorové hodnoty všech prvků v části „v“ nahoru na nejbližší celé číslo.",
+        "documentation-changes": "Pro každou vstupní časovou řadu vrátí „changes(v range-vector)“ počet změn její hodnoty v zadaném časovém rozsahu jako okamžitý vektor.",
+        "documentation-clamp": "Omezí hodnoty všech prvků v části „v“ tak, aby měly dolní hranici „min“ a horní hranici „max“.",
+        "documentation-clamp-max": "Omezí hodnoty všech prvků v části „v“ tak, aby měly horní hranici „max“.",
+        "documentation-clamp-min": "Omezí hodnoty všech prvků v části „v“ tak, aby měly dolní hranici „min“.",
+        "documentation-count-over-time": "Počet všech hodnot v zadaném intervalu.",
+        "documentation-count-scalar": "Vrací počet prvků vektoru časové řady jako skalární hodnotu. To je rozdíl od agregačního operátoru „count()“, který vždy vrací vektor (prázdný, pokud je vstupní vektor prázdný) a umožňuje seskupování podle štítků pomocí klauzule „by“.",
+        "documentation-day-of-month": "Vrátí den v měsíci pro každý z daných časů v UTC. Vrácené hodnoty jsou od 1 do 31.",
+        "documentation-day-of-week": "Vrátí den v týdnu pro každý z daných časů v UTC. Vrácené hodnoty jsou od 0 do 6, kde 0 znamená neděli atd.",
+        "documentation-day-of-year": "Vrátí den v roce pro každý z daných časů v UTC. Vrácené hodnoty jsou od 1 do 365 pro roky, které nejsou přestupné, a od 1 do 366 pro přestupné roky.",
+        "documentation-days-in-month": "Vrátí počet dní v měsíci pro každý z daných časů v UTC. Vrácené hodnoty jsou od 28 do 31.",
+        "documentation-deg": "Převádí radiány na stupně pro všechny prvky v",
+        "documentation-delta": "Vypočítá rozdíl mezi první a poslední hodnotou každého prvku časové řady ve vektoru rozsahu „v“ a vrátí okamžitý vektor s danými deltami a ekvivalentními štítky. Delta je extrapolována tak, aby pokrývala celý časový rozsah, jak je specifikováno ve voliči vektoru rozsahu, takže je možné získat neceločíselný výsledek, i když jsou všechny hodnoty vzorku celá čísla.",
+        "documentation-deriv": "Vypočítá derivaci časové řady za sekundu ve vektoru rozsahu „v“ pomocí jednoduché lineární regrese.",
+        "documentation-double-exponential-smoothing": "Vytvoří vyhlazenou hodnotu pro časové řady na základě rozsahu v části „v“. Čím nižší je vyhlazovací faktor „sf“, tím větší důležitost je přikládána starým datům. Čím vyšší je trendový faktor „tf“, tím více trendů v datech je zvažováno. „sf“ i „tf“ musí být mezi 0 a 1.",
+        "documentation-drop-common-labels": "Vynechá všechny štítky, které mají stejný název a hodnotu ve všech řadách ve vstupním vektoru.",
+        "documentation-exp": "Vypočítá exponenciální funkci pro všechny prvky v části „v“.\nZvláštní případy jsou:\n* „Exp(+Inf) = +Inf“ \n* „Exp(NaN) = NaN“",
+        "documentation-floor": "Zaokrouhlí vzorové hodnoty všech prvků v části „v“ dolů na nejbližší celé číslo.",
+        "documentation-histogram-avg": "Vrátí aritmetický průměr pozorovaných hodnot uložených v nativním histogramu. Vzorky, které nejsou nativními histogramy, jsou ignorovány a ve vráceném vektoru se nezobrazují.",
+        "documentation-histogram-count": "Vrátí počet pozorování uložených v nativním histogramu.",
+        "documentation-histogram-fraction": "Vrátí odhadovaný zlomek pozorování mezi zadanou dolní a horní hodnotou.",
+        "documentation-histogram-quantile": "Vypočítá φ-kvantil (0 ≤ φ ≤ 1) ze segmentů „b“ histogramu. Vzorky v „b“ jsou počty pozorování v každém segmentu. Každý vzorek musí mít štítek „le“, kde hodnota štítku označuje inkluzivní horní hranici segmentu. (Vzorky bez takového štítku jsou tiše ignorovány.) Typ metriky histogramu automaticky poskytuje časové řady s příponou „_bucket“ a příslušnými štítky.",
+        "documentation-histogram-stddev": "Vrátí odhadovanou směrodatnou odchylku pozorování v nativním histogramu na základě geometrického průměru segmentů, kde se pozorování nacházejí.",
+        "documentation-histogram-stdvar": "Vrátí odhadovaný standardní rozptyl pozorování v nativním histogramu.",
+        "documentation-histogram-sum": "Vrátí součet pozorování uložených v nativním histogramu.",
+        "documentation-holt-winters": "Přejmenováno na double_exponential_smoothing v prometheus v3.x. Pro verze Prometheus rovné a větší než v3.0 použijte double_exponential_smoothing. \n\nVytváří vyhlazenou hodnotu pro časové řady na základě rozsahu v „v“. Čím nižší je vyhlazovací faktor „sf“, tím větší význam je přikládán starým datům. Čím vyšší je trendový faktor „tf“, tím více trendů v datech je zvažováno. „sf“ i „tf“ musí být mezi 0 a 1.",
+        "documentation-hour": "Vrátí hodinu dne pro každý z daných časů v UTC. Vrácené hodnoty jsou od 0 do 23.",
+        "documentation-idelta": "Vypočítá rozdíl mezi posledními dvěma vzorky ve vektoru rozsahu „v“ a vrátí okamžitý vektor s danými deltami a ekvivalentními štítky.",
+        "documentation-increase": "Vypočítá nárůst časové řady ve vektoru rozsahu. Přerušení monotónnosti (například resetování počítadla v důsledku restartů cíle) se automaticky upravují. Nárůst je extrapolován tak, aby pokrýval celý časový rozsah, jak je specifikováno ve voliči vektoru rozsahu, takže je možné získat neceločíselný výsledek, i když se počítadlo zvyšuje pouze o celočíselné přírůstky.",
+        "documentation-info": "Vrátí nejnovější podrobnosti a metadata o skupině metrik, jako jsou jejich štítky a aktuální hodnoty, bez provádění jakýchkoli výpočtů",
+        "documentation-irate": "Vypočítá okamžitou rychlost nárůstu časové řady ve vektoru rozsahu za sekundu. Vychází z posledních dvou datových bodů. Přerušení monotónnosti (například resetování počítadla v důsledku restartu cíle) se automaticky upravují.",
+        "documentation-label-join": "Pro každou časovou řadu v části „v“ spojí všechny hodnoty všech „src_labels“ pomocí „separator“ a vrátí časové řady se štítkem „dst_label“ obsahujícím spojenou hodnotu. V této funkci může být libovolný počet „src_labels“.",
+        "documentation-label-replace": "Pro každou časovou řadu v části „v“ porovná „label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)“ regulární výraz „regex“ se štítkem „src_label“. Pokud se shoduje, pak se vrátí časová řada se štítkem „dst_label“ nahrazeným rozšířením „replacement“. „$1“ se nahradí první odpovídající podskupinou, „$2“ druhou atd. Pokud se regulární výraz neshoduje, pak se časová řada vrátí beze změny.",
+        "documentation-last-over-time": "Nejnovější bodová hodnota v zadaném intervalu.",
+        "documentation-ln": "Vypočítá přirozený logaritmus pro všechny prvky v části „v“.\nZvláštní případy jsou:\n * „ln(+Inf) = +Inf“\n * „ln(0) = -Inf“\n * „ln(x < 0) = NaN“\n * „ln(NaN) = NaN“",
+        "documentation-log10": "Vypočítá desetinný logaritmus pro všechny prvky v části „v“. Zvláštní případy jsou ekvivalentní těm v „ln“.",
+        "documentation-log2": "Vypočítá binární logaritmus pro všechny prvky v části „v“. Zvláštní případy jsou ekvivalentní těm v části „ln“.",
+        "documentation-max-over-time": "Maximální hodnota všech bodů v zadaném intervalu.",
+        "documentation-min-over-time": "Minimální hodnota všech bodů v zadaném intervalu.",
+        "documentation-minute": "Vrátí minutu hodiny pro každý z daných časů v UTC. Vrácené hodnoty jsou od 0 do 59.",
+        "documentation-month": "Vrátí měsíc v roce pro každý z daných časů v UTC. Vrácené hodnoty jsou od 1 do 12, kde 1 znamená leden atd.",
+        "documentation-pi": "Vrátí pí",
+        "documentation-predict-linear": "Předpovídá hodnotu časové řady „t“ sekund od této chvíle na základě vektoru rozsahu „v“ pomocí jednoduché lineární regrese.",
+        "documentation-present-over-time": "Hodnota 1 pro libovolnou řadu v zadaném intervalu.",
+        "documentation-quantile-over-time": "φ-kvantil (0 ≤ φ ≤ 1) hodnot v zadaném intervalu.",
+        "documentation-rad": "Převádí stupně na radiány pro všechny prvky v části v",
+        "documentation-rate": "Vypočítá průměrnou rychlost nárůstu časové řady za sekundu ve vektoru rozsahu. Přerušení monotónnosti (například resetování počítadla v důsledku restartů cíle) se automaticky upravují. Výpočet také extrapoluje na konce časového rozsahu, což umožňuje vynechané metriky nebo nedokonalé srovnání cyklů metrik s časovým obdobím rozsahu.",
+        "documentation-resets": "Pro každou vstupní časovou řadu vrátí „resets(v range-vector)“ počet resetů počítadla v zadaném časovém rozsahu jako okamžitý vektor. Jakékoli snížení hodnoty mezi dvěma po sobě jdoucími vzorky je interpretováno jako reset počítadla.",
+        "documentation-round": "Zaokrouhlí vzorové hodnoty všech prvků v části „v“ na nejbližší celé číslo. Shody se zaokrouhlují nahoru. Volitelný argument „to_nearest“ umožňuje určit nejbližší násobek, na který by měly být vzorové hodnoty zaokrouhleny. Tento násobek může být také zlomkem.",
+        "documentation-scalar": "Vzhledem k jednoprvkovému vstupnímu vektoru vrátí „scalar(v instant-vector)“ hodnotu vzorku tohoto jednoho prvku jako skalární hodnotu. Pokud vstupní vektor nemá přesně jeden prvek, „scalar“ vrátí „NaN“.",
+        "documentation-sgn": "Vrátí vektor se všemi hodnotami vzorku převedenými na jejich znaménko, definované takto: 1, pokud je v kladné, -1, pokud je v záporné, a 0, pokud se v rovná nule.",
+        "documentation-sort": "Vrátí vektorové prvky seřazené podle jejich vzorových hodnot ve vzestupném pořadí.",
+        "documentation-sort-desc": "Vrátí vektorové prvky seřazené podle jejich vzorových hodnot v sestupném pořadí.",
+        "documentation-sqrt": "Vypočítá druhou odmocninu všech prvků v části „v“.",
+        "documentation-stddev-over-time": "Standardní odchylka hodnot v zadaném intervalu.",
+        "documentation-stdvar-over-time": "Standardní rozptyl hodnot v zadaném intervalu.",
+        "documentation-sum-over-time": "Součet všech hodnot v zadaném intervalu.",
+        "documentation-time": "Vrátí počet sekund od 1. ledna 1970 UTC. Upozorňujeme, že se nejedná o aktuální čas, ale o čas, kdy má být výraz vyhodnocen.",
+        "documentation-timestamp": "Vrátí časové razítko každého ze vzorků daného vektoru jako počet sekund od 1. ledna 1970 UTC.",
+        "documentation-vector": "Vrátí skalární hodnotu jako vektor bez štítků.",
+        "documentation-year": "Vrátí rok pro každý z daných časů v UTC."
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "vypočítá arkus kosinus všech prvků v {{argument}}",
+        "documentation-acosh": "vypočítá inverzní hyperbolický kosinus všech prvků v {{argument}}",
+        "documentation-asin": "vypočítá arkus sinus všech prvků v {{argument}}",
+        "documentation-asinh": "vypočítá inverzní hyperbolický sinus všech prvků v {{argument}}",
+        "documentation-atan": "vypočítá arkus tangens všech prvků v {{argument}}",
+        "documentation-atanh": "vypočítá inverzní hyperbolický tangens všech prvků v {{argument}}",
+        "documentation-cos": "vypočítá kosinus všech prvků v {{argument}}",
+        "documentation-cosh": "vypočítá hyperbolický kosinus všech prvků v {{argument}}",
+        "documentation-sin": "vypočítá sinus všech prvků v {{argument}}",
+        "documentation-sinh": "vypočítá hyperbolický sinus všech prvků v {{argument}}",
+        "documentation-tan": "vypočítá tangens všech prvků v {{argument}}",
+        "documentation-tanh": "vypočítá hyperbolický tangens všech prvků v {{argument}}"
+      }
+    },
+    "querybuilder": {
+      "feedback-link": {
+        "give-feedback": "Poskytnout zpětnou vazbu",
+        "title-give-feedback": "Průzkumník metrik je nový. Dejte nám prosím vědět, jak ho můžeme vylepšit"
+      },
+      "get-collapsed-info": {
+        "exemplars": "Příklady: {{value}}",
+        "format": "Formát: {{value}}",
+        "legend": "Legenda: {{value}}",
+        "step": "Krok: {{value}}",
+        "type": "Typ: {{value}}"
+      },
+      "get-placeholders": {
+        "browse": "Hledat metriky podle názvu",
+        "type": "Filtrovat podle typu"
+      },
+      "get-prom-types": {
+        "description-counter": "Kumulativní metrika, která představuje jedno monotónně rostoucí počítadlo, jehož hodnota se může při restartu pouze zvýšit nebo vynulovat.",
+        "description-gauge": "Metrika, která představuje jednu číselnou hodnotu, která může libovolně stoupat a klesat.",
+        "description-histogram": "Histogram vzorkuje pozorování (obvykle údaje jako doba trvání požadavků nebo velikosti odpovědí) a počítá je v konfigurovatelných segmentech.",
+        "description-native-histogram": "Nativní histogramy se od klasických histogramů Prometheus liší v několika ohledech: Hranice nativních histogramových segmentů se počítají podle vzorce, který závisí na měřítku (rozlišení) nativního histogramu, a nejsou definovány uživatelem.",
+        "description-no-type": "Tyto metriky nemají v metadatech definovaný typ.",
+        "description-summary": "Shrnuje vzorky pozorování (obvykle údaje jako délka požadavků a velikost odpovědí) a dokáže vypočítat konfigurovatelné kvantily v posuvném časovém okně.",
+        "description-unknown": "Těmto metrikám byl v metadatech přiřazen neznámý typ.",
+        "label-counter": "Počítadlo",
+        "label-gauge": "Měřidlo",
+        "label-histogram": "Histogram",
+        "label-native-histogram": "Nativní histogram",
+        "label-no-type": "Žádný typ",
+        "label-summary": "Shrnutí",
+        "label-unknown": "Neznámý"
+      },
+      "handle-function": {
+        "text": {
+          "query-parsing-is-ambiguous": "Analýza dotazu je nejednoznačná."
+        }
+      },
+      "label-filter-item": {
+        "aria-label-remove": "Odebrat {{name}}",
+        "placeholder-select-label": "Vybrat štítek",
+        "placeholder-select-value": "Vyberte hodnotu"
+      },
+      "label-filters": {
+        "label-filters": "Filtry štítků",
+        "label-label-filters": "Filtry štítků",
+        "tooltip-label-filters": "Volitelné: používá se k filtrování metriky vybrané pro tento typ dotazu."
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "Načítání štítků",
+        "noOptionsMessage-no-labels-found": "Nebyly nalezeny žádné štítky"
+      },
+      "metric-combobox": {
+        "async-select": {
+          "aria-label-open-metrics-explorer": "Otevřít průzkumníka metrik",
+          "placeholder-select-metric": "Vybrat metriku",
+          "tooltip-open-metrics-explorer": "Otevřít průzkumníka metrik"
+        },
+        "label-metric": "Metrika",
+        "tooltip-metric": "Volitelné: vrátí seznam hodnot štítků pro název štítku v zadané metrice."
+      },
+      "metrics-modal": {
+        "aria-label-browse-metrics": "Procházet metriky",
+        "currently-selected": "Aktuálně vybráno: {{selected}}",
+        "metrics-pre-filtered": "Tyto metriky byly předem filtrovány štítky vybranými ve filtrech štítků.",
+        "title-metrics-explorer": "Průzkumník metrik"
+      },
+      "nested-query": {
+        "label": {
+          "ignoring": "Ignorování",
+          "on": "Zapnuto"
+        },
+        "operator": "Operátor",
+        "tooltip-remove-match": "Odebrat shodu",
+        "vector-matches": "Vektorové shody"
+      },
+      "operation-editor": {
+        "not-found": "Operace {{id}} nebyla nalezena",
+        "title-remove": "Odebrat {{name}}"
+      },
+      "operation-header": {
+        "placeholder-replace-with": "Nahradit",
+        "title-click-to-view-alternative-operations": "Kliknutím zobrazíte alternativní operace",
+        "title-remove-operation": "Odebrat operaci"
+      },
+      "operation-info-button": {
+        "title-click-to-show-description": "Kliknutím zobrazíte popis",
+        "title-remove-operation": "Odebrat operaci"
+      },
+      "operation-list": {
+        "operations": "Operace",
+        "placeholder-search": "Hledat",
+        "title-add-operation": "Přidat operaci"
+      },
+      "operation-param-editor": {
+        "title-add": "Přidat {{name}}",
+        "title-remove": "Odebrat {{name}}"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "Vypočítá {{aggregationName}} podle rozměrů při zachování {{labelWord}} {{labels}}.",
+          "label-default": "Vypočítá {{aggregationName}} podle rozměrů.",
+          "label-without": "Vypočítá {{aggregationName}} podle rozměrů {{labels}}. Všechny ostatní štítky jsou zachovány."
+        }
+      },
+      "prom-query-builder-options": {
+        "aria-label-lower-limit-parameter": "Nastavit dolní limit pro parametr kroku",
+        "aria-label-select-resolution": "Vyberte rozlišení",
+        "format-options": {
+          "label-heatmap": "Teplotní mapa",
+          "label-table": "Tabulka",
+          "label-time-series": "Časové řady"
+        },
+        "label-exemplars": "Příklady",
+        "label-format": "Formát",
+        "label-min-step": "Min. krok",
+        "label-resolution": "Rozlišení",
+        "label-type": "Typ",
+        "placeholder-auto": "auto.",
+        "title-options": "Možnosti",
+        "tooltip-min-step": "Dodatečný dolní limit pro parametr kroku dotazu Prometheus a pro proměnné <2>{{interval}}</2> a <4>{{rateInterval}}</4>."
+      },
+      "prom-query-code-editor-autocomplete-info": {
+        "autocomplete-suggestions-limited": "Návrhy automatického doplňování jsou omezeny",
+        "tooltip-autocomplete-suggestions-limited": "Počet názvů metrik překračuje limit automatického doplňování. Zobrazuje se pouze {{autocompleteLimit}} nejrelevantnější/ch metrik. Prahovou hodnotu můžete upravit v nastavení zdroje dat."
+      },
+      "prom-query-editor-selector": {
+        "body-syntax-error": "Došlo k syntaktické chybě nebo nelze vizualizovat strukturu dotazu při přepnutí do režimu nástroje pro tvorbu. Části dotazu mohou být ztraceny.",
+        "confirmText-continue": "Pokračovat",
+        "kick-start-your-query": "Spustit dotaz",
+        "label-explain": "Vysvětlit",
+        "run-queries": "Spustit dotazy",
+        "title-parsing-error-switch-builder": "Chyba analýzy: Přepnout do režimu nástroje pro tvorbu?"
+      },
+      "prom-query-legend-editor": {
+        "label-legend": "Legenda",
+        "placeholder-select-legend-mode": "Vyberte režim legendy",
+        "tooltip-legend": "Přepsání názvu řady nebo šablony. Např. {{templateExample}} bude nahrazeno hodnotou štítku pro {{labelName}}."
+      },
+      "query-builder-hints": {
+        "hint-details": "nápověda: {{hintDetails}}"
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "Nástroj pro tvorbu",
+          "label-code": "Kód"
+        }
+      },
+      "query-pattern": {
+        "apply-query": "Použít dotaz",
+        "aria-label-apply-query-starter-button": "tlačítko Použít spouštěč dotazu",
+        "aria-label-back-button": "tlačítko Zpět",
+        "aria-label-create-new-query-button": "tlačítko Vytvořit nový dotaz",
+        "aria-label-raw-query": "Nezpracovaný dotaz: {{patternName}}",
+        "aria-label-use-this-query-button": "použít toto tlačítko dotazu",
+        "back": "Zpět",
+        "create-new-query": "Vytvořit nový dotaz",
+        "use-this-query": "Použít tento dotaz"
+      },
+      "query-patterns-modal": {
+        "aria-label-close-kick-start-your-query-modal": "zavřít modální okno spuštění dotazu",
+        "aria-label-kick-start-your-query-modal": "Spustit modální okno dotazu",
+        "aria-label-toggle-query-starter": "otevřít a zavřít {{patternType}} kartu spouštěče dotazu",
+        "close": "Zavřít",
+        "description-kick-start-your-query": "Spusťte dotaz výběrem jednoho z těchto dotazů. Poté můžete pokračovat v dokončení dotazu.",
+        "label-toggle-query-starter": "Spouštěče dotazů: {{patternType}}",
+        "title-kick-start-your-query": "Spustit dotaz"
+      },
+      "raw-query": {
+        "aria-label-selector": "volič"
+      },
+      "results-table": {
+        "content-descriptive-type": "Při vytváření {{descriptiveType}} Prometheus zobrazí více řad s počítadlem typů. ",
+        "description": "Popis",
+        "message-expand-label-filters": "Nebyly nalezeny žádné metriky. Zkuste rozšířit filtry štítků.",
+        "message-expand-search": "Nebyly nalezeny žádné metriky. Zkuste rozšířit vyhledávání a filtry.",
+        "message-no-metrics-found": "Ve zdroji dat nebyly nalezeny žádné metriky.",
+        "name": "Název",
+        "type": "Typ"
+      },
+      "update-function-args": {
+        "text": {
+          "query-parsing-is-ambiguous": "Analýza dotazu je nejednoznačná."
+        }
+      }
+    }
+  }
+}

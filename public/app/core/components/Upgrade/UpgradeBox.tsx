@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { HTMLAttributes, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportExperimentView } from '@grafana/runtime';
 import { Button, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 
@@ -31,8 +31,6 @@ export const UpgradeBox = ({
   useEffect(() => {
     reportExperimentView(`feature-highlights-${featureId}`, 'test', eventVariant);
   }, [eventVariant, featureId]);
-
-  const { t } = useTranslate();
 
   return (
     <div className={cx(styles.box, className)} {...htmlProps}>

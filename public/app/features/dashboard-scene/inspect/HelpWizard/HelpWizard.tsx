@@ -3,7 +3,7 @@ import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, FeatureState } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import {
@@ -24,7 +24,7 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 
@@ -55,8 +55,6 @@ export function HelpWizard({ panel, onClose }: Props) {
   useEffect(() => {
     service.buildDebugDashboard();
   }, [service, plugin, randomize]);
-
-  const { t } = useTranslate();
 
   if (!plugin) {
     return null;

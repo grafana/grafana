@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
 
 const Body = () => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   return (
@@ -31,8 +30,6 @@ export const DeletePublicDashboardModal = ({
   onConfirm: () => void;
   onDismiss: () => void;
 }) => {
-  const { t } = useTranslate();
-
   const translatedRevocationModalText = config.featureToggles.newDashboardSharingComponent
     ? t('shared-dashboard.delete-modal.revoke-title', 'Revoke access')
     : t('public-dashboard.delete-modal.revoke-title', 'Revoke public URL');

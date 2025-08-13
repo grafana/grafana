@@ -27,12 +27,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -242,10 +242,10 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}
 
 	sqlStore := db.InitTestDB(t)
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	fakeFolderService := foldertest.NewFakeService()
 	b := &fakeBus{}
 	logger := &logtest.Fake{}
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures()
 
 	gen := models.RuleGen
@@ -258,15 +258,38 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	parentFolderUid := uuid.NewString()
 	parentFolderTitle := "Very Parent Folder"
-	createFolder(t, store, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
 	rule1FolderTitle := "folder-" + rule1.Title
 	rule2FolderTitle := "folder-" + rule2.Title
 	rule3FolderTitle := "folder-" + rule3.Title
-	createFolder(t, store, rule1.NamespaceUID, rule1FolderTitle, rule1.OrgID, parentFolderUid)
-	createFolder(t, store, rule2.NamespaceUID, rule2FolderTitle, rule2.OrgID, "")
-	createFolder(t, store, rule3.NamespaceUID, rule3FolderTitle, rule3.OrgID, "")
 
-	createFolder(t, store, rule2.NamespaceUID, "same UID folder", gen.GenerateRef().OrgID, "") // create a folder with the same UID but in the different org
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule1.NamespaceUID,
+		Title:     rule1FolderTitle,
+		OrgID:     rule1.OrgID,
+		ParentUID: parentFolderUid,
+		Fullpath:  rule1FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule2.NamespaceUID,
+		Title:     rule2FolderTitle,
+		OrgID:     rule2.OrgID,
+		ParentUID: "",
+		Fullpath:  rule2FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule3.NamespaceUID,
+		Title:     rule3FolderTitle,
+		OrgID:     rule3.OrgID,
+		ParentUID: "",
+		Fullpath:  rule3FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       parentFolderUid,
+		Title:     parentFolderTitle,
+		OrgID:     rule1.OrgID,
+		ParentUID: "",
+		Fullpath:  parentFolderTitle,
+	})
 
 	tc := []struct {
 		name         string
@@ -343,7 +366,14 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}
 
 	t.Run("when nested folders are enabled folders should contain full path", func(t *testing.T) {
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:       rule1.NamespaceUID,
+			Title:     rule1FolderTitle,
+			OrgID:     rule1.OrgID,
+			ParentUID: parentFolderUid,
+			Fullpath:  parentFolderTitle + "/" + rule1FolderTitle,
+		})
+
 		query := &models.GetAlertRulesForSchedulingQuery{
 			PopulateFolders: true,
 		}
@@ -535,7 +565,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all version and insert one with empty rule_uid when DeletedRuleRetention is set", func(t *testing.T) {
-		orgID := int64(rand.IntN(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -602,7 +632,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all versions and not keep history if DeletedRuleRetention = 0", func(t *testing.T) {
-		orgID := int64(rand.IntN(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -655,7 +685,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all versions and not keep history if permanently is true", func(t *testing.T) {
-		orgID := int64(rand.IntN(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -839,7 +869,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		cp.Title = "unique-test-title"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
-		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
+		require.ErrorContains(t, err, fmt.Sprintf("Failed to save alert rule '%s' in organization %d due to conflict", cp.UID, cp.OrgID))
 	})
 
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
@@ -1447,7 +1477,7 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	})
 }
 
-func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
+func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -1496,7 +1526,7 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	})
 }
 
-func TestGetRuleVersions(t *testing.T) {
+func TestIntegrationGetRuleVersions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -1595,27 +1625,6 @@ func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerat
 	require.NoError(t, err)
 
 	return rule
-}
-
-func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, parentUID string) {
-	t.Helper()
-	u := &user.SignedInUser{
-		UserID:         1,
-		OrgID:          orgID,
-		OrgRole:        org.RoleAdmin,
-		IsGrafanaAdmin: true,
-	}
-
-	_, err := store.FolderService.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          uid,
-		OrgID:        orgID,
-		Title:        title,
-		Description:  "",
-		SignedInUser: u,
-		ParentUID:    parentUID,
-	})
-
-	require.NoError(t, err)
 }
 
 func setupFolderService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
@@ -1899,7 +1908,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 	gen := models.RuleGen
-	orgID := int64(rand.IntN(1000))
+	orgID := int64(rand.IntN(1000)) + 1
 
 	gen = gen.With(gen.WithOrgID(orgID))
 

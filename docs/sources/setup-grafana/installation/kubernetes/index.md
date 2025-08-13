@@ -45,16 +45,16 @@ For a list of supported databases, refer to [supported databases](/docs/grafana/
 
 For a list of support web browsers, refer to [supported web browsers](/docs/grafana/latest/setup-grafana/installation#supported-web-browsers).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Enable port `3000` in your network environment, as this is the Grafana default port.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Deploy Grafana OSS on Kubernetes
 
 This section explains how to install Grafana OSS using Kubernetes.
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you want to install Grafana Enterprise on Kubernetes, refer to [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes).
-{{% /admonition %}}
+{{< /admonition >}}
 
 If you deploy an application in Kubernetes, it will use the default namespace which may already have other applications running. This can result in conflicts and other issues.
 
@@ -346,9 +346,9 @@ Rolling updates enable deployment updates to take place with no downtime by incr
 
 The following steps use the `kubectl annotate` command to add the metadata and keep track of the deployment. For more information about `kubectl annotate`, refer to [kubectl annotate documentation](https://jamesdefabia.github.io/docs/user-guide/kubectl/kubectl_annotate/).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Instead of using the `annotate` flag, you can still use the `--record` flag. However, it has been deprecated and will be removed in the future version of Kubernetes. See: https://github.com/kubernetes/kubernetes/issues/40422
-{{% /admonition %}}
+{{< /admonition >}}
 
 1. To view the current status of the rollout, run the following command:
 
@@ -391,9 +391,7 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
 1. In the editor, change the container image under the `kind: Deployment` section.
 
    For example:
-
    - From
-
      - `yaml image: grafana/grafana-oss:10.0.1`
 
    - To
@@ -457,9 +455,9 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
 
 This means that `REVISION#2` is the current version.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The last line of the `kubectl rollout history deployment` command output is the one which is currently active and running on your Kubernetes environment.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Roll back a deployment
 
@@ -573,7 +571,6 @@ This section outlines general instructions for provisioning Grafana resources wi
    ```
 
    You can follow the same process to provision additional Grafana resources by supplying the following folders:
-
    - `provisioning/dashboards`
    - `provisioning/datasources`
    - `provisioning/plugins`
@@ -887,9 +884,9 @@ kubectl create configmap ge-config --from-file=/path/to/your/grafana.ini
      type: LoadBalancer
    ```
 
-   {{% admonition type="caution" %}}
+   {{< admonition type="caution" >}}
    If you use `LoadBalancer` in the Service and depending on your cloud platform and network configuration, doing so might expose your Grafana instance to the Internet. To eliminate this risk, use `ClusterIP` to restrict access from within the cluster Grafana is deployed to.
-   {{% /admonition %}}
+   {{< /admonition >}}
 
 1. To send the manifest to Kubernetes API Server, run the following command:
    `kubectl apply -f grafana.yaml`

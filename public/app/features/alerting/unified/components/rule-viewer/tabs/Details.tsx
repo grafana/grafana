@@ -1,18 +1,23 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { isUndefined } from 'lodash';
+import { isEmpty, isUndefined } from 'lodash';
+import { Fragment } from 'react/jsx-runtime';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
+import { GrafanaAlertingRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
+import { makeEditTimeIntervalLink } from '../../../utils/misc';
 import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../../utils/rules';
 import { isNullDate } from '../../../utils/time';
 import { Tokenize } from '../../Tokenize';
 import { DetailText } from '../../common/DetailText';
+import { TimingOptionsMeta } from '../../notification-policies/Policy';
+import { ContactPointLink } from '../ContactPointLink';
 
 import { UpdatedByUser } from './version-history/UpdatedBy';
 
@@ -41,7 +46,6 @@ interface DetailsProps {
 
 export const Details = ({ rule }: DetailsProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const pendingPeriod = usePendingPeriod(rule);
   const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
@@ -166,7 +170,7 @@ export const Details = ({ rule }: DetailsProps) => {
                 value={missingSeriesEvalsToResolve}
                 tooltipValue={t(
                   'alerting.alert.description-missing-series-evaluations',
-                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.'
+                  'The number of consecutive evaluation intervals a dimension must be missing before the alert instance becomes stale, and is then automatically resolved and evicted. Defaults to 2 if empty.'
                 )}
               />
             )}
@@ -188,6 +192,12 @@ export const Details = ({ rule }: DetailsProps) => {
           />
         )}
       </DetailGroup>
+
+      {/* show simplified routing information for Grafana managed alert rules */}
+      {rulerRuleType.grafana.alertingRule(rule.rulerRule) &&
+        !isEmpty(rule.rulerRule.grafana_alert.notification_settings) && (
+          <NotificationSettings rulerRule={rule.rulerRule} />
+        )}
 
       {rulerRuleType.grafana.rule(rule.rulerRule) &&
         // grafana recording rules don't have these fields
@@ -249,6 +259,93 @@ export function AnnotationValue({ value }: AnnotationValueProps) {
 
   return <Text color="primary">{tokenizeValue}</Text>;
 }
+
+interface NotificationSettingsProps {
+  rulerRule: RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition>;
+}
+
+const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
+  const notificationSettings = rulerRule.grafana_alert.notification_settings;
+  if (!notificationSettings) {
+    return null;
+  }
+
+  return (
+    <DetailGroup title={t('alerting.alert.notification-configuration.group-title', 'Notification configuration')}>
+      <DetailText
+        id="receiver"
+        label={t('alerting.alert.notification-configuration.contact-point', 'Contact point')}
+        value={<ContactPointLink name={notificationSettings.receiver} />}
+      />
+
+      {notificationSettings.mute_time_intervals && (
+        <DetailText
+          id="mute-timings"
+          label={t('alerting.alert.notification-configuration.mute-timings', 'Mute timings')}
+          value={
+            <>
+              {notificationSettings.mute_time_intervals.map((intervalName, index) => (
+                <Fragment key={intervalName}>
+                  <TextLink href={makeEditTimeIntervalLink(intervalName, { alertmanager: 'grafana' })}>
+                    {intervalName}
+                  </TextLink>
+                  {index < notificationSettings.mute_time_intervals!.length - 1 && ', '}
+                </Fragment>
+              ))}
+            </>
+          }
+        />
+      )}
+
+      {notificationSettings.active_time_intervals && (
+        <DetailText
+          id="active-time-intervals"
+          label={t('alerting.alert.notification-configuration.active-timings', 'Active time intervals')}
+          value={
+            <>
+              {notificationSettings.active_time_intervals.map((intervalName, index) => (
+                <Fragment key={intervalName}>
+                  <TextLink href={makeEditTimeIntervalLink(intervalName, { alertmanager: 'grafana' })}>
+                    {intervalName}
+                  </TextLink>
+                  {index < notificationSettings.active_time_intervals!.length - 1 && ', '}
+                </Fragment>
+              ))}
+            </>
+          }
+        />
+      )}
+
+      {/* override grouping */}
+      {notificationSettings.group_by && (
+        <DetailText
+          id="group-by"
+          label={t('alerting.alert.notification-configuration.group-by', 'Grouped by')}
+          value={notificationSettings.group_by.join(', ')}
+        />
+      )}
+
+      {/* override timings */}
+      {(notificationSettings.group_interval ||
+        notificationSettings.group_wait ||
+        notificationSettings.repeat_interval) && (
+        <DetailText
+          id="timing-options"
+          label={t('alerting.alert.notification-configuration.timing-options', 'Timings')}
+          value={
+            <TimingOptionsMeta
+              timingOptions={{
+                group_interval: notificationSettings.group_interval,
+                group_wait: notificationSettings.group_wait,
+                repeat_interval: notificationSettings.repeat_interval,
+              }}
+            />
+          }
+        />
+      )}
+    </DetailGroup>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   metadata: css({

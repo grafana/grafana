@@ -1,8 +1,8 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
-import { ExplorePanelData } from 'app/types';
+import { ExplorePanelData } from 'app/types/explore';
 
 interface ExploreToDashboardPanelOptions {
   queries: DataQuery[];

@@ -11,15 +11,15 @@ import {
 } from '@grafana/data';
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/reduce.svg';
+import lightImage from '../images/light/reduce.svg';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
-  const { t } = useTranslate();
-
   const modes: Array<SelectableValue<ReduceTransformerMode>> = [
     {
       label: t('transformers.reduce-transformer-editor.modes.label.series-to-rows', 'Series to rows'),
@@ -119,12 +119,17 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
   );
 };
 
-export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransformerOptions> = {
+export const getReduceTransformRegistryItem: () => TransformerRegistryItem<ReduceTransformerOptions> = () => ({
   id: DataTransformerID.reduce,
   editor: ReduceTransformerEditor,
   transformation: standardTransformers.reduceTransformer,
-  name: standardTransformers.reduceTransformer.name,
-  description: standardTransformers.reduceTransformer.description,
+  name: t('transformers.reduce-transformer-editor.name.reduce', 'Reduce'),
+  description: t(
+    'transformers.reduce-transformer-editor.description.reduce-to-single-value',
+    'Reduce all rows or data points to a single value (ex. max, mean).'
+  ),
   categories: new Set([TransformerCategory.CalculateNewFields]),
   help: getTransformationContent(DataTransformerID.reduce).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

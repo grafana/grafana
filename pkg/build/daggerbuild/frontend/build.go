@@ -1,11 +1,14 @@
 package frontend
 
 import (
+	"fmt"
+
 	"dagger.io/dagger"
 )
 
-func Build(builder *dagger.Container) *dagger.Directory {
+func Build(builder *dagger.Container, version string) *dagger.Directory {
 	public := builder.
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("yarn lerna version %s --exact --no-git-tag-version --no-push --force-publish -y", version)}).
 		WithExec([]string{"yarn", "run", "build"}).
 		WithExec([]string{"/bin/sh", "-c", "find /src/public -type d -name node_modules -print0 | xargs -0 rm -rf"}).
 		Directory("/src/public")

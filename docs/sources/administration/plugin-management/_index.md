@@ -151,10 +151,11 @@ Here is an example based on `grafana-lokiexplore-app` plugins.
 
 #### Install plugins using the Grafana Helm chart
 
-With the Grafana Helm chart, add the plugins you want to install as a list using the `plugins` field in the your values file. For more information about the configuration, refer to [the Helm chart configuration reference](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration).
+With the Grafana Helm chart, you can install plugins using one of the following methods:
 
-The following YAML snippet installs v1.9.0 of the Grafana OnCall App plugin and the Redis data source plugin.
-You must incorporate this snippet within your Helm values file.
+##### Method 1: Using the `plugins` field
+
+Add the plugins you want to install as a list in your values file. For more information about the configuration, refer to [the Helm chart configuration reference](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration).
 
 ```yaml
 plugins:
@@ -162,7 +163,31 @@ plugins:
   - redis-datasource
 ```
 
-When the update is complete, a confirmation message will indicate the installation was successful.
+##### Method 2: Using `GF_PLUGINS_PREINSTALL_SYNC`
+
+Add the following to your `values.yaml` file:
+
+```yaml
+env:
+  # Format: <plugin ID>@[<plugin version>]@<url to plugin zip>
+  GF_PLUGINS_PREINSTALL_SYNC: grafana-oncall-app@1.9.0@https://grafana.com/api/plugins/grafana-oncall-app/versions/v1.9.0/download
+
+  # Or without version and URL (latest version will be used)
+  # GF_PLUGINS_PREINSTALL_SYNC: grafana-oncall-app
+
+  # Multiple plugins (comma-separated)
+  # GF_PLUGINS_PREINSTALL_SYNC: grafana-oncall-app,redis-datasource
+```
+
+##### Method 3: Using `GF_PLUGINS_INSTALL` (Deprecated since 12.1.0)
+
+```yaml
+env:
+  # Comma-separated list of plugin IDs
+  GF_PLUGINS_INSTALL: grafana-oncall-app,redis-datasource
+```
+
+When the installation is complete, a confirmation message will indicate that the plugins were successfully installed.
 
 ### Update a plugin
 
@@ -222,7 +247,7 @@ All plugins are signed under a _signature level_. The signature level determines
 
 {{< admonition type="note" >}}
 Unsigned plugins are not supported in Grafana Cloud.
-{{% /admonition %}}
+{{< /admonition >}}
 
 We strongly recommend that you don't run unsigned plugins in your Grafana instance. However, if you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration](../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins).
 
@@ -249,7 +274,6 @@ To enable backend communication between plugins:
    ```
 
    This is a comma-separated list that uses glob matching.
-
    - To allow access to all plugins that have a backend:
 
      ```

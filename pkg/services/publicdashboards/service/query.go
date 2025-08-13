@@ -55,7 +55,8 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 			annoQuery.Limit = anno.Target.Limit
 			annoQuery.MatchAny = anno.Target.MatchAny
 			if anno.Target.Type == "tags" {
-				annoQuery.DashboardID = 0
+				annoQuery.DashboardID = 0 // nolint: staticcheck
+				annoQuery.DashboardUID = ""
 				annoQuery.Tags = anno.Target.Tags
 			}
 		}
@@ -68,7 +69,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		for _, item := range annotationItems {
 			event := models.AnnotationEvent{
 				Id:          item.ID,
-				DashboardId: item.DashboardID,
+				DashboardId: item.DashboardID, // nolint: staticcheck
 				Tags:        item.Tags,
 				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 				Text:        item.Text,
@@ -76,6 +77,10 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 				Time:        item.Time,
 				TimeEnd:     item.TimeEnd,
 				Source:      anno,
+			}
+
+			if item.DashboardUID != nil {
+				event.DashboardUID = *item.DashboardUID
 			}
 
 			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels

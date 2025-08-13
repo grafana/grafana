@@ -5,7 +5,7 @@ package jobs
 import (
 	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -203,6 +203,40 @@ func (_c *MockJobProgressRecorder_SetMessage_Call) RunAndReturn(run func(context
 	return _c
 }
 
+// SetRefURLs provides a mock function with given fields: ctx, refURLs
+func (_m *MockJobProgressRecorder) SetRefURLs(ctx context.Context, refURLs *v0alpha1.RepositoryURLs) {
+	_m.Called(ctx, refURLs)
+}
+
+// MockJobProgressRecorder_SetRefURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetRefURLs'
+type MockJobProgressRecorder_SetRefURLs_Call struct {
+	*mock.Call
+}
+
+// SetRefURLs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - refURLs *v0alpha1.RepositoryURLs
+func (_e *MockJobProgressRecorder_Expecter) SetRefURLs(ctx interface{}, refURLs interface{}) *MockJobProgressRecorder_SetRefURLs_Call {
+	return &MockJobProgressRecorder_SetRefURLs_Call{Call: _e.mock.On("SetRefURLs", ctx, refURLs)}
+}
+
+func (_c *MockJobProgressRecorder_SetRefURLs_Call) Run(run func(ctx context.Context, refURLs *v0alpha1.RepositoryURLs)) *MockJobProgressRecorder_SetRefURLs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*v0alpha1.RepositoryURLs))
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_SetRefURLs_Call) Return() *MockJobProgressRecorder_SetRefURLs_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_SetRefURLs_Call) RunAndReturn(run func(context.Context, *v0alpha1.RepositoryURLs)) *MockJobProgressRecorder_SetRefURLs_Call {
+	_c.Run(run)
+	return _c
+}
+
 // SetTotal provides a mock function with given fields: ctx, total
 func (_m *MockJobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	_m.Called(ctx, total)
@@ -237,34 +271,35 @@ func (_c *MockJobProgressRecorder_SetTotal_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// Strict provides a mock function with no fields
-func (_m *MockJobProgressRecorder) Strict() {
-	_m.Called()
+// StrictMaxErrors provides a mock function with given fields: maxErrors
+func (_m *MockJobProgressRecorder) StrictMaxErrors(maxErrors int) {
+	_m.Called(maxErrors)
 }
 
-// MockJobProgressRecorder_Strict_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Strict'
-type MockJobProgressRecorder_Strict_Call struct {
+// MockJobProgressRecorder_StrictMaxErrors_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StrictMaxErrors'
+type MockJobProgressRecorder_StrictMaxErrors_Call struct {
 	*mock.Call
 }
 
-// Strict is a helper method to define mock.On call
-func (_e *MockJobProgressRecorder_Expecter) Strict() *MockJobProgressRecorder_Strict_Call {
-	return &MockJobProgressRecorder_Strict_Call{Call: _e.mock.On("Strict")}
+// StrictMaxErrors is a helper method to define mock.On call
+//   - maxErrors int
+func (_e *MockJobProgressRecorder_Expecter) StrictMaxErrors(maxErrors interface{}) *MockJobProgressRecorder_StrictMaxErrors_Call {
+	return &MockJobProgressRecorder_StrictMaxErrors_Call{Call: _e.mock.On("StrictMaxErrors", maxErrors)}
 }
 
-func (_c *MockJobProgressRecorder_Strict_Call) Run(run func()) *MockJobProgressRecorder_Strict_Call {
+func (_c *MockJobProgressRecorder_StrictMaxErrors_Call) Run(run func(maxErrors int)) *MockJobProgressRecorder_StrictMaxErrors_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(int))
 	})
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_Strict_Call) Return() *MockJobProgressRecorder_Strict_Call {
+func (_c *MockJobProgressRecorder_StrictMaxErrors_Call) Return() *MockJobProgressRecorder_StrictMaxErrors_Call {
 	_c.Call.Return()
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_Strict_Call) RunAndReturn(run func()) *MockJobProgressRecorder_Strict_Call {
+func (_c *MockJobProgressRecorder_StrictMaxErrors_Call) RunAndReturn(run func(int)) *MockJobProgressRecorder_StrictMaxErrors_Call {
 	_c.Run(run)
 	return _c
 }

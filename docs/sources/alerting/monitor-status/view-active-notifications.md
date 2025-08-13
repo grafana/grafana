@@ -89,11 +89,11 @@ If an alert does not contain labels specified either in the grouping of the defa
 
 ## View notification errors
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 Notification errors are only available with [pre-configured Grafana Alertmanagers](ref:alertmanager).
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 Notification errors provide information about why they failed to be sent or were not received.
 

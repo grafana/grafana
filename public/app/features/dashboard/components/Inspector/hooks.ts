@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -46,8 +46,6 @@ export const useInspectTabs = (
   hasError?: boolean,
   metaDs?: DataSourceApi
 ) => {
-  const { t } = useTranslate();
-
   return useMemo(() => {
     const tabs = [];
     if (supportsDataQuery(plugin)) {
@@ -69,5 +67,5 @@ export const useInspectTabs = (
       tabs.push({ label: t('dashboard.inspect.query-tab', 'Query'), value: InspectTab.Query });
     }
     return tabs;
-  }, [plugin, metaDs, dashboard, hasError, t]);
+  }, [plugin, metaDs, dashboard, hasError]);
 };

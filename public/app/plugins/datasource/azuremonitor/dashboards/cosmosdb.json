@@ -1,22 +1,32 @@
 {
+  "__inputs": [
+    {
+      "name": "datasource",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "grafana-azure-monitor-datasource",
+      "pluginName": "Azure Monitor"
+    }
+  ],
+  "__elements": {},
   "__requires": [
     {
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "7.4.3"
+      "version": "12.1.0-pre"
     },
     {
       "type": "datasource",
       "id": "grafana-azure-monitor-datasource",
       "name": "Azure Monitor",
-      "version": "0.3.0"
+      "version": "12.1.0-pre"
     },
     {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
+      "type": "datasource",
+      "id": "grafana-testdata-datasource",
+      "name": "TestData",
+      "version": "12.1.0-pre"
     },
     {
       "type": "panel",
@@ -31,16 +41,33 @@
       "version": ""
     }
   ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1621378610748,
   "links": [],
   "panels": [
     {
       "collapsed": true,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -54,7 +81,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {},
@@ -190,6 +219,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -200,9 +233,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Total Requests",
           "tooltip": {
             "shared": true,
@@ -211,33 +242,25 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -245,7 +268,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {},
@@ -388,6 +413,10 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -398,9 +427,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Throttled Requests (429s)",
           "tooltip": {
             "shared": true,
@@ -409,33 +436,25 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -443,7 +462,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {},
@@ -556,6 +577,10 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -566,9 +591,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Normalized RU Consumption (max)",
           "tooltip": {
             "shared": true,
@@ -577,33 +600,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "percent",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -611,7 +625,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {},
@@ -708,6 +724,10 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -766,6 +786,9 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -777,9 +800,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Index & Data Usage",
           "tooltip": {
             "shared": true,
@@ -788,44 +809,37 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
                 "mode": "fixed"
               },
               "custom": {
-                "align": null,
                 "filterable": false
               },
               "mappings": [],
@@ -833,8 +847,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               }
@@ -847,8 +860,11 @@
                 },
                 "properties": [
                   {
-                    "id": "custom.displayMode",
-                    "value": "lcd-gauge"
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "lcd",
+                      "type": "gauge"
+                    }
                   },
                   {
                     "id": "color",
@@ -968,6 +984,9 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -978,8 +997,6 @@
               "subscription": "$sub"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Total Requests (Count) By Collection",
           "transformations": [
             {
@@ -992,14 +1009,16 @@
           "type": "table"
         },
         {
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
                 "mode": "fixed"
               },
               "custom": {
-                "align": null,
                 "filterable": false
               },
               "mappings": [],
@@ -1007,8 +1026,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               }
@@ -1021,8 +1039,11 @@
                 },
                 "properties": [
                   {
-                    "id": "custom.displayMode",
-                    "value": "lcd-gauge"
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "lcd",
+                      "type": "gauge"
+                    }
                   },
                   {
                     "id": "color",
@@ -1102,6 +1123,9 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -1112,8 +1136,6 @@
               "subscription": "$sub"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Document Count (Avg) By Collection",
           "transformations": [
             {
@@ -1126,14 +1148,16 @@
           "type": "table"
         },
         {
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
                 "mode": "fixed"
               },
               "custom": {
-                "align": null,
                 "filterable": false
               },
               "mappings": [],
@@ -1141,8 +1165,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               }
@@ -1155,8 +1178,11 @@
                 },
                 "properties": [
                   {
-                    "id": "custom.displayMode",
-                    "value": "lcd-gauge"
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "lcd",
+                      "type": "gauge"
+                    }
                   },
                   {
                     "id": "color",
@@ -1236,6 +1262,9 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -1246,8 +1275,6 @@
               "subscription": "$sub"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Data Usage (Avg) By Collection",
           "transformations": [
             {
@@ -1260,14 +1287,16 @@
           "type": "table"
         },
         {
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
                 "mode": "fixed"
               },
               "custom": {
-                "align": null,
                 "filterable": false
               },
               "mappings": [],
@@ -1275,8 +1304,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               }
@@ -1289,8 +1317,11 @@
                 },
                 "properties": [
                   {
-                    "id": "custom.displayMode",
-                    "value": "lcd-gauge"
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "lcd",
+                      "type": "gauge"
+                    }
                   },
                   {
                     "id": "color",
@@ -1370,6 +1401,9 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -1380,8 +1414,6 @@
               "subscription": "$sub"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Index Usage (Avg) By Collection",
           "transformations": [
             {
@@ -1394,14 +1426,16 @@
           "type": "table"
         },
         {
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
                 "mode": "fixed"
               },
               "custom": {
-                "align": null,
                 "filterable": false
               },
               "mappings": [],
@@ -1409,8 +1443,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               }
@@ -1423,8 +1456,11 @@
                 },
                 "properties": [
                   {
-                    "id": "custom.displayMode",
-                    "value": "lcd-gauge"
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "lcd",
+                      "type": "gauge"
+                    }
                   },
                   {
                     "id": "color",
@@ -1500,6 +1536,9 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -1510,8 +1549,6 @@
               "subscription": "$sub"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Provisioned Throughput (Max) By Collection",
           "transformations": [
             {
@@ -1524,14 +1561,16 @@
           "type": "table"
         },
         {
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
                 "mode": "fixed"
               },
               "custom": {
-                "align": null,
                 "filterable": false
               },
               "mappings": [],
@@ -1539,8 +1578,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               }
@@ -1553,8 +1591,11 @@
                 },
                 "properties": [
                   {
-                    "id": "custom.displayMode",
-                    "value": "lcd-gauge"
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "lcd",
+                      "type": "gauge"
+                    }
                   },
                   {
                     "id": "color",
@@ -1650,6 +1691,9 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -1660,8 +1704,6 @@
               "subscription": "$sub"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Normalized RU Consumption (Max) By Collection",
           "transformations": [
             {
@@ -1674,12 +1716,22 @@
           "type": "table"
         }
       ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Overview",
       "type": "row"
     },
     {
       "collapsed": true,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1693,7 +1745,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -1824,6 +1879,9 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -1834,9 +1892,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Total Request Units",
           "tooltip": {
             "shared": true,
@@ -1845,33 +1901,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1879,7 +1926,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -1994,6 +2044,9 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -2004,9 +2057,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Normalized RU Consumption By PartitionKeyRangeID",
           "tooltip": {
             "shared": true,
@@ -2015,37 +2066,31 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "percent",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2133,6 +2178,9 @@
                 ],
                 "top": ""
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -2142,10 +2190,16 @@
               "subscription": "$sub"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Provisioned Throughput (Max) by Collection",
           "type": "stat"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
         }
       ],
       "title": "Throughput",
@@ -2153,7 +2207,9 @@
     },
     {
       "collapsed": true,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -2167,7 +2223,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -2304,6 +2363,9 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -2314,9 +2376,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Total Requests by Status Code",
           "tooltip": {
             "shared": true,
@@ -2325,33 +2385,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2359,7 +2410,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -2496,6 +2550,9 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -2506,9 +2563,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Throttled Requests (429)",
           "tooltip": {
             "shared": true,
@@ -2517,33 +2572,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2551,7 +2597,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -2688,6 +2737,9 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -2698,9 +2750,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Total Requests by Operation Type",
           "tooltip": {
             "shared": true,
@@ -2709,34 +2759,33 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
         }
       ],
       "title": "Requests",
@@ -2744,7 +2793,9 @@
     },
     {
       "collapsed": true,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -2758,7 +2809,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${datasource}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -2818,7 +2872,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -2855,6 +2908,9 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "uid": "$ds"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -2881,7 +2937,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -2918,6 +2973,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -2929,9 +2988,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Data & Index Usage",
           "tooltip": {
             "shared": true,
@@ -2940,33 +2997,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2974,7 +3022,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -3034,7 +3084,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -3071,6 +3120,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -3081,9 +3134,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Document Count",
           "tooltip": {
             "shared": true,
@@ -3092,37 +3143,30 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3134,8 +3178,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -3223,6 +3266,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -3285,6 +3332,9 @@
                   }
                 ],
                 "top": "10"
+              },
+              "datasource": {
+                "uid": "$ds"
               },
               "hide": false,
               "insightsAnalytics": {
@@ -3350,6 +3400,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -3360,10 +3414,16 @@
               "subscription": "$sub"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Data, Index & Document Usage",
           "type": "stat"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
         }
       ],
       "title": "Storage",
@@ -3371,7 +3431,9 @@
     },
     {
       "collapsed": true,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -3385,7 +3447,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -3422,13 +3486,6 @@
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
-          "scopedVars": {
-            "sub": {
-              "selected": true,
-              "text": "RTD-Experimental - f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-              "value": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-            }
-          },
           "seriesOverrides": [],
           "spaceLength": 10,
           "stack": false,
@@ -3452,7 +3509,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -3475,6 +3531,10 @@
                   }
                 ],
                 "top": "10"
+              },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
               },
               "insightsAnalytics": {
                 "query": "",
@@ -3502,7 +3562,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -3525,6 +3584,9 @@
                   }
                 ],
                 "top": "10"
+              },
+              "datasource": {
+                "uid": "$ds"
               },
               "hide": false,
               "insightsAnalytics": {
@@ -3553,7 +3615,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -3577,6 +3638,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -3588,9 +3653,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Service Availability (min/max/avg in %)",
           "tooltip": {
             "shared": true,
@@ -3599,43 +3662,44 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "percent",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
       "repeat": "sub",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Availability",
       "type": "row"
     },
     {
       "collapsed": true,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -3649,7 +3713,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -3758,6 +3824,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -3768,9 +3838,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Server Side Latency (Avg) By Region",
           "tooltip": {
             "shared": true,
@@ -3779,33 +3847,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "ms",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3813,7 +3872,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -3922,6 +3983,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -3932,9 +3997,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Server Side Latency (Avg) By Operation",
           "tooltip": {
             "shared": true,
@@ -3943,34 +4006,33 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "ms",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
         }
       ],
       "title": "Latency",
@@ -3978,7 +4040,9 @@
     },
     {
       "collapsed": true,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -3992,7 +4056,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4121,6 +4187,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -4131,9 +4201,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Metadata Requests by Status Code",
           "tooltip": {
             "shared": true,
@@ -4142,33 +4210,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -4176,7 +4235,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4305,6 +4366,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -4315,9 +4380,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Metadata Requests That Exceeded Capacity (429s)",
           "tooltip": {
             "shared": true,
@@ -4326,34 +4389,33 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
         }
       ],
       "title": "System",
@@ -4361,7 +4423,9 @@
     },
     {
       "collapsed": true,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -4375,7 +4439,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4435,7 +4501,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -4458,6 +4523,10 @@
                   }
                 ],
                 "top": "10"
+              },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
               },
               "insightsAnalytics": {
                 "query": "",
@@ -4485,7 +4554,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -4508,6 +4576,9 @@
                   }
                 ],
                 "top": "10"
+              },
+              "datasource": {
+                "uid": "$ds"
               },
               "hide": false,
               "insightsAnalytics": {
@@ -4536,7 +4607,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -4565,6 +4635,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -4576,9 +4650,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Cosmos DB Account Management (Creates, Deletes) and Account Key Updates",
           "tooltip": {
             "shared": true,
@@ -4587,33 +4659,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -4621,7 +4684,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$ds",
+          "datasource": {
+            "uid": "$ds"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4681,7 +4746,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -4714,6 +4778,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "insightsAnalytics": {
                 "query": "",
                 "resultFormat": "time_series"
@@ -4740,7 +4808,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -4763,6 +4830,9 @@
                   }
                 ],
                 "top": "10"
+              },
+              "datasource": {
+                "uid": "$ds"
               },
               "hide": false,
               "insightsAnalytics": {
@@ -4791,7 +4861,6 @@
                 "dimensionFilter": "*",
                 "dimensionFilters": [
                   {
-                    "dimension": null,
                     "filter": "",
                     "operator": "eq"
                   }
@@ -4815,6 +4884,10 @@
                 ],
                 "top": "10"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${datasource}"
+              },
               "hide": false,
               "insightsAnalytics": {
                 "query": "",
@@ -4826,9 +4899,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Cosmos DB Account Diagnostic, Network and Replication Settings Updates",
           "tooltip": {
             "shared": true,
@@ -4837,49 +4908,46 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
         }
       ],
       "title": "Account Management",
       "type": "row"
     }
   ],
-  "refresh": false,
-  "schemaVersion": 27,
+  "refresh": "",
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {},
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Data Source",
@@ -4894,12 +4962,11 @@
         "type": "datasource"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "uid": "$ds"
+        },
         "definition": "subscriptions()",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Subscription",
@@ -4912,18 +4979,17 @@
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${datasource}"
+        },
         "definition": "",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Resource Group",
@@ -4943,7 +5009,6 @@
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -4976,15 +5041,14 @@
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${datasource}"
+        },
         "definition": "",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": null,
         "multi": false,
         "name": "resource",
         "options": [],
@@ -5000,7 +5064,6 @@
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -5015,5 +5078,6 @@
   "timezone": "",
   "title": "Azure / Insights / Cosmos DB",
   "uid": "INH9berMk",
-  "version": 17
+  "version": 2,
+  "weekStart": ""
 }

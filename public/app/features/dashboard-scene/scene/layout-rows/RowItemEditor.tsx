@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Input, Switch, TextLink, Field } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -18,7 +18,7 @@ import { RowItem } from './RowItem';
 
 export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
-  const { t } = useTranslate();
+
   const rowCategory = useMemo(
     () =>
       new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
@@ -41,7 +41,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
             render: () => <RowHeaderSwitch row={model} />,
           })
         ),
-    [model, isNewElement, t]
+    [model, isNewElement]
   );
 
   const repeatCategory = useMemo(
@@ -60,7 +60,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
           render: () => <RowRepeatSelect row={model} />,
         })
       ),
-    [model, t]
+    [model]
   );
 
   const layoutCategory = useLayoutCategory(layout);
@@ -81,7 +81,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
 
 function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: boolean }) {
   const { title } = row.useState();
-  const { t } = useTranslate();
+
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
 
@@ -132,7 +132,7 @@ function RowRepeatSelect({ row }: { row: RowItem }) {
     <>
       <RepeatRowSelect2
         sceneContext={dashboard}
-        repeat={row.getRepeatVariable()}
+        repeat={row.state.repeatByVariable}
         onChange={(repeat) => row.onChangeRepeat(repeat)}
       />
       {isAnyPanelUsingDashboardDS ? (

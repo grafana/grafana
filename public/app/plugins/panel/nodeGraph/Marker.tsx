@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { MouseEvent, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { NodesMarker } from './types';
@@ -33,7 +33,6 @@ export const Marker = memo(function Marker(props: {
   marker: NodesMarker;
   onClick?: (event: MouseEvent<SVGElement>, marker: NodesMarker) => void;
 }) {
-  const { t } = useTranslate();
   const { marker, onClick } = props;
   const { node } = marker;
   const styles = useStyles2(getStyles);

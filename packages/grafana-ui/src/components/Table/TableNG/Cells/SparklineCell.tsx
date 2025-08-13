@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
 import * as React from 'react';
 
 import {
@@ -10,8 +9,8 @@ import {
   isDataFrame,
   Field,
   isDataFrameWithValue,
-  GrafanaTheme2,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   BarAlignment,
   GraphDrawStyle,
@@ -23,11 +22,10 @@ import {
   VisibilityMode,
 } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes';
-import { measureText } from '../../../../utils';
+import { measureText } from '../../../../utils/measureText';
 import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../../Sparkline/Sparkline';
-import { SparklineCellProps } from '../types';
+import { SparklineCellProps, TableCellStyles } from '../types';
 import { getAlignmentFactor, getCellOptions } from '../utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
@@ -44,12 +42,11 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
 };
 
 export const SparklineCell = (props: SparklineCellProps) => {
-  const { field, value, theme, timeRange, rowIdx, justifyContent, width } = props;
-  const styles = useStyles2(getStyles, justifyContent);
-  const sparkline = getSparkline(value);
+  const { field, value, theme, timeRange, rowIdx, width } = props;
+  const sparkline = getSparkline(value, field);
 
   if (!sparkline) {
-    return <>{field.config.noValue || 'no data'}</>;
+    return <>{field.config.noValue || t('grafana-ui.table.sparkline.no-data', 'no data')}</>;
   }
 
   // Get the step from the first two values to null-fill the x-axis based on timerange
@@ -82,7 +79,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
     },
   };
 
-  const hideValue = field.config.custom?.cellOptions?.hideValue;
+  const hideValue = cellOptions.hideValue;
   let valueWidth = 0;
   let valueElement: React.ReactNode = null;
   if (!hideValue) {
@@ -94,34 +91,22 @@ export const SparklineCell = (props: SparklineCellProps) => {
       measureText(`${alignmentFactor.prefix ?? ''}${alignmentFactor.text}${alignmentFactor.suffix ?? ''}`, 16).width +
       theme.spacing.gridSize;
 
-    valueElement = (
-      <FormattedValueDisplay
-        style={{
-          width: `${valueWidth - theme.spacing.gridSize}px`,
-          textAlign: 'right',
-          marginRight: theme.spacing(1),
-          marginLeft: theme.spacing(1),
-        }}
-        className={styles.valueContainer}
-        value={displayValue}
-      />
-    );
+    valueElement = <FormattedValueDisplay style={{ width: valueWidth }} value={displayValue} />;
   }
 
-  // @TODO update width, height
   return (
-    <div className={styles.cellContainer}>
+    <>
       {valueElement}
       <Sparkline width={width - valueWidth} height={25} sparkline={sparkline} config={config} theme={theme} />
-    </div>
+    </>
   );
 };
 
-function getSparkline(value: unknown): FieldSparkline | undefined {
+function getSparkline(value: unknown, field: Field): FieldSparkline | undefined {
   if (Array.isArray(value)) {
     return {
       y: {
-        name: 'test',
+        name: `${field.name}-sparkline`,
         type: FieldType.number,
         values: value,
         config: {},
@@ -152,14 +137,10 @@ function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
   throw new Error(`Expected options type ${TableCellDisplayMode.Sparkline} but got ${options.type}`);
 }
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
-  cellContainer: css({
-    display: 'flex',
+export const getStyles: TableCellStyles = (theme, { textAlign }) =>
+  css({
     width: '100%',
-    alignItems: 'center',
-    justifyContent,
-  }),
-  valueContainer: css({
-    div: { width: 'inherit' },
-  }),
-});
+    gap: theme.spacing(1),
+    justifyContent: 'space-between',
+    ...(textAlign === 'right' && { flexDirection: 'row-reverse' }),
+  });

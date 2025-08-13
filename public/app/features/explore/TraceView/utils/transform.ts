@@ -1,6 +1,7 @@
 import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
 
-import { Trace, TraceProcess, TraceResponse, transformTraceData } from '../components';
+import transformTraceData from '../components/model/transform-trace-data';
+import { Trace, TraceProcess, TraceResponse } from '../components/types/trace';
 
 export function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {

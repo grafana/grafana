@@ -4,14 +4,16 @@ import { MouseEvent, useCallback, useMemo } from 'react';
 
 import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
+import { LogLineTimestampResolution } from './LogLine';
 import { useLogListContext } from './LogListContext';
+import { useLogListSearchContext } from './LogListSearchContext';
 import { ScrollToLogsEvent } from './virtualization';
 
 type Props = {
@@ -43,11 +45,13 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     dedupStrategy,
     downloadLogs,
     filterLevels,
+    fontSize,
     forceEscape,
     hasUnescapedContent,
     prettifyJSON,
     setDedupStrategy,
     setFilterLevels,
+    setFontSize,
     setForceEscape,
     setPrettifyJSON,
     setShowTime,
@@ -61,6 +65,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     syntaxHighlighting,
     wrapLogMessage,
   } = useLogListContext();
+  const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
 
   const onScrollToTopClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_scroll_top_clicked');
@@ -98,6 +103,14 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     },
     [filterLevels, setFilterLevels]
   );
+
+  const onFontSizeClick = useCallback(() => {
+    const newSize = fontSize === 'default' ? 'small' : 'default';
+    reportInteraction('logs_log_list_controls_font_size_clicked', {
+      size: newSize,
+    });
+    setFontSize(newSize);
+  }, [fontSize, setFontSize]);
 
   const onShowTimestampsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_time_clicked', {
@@ -162,8 +175,6 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     [dedupStrategy, setDedupStrategy, styles.menuItemActive]
   );
 
-  const { t } = useTranslate();
-
   const filterLevelsMenu = useMemo(
     () => (
       <Menu>
@@ -183,7 +194,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         ))}
       </Menu>
     ),
-    [filterLevels, onFilterLevelClick, styles.menuItemActive, t]
+    [filterLevels, onFilterLevelClick, styles.menuItemActive]
   );
 
   const downloadMenu = useMemo(
@@ -203,7 +214,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         />
       </Menu>
     ),
-    [downloadLogs, t]
+    [downloadLogs]
   );
 
   const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
@@ -236,6 +247,19 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           {visualisationType === 'logs' && (
             <>
               <div className={styles.divider} />
+              {config.featureToggles.newLogsPanel && (
+                <IconButton
+                  name={'search'}
+                  className={searchVisible ? styles.controlButtonActive : styles.controlButton}
+                  onClick={searchVisible ? hideSearch : showSearch}
+                  tooltip={
+                    searchVisible
+                      ? t('logs.logs-controls.hide-search', 'Close search')
+                      : t('logs.logs-controls.show-search', 'Search in logs result')
+                  }
+                  size="lg"
+                />
+              )}
               <Dropdown overlay={deduplicationMenu} placement="auto-end">
                 <IconButton
                   name={'filter'}
@@ -257,18 +281,22 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 />
               </Dropdown>
               <div className={styles.divider} />
-              <IconButton
-                name="clock-nine"
-                aria-pressed={showTime}
-                className={showTime ? styles.controlButtonActive : styles.controlButton}
-                onClick={onShowTimestampsClick}
-                tooltip={
-                  showTime
-                    ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-                    : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-                }
-                size="lg"
-              />
+              {config.featureToggles.newLogsPanel ? (
+                <TimestampResolutionButton />
+              ) : (
+                <IconButton
+                  name="clock-nine"
+                  aria-pressed={showTime}
+                  className={showTime ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onShowTimestampsClick}
+                  tooltip={
+                    showTime
+                      ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+                      : t('logs.logs-controls.show-timestamps', 'Show timestamps')
+                  }
+                  size="lg"
+                />
+              )}
               {/* When this is used in a Plugin context, app is unknown */}
               {showUniqueLabels !== undefined && app !== CoreApp.Unknown && (
                 <IconButton
@@ -324,6 +352,20 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   size="lg"
                 />
               )}
+              {config.featureToggles.newLogsPanel && (
+                <IconButton
+                  name="text-fields"
+                  className={fontSize === 'small' ? styles.controlButtonActive : styles.controlButton}
+                  aria-pressed={Boolean(fontSize)}
+                  onClick={onFontSizeClick}
+                  tooltip={
+                    fontSize === 'default'
+                      ? t('logs.logs-controls.font-size-default', 'Use small font size')
+                      : t('logs.logs-controls.font-size-small', 'Use default font size')
+                  }
+                  size="lg"
+                />
+              )}
               {hasUnescapedContent && (
                 <IconButton
                   name="enter"
@@ -358,14 +400,46 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           )}
         </>
       ) : (
-        <Dropdown overlay={filterLevelsMenu} placement="auto-end">
-          <IconButton
-            name={'gf-logs'}
-            className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
-            tooltip={t('logs.logs-controls.display-level', 'Display levels')}
-            size="lg"
-          />
-        </Dropdown>
+        <>
+          {config.featureToggles.newLogsPanel && (
+            <IconButton
+              name={'search'}
+              className={searchVisible ? styles.controlButtonActive : styles.controlButton}
+              onClick={searchVisible ? hideSearch : showSearch}
+              tooltip={
+                searchVisible
+                  ? t('logs.logs-controls.hide-search', 'Close search')
+                  : t('logs.logs-controls.show-search', 'Search in logs result')
+              }
+              size="lg"
+            />
+          )}
+          <Dropdown overlay={filterLevelsMenu} placement="auto-end">
+            <IconButton
+              name={'gf-logs'}
+              className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
+              tooltip={t('logs.logs-controls.display-level', 'Display levels')}
+              size="lg"
+            />
+          </Dropdown>
+          {visualisationType === 'logs' && hasUnescapedContent && (
+            <IconButton
+              name="enter"
+              aria-pressed={forceEscape}
+              className={forceEscape ? styles.controlButtonActive : styles.controlButton}
+              onClick={onForceEscapeClick}
+              tooltip={
+                forceEscape
+                  ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
+                  : t(
+                      'logs.logs-controls.escape-newlines',
+                      'Fix incorrectly escaped newline and tab sequences in log lines'
+                    )
+              }
+              size="lg"
+            />
+          )}
+        </>
       )}
       {visualisationType === 'logs' && (
         <IconButton
@@ -379,6 +453,47 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         />
       )}
     </div>
+  );
+};
+
+const TimestampResolutionButton = () => {
+  const styles = useStyles2(getStyles);
+  const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
+
+  const onShowTimestampsClick = useCallback(() => {
+    if (!config.featureToggles.newLogsPanel) {
+      reportInteraction('logs_log_list_controls_show_time_clicked', {
+        show_time: !showTime,
+      });
+      setShowTime(!showTime);
+      return;
+    }
+    if (!showTime || timestampResolution === 'ns') {
+      setShowTime(!showTime);
+    } else if (timestampResolution === 'ms') {
+      setTimestampResolution('ns');
+    }
+  }, [setShowTime, setTimestampResolution, showTime, timestampResolution]);
+
+  return (
+    <Tooltip content={getTimestampTooltip(showTime, timestampResolution)}>
+      <button
+        aria-label={getTimestampTooltip(showTime, timestampResolution)}
+        aria-pressed={showTime}
+        className={`${styles.timestampResolutionButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
+        type="button"
+        onClick={onShowTimestampsClick}
+      >
+        <Icon name="clock-nine" size="lg" className={styles.timestampResolutionIcon} />
+        {showTime && (
+          <span className={styles.resolutionText}>
+            {timestampResolution === 'ms'
+              ? t('logs.logs-controls.resolution-ms', 'ms')
+              : t('logs.logs-controls.resolution-ns', 'ns')}
+          </span>
+        )}
+      </button>
+    </Tooltip>
   );
 };
 
@@ -441,5 +556,41 @@ const getStyles = (theme: GrafanaTheme2) => {
         backgroundColor: theme.colors.warning.main,
       },
     }),
+    timestampResolutionButton: css({
+      position: 'relative',
+      zIndex: 0,
+      margin: 0,
+      boxShadow: 'none',
+      border: 'none',
+      display: 'inline-flex',
+      background: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 0,
+      overflow: 'visible',
+    }),
+    timestampResolutionIcon: css({
+      verticalAlign: 'baseline',
+    }),
+    resolutionText: css({
+      color: theme.colors.text.primary,
+      fontSize: 10,
+      position: 'absolute',
+      bottom: -4,
+      right: 0,
+      lineHeight: '10px',
+      backgroundColor: theme.colors.background.elevated,
+      paddingLeft: 2,
+    }),
   };
 };
+
+function getTimestampTooltip(showTime: boolean, timestampResolution: LogLineTimestampResolution) {
+  if (!showTime) {
+    return t('logs.logs-controls.show-ms-timestamps', 'Show millisecond timestamps');
+  }
+  if (timestampResolution === 'ms') {
+    return t('logs.logs-controls.show-ns-timestamps', 'Show nanosecond timestamps');
+  }
+  return t('logs.logs-controls.hide-timestamps', 'Hide timestamps');
+}

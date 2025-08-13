@@ -4,13 +4,11 @@ import { uniq } from 'lodash';
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE, LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/i18n';
 
 export type LocaleFileLoader = () => Promise<ResourceKey>;
-export interface LanguageDefinition<Namespace extends string = string> {
-  /** IETF language tag for the language e.g. en-US */
-  code: string;
 
-  /** Language name to show in the UI. Should be formatted local to that language e.g. Français for French */
-  name: string;
+export const GRAFANA_NAMESPACE = 'grafana' as const;
 
+type BaseLanguageDefinition = (typeof SUPPORTED_LANGUAGES)[number];
+export interface LanguageDefinition<Namespace extends string = string> extends BaseLanguageDefinition {
   /** Function to load translations */
   loader: Record<Namespace, LocaleFileLoader>;
 }
@@ -20,7 +18,7 @@ export const LANGUAGES: LanguageDefinition[] = SUPPORTED_LANGUAGES.map((def) => 
   const locale = def.code === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : def.code;
   return {
     ...def,
-    loader: { grafana: () => import(`../../../locales/${locale}/grafana.json`) },
+    loader: { [GRAFANA_NAMESPACE]: () => import(`../../../locales/${locale}/grafana.json`) },
   };
 });
 

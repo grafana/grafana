@@ -277,11 +277,12 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
 
-  const defaultFormValues = getDefaultFormValues();
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (rulerRuleType.grafana.recordingRule(rule)) {
+    if (isGrafanaRecordingRule) {
       // grafana recording rule
       const ga = rule.grafana_alert;
       return {
@@ -297,7 +298,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
-        targetDatasourceUid: ga.record?.target_datasource_uid,
+        targetDatasourceUid: ga.record?.target_datasource_uid || defaultFormValues.targetDatasourceUid,
       };
     } else if (rulerRuleType.grafana.rule(rule)) {
       // grafana alerting rule
@@ -382,7 +383,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 }
 
 export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {
-  const defaultFormValues = getDefaultFormValues();
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
 
   const ga = rule.grafana_alert;
   const duration = rule.for;

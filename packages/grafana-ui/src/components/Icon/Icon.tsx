@@ -8,7 +8,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
 import { spin } from '../../utils/keyframes';
 
-import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
+import { getIconPath, getSvgSize } from './utils';
 
 export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | 'onError' | 'ref'> {
   name: IconName;
@@ -53,12 +53,10 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
     // handle the deprecated 'fa fa-spinner'
     const iconName: IconName = name === 'fa fa-spinner' ? 'spinner' : name;
 
-    const iconRoot = getIconRoot();
     const svgSize = getSvgSize(size);
     const svgHgt = svgSize;
     const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
-    const subDir = getIconSubDir(iconName, type);
-    const svgPath = `${iconRoot}${subDir}/${iconName}.svg`;
+    const svgPath = getIconPath(iconName, type);
 
     const composedClassName = cx(
       styles.icon,

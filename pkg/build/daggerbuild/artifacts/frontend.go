@@ -47,7 +47,7 @@ func (f *Frontend) BuildFile(ctx context.Context, builder *dagger.Container, opt
 }
 
 func (f *Frontend) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	return frontend.Build(builder), nil
+	return frontend.Build(builder, f.Version), nil
 }
 
 func (f *Frontend) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {

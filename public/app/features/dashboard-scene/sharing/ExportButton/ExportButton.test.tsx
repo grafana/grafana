@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -9,21 +8,32 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 
 import ExportButton from './ExportButton';
 
-const selector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton;
-
 describe('ExportButton', () => {
-  it('should render Export menu', async () => {
+  it('should render Export button', async () => {
     setup();
-    expect(await screen.findByTestId(selector.arrowMenu)).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /export dashboard/i })).toBeInTheDocument();
   });
 
-  it('should render menu when arrow button clicked', async () => {
+  it('should show menu when export button is clicked', async () => {
     setup();
 
-    const arrowMenu = await screen.findByTestId(selector.arrowMenu);
-    await userEvent.click(arrowMenu);
+    const exportButton = await screen.findByRole('button', { name: /export dashboard/i });
+    expect(exportButton).toHaveAttribute('aria-expanded', 'false');
 
-    expect(await screen.findByTestId(selector.Menu.container)).toBeInTheDocument();
+    await userEvent.click(exportButton);
+
+    expect(exportButton).toHaveAttribute('aria-expanded', 'true');
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+  });
+
+  it('should show export options in the menu', async () => {
+    setup();
+
+    const exportButton = await screen.findByRole('button', { name: /export dashboard/i });
+    await userEvent.click(exportButton);
+
+    // Should show JSON export option
+    expect(await screen.findByRole('menuitem', { name: /export as json/i })).toBeInTheDocument();
   });
 });
 

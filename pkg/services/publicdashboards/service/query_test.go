@@ -307,7 +307,10 @@ const (
 }`
 )
 
-func TestGetQueryDataResponse(t *testing.T) {
+func TestIntegrationGetQueryDataResponse(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeDashboardService := &dashboards.FakeDashboardService{}
 	service, sqlStore, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 	fakeQueryService := &query.FakeQueryService{}
@@ -361,7 +364,10 @@ func TestGetQueryDataResponse(t *testing.T) {
 	})
 }
 
-func TestFindAnnotations(t *testing.T) {
+func TestIntegrationFindAnnotations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	color := "red"
 	name := "annoName"
 	t.Run("service identity has correct permissions to get annotations dashboards and query datasources", func(t *testing.T) {
@@ -717,7 +723,10 @@ func TestFindAnnotations(t *testing.T) {
 	})
 }
 
-func TestGetMetricRequest(t *testing.T) {
+func TestIntegrationGetMetricRequest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, nil, nil)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
@@ -756,7 +765,10 @@ func TestGetMetricRequest(t *testing.T) {
 	})
 }
 
-func TestBuildMetricRequest(t *testing.T) {
+func TestIntegrationBuildMetricRequest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeDashboardService := &dashboards.FakeDashboardService{}
 	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 

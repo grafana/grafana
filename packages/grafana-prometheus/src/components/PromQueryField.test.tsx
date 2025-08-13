@@ -28,8 +28,8 @@ const defaultProps = {
     languageProvider: {
       start: () => Promise.resolve([]),
       syntax: () => {},
-      getLabelKeys: () => [],
-      metrics: [],
+      // getLabelKeys: () => [],
+      retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource,
   query: {
@@ -78,6 +78,19 @@ describe('PromQueryField', () => {
 
     const bcButton = queryField.getByRole('button');
     expect(bcButton).toBeDisabled();
+  });
+
+  it('renders no metrics chooser if hidden by props', async () => {
+    const props = {
+      ...defaultProps,
+      hideMetricsBrowser: true,
+    };
+    const queryField = render(<PromQueryField {...props} />);
+
+    // wait for component to render
+    await screen.findByTestId('dummy-code-input');
+
+    expect(queryField.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('renders an initial hint if no data and initial hint provided', async () => {

@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
@@ -14,6 +14,11 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
+import {
+  StaticOptionsOrderType,
+  StaticOptionsType,
+  QueryVariableStaticOptions,
+} from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { VariableLegend } from './VariableLegend';
 import { VariableTextAreaField } from './VariableTextAreaField';
@@ -41,6 +46,10 @@ interface QueryVariableEditorFormProps {
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   allValue: string;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
+  staticOptions?: StaticOptionsType;
+  staticOptionsOrder?: StaticOptionsOrderType;
+  onStaticOptionsChange?: (staticOptions: StaticOptionsType) => void;
+  onStaticOptionsOrderChange?: (staticOptionsOrder: StaticOptionsOrderType) => void;
 }
 
 export function QueryVariableEditorForm({
@@ -64,6 +73,10 @@ export function QueryVariableEditorForm({
   onIncludeAllChange,
   allValue,
   onAllValueChange,
+  staticOptions,
+  staticOptionsOrder,
+  onStaticOptionsChange,
+  onStaticOptionsOrderChange,
 }: QueryVariableEditorFormProps) {
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
@@ -78,7 +91,7 @@ export function QueryVariableEditorForm({
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
-  const { t } = useTranslate();
+
   const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
   return (
@@ -106,7 +119,7 @@ export function QueryVariableEditorForm({
 
       <VariableTextAreaField
         defaultValue={regex ?? ''}
-        name="Regex"
+        name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
         description={
           <div>
             <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
@@ -143,6 +156,15 @@ export function QueryVariableEditorForm({
         onChange={onRefreshChange}
         refresh={refresh}
       />
+
+      {onStaticOptionsChange && onStaticOptionsOrderChange && (
+        <QueryVariableStaticOptions
+          staticOptions={staticOptions}
+          staticOptionsOrder={staticOptionsOrder}
+          onStaticOptionsChange={onStaticOptionsChange}
+          onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+        />
+      )}
 
       <VariableLegend>
         <Trans i18nKey="dashboard-scene.query-variable-editor-form.selection-options">Selection options</Trans>

@@ -1,13 +1,14 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/DataSourceHttpSettingsOverhaul.tsx
 import { DataSourceSettings } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Auth, AuthMethod, ConnectionSettings, convertLegacyAuthProps } from '@grafana/plugin-ui';
 import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 
 import { PromOptions } from '../types';
 
-import { docsTip, overhaulStyles } from './ConfigEditor';
+import { docsTip, overhaulStyles } from './shared/utils';
 
-export type DataSourceHttpSettingsProps = {
+type DataSourceHttpSettingsProps = {
   options: DataSourceSettings<PromOptions, {}>;
   onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void;
   secureSocksDSProxyEnabled: boolean;
@@ -34,7 +35,9 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
     case 'direct':
       urlTooltip = (
         <>
-          Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
+          <Trans i18nKey="grafana-prometheus.configuration.data-source-http-settings-overhaul.tooltip-browser-access-mode">
+            Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
+          </Trans>
           {docsTip()}
         </>
       );
@@ -42,14 +45,26 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
     case 'proxy':
       urlTooltip = (
         <>
-          Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
-          backend/server.
+          <Trans i18nKey="grafana-prometheus.configuration.data-source-http-settings-overhaul.tooltip-server-access-mode">
+            Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
+            backend/server.
+          </Trans>
           {docsTip()}
         </>
       );
       break;
     default:
-      urlTooltip = <>Specify a complete HTTP URL (for example http://your_server:8080) {docsTip()}</>;
+      urlTooltip = (
+        <>
+          <Trans
+            i18nKey="grafana-prometheus.configuration.data-source-http-settings-overhaul.tooltip-http-url"
+            values={{ exampleURL: 'http://your_server:8080' }}
+          >
+            Specify a complete HTTP URL (for example {'{{exampleURL}}'})
+          </Trans>
+          {docsTip()}
+        </>
+      );
   }
 
   return (

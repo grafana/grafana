@@ -6,8 +6,12 @@ describe('Trace view', () => {
   });
 
   it('Can lazy load big traces', () => {
-    cy.intercept('GET', '**/api/traces/trace', {
-      fixture: 'long-trace-response.json',
+    cy.intercept('POST', '**/api/ds/query*', (req) => {
+      if (!req.url.includes('ds_type=jaeger')) {
+        return;
+      }
+
+      req.reply({ fixture: 'long-trace-response-backend.json' });
     }).as('longTrace');
 
     e2e.pages.Explore.visit();
