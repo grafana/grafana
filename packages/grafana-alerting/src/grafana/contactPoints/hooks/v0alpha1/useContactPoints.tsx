@@ -15,6 +15,12 @@ type ListContactPointsHookResult = TypedUseQueryHookResult<
   ReturnType<typeof fetchBaseQuery>
 >;
 
+// Type for the options that can be passed to the hook
+// Based on the pattern used for mutation options in this file
+type UseListContactPointsOptions = Parameters<
+  typeof alertingAPI.endpoints.listReceiver.useQuery<ListContactPointsHookResult>
+>[1];
+
 /**
  * useListContactPoints is a hook that fetches a list of contact points
  *
@@ -22,12 +28,12 @@ type ListContactPointsHookResult = TypedUseQueryHookResult<
  * to ensure that the returned ContactPoints are correctly typed in the data.items array.
  *
  * It automatically uses the configured namespace for the query.
+ *
+ * @param queryOptions - Optional query options that will be passed to the underlying useListReceiverQuery hook.
+ *                      These options can include refetchOnFocus, refetchOnMountOrArgChange, skip, etc.
  */
-export function useListContactPoints() {
-  return alertingAPI.useListReceiverQuery<ListContactPointsHookResult>(
-    {},
-    { refetchOnFocus: true, refetchOnMountOrArgChange: true }
-  );
+export function useListContactPoints(queryOptions: UseListContactPointsOptions = {}) {
+  return alertingAPI.useListReceiverQuery<ListContactPointsHookResult>({}, queryOptions);
 }
 
 // type narrowing mutations requires us to define a few helper types

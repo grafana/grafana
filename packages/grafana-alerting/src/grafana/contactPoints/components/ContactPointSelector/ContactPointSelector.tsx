@@ -17,7 +17,10 @@ export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint>;
  * @TODO make ComboBox accept a ReactNode so we can use icons and such
  */
 function ContactPointSelector(props: ContactPointSelectorProps) {
-  const { currentData: contactPoints, isLoading } = useListContactPoints();
+  const { currentData: contactPoints, isLoading } = useListContactPoints({
+    refetchOnFocus: true,
+    refetchOnMountOrArgChange: true,
+  });
 
   // Create a mapping of options with their corresponding contact points
   const contactPointOptions = chain(contactPoints?.items)
