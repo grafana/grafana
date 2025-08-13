@@ -128,7 +128,7 @@ func cleanupSecureValues(v *objectForStorage, obj utils.GrafanaMetaAccessor, sec
 	return obj.SetSecureValues(secure)
 }
 
-// Mutation hook that will update secure values
+// Mutation hook that will delete secure values
 func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor) error {
 	secure, err := obj.GetSecureValues()
 	if err != nil || len(secure) == 0 {
