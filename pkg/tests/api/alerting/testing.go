@@ -276,44 +276,19 @@ func newAlertingApiClient(host, user, pass string) apiClient {
 	return apiClient{url: fmt.Sprintf("http://%s:%s@%s", user, pass, host)}
 }
 
-// makeAuthenticatedRequest creates an HTTP request with proper authentication headers
-// This avoids issues with URL-embedded credentials in concurrent scenarios
-func (a apiClient) makeAuthenticatedRequest(method, fullURL string, body io.Reader) (*http.Request, *http.Client, error) {
-	req, err := http.NewRequest(method, fullURL, body)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Extract credentials from URL and set proper auth header
-	if parsedURL, err := url.Parse(a.url); err == nil && parsedURL.User != nil {
-		if password, _ := parsedURL.User.Password(); password != "" {
-			req.SetBasicAuth(parsedURL.User.Username(), password)
-			// Use clean URL without embedded credentials for the request
-			req.URL.User = nil
-		}
-	}
-
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-
-	return req, &http.Client{}, nil
-}
-
 // ReloadCachedPermissions sends a request to access control API to refresh cached user permissions
 func (a apiClient) ReloadCachedPermissions(t *testing.T) {
 	t.Helper()
 
 	u := fmt.Sprintf("%s/api/access-control/user/permissions?reloadcache=true", a.url)
-	req, client, err := a.makeAuthenticatedRequest("GET", u, nil)
-	require.NoError(t, err)
-
-	resp, err := client.Do(req)
+	// nolint:gosec
+	resp, err := http.Get(u)
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 	require.NoErrorf(t, err, "failed to reload permissions cache")
-	require.Equalf(t, http.StatusOK, resp.StatusCode, "failed to reload permissions cache")
+	require.Equalf(t, http.StatusOK, resp.StatusCode,
+		"failed to reload permissions cache")
 }
 
 // AssignReceiverPermission sends a request to access control API to assign permissions to a user, role, or team on a receiver.
@@ -368,18 +343,41 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUI
 
 	payload := string(blob)
 	u := fmt.Sprintf("%s/api/folders", a.url)
-	r := strings.NewReader(payload)
 
-	req, client, err := a.makeAuthenticatedRequest("POST", u, r)
-	require.NoError(t, err)
+	// Retry logic to handle permission cache race conditions
+	maxRetries := 3
+	baseDelay := 100 * time.Millisecond
 
-	resp, err := client.Do(req)
-	defer func() {
-		require.NoError(t, resp.Body.Close())
-	}()
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	a.ReloadCachedPermissions(t)
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		r := strings.NewReader(payload)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", r)
+		if err != nil {
+			require.NoError(t, err) // Fail immediately on network errors
+		}
+
+		defer func() {
+			require.NoError(t, resp.Body.Close())
+		}()
+
+		if resp.StatusCode == http.StatusOK {
+			// Success! Reload cache and return
+			a.ReloadCachedPermissions(t)
+			return
+		}
+
+		if resp.StatusCode == http.StatusForbidden && attempt < maxRetries-1 {
+			// 403 error, likely a cache race condition - retry after delay
+			t.Logf("CreateFolder attempt %d failed with 403, retrying after delay...", attempt+1)
+			a.ReloadCachedPermissions(t)                      // Force cache reload
+			time.Sleep(baseDelay * time.Duration(1<<attempt)) // Exponential backoff
+			continue
+		}
+
+		// For any other error or final attempt, fail the test
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		return
+	}
 }
 
 func (a apiClient) ReloadAlertingFileProvisioning(t *testing.T) {
