@@ -73,12 +73,12 @@ org-example-app = explore 50
 /a/org-example-app/logs = alerting 75
 ```
 
-## Understanding page paths
+## Find page paths
 
-To move individual pages, you need to know their paths. Page paths in app plugins follow this format:
-`/a/PLUGIN_ID/PAGE_PATH`
+To move individual pages you need to know their paths. To identify a plugin page path: 
 
-You can identify a plugin page path by visiting the page in the browser and observing the URL in the address bar.
+- Visit the page in the browser and check the URL in the address bar.
+- Page paths in app plugins follow the format `/a/PLUGIN_ID/PAGE_PATH`
 
 ## Troubleshooting
 
