@@ -24,7 +24,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Button, Collapse, Modal, RadioButtonGroup, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, Combobox, ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';
 
@@ -200,6 +200,7 @@ export const LogLineContext = memo(
         return;
       }
       if (!initialized) {
+        console.log('innitializing');
         Promise.all([loadMore('above', log), loadMore('below', log)]).then(() => {});
         setInitialized(true);
       }
@@ -253,16 +254,16 @@ export const LogLineContext = memo(
     }, [contextQuery, dispatch, log.dataFrame.refId, log.datasourceType, log.uid, onClose, timeRange]);
 
     const handleTimeWindowChange = useCallback(
-      (windowSize: string) => {
+      (option: ComboboxOption<string>) => {
         if (logOptionsStorageKey) {
-          store.set(`${logOptionsStorageKey}.contextTimeWindow`, windowSize);
+          store.set(`${logOptionsStorageKey}.contextTimeWindow`, option.value);
         }
-        setTimeWindow(parseInt(windowSize, 10));
+        setTimeWindow(parseInt(option.value, 10));
         setAboveLogs([]);
         setBelowLogs([]);
         setInitialized(false);
         reportInteraction('logs_log_line_context_time_window_change', {
-          windowSize,
+          window_size: option.value,
         });
       },
       [logOptionsStorageKey]
@@ -316,11 +317,26 @@ export const LogLineContext = memo(
         </Collapse>
         <div className={styles.controls}>
           {log.datasourceType === 'loki' && (
-            <RadioButtonGroup
-              options={getTimeWindowOptions()}
-              value={timeWindow.toString()}
-              onChange={handleTimeWindowChange}
-            />
+            <Stack>
+              <InlineLabel
+                htmlFor="time-window-control"
+                tooltip={t(
+                  'logs.log-line-context.time-window-tooltip',
+                  'Amount of time before and after the referenced log'
+                )}
+                width="auto"
+              >
+                {t('logs.log-line-context.time-window-label', 'Context time window')}
+              </InlineLabel>
+              <Combobox
+                id="time-window-control"
+                options={getTimeWindowOptions()}
+                onChange={handleTimeWindowChange}
+                value={timeWindow.toString()}
+                minWidth={5}
+                width="auto"
+              />
+            </Stack>
           )}
           <Button variant="secondary" onClick={onScrollCenterClick}>
             <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
@@ -498,7 +514,7 @@ const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
 };
 
 function getTimeWindowOptions() {
-  const intervals = [100, 500, 1000, 5000, 30000, 60000, 30000, 1800000, 3600000, 7200000];
+  const intervals = [100, 500, 1000, 5000, 30000, 60000, 300000, 1800000, 3600000, 7200000];
   return intervals.map((interval) => ({
     label: formattedValueToString(getValueFormat('ms')(interval)),
     value: interval.toString(),
