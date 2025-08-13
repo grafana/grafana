@@ -405,6 +405,24 @@ describe('AzureMonitor ResourcePicker', () => {
   });
 
   describe('filters', () => {
+    beforeEach(() => {
+      config.featureToggles.azureResourcePickerUpdates = true;
+    });
+    it('should not render filters if feature toggle disabled', async () => {
+      config.featureToggles.azureResourcePickerUpdates = false;
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
+
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.resourcePicker.filters.subscription.input)
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input)
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.resourcePicker.filters.location.input)
+      ).not.toBeInTheDocument();
+    });
+
     it('should render subscription filter and load subscription options', async () => {
       await act(async () => render(<ResourcePicker {...defaultProps} />));
 
