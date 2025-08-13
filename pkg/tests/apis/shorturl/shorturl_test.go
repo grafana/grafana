@@ -36,6 +36,8 @@ var gvr = schema.GroupVersionResource{
 var RESOURCEGROUP = gvr.GroupResource().String()
 
 func TestIntegrationShortURL(t *testing.T) {
+	t.Skip("Skipping due to issue with https://github.com/grafana/grafana/pull/109267")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

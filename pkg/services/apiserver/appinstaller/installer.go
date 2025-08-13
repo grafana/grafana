@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -59,31 +58,27 @@ func AddToScheme(
 	return additionalGroupVersions, nil
 }
 
-// RegisterAdmission combines the existing admission control from builders.
-func RegisterAdmission(
-	existingAdmission admission.Interface,
+// RegisterAdmissionPlugins registers admission plugins for app installers
+func RegisterAdmissionPlugins(
+	ctx context.Context,
 	appInstallers []appsdkapiserver.AppInstaller,
-) (admission.Interface, error) {
-	controllers := []admission.Interface{}
+	options *grafanaapiserveroptions.Options,
+) error {
+	logger := logging.FromContext(ctx)
 
 	for _, installer := range appInstallers {
-		factory := installer.AdmissionPlugin()
-		if factory == nil {
-			continue
+		plugin := installer.AdmissionPlugin()
+		if plugin != nil {
+			md := installer.ManifestData()
+			if md == nil {
+				return fmt.Errorf("manifest is not initialized for installer for GroupVersions %v", installer.GroupVersions())
+			}
+			pluginName := md.AppName + " admission"
+			options.RecommendedOptions.Admission.Plugins.Register(pluginName, plugin)
+			logger.Info("Registered admission plugin", "app", md.AppName)
 		}
-
-		admissionInterface, err := factory(nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create admission plugin: %w", err)
-		}
-		controllers = append(controllers, admissionInterface)
 	}
-
-	if existingAdmission != nil {
-		controllers = append(controllers, existingAdmission)
-	}
-
-	return admission.NewChainHandler(controllers...), nil
+	return nil
 }
 
 type AuthorizerRegistrar interface {
