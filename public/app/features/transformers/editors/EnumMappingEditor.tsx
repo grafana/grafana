@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { DataFrame, EnumFieldConfig, GrafanaTheme2 } from '@grafana/data';
 import { ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { Button, HorizontalGroup, InlineFieldRow, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import EnumMappingRow from './EnumMappingRow';
 
@@ -119,8 +119,8 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
   };
 
   return (
-    <InlineFieldRow>
-      <HorizontalGroup>
+    <Stack direction="column" rowGap={0.5}>
+      <Stack>
         <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.button}>
           <Trans i18nKey="transformers.enum-mapping-editor.generate-enum-values-from-data">
             Generate enum values from data
@@ -129,9 +129,8 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
         <Button size="sm" icon="plus" onClick={() => onAddEnumRow()} className={styles.button}>
           <Trans i18nKey="transformers.enum-mapping-editor.add-enum-value">Add enum value</Trans>
         </Button>
-      </HorizontalGroup>
-
-      <VerticalGroup>
+      </Stack>
+      <Stack>
         <table className={styles.compactTable}>
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="sortable-enum-config-mappings" direction="vertical">
@@ -159,8 +158,8 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
             </Droppable>
           </DragDropContext>
         </table>
-      </VerticalGroup>
-    </InlineFieldRow>
+      </Stack>
+    </Stack>
   );
 };
 
