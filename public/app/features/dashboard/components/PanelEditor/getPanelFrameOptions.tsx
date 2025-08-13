@@ -107,6 +107,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addCategory(
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.get-panel-frame-category.title.panel-links', 'Panel links'),
+        id: 'Panel links',
         isOpenDefault: false,
         itemsCount: panel.links?.length,
       }).addItem(
