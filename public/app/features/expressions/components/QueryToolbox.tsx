@@ -81,9 +81,11 @@ export const QueryToolbox = ({ onFormatCode, onExpand, isExpanded, query }: Quer
           tooltip={t('expressions.query-toolbox.tooltip-copy-query', 'Copy query')}
           variant={showCopySuccess ? 'primary' : 'secondary'}
         />
-        <Tooltip content={t('expressions.query-toolbox.tooltip-run-query', 'Hit ctrl/cmd+enter to run query')}>
-          <Icon name="keyboard" />
-        </Tooltip>
+        {!isExpanded && (
+          <Tooltip content={t('expressions.query-toolbox.tooltip-run-query', 'Hit ctrl/cmd+enter to run query')}>
+            <Icon name="keyboard" />
+          </Tooltip>
+        )}
       </Stack>
     </div>
   );

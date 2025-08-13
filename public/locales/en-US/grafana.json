@@ -7499,7 +7499,7 @@
     },
     "sql-expr": {
       "button-run-query": "Run query",
-      "modal-title": "SQL Editor"
+      "modal-title": "SQL Editor",
       "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
     },
     "threshold": {
