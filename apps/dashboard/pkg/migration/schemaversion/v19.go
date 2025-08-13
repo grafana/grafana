@@ -86,8 +86,8 @@ func upgradePanelLink(link map[string]interface{}) map[string]interface{} {
 
 	result := map[string]interface{}{
 		"url":         url,
-		"title":       getStringValue(link, "title"),
-		"targetBlank": getBoolValue(link, "targetBlank"),
+		"title":       GetStringValue(link, "title"),
+		"targetBlank": GetBoolValue(link, "targetBlank"),
 	}
 
 	return result
@@ -113,11 +113,11 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 	// Add query parameters
 	params := []string{}
 
-	if getBoolValue(link, "keepTime") {
+	if GetBoolValue(link, "keepTime") {
 		params = append(params, "$__url_time_range")
 	}
 
-	if getBoolValue(link, "includeVars") {
+	if GetBoolValue(link, "includeVars") {
 		params = append(params, "$__all_variables")
 	}
 
@@ -156,20 +156,4 @@ func slugifyForURL(name string) string {
 		return -1
 	}, result)
 	return result
-}
-
-// getStringValue safely extracts a string value from a map
-func getStringValue(m map[string]interface{}, key string) string {
-	if v, ok := m[key].(string); ok {
-		return v
-	}
-	return ""
-}
-
-// getBoolValue safely extracts a boolean value from a map
-func getBoolValue(m map[string]interface{}, key string) bool {
-	if v, ok := m[key].(bool); ok {
-		return v
-	}
-	return false
 }
