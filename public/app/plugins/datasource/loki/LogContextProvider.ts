@@ -181,8 +181,6 @@ export class LogContextProvider {
             to: timestamp,
           };
 
-    console.log(queryDirection, range.from, range.to);
-
     return {
       query,
       range: {
