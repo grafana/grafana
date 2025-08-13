@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,7 +30,7 @@ import (
 
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
-	ListAlertRulesStore
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
 }
 
 type RuleGroupAccessControlService interface {
@@ -240,7 +241,7 @@ type RuleGroupStatusesOptions struct {
 }
 
 type ListAlertRulesStore interface {
-	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesByGroupQuery) (ngmodels.RulesGroup, string, error)
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
@@ -475,24 +476,15 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	receiverName := opts.Query.Get("receiver_name")
 
-	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
-	nextToken := opts.Query.Get("group_next_token")
-
-	if maxGroups == 0 {
-		return ruleResponse
+	alertRuleQuery := ngmodels.ListAlertRulesQuery{
+		OrgID:         opts.OrgID,
+		NamespaceUIDs: namespaceUIDs,
+		DashboardUID:  dashboardUID,
+		PanelID:       panelID,
+		RuleGroups:    ruleGroups,
+		ReceiverName:  receiverName,
 	}
-
-	byGroupQuery := ngmodels.ListAlertRulesByGroupQuery{
-		OrgID:              opts.OrgID,
-		GroupLimit:         maxGroups,
-		GroupContinueToken: nextToken,
-		NamespaceUIDs:      namespaceUIDs,
-		DashboardUID:       dashboardUID,
-		PanelID:            panelID,
-		RuleGroups:         ruleGroups,
-		ReceiverName:       receiverName,
-	}
-	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
+	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
@@ -506,9 +498,31 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ruleNamesSet[rn] = struct{}{}
 	}
 
+	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
+	nextToken := opts.Query.Get("group_next_token")
+	if nextToken != "" {
+		if _, err := base64.URLEncoding.DecodeString(nextToken); err != nil {
+			nextToken = ""
+		}
+	}
+
 	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
+	var newToken string
+	foundToken := false
 	for _, rg := range groupedRules {
+		if nextToken != "" && !foundToken {
+			if !tokenGreaterThanOrEqual(getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
+				continue
+			}
+			foundToken = true
+		}
+
+		if maxGroups > -1 && len(ruleResponse.Data.RuleGroups) == int(maxGroups) {
+			newToken = getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
+			break
+		}
+
 		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
@@ -532,7 +546,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		}
 	}
 
-	ruleResponse.Data.NextToken = continueToken
+	ruleResponse.Data.NextToken = newToken
 
 	// Only return Totals if there is no pagination
 	if maxGroups == -1 {
@@ -540,6 +554,18 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	}
 
 	return ruleResponse
+}
+
+func getRuleGroupNextToken(namespace, group string) string {
+	return base64.URLEncoding.EncodeToString([]byte(namespace + "/" + group))
+}
+
+// Returns true if tokenA >= tokenB
+func tokenGreaterThanOrEqual(tokenA string, tokenB string) bool {
+	decodedTokenA, _ := base64.URLEncoding.DecodeString(tokenA)
+	decodedTokenB, _ := base64.URLEncoding.DecodeString(tokenB)
+
+	return string(decodedTokenA) >= string(decodedTokenB)
 }
 
 type ruleGroup struct {

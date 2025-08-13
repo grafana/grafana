@@ -52,7 +52,7 @@
       "button-use-query": "Utiliser cette requête",
       "label-categories": "Catégories",
       "label-query-results": "Résultats de la requête : {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Impossible d’afficher toutes les catégories",
       "placeholder-all-categories": "Toutes les catégories",
       "placeholder-search-logs": "Rechercher des requêtes de journaux",
       "text-loading": "Chargement en cours..."
@@ -166,8 +166,8 @@
       "tooltip-limit": "Limitez le nombre de lignes renvoyées (la valeur par défaut est 1 000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Voulez-vous vraiment passer aux journaux de base ?",
+      "confirmText-confirm": "Confirmer",
       "description-basic-logs-queries": "Les requêtes de journaux de base entraînent des coûts en fonction de la quantité de données analysées.",
       "label-logs": "Journaux",
       "title-basic-logs-queries": "Requêtes de journaux de base",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Bouton Lancer votre requête des journaux Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Passer en mode Builder supprimera votre requête KQL actuelle et réinitialisera l’éditeur KQL. Voulez-vous continuer ?",
+      "body-switching-to-kql": "Passer en mode KQL supprimera vos paramètres Builder actuels. Voulez-vous continuer ?",
       "button-kick-start-your-query": "Lancer votre requête",
       "button-run-query": "Exécuter la requête",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Passer en mode {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Builder",
+        "label-kql": "KQL"
       },
       "label-service": "Service",
       "placeholder-service": "Service...",

@@ -30,6 +30,8 @@ const (
 	LabelJobClaim = "provisioning.grafana.app/claim"
 	// LabelRepository contains the repository name as a label. This allows for label selectors to find the archived version of a job.
 	LabelRepository = "provisioning.grafana.app/repository"
+	// LabelJobOriginalUID contains the Job's original uid as a label. This allows for label selectors to find the archived version of a job.
+	LabelJobOriginalUID = "provisioning.grafana.app/original-uid"
 )
 
 var (

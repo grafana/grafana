@@ -242,6 +242,8 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
+| [Pill](#pill)                             | Displays each item in a comma-separated string in a colored block. |
+| [Markdown + HTML](#markdown--html)        | Displays rich markdown or HTML content. |
 | [Image](#image)                           | Displays an image when the value is a URL or a base64 encoded image. |
 | [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
 <!-- prettier-ignore-end -->
@@ -358,7 +360,37 @@ This enables value inspection from table cells.
 When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.
 
 Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
-However, you can switch back and forth between tabs
+However, you can switch back and forth between tabs.
+
+#### Pill
+
+The **Pill** cell type displays each item in a comma-separated string in a colored block.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pills-v12.1.png" max-width="750px" alt="Table using the pill cell type" >}}
+
+The colors applied to each piece of text are maintained throughout the table.
+For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
+Pill cells also support text wrapping.
+
+The following data formats are supported for the pill cell type:
+
+- Comma-separated values (`cows,chickens,goats`)
+- JSON arrays of uniform (`(["cows","chickens","goats"])`) or mixed (`[1,2,3,"foo",42,"bar"]`) types
+
+#### Markdown + HTML
+
+The **Markdown + HTML** cell type displays rich Markdown or HTML content, rendered using the
+[GitHub-Flavored Markdown](https://github.github.com/gfm/) spec. This is useful if you need to display
+customized, pre-formatted information alongside tabular data, such as formatted strings,
+lists of links, or other dynamic cases.
+
+For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize
+dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
+also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
+Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
+
+By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
+in these cells if the [`disable_sanitize_html`](../../../setup-grafana/configure-grafana/_index.md#disable_sanitize_html) option is set to true for your Grafana instance.
 
 #### Image
 

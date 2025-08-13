@@ -67,11 +67,14 @@ export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
 export const AnnoKeyDashboardSnapshotOriginalUrl = 'grafana.app/dashboard-snapshot-original-url';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
-
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
+
+/** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
+/** Not intended to be used in production, we will be removing this in short-term future */
+export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -89,6 +92,10 @@ type GrafanaAnnotations = {
   [AnnoKeySourcePath]?: string;
   [AnnoKeySourceChecksum]?: string;
   [AnnoKeySourceTimestamp]?: string;
+
+  /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
+  /** Not intended to be used in production, we will be removing this in short-term future */
+  [AnnoReloadOnParamsChange]?: boolean;
 };
 
 // Annotations provided by the front-end client
