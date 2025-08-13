@@ -437,8 +437,7 @@ describe('AzureMonitor ResourcePicker', () => {
     });
 
     it('should render resource type filter for metrics query type', async () => {
-      const metricsProps = { ...defaultProps, queryType: 'metrics' as ResourcePickerQueryType };
-      await act(async () => render(<ResourcePicker {...metricsProps} />));
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
 
       await waitFor(() => {
         expect(defaultProps.datasource.getMetricNamespaces).toHaveBeenCalled();
@@ -449,8 +448,7 @@ describe('AzureMonitor ResourcePicker', () => {
     });
 
     it('should not render resource type filter for logs query type', async () => {
-      const logsProps = { ...defaultProps, queryType: 'logs' as ResourcePickerQueryType };
-      await act(async () => render(<ResourcePicker {...logsProps} />));
+      await act(async () => render(<ResourcePicker {...defaultProps} />));
 
       const resourceTypeFilter = screen.queryByTestId(
         selectors.components.queryEditor.resourcePicker.filters.type.input
@@ -526,10 +524,9 @@ describe('AzureMonitor ResourcePicker', () => {
 
     it('should call fetchFiltered when resource type filter changes for metrics', async () => {
       const user = userEvent.setup();
-      const metricsProps = { ...defaultProps, queryType: 'metrics' as ResourcePickerQueryType };
       const mockFetchFiltered = jest.spyOn(resourcePickerData, 'fetchFiltered');
 
-      await act(async () => render(<ResourcePicker {...metricsProps} />));
+      await act(async () => render(<ResourcePicker {...defaultProps} queryType="metrics" />));
 
       const typeFilter = await screen.getByTestId(selectors.components.queryEditor.resourcePicker.filters.type.input);
       await act(async () => {
