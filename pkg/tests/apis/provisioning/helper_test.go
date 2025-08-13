@@ -421,14 +421,16 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 			continue
 		}
 
+		// Calculate new path for nested objects
+		newPath := path
+		if path != "" {
+			newPath = path + "/" + key
+		} else {
+			newPath = key
+		}
+
 		switch v := value.(type) {
 		case map[string]interface{}:
-			newPath := path
-			if path != "" {
-				newPath = path + "/" + key
-			} else {
-				newPath = key
-			}
 			t.Logf("%s├── %s/", prefix, key)
 			h.logRepositoryObject(t, v, prefix+"  ", newPath)
 		case []interface{}:
@@ -438,7 +440,7 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 				for i, item := range v {
 					if itemMap, ok := item.(map[string]interface{}); ok {
 						t.Logf("%s├── item %d:", prefix, i+1)
-						h.logRepositoryObject(t, itemMap, prefix+"  ", path)
+						h.logRepositoryObject(t, itemMap, prefix+"  ", newPath)
 					}
 				}
 			}
