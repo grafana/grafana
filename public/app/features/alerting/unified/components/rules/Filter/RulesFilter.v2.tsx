@@ -1,16 +1,14 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import {
   Box,
   Button,
   Combobox,
-  ComboboxOption,
   FilterInput,
   Icon,
   Input,
@@ -23,20 +21,20 @@ import {
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
-import { GrafanaPromRuleGroupDTO, PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackFilterButtonApplyClick, trackFilterButtonClearClick, trackFilterButtonClick } from '../../../Analytics';
-import { alertRuleApi } from '../../../api/alertRuleApi';
-import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
-import { prometheusApi } from '../../../api/prometheusApi';
-import { useGetLabelsFromDataSourceName } from '../../../components/rule-editor/useAlertRuleSuggestions';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
 import { PopupCard } from '../../HoverCard';
 
 import { RulesFilterProps } from './RulesFilter';
 import { RulesViewModeSelector } from './RulesViewModeSelector';
+import {
+  useAlertingDataSourceOptions,
+  useLabelOptions,
+  useNamespaceAndGroupOptions,
+} from './useRuleFilterAutocomplete';
 import {
   emptyAdvancedFilters,
   formAdvancedFiltersToRuleFilter,
@@ -82,7 +80,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
-  const { setValue, getValues, handleSubmit } = useForm<SearchQueryForm>({
+  const { setValue, watch, getValues, handleSubmit } = useForm<SearchQueryForm>({
     defaultValues: {
       query: searchQuery,
     },
@@ -180,7 +178,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
                 const parsedFilter = getSearchFilterFromQuery(currentQuery);
                 updateFilters(parsedFilter);
               }}
-              value={getValues('query')}
+              value={watch('query')}
             />
           </Box>
           {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
@@ -243,180 +241,13 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
   const defaultValues = searchQueryToDefaultValues(filterState);
 
   // Fetch namespace and group data from all sources (optimized for filter UI)
-  const { currentData: grafanaPromRulesResponse, isLoading: isLoadingGrafanaPromRules } =
-    prometheusApi.endpoints.getGrafanaGroups.useQuery({
-      limitAlerts: 0, // Don't fetch alert instances, only rule metadata
-      groupLimit: 1000, // Limit to reasonable number for UI
-    });
+  const { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder } =
+    useNamespaceAndGroupOptions();
 
-  // Transform Grafana groups to namespace structure
-  const grafanaPromRules = useMemo(() => {
-    if (!grafanaPromRulesResponse?.data?.groups) {
-      return [];
-    }
-
-    const namespaceMap = new Map<string, { name: string; groups: GrafanaPromRuleGroupDTO[] }>();
-    grafanaPromRulesResponse.data.groups.forEach((group) => {
-      const namespaceName = group.file || 'default';
-      if (!namespaceMap.has(namespaceName)) {
-        namespaceMap.set(namespaceName, { name: namespaceName, groups: [] });
-      }
-      namespaceMap.get(namespaceName)!.groups.push(group);
-    });
-
-    return Array.from(namespaceMap.values());
-  }, [grafanaPromRulesResponse]);
-
-  const { isLoading: isLoadingGrafanaRulerRules } = alertRuleApi.endpoints.rulerRules.useQuery({
-    rulerConfig: GRAFANA_RULER_CONFIG,
-  });
-
-  const externalDataSources = useMemo(getRulesDataSources, []);
-
-  const externalPromRulesQueries = externalDataSources.map((ds) =>
-    prometheusApi.endpoints.getGroups.useQuery({
-      ruleSource: { uid: ds.uid },
-      excludeAlerts: true,
-      groupLimit: 500, // Limit to reasonable number for external sources
-    })
-  );
-
-  const isLoadingNamespaces = useMemo(() => {
-    return (
-      isLoadingGrafanaPromRules ||
-      isLoadingGrafanaRulerRules ||
-      externalPromRulesQueries.some((query) => query.isLoading)
-    );
-  }, [isLoadingGrafanaPromRules, isLoadingGrafanaRulerRules, externalPromRulesQueries]);
-
-  // Create namespace options with better display names and grouping
-  const namespaceOptions = useMemo((): Array<ComboboxOption<string>> => {
-    const grafanaFolders: Array<ComboboxOption<string>> = [];
-    const externalNamespaces: Array<ComboboxOption<string>> = [];
-
-    // Add Grafana folders
-    grafanaPromRules.forEach((namespace) => {
-      grafanaFolders.push({
-        label: namespace.name,
-        value: namespace.name,
-        description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
-      });
-    });
-
-    // Add external data source namespaces
-    externalPromRulesQueries.forEach((query) => {
-      // Transform groups to unique namespaces
-      const namespaces = new Set<string>();
-      query.currentData?.data?.groups?.forEach((group) => {
-        namespaces.add(group.file || 'default');
-      });
-
-      namespaces.forEach((namespaceName) => {
-        // Handle file paths from external Prometheus data sources
-        if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
-          const filename = namespaceName.split('/').pop() || namespaceName;
-          const maxDescriptionLength = 100;
-          const truncatedDescription =
-            namespaceName.length > maxDescriptionLength
-              ? `${namespaceName.substring(0, maxDescriptionLength)}...`
-              : namespaceName;
-
-          externalNamespaces.push({
-            label: filename,
-            value: namespaceName,
-            description: truncatedDescription,
-          });
-        } else {
-          // For other external namespaces (like Mimir)
-          const maxLength = 50;
-          const maxDescriptionLength = 100;
-          const truncatedName =
-            namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
-          const truncatedDescription =
-            namespaceName.length > maxDescriptionLength
-              ? `${namespaceName.substring(0, maxDescriptionLength)}...`
-              : namespaceName;
-
-          externalNamespaces.push({
-            label: truncatedName,
-            value: namespaceName,
-            description: truncatedDescription,
-          });
-        }
-      });
-    });
-
-    // Sort each group and combine (folders first, then external namespaces)
-    // eslint-disable-next-line no-restricted-syntax
-    grafanaFolders.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
-    // eslint-disable-next-line no-restricted-syntax
-    externalNamespaces.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
-
-    return [...grafanaFolders, ...externalNamespaces];
-  }, [grafanaPromRules, externalPromRulesQueries]);
-
-  // Combine all group names
-  const allGroupNames = useMemo(() => {
-    const groupSet = new Set<string>();
-
-    // Add Grafana groups
-    grafanaPromRules.forEach((namespace) => {
-      namespace.groups.forEach((group) => groupSet.add(group.name));
-    });
-
-    // Add external data source groups
-    externalPromRulesQueries.forEach((query) => {
-      query.currentData?.data?.groups?.forEach((group) => {
-        groupSet.add(group.name);
-      });
-    });
-
-    return Array.from(groupSet).sort();
-  }, [grafanaPromRules, externalPromRulesQueries]);
-
-  const { labels: grafanaLabels, isLoading: isLoadingGrafanaLabels } =
-    useGetLabelsFromDataSourceName(GRAFANA_RULES_SOURCE_NAME);
+  const { labelOptions, isLoadingGrafanaLabels } = useLabelOptions();
 
   // Create label options for the multi-select dropdown
-  const labelOptions = useMemo((): Array<ComboboxOption<string>> => {
-    const infoOption: ComboboxOption<string> = {
-      label: t('label-dropdown-info', "Can't find your label? Enter it manually"),
-      value: '__GRAFANA_LABEL_DROPDOWN_INFO__',
-      infoOption: true,
-    };
-
-    const selectableOptions = Array.from(grafanaLabels.entries())
-      .flatMap(([key, values]) =>
-        Array.from(values).map((value: string) => {
-          const labelPair = `${key}=${value}`;
-          return { label: labelPair, value: labelPair };
-        })
-      )
-      .sort((a, b) => new Intl.Collator().compare(a.label, b.label));
-
-    return [...selectableOptions, infoOption];
-  }, [grafanaLabels]);
-
-  // Generate appropriate placeholder text
-  const namespacePlaceholder = useMemo(() => {
-    if (isLoadingNamespaces) {
-      return t('common.loading', 'Loading...');
-    }
-    if (namespaceOptions.length === 0) {
-      return t('alerting.rules-filter.no-namespaces', 'No folders available');
-    }
-    return t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
-  }, [isLoadingNamespaces, namespaceOptions.length]);
-
-  const groupPlaceholder = useMemo(() => {
-    if (isLoadingNamespaces) {
-      return t('common.loading', 'Loading...');
-    }
-    if (allGroupNames.length === 0) {
-      return t('alerting.rules-filter.no-groups', 'No groups available');
-    }
-    return t('grafana.select-group', 'Select group');
-  }, [isLoadingNamespaces, allGroupNames.length]);
+  const dataSourceOptions = useAlertingDataSourceOptions();
 
   // turn the filterState into form default values
   const { handleSubmit, reset, register, control } = useForm<AdvancedFilters>({
@@ -436,12 +267,6 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
   }, [filterState, reset]);
 
   const submitAdvancedFilters = handleSubmit(onSubmit);
-
-  const dataSourceOptions = useMemo(() => {
-    return getDataSourceSrv()
-      .getList({ alerting: true })
-      .map((ds: DataSourceInstanceSettings) => ({ label: ds.name, value: ds.name }));
-  }, []);
 
   return (
     <form
