@@ -190,6 +190,7 @@ export class DashboardGridItem
           ],
         }),
         key: getCloneKey(panelToRepeat.state.key!, index),
+        repeatSourceKey: panelToRepeat.state.key,
       };
       const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);

@@ -100,3 +100,17 @@ export function useHasClonedParents(scene: SceneObject): boolean {
 
   return useHasClonedParents(scene.parent);
 }
+
+export function isRepeatCloneOrChildOf(scene: SceneObject): boolean {
+  let obj: SceneObject | undefined = scene;
+
+  do {
+    if ('repeatSourceKey' in obj.state && obj.state.repeatSourceKey) {
+      return true;
+    }
+
+    obj = obj.parent;
+  } while (obj);
+
+  return false;
+}
