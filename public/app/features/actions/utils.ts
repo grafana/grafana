@@ -118,25 +118,30 @@ export const getActions = (
 
 /** @internal */
 export const buildActionRequest = (action: Action, replaceVariables: InterpolateFunction) => {
-  const url = new URL(getUrl(replaceVariables(action.fetch.url)));
+  const config = action[action.type];
+  if (!config) {
+    throw new Error('Action does not have the correct configuration');
+  }
+
+  const url = new URL(getUrl(replaceVariables(config.url)));
 
   const requestHeaders: Record<string, string> = {};
 
   let request: BackendSrvRequest = {
     url: url.toString(),
-    method: action.fetch.method,
+    method: config.method,
     data: getData(action, replaceVariables),
     headers: requestHeaders,
   };
 
-  if (action.fetch.headers) {
-    action.fetch.headers.forEach(([name, value]) => {
+  if (config.headers) {
+    config.headers.forEach(([name, value]) => {
       requestHeaders[replaceVariables(name)] = replaceVariables(value);
     });
   }
 
-  if (action.fetch.queryParams) {
-    action.fetch.queryParams?.forEach(([name, value]) => {
+  if (config.queryParams) {
+    config.queryParams?.forEach(([name, value]) => {
       url.searchParams.append(replaceVariables(name), replaceVariables(value));
     });
 
@@ -174,10 +179,19 @@ const getUrl = (endpoint: string) => {
 
 /** @internal */
 const getData = (action: Action, replaceVariables: InterpolateFunction) => {
-  let data: string | undefined = action.fetch.body ? replaceVariables(action.fetch.body) : '{}';
-  if (action.fetch.method === HttpRequestMethod.GET) {
+  const config = action[action.type];
+  if (!config) {
+    return '{}';
+  }
+
+  let data: string | undefined = config.body ? replaceVariables(config.body) : '{}';
+  if (config.method === HttpRequestMethod.GET) {
     data = undefined;
   }
 
   return data;
 };
+
+export enum SupportedDataSourceType {
+  Infinity = 'yesoreyeram-infinity-datasource',
+}

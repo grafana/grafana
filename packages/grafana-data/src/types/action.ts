@@ -1,5 +1,7 @@
 import { CSSProperties, ReactNode } from 'react';
 
+import { config } from '@grafana/runtime';
+
 import { SelectableValue } from './select';
 
 export enum ActionType {
@@ -12,8 +14,6 @@ type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
 export interface Action {
   type: ActionType;
   title: string;
-
-  // Options for the selected type
   [ActionType.Fetch]?: FetchOptions;
   [ActionType.Proxy]?: ProxyOptions;
   confirmation?: string;
@@ -44,7 +44,7 @@ export enum ActionVariableType {
   String = 'string',
 }
 
-interface FetchOptions {
+export interface FetchOptions {
   method: HttpRequestMethod;
   url: string;
   body?: string;
@@ -53,7 +53,7 @@ interface FetchOptions {
 }
 
 export interface ProxyOptions extends FetchOptions {
-  type: 'yesoreyeram-infinity-datasource'; // Infinity?
+  datasourceType: SupportedDataSourceTypes;
   datasourceUid: string;
 }
 
@@ -76,10 +76,23 @@ export const contentTypeOptions: SelectableValue[] = [
   { label: 'application/x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
 ];
 
+export const requestMethodOptions: SelectableValue[] = [
+  { label: 'Direct', value: ActionType.Fetch },
+  ...(config.featureToggles.vizActionsAuth
+    ? [
+        {
+          label: 'Proxy',
+          value: ActionType.Proxy,
+          description: 'Use configured datasource with authentication',
+        },
+      ]
+    : []),
+];
+
 export const defaultActionConfig: Action = {
   type: ActionType.Fetch,
   title: '',
-  fetch: {
+  [ActionType.Fetch]: {
     url: '',
     method: HttpRequestMethod.POST,
     body: '{}',
@@ -89,3 +102,7 @@ export const defaultActionConfig: Action = {
 };
 
 export type ActionVariableInput = { [key: string]: string };
+
+export enum SupportedDataSourceTypes {
+  Infinity = 'yesoreyeram-infinity-datasource',
+}

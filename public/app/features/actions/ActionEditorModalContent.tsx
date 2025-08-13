@@ -45,7 +45,7 @@ export const ActionEditorModalContent = ({
           onClick={() => {
             onSave(index, dirtyAction);
           }}
-          disabled={dirtyAction.title.trim() === '' || dirtyAction.fetch.url.trim() === ''}
+          disabled={dirtyAction.title.trim() === '' || !dirtyAction[dirtyAction.type]?.url?.trim()}
         >
           <Trans i18nKey="action-editor.modal.save-button">Save</Trans>
         </Button>

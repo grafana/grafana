@@ -836,6 +836,10 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
+  requestMethodOptions,
+  SupportedDataSourceTypes,
+  type FetchOptions,
+  type ProxyOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {
