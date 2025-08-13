@@ -57,7 +57,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	for k, val := range secure {
 		before := previous[k]
 		if val.Name == "" {
-			if before.Name != "" {
+			if before.Name != "" { // implicitly delete previous secure value if the same field no longer references it
 				v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
 				delete(previous, k)
 			}
