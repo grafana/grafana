@@ -37,7 +37,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 	t.Run("move single file", func(t *testing.T) {
 		helper.DebugState(t, repo, "BEFORE MOVE SINGLE FILE")
-		
+
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
@@ -46,7 +46,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			},
 		}
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
-		
+
 		helper.DebugState(t, repo, "AFTER MOVE SINGLE FILE")
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
@@ -85,7 +85,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 	t.Run("move multiple files and folder", func(t *testing.T) {
 		helper.DebugState(t, repo, "BEFORE MOVE MULTIPLE FILES")
-		
+
 		// Create move job for multiple files including a folder
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
@@ -95,7 +95,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			},
 		}
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
-		
+
 		helper.DebugState(t, repo, "AFTER MOVE MULTIPLE FILES")
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
@@ -136,7 +136,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 	t.Run("move non-existent file", func(t *testing.T) {
 		helper.DebugState(t, repo, "BEFORE MOVE NON-EXISTENT FILE")
-		
+
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
