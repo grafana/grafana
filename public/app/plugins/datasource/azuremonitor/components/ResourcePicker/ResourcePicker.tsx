@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import { uniqBy } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { useEffectOnce } from 'react-use';
@@ -205,6 +206,19 @@ const ResourcePicker = ({
       onApply(queryType === 'logs' ? internalSelected : parseMultipleResourceDetails(internalSelected));
     }
   }, [queryType, internalSelected, onApply]);
+
+  // Once the azureResourcePickerUpdates feature toggle is removed this will replace handleApply above
+  const handleApplyWithLocalStorage = useCallback(
+    (recentResources: ResourceRowGroup, onRecentResourcesSave: (value: ResourceRowGroup) => void) => {
+      if (internalSelected) {
+        const resourcesToSave = uniqBy([...selectedRows, ...recentResources], 'id');
+
+        onRecentResourcesSave(resourcesToSave.slice(0, 30));
+        onApply(queryType === 'logs' ? internalSelected : parseMultipleResourceDetails(internalSelected));
+      }
+    },
+    [queryType, internalSelected, selectedRows, onApply]
+  );
 
   const handleSearch = useCallback(
     async (searchWord: string) => {
