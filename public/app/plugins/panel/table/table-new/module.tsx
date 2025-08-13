@@ -124,10 +124,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         })
         .addFieldNamePicker({
           path: 'tooltip.field',
-          name: t('table-new.name-tooltip-by-field', 'Tooltip by field'),
+          name: t('table-new.name-tooltip-from-field', 'Tooltip from field'),
           description: t(
-            'table-new.description-tooltip-by-field',
-            'Render the value from a sibling field in a tooltip when hovering a cell in this field.'
+            'table-new.description-tooltip-from-field',
+            'Render a cell from a field (hidden or visible) in a tooltip'
           ),
           category: cellCategory,
         })
