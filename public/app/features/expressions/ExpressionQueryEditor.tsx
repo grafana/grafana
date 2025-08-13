@@ -118,7 +118,16 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
 
       case ExpressionQueryType.sql:
-        return <SqlExpr onChange={onChange} query={query} refIds={refIds} queries={queries} metadata={props} />;
+        return (
+          <SqlExpr
+            onChange={onChange}
+            query={query}
+            refIds={refIds}
+            queries={queries}
+            metadata={props}
+            onRunQuery={onRunQuery}
+          />
+        );
     }
   };
 
