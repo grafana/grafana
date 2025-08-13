@@ -82,14 +82,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		case string(dataquery.TempoQueryTypeTraceId):
 			res, err = s.getTrace(ctx, req.PluginContext, q)
 			if err != nil {
-				ctxLogger.Error("Error processing query", "error", err)
+				ctxLogger.Error("Error processing TraceId query", "error", err)
 				return response, err
 			}
 
 		case string(dataquery.TempoQueryTypeTraceql):
 			res, err = s.runTraceQlQuery(ctx, req.PluginContext, q)
 			if err != nil {
-				ctxLogger.Error("Error processing query", "error", err)
+				ctxLogger.Error("Error processing TraceQL query", "error", err)
 				return response, err
 			}
 
