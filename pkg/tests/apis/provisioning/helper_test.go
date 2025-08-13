@@ -423,14 +423,14 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 
 		switch v := value.(type) {
 		case map[string]interface{}:
-			fullPath := path
+			newPath := path
 			if path != "" {
-				fullPath = path + "/" + key
+				newPath = path + "/" + key
 			} else {
-				fullPath = key
+				newPath = key
 			}
 			t.Logf("%s├── %s/", prefix, key)
-			h.logRepositoryObject(t, v, prefix+"  ", fullPath)
+			h.logRepositoryObject(t, v, prefix+"  ", newPath)
 		case []interface{}:
 			// Handle lists (like items array)
 			if key == "items" && len(v) > 0 {
@@ -451,24 +451,6 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 	}
 }
 
-// logRepositoryContents recursively logs repository file structure
-func (h *provisioningTestHelper) logRepositoryContents(t *testing.T, obj map[string]interface{}, prefix string) {
-	t.Helper()
-
-	if obj == nil {
-		return
-	}
-
-	for key, value := range obj {
-		switch v := value.(type) {
-		case map[string]interface{}:
-			t.Logf("  %sDIR: %s/", prefix, key)
-			h.logRepositoryContents(t, v, prefix+"  ")
-		default:
-			t.Logf("  %sFILE: %s", prefix, key)
-		}
-	}
-}
 
 type TestRepo struct {
 	Name               string
