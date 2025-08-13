@@ -36,7 +36,7 @@ interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
   basicLogsEnabled: boolean;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
-  schema: EngineSchema;
+  schema?: EngineSchema;
   templateVariableOptions: SelectableValue<string>;
   datasource: Datasource;
   timeRange?: TimeRange;
