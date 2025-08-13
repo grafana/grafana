@@ -178,7 +178,8 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 
 Click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle.
-You can sort multiple columns by holding the `Shift` key and clicking the column name.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key (depending on your platform)
+and clicking the column name.
 
 {{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
