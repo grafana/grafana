@@ -1,0 +1,47 @@
+name: Scheduled Performance Tests
+
+on:
+  schedule:
+    - cron: "0 * * * *" # Run hourly
+  workflow_dispatch: # Allow manual triggering
+  push:
+    branches:
+      - jh/scheduled-perf-tests
+
+jobs:
+  performance-tests:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-x64
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@62722333225a1fae03ae27a63d638f9bc2176edb #get-vault-secrets-v1.2.0
+        with:
+          repo_secrets: |
+            PROMETHEUS_TOKEN=scheduled_perf_tests:prometheus_token
+            FSPERFBASELINE_USERNAME=scheduled_perf_tests:fsperfbaseline_username
+            FSPERFBASELINE_PASSWORD=scheduled_perf_tests:fsperfbaseline_password
+            FSPERF_USERNAME=scheduled_perf_tests:fsperf_username
+            FSPERF_PASSWORD=scheduled_perf_tests:fsperf_password
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Yarn install
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: yarn e2e:playwright --grep @performance
