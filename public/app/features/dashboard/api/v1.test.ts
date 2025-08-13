@@ -1,6 +1,6 @@
 import { GrafanaConfig, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoReloadOnParamsChange } from 'app/features/apiserver/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardWithAccessInfo } from './types';
@@ -199,6 +199,17 @@ describe('v1 dashboard API', () => {
     expect(dashboardDTO.meta.folderTitle).toBeUndefined();
     expect(dashboardDTO.meta.folderUrl).toBeUndefined();
     expect(dashboardDTO.meta.folderId).toBeUndefined();
+  });
+
+  it('should set reloadOnParamsChange to true if AnnoReloadOnParamsChange is present', async () => {
+    mockGet.mockResolvedValueOnce({
+      ...mockDashboardDto,
+      metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoReloadOnParamsChange]: true } },
+    });
+
+    const api = new K8sDashboardAPI();
+    const result = await api.getDashboardDTO('test');
+    expect(result.meta.reloadOnParamsChange).toBe(true);
   });
 
   describe('saveDashboard', () => {
