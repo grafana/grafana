@@ -57,6 +57,7 @@ export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermis
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
 export { usePluginUserStorage } from './utils/userStorage';
+export { useFavoriteDatasources } from './utils/useFavoriteDatasources';
 export { FolderPicker, setFolderPicker } from './components/FolderPicker';
 export {
   type CorrelationsService,
