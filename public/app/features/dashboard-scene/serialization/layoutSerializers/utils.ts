@@ -234,8 +234,8 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
   }
 
   // Otherwise try to infer datasource based on query kind (kind = ds type)
-  const defaultDatasource = config.bootData.settings.defaultDatasource;
-  const dsList = config.bootData.settings.datasources;
+  const defaultDatasource = config.defaultDatasource;
+  const dsList = config.datasources;
 
   // First check if the default datasource matches the query type
   if (dsList && dsList[defaultDatasource] && dsList[defaultDatasource].meta.id === queryKind) {

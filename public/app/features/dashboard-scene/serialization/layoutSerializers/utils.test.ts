@@ -9,35 +9,31 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    bootData: {
-      settings: {
-        defaultDatasource: 'default-ds-prometheus',
-        datasources: {
-          'default-ds-prometheus': {
-            uid: 'default-prometheus-uid',
-            name: 'Default Prometheus',
-            meta: { id: 'prometheus' },
-            type: 'datasource',
-          },
-          prometheus: {
-            uid: 'prometheus-uid',
-            name: 'Prometheus',
-            meta: { id: 'prometheus' },
-            type: 'datasource',
-          },
-          loki: {
-            uid: 'loki-uid',
-            name: 'Loki',
-            meta: { id: 'loki' },
-            type: 'datasource',
-          },
-          '-- Grafana --': {
-            uid: 'grafana',
-            name: 'Grafana',
-            meta: { id: 'grafana' },
-            type: 'datasource',
-          },
-        },
+    defaultDatasource: 'default-ds-prometheus',
+    datasources: {
+      'default-ds-prometheus': {
+        uid: 'default-prometheus-uid',
+        name: 'Default Prometheus',
+        meta: { id: 'prometheus' },
+        type: 'datasource',
+      },
+      prometheus: {
+        uid: 'prometheus-uid',
+        name: 'Prometheus',
+        meta: { id: 'prometheus' },
+        type: 'datasource',
+      },
+      loki: {
+        uid: 'loki-uid',
+        name: 'Loki',
+        meta: { id: 'loki' },
+        type: 'datasource',
+      },
+      '-- Grafana --': {
+        uid: 'grafana',
+        name: 'Grafana',
+        meta: { id: 'grafana' },
+        type: 'datasource',
       },
     },
     featureToggles: {
