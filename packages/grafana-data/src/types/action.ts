@@ -59,7 +59,6 @@ export interface ProxyOptions extends FetchOptions {
 
 export enum HttpRequestMethod {
   POST = 'POST',
-  PUT = 'PUT',
   GET = 'GET',
 }
 
