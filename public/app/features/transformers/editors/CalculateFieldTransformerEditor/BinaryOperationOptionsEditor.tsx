@@ -89,6 +89,14 @@ export const BinaryOperationOptionsEditor = (props: {
     });
   };
 
+  // if the operator is missing, set a default value
+  if (!binary?.operator) {
+    updateBinaryOptions({
+      ...binary!,
+      operator: ops[0].value,
+    });
+  }
+
   const onBinaryLeftChanged = (v: SelectableValue<string>) => {
     const vObject: BinaryValue = JSON.parse(v.value ?? '');
     // If no matcher, treat as fixed value
@@ -148,12 +156,7 @@ export const BinaryOperationOptionsEditor = (props: {
           />
         </InlineField>
         <InlineField>
-          <Select
-            className="width-4"
-            options={ops}
-            value={binary?.operator ?? ops[0].value}
-            onChange={onBinaryOperationChanged}
-          />
+          <Select className="width-4" options={ops} value={binary?.operator} onChange={onBinaryOperationChanged} />
         </InlineField>
         <InlineField>
           <Select
