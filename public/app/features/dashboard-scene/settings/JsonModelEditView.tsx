@@ -73,7 +73,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       // FIXME: We could avoid this call by storing the entire dashboard DTO as initial dashboard scene instead of only the spec and metadata
       const dto = await getDashboardAPI('v2').getDashboardDTO(result.uid);
       newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(dto.spec, dto.metadata);
@@ -84,7 +84,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         dashboard: jsonModel,
         meta: dashboard.state.meta,
       });
-      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(jsonModel, dashboard.state.meta);
@@ -93,12 +93,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
     this.setState({ jsonText: this.getJsonText() });
 
-    // Given we clone the state of the new dashboard scene, new objects from the state are not activated
-    // We need to force a dashboard deactivation otherwise we lost the URL sync, and there are probably
-    // Other silent errors we didn't notice yet
-    dashboard.activate();
-
-    // We also need to resume tracking changes since any subsequent edit won't be seen by the change handler
+    // We also need to resume tracking changes since the change handler won't see any later edit
     dashboard.resumeTrackingChanges();
   };
 
