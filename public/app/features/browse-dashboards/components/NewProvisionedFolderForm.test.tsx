@@ -222,25 +222,6 @@ describe('NewProvisionedFolderForm', () => {
     expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
   });
 
-  it('should validate folder name', async () => {
-    (validationSrv.validateNewFolderName as jest.Mock).mockRejectedValue(new Error('Folder name already exists'));
-
-    const { user } = setup();
-
-    const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
-    await user.clear(folderNameInput);
-    await user.type(folderNameInput, 'Existing Folder');
-
-    // Submit the form
-    const submitButton = screen.getByRole('button', { name: /^create$/i });
-    await user.click(submitButton);
-
-    // Wait for validation error to appear
-    await waitFor(() => {
-      expect(screen.getByText('Folder name already exists')).toBeInTheDocument();
-    });
-  });
-
   it('should validate branch name', async () => {
     const { user } = setup();
 

@@ -33,38 +33,6 @@ export function getFolderURL(uid: string) {
   return url;
 }
 
-// Invalid characters: anything not A–Z, a–z, 0–9, dash, underscore, or space
-const INVALID_CHAR_GLOBAL = /[^A-Za-z0-9\- _]/g;
-
-/**
- * Checks if the folder name contains invalid characters or extra spaces.
- * @returns true if the folder name has invalid characters or extra spaces, false otherwise.
- */
-export function hasFolderNameCharactersToReplace(folderName: string): boolean {
-  if (typeof folderName !== 'string') {
-    return false;
-  }
-  // True if formatting would change anything (handles tabs/newlines, extra spaces, etc.)
-  return formatFolderName(folderName) !== folderName;
-}
-/**
- * Formats the folder name by removing invalid characters and extra spaces. Currently used in creating git provisioned folders.
- * @param folderName The folder name to format.
- * @returns The formatted folder name.
- */
-export function formatFolderName(folderName?: string): string {
-  if (typeof folderName !== 'string') {
-    console.error('Invalid folder name type:', typeof folderName);
-    return '';
-  }
-
-  return folderName
-    .trim() // strip edges
-    .replace(INVALID_CHAR_GLOBAL, '') // remove disallowed chars (global!)
-    .replace(/ {2,}/g, ' ') // collapse multiple spaces to one
-    .replace(/^-+|-+$/g, ''); // strip leading/trailing hyphens
-}
-
 // Collect selected dashboard and folder from the DashboardTreeSelection
 // This is used to prepare the items for bulk delete operation.
 export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
