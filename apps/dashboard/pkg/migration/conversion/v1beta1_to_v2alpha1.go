@@ -131,13 +131,9 @@ func getBoolField(m map[string]interface{}, key string, defaultValue bool) bool 
 	return defaultValue
 }
 
-func getBoolPtr(m map[string]interface{}, key string) *bool {
-	if val, ok := m[key]; ok {
-		if b, ok := val.(bool); ok {
-			return &b
-		}
-	}
-	return nil
+// Helper function to create int64 pointer
+func int64Ptr(i int64) *int64 {
+	return &i
 }
 
 func getIntField(m map[string]interface{}, key string, defaultValue int) int {
@@ -154,29 +150,6 @@ func getIntField(m map[string]interface{}, key string, defaultValue int) int {
 		}
 	}
 	return defaultValue
-}
-
-func getUInt16Ptr(m map[string]interface{}, key string) *uint16 {
-	if val, ok := m[key]; ok {
-		switch v := val.(type) {
-		case int:
-			if v >= 0 && v <= 65535 {
-				u := uint16(v)
-				return &u
-			}
-		case float64:
-			if v >= 0 && v <= 65535 {
-				u := uint16(v)
-				return &u
-			}
-		case string:
-			if i, err := strconv.Atoi(v); err == nil && i >= 0 && i <= 65535 {
-				u := uint16(i)
-				return &u
-			}
-		}
-	}
-	return nil
 }
 
 func getUInt16Field(m map[string]interface{}, key string, defaultValue uint16) uint16 {
@@ -401,7 +374,7 @@ func convertToGridLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 		}
 
 		elements[elementName] = element
-		items = append(items, buildGridItemKind(panelMap, elementName, 0))
+		items = append(items, buildGridItemKind(panelMap, elementName, nil))
 	}
 
 	layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
@@ -448,7 +421,7 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 						element, name, err := buildElement(collapsedPanelMap)
 						if err == nil {
 							elements[name] = element
-							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, yOffsetInRows(collapsedPanelMap, legacyRowY)))
+							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, int64Ptr(yOffsetInRows(collapsedPanelMap, legacyRowY))))
 						}
 					}
 				}
@@ -469,14 +442,14 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 				if currentRow.Spec.Layout.GridLayoutKind != nil {
 					currentRow.Spec.Layout.GridLayoutKind.Spec.Items = append(
 						currentRow.Spec.Layout.GridLayoutKind.Spec.Items,
-						buildGridItemKind(panelMap, elementName, yOffsetInRows(panelMap, legacyRowY)),
+						buildGridItemKind(panelMap, elementName, int64Ptr(yOffsetInRows(panelMap, legacyRowY))),
 					)
 				}
 			} else {
 				// Create first row (hidden header)
 				legacyRowY = -1
 				gridItems := []dashv2alpha1.DashboardGridLayoutItemKind{
-					buildGridItemKind(panelMap, elementName, 0),
+					buildGridItemKind(panelMap, elementName, int64Ptr(0)),
 				}
 
 				hideHeader := true
@@ -600,7 +573,7 @@ func buildPanelKind(panelMap map[string]interface{}) (*dashv2alpha1.DashboardPan
 	return panelKind, nil
 }
 
-func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOverride int64) dashv2alpha1.DashboardGridLayoutItemKind {
+func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOverride *int64) dashv2alpha1.DashboardGridLayoutItemKind {
 	// Default grid position
 	x, y, width, height := int64(0), int64(0), int64(12), int64(8)
 
@@ -611,8 +584,9 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 		height = int64(getIntField(gridPos, "h", 8))
 	}
 
-	if yOverride != 0 {
-		y = yOverride
+	// Use yOverride when explicitly provided (including when it's 0)
+	if yOverride != nil {
+		y = *yOverride
 	}
 
 	item := dashv2alpha1.DashboardGridLayoutItemKind{
@@ -990,7 +964,7 @@ func buildVariableCurrent(current interface{}) dashv2alpha1.DashboardVariableOpt
 }
 
 // Helper function to build DataQuery kind
-func buildDataQueryKind(query interface{}, datasourceType, datasourceUID string) dashv2alpha1.DashboardDataQueryKind {
+func buildDataQueryKind(query interface{}, datasourceType string) dashv2alpha1.DashboardDataQueryKind {
 	var querySpec map[string]interface{}
 
 	switch q := query.(type) {
@@ -1045,7 +1019,7 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
 			Regex:            getStringField(varMap, "regex", ""),
-			Query:            buildDataQueryKind(varMap["query"], datasourceType, datasourceUID),
+			Query:            buildDataQueryKind(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
 	}
@@ -1654,7 +1628,7 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 	panelQuerySpec := dashv2alpha1.DashboardPanelQuerySpec{
 		RefId:  refId,
 		Hidden: hidden,
-		Query:  buildDataQueryKind(querySpec, queryDatasourceType, queryDatasourceUID),
+		Query:  buildDataQueryKind(querySpec, queryDatasourceType),
 	}
 
 	// // if panelQuerySpec.Query.Datasource is not set, set it to default datasource
