@@ -2,7 +2,7 @@ import { debounce } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
+import PageActionBar, { FilterCheckbox } from 'app/core/components/PageActionBar/PageActionBar';
 import { StoreState, useSelector, useDispatch } from 'app/types/store';
 
 import { setDataSourcesSearchQuery, setIsSortAscending } from '../state/reducers';
@@ -20,8 +20,13 @@ const sortOptions = [
   { label: 'Sort by Z–A', value: descendingSortValue },
 ];
 
-export function DataSourcesListHeader() {
+export interface DataSourcesListHeaderProps {
+  filterCheckbox?: FilterCheckbox;
+}
+
+export function DataSourcesListHeader({ filterCheckbox }: DataSourcesListHeaderProps) {
   const dispatch = useDispatch();
+
   const debouncedTrackSearch = useMemo(
     () =>
       debounce((q) => {
@@ -54,6 +59,12 @@ export function DataSourcesListHeader() {
   };
 
   return (
-    <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} key="action-bar" sortPicker={sortPicker} />
+    <PageActionBar
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      key="action-bar"
+      sortPicker={sortPicker}
+      filterCheckbox={filterCheckbox}
+    />
   );
 }
