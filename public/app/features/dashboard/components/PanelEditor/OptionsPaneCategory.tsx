@@ -214,7 +214,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   disabledIcon: css({
     color: theme.colors.text.disabled,
-    marginRight: theme.spacing(1),
+    margin: theme.spacing(1, 1, 1, 0),
   }),
   bodyNested: css({
     position: 'relative',
