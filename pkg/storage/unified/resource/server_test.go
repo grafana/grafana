@@ -9,17 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -243,68 +241,5 @@ func TestSimpleServer(t *testing.T) {
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
-	})
-
-	t.Run("secure values support", func(t *testing.T) {
-		key := &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     "playlist.grafana.app",
-			Resource:  "rrrr", // from the URL, not the object body
-			Name:      "nnnn",
-		}
-		obj := &unstructured.Unstructured{
-			Object: map[string]any{
-				"apiVersion": key.Group + "/v0alpha1",
-				"kind":       "Playlist",
-				"metadata": map[string]any{
-					"name":      key.Name,
-					"namespace": key.Namespace,
-				},
-				"spec": map[string]any{
-					"title": "hello",
-				},
-				"secure": map[string]any{}, // empty
-			},
-		}
-		m, err := utils.MetaAccessor(obj)
-		require.NoError(t, err)
-		owner := utils.ToObjectReference(m)
-
-		t.Run("check CanReference on create", func(t *testing.T) {
-			obj.Object["secure"] = map[string]any{
-				"A": common.InlineSecureValue{
-					Name: "111",
-				},
-				"B": common.InlineSecureValue{
-					Name: "111", // duplicate reference, but only checked once
-				},
-			}
-			objBytes, err := json.Marshal(obj)
-			require.NoError(t, err)
-			secureMock := secret.NewMockInlineSecureValueSupport(t)
-			secureMock.On("CanReference", mock.Anything, owner, "111").
-				Return(nil).Once()
-			server.secure = secureMock
-			evt, errResult := server.newEvent(ctx, testUserA, key, objBytes, nil)
-			require.Nil(t, errResult)
-			require.Equal(t, resourcepb.WatchEvent_ADDED, evt.Type)
-			secureMock.AssertExpectations(t)
-		})
-
-		t.Run("skip CanReference when nothing changed", func(t *testing.T) {
-			obj.Object["secure"] = map[string]any{
-				"A": common.InlineSecureValue{
-					Name: "111",
-				},
-			}
-			objBytes, err := json.Marshal(obj)
-			require.NoError(t, err)
-			secureMock := secret.NewMockInlineSecureValueSupport(t)
-			server.secure = secureMock
-			evt, errResult := server.newEvent(ctx, testUserA, key, objBytes, objBytes)
-			require.Nil(t, errResult)
-			require.Equal(t, resourcepb.WatchEvent_MODIFIED, evt.Type)
-			secureMock.AssertExpectations(t) // CanReference should not be called
-		})
 	})
 }

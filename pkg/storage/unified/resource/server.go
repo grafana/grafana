@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"maps"
 	"net/http"
-	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -475,51 +473,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	}
 
 	// Verify that this resource can reference secure values
-	secure, err := obj.GetSecureValues()
-	if err != nil {
-		return nil, AsErrorResult(err)
-	}
-	if len(secure) > 0 {
-		if s.secure == nil {
-			return nil, NewBadRequestError("secure storage not configured")
-		}
-
-		// Make sure the secure values are safe to save (just in case)
-		found := make(map[string]bool, len(secure))
-		for _, v := range secure {
-			if !v.Create.IsZero() {
-				return nil, NewBadRequestError("unable to create values in unified storage")
-			}
-			if v.Remove {
-				return nil, NewBadRequestError("unable to save remove command")
-			}
-			if v.Name == "" {
-				return nil, NewBadRequestError("secure value requires name")
-			}
-			found[v.Name] = true
-		}
-
-		// The "CanReference" check exists to avoid writing references to secrets
-		// the user should not allow granting access.  We only check it when the value changes
-		secureValuesChanged := event.ObjectOld == nil
-		if event.ObjectOld != nil {
-			oldSecureValues, _ := obj.GetSecureValues()
-			secureValuesChanged = len(secure) != len(oldSecureValues)
-			if !secureValuesChanged {
-				for k, v := range secure {
-					if oldSecureValues[k].Name != v.Name {
-						secureValuesChanged = true
-						break
-					}
-				}
-			}
-		}
-		if secureValuesChanged {
-			names := slices.Collect(maps.Keys(found))
-			if err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), names...); err != nil {
-				return nil, AsErrorResult(err)
-			}
-		}
+	if err := canReferenceSecureValues(ctx, obj, event.ObjectOld, s.secure); err != nil {
+		return nil, err
 	}
 
 	if key.Namespace != obj.GetNamespace() {

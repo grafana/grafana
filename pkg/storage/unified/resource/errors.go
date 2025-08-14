@@ -7,10 +7,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	grpcstatus "google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -56,6 +58,58 @@ func NewTooManyRequestsError(msg string) *resourcepb.ErrorResult {
 		Message: msg,
 		Code:    http.StatusTooManyRequests,
 		Reason:  string(metav1.StatusReasonTooManyRequests),
+	}
+}
+
+func newInvalidFieldError(
+	obj utils.GrafanaMetaAccessor,
+	detail string,
+	path string,
+	morePath ...string,
+) *resourcepb.ErrorResult {
+	gvk := obj.GetGroupVersionKind()
+	return &resourcepb.ErrorResult{
+		Message: detail,
+		Code:    http.StatusUnprocessableEntity,
+		Reason:  string(metav1.StatusReasonInvalid),
+		Details: &resourcepb.ErrorDetails{
+			Name:  obj.GetName(),
+			Group: gvk.Group,
+			Kind:  gvk.Kind,
+			Uid:   string(obj.GetUID()),
+			Causes: []*resourcepb.ErrorCause{
+				{
+					Reason: string(field.ErrorTypeForbidden),
+					Field:  field.NewPath(path, morePath...).String(),
+				},
+			},
+		},
+	}
+}
+
+func newRequiredFieldError(
+	obj utils.GrafanaMetaAccessor,
+	detail string,
+	path string,
+	morePath ...string,
+) *resourcepb.ErrorResult {
+	gvk := obj.GetGroupVersionKind()
+	return &resourcepb.ErrorResult{
+		Message: detail,
+		Code:    http.StatusUnprocessableEntity,
+		Reason:  string(metav1.StatusReasonInvalid),
+		Details: &resourcepb.ErrorDetails{
+			Name:  obj.GetName(),
+			Group: gvk.Group,
+			Kind:  gvk.Kind,
+			Uid:   string(obj.GetUID()),
+			Causes: []*resourcepb.ErrorCause{
+				{
+					Reason: string(field.ErrorTypeRequired),
+					Field:  field.NewPath(path, morePath...).String(),
+				},
+			},
+		},
 	}
 }
 
