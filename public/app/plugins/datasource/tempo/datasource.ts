@@ -289,7 +289,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
     this.tempoVersion = response.data.version;
   };
-
+  // TODO: Implement this function in Prometheus datasource https://github.com/grafana/grafana/issues/109706
   async getNativeHistograms(timeRange?: TimeRange): Promise<boolean> {
     if (!this.serviceMap?.datasourceUid) {
       return false;
