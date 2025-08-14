@@ -45,7 +45,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow, title] = watch(['workflow', 'title']);
+  const [workflow] = watch(['workflow']);
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
