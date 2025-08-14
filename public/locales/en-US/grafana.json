@@ -9746,7 +9746,8 @@
       "message-name-required": "Name is required",
       "message-reserved-name": "This is a reserved name and cannot be used for a folder.",
       "message-same-name": "A dashboard or a folder with the same name already exists",
-      "message-same-name-general": "A folder or dashboard in the general folder with the same name already exists"
+      "message-same-name-current-folder": "A dashboard or a folder with the same name already exists in the current folder",
+      "message-same-name-general": "A folder or dashboard with the same name already exists in the root folder"
     }
   },
   "metric-select": {

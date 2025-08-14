@@ -27,7 +27,7 @@ export class ValidationSrv {
   validateNewFolderName(name?: string, parentFolderUid?: string) {
     const validationMessage = parentFolderUid
       ? t(
-          'manage-dashboards.validation-srv.message-same-name',
+          'manage-dashboards.validation-srv.message-same-name-current-folder',
           'A dashboard or a folder with the same name already exists in the current folder'
         )
       : t(
