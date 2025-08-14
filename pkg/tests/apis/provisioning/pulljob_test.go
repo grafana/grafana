@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -52,8 +53,8 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		ExpectedFolders:    2, // Total across both repos
 	})
 
-	// Test: Sync job should fail when trying to manage resources owned by another repository
-	t.Run("sync job should fail when trying to manage resources owned by another repository", func(t *testing.T) {
+	// Test: Pull job should fail when trying to manage resources owned by another repository
+	t.Run("pull job should fail when trying to manage resources owned by another repository", func(t *testing.T) {
 		// Step 1: Try to add a file with the same UID as repo1's dashboard to repo2's directory
 		// This simulates a scenario where repo2 tries to manage a resource that repo1 already owns
 		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json (owned by repo1)
@@ -66,7 +67,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		err = os.WriteFile(repo2DashboardPath, file, 0600)
 		require.NoError(t, err, "should write conflicting file")
 
-		// Step 2: Try to sync repo2 - should fail due to ownership conflict
+		// Step 2: Try to pull repo2 - should fail due to ownership conflict
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},
@@ -78,7 +79,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.NoError(t, err)
 
 		// FIXME: The job completes with "warning" state instead of "error" state
-		// This is actually correct behavior - the sync job completes but reports conflicts as warnings
+		// This is actually correct behavior - the pull job completes but reports conflicts as warnings
 		t.Logf("Job state: %s", jobObj.Status.State)
 		t.Logf("Job errors: %v", jobObj.Status.Errors)
 		
@@ -89,9 +90,8 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		found := false
 		for _, errMsg := range jobObj.Status.Errors {
 			t.Logf("Error message: %s", errMsg)
-			if assert.Contains(t, errMsg, "is managed by repo") && assert.Contains(t, errMsg, "cannot be modified by repo") {
-				assert.Contains(t, errMsg, repo1, "error should mention owning repository")
-				assert.Contains(t, errMsg, repo2, "error should mention requesting repository")
+			if assert.Contains(t, errMsg, fmt.Sprintf("managed by repo '%s'", repo1)) && 
+			   assert.Contains(t, errMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2)) {
 				found = true
 				break
 			}
@@ -108,10 +108,10 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.NoError(t, err, "should clean up conflicting file")
 	})
 
-	// Test: Repositories should not delete resources owned by other repositories during sync
-	t.Run("repositories should not delete resources owned by other repositories during sync", func(t *testing.T) {
+	// Test: Repositories should not delete resources owned by other repositories during pull
+	t.Run("repositories should not delete resources owned by other repositories during pull", func(t *testing.T) {
 		// Both repositories were created with their own resources (repo1 has all-panels.json, repo2 has timeline-demo.json)
-		// Verify that syncing one repository doesn't affect the other's resources
+		// Verify that pulling one repository doesn't affect the other's resources
 		
 		// Step 1: Verify both repositories have their own resources
 		const allPanelsUID = "n1jR8vnnz"   // UID from all-panels.json (repo1)
@@ -125,28 +125,28 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.NoError(t, err, "repo2's dashboard should exist")
 		require.Equal(t, repo2, repo2Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "should be owned by repo2")
 
-		// Step 2: Sync repo1 (which doesn't manage repo2's resource) - should complete successfully
+		// Step 2: Pull repo1 (which doesn't manage repo2's resource) - should complete successfully
 		helper.SyncAndWait(t, repo1, nil)
 
-		// Step 3: Verify that repo2's resource is still intact after repo1's sync
+		// Step 3: Verify that repo2's resource is still intact after repo1's pull
 		persistentRepo2Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
-		require.NoError(t, err, "repo2's dashboard should still exist after repo1 sync")
+		require.NoError(t, err, "repo2's dashboard should still exist after repo1 pull")
 		require.Equal(t, repo2, persistentRepo2Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo2")
-		require.Equal(t, repo2Dashboard.GetResourceVersion(), persistentRepo2Dashboard.GetResourceVersion(), "repo2's resource should not be modified by repo1 sync")
+		require.Equal(t, repo2Dashboard.GetResourceVersion(), persistentRepo2Dashboard.GetResourceVersion(), "repo2's resource should not be modified by repo1 pull")
 
-		// Step 4: Sync repo2 and verify repo1's resource is still intact
+		// Step 4: Pull repo2 and verify repo1's resource is still intact
 		helper.SyncAndWait(t, repo2, nil)
 
 		persistentRepo1Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		require.NoError(t, err, "repo1's dashboard should still exist after repo2 sync")
+		require.NoError(t, err, "repo1's dashboard should still exist after repo2 pull")
 		require.Equal(t, repo1, persistentRepo1Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
-		require.Equal(t, repo1Dashboard.GetResourceVersion(), persistentRepo1Dashboard.GetResourceVersion(), "repo1's resource should not be modified by repo2 sync")
+		require.Equal(t, repo1Dashboard.GetResourceVersion(), persistentRepo1Dashboard.GetResourceVersion(), "repo1's resource should not be modified by repo2 pull")
 	})
 
-	// Test: Sync should handle ownership conflicts gracefully via files API
-	t.Run("sync job should handle ownership conflicts gracefully via files API", func(t *testing.T) {
+	// Test: Pull should handle ownership conflicts gracefully via files API
+	t.Run("pull job should handle ownership conflicts gracefully via files API", func(t *testing.T) {
 		// FIXME: This test uses the files API to create conflicting files, which should fail
-		// The files API calls correctly detect ownership conflicts and return 500 errors
+		// The files API calls correctly detect ownership conflicts and return 400 errors
 		// But this means we can't use the files API to create the test scenario
 		
 		// Step 1: Try to add a file with same UID as repo1's resource to repo2 via files API
@@ -166,10 +166,8 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// The error demonstrates that ownership protection is working at the files API level
 		errorMsg := result.Error().Error()
 		t.Logf("Files API error message: %s", errorMsg)
-		require.Contains(t, errorMsg, "is managed by repo", "error should mention current manager")
-		require.Contains(t, errorMsg, repo1, "error should mention owning repository") 
-		require.Contains(t, errorMsg, "cannot be modified by repo", "error should mention modification restriction")
-		require.Contains(t, errorMsg, repo2, "error should mention requesting repository")
+		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
+		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 
 		// Step 2: Verify original resource is still intact and owned by repo1
 		const allPanelsUID = "n1jR8vnnz"
