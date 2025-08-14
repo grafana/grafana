@@ -21,7 +21,7 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
   const {
     handleSubmit,
     register,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormModel>({ defaultValues: initialFormModel });
 
   const translatedFolderNameRequiredPhrase = t(
@@ -56,7 +56,7 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
         <Button variant="secondary" fill="outline" onClick={onCancel}>
           <Trans i18nKey="browse-dashboards.new-folder-form.cancel-label">Cancel</Trans>
         </Button>
-        <Button type="submit">
+        <Button type="submit" disabled={isSubmitting}>
           <Trans i18nKey="browse-dashboards.new-folder-form.create-label">Create</Trans>
         </Button>
       </Stack>
