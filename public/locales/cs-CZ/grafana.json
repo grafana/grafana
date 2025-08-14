@@ -5381,6 +5381,7 @@
       "playlist-next": "Přejít na další nástěnku",
       "playlist-previous": "Přejít na předchozí nástěnku",
       "playlist-stop": "Zastavit playlist",
+      "read-only": "",
       "refresh": "Obnovit nástěnku",
       "save": "Uložit nástěnku",
       "save-dashboard": {
@@ -7516,6 +7517,13 @@
       "tooltip-title": "Matematický operátor",
       "tooltip-trigger": "Výraz"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Funkce",
       "label-input": "Vstup",
@@ -7530,6 +7538,11 @@
       "label-resample-to": "Převzorkovat do",
       "label-upsample": "Zvýšit vzorkovací frekvenci",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Vstup"
@@ -7547,7 +7560,8 @@
     "loading": "Načítání složek…"
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10924,7 +10938,6 @@
         "downloads": "Stažení",
         "from": "Od",
         "installedVersion": "Nainstalovaná verze",
-        "lastCommitDate": "Datum posledního nasazení:",
         "latestReleaseDate": "Nejnovější datum vydání:",
         "latestVersion": "Poslední verze",
         "license": "Licence",
@@ -11483,6 +11496,8 @@
         "subtitle": "Tuto možnost použijte, pokud chcete synchronizovat a spravovat celou instanci Grafany prostřednictvím externího úložiště."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktivní práce",
       "column-action": "Akce",
@@ -11501,6 +11516,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Nastavení",
       "view": "Zobrazit"
     },
@@ -11918,6 +11934,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Sbalit řádek dotazu",
       "datasource-help": "Zobrazit nápovědu pro zdroj dat",
       "drag-and-drop": "Přetažením změníte pořadí",
@@ -11928,7 +11945,11 @@
       "replace-query-from-library": "Nahradit dotazem z knihovny",
       "show-response": "Zobrazit odpověď"
     },
-    "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
+    "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12170,7 +12191,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Přidat účet služby",
-      "message": "Nebyly nalezeny žádné účty služeb",
+      "message": "",
       "more-info": "Nezapomeňte, že můžete poskytnout specifická oprávnění pro přístup API k jiným aplikacím",
       "title": "Dosud jste nevytvořili žádné účty služeb"
     }
@@ -12565,6 +12586,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Třídit"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
