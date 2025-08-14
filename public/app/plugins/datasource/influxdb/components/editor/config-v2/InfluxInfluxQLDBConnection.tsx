@@ -6,6 +6,7 @@ import {
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
+import { DB_SETTINGS_LABEL_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField,
@@ -19,7 +20,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Database" labelWidth={30} grow>
+        <InlineField label="Database" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
           <Input
             id="database"
             placeholder="mydb"
@@ -30,7 +31,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="User" labelWidth={30} grow>
+        <InlineField label="User" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
           <Input
             id="user"
             placeholder="myuser"
@@ -41,7 +42,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Password" labelWidth={30} grow>
+        <InlineField label="Password" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
           <SecretInput
             id="password"
             isConfigured={Boolean(options.secureJsonFields && options.secureJsonFields.password)}

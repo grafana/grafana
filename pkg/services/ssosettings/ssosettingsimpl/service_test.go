@@ -347,7 +347,7 @@ func TestService_GetForProvider(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, true, false, true, true)
+			env := setupTestEnv(t, true, false, true)
 			if tc.setup != nil {
 				tc.setup(env)
 			}
@@ -514,7 +514,7 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, false, false, false, true)
+			env := setupTestEnv(t, false, false, true)
 			if tc.setup != nil {
 				tc.setup(env)
 			}
@@ -665,7 +665,7 @@ func TestService_List(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, false, false, false, false)
+			env := setupTestEnv(t, false, false, false)
 			if tc.setup != nil {
 				tc.setup(env)
 			}
@@ -967,7 +967,7 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, false, false, false, false)
+			env := setupTestEnv(t, false, false, false)
 			if tc.setup != nil {
 				tc.setup(env)
 			}
@@ -991,7 +991,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1054,7 +1054,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings for LDAP", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, true)
+		env := setupTestEnv(t, false, false, true)
 
 		provider := social.LDAPProviderName
 		settings := models.SSOSettings{
@@ -1124,7 +1124,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if provider is not configurable", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.GrafanaComProviderName
 		settings := &models.SSOSettings{
@@ -1147,7 +1147,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if provider was not found in reloadables", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := &models.SSOSettings{
@@ -1171,7 +1171,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if validation fails", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1195,7 +1195,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if a fallback strategy is not available for the provider", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		settings := &models.SSOSettings{
 			Provider: social.AzureADProviderName,
@@ -1216,7 +1216,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if a secret does not have the type string", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.OktaProviderName
 		settings := models.SSOSettings{
@@ -1239,7 +1239,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.OktaProviderName
 		settings := models.SSOSettings{
@@ -1264,7 +1264,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("should not update the current secret if the secret has not been updated", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1308,7 +1308,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("run validation with all new and current secrets available in settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1361,7 +1361,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1393,7 +1393,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings if reload fails", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1426,7 +1426,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		var wg sync.WaitGroup
 		wg.Add(1)
@@ -1464,7 +1464,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("return error if SSO setting was not found for the specified provider", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		reloadable := ssosettingstests.NewMockReloadable(t)
@@ -1480,7 +1480,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("should not delete the SSO settings if the provider is not configurable", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 		env.cfg.SSOSettingsConfigurableProviders = map[string]bool{social.AzureADProviderName: true}
 
 		provider := social.GrafanaComProviderName
@@ -1493,7 +1493,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("return error when store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		env.store.ExpectedError = errors.New("delete sso settings failed")
@@ -1506,7 +1506,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("return successfully when the deletion was successful but reloading the settings fail", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		reloadable := ssosettingstests.NewMockReloadable(t)
@@ -1523,7 +1523,7 @@ func TestService_Delete(t *testing.T) {
 
 	t.Run("should delete SAML SettingsProvider while deleting SAML SSO Settings", func(t *testing.T) {
 		t.Parallel()
-		env := setupTestEnv(t, true, true, true, false)
+		env := setupTestEnv(t, true, true, false)
 
 		mockProvider := &settingtest.MockProvider{}
 		mockProvider.On("Current", mock.Anything).Return(setting.SettingsBag{
@@ -1598,7 +1598,7 @@ func TestService_DoReload(t *testing.T) {
 	t.Run("successfully reload settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		settingsList := []*models.SSOSettings{
 			{
@@ -1638,7 +1638,7 @@ func TestService_DoReload(t *testing.T) {
 	t.Run("successfully reload settings when some providers have empty settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		settingsList := []*models.SSOSettings{
 			{
@@ -1668,7 +1668,7 @@ func TestService_DoReload(t *testing.T) {
 	t.Run("failed fetching the SSO settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false, false)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := "github"
 
@@ -1798,7 +1798,7 @@ func TestService_decryptSecrets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, false, false, false, false)
+			env := setupTestEnv(t, false, false, false)
 
 			if tc.setup != nil {
 				tc.setup(env)
@@ -1823,7 +1823,6 @@ func Test_ProviderService(t *testing.T) {
 	tests := []struct {
 		name                  string
 		isLicenseEnabled      bool
-		samlEnabled           bool
 		expectedProvidersList []string
 		strategiesLength      int
 	}{
@@ -1842,23 +1841,8 @@ func Test_ProviderService(t *testing.T) {
 			strategiesLength: 2,
 		},
 		{
-			name:             "should return all fallback strategies and it should return all OAuth providers but not SAML because the licensing feature is enabled but the configurable provider is not setup",
-			isLicenseEnabled: true,
-			expectedProvidersList: []string{
-				"github",
-				"gitlab",
-				"google",
-				"generic_oauth",
-				"grafana_com",
-				"azuread",
-				"okta",
-			},
-			strategiesLength: 3,
-		},
-		{
 			name:             "should return all fallback strategies and it should return all OAuth providers and SAML because the licensing feature is enabled and the provider is setup",
 			isLicenseEnabled: true,
-			samlEnabled:      true,
 			expectedProvidersList: []string{
 				"github",
 				"gitlab",
@@ -1877,7 +1861,7 @@ func Test_ProviderService(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, tc.isLicenseEnabled, true, tc.samlEnabled, false)
+			env := setupTestEnv(t, tc.isLicenseEnabled, true, false)
 
 			require.Equal(t, tc.expectedProvidersList, env.service.providersList)
 			require.Equal(t, tc.strategiesLength, len(env.service.fbStrategies))
@@ -1885,7 +1869,7 @@ func Test_ProviderService(t *testing.T) {
 	}
 }
 
-func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, samlEnabled bool, ldapEnabled bool) testEnv {
+func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool, ldapEnabled bool) testEnv {
 	t.Helper()
 
 	store := ssosettingstests.NewFakeStore()
@@ -1916,9 +1900,6 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, sam
 	licensing.On("FeatureEnabled", "saml").Return(isLicensingEnabled)
 
 	features := make([]any, 0)
-	if samlEnabled {
-		features = append(features, featuremgmt.FlagSsoSettingsSAML)
-	}
 	if ldapEnabled {
 		features = append(features, featuremgmt.FlagSsoSettingsLDAP)
 	}

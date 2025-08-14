@@ -3,18 +3,21 @@ package metadata
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
@@ -22,14 +25,8 @@ var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 func ProvideSecureValueMetadataStorage(
 	db contracts.Database,
 	tracer trace.Tracer,
-	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 ) (contracts.SecureValueMetadataStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return &secureValueMetadataStorage{}, nil
-	}
-
 	return &secureValueMetadataStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
@@ -46,16 +43,39 @@ type secureValueMetadataStorage struct {
 	tracer  trace.Tracer
 }
 
-func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, svmCreateErr error) {
 	start := time.Now()
+	name := sv.GetName()
+	namespace := sv.GetNamespace()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Create", trace.WithAttributes(
-		attribute.String("name", sv.GetName()),
-		attribute.String("namespace", sv.GetNamespace()),
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
 		attribute.String("actorUID", actorUID),
 	))
 	defer span.End()
 
-	// Set inside of the transaction callback
+	defer func() {
+		success := svmCreateErr == nil
+
+		args := []any{
+			"name", name,
+			"namespace", namespace,
+			"actorUID", actorUID,
+		}
+
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Create failed")
+			span.RecordError(svmCreateErr)
+			args = append(args, "error", svmCreateErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Create", args...)
+
+		s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
+	// Set inside the transaction callback
 	var row *secureValueDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
@@ -151,9 +171,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
-	s.metrics.SecureValueMetadataCreateDuration.Observe(time.Since(start).Seconds())
-	s.metrics.SecureValueMetadataCreateCount.Inc()
-
 	return createdSecureValue, nil
 }
 
@@ -197,59 +214,6 @@ func (s *secureValueMetadataStorage) getLatestVersion(ctx context.Context, names
 	return &version, nil
 }
 
-func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	start := time.Now()
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.ReadForDecrypt", trace.WithAttributes(
-		attribute.String("name", name),
-		attribute.String("namespace", namespace.String()),
-	))
-	defer span.End()
-
-	req := readSecureValueForDecrypt{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-	}
-
-	query, err := sqltemplate.Execute(sqlSecureValueReadForDecrypt, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueReadForDecrypt.Name(), err)
-	}
-
-	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("reading row: %w", err)
-	}
-	defer func() { _ = res.Close() }()
-
-	var row secureValueForDecrypt
-	if !res.Next() {
-		return nil, contracts.ErrSecureValueNotFound
-	}
-	if err := res.Scan(
-		&row.Keeper, &row.Decrypters,
-		&row.Ref, &row.ExternalID, &row.Active); err != nil {
-		return nil, fmt.Errorf("failed to scan secure value row: %w", err)
-	}
-
-	if err := res.Err(); err != nil {
-		return nil, fmt.Errorf("read rows error: %w", err)
-	}
-
-	if !row.Active {
-		return nil, fmt.Errorf("bug: read an inactive version: row=%+v", row)
-	}
-
-	secureValue, err := row.toDecrypt()
-	if err != nil {
-		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
-	}
-
-	s.metrics.SecureValueGetForDecryptDuration.Observe(time.Since(start).Seconds())
-
-	return secureValue, nil
-}
-
 func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
 	req := readSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
@@ -279,7 +243,9 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 		&secureValue.Annotations, &secureValue.Labels,
 		&secureValue.Created, &secureValue.CreatedBy,
 		&secureValue.Updated, &secureValue.UpdatedBy,
-		&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID, &secureValue.Active, &secureValue.Version); err != nil {
+		&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID, &secureValue.Active, &secureValue.Version,
+		&secureValue.OwnerReferenceAPIGroup, &secureValue.OwnerReferenceAPIVersion, &secureValue.OwnerReferenceKind, &secureValue.OwnerReferenceName,
+	); err != nil {
 		return secureValueDB{}, fmt.Errorf("failed to scan secure value row: %w", err)
 	}
 
@@ -289,7 +255,7 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (_ *secretv1beta1.SecureValue, readErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Read", trace.WithAttributes(
 		attribute.String("name", name),
@@ -297,6 +263,25 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		attribute.Bool("isForUpdate", opts.ForUpdate),
 	))
 	defer span.End()
+
+	defer func() {
+		success := readErr == nil
+
+		args := []any{
+			"name", name,
+			"namespace", namespace.String(),
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Read failed")
+			span.RecordError(readErr)
+			args = append(args, "error", readErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", args...)
+		s.metrics.SecureValueMetadataGetDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
 
 	secureValue, err := s.readActiveVersion(ctx, namespace, name, opts)
 	if err != nil {
@@ -308,13 +293,10 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
-	s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
-	s.metrics.SecureValueMetadataGetCount.Inc()
-
 	return secureValueKub, nil
 }
 
-func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv0alpha1.SecureValue, error error) {
+func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv1beta1.SecureValue, listErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.List", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -322,7 +304,23 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	defer span.End()
 
 	defer func() {
+		success := listErr == nil
 		span.SetAttributes(attribute.Int("returnedList.count", len(svList)))
+
+		args := []any{
+			"namespace", namespace.String(),
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.List failed")
+			span.RecordError(listErr)
+			args = append(args, "error", listErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.List", args...)
+
+		s.metrics.SecureValueMetadataListDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	req := listSecureValue{
@@ -341,7 +339,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	}
 	defer func() { _ = rows.Close() }()
 
-	secureValues := make([]secretv0alpha1.SecureValue, 0)
+	secureValues := make([]secretv1beta1.SecureValue, 0)
 	for rows.Next() {
 		row := secureValueDB{}
 
@@ -352,6 +350,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 			&row.Updated, &row.UpdatedBy,
 			&row.Description, &row.Keeper, &row.Decrypters,
 			&row.Ref, &row.ExternalID, &row.Version, &row.Active,
+			&row.OwnerReferenceAPIGroup, &row.OwnerReferenceAPIVersion, &row.OwnerReferenceKind, &row.OwnerReferenceName,
 		)
 
 		if err != nil {
@@ -372,9 +371,6 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
-
-	s.metrics.SecureValueMetadataListDuration.Observe(time.Since(start).Seconds())
-	s.metrics.SecureValueMetadataListCount.Inc()
 
 	return secureValues, nil
 }
@@ -452,7 +448,7 @@ func (s *secureValueMetadataStorage) SetVersionToInactive(ctx context.Context, n
 	return nil
 }
 
-func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID contracts.ExternalID) error {
+func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID contracts.ExternalID) (setExtIDErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetExternalID", trace.WithAttributes(
 		attribute.String("name", name),
@@ -460,7 +456,28 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 		attribute.String("externalID", externalID.String()),
 		attribute.Int64("version", version),
 	))
+
 	defer span.End()
+
+	defer func() {
+		success := setExtIDErr == nil
+		args := []any{
+			"name", name,
+			"namespace", namespace.String(),
+			"success", success,
+			"version", strconv.FormatInt(version, 10),
+			"externalID", externalID.String(),
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.SetExternalID failed")
+			span.RecordError(setExtIDErr)
+			args = append(args, "error", setExtIDErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.SetExternalID", args...)
+		s.metrics.SecureValueSetExternalIDDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
 
 	req := updateExternalIdSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
@@ -488,7 +505,6 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	if modifiedCount > 1 {
 		return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
 	}
-	s.metrics.SecureValueSetExternalIDDuration.Observe(time.Since(start).Seconds())
 
 	return nil
 }

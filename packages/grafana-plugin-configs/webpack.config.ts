@@ -31,7 +31,7 @@ function skipFiles(f: string): boolean {
   return true;
 }
 
-type Env = {
+export type Env = {
   [key: string]: true | string | Env;
 };
 
@@ -273,6 +273,7 @@ const config = async (env: Env): Promise<Configuration> => {
                 '.eslintcache'
               ),
               configType: 'flat',
+              failOnError: false,
             }),
           ]
         : []),

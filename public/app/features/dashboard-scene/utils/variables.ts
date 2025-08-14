@@ -190,6 +190,11 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       definition: variable.definition,
       allowCustomValue: variable.allowCustomValue,
+      staticOptions: variable.staticOptions?.map((option) => ({
+        label: String(option.text),
+        value: String(option.value),
+      })),
+      staticOptionsOrder: variable.staticOptionsOrder,
     });
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({

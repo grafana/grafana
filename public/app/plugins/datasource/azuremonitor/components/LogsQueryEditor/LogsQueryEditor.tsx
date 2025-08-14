@@ -107,11 +107,9 @@ const LogsQueryEditor = ({
             if (schema.database?.tables) {
               schema.database.tables = t;
             }
-            setSchema(schema);
           });
-        } else {
-          setSchema(schema);
         }
+        setSchema(schema);
         setIsLoadingSchema(false);
       });
     }
@@ -280,7 +278,7 @@ const LogsQueryEditor = ({
         !!config.featureToggles.azureMonitorLogsBuilderEditor ? (
           <LogsQueryBuilder
             query={query}
-            schema={schema!}
+            schema={schema}
             basicLogsEnabled={basicLogsEnabled}
             onQueryChange={onQueryChange}
             variableOptionGroup={variableOptionGroup}

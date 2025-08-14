@@ -1,5 +1,5 @@
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -409,7 +409,7 @@ export class V2DashboardSerializer
       'elements' in this.initialSaveModel
         ? Object.values(this.initialSaveModel.elements)
             .filter((e) => e.kind === 'Panel')
-            .map((p) => p.spec.vizConfig.kind)
+            .map((p) => p.spec.vizConfig.group)
         : [];
     const panels = getPanelPluginCounts(panelPluginIds);
     const variables =

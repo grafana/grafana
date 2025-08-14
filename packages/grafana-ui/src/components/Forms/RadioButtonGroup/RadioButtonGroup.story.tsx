@@ -35,9 +35,9 @@ export const RadioButtons: StoryFn = (args) => {
   ];
 
   const optionsWithOnlyIcons = [
-    { description: 'Prometheus', value: 'prometheus', icon: 'gf-interpolation-linear' },
-    { description: 'Graphite', value: 'graphite', icon: 'gf-interpolation-smooth' },
-    { description: 'Elastic', value: 'elastic', icon: 'gf-interpolation-step-after' },
+    { ariaLabel: 'Prometheus', description: 'Prometheus', value: 'prometheus', icon: 'gf-interpolation-linear' },
+    { ariaLabel: 'Graphite', description: 'Graphite', value: 'graphite', icon: 'gf-interpolation-smooth' },
+    { ariaLabel: 'Elastic', description: 'Elastic', value: 'elastic', icon: 'gf-interpolation-step-after' },
   ];
 
   return (

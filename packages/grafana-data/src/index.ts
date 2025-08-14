@@ -137,6 +137,8 @@ export {
   fieldColorModeRegistry,
   type FieldColorMode,
   getFieldSeriesColor,
+  /** @internal */
+  getColorByStringHash,
 } from './field/fieldColor';
 export { FieldConfigOptionsRegistry } from './field/FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './field/thresholds';
@@ -449,8 +451,11 @@ export { getLinksSupplier } from './field/fieldOverrides';
 // Types
 export { isUnsignedPluginSignature } from './types/pluginSignature';
 export type {
+  AzureSettings,
+  AzureCloudInfo,
   CurrentUserDTO,
   AnalyticsSettings,
+  AppPluginConfig,
   BootData,
   OAuth,
   OAuthSettings,
@@ -458,6 +463,8 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
+  PreinstalledPlugin,
+  UnifiedAlertingConfig,
 } from './types/config';
 export { availableIconsIndex, type IconName, isIconName, toIconName } from './types/icon';
 export type { WithAccessControlMetadata } from './types/accesscontrol';
@@ -490,6 +497,8 @@ export type {
   ExploreLogsPanelState,
   SplitOpenOptions,
   SplitOpen,
+  TraceSearchProps,
+  TraceSearchTag,
 } from './types/explore';
 export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
 export type { FlotDataPoint } from './types/flot';
@@ -559,9 +568,12 @@ export {
   type ComponentTypeWithExtensionMeta,
   type PluginExtensionFunction,
   type PluginExtensionEventHelpers,
+  type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionDataSourceConfigActionsContext,
+  type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
@@ -655,6 +667,7 @@ export {
   type QueryFixAction,
   type QueryHint,
   type MetricFindValue,
+  type FiltersApplicability,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,

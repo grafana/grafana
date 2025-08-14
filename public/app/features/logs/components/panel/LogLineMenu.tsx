@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, MouseEvent } from 'react';
+import { MouseEvent, useCallback, useMemo, useRef } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -45,6 +45,8 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     logLineMenuCustomItems = [],
     logSupportsContext,
     toggleDetails,
+    isAssistantAvailable,
+    openAssistantByLog,
   } = useLogListContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
@@ -81,6 +83,8 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     }
   }, [log, onPinLine, onUnpinLine, pinned]);
 
+  const showFirstDivider = enableLogDetails || shouldlogSupportsContext || onPinLine || onUnpinLine;
+
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
@@ -103,7 +107,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {pinned && onUnpinLine && (
           <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.unpin-from-outline', 'Unpin log')} />
         )}
-        <Menu.Divider />
+        {showFirstDivider && <Menu.Divider />}
         <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log', 'Copy log line')} />
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
@@ -117,6 +121,16 @@ export const LogLineMenu = ({ log, styles }: Props) => {
           }
           return null;
         })}
+        {isAssistantAvailable && (
+          <>
+            <Menu.Divider />
+            <Menu.Item
+              onClick={() => openAssistantByLog?.(log)}
+              icon="ai-sparkle"
+              label={t('logs.log-line-menu.open-assistant', 'Explain this log line in Assistant')}
+            />
+          </>
+        )}
       </Menu>
     ),
     [
@@ -124,14 +138,17 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       copyLogLine,
       detailsDisplayed,
       enableLogDetails,
+      isAssistantAvailable,
       log,
       logLineMenuCustomItems,
       onPermalinkClick,
       onPinLine,
       onUnpinLine,
+      openAssistantByLog,
       pinned,
       shouldlogSupportsContext,
       showContext,
+      showFirstDivider,
       toggleLogDetails,
       togglePinning,
     ]

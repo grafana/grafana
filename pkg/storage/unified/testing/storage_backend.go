@@ -1106,7 +1106,7 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 	}
 	meta.SetFolder(options.Folder)
 
-	return store.WriteEvent(ctx, resource.WriteEvent{
+	event := resource.WriteEvent{
 		Type:  action,
 		Value: options.Value,
 		GUID:  uuid.New().String(),
@@ -1116,8 +1116,32 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 			Resource:  options.Resource,
 			Name:      name,
 		},
-		Object: meta,
-	})
+	}
+	switch action {
+	case resourcepb.WatchEvent_DELETED:
+		event.ObjectOld = meta
+
+		obj, err := utils.MetaAccessor(res)
+		if err != nil {
+			return 0, err
+		}
+		now := metav1.Now()
+		obj.SetDeletionTimestamp(&now)
+		obj.SetUpdatedTimestamp(&now.Time)
+		obj.SetManagedFields(nil)
+		obj.SetFinalizers(nil)
+		obj.SetGeneration(utils.DeletedGeneration)
+		obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
+		event.Object = obj
+	case resourcepb.WatchEvent_ADDED:
+		event.Object = meta
+	case resourcepb.WatchEvent_MODIFIED:
+		event.Object = meta //
+		event.ObjectOld = meta
+	default:
+		panic(fmt.Sprintf("invalid action: %s", action))
+	}
+	return store.WriteEvent(ctx, event)
 }
 
 func newServer(t *testing.T, b resource.StorageBackend) resource.ResourceServer {

@@ -1,13 +1,17 @@
 import { config, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { Resource } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardWithAccessInfo } from './types';
+
+export function isV2StoredVersion(version: string): boolean {
+  return version === 'v2alpha1' || version === 'v2beta1';
+}
 
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   const isDashboardSceneEnabled = config.featureToggles.dashboardScene;
@@ -72,6 +76,10 @@ export function isV1DashboardCommand(
   cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
 ): cmd is SaveDashboardCommand<Dashboard> {
   return !isDashboardV2Spec(cmd.dashboard);
+}
+
+export function isV1ClassicDashboard(obj: Dashboard | DashboardV2Spec): obj is Dashboard {
+  return !isDashboardV2Spec(obj);
 }
 
 export function isV2DashboardCommand(

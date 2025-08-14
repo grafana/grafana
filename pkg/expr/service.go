@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -65,8 +66,9 @@ type Service struct {
 
 	pluginsClient backend.CallResourceHandler
 
-	tracer  tracing.Tracer
-	metrics *metrics.ExprMetrics
+	tracer                    tracing.Tracer
+	metrics                   *metrics.ExprMetrics
+	mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder
 }
 
 type pluginContextProvider interface {
@@ -75,7 +77,7 @@ type pluginContextProvider interface {
 }
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
-	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, builder mtdsclient.MTDatasourceClientBuilder) *Service {
 	return &Service{
 		cfg:           cfg,
 		dataService:   pluginClient,
@@ -88,6 +90,7 @@ func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider 
 			Features: features,
 			Tracer:   tracer,
 		},
+		mtDatasourceClientBuilder: builder,
 	}
 }
 
@@ -99,8 +102,8 @@ func (s *Service) isDisabled() bool {
 }
 
 // BuildPipeline builds a pipeline from a request.
-func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
-	return s.buildPipeline(req)
+func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
+	return s.buildPipeline(ctx, req)
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.

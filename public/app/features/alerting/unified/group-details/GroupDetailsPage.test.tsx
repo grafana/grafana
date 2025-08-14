@@ -2,7 +2,7 @@ import { uniqueId } from 'lodash';
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
-import { render, screen, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -41,7 +41,6 @@ const ui = {
   header: byRole('heading', { level: 1 }),
   editLink: byRole('link', { name: 'Edit' }),
   exportButton: byRole('button', { name: 'Export' }),
-  ruleLoader: byTestId('alert-rule-list-item-loader'),
   ruleItem: byRole('treeitem'),
   export: {
     dialog: byRole('dialog', { name: /Drawer title Export .* rules/ }),
@@ -161,7 +160,7 @@ describe('GroupDetailsPage', () => {
         '/alerting/grafana/namespaces/test-folder-uid/groups/test-group-cpu/edit?returnTo=%2Falerting%2Fgrafana%2Fnamespaces%2Ftest-folder-uid%2Fgroups%2Ftest-group-cpu%2Fview'
       );
 
-      await waitForElementToBeRemoved(() => ui.ruleLoader.queryAll());
+      expect(await screen.findByRole('treeitem', { name: rule1.grafana_alert.title })).toBeInTheDocument();
 
       const alertRuleItems = await ui.ruleItem.findAll();
       expect(alertRuleItems).toHaveLength(2);
@@ -221,11 +220,9 @@ describe('GroupDetailsPage', () => {
       // Act
       renderGroupDetailsPage('grafana', 'test-folder-uid', group.name);
 
-      // wait for loaders to show and dissapear
-      await waitFor(() => expect(ui.ruleLoader.queryAll()).toHaveLength(3));
-      await waitForElementToBeRemoved(() => ui.ruleLoader.queryAll());
-
-      const alertRuleItems = await ui.ruleItem.findAll();
+      // Wait until rule items are rendered
+      expect(await screen.findByRole('treeitem', { name: rule1.grafana_alert.title })).toBeInTheDocument();
+      const alertRuleItems = ui.ruleItem.getAll();
 
       // Assert
       expect(alertRuleItems).toHaveLength(2);
@@ -238,9 +235,8 @@ describe('GroupDetailsPage', () => {
       // Act
       renderGroupDetailsPage('grafana', 'test-folder-uid', group.name);
 
-      // wait for loaders to show and dissapear
-      await waitFor(() => expect(ui.ruleLoader.queryAll()).toHaveLength(3));
-      await waitForElementToBeRemoved(() => ui.ruleLoader.queryAll());
+      // wait for rule items to render
+      expect(await screen.findByRole('treeitem', { name: rule1.grafana_alert.title })).toBeInTheDocument();
 
       const alertRuleItems = await ui.ruleItem.findAll();
 
@@ -264,9 +260,8 @@ describe('GroupDetailsPage', () => {
 
       // Act
       renderGroupDetailsPage('grafana', 'test-folder-uid', provisionedGroup.name);
-      // wait for loaders to show and dissapear
-      await waitFor(() => expect(ui.ruleLoader.queryAll()).toHaveLength(3));
-      await waitForElementToBeRemoved(() => ui.ruleLoader.queryAll());
+      // wait for rule items to render
+      expect(await screen.findByRole('treeitem', { name: provisionedRule.grafana_alert.title })).toBeInTheDocument();
 
       const alertRuleItems = await ui.ruleItem.findAll();
 

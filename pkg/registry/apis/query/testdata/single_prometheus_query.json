@@ -1,0 +1,41 @@
+{
+  "results": {
+    "A": {
+      "status": 200,
+      "frames": [
+        {
+          "schema": {
+            "refId": "A",
+            "fields": [
+              {
+                "name": "Time",
+                "type": "time",
+                "typeInfo": {
+                  "frame": "time.Time"
+                }
+              },
+              {
+                "name": "Value",
+                "type": "number",
+                "typeInfo": {
+                  "frame": "float64"
+                },
+                "labels": {}
+              }
+            ]
+          },
+          "data": {
+            "values": [
+              [
+                1704067200000
+              ],
+              [
+                7
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

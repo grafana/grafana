@@ -21,7 +21,7 @@ const meta: Meta<typeof ColorPicker> = {
   },
   args: {
     enableNamedColors: false,
-    color: '#00ff00',
+    color: '#0000ff',
   },
 };
 

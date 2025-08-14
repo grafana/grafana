@@ -1,5 +1,4 @@
 import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   Spec as DashboardV2Spec,
   defaultDataQueryKind,
@@ -9,7 +8,8 @@ import {
   RowsLayoutKind,
   RowsLayoutRowKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -394,7 +394,7 @@ describe('ResponseTransformers', () => {
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
-      expect(transformed.apiVersion).toBe('v2alpha1');
+      expect(transformed.apiVersion).toBe('v2beta1');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
@@ -450,14 +450,15 @@ describe('ResponseTransformers', () => {
           id: 1,
           links: [],
           vizConfig: {
-            kind: 'timeseries',
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: undefined,
             spec: {
               fieldConfig: {
                 defaults: {},
                 overrides: [],
               },
               options: {},
-              pluginVersion: undefined,
             },
           },
           data: {
@@ -798,7 +799,7 @@ describe('ResponseTransformers', () => {
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2beta1',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           creationTimestamp: '2023-01-01T00:00:00Z',
@@ -1032,12 +1033,12 @@ describe('ResponseTransformers', () => {
 
     expect(v1.id).toBe(v2Spec.id);
     expect(v1.id).toBe(v2Spec.id);
-    expect(v1.type).toBe(v2Spec.vizConfig.kind);
+    expect(v1.type).toBe(v2Spec.vizConfig.group);
     expect(v1.title).toBe(v2Spec.title);
     expect(v1.description).toBe(v2Spec.description);
     expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
     expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
-    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.spec.pluginVersion);
+    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.version);
     expect(v1.links).toEqual(v2Spec.links);
     expect(v1.targets).toEqual(
       v2Spec.data.spec.queries.map((q) => {
@@ -1130,7 +1131,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'AdhocVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       // @ts-expect-error
       expect(v2.spec.filters).toEqual(v1.filters);
       // @ts-expect-error
@@ -1159,7 +1161,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'GroupByVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       expect(v2.spec.options).toEqual(v1.options);
     }
   }

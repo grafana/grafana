@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
@@ -41,9 +42,16 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pr registry.Service)
 }
 
 func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
+	disableAlertingForTempoDecorateFunc := func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		if p.ID == coreplugin.Tempo && !cfg.Features.TempoAlertingEnabled {
+			p.Alerting = false
+		}
+		return p, nil
+	}
+
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, sc, a),
-		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
+		DecorateFuncs: append(bootstrap.DefaultDecorateFuncs(cfg), disableAlertingForTempoDecorateFunc),
 	})
 }
 

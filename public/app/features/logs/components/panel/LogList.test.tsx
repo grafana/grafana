@@ -1,17 +1,24 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder, store } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { createLogRow } from '../mocks/logRow';
 
 import { LogList, Props } from './LogList';
 
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn(() => [true, jest.fn()]),
+}));
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+    reportInteraction: jest.fn(),
     config: {
       ...jest.requireActual('@grafana/runtime').config,
       featureToggles: {
@@ -28,6 +35,14 @@ jest.mock('../../utils', () => ({
   disablePopoverMenu: jest.fn(),
   enablePopoverMenu: jest.fn(),
 }));
+
+const originalFlagValue = config.featureToggles.newLogsPanel;
+beforeAll(() => {
+  config.featureToggles.newLogsPanel = true;
+});
+afterAll(() => {
+  config.featureToggles.newLogsPanel = originalFlagValue;
+});
 
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
@@ -75,6 +90,12 @@ describe('LogList', () => {
   });
 
   test('Supports showing log details', async () => {
+    jest.spyOn(store, 'get').mockImplementation((option: string) => {
+      if (option === 'storage-key.detailsMode') {
+        return 'sidebar';
+      }
+      return undefined;
+    });
     const onClickFilterLabel = jest.fn();
     const onClickFilterOutLabel = jest.fn();
     const onClickShowField = jest.fn();
@@ -86,6 +107,50 @@ describe('LogList', () => {
         onClickFilterLabel={onClickFilterLabel}
         onClickFilterOutLabel={onClickFilterOutLabel}
         onClickShowField={onClickShowField}
+        logOptionsStorageKey="storage-key"
+      />
+    );
+
+    await userEvent.click(screen.getByText('log message 1'));
+    await screen.findByText('Fields');
+
+    expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
+    expect(screen.getByText('value of the label')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+    expect(onClickFilterLabel).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+    expect(onClickFilterOutLabel).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+    expect(onClickShowField).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Close log details'));
+
+    expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+    expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+  });
+
+  test('Supports showing inline log details', async () => {
+    jest.spyOn(store, 'get').mockImplementation((option: string) => {
+      if (option === 'storage-key.detailsMode') {
+        return 'inline';
+      }
+      return undefined;
+    });
+    const onClickFilterLabel = jest.fn();
+    const onClickFilterOutLabel = jest.fn();
+    const onClickShowField = jest.fn();
+
+    render(
+      <LogList
+        {...defaultProps}
+        enableLogDetails={true}
+        onClickFilterLabel={onClickFilterLabel}
+        onClickFilterOutLabel={onClickFilterOutLabel}
+        onClickShowField={onClickShowField}
+        logOptionsStorageKey="storage-key"
       />
     );
 
@@ -286,6 +351,41 @@ describe('LogList', () => {
 
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(screen.getByText('some text')).toBeInTheDocument();
+    });
+
+    test('Allows to toggle between ms and ns precision timestamps', async () => {
+      logs = [createLogRow({ uid: '1', timeEpochMs: 1754472919504, timeEpochNs: '1754472919504133766' })];
+
+      render(<LogList {...defaultProps} showTime showControls logs={logs} />);
+
+      expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
+      expect(screen.getByLabelText('Show nanosecond timestamps')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Show nanosecond timestamps'));
+
+      expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
+      expect(screen.getByLabelText('Hide timestamps')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Hide timestamps'));
+
+      expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Show millisecond timestamps')).toBeInTheDocument();
+    });
+  });
+  describe('Interactions', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+      jest.mocked(reportInteraction).mockClear();
+    });
+    test('Reports interactions ', async () => {
+      render(<LogList {...defaultProps} />);
+      await screen.findByText('log message 1');
+      expect(reportInteraction).toHaveBeenCalled();
+    });
+    test('Can disable interaction report ', async () => {
+      render(<LogList {...defaultProps} noInteractions={true} />);
+      await screen.findByText('log message 1');
+      expect(reportInteraction).not.toHaveBeenCalled();
     });
   });
 });

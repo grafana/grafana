@@ -17,7 +17,7 @@ import { InfluxVersion } from '../../../types';
 
 import { AdvancedHttpSettings } from './AdvancedHttpSettings';
 import { AuthSettings } from './AuthSettings';
-import { CONFIG_SECTION_HEADERS } from './constants';
+import { CONFIG_SECTION_HEADERS, CONTAINER_MIN_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2ProductSelected,
   trackInfluxDBConfigV2QueryLanguageSelected,
@@ -66,7 +66,14 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => onUpdateDatasourceOption(props, 'url')(event);
 
   return (
-    <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[0].id}`}>
+    <Box
+      borderStyle="solid"
+      borderColor="weak"
+      padding={2}
+      marginBottom={4}
+      id={`${CONFIG_SECTION_HEADERS[0].id}`}
+      minWidth={CONTAINER_MIN_WIDTH}
+    >
       <CollapsableSection
         label={<Text element="h3">1. {CONFIG_SECTION_HEADERS[0].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[0].isOpen}
@@ -76,7 +83,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           available settings and authentication methods in the next steps. If you are unsure what product you are using,
           view the{' '}
           <TextLink href="https://docs.influxdata.com/" external>
-            InfluxDB Docs.
+            InfluxDB Docs
           </TextLink>
           .
         </Text>
@@ -85,7 +92,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           <Field label={<div style={{ marginBottom: '5px' }}>URL</div>} noMargin>
             <Input
               data-testid="influxdb-v2-config-url-input"
-              placeholder="http://localhost:3000/"
+              placeholder="http://localhost:8086/"
               onChange={onUrlChange}
               value={options.url || ''}
               onBlur={trackInfluxDBConfigV2URLInputField}
@@ -121,8 +128,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
 
           {requiresDbrpMapping && (
             <Alert severity="warning" title="InfluxQL requires DBRP mapping">
-              InfluxDB OSS 1.x and 2.x users must configure a Database + Retention Policy (DBRP) mapping via the CLI or
-              API before data can be queried.{' '}
+              {`${options.jsonData.product} requires a Database + Retention Policy (DBRP) mapping via the CLI or
+              API before data can be queried.`}{' '}
               <TextLink href="https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/" external>
                 Learn how to set this up
               </TextLink>

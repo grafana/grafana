@@ -72,6 +72,7 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 				},
 				Value:      objectToJSONBytes(t, testObj),
 				Object:     metaAccessor,
+				ObjectOld:  metaAccessor,
 				PreviousRV: 100,
 			}
 
@@ -799,6 +800,8 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 	// Delete the resource
 	writeEvent.Type = resourcepb.WatchEvent_DELETED
 	writeEvent.PreviousRV = rv1
+	writeEvent.Object = metaAccessor
+	writeEvent.ObjectOld = metaAccessor
 
 	rv2, err := backend.WriteEvent(ctx, writeEvent)
 	require.NoError(t, err)
@@ -989,7 +992,11 @@ func writeObject(t *testing.T, backend *kvStorageBackend, obj *unstructured.Unst
 		},
 		Value:      objectToJSONBytes(t, obj),
 		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
 		PreviousRV: previousRV,
+	}
+	if eventType == resourcepb.WatchEvent_ADDED {
+		writeEvent.ObjectOld = nil
 	}
 
 	return backend.WriteEvent(context.Background(), writeEvent)

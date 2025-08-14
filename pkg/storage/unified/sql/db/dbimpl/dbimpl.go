@@ -62,62 +62,36 @@ type resourceDBProvider struct {
 	initErr    error
 }
 
-func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (p *resourceDBProvider, err error) {
-	// Resource API has other configs in its section besides database ones, so
-	// we prefix them with "db_". We use the database config from core Grafana
-	// as fallback, and as it uses a dedicated INI section, then keys are not
-	// prefixed with "db_"
-	getter := newConfGetter(cfg.SectionWithEnvOverrides("resource_api"), "db_")
-	fallbackConfig, fallbackErr := sqlstore.NewDatabaseConfig(cfg, nil)
-	if fallbackErr != nil {
-		// Ignore error here and keep going.
-		fallbackConfig = nil
-	}
-
-	logger := log.New("entity-db")
-	p = &resourceDBProvider{
+func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (*resourceDBProvider, error) {
+	logger := log.New("resource-db")
+	p := &resourceDBProvider{
 		cfg:         cfg,
 		log:         logger,
-		logQueries:  getter.Bool("log_queries"),
 		migrateFunc: migrations.MigrateResourceStore,
 		tracer:      tracer,
 	}
 
-	dbType := getter.String("type")
+	dbType := cfg.SectionWithEnvOverrides("database").Key("type").String()
+
 	switch {
-	// Deprecated: First try with the config in the "resource_api" section, which is specific to Unified Storage
-	case dbType == dbTypePostgres:
-		logger.Info("Using resource_api section", "db_type", dbType)
-		p.registerMetrics = true
-		p.engine, err = getEnginePostgres(getter)
-		return p, err
-
-	case dbType == dbTypeMySQL:
-		logger.Info("Using resource_api section", "db_type", dbType)
-		p.registerMetrics = true
-		p.engine, err = getEngineMySQL(getter)
-		return p, err
-
 	case dbType != "":
-		return p, fmt.Errorf("invalid db type specified: %s", dbType)
-
-	// If we have an empty Resource API db config, try with the core Grafana database config
-	case fallbackConfig != nil && fallbackConfig.Type != "":
-		logger.Info("Using database section", "db_type", fallbackConfig.Type)
+		logger.Info("Using database section", "db_type", dbType)
+		dbCfg, err := sqlstore.NewDatabaseConfig(cfg, nil)
+		if err != nil {
+			return nil, err
+		}
 		p.registerMetrics = true
-		p.engine, err = getEngine(fallbackConfig)
+		p.engine, err = getEngine(dbCfg)
 		return p, err
 	case grafanaDB != nil:
-		// try to use the grafana db connection (should only happen in tests)
+		// Try to use the grafana db connection, should only happen in tests.
 		if newConfGetter(cfg.SectionWithEnvOverrides("database"), "").Bool(grafanaDBInstrumentQueriesKey) {
 			return nil, errGrafanaDBInstrumentedNotSupported
 		}
 		p.engine = grafanaDB.GetEngine()
+		p.logQueries = cfg.SectionWithEnvOverrides("database").Key("log_queries").MustBool(false)
 		return p, nil
 	default:
-		if fallbackErr != nil {
-			return nil, fallbackErr
-		}
 		return nil, fmt.Errorf("no database type specified")
 	}
 }

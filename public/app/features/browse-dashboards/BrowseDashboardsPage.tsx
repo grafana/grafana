@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
 import { memo, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -8,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
@@ -16,10 +16,11 @@ import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo'
 import { contextSrv } from '../../core/services/context_srv';
 import { ManagerKind } from '../apiserver/types';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
+import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
+import { useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
@@ -41,6 +42,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderUID });
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -70,7 +72,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     }
   }, [isSearching, searchState.result, stateManager]);
 
-  const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
+  const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useSaveFolderMutation();
   const navModel = useMemo(() => {
     if (!folderDTO) {
@@ -90,14 +92,27 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const hasSelection = useHasSelection();
 
   // Fetch the root (aka general) folder if we're not in a specific folder
-  const { data: rootFolderDTO } = useGetFolderQuery(folderDTO ? skipToken : 'general');
+  const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   const folder = folderDTO ?? rootFolderDTO;
 
-  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
+  const {
+    canEditFolders,
+    canDeleteFolders,
+    canDeleteDashboards,
+    canEditDashboards,
+    canCreateDashboards,
+    canCreateFolders,
+  } = getFolderPermissions(folder);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
-  const canSelect = (canEditFolders || canEditDashboards) && !isProvisionedFolder;
+  const permissions = {
+    canEditFolders,
+    canEditDashboards,
+    canDeleteFolders,
+    canDeleteDashboards,
+    isReadOnlyRepo,
+  };
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -148,12 +163,14 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
               <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
             </LinkButton>
           )}
-          {folderDTO && <FolderActionsButton folder={folderDTO} />}
+          {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton
               parentFolder={folderDTO}
               canCreateDashboard={canCreateDashboards}
               canCreateFolder={canCreateFolders}
+              repoType={repoType}
+              isReadOnlyRepo={isReadOnlyRepo}
             />
           )}
         </>
@@ -171,7 +188,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         </div>
 
         {hasSelection ? (
-          <BrowseActions />
+          <BrowseActions folderDTO={folderDTO} />
         ) : (
           <div className={styles.filters}>
             <BrowseFilters />
@@ -183,14 +200,14 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             {({ width, height }) =>
               isSearching ? (
                 <SearchView
-                  canSelect={canSelect}
+                  permissions={permissions}
                   width={width}
                   height={height}
                   searchState={searchState}
                   searchStateManager={stateManager}
                 />
               ) : (
-                <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
+                <BrowseView permissions={permissions} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

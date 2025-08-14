@@ -38,6 +38,7 @@ interface LogsQueryBuilderProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   schema: EngineSchema;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
+  templateVariableOptions: SelectableValue<string>;
   datasource: Datasource;
   timeRange?: TimeRange;
   isLoadingSchema: boolean;
@@ -131,7 +132,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   );
 
   return (
-    <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
+    <span data-testid={selectors.components.queryEditor.logsQueryBuilder.container.input}>
       <EditorRows>
         {schema && tables.length === 0 && (
           <Alert

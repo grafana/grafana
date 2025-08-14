@@ -1,5 +1,5 @@
 import { AnnotationQuery } from '@grafana/data';
-import { AnnotationQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { AnnotationQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { transformV1ToV2AnnotationQuery, transformV2ToV1AnnotationQuery } from './annotations';
 

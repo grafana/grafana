@@ -399,14 +399,17 @@ describe('Plugin Extensions / Utils', () => {
       });
 
       it('should be possible to modify values in proxied object, but logs an error', () => {
-        const proxy = getMutationObserverProxy({ a: 'a' }, { pluginId: 'myorg-cool-datasource', source: 'datasource' });
+        const proxy = getMutationObserverProxy(
+          { a: 'a' },
+          { pluginId: 'myorg-cool-datasource', source: 'datasource', pluginVersion: '1.2.3' }
+        );
 
         expect(() => {
           proxy.a = 'b';
         }).not.toThrow();
 
         expect(log.error).toHaveBeenCalledWith(
-          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource`,
+          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version 1.2.3`,
           {
             stack: expect.any(String),
           }
@@ -427,7 +430,7 @@ describe('Plugin Extensions / Utils', () => {
         }).not.toThrow();
 
         expect(log.debug).toHaveBeenCalledWith(
-          `Attempted to define object property "b" from extension with id myorg-cool-extension`,
+          `Attempted to define object property "b" from extension with id myorg-cool-extension and version unknown`,
           {
             stack: expect.any(String),
           }
@@ -450,7 +453,7 @@ describe('Plugin Extensions / Utils', () => {
         }).not.toThrow();
 
         expect(log.error).toHaveBeenCalledWith(
-          `Attempted to delete object property "c" from extension with id unknown`,
+          `Attempted to delete object property "c" from extension with id unknown and version unknown`,
           {
             stack: expect.any(String),
           }
@@ -473,7 +476,7 @@ describe('Plugin Extensions / Utils', () => {
         }).not.toThrow();
 
         expect(log.warning).toHaveBeenCalledWith(
-          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource`,
+          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version unknown`,
           {
             stack: expect.any(String),
           }
@@ -494,7 +497,7 @@ describe('Plugin Extensions / Utils', () => {
         }).not.toThrow();
 
         expect(log.debug).toHaveBeenCalledWith(
-          `Attempted to define object property "b" from extension with id myorg-cool-extension`,
+          `Attempted to define object property "b" from extension with id myorg-cool-extension and version unknown`,
           {
             stack: expect.any(String),
           }
@@ -517,7 +520,7 @@ describe('Plugin Extensions / Utils', () => {
         }).not.toThrow();
 
         expect(log.warning).toHaveBeenCalledWith(
-          `Attempted to delete object property "c" from extension with id unknown`,
+          `Attempted to delete object property "c" from extension with id unknown and version unknown`,
           {
             stack: expect.any(String),
           }
@@ -548,7 +551,11 @@ describe('Plugin Extensions / Utils', () => {
       config.buildInfo.env = 'development';
 
       const obj = { a: 'a' };
-      const copy = writableProxy(obj, { source: 'datasource', pluginId: 'myorg-cool-datasource' });
+      const copy = writableProxy(obj, {
+        source: 'datasource',
+        pluginId: 'myorg-cool-datasource',
+        pluginVersion: '1.2.3',
+      });
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -558,7 +565,7 @@ describe('Plugin Extensions / Utils', () => {
       }).not.toThrow();
 
       expect(log.error).toHaveBeenCalledWith(
-        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource`,
+        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version 1.2.3`,
         {
           stack: expect.any(String),
         }
@@ -581,7 +588,7 @@ describe('Plugin Extensions / Utils', () => {
       }).not.toThrow();
 
       expect(log.warning).toHaveBeenCalledWith(
-        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource`,
+        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version unknown`,
         {
           stack: expect.any(String),
         }
@@ -605,9 +612,12 @@ describe('Plugin Extensions / Utils', () => {
       expect(Object.isFrozen(copy.b)).toBe(true);
       expect(copy.b).toEqual({ c: 'c' });
 
-      expect(log.debug).toHaveBeenCalledWith(`Attempted to define object property "a" from extension with id unknown`, {
-        stack: expect.any(String),
-      });
+      expect(log.debug).toHaveBeenCalledWith(
+        `Attempted to define object property "a" from extension with id unknown and version unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
     });
   });
 
@@ -893,7 +903,7 @@ describe('Plugin Extensions / Utils', () => {
       // Logs a warning
       expect(log.error).toHaveBeenCalledTimes(1);
       expect(log.error).toHaveBeenCalledWith(
-        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel`,
+        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel and version unknown`,
         {
           stack: expect.any(String),
         }
@@ -921,7 +931,7 @@ describe('Plugin Extensions / Utils', () => {
       // Logs a warning
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(log.warning).toHaveBeenCalledWith(
-        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel`,
+        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel and version unknown`,
         {
           stack: expect.any(String),
         }

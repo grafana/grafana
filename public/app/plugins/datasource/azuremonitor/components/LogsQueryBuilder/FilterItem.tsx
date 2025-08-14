@@ -65,7 +65,12 @@ export const FilterItem: React.FC<FilterItemProps> = ({
         width={inputFieldSize}
         disabled={!filter.property?.name}
       />
-      <Button variant="secondary" icon="times" onClick={() => onDelete(groupIndex, filterIndex)} />
+      <Button
+        aria-label={t('components.filter-item.aria-label-remove-filter', 'Remove filter')}
+        variant="secondary"
+        icon="times"
+        onClick={() => onDelete(groupIndex, filterIndex)}
+      />
       {showOr && (
         <Label style={{ padding: '9px 14px' }}>
           <Trans i18nKey="components.filter-item.label-or">OR</Trans>

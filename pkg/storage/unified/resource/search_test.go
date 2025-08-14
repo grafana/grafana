@@ -2,7 +2,11 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
@@ -96,6 +100,7 @@ func (m *mockStorageBackend) ListHistory(ctx context.Context, req *resourcepb.Li
 
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
+	mu                   sync.Mutex
 	buildIndexCalls      []buildIndexCall
 	buildEmptyIndexCalls []buildEmptyIndexCall
 }
@@ -118,7 +123,7 @@ func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource
 	return nil, nil
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -128,6 +133,9 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	if err != nil {
 		return nil, err
 	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
@@ -240,7 +248,7 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 				InitMaxCount:  tt.initMaxSize,
 			}
 
-			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil)
+			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil, false)
 			require.NoError(t, err)
 			require.NotNil(t, support)
 
@@ -270,4 +278,195 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 			require.ElementsMatch(t, tt.expectedEmptyBuilds, actualEmptyBuilds)
 		})
 	}
+}
+
+func TestSearchGetOrCreateIndex(t *testing.T) {
+	// Setup mock implementations
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	search := &mockSearchBackend{
+		buildIndexCalls:      []buildIndexCall{},
+		buildEmptyIndexCalls: []buildEmptyIndexCall{},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	// Create search support with the specified initMaxSize
+	opts := SearchOptions{
+		Backend:       search,
+		Resources:     supplier,
+		WorkerThreads: 1,
+		InitMinCount:  1, // set min count to default for this test
+		InitMaxCount:  0,
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	start := make(chan struct{})
+
+	const concurrency = 100
+	wg := sync.WaitGroup{}
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
+		}()
+	}
+
+	// Wait a bit for goroutines to start (hopefully)
+	time.Sleep(10 * time.Millisecond)
+	// Unblock all goroutines.
+	close(start)
+	wg.Wait()
+
+	require.NotEmpty(t, search.buildIndexCalls)
+	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
+	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Equal(t, int64(11111111), search.buildIndexCalls[0].resourceVersion)
+}
+
+func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
+	// Setup mock implementations
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	search := &slowSearchBackendWithCache{
+		mockSearchBackend: mockSearchBackend{},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	// Create search support with the specified initMaxSize
+	opts := SearchOptions{
+		Backend:       search,
+		Resources:     supplier,
+		WorkerThreads: 1,
+		InitMinCount:  1, // set min count to default for this test
+		InitMaxCount:  0,
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+	defer cancel()
+
+	_, err = support.getOrCreateIndex(ctx, key, "test")
+	// Make sure we get context deadline error
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+
+	// Wait until indexing is finished.
+	search.wg.Wait()
+
+	require.NotEmpty(t, search.buildIndexCalls)
+
+	// Wait until new index is put into cache.
+	require.Eventually(t, func() bool {
+		idx, err := support.search.GetIndex(ctx, key)
+		return err == nil && idx != nil
+	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
+
+	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
+	_, err = support.getOrCreateIndex(ctx, key, "test")
+	require.NoError(t, err)
+}
+
+func TestSearchWillUpdateIndexOnQueueProcessor(t *testing.T) {
+	// Regression test: Indexes were being closed when being rebuilt, but not updated on the queue processor. This was causing new events to
+	// be added to a closed index, resulting in an error and missing docs in the index.
+
+	// Create mock components
+	mockIndex1 := &MockResourceIndex{}
+	mockIndex2 := &MockResourceIndex{} // Different index to test replacement
+	mockBuilder := &MockDocumentBuilder{}
+
+	// Create searchSupport instance
+	s := &searchSupport{
+		log:                       slog.Default(),
+		indexQueueProcessors:      make(map[string]*indexQueueProcessor),
+		indexQueueProcessorsMutex: sync.Mutex{},
+		indexEventsChan:           make(chan *IndexEvent, 10),
+	}
+
+	nsr := NamespacedResource{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+	}
+
+	// Pre-populate the processor to avoid the builders.get() call
+	key := fmt.Sprintf("%s/%s/%s", nsr.Namespace, nsr.Group, nsr.Resource)
+	processor1 := newIndexQueueProcessor(mockIndex1, nsr, 10, mockBuilder, s.indexEventsChan)
+	s.indexQueueProcessors[key] = processor1
+
+	// Verify initial state
+	require.Same(t, mockIndex1, processor1.index)
+
+	// Call getOrCreateIndexQueueProcessor with a different index
+	// This should return the existing processor but update its index
+	processor2, err := s.getOrCreateIndexQueueProcessor(mockIndex2, nsr)
+	require.NoError(t, err)
+	require.NotNil(t, processor2)
+
+	// Same processor instance, but index was replaced
+	require.Same(t, processor1, processor2, "Should return the same processor instance")
+	require.Same(t, mockIndex2, processor2.index, "Index should be replaced with mockIndex2")
+	require.Same(t, mockIndex2, processor1.index, "Original processor should have updated index")
+}
+
+type slowSearchBackendWithCache struct {
+	mockSearchBackend
+	wg sync.WaitGroup
+
+	mu    sync.Mutex
+	cache map[NamespacedResource]ResourceIndex
+}
+
+func (m *slowSearchBackendWithCache) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.cache[key], nil
+}
+
+func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+	m.wg.Add(1)
+	defer m.wg.Done()
+
+	time.Sleep(1 * time.Second)
+
+	// Simulate erroring out when context is cancelled.
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.cache == nil {
+		m.cache = make(map[NamespacedResource]ResourceIndex)
+	}
+	m.cache[key] = idx
+	return idx, nil
 }

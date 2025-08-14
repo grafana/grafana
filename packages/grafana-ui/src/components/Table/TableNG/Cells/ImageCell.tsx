@@ -1,37 +1,28 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
-import { useStyles2 } from '../../../../themes/ThemeContext';
-import { renderSingleLink } from '../../DataLinksActionsTooltip';
 import { TableCellDisplayMode } from '../../types';
-import { useSingleLink } from '../hooks';
-import { ImageCellProps } from '../types';
+import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
+import { ImageCellProps, TableCellStyles } from '../types';
 
-const DATALINKS_HEIGHT_OFFSET = 10;
-
-export const ImageCell = ({ cellOptions, field, height, justifyContent, value, rowIdx }: ImageCellProps) => {
-  const calculatedHeight = height - DATALINKS_HEIGHT_OFFSET;
-  const styles = useStyles2(getStyles, calculatedHeight, justifyContent);
-
+export const ImageCell = ({ cellOptions, field, value, rowIdx }: ImageCellProps) => {
   const { text } = field.display!(value);
   const { alt, title } =
     cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { alt: undefined, title: undefined };
 
-  const img = <img alt={alt} src={text} className={styles.image} title={title} />;
-  const link = useSingleLink(field, rowIdx);
-
-  return <div className={styles.imageContainer}>{link == null ? img : renderSingleLink(link, img)}</div>;
+  return (
+    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+      <img alt={alt} src={text} title={title} />
+    </MaybeWrapWithLink>
+  );
 };
 
-const getStyles = (theme: GrafanaTheme2, height: number, justifyContent: Property.JustifyContent) => ({
-  image: css({
-    height,
-    width: 'auto',
-  }),
-  imageContainer: css({
-    display: 'flex',
-    justifyContent,
-  }),
-});
+export const getStyles: TableCellStyles = () =>
+  css({
+    'a, img': {
+      width: '100%',
+      height: '100%',
+    },
+    img: {
+      objectFit: 'contain',
+    },
+  });
