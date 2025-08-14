@@ -97,6 +97,7 @@ export function TableNG(props: TableNGProps) {
     onSortByChange,
     showTypeIcons,
     structureRev,
+    timeRange,
     transparent,
     width,
   } = props;
@@ -461,6 +462,7 @@ export function TableNG(props: TableNGProps) {
                 theme,
                 value,
                 width,
+                timeRange,
                 cellInspect,
                 showFilters,
                 getActions: getCellActions,
