@@ -14,7 +14,7 @@ import {
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
-import { Options, PieChartType, PieChartSortOptions, PieChartLegendValues } from './panelcfg.gen';
+import { Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
@@ -172,35 +172,35 @@ describe('comparePieChartItemsByValue', () => {
   it.each([
     {
       name: 'always: NaN a sorts after 1',
-      sort: PieChartSortOptions.Descending,
+      sort: SortOrder.Descending,
       a: makeFieldDisplay(NaN),
       b: makeFieldDisplay(1),
       expected: 1,
     },
     {
       name: 'always: NaN b sorts before 1',
-      sort: PieChartSortOptions.Descending,
+      sort: SortOrder.Descending,
       a: makeFieldDisplay(1),
       b: makeFieldDisplay(NaN),
       expected: -1,
     },
     {
       name: 'descending: larger a sorts before smaller b (negative)',
-      sort: PieChartSortOptions.Descending,
+      sort: SortOrder.Descending,
       a: makeFieldDisplay(10),
       b: makeFieldDisplay(5),
       expected: -5,
     },
     {
       name: 'ascending: smaller a sorts before larger b (negative)',
-      sort: PieChartSortOptions.Ascending,
+      sort: SortOrder.Ascending,
       a: makeFieldDisplay(5),
       b: makeFieldDisplay(10),
       expected: -5,
     },
     {
       name: 'none: comparator returns 0 regardless of values',
-      sort: PieChartSortOptions.None,
+      sort: SortOrder.None,
       a: makeFieldDisplay(5),
       b: makeFieldDisplay(10),
       expected: 0,
@@ -219,7 +219,7 @@ const setup = (propsOverrides?: {}) => {
 
   const options: Options = {
     pieType: PieChartType.Pie,
-    pieSorting: PieChartSortOptions.Descending,
+    sort: SortOrder.Descending,
     displayLabels: [],
     legend: {
       displayMode: LegendDisplayMode.List,

@@ -11,7 +11,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
+import { HideSeriesConfig, SortOrder, LegendDisplayMode } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartSortOptions, PieChartLegendValues, Options } from './panelcfg.gen';
+import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -67,7 +67,7 @@ export function PieChartPanel(props: Props) {
             fieldDisplayValues={fieldDisplayValues}
             tooltipOptions={options.tooltip}
             pieType={options.pieType}
-            pieSorting={options.pieSorting}
+            sort={options.sort}
             displayLabels={options.displayLabels}
           />
         );
@@ -83,7 +83,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
     return undefined;
   }
 
-  const sortedDisplayValues = displayValues.sort(comparePieChartItemsByValue(props.options.pieSorting));
+  const sortedDisplayValues = displayValues.sort(comparePieChartItemsByValue(props.options.sort));
 
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
@@ -145,9 +145,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   );
 }
 
-export function comparePieChartItemsByValue(
-  pieSorting: PieChartSortOptions
-): (a: FieldDisplay, b: FieldDisplay) => number {
+export function comparePieChartItemsByValue(sort: SortOrder): (a: FieldDisplay, b: FieldDisplay) => number {
   return function (a: FieldDisplay, b: FieldDisplay) {
     if (isNaN(a.display.numeric)) {
       return 1;
@@ -156,10 +154,10 @@ export function comparePieChartItemsByValue(
       return -1;
     }
 
-    if (pieSorting === PieChartSortOptions.Descending) {
+    if (sort === SortOrder.Descending) {
       return b.display.numeric - a.display.numeric;
     }
-    if (pieSorting === PieChartSortOptions.Ascending) {
+    if (sort === SortOrder.Ascending) {
       return a.display.numeric - b.display.numeric;
     }
 

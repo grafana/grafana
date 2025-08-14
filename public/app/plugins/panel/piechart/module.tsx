@@ -1,5 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { SortOrder } from '@grafana/schema/dist/esm/index';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -7,14 +8,7 @@ import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';
-import {
-  Options,
-  FieldConfig,
-  PieChartType,
-  PieChartSortOptions,
-  PieChartLabels,
-  PieChartLegendValues,
-} from './panelcfg.gen';
+import { Options, FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
 import { PieChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
@@ -58,15 +52,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
       .addSelect({
         name: 'Slice sorting',
         description: 'Select how to sort the pie slices',
-        path: 'pieSorting',
+        path: 'sort',
         settings: {
           options: [
-            { value: PieChartSortOptions.Descending, label: 'Descending' },
-            { value: PieChartSortOptions.Ascending, label: 'Ascending' },
-            { value: PieChartSortOptions.None, label: 'None' },
+            { value: SortOrder.Descending, label: 'Descending' },
+            { value: SortOrder.Ascending, label: 'Ascending' },
+            { value: SortOrder.None, label: 'None' },
           ],
         },
-        defaultValue: PieChartSortOptions.Descending,
+        defaultValue: SortOrder.Descending,
       })
       .addMultiSelect({
         name: t('piechart.name-labels', 'Labels'),

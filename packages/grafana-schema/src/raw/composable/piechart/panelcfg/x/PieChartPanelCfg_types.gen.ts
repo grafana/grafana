@@ -21,18 +21,6 @@ export enum PieChartType {
 }
 
 /**
- * Select how to sort the pie slices.
- *  - Descending - The slices are sorted in descending value going clockwise (default).
- *  - Ascending - The slices are sorted in ascending value going clockwise.
- *  - None - The slices are not sorted and the order of the query/transform is maintained.
- */
-export enum PieChartSortOptions {
-  Ascending = 'ascending',
-  Descending = 'descending',
-  None = 'none',
-}
-
-/**
  * Select labels to display on the pie chart.
  *  - Name - The series or field name.
  *  - Percent - The percentage of the whole.
@@ -65,8 +53,8 @@ export const defaultPieChartLegendOptions: Partial<PieChartLegendOptions> = {
 export interface Options extends common.OptionsWithTooltip, common.SingleStatBaseOptions {
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
-  pieSorting: PieChartSortOptions;
   pieType: PieChartType;
+  sort: common.SortOrder;
 }
 
 export const defaultOptions: Partial<Options> = {

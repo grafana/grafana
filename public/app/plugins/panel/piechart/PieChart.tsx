@@ -18,7 +18,7 @@ import {
   DataHoverEvent,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { VizTooltipOptions } from '@grafana/schema';
+import { SortOrder, VizTooltipOptions } from '@grafana/schema';
 import {
   useTheme2,
   useStyles2,
@@ -29,7 +29,7 @@ import {
 } from '@grafana/ui';
 import { getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
 
-import { PieChartType, PieChartSortOptions, PieChartLabels } from './panelcfg.gen';
+import { PieChartType, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**
@@ -40,7 +40,7 @@ interface PieChartProps {
   width: number;
   fieldDisplayValues: FieldDisplay[];
   pieType: PieChartType;
-  pieSorting: PieChartSortOptions;
+  sort: SortOrder;
   highlightedTitle?: string;
   displayLabels?: PieChartLabels[];
   useGradients?: boolean; // not used?
@@ -50,7 +50,7 @@ interface PieChartProps {
 export const PieChart = ({
   fieldDisplayValues,
   pieType,
-  pieSorting,
+  sort,
   width,
   height,
   highlightedTitle,
