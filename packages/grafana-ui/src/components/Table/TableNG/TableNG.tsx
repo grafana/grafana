@@ -648,6 +648,7 @@ export function TableNG(props: TableNGProps) {
     showTypeIcons,
     sortColumns,
     styles,
+    timeRange,
     theme,
     visibleFields,
     widths,
