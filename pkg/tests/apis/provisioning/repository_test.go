@@ -152,7 +152,6 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 
-
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
