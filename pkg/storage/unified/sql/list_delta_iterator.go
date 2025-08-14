@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
-var _ resource.ListIterator = (*listIter)(nil)
+var _ resource.ListIterator = (*listDeltaIter)(nil)
 
 type listDeltaIter struct {
 	rows  db.Rows
