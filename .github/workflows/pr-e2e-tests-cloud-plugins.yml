@@ -52,8 +52,9 @@ jobs:
           AZURE_SP_APP_ID: ${{ env.AZURE_SP_APP_ID}}
           AZURE_SP_PASSWORD: ${{ env.AZURE_SP_PASSWORD}}
           AZURE_TENANT: ${{ env.AZURE_TENANT }}
+          NAME: ${{ github.ref_name }}
         run: |
-          docker container run --name cpp-e2e-deploy -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT -e PLAYWRIGHT_CI=true us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure ${{ github.ref_name }} deploy
+          docker container run --name cpp-e2e-deploy -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT -e PLAYWRIGHT_CI=true us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure ${NAME} deploy
 
       - id: extract-creds
         # see https://github.com/grafana/oss-plugin-partnerships/blob/a77040d0456003cd258668b61d542dc7c75db5b5/e2e/scripts/deploy.sh#L25 for path
@@ -86,5 +87,6 @@ jobs:
           AZURE_SP_APP_ID: ${{ env.AZURE_SP_APP_ID }}
           AZURE_SP_PASSWORD: ${{ env.AZURE_SP_PASSWORD }}
           AZURE_TENANT: ${{ env.AZURE_TENANT }}
+          NAME: ${{ github.ref_name }}
         run: |
-          docker container run --name cpp-e2e-destroy -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure ${{ github.ref_name }} destroy
+          docker container run --name cpp-e2e-destroy -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure ${NAME} destroy
