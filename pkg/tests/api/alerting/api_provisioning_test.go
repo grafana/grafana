@@ -1025,7 +1025,7 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 
 			require.Equal(t, model.Duration(time.Second*120), provisionedRule.KeepFiringFor)
 			require.NotNil(t, provisionedRule.MissingSeriesEvalsToResolve)
-			require.Equal(t, int64(3), *provisionedRule.MissingSeriesEvalsToResolve)
+			require.Equal(t, 3, *provisionedRule.MissingSeriesEvalsToResolve)
 		})
 
 		t.Run("exported alert rules should escape $ characters", func(t *testing.T) {

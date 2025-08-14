@@ -73,7 +73,7 @@ type AlertRuleV1 struct {
 	ExecErrState                values.StringValue      `json:"execErrState" yaml:"execErrState"`
 	For                         values.StringValue      `json:"for" yaml:"for"`
 	KeepFiringFor               values.StringValue      `json:"keepFiringFor" yaml:"keepFiringFor"`
-	MissingSeriesEvalsToResolve values.Int64Value       `json:"missing_series_evals_to_resolve" yaml:"missing_series_evals_to_resolve"`
+	MissingSeriesEvalsToResolve values.IntValue         `json:"missing_series_evals_to_resolve" yaml:"missing_series_evals_to_resolve"`
 	Annotations                 values.StringMapValue   `json:"annotations" yaml:"annotations"`
 	Labels                      values.StringMapValue   `json:"labels" yaml:"labels"`
 	IsPaused                    values.BoolValue        `json:"isPaused" yaml:"isPaused"`
