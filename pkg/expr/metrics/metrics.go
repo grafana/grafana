@@ -47,7 +47,7 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			Subsystem: subsystem,
 			Name:      "sql_command_count",
 			Help:      "Total number of SQL command executions with a status label",
-		}, []string{"status"}),
+		}, []string{"status", "error_type"}),
 
 		SqlCommandCellCount: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{

@@ -86,9 +86,9 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 	contextErr := func(err error) error {
 		switch {
 		case errors.Is(err, context.DeadlineExceeded):
-			return fmt.Errorf("SQL expression for refId %v did not complete within the timeout of %v: %w", name, QueryOptions.Timeout, err)
+			return MakeTimeOutError(err, name, QueryOptions.Timeout)
 		case errors.Is(err, context.Canceled):
-			return fmt.Errorf("SQL expression for refId %v was cancelled before it completed: %w", name, err)
+			return MakeCancelError(err, name)
 		default:
 			return fmt.Errorf("SQL expression for refId %v ended unexpectedly: %w", name, err)
 		}
@@ -100,7 +100,7 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 		if ctx.Err() != nil {
 			return nil, contextErr(ctx.Err())
 		}
-		return nil, MakeSqlErrorType(name, err)
+		return nil, MakeGMSError(name, err)
 	}
 
 	// Convert the iterator into a Grafana data.Frame

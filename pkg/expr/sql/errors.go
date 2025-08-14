@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -16,11 +17,13 @@ type GoMySQLServerError struct {
 	errorType string
 }
 
+// ErrorWithType is an interface that allows us to categorize errors with a string that can be attached to metrics as a label, logs, and traces.
 type ErrorWithType interface {
 	error
 	ErrorType() string
 }
 
+// et is a concrete implementation of ErrorWithType that holds an error and its type.
 type et struct {
 	errorType string
 	err       error
@@ -68,7 +71,7 @@ func WrapGoMySQLServerError(err error) error {
 	return err
 }
 
-func MakeSqlErrorType(refID string, err error) error {
+func MakeGMSError(refID string, err error) error {
 	err = WrapGoMySQLServerError(err)
 
 	gmsError := &GoMySQLServerError{}
@@ -112,11 +115,11 @@ func MakeInputLimitExceededError(refID string, inputLimit int64) ErrorWithType {
 		},
 	}
 
-	return &et{errorType: "limit_exceeded", err: InputLimitExceededError.Build(data)}
+	return &et{errorType: "input_limit_exceeded", err: InputLimitExceededError.Build(data)}
 }
 
 var DuplicateStringColumnError = errutil.NewBase(
-	errutil.StatusBadRequest, "sse.duplicateStringColumns").MustTemplate(
+	errutil.StatusBadRequest, "sse.sql.duplicateStringColumns").MustTemplate(
 	"your SQL query returned {{ .Public.count }} rows with duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination.",
 	errutil.WithPublic("SQL query returned duplicate combinations of string column values. Use GROUP BY or aggregation to return one row per combination."),
 )
@@ -160,7 +163,50 @@ func MakeGeneralGMSError(err *GoMySQLServerError, refID string) ErrorWithType {
 		Public: map[string]interface{}{
 			"refId": refID,
 		},
+		Error: err,
 	}
 
 	return &et{errorType: err.ErrorType(), err: generalGMSError.Build(data)}
+}
+
+var timeoutStr = "query [{{ .Public.refId }}] timed out after {{ .Public.timeout }}"
+
+var timeoutError = errutil.NewBase(
+	errutil.StatusTimeout, "sse.sql.timeout").MustTemplate(
+	timeoutStr,
+	errutil.WithPublic(timeoutStr))
+
+// MakeTimeOutError creates an error for when a query times out because it took longer that the configured timeout.
+func MakeTimeOutError(err error, refID string, timeout time.Duration) ErrorWithType {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":   refID,
+			"timeout": timeout.String(),
+		},
+
+		Error: err,
+	}
+
+	return &et{errorType: "timeout", err: timeoutError.Build(data)}
+}
+
+var CancelStr = "query [{{ .Public.refId }}] was cancelled before completion"
+
+var cancelError = errutil.NewBase(
+	errutil.StatusClientClosedRequest, "sse.sql.cancel").MustTemplate(
+	CancelStr,
+	errutil.WithPublic(CancelStr))
+
+// MakeCancelError creates an error for when a query is cancelled before completion.
+// Users won't see this error in the browser, rather an empty response when the browser cancels the connection.
+func MakeCancelError(err error, refID string) ErrorWithType {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+		},
+
+		Error: err,
+	}
+
+	return &et{errorType: "cancel", err: cancelError.Build(data)}
 }

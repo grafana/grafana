@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
@@ -118,27 +117,28 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	sqlLogger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
 	tc := int64(0)
 	rsp := mathexp.Results{}
-	var cat string
+	errorType := "none"
 
 	defer func() {
 		duration := float64(time.Since(start).Milliseconds())
 		statusLabel := "ok"
 		if rsp.Error != nil {
 			if ce, ok := rsp.Error.(sql.ErrorWithType); ok {
-				cat = ce.ErrorType()
+				errorType = ce.ErrorType()
+			} else {
+				errorType = "unknown"
 			}
 			statusLabel = "error"
 			span.RecordError(rsp.Error)
 			span.SetStatus(codes.Error, rsp.Error.Error())
 			span.SetAttributes(
-				attribute.String("error.type", cat),
+				attribute.String("error.type", errorType),
 			)
-			spew.Dump(cat, rsp.Error)
-			sqlLogger.Error("SQL command execution failed", "error", rsp.Error.Error())
+			sqlLogger.Error("SQL command execution failed", "error", rsp.Error.Error(), "error_type", errorType)
 		}
 		span.End()
 
-		metrics.SqlCommandCount.WithLabelValues(statusLabel).Inc()
+		metrics.SqlCommandCount.WithLabelValues(statusLabel, errorType).Inc()
 		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
 		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
 	}()
