@@ -273,7 +273,7 @@ type AlertRuleExport struct {
 	NoDataState   *NoDataState         `json:"noDataState,omitempty" yaml:"noDataState,omitempty" hcl:"no_data_state"`
 	ExecErrState  *ExecutionErrorState `json:"execErrState,omitempty" yaml:"execErrState,omitempty" hcl:"exec_err_state"`
 	For           model.Duration       `json:"for,omitempty" yaml:"for,omitempty"`
-	KeepFiringFor model.Duration       `json:"keepFiringFor,omitempty" yaml:"keepFiringFor,omitempty" hcl:"keep_firing_for"`
+	KeepFiringFor model.Duration       `json:"keepFiringFor,omitempty" yaml:"keepFiringFor,omitempty"`
 	// ForString and KeepFiringForString are used to:
 	// - Only export the for field for HCL if it is non-zero.
 	// - Format the Prometheus model.Duration type properly for HCL.
