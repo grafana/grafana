@@ -1,4 +1,4 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
@@ -115,9 +115,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     }));
   }
 
-  async getDashboardDTO(uid: string) {
+  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
+      const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto', params);
 
       // This could come as conversion error from v0 or v2 to V1.
       if (dash.status?.conversion?.failed && isV2StoredVersion(dash.status.conversion.storedVersion)) {

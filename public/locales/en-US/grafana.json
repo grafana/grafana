@@ -7480,6 +7480,13 @@
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "Collapse editor",
+      "tooltip-copy-query": "Copy query",
+      "tooltip-expand-editor": "Expand editor",
+      "tooltip-format-query": "Format query",
+      "tooltip-run-query": "Hit ctrl/cmd+enter to run query"
+    },
     "reduce": {
       "label-function": "Function",
       "label-input": "Input",
@@ -7494,6 +7501,11 @@
       "label-resample-to": "Resample to",
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
+    },
+    "sql-expr": {
+      "button-run-query": "Run query",
+      "modal-title": "SQL Editor",
+      "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
     },
     "threshold": {
       "label-input": "Input"
@@ -12106,7 +12118,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
-      "message": "No services accounts found",
+      "message": "No service accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
     }
@@ -12499,6 +12511,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sort"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
+    "ai-explain-title": "AI-powered SQL expression explanation",
+    "ai-suggestions-title": "AI-powered SQL expression suggestions",
+    "apply": "Apply",
+    "code-label": "{{ language }}",
+    "copy": "Copy",
+    "explain-empty-query-tooltip": "Enter a SQL expression to get an explanation",
+    "explain-query": "Explain query",
+    "explanation-modal-title": "SQL Query Explanation",
+    "sql-ai-interaction": "{{text}}",
+    "sql-suggestion-history": "SQL Suggestion History",
+    "suggestions": "Suggestions",
+    "view-explanation": "View explanation"
   },
   "stat": {
     "add-orientation-option": {
