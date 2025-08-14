@@ -427,7 +427,7 @@ func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error)
 	return &x, nil
 }
 
-type sqlResourceListSinceModifiedRequest struct {
+type sqlResourceListModifiedSinceRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace string
 	Group     string
@@ -435,7 +435,7 @@ type sqlResourceListSinceModifiedRequest struct {
 	SinceRv   int64
 }
 
-func (r sqlResourceListSinceModifiedRequest) Validate() error {
+func (r sqlResourceListModifiedSinceRequest) Validate() error {
 	if r.Namespace == "" {
 		return fmt.Errorf("missing namespace")
 	}
