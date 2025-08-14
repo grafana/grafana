@@ -5324,6 +5324,7 @@
       "playlist-next": "Buka dasbor berikutnya",
       "playlist-previous": "Buka dasbor sebelumnya",
       "playlist-stop": "Hentikan daftar putar",
+      "read-only": "",
       "refresh": "Muat ulang dasbor",
       "save": "Simpan dasbor",
       "save-dashboard": {
@@ -7453,6 +7454,13 @@
       "tooltip-title": "Operator matematika",
       "tooltip-trigger": "Ekspresi"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Fungsi",
       "label-input": "Input",
@@ -7467,6 +7475,11 @@
       "label-resample-to": "Sampel ulang ke",
       "label-upsample": "Tingkatkan sample",
       "tooltip-s-m-h": "10 dtk, 1 mnt, 30 mnt, 1 jm"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Input"
@@ -7484,7 +7497,8 @@
     "loading": "Memuat folder..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10828,7 +10842,6 @@
         "downloads": "Unduhan",
         "from": "Dari",
         "installedVersion": "Versi Terinstal",
-        "lastCommitDate": "Tanggal melakukan terakhir:",
         "latestReleaseDate": "Tanggal rilis terbaru:",
         "latestVersion": "Versi Terbaru",
         "license": "Lisensi",
@@ -11378,6 +11391,8 @@
         "subtitle": "Gunakan opsi ini jika Anda ingin menyinkronkan dan mengelola seluruh instans Grafana melalui penyimpanan eksternal."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "pekerjaan aktif",
       "column-action": "Tindakan",
@@ -11396,6 +11411,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Pengaturan",
       "view": "Lihat"
     },
@@ -11810,6 +11826,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Ciutkan baris kueri",
       "datasource-help": "Tampilkan bantuan sumber data",
       "drag-and-drop": "Seret dan lepas untuk menyusun ulang",
@@ -11820,7 +11837,11 @@
       "replace-query-from-library": "Ganti dengan kueri dari pustaka",
       "show-response": "Tampilkan respons"
     },
-    "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
+    "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12053,7 +12074,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Tambahkan akun layanan",
-      "message": "Akun layanan tidak ditemukan",
+      "message": "",
       "more-info": "Ingat, Anda dapat memberikan izin khusus untuk akses API ke aplikasi lain",
       "title": "Anda belum membuat akun layanan"
     }
@@ -12445,6 +12466,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Urutkan"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

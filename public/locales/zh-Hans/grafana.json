@@ -5324,6 +5324,7 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
+      "read-only": "",
       "refresh": "刷新仪表板",
       "save": "保存仪表板",
       "save-dashboard": {
@@ -7453,6 +7454,13 @@
       "tooltip-title": "数学运算符",
       "tooltip-trigger": "表达式"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "功能",
       "label-input": "输入",
@@ -7467,6 +7475,11 @@
       "label-resample-to": "重新采样为",
       "label-upsample": "升高采样",
       "tooltip-s-m-h": "10 秒、1 分钟、30 分钟、1 小时"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "输入"
@@ -7484,7 +7497,8 @@
     "loading": "正在加载文件夹..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10828,7 +10842,6 @@
         "downloads": "下载",
         "from": "",
         "installedVersion": "安装的版本",
-        "lastCommitDate": "上次提交日期：",
         "latestReleaseDate": "最新发布日期：",
         "latestVersion": "最新版本",
         "license": "许可",
@@ -11378,6 +11391,8 @@
         "subtitle": "如果要通过外部存储来同步和管理整个 Grafana 实例，请使用此选项。"
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "活跃的作业",
       "column-action": "操作",
@@ -11396,6 +11411,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "设置",
       "view": "查看"
     },
@@ -11810,6 +11826,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "折叠查询行",
       "datasource-help": "显示数据源帮助",
       "drag-and-drop": "拖放以重新排序",
@@ -11820,7 +11837,11 @@
       "replace-query-from-library": "替换为来自库的查询",
       "show-response": "显示回复"
     },
-    "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
+    "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12053,7 +12074,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "添加服务账户",
-      "message": "未找到服务账户",
+      "message": "",
       "more-info": "请记住，您可以为其他应用程序的 API 访问提供特定权限",
       "title": "您尚未创建任何服务账号"
     }
@@ -12445,6 +12466,21 @@
   },
   "sort-picker": {
     "select-aria-label": "排序"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

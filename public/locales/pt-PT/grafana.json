@@ -5343,6 +5343,7 @@
       "playlist-next": "Ir para o próximo painel de controlo",
       "playlist-previous": "Ir para o painel de controlo anterior",
       "playlist-stop": "Parar a lista de reprodução",
+      "read-only": "",
       "refresh": "Atualizar o painel de controlo",
       "save": "Guardar o painel de controlo",
       "save-dashboard": {
@@ -7474,6 +7475,13 @@
       "tooltip-title": "Operador matemático",
       "tooltip-trigger": "Expressão"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Função",
       "label-input": "Entrada",
@@ -7488,6 +7496,11 @@
       "label-resample-to": "Refazer amostra para",
       "label-upsample": "Aumentar a quantidade de amostras",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Entrada"
@@ -7505,7 +7518,8 @@
     "loading": "A carregar pastas..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10860,7 +10874,6 @@
         "downloads": "Transferências",
         "from": "De",
         "installedVersion": "Versão instalada",
-        "lastCommitDate": "Data do último compromisso:",
         "latestReleaseDate": "Data de lançamento mais recente:",
         "latestVersion": "Versão mais recente",
         "license": "Licença",
@@ -11413,6 +11426,8 @@
         "subtitle": "Utilize esta opção se pretender sincronizar e gerir toda a sua instância Grafana através de um armazenamento externo."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "trabalhos ativos",
       "column-action": "Ação",
@@ -11431,6 +11446,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Definições",
       "view": "Ver"
     },
@@ -11846,6 +11862,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Recolher linha de consulta",
       "datasource-help": "Mostrar ajuda da origem de dados",
       "drag-and-drop": "Arrastar e largar para reordenar",
@@ -11856,7 +11873,11 @@
       "replace-query-from-library": "Substituir por consulta da biblioteca",
       "show-response": "Mostrar resposta"
     },
-    "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas"
+    "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12092,7 +12113,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Adicionar conta de serviço",
-      "message": "Não foram encontradas contas de serviços",
+      "message": "",
       "more-info": "Lembre-se de que pode fornecer permissões específicas para acesso à API a outras aplicações",
       "title": "Ainda não criou qualquer conta de serviço"
     }
@@ -12485,6 +12506,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Ordenar"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

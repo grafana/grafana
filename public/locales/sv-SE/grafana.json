@@ -5343,6 +5343,7 @@
       "playlist-next": "Gå till nästa instrumentpanel",
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
+      "read-only": "",
       "refresh": "Uppdatera instrumentpanel",
       "save": "Spara instrumentpanel",
       "save-dashboard": {
@@ -7474,6 +7475,13 @@
       "tooltip-title": "Matematisk operator",
       "tooltip-trigger": "Uttryck"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Funktion",
       "label-input": "Ingång",
@@ -7488,6 +7496,11 @@
       "label-resample-to": "Sampla om till",
       "label-upsample": "Sampla upp",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Ingång"
@@ -7505,7 +7518,8 @@
     "loading": "Laddar mappar…"
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10860,7 +10874,6 @@
         "downloads": "Nedladdningar",
         "from": "Från",
         "installedVersion": "Installerad version",
-        "lastCommitDate": "Senaste åtagandedatum:",
         "latestReleaseDate": "Senaste utgivningsdatum:",
         "latestVersion": "Senaste versionen",
         "license": "Licens",
@@ -11413,6 +11426,8 @@
         "subtitle": "Använd det här alternativet om du vill synkronisera och hantera hela din Grafana-instans via extern lagring."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktiva jobb",
       "column-action": "Åtgärd",
@@ -11431,6 +11446,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Inställningar",
       "view": "Visa"
     },
@@ -11846,6 +11862,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Dölj frågeraden",
       "datasource-help": "Visa hjälp med datakälla",
       "drag-and-drop": "Ändra ordning genom dra och släpp",
@@ -11856,7 +11873,11 @@
       "replace-query-from-library": "Ersätt med fråga från biblioteket",
       "show-response": "Visa svar"
     },
-    "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
+    "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12092,7 +12113,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Lägg till servicekonto",
-      "message": "Inga servicekonton hittades",
+      "message": "",
       "more-info": "Kom ihåg att du kan ange specifika behörigheter för API-åtkomst till andra applikationer",
       "title": "Du har inte skapat några servicekonton ännu"
     }
@@ -12485,6 +12506,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sortera"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

@@ -5324,6 +5324,7 @@
       "playlist-next": "前往下一個儀表板",
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
+      "read-only": "",
       "refresh": "重新整理儀表板",
       "save": "儲存儀表板",
       "save-dashboard": {
@@ -7453,6 +7454,13 @@
       "tooltip-title": "數學運算子",
       "tooltip-trigger": "表達式"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "功能",
       "label-input": "輸入",
@@ -7467,6 +7475,11 @@
       "label-resample-to": "重新取樣為",
       "label-upsample": "向上取樣",
       "tooltip-s-m-h": "10 秒、1 分鐘、30 分鐘、1 小時"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "輸入"
@@ -7484,7 +7497,8 @@
     "loading": "正在載入資料夾…"
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10828,7 +10842,6 @@
         "downloads": "下載量",
         "from": "自",
         "installedVersion": "安裝版本",
-        "lastCommitDate": "上次提交日期：",
         "latestReleaseDate": "最新發佈日期：",
         "latestVersion": "最新版本",
         "license": "授權",
@@ -11378,6 +11391,8 @@
         "subtitle": "若想透過外部儲存空間同步及管理整個 Grafana 執行個體，請使用此選項。"
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "進行中的作業",
       "column-action": "動作",
@@ -11396,6 +11411,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "設定",
       "view": "檢視"
     },
@@ -11810,6 +11826,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "收闔查詢列",
       "datasource-help": "顯示資料來源說明",
       "drag-and-drop": "拖放以重新排序",
@@ -11820,7 +11837,11 @@
       "replace-query-from-library": "替換為來自資料庫的查詢",
       "show-response": "顯示回應"
     },
-    "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
+    "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12053,7 +12074,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "新增服務帳戶",
-      "message": "未找到服務帳戶",
+      "message": "",
       "more-info": "請記住，您可以為 API 存取其他應用程式提供特定權限",
       "title": "您尚未建立任何服務帳戶"
     }
@@ -12445,6 +12466,21 @@
   },
   "sort-picker": {
     "select-aria-label": "排序"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
