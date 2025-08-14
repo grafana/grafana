@@ -374,9 +374,8 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 			for _, repo := range list.Items {
 				err := helper.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
 				// Don't fail if already deleted (404 is OK)
-				if err != nil && !apierrors.IsNotFound(err) {
-					collect.Errorf("Failed to delete repository %s: %v", repo.GetName(), err)
-					return
+				if err != nil {
+					assert.True(collect, apierrors.IsNotFound(err), "Should be able to delete repository %s (or it should already be deleted)", repo.GetName())
 				}
 			}
 		}, time.Second*10, time.Millisecond*100, "should be able to delete all repositories")
@@ -384,9 +383,10 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 		// Then wait for repositories to be fully deleted to ensure clean state
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
-			if assert.NoError(collect, err) {
-				assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
+			if !assert.NoError(collect, err) {
+				return
 			}
+			assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
 		}, time.Second*15, time.Millisecond*100, "repositories should be cleaned up between subtests")
 	}
 
