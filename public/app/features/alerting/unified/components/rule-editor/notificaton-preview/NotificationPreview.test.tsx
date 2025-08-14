@@ -236,8 +236,7 @@ describe('NotificationPreviewByAlertmanager', () => {
     const { user } = render(
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
-        potentialInstances={potentialInstances}
-        onlyOneAM={true}
+        instances={potentialInstances}
       />
     );
 
@@ -289,8 +288,7 @@ describe('NotificationPreviewByAlertmanager', () => {
     const { user } = render(
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
-        potentialInstances={potentialInstances}
-        onlyOneAM={true}
+        instances={potentialInstances}
       />
     );
 
@@ -343,8 +341,7 @@ describe('NotificationPreviewByAlertmanager', () => {
     const { user } = render(
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
-        potentialInstances={potentialInstances}
-        onlyOneAM={true}
+        instances={potentialInstances}
       />
     );
 
@@ -390,8 +387,7 @@ describe('NotificationPreviewByAlertmanager', () => {
       render(
         <NotificationPreviewByAlertManager
           alertManagerSource={grafanaAlertManagerDataSource}
-          potentialInstances={potentialInstances}
-          onlyOneAM={true}
+          instances={potentialInstances}
         />
       );
 
@@ -416,8 +412,7 @@ describe('NotificationPreviewByAlertmanager', () => {
       render(
         <NotificationPreviewByAlertManager
           alertManagerSource={grafanaAlertManagerDataSource}
-          potentialInstances={potentialInstances}
-          onlyOneAM={true}
+          instances={potentialInstances}
         />
       );
 
@@ -441,8 +436,7 @@ describe('NotificationPreviewByAlertmanager', () => {
       render(
         <NotificationPreviewByAlertManager
           alertManagerSource={grafanaAlertManagerDataSource}
-          potentialInstances={potentialInstances}
-          onlyOneAM={true}
+          instances={potentialInstances}
         />
       );
 
@@ -467,8 +461,7 @@ describe('NotificationPreviewByAlertmanager', () => {
     render(
       <NotificationPreviewByAlertManager
         alertManagerSource={grafanaAlertManagerDataSource}
-        potentialInstances={potentialInstances}
-        onlyOneAM={true}
+        instances={potentialInstances}
       />
     );
 

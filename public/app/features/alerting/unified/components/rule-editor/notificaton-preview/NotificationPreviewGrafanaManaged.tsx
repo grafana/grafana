@@ -1,5 +1,6 @@
 import { groupBy } from 'lodash';
 
+import { useMatchAlertInstancesToNotificationPolicies } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -8,9 +9,8 @@ import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/St
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { AlertManagerDataSource } from '../../../utils/datasource';
 
-import { ExternalContactPointGroup } from './ContactPointGroup';
+import { GrafanaContactPointGroup } from './ContactPointGroup';
 import { InstanceMatch } from './NotificationRoute';
-import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
 
 const UNKNOWN_RECEIVER = 'unknown';
 
@@ -21,11 +21,7 @@ function NotificationPreviewByAlertManager({
   alertManagerSource: AlertManagerDataSource;
   instances: Labels[];
 }) {
-
-  const { treeMatchingResults, isLoading, error } = useAlertmanagerNotificationRoutingPreview(
-    alertManagerSource.name,
-    instances
-  );
+  const { matchInstancesToPolicies, isLoading, error } = useMatchAlertInstancesToNotificationPolicies();
 
   if (error) {
     const title = t('alerting.notification-preview.error', 'Could not load routing preview for {{alertmanager}}', {
@@ -49,6 +45,7 @@ function NotificationPreviewByAlertManager({
     );
   }
 
+  const treeMatchingResults = matchInstancesToPolicies(instances.map((instance) => Object.entries(instance)));
   const matchingPoliciesFound = treeMatchingResults.some((result) => result.matchedRoutes.length > 0);
 
   // Group results by receiver name
@@ -68,18 +65,13 @@ function NotificationPreviewByAlertManager({
     <Box display="flex" direction="column" gap={1} width="100%">
       <Stack direction="column" gap={0}>
         {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) => (
-          <ExternalContactPointGroup
-            key={receiver}
-            name={receiver}
-            matchedInstancesCount={resultsForReceiver.length}
-            alertmanagerSourceName={alertManagerSource.name}
-          >
+          <GrafanaContactPointGroup key={receiver} name={receiver} matchedInstancesCount={resultsForReceiver.length}>
             <Stack direction="column" gap={0}>
               {resultsForReceiver.map(({ routeTree, matchDetails }) => (
-                <InstanceMatch key={matchDetails.labels.join(',')} matchedInstance={matchDetails}  policyTreeSpec={routeTree.expandedSpec} policyTreeMetadata={routeTree.metadata} />
+                <InstanceMatch key={matchDetails.labels.join(',')} matchedInstance={matchDetails} policyTreeSpec={routeTree.expandedSpec} policyTreeMetadata={routeTree.metadata} />
               ))}
             </Stack>
-          </ExternalContactPointGroup>
+          </GrafanaContactPointGroup>
         ))}
       </Stack>
     </Box>
@@ -89,3 +81,4 @@ function NotificationPreviewByAlertManager({
 // export default because we want to load the component dynamically using React.lazy
 // Due to loading of the web worker we don't want to load this component when not necessary
 export default withErrorBoundary(NotificationPreviewByAlertManager);
+

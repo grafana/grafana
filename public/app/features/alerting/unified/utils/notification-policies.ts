@@ -1,9 +1,10 @@
 import { isArray, pick, reduce } from 'lodash';
 
+import { RouteWithID as AlertingRouteWithID, LabelMatcher } from '@grafana/alerting/unstable';
 import { AlertmanagerGroup, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { Label, isLabelMatch, matchLabelsSet, normalizeMatchers, unquoteWithUnescape } from './matchers';
+import { Label, convertObjectMatcherToAlertingPackageMatcher, isLabelMatch, matchLabelsSet, matcherToObjectMatcher, normalizeMatchers, parseMatcherToArray, unquoteWithUnescape } from './matchers';
 
 // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
 // So we cannot use null as an indicator of no match
@@ -93,8 +94,8 @@ function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): Array<R
 }
 
 // This is a performance improvement to normalize matchers only once and use the normalized version later on
-export function normalizeRoute(rootRoute: RouteWithID): RouteWithID {
-  function normalizeRoute(route: RouteWithID) {
+export function normalizeRoute<T extends Route>(rootRoute: T): T {
+  function normalizeRoute<T extends Route>(route: T) {
     route.object_matchers = normalizeMatchers(route);
     delete route.matchers;
     delete route.match;
@@ -108,8 +109,8 @@ export function normalizeRoute(rootRoute: RouteWithID): RouteWithID {
   return normalizedRootRoute;
 }
 
-export function unquoteRouteMatchers(route: RouteWithID): RouteWithID {
-  function unquoteRoute(route: RouteWithID) {
+export function unquoteRouteMatchers<T extends Route>(route: T): T {
+  function unquoteRoute(route: Route) {
     route.object_matchers = route.object_matchers?.map(([name, operator, value]) => {
       return [unquoteWithUnescape(name), operator, unquoteWithUnescape(value)];
     });
@@ -227,6 +228,34 @@ function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
   }
 
   return updated;
+} 
+
+/**
+ * Converts a RouteWithID from the alertmanager types to the alerting package RouteWithID format.
+ * This handles the conversion between different matcher formats.
+ */
+function convertRouteWithIDToAlertingFormat(route: RouteWithID): AlertingRouteWithID {
+  let matchers: LabelMatcher[] = [];
+
+  if (route.object_matchers) {
+    matchers = route.object_matchers.map(convertObjectMatcherToAlertingPackageMatcher);
+  } else if (route.matchers) {
+    route.matchers.forEach((matcher) => {
+      const parsedMatchers = parseMatcherToArray(matcher).map(matcherToObjectMatcher).map(convertObjectMatcherToAlertingPackageMatcher);
+      matchers.push(...parsedMatchers);
+    });
+  }   
+
+  const convertedRoute: AlertingRouteWithID = {
+    ...route,
+    receiver: route.receiver ?? undefined,
+    continue: route.continue ?? false,
+    matchers,
+    routes: route.routes ? route.routes.map(convertRouteWithIDToAlertingFormat) : [],
+  };
+
+  return convertedRoute;
 }
 
-export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, renameReceiverInRoute };
+
+export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, renameReceiverInRoute, convertRouteWithIDToAlertingFormat };

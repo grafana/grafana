@@ -7,6 +7,7 @@
 
 import { chain, compact } from 'lodash';
 
+import { LabelMatcher } from '@grafana/alerting/unstable';
 import { parseFlags } from '@grafana/data';
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
@@ -14,7 +15,7 @@ import { Labels } from '../../../../types/unified-alerting-dto';
 import { MatcherFieldValue } from '../types/silence-form';
 
 import { isPrivateLabelKey } from './labels';
-
+ 
 const matcherOperators = [
   MatcherOperator.regex,
   MatcherOperator.notRegex,
@@ -329,3 +330,13 @@ export function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
 export type MatcherFormatter = keyof typeof matcherFormatter;
 
 export type Label = [string, string];
+
+export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatcher): LabelMatcher {
+  const [label, operator, value] = matcher;
+  
+  return {
+    label,
+    type: operator as LabelMatcher['type'],
+    value,
+  };
+}

@@ -5,8 +5,16 @@ import { Label, LabelMatcher } from './types';
 // LabelMatchDetails is a map of labels to their match results
 export type LabelMatchDetails = {
   labelIndex: number; // index of the label in the labels array
-  match: boolean;
-  matcher: LabelMatcher | null;
+} & (PositiveLabelMatch | NegativeLabelMatch);
+
+type PositiveLabelMatch = {
+  match: true;
+  matcher: LabelMatcher;
+};
+
+type NegativeLabelMatch = {
+  match: false;
+  matcher: null;
 };
 
 type LabelMatchingResult = {
