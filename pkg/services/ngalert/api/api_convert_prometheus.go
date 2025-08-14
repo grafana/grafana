@@ -135,7 +135,7 @@ type ConvertPrometheusSrv struct {
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
 	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error
-	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
+	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -594,7 +594,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 
 	identifier := parseConfigIdentifierHeader(c)
 
-	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false)
+	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false, false)
 	if err != nil {
 		logger.Error("failed to get alertmanager configuration", "err", err)
 		return errorToResponse(err)

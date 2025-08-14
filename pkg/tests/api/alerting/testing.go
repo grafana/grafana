@@ -1053,6 +1053,16 @@ func (a apiClient) GetAlertmanagerConfigWithStatus(t *testing.T) (apimodels.Gett
 	return sendRequestJSON[apimodels.GettableUserConfig](t, req, http.StatusOK)
 }
 
+func (a apiClient) GetAlertmanagerConfigForDatasource(t *testing.T, datasourceUID string) apimodels.GettableUserConfig {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/%s/config/api/v1/alerts", a.url, datasourceUID), nil)
+	require.NoError(t, err)
+
+	config, status, body := sendRequestJSON[apimodels.GettableUserConfig](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, body)
+	return config
+}
+
 func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroups, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/alerts/groups", a.url), nil)
