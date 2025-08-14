@@ -22,7 +22,6 @@ export interface Props {
   gridRef: RefObject<DataGridHandle>;
   height: number;
   placement?: TableCellTooltipPlacement;
-  popoverRef: React.MutableRefObject<HTMLElement | null>;
   renderer: TableCellRenderer;
   rowIdx: number;
   style?: CSSProperties;
@@ -43,7 +42,6 @@ export function TableCellTooltip({
   gridRef,
   height,
   placement,
-  popoverRef,
   renderer,
   rowIdx,
   style,
@@ -111,6 +109,8 @@ export function TableCellTooltip({
     [cellOptions, data, disableSanitizeHtml, field, getActions, height, rawValue, rowIdx, theme, width]
   );
 
+  const cellElement = tooltipCaretRef.current?.closest<HTMLElement>('.rdg-cell');
+
   if (rawValue === null || rawValue === undefined) {
     return children;
   }
@@ -123,7 +123,7 @@ export function TableCellTooltip({
 
   return (
     <>
-      {popoverRef.current && (
+      {cellElement && (
         <Popover
           content={body}
           show={show}
@@ -131,7 +131,7 @@ export function TableCellTooltip({
           wrapperClassName={classes.tooltipWrapper}
           className={className}
           style={{ ...style, minWidth: width, ...(!dynamicHeight && { height }) }}
-          referenceElement={popoverRef.current}
+          referenceElement={cellElement}
           onMouseLeave={onMouseLeave}
           onMouseEnter={onMouseEnter}
           onClick={(ev) => ev.stopPropagation()} // prevent click from bubbling to the global click listener for un-pinning

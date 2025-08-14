@@ -344,9 +344,6 @@ export function TableNG(props: TableNGProps) {
         background: undefined,
       };
 
-      // only used when tooltips are enabled for one or more columns.
-      const cellRefsMatrix: Array<Array<React.RefObject<HTMLDivElement>>> = [];
-
       f.forEach((field, i) => {
         const cellOptions = getCellOptions(field);
         const cellType = cellOptions.type;
@@ -446,21 +443,12 @@ export function TableNG(props: TableNGProps) {
             };
           }
 
-          const tooltipFieldName = field.config.custom?.tooltip?.field;
-          let ref: React.RefObject<HTMLDivElement> | undefined;
-          if (tooltipFieldName) {
-            ref = createRef();
-            cellRefsMatrix[rowIdx] = cellRefsMatrix[rowIdx] || [];
-            cellRefsMatrix[rowIdx][i] = ref;
-          }
-
           return (
             <Cell
               key={key}
               {...props}
               className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
               style={style}
-              ref={ref}
             />
           );
         };
@@ -567,13 +555,6 @@ export function TableNG(props: TableNGProps) {
             } satisfies Partial<React.ComponentProps<typeof TableCellTooltip>>;
 
             renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-              const cellRef = cellRefsMatrix[props.row.__index]?.[props.column.idx];
-
-              // if we lost the cell ref somehow, gracefully fallback to basic rendering
-              if (!cellRef) {
-                return renderBasicCellContent(props);
-              }
-
               // cached so we don't care about multiple calls.
               const height = rowHeightFn(props.row);
               let tooltipStyle: CSSProperties | undefined;
@@ -588,13 +569,7 @@ export function TableNG(props: TableNGProps) {
               }
 
               return (
-                <TableCellTooltip
-                  {...tooltipProps}
-                  height={height}
-                  popoverRef={cellRef}
-                  rowIdx={props.rowIdx}
-                  style={tooltipStyle}
-                >
+                <TableCellTooltip {...tooltipProps} height={height} rowIdx={props.rowIdx} style={tooltipStyle}>
                   {renderBasicCellContent(props)}
                 </TableCellTooltip>
               );
