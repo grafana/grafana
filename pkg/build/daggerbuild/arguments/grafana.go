@@ -99,7 +99,9 @@ func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, r
 		}
 		localPath = absolute
 		slog.Info("Using local directory for repository", "path", localPath, "repo", repo)
-		return daggerutil.HostDir(client, localPath)
+		return daggerutil.HostDir(client, localPath, dagger.HostDirectoryOpts{
+			Exclude: []string{"dist", "node_modules"},
+		})
 	}
 
 	ght, err := githubToken(ctx, ght)
