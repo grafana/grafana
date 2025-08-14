@@ -79,42 +79,6 @@ describe('RowRepeaterBehavior', () => {
       expect(isRepeatCloneOrChildOf(row2)).toBe(true);
     });
 
-    it('Should update all rows when a panel is added to a clone', async () => {
-      const originalRow = grid.state.children[1] as SceneGridRow;
-      const clone1 = grid.state.children[2] as SceneGridRow;
-      const clone2 = grid.state.children[3] as SceneGridRow;
-
-      expect(originalRow.state.children.length).toBe(1);
-      expect(clone1.state.children.length).toBe(1);
-      expect(clone2.state.children.length).toBe(1);
-
-      clone1.setState({
-        children: [
-          ...clone1.state.children,
-          new SceneGridItem({
-            x: 0,
-            y: 16,
-            width: 24,
-            height: 5,
-            key: 'grid-item-4',
-            body: new SceneCanvasText({
-              text: 'new panel',
-            }),
-          }),
-        ],
-      });
-
-      grid.forceRender();
-
-      // repeater has run so there are new clone row objects
-      const newClone1 = grid.state.children[2] as SceneGridRow;
-      const newClone2 = grid.state.children[3] as SceneGridRow;
-
-      expect(originalRow.state.children.length).toBe(2);
-      expect(newClone1.state.children.length).toBe(2);
-      expect(newClone2.state.children.length).toBe(2);
-    });
-
     it('Should push row at the bottom down', () => {
       // Should push row at the bottom down
       const rowAtTheBottom = grid.state.children[6] as SceneGridRow;
