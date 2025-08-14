@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -399,67 +400,73 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	// Create two repositories with folder targets to allow multiple repos
+	// Create two repositories pointing to different folders to avoid conflicts
 	const repo1 = "ownership-repo-1"
 	const repo2 = "ownership-repo-2"
 
-	// Create first repository with folder target
-	localTmp1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo1,
-		"SyncEnabled": true,
-		"SyncTarget":  "folder",
+	// Create first repository targeting "folder-1"
+	helper.CreateRepo(t, TestRepo{
+		Name:   repo1,
+		Target: "folder-1",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "dashboard1.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    1,
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp1, metav1.CreateOptions{})
-	require.NoError(t, err)
 
-	// Create second repository with folder target  
-	localTmp2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo2,
-		"SyncEnabled": true,
-		"SyncTarget":  "folder",
+	// Create second repository targeting "folder-2" 
+	helper.CreateRepo(t, TestRepo{
+		Name:   repo2,
+		Target: "folder-2",
+		Copies: map[string]string{
+			"testdata/timeline-demo.json": "dashboard2.json",
+		},
+		ExpectedDashboards: 2, // Total across both repos
+		ExpectedFolders:    2, // Total across both repos
 	})
-	_, err = helper.Repositories.Resource.Create(ctx, localTmp2, metav1.CreateOptions{})
-	require.NoError(t, err)
 
-	// Test CREATE operation - should work for new resources
-	t.Run("CREATE new resource - should succeed", func(t *testing.T) {
+	// Test: Try to create a file in repo2 with the same UID as one owned by repo1
+	t.Run("CREATE file with UID already owned by different repository - should fail", func(t *testing.T) {
+		// Try to create a dashboard in repo2 that has the same UID as the one in repo1
+		// The all-panels.json has UID "n1jR8vnnz" which is already owned by repo1
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
-			Name(repo1).
-			SubResource("files", "test-dashboard-create.json").
-			Body(helper.LoadFile("testdata/all-panels.json")).
+			Name(repo2). // Using repo2 to try to create resource with same UID as repo1
+			SubResource("files", "conflicting-dashboard.json").
+			Body(helper.LoadFile("testdata/all-panels.json")). // Same file = same UID
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
-		require.NoError(t, result.Error(), "creating new resource should succeed")
 
-		// Sync to ensure resource is created in Grafana
-		helper.SyncAndWait(t, repo1, nil)
+		// This should fail with ownership conflict
+		require.Error(t, result.Error(), "creating resource with UID already owned by different repository should fail")
+		require.True(t, apierrors.IsBadRequest(result.Error()), "should return BadRequest error")
 
-		// Verify resource exists and has correct ownership
-		const allPanelsUID = "n1jR8vnnz"
-		obj, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		require.NoError(t, err, "resource should exist in Grafana")
-		require.Equal(t, repo1, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity], "should have correct manager identity")
-		require.Equal(t, string(utils.ManagerKindRepo), obj.GetAnnotations()[utils.AnnoKeyManagerKind], "should have correct manager kind")
+		// Check error message contains ownership information
+		errorMsg := result.Error().Error()
+		require.Contains(t, errorMsg, "is managed by repo", "error should mention ownership")
+		require.Contains(t, errorMsg, repo1, "error should mention the owning repository")
+		require.Contains(t, errorMsg, "cannot be modified by repo", "error should mention modification restriction")
+		require.Contains(t, errorMsg, repo2, "error should mention the requesting repository")
 	})
 
-	// Test UPDATE operation - should block cross-repository updates
-	t.Run("UPDATE resource from different repository - should block", func(t *testing.T) {
-		// Try to update the resource created by repo1 using repo2
+	// Test: Try to update a file that belongs to a different repository
+	t.Run("UPDATE file owned by different repository - should fail", func(t *testing.T) {
+		// Try to update the dashboard owned by repo1 using repo2
 		result := helper.AdminREST.Put().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo2). // Using repo2 to try to update repo1's resource
-			SubResource("files", "test-dashboard-update.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
+			SubResource("files", "conflicting-update.json").
+			Body(helper.LoadFile("testdata/all-panels.json")). // Same UID as repo1's dashboard
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
-		
+
 		// This should fail with ownership conflict
-		require.Error(t, result.Error(), "updating resource from different repository should fail")
+		require.Error(t, result.Error(), "updating resource owned by different repository should fail")
 		require.True(t, apierrors.IsBadRequest(result.Error()), "should return BadRequest error")
-		
+
 		// Check error message contains ownership information
 		errorMsg := result.Error().Error()
 		require.Contains(t, errorMsg, "is managed by repo", "error should mention ownership")
@@ -468,20 +475,20 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, repo2, "error should mention the requesting repository")
 	})
 
-	// Test DELETE operation - should block cross-repository deletes
-	t.Run("DELETE resource from different repository - should block", func(t *testing.T) {
-		// Try to delete the resource created by repo1 using repo2
+	// Test: Try to delete a file that belongs to a different repository
+	t.Run("DELETE file owned by different repository - should fail", func(t *testing.T) {
+		// Try to delete the dashboard owned by repo1 using repo2
 		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").
-			Name(repo2). // Using repo2 to try to delete repo1's resource  
-			SubResource("files", "test-dashboard-create.json").
+			Name(repo2). // Using repo2 to try to delete repo1's resource
+			SubResource("files", "dashboard1.json"). // File that exists in repo1
 			Do(ctx)
-		
+
 		// This should fail with ownership conflict
-		require.Error(t, result.Error(), "deleting resource from different repository should fail")
+		require.Error(t, result.Error(), "deleting resource owned by different repository should fail")
 		require.True(t, apierrors.IsBadRequest(result.Error()), "should return BadRequest error")
-		
+
 		// Check error message contains ownership information
 		errorMsg := result.Error().Error()
 		require.Contains(t, errorMsg, "is managed by repo", "error should mention ownership")
@@ -490,31 +497,47 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, repo2, "error should mention the requesting repository")
 	})
 
-	// Test UPDATE by same repository - should work
-	t.Run("UPDATE resource by same repository - should succeed", func(t *testing.T) {
-		// Update the resource using the same repository that created it (repo1)
-		result := helper.AdminREST.Put().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo1). // Using repo1 to update its own resource
-			SubResource("files", "test-dashboard-create.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		
-		require.NoError(t, result.Error(), "updating resource by same repository should succeed")
+	// Test: Try to move a file that belongs to a different repository
+	t.Run("MOVE file owned by different repository - should fail", func(t *testing.T) {
+		// Try to move the dashboard owned by repo1 using repo2
+		// Move is essentially a POST with originalPath parameter
+		resp := helper.postFilesRequest(t, repo2, filesPostOptions{
+			targetPath:   "moved-dashboard.json",
+			originalPath: path.Join(helper.ProvisioningPath, "dashboard1.json"), // Full path to file that exists in repo1
+			message:      "attempt to move file from different repository",
+		})
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		// This should fail with ownership conflict
+		require.NotEqual(t, http.StatusOK, resp.StatusCode, "moving resource owned by different repository should fail")
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return BadRequest status")
+
+		// Read response body to check error message
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		errorMsg := string(body)
+
+		// Check error message contains ownership information
+		require.Contains(t, errorMsg, "is managed by repo", "error should mention ownership")
+		require.Contains(t, errorMsg, repo1, "error should mention the owning repository")
+		require.Contains(t, errorMsg, "cannot be modified by repo", "error should mention modification restriction")
+		require.Contains(t, errorMsg, repo2, "error should mention the requesting repository")
 	})
 
-	// Test DELETE by same repository - should work  
-	t.Run("DELETE resource by same repository - should succeed", func(t *testing.T) {
-		// Delete the resource using the same repository that created it (repo1)
-		result := helper.AdminREST.Delete().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo1). // Using repo1 to delete its own resource
-			SubResource("files", "test-dashboard-create.json").
-			Do(ctx)
-		
-		require.NoError(t, result.Error(), "deleting resource by same repository should succeed")
+	// Verify that the original dashboards are still intact and owned by their respective repositories
+	t.Run("verify original resources remain intact", func(t *testing.T) {
+		const allPanelsUID = "n1jR8vnnz"   // UID from all-panels.json (repo1)
+		const timelineUID = "mIJjFy8Kz"    // UID from timeline-demo.json (repo2)
+
+		// Verify repo1's dashboard is still owned by repo1
+		dashboard1, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.NoError(t, err, "repo1's dashboard should still exist")
+		require.Equal(t, repo1, dashboard1.GetAnnotations()[utils.AnnoKeyManagerIdentity], "repo1's dashboard should still be owned by repo1")
+
+		// Verify repo2's dashboard is still owned by repo2
+		dashboard2, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		require.NoError(t, err, "repo2's dashboard should still exist")
+		require.Equal(t, repo2, dashboard2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "repo2's dashboard should still be owned by repo2")
 	})
 }

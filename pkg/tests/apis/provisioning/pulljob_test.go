@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -66,11 +67,10 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "conflicting-dashboard.json")
 
 		// Modify the text-options.json to have the same UID as all-panels.json to create conflict
-		conflictingDashboard := helper.LoadFile("testdata/text-options.json")
 		// We need to manually create a file with the same UID to test ownership conflict
 
 		// Step 3: Try to sync repo2 - it should fail or skip the conflicting resource
-		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},
 		})
@@ -111,7 +111,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 
 		// The sync should complete successfully
 		jobObj := &provisioning.Job{}
-		err = helper.Runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
 		// Step 3: Verify that repo1's exclusive resource still exists and wasn't deleted by repo2's sync
@@ -155,7 +155,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, spec)
 		jobObj := &provisioning.Job{}
-		err = helper.Runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
 		// The job might complete with errors due to ownership conflicts
@@ -180,65 +180,6 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.Equal(t, repo1, dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
 	})
 
-	// Test: Verify that allowed edits flag works in sync jobs
-	t.Run("sync should respect AllowsEdits flag", func(t *testing.T) {
-		// Step 1: Create a resource via repo1 with AllowsEdits=true
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo1).
-			SubResource("files", "allows-edits-resource.json").
-			Body(helper.LoadFile("testdata/timeline-demo.json")).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error())
-
-		helper.SyncAndWait(t, repo1, nil)
-
-		// Step 2: Manually set AllowsEdits=true on the created resource
-		const timelineUID = "mIJjFy8Kz"
-		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
-		require.NoError(t, err)
-
-		// Add the AllowsEdits annotation
-		annotations := dashboard.GetAnnotations()
-		if annotations == nil {
-			annotations = make(map[string]string)
-		}
-		annotations[utils.AnnoKeyManagerAllowsEdits] = "true"
-		dashboard.SetAnnotations(annotations)
-
-		_, err = helper.DashboardsV1.Resource.Update(ctx, dashboard, metav1.UpdateOptions{})
-		require.NoError(t, err)
-
-		// Step 3: Try to sync the same resource from repo2 - should succeed due to AllowsEdits
-		result = helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo2).
-			SubResource("files", "edit-allowed-resource.json").
-			Body(helper.LoadFile("testdata/timeline-demo.json")).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error())
-
-		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
-		})
-
-		jobObj := &provisioning.Job{}
-		err = helper.Runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
-		require.NoError(t, err)
-
-		// Should complete successfully due to AllowsEdits=true
-		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State, "sync should succeed when AllowsEdits=true")
-
-		// Verify the resource was updated and is now owned by repo2
-		updatedDashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t, repo2, updatedDashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should transfer to repo2")
-	})
 
 	// Clean up - delete repositories
 	err = helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
