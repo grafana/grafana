@@ -79,7 +79,7 @@ jobs:
           args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
 
       - name: Run E2E tests
-        run: yarn e2e:playwright --grep @cloud-plugins
+        run: yarn e2e:playwright:cloud-plugins
 
       - name: Destroy resources
         if: always() && steps.deploy-resources.outcome == 'success'

@@ -36,6 +36,7 @@ export default defineConfig<PluginOptions>({
       url: DEFAULT_URL,
       stdout: 'pipe',
       stderr: 'pipe',
+      timeout: 120000,
     },
   }),
   projects: [
