@@ -35,13 +35,10 @@ services:
       GF_PANELS_ENABLE_ALPHA: true
       GF_SERVER_CDN_URL: http://localhost:3010
       GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
-      GF_DATABASE_TYPE: postgres
-      GF_DATABASE_HOST: postgres
-      GF_DATABASE_NAME: grafana
-      GF_DATABASE_USER: grafana
-      GF_DATABASE_PASSWORD: grafana
+      GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
       GF_SERVER_ROUTER_LOGGING: true
       GF_LOG_LEVEL: info
+      GF_AUTH_LOGIN_COOKIE_NAME: grafana_fs_dev_login # set a custom cookie name to not conflict with other instances running on localhost
       OTEL_SERVICE_NAME: grafana-api
       GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
     ports:
