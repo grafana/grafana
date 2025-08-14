@@ -6,6 +6,7 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
+const hooksPlugin = require('eslint-plugin-react-hooks');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
@@ -52,6 +53,13 @@ module.exports = [
     name: 'react/jsx-runtime',
     // @ts-ignore - not sure why but flat config is typed as a maybe?
     ...reactPlugin.configs.flat['jsx-runtime'],
+  },
+  // FIXME: Remove once eslint-config-grafana is updated to include correct plugin
+  {
+    name: 'react-hooks-plugin',
+    plugins: {
+      'react-hooks': hooksPlugin,
+    },
   },
   {
     files: ['**/*.{ts,tsx,js}'],
