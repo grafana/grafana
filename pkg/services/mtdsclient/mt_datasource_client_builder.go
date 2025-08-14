@@ -26,7 +26,6 @@ func NewNullMTDatasourceClientBuilder() MTDatasourceClientBuilder {
 type MtDatasourceClientBuilderWithInstance struct {
 	instance clientapi.Instance
 	ctx      context.Context
-	headers  map[string]string
 	logger   log.Logger
 }
 
@@ -37,7 +36,6 @@ func (b *MtDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid
 			Type: pluginId,
 			UID:  uid,
 		},
-		b.headers,
 	)
 	if err != nil {
 		b.logger.Debug("failed to get mt ds client", "error", err)
@@ -50,13 +48,11 @@ func (b *MtDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid
 func NewMtDatasourceClientBuilderWithInstance(
 	instance clientapi.Instance,
 	ctx context.Context,
-	headers map[string]string,
 	logger log.Logger,
 ) MTDatasourceClientBuilder {
 	return &MtDatasourceClientBuilderWithInstance{
 		instance: instance,
 		ctx:      ctx,
-		headers:  headers,
 		logger:   logger,
 	}
 }
