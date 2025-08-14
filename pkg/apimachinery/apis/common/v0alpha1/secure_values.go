@@ -34,6 +34,8 @@ type InlineSecureValue struct {
 	Create RawSecureValue `json:"create,omitempty"`
 
 	// Name in the secret service (reference)
+	// +k8s:validation:minLength=1
+	// +k8s:validation:maxLength=253
 	Name string `json:"name,omitempty"`
 
 	// Remove this value from the secure value map
@@ -57,6 +59,8 @@ func (InlineSecureValue) OpenAPIDefinition() openapi.OpenAPIDefinition {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name in the secret service (reference)",
 							Type:        []string{"string"},
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](253),
 							Format:      ""}},
 					"create": {
 						SchemaProps: spec.SchemaProps{

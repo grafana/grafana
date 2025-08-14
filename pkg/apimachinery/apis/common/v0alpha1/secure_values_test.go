@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-
 	"k8s.io/kube-openapi/pkg/validation/strfmt"
 	"k8s.io/kube-openapi/pkg/validation/validate"
 
@@ -66,9 +65,9 @@ func TestSecureValues(t *testing.T) {
 
 		t.Run("Validate OneOf", func(t *testing.T) {
 			def := common.InlineSecureValue{}.OpenAPIDefinition()
-			jj, _ := json.MarshalIndent(def.Schema, "", "  ")
-			fmt.Printf("%s", string(jj))
-			t.FailNow()
+			// jj, _ := json.MarshalIndent(def.Schema, "", "  ")
+			// fmt.Printf("%s", string(jj))
+			// t.FailNow()
 
 			validator := validate.NewSchemaValidator(&def.Schema, nil, "", strfmt.Default)
 
