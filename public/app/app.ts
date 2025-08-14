@@ -341,6 +341,9 @@ async function initEchoSrv() {
   if (contextSrv.user.orgRole !== '') {
     const { PerformanceBackend } = await import('./core/services/echo/backends/PerformanceBackend');
     registerEchoBackend(new PerformanceBackend({}));
+
+    const { MemoryUsageBackend } = await import('./core/services/echo/backends/MemoryUsageBackend');
+    registerEchoBackend(new MemoryUsageBackend({}));
   }
 
   if (config.grafanaJavascriptAgent.enabled) {
