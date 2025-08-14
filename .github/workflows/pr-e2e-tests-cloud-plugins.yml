@@ -21,6 +21,9 @@ jobs:
   pull-docker-image:
     if: ${{ ! github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: grafana/shared-workflows/actions/login-to-gar@login-to-gar-v0.4.0
         id: login-to-gar
