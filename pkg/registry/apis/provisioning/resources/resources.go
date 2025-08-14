@@ -34,7 +34,7 @@ func NewResourceOwnershipConflictError(resourceName string, currentManager utils
 		currentManager.Identity,
 		requestingManager.Kind,
 		requestingManager.Identity)
-	
+
 	return apierrors.NewBadRequest(message)
 }
 
@@ -106,7 +106,6 @@ func CheckResourceOwnership(existingResource *unstructured.Unstructured, resourc
 	return NewResourceOwnershipConflictError(resourceName, currentManager, requestingManager)
 }
 
-
 // CreateResource writes an object to the repository
 func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
 	if err := ctx.Err(); err != nil {
@@ -133,7 +132,6 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	if name == "" {
 		return "", ErrMissingName
 	}
-
 
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how should we handle this?
@@ -208,7 +206,6 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, ErrMissingName
 	}
-
 
 	// Check if the resource already exists
 	id := resourceID{

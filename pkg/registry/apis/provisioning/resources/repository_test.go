@@ -439,14 +439,14 @@ var _ dynamic.ResourceInterface = (*MockDynamicResourceInterface)(nil)
 
 func TestCheckResourceOwnership(t *testing.T) {
 	tests := []struct {
-		name             string
-		existingResource *unstructured.Unstructured
+		name              string
+		existingResource  *unstructured.Unstructured
 		requestingManager utils.ManagerProperties
-		expectError      bool
-		expectedMessage  string
+		expectError       bool
+		expectedMessage   string
 	}{
 		{
-			name: "no existing resource - allow operation",
+			name:             "no existing resource - allow operation",
 			existingResource: nil, // Explicitly nil to represent non-existing resource
 			requestingManager: utils.ManagerProperties{
 				Kind:     utils.ManagerKindRepo,
@@ -525,7 +525,7 @@ func TestCheckResourceOwnership(t *testing.T) {
 				Kind:     utils.ManagerKindRepo,
 				Identity: "repo-2",
 			},
-			expectError: true,
+			expectError:     true,
 			expectedMessage: "resource 'test-resource' is managed by repo 'repo-1' and cannot be modified by repo 'repo-2'",
 		},
 		{
@@ -545,7 +545,7 @@ func TestCheckResourceOwnership(t *testing.T) {
 				Kind:     utils.ManagerKindRepo,
 				Identity: "repo-1",
 			},
-			expectError: true,
+			expectError:     true,
 			expectedMessage: "resource 'test-resource' is managed by terraform 'tf-stack-1' and cannot be modified by repo 'repo-1'",
 		},
 	}

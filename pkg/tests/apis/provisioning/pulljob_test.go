@@ -58,9 +58,9 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// Step 1: Try to add a file with the same UID as repo1's dashboard to repo2's directory
 		// This simulates a scenario where repo2 tries to manage a resource that repo1 already owns
 		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json (owned by repo1)
-		
+
 		// Copy the same file (same UID) to repo2's directory to create ownership conflict
-		repo2DashboardPath := path.Join(helper.ProvisioningPath, "repo2", "conflicting-dashboard.json") 
+		repo2DashboardPath := path.Join(helper.ProvisioningPath, "repo2", "conflicting-dashboard.json")
 		err := os.MkdirAll(path.Dir(repo2DashboardPath), 0750)
 		require.NoError(t, err, "should create directory")
 		file := helper.LoadFile("testdata/all-panels.json")
@@ -82,7 +82,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// This is actually correct behavior - the pull job completes but reports conflicts as warnings
 		t.Logf("Job state: %s", jobObj.Status.State)
 		t.Logf("Job errors: %v", jobObj.Status.Errors)
-		
+
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State, "job should complete with warnings due to ownership conflicts")
 		require.NotEmpty(t, jobObj.Status.Errors, "should have error details")
 
@@ -90,8 +90,8 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		found := false
 		for _, errMsg := range jobObj.Status.Errors {
 			t.Logf("Error message: %s", errMsg)
-			if assert.Contains(t, errMsg, fmt.Sprintf("managed by repo '%s'", repo1)) && 
-			   assert.Contains(t, errMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2)) {
+			if assert.Contains(t, errMsg, fmt.Sprintf("managed by repo '%s'", repo1)) &&
+				assert.Contains(t, errMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2)) {
 				found = true
 				break
 			}
@@ -102,7 +102,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		originalDashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "original dashboard should still exist")
 		require.Equal(t, repo1, originalDashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
-		
+
 		// Clean up the conflicting file for subsequent tests
 		err = os.Remove(repo2DashboardPath)
 		require.NoError(t, err, "should clean up conflicting file")
@@ -112,11 +112,11 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	t.Run("repositories should not delete resources owned by other repositories during pull", func(t *testing.T) {
 		// Both repositories were created with their own resources (repo1 has all-panels.json, repo2 has timeline-demo.json)
 		// Verify that pulling one repository doesn't affect the other's resources
-		
+
 		// Step 1: Verify both repositories have their own resources
-		const allPanelsUID = "n1jR8vnnz"   // UID from all-panels.json (repo1)
-		const timelineUID = "mIJjFy8Kz"    // UID from timeline-demo.json (repo2)
-		
+		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json (repo1)
+		const timelineUID = "mIJjFy8Kz"  // UID from timeline-demo.json (repo2)
+
 		repo1Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo1's dashboard should exist")
 		require.Equal(t, repo1, repo1Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "should be owned by repo1")
@@ -148,7 +148,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// FIXME: This test uses the files API to create conflicting files, which should fail
 		// The files API calls correctly detect ownership conflicts and return 400 errors
 		// But this means we can't use the files API to create the test scenario
-		
+
 		// Step 1: Try to add a file with same UID as repo1's resource to repo2 via files API
 		result := helper.AdminREST.Post().
 			Namespace("default").
@@ -162,7 +162,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// This should fail due to ownership conflict (which is correct behavior)
 		t.Logf("Files API result error: %v", result.Error())
 		require.Error(t, result.Error(), "files API should reject conflicting UID")
-		
+
 		// The error demonstrates that ownership protection is working at the files API level
 		errorMsg := result.Error().Error()
 		t.Logf("Files API error message: %s", errorMsg)
@@ -175,7 +175,6 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.NoError(t, err, "original dashboard should still exist")
 		require.Equal(t, repo1, dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
 	})
-
 
 	// Clean up - delete repositories
 	err := helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
@@ -190,4 +189,3 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		assert.Equal(collect, 0, len(dashboards.Items), "all dashboards should be cleaned up")
 	}, time.Second*30, time.Millisecond*100, "expected cleanup to complete")
 }
-

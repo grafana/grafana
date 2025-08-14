@@ -503,6 +503,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		// Create a file manually in the second repo which is already in first one
 		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo2/conflicting-delete.json")
 		printFileTree(t, helper.ProvisioningPath)
+
 		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").

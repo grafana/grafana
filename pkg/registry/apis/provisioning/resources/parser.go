@@ -337,12 +337,12 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		if apierrors.IsNotFound(err) {
 			err = nil // ignorable - resource was already deleted
 		}
-		
+
 		// Set the deleted resource as the result
 		if err == nil && f.Existing != nil {
 			f.Upsert = f.Existing.DeepCopy()
 		}
-		
+
 		return err
 	}
 
