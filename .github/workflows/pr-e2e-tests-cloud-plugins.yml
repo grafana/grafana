@@ -36,9 +36,20 @@ jobs:
       - id: pull-docker-image
         run: |
           docker pull us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            AZURE_SP_APP_ID=cpp-azure-resourcemanager-credentials:application_id
+            AZURE_SP_PASSWORD=cpp-azure-resourcemanager-credentials:application_secret
+            AZURE_TENANT=cpp-azure-resourcemanager-credentials:tenant_id
       - id: deploy-resources
+        env:
+          AZURE_SP_APP_ID: ${{ steps.vault-secrets.outputs.AZURE_SP_APP_ID }}
+          AZURE_SP_PASSWORD: ${{ steps.vault-secrets.outputs.AZURE_SP_PASSWORD }}
+          AZURE_TENANT: ${{ steps.vault-secrets.outputs.AZURE_TENANT }}
         run: |
-          docker container run --name cpp-e2e us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run.sh azure ${{ github.ref_name }} deploy
+          docker container run --name cpp-e2e -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run.sh azure ${{ github.ref_name }} deploy
       - id: extract-creds
         # see https://github.com/grafana/oss-plugin-partnerships/blob/a77040d0456003cd258668b61d542dc7c75db5b5/e2e/scripts/deploy.sh#L25 for path
         run: |
@@ -65,8 +76,12 @@ jobs:
 
       - name: Destroy resources
         if: always() && steps.deploy-resources.outcome == 'success'
+        env:
+          AZURE_SP_APP_ID: ${{ steps.vault-secrets.outputs.AZURE_SP_APP_ID }}
+          AZURE_SP_PASSWORD: ${{ steps.vault-secrets.outputs.AZURE_SP_PASSWORD }}
+          AZURE_TENANT: ${{ steps.vault-secrets.outputs.AZURE_TENANT }}
         run: |
-          docker container run --name cpp-e2e us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run.sh azure ${{ github.ref_name }} destroy
+          docker container run --name cpp-e2e -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run.sh azure ${{ github.ref_name }} destroy
   # run-azure-monitor-e2e:
   #   name: E2E tests for azure monitor
   #   runs-on: ubuntu-latest
