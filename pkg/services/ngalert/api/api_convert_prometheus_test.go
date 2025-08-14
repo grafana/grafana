@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -283,6 +284,120 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				srv, _, _ := createConvertPrometheusSrv(t)
 				rc := createRequestCtx()
 				rc.Req.Header.Set(tc.headerName, tc.headerValue)
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, http.StatusBadRequest, response.Status())
+				require.Contains(t, string(response.Body()), tc.expectedError)
+			})
+		}
+	})
+
+	t.Run("with extra labels header should apply labels only to alert rules", func(t *testing.T) {
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(extraLabelsHeader, "environment=production,team=alerting")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		var alertRule, recordingRule *models.AlertRule
+		for i := range rules {
+			switch rules[i].Title {
+			case "TestAlert":
+				alertRule = rules[i]
+			case "recorded-metric":
+				recordingRule = rules[i]
+			}
+		}
+
+		require.NotNil(t, alertRule, "Alert rule should be present")
+		require.NotNil(t, recordingRule, "Recording rule should be present")
+
+		// Alert rule should have extra labels
+		require.Equal(t, "production", alertRule.Labels["environment"])
+		require.Equal(t, "alerting", alertRule.Labels["team"])
+		require.Equal(t, "critical", alertRule.Labels["severity"])
+
+		// Recording rule should not have extra labels
+		require.NotContains(t, recordingRule.Labels, "environment")
+		require.NotContains(t, recordingRule.Labels, "team")
+		require.Equal(t, "warning", recordingRule.Labels["severity"])
+	})
+
+	t.Run("with extra labels that conflict with rule labels", func(t *testing.T) {
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		// rules in the simpleGroup already have a severity label, so
+		// it should not be overwritten by the label from the header
+		rc.Req.Header.Set(extraLabelsHeader, "environment=production,severity=low")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		var alertRule, recordingRule *models.AlertRule
+		for i := range rules {
+			switch rules[i].Title {
+			case "TestAlert":
+				alertRule = rules[i]
+			case "recorded-metric":
+				recordingRule = rules[i]
+			}
+		}
+
+		require.NotNil(t, alertRule, "Alert rule should be present")
+		require.NotNil(t, recordingRule, "Recording rule should be present")
+
+		// Alert rule should have extra labels where they don't conflict
+		require.Equal(t, "production", alertRule.Labels["environment"])
+		// Rule label should take precedence over extra label
+		require.Equal(t, "critical", alertRule.Labels["severity"])
+		require.NotEqual(t, "low", alertRule.Labels["severity"])
+
+		// Recording rule should not have extra labels
+		require.NotContains(t, recordingRule.Labels, "environment")
+		require.Equal(t, "warning", recordingRule.Labels["severity"])
+	})
+
+	t.Run("with invalid extra labels header should return 400", func(t *testing.T) {
+		testCases := []struct {
+			name          string
+			headerValue   string
+			expectedError string
+		}{
+			{
+				name:          "missing equals sign",
+				headerValue:   "environment,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: format should be 'key=value,key2=value2'",
+			},
+			{
+				name:          "empty key",
+				headerValue:   "=production,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: keys and values cannot be empty",
+			},
+			{
+				name:          "empty value",
+				headerValue:   "environment=,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: keys and values cannot be empty",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				srv, _, _ := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(extraLabelsHeader, tc.headerValue)
 
 				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
 				require.Equal(t, http.StatusBadRequest, response.Status())
@@ -571,6 +686,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		fldr.ParentUID = ""
 		folderService.ExpectedFolder = fldr
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		folderService.AddFolder(fldr)
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// Create rules in both folders
@@ -596,17 +712,34 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 			GenerateRef()
 		ruleStore.PutRule(context.Background(), ruleInOtherFolder)
 
-		getResp := srv.RouteConvertPrometheusGetRuleGroup(rc, fldr.Title, groupKey.RuleGroup)
-		require.Equal(t, http.StatusOK, getResp.Status())
+		t.Run("YAML response", func(t *testing.T) {
+			getResp := srv.RouteConvertPrometheusGetRuleGroup(rc, fldr.Title, groupKey.RuleGroup)
+			require.Equal(t, http.StatusOK, getResp.Status())
 
-		var respGroup apimodels.PrometheusRuleGroup
-		err := yaml.Unmarshal(getResp.Body(), &respGroup)
-		require.NoError(t, err)
+			var respGroup apimodels.PrometheusRuleGroup
+			err := yaml.Unmarshal(getResp.Body(), &respGroup)
+			require.NoError(t, err)
 
-		require.Equal(t, groupKey.RuleGroup, respGroup.Name)
-		require.Equal(t, prommodel.Duration(time.Duration(rule.IntervalSeconds)*time.Second), respGroup.Interval)
-		require.Len(t, respGroup.Rules, 1)
-		require.Equal(t, promRule.Alert, respGroup.Rules[0].Alert)
+			require.Equal(t, groupKey.RuleGroup, respGroup.Name)
+			require.Equal(t, prommodel.Duration(time.Duration(rule.IntervalSeconds)*time.Second), respGroup.Interval)
+			require.Len(t, respGroup.Rules, 1)
+			require.Equal(t, promRule.Alert, respGroup.Rules[0].Alert)
+		})
+
+		t.Run("JSON response", func(t *testing.T) {
+			rc.Req.Header.Set("Accept", "application/json")
+			getResp := srv.RouteConvertPrometheusGetRuleGroup(rc, fldr.Title, groupKey.RuleGroup)
+			require.Equal(t, http.StatusOK, getResp.Status())
+
+			var jsonGroup apimodels.PrometheusRuleGroup
+			err := json.Unmarshal(getResp.Body(), &jsonGroup)
+			require.NoError(t, err)
+
+			require.Equal(t, groupKey.RuleGroup, jsonGroup.Name)
+			require.Equal(t, prommodel.Duration(time.Duration(rule.IntervalSeconds)*time.Second), jsonGroup.Interval)
+			require.Len(t, jsonGroup.Rules, 1)
+			require.Equal(t, promRule.Alert, jsonGroup.Rules[0].Alert)
+		})
 	})
 }
 
@@ -669,6 +802,8 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 		fldr2 := randFolder()
 		fldr2.ParentUID = ""
 		folderService.ExpectedFolders = []*folder.Folder{fldr, fldr2}
+		folderService.AddFolder(fldr)
+		folderService.AddFolder(fldr2)
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr, fldr2)
 
 		// Create a Grafana rule for each Prometheus rule
@@ -687,16 +822,32 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 			ruleStore.PutRule(context.Background(), rule)
 		}
 
-		response := srv.RouteConvertPrometheusGetNamespace(rc, fldr.Title)
-		require.Equal(t, http.StatusOK, response.Status())
+		t.Run("YAML response", func(t *testing.T) {
+			response := srv.RouteConvertPrometheusGetNamespace(rc, fldr.Title)
+			require.Equal(t, http.StatusOK, response.Status())
 
-		var respNamespaces map[string][]apimodels.PrometheusRuleGroup
-		err := yaml.Unmarshal(response.Body(), &respNamespaces)
-		require.NoError(t, err)
+			var respNamespaces map[string][]apimodels.PrometheusRuleGroup
+			err := yaml.Unmarshal(response.Body(), &respNamespaces)
+			require.NoError(t, err)
 
-		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Title)
-		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+			require.Len(t, respNamespaces, 1)
+			require.Contains(t, respNamespaces, fldr.Title)
+			require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		})
+
+		t.Run("JSON response", func(t *testing.T) {
+			rc.Req.Header.Set("Accept", "application/json")
+			response := srv.RouteConvertPrometheusGetNamespace(rc, fldr.Title)
+			require.Equal(t, http.StatusOK, response.Status())
+
+			var jsonNamespaces map[string][]apimodels.PrometheusRuleGroup
+			err := json.Unmarshal(response.Body(), &jsonNamespaces)
+			require.NoError(t, err)
+
+			require.Len(t, jsonNamespaces, 1)
+			require.Contains(t, jsonNamespaces, fldr.Title)
+			require.ElementsMatch(t, jsonNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		})
 	})
 }
 
@@ -798,6 +949,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		// Create a folder in the root
 		fldr := randFolder()
 		fldr.ParentUID = ""
+		folderService.AddFolder(fldr)
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
@@ -817,17 +969,118 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 			ruleStore.PutRule(context.Background(), rule)
 		}
 
-		response := srv.RouteConvertPrometheusGetRules(rc)
-		require.Equal(t, http.StatusOK, response.Status())
+		t.Run("YAML response", func(t *testing.T) {
+			response := srv.RouteConvertPrometheusGetRules(rc)
+			require.Equal(t, http.StatusOK, response.Status())
 
-		var respNamespaces map[string][]apimodels.PrometheusRuleGroup
-		err := yaml.Unmarshal(response.Body(), &respNamespaces)
-		require.NoError(t, err)
+			var respNamespaces map[string][]apimodels.PrometheusRuleGroup
+			err := yaml.Unmarshal(response.Body(), &respNamespaces)
+			require.NoError(t, err)
 
-		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Title)
-		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+			require.Len(t, respNamespaces, 1)
+			require.Contains(t, respNamespaces, fldr.Title)
+			require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		})
+
+		t.Run("JSON response", func(t *testing.T) {
+			rc.Req.Header.Set("Accept", "application/json")
+			response := srv.RouteConvertPrometheusGetRules(rc)
+			require.Equal(t, http.StatusOK, response.Status())
+
+			var jsonNamespaces map[string][]apimodels.PrometheusRuleGroup
+			err := json.Unmarshal(response.Body(), &jsonNamespaces)
+			require.NoError(t, err)
+
+			require.Len(t, jsonNamespaces, 1)
+			require.Contains(t, jsonNamespaces, fldr.Title)
+			require.ElementsMatch(t, jsonNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		})
 	})
+}
+
+func TestConvertPrometheusResponse(t *testing.T) {
+	testData := map[string][]apimodels.PrometheusRuleGroup{
+		"test": {
+			{
+				Name: "test-group",
+				Rules: []apimodels.PrometheusRule{
+					{
+						Alert: "TestAlert",
+						Expr:  "up == 0",
+					},
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		acceptHeader  string
+		expectedType  string
+		checkResponse func(t *testing.T, body []byte)
+	}{
+		{
+			name:         "by default returns YAML",
+			expectedType: "text/yaml",
+			checkResponse: func(t *testing.T, body []byte) {
+				require.True(t, strings.Contains(string(body), "test-group"))
+				require.True(t, strings.Contains(string(body), "TestAlert"))
+				var result map[string][]apimodels.PrometheusRuleGroup
+				err := yaml.Unmarshal(body, &result)
+				require.NoError(t, err)
+			},
+		},
+		{
+			name:         "with application/json Accept header returns JSON",
+			acceptHeader: "application/json",
+			expectedType: "application/json",
+			checkResponse: func(t *testing.T, body []byte) {
+				require.True(t, strings.Contains(string(body), "test-group"))
+				require.True(t, strings.Contains(string(body), "TestAlert"))
+				var result map[string][]apimodels.PrometheusRuleGroup
+				err := json.Unmarshal(body, &result)
+				require.NoError(t, err)
+			},
+		},
+		{
+			name:         "with application/yaml accept header returns YAML",
+			acceptHeader: "application/yaml",
+			expectedType: "text/yaml",
+			checkResponse: func(t *testing.T, body []byte) {
+				require.True(t, strings.Contains(string(body), "test-group"))
+				require.True(t, strings.Contains(string(body), "TestAlert"))
+				var result map[string][]apimodels.PrometheusRuleGroup
+				err := yaml.Unmarshal(body, &result)
+				require.NoError(t, err)
+			},
+		},
+		{
+			name:         "with a header with both json and yaml returns JSON",
+			acceptHeader: "application/yaml, application/json",
+			expectedType: "application/json",
+			checkResponse: func(t *testing.T, body []byte) {
+				require.True(t, strings.Contains(string(body), "test-group"))
+				require.True(t, strings.Contains(string(body), "TestAlert"))
+				var result map[string][]apimodels.PrometheusRuleGroup
+				err := json.Unmarshal(body, &result)
+				require.NoError(t, err)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rc := createRequestCtx()
+			if tc.acceptHeader != "" {
+				rc.Req.Header.Set("Accept", tc.acceptHeader)
+			}
+
+			response := convertPrometheusResponse(rc, http.StatusOK, testData)
+
+			require.Equal(t, http.StatusOK, response.Status())
+			tc.checkResponse(t, response.Body())
+		})
+	}
 }
 
 func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
@@ -1529,8 +1782,8 @@ func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, o
 	return args.Error(0)
 }
 
-func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error) {
-	args := m.Called(ctx, org, withAutogen)
+func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error) {
+	args := m.Called(ctx, org, withAutogen, withMergedExtraConfig)
 	return args.Get(0).(apimodels.GettableUserConfig), args.Error(1)
 }
 
@@ -1659,7 +1912,7 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 
 	t.Run("without config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
 					Identifier: defaultConfigIdentifier,
@@ -1682,7 +1935,7 @@ receivers:
 
 	t.Run("with empty config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
 					Identifier: defaultConfigIdentifier,
@@ -1730,7 +1983,7 @@ receivers:
 			},
 		}
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false).Return(expectedConfig, nil).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false, false).Return(expectedConfig, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -1784,7 +2037,7 @@ receivers:
 			},
 		}
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(expectedConfig, nil).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(expectedConfig, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -1799,7 +2052,7 @@ receivers:
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
-		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)

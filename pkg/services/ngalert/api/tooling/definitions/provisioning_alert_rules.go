@@ -174,7 +174,7 @@ type ProvisionedAlertRule struct {
 	// example: {"metric":"grafana_alerts_ratio", "from":"A"}
 	Record *Record `json:"record"`
 	// example: 2
-	MissingSeriesEvalsToResolve *int `json:"missingSeriesEvalsToResolve,omitempty"`
+	MissingSeriesEvalsToResolve *int64 `json:"missingSeriesEvalsToResolve,omitempty"`
 }
 
 // swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
@@ -284,7 +284,7 @@ type AlertRuleExport struct {
 	IsPaused                    bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
 	NotificationSettings        *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
 	Record                      *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record,block"`
-	MissingSeriesEvalsToResolve *int                                 `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty" hcl:"missing_series_evals_to_resolve"`
+	MissingSeriesEvalsToResolve *int64                               `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty" hcl:"missing_series_evals_to_resolve"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.

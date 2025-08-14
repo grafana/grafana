@@ -241,6 +241,7 @@ jest.mock('@grafana/runtime', () => ({
       // if datasource is not found, return default instance settings
       return instance1SettingsMock;
     },
+    getList: () => [],
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,

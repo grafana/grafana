@@ -18,8 +18,7 @@
       },
       "references": [
         {
-          "family": "ds",
-          "identifier": "gdev-testdata"
+          "family": "ds"
         },
         {
           "family": "plugin",
@@ -37,8 +36,7 @@
       },
       "references": [
         {
-          "family": "ds",
-          "identifier": "gdev-testdata"
+          "family": "ds"
         },
         {
           "family": "plugin",
@@ -56,8 +54,7 @@
       },
       "references": [
         {
-          "family": "ds",
-          "identifier": "gdev-testdata"
+          "family": "ds"
         },
         {
           "family": "plugin",
@@ -75,8 +72,7 @@
       },
       "references": [
         {
-          "family": "ds",
-          "identifier": "gdev-testdata"
+          "family": "ds"
         },
         {
           "family": "plugin",
@@ -94,8 +90,7 @@
       },
       "references": [
         {
-          "family": "ds",
-          "identifier": "gdev-testdata"
+          "family": "ds"
         },
         {
           "family": "plugin",
@@ -107,8 +102,7 @@
   ],
   "references": [
     {
-      "family": "ds",
-      "identifier": "gdev-testdata"
+      "family": "ds"
     },
     {
       "family": "plugin",

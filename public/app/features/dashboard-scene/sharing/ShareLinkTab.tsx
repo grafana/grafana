@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
-import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
+import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch, TextLink } from '@grafana/ui';
 import { createDashboardShareUrl, createShortLink, getShareUrlParams } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -215,14 +215,9 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
         >
           <Trans i18nKey="share-modal.link.render-instructions">
             To render an image, you must install the{' '}
-            <a
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="external-link"
-            >
+            <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
               Grafana image renderer plugin
-            </a>
+            </TextLink>
             . Please contact your Grafana administrator to install the plugin.
           </Trans>
         </Alert>

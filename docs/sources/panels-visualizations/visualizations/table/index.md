@@ -155,7 +155,7 @@ To filter column values, follow these steps:
 
    Grafana displays the filter options for that column.
 
-   {{< figure src="/static/img/docs/tables/filter-column-values.png" max-width="300px" alt="Filter column values" class="docs-image--no-shadow" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
 
 1. Click the checkbox next to the values that you want to display or click **Select all**.
 1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
@@ -178,7 +178,8 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 
 Click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle.
-You can sort multiple columns by holding the `Shift` key and clicking the column name.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key
+and clicking the column name.
 
 {{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
@@ -197,15 +198,19 @@ This option is only available when you're editing the panel.
 
 ### Table options
 
-| Option               | Description                                                                                                                                                                                                                                                                 |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Show table header    | Show or hide column names imported from your data source.                                                                                                                                                                                                                   |
-| Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**.                                                                                                                                                                                                |
-| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries.                                                                                 |
+<!-- prettier-ignore-start -->
+| Option               | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| Show table header    | Show or hide column names imported from your data source. |
+| Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
+| Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
+| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
-| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width.                                                                             |
-| Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.                                                                                                                                                            |
-| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering).                                                                                                           |
+| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
+| Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
+| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
+| Wrap header text     | Enables text wrapping for column headers. |
+<!-- prettier-ignore-end -->
 
 ### Table footer options
 
@@ -236,12 +241,14 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | Cell type                                 | Description                                                                                                                |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | [Auto](#auto)                             | A basic text and number cell. |
-| [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the cell text is displayed in the appropriate color. |
 | [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the cell background is displayed in the appropriate color. |
+| [Data links](#data-links)                 | The cell text reflects the titles of the configured data links.|
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
-| Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
+| [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
+| [Pill](#pill)                             | Displays each item in a comma-separated string in a colored block. |
+| [Markdown + HTML](#markdown--html)        | Displays rich markdown or HTML content. |
 | [Image](#image)                           | Displays an image when the value is a URL or a base64 encoded image. |
 | [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
 <!-- prettier-ignore-end -->
@@ -253,32 +260,6 @@ This is a basic text and number cell.
 It has the following cell options:
 
 {{< docs/shared lookup="visualizations/cell-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-#### Sparkline
-
-This cell type shows values rendered as a sparkline.
-To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
-
-![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
-
-The sparkline cell type options are described in the following table.
-For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
-
-<!-- prettier-ignore-start -->
-| Option              | Description                                                                |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
-| Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
-| Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
-| Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
-| Fill opacity        | The series area fill color using the **Fill opacity** slider. |
-| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li></ul>                                                                                                    |
-| Line style          | Choose from:<ul><li>**Solid**</li><li>**Dash** - Select the length and gap for the line dashes. Default dash spacing is 10, 10.</li><li>**Dots** - Select the gap for the dot spacing. Default dot spacing is 0, 10.</li></ul> |
-| Connect null values | How null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected. Choose from:<ul><li>**Never** - Time series data points with gaps in the data are never connected.</li><li>**Always** - Time series data points with gaps in the data are always connected.</li><li>**Threshold** - Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size or within a known range, and gaps outside this range should no longer be connected.</li></ul> |
-| Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
-| Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
-| Bar alignment       | Set the position of the bar relative to a data point. |
-<!-- prettier-ignore-end -->
 
 #### Colored text
 
@@ -307,11 +288,22 @@ The colored background cell type has the following options:
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
-| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
+| Wrap text | Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch. |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 <!-- prettier-ignore-end -->
 
 <!-- The wrap text and cell value inspect descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+
+#### Data links
+
+If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable.
+If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
+
+Data links cells also support text wrapping.
+Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
+
+<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Gauge
 
@@ -346,6 +338,32 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 | Hidden | Labels are hidden. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-hidden-v11.3.png" alt="Table with labels hidden" >}} |
 <!-- prettier-ignore-end -->
 
+#### Sparkline
+
+This cell type shows values rendered as a sparkline.
+To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
+
+![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
+
+The sparkline cell type options are described in the following table.
+For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
+
+<!-- prettier-ignore-start -->
+| Option              | Description                                                                |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
+| Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
+| Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
+| Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
+| Fill opacity        | The series area fill color using the **Fill opacity** slider. |
+| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li></ul>                                                                                                    |
+| Line style          | Choose from:<ul><li>**Solid**</li><li>**Dash** - Select the length and gap for the line dashes. Default dash spacing is 10, 10.</li><li>**Dots** - Select the gap for the dot spacing. Default dot spacing is 0, 10.</li></ul> |
+| Connect null values | How null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected. Choose from:<ul><li>**Never** - Time series data points with gaps in the data are never connected.</li><li>**Always** - Time series data points with gaps in the data are always connected.</li><li>**Threshold** - Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size or within a known range, and gaps outside this range should no longer be connected.</li></ul> |
+| Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
+| Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
+| Bar alignment       | Set the position of the bar relative to a data point. |
+<!-- prettier-ignore-end -->
+
 #### JSON View
 
 This cell type shows values formatted as code.
@@ -358,7 +376,42 @@ This enables value inspection from table cells.
 When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.
 
 Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
-However, you can switch back and forth between tabs
+However, you can switch back and forth between tabs.
+
+#### Pill
+
+The **Pill** cell type displays each item in a comma-separated string in a colored block.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pills-v12.1.png" max-width="750px" alt="Table using the pill cell type" >}}
+
+The colors applied to each piece of text are maintained throughout the table.
+For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
+
+Pill cells also support text wrapping.
+Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
+
+<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+
+The following data formats are supported for the pill cell type:
+
+- Comma-separated values (`cows,chickens,goats`)
+- JSON arrays of uniform (`(["cows","chickens","goats"])`) or mixed (`[1,2,3,"foo",42,"bar"]`) types
+
+#### Markdown + HTML
+
+The **Markdown + HTML** cell type displays rich Markdown or HTML content, rendered using the
+[GitHub-Flavored Markdown](https://github.github.com/gfm/) spec. This is useful if you need to display
+customized, pre-formatted information alongside tabular data, such as formatted strings,
+lists of links, or other dynamic cases.
+
+For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize
+dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
+also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
+Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
+
+By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
+in these cells if the [`disable_sanitize_html`](../../../setup-grafana/configure-grafana/_index.md#disable_sanitize_html) option is set to true for your Grafana instance.
 
 #### Image
 

@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"text/template"
@@ -25,9 +27,9 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardsV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -51,7 +53,7 @@ type provisioningTestHelper struct {
 	DashboardsV0       *apis.K8sResourceClient
 	DashboardsV1       *apis.K8sResourceClient
 	DashboardsV2alpha1 *apis.K8sResourceClient
-	DashboardsV2alpha2 *apis.K8sResourceClient
+	DashboardsV2beta1  *apis.K8sResourceClient
 	AdminREST          *rest.RESTClient
 	EditorREST         *rest.RESTClient
 	ViewerREST         *rest.RESTClient
@@ -94,37 +96,114 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 	h.AwaitJobSuccess(t, t.Context(), unstruct)
 }
 
+func (h *provisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
+	t.Helper()
+
+	body := asJSON(spec)
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("jobs").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	if apierrors.IsAlreadyExists(result.Error()) {
+		// Wait for all jobs to finish as we don't have the name.
+		h.AwaitJobs(t, repo)
+		return
+	}
+
+	obj, err := result.Get()
+	require.NoError(t, err, "expecting to be able to sync repository")
+
+	unstruct, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expecting unstructured object, but got %T", obj)
+
+	name := unstruct.GetName()
+	require.NotEmpty(t, name, "expecting name to be set")
+	h.AwaitJobSuccess(t, t.Context(), unstruct)
+}
+
+func (h *provisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo string, spec provisioning.JobSpec) *unstructured.Unstructured {
+	t.Helper()
+
+	body := asJSON(spec)
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("jobs").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	if apierrors.IsAlreadyExists(result.Error()) {
+		// Wait for all jobs to finish as we don't have the name.
+		h.AwaitJobs(t, repo)
+		t.Errorf("repository %s already has a job running, but we expected a new one to be created", repo)
+		t.FailNow()
+
+		return nil
+	}
+
+	obj, err := result.Get()
+	require.NoError(t, err, "expecting to be able to sync repository")
+
+	unstruct, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expecting unstructured object, but got %T", obj)
+
+	name := unstruct.GetName()
+	require.NotEmpty(t, name, "expecting name to be set")
+
+	return h.AwaitJob(t, t.Context(), unstruct)
+}
+
 func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
+	t.Helper()
+	job = h.AwaitJob(t, ctx, job)
+	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
+	lastState := mustNestedString(job.Object, "status", "state")
+
+	repo := job.GetLabels()[jobs.LabelRepository]
+
+	// Debug state if job failed
+	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
+	}
+
+	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
+	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
+		"historic job '%s' was not successful", job.GetName())
+}
+
+func (h *provisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job *unstructured.Unstructured) *unstructured.Unstructured {
 	t.Helper()
 
 	repo := job.GetLabels()[jobs.LabelRepository]
 	require.NotEmpty(t, repo)
-	if !assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+
+	var lastResult *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		result, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(job.GetUID()))
 
-		if apierrors.IsNotFound(err) {
-			assert.Fail(collect, "job '%s' not found yet yet", job.GetName())
-			return // continue trying
+		if !assert.False(collect, apierrors.IsNotFound(err)) {
+			collect.Errorf("job '%s' not found, still waiting for it to complete", job.GetName())
+			return
 		}
 
-		// Can fail fast here -- the jobs are immutable
-		require.NoError(t, err)
-		require.NotNil(t, result)
-
-		state := mustNestedString(result.Object, "status", "state")
-		require.Equal(t, string(provisioning.JobStateSuccess), state,
-			"historic job '%s' was not successful", job.GetName())
-	}, time.Second*10, time.Millisecond*25) {
-		// We also want to add the job details to the error when it fails.
-		job, err := h.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
+		assert.NoError(collect, err, "failed to get job '%s' to be found", job.GetName())
 		if err != nil {
-			t.Logf("failed to get job details for further help: %v", err)
-		} else {
-			t.Logf("job details: %+v", job.Object)
+			return
 		}
-		t.FailNow()
-	}
+
+		lastResult = result
+	}, time.Second*10, time.Millisecond*25)
+	require.NotNil(t, lastResult, "expected job result to be non-nil")
+
+	return lastResult
 }
 
 func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
@@ -136,9 +215,11 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 		if assert.NoError(collect, err, "failed to list active jobs") {
 			for _, elem := range list.Items {
 				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
-				require.NoError(t, err)
-				if repo == repoName {
-					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
+				if !assert.NoError(collect, err, "failed to get repository from job spec") {
+					return
+				}
+
+				if !assert.NotEqual(collect, repoName, repo, "there are still remaining jobs for %s: %+v", repoName, elem) {
 					return
 				}
 			}
@@ -158,6 +239,52 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 
 		state := mustNestedString(elem.Object, "status", "state")
 		require.Equal(t, string(provisioning.JobStateSuccess), state, "job %s failed: %+v", elem.GetName(), elem.Object)
+	}
+}
+
+// AwaitJobsWithStates waits for all jobs for a repository to complete and accepts multiple valid end states
+func (h *provisioningTestHelper) AwaitJobsWithStates(t *testing.T, repoName string, acceptedStates []string) {
+	t.Helper()
+
+	// First, we wait for all jobs for the repository to disappear (i.e. complete/fail).
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+		if assert.NoError(collect, err, "failed to list active jobs") {
+			for _, elem := range list.Items {
+				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
+				if !assert.NoError(collect, err, "failed to get repository from job spec") {
+					return
+				}
+
+				if !assert.NotEqual(collect, repoName, repo, "there are still remaining jobs for %s: %+v", repoName, elem) {
+					return
+				}
+			}
+		}
+	}, time.Second*10, time.Millisecond*25, "job queue must be empty")
+
+	// Then, as all jobs are now historic jobs, we make sure they are in an accepted state.
+	result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
+	require.NoError(t, err, "failed to list historic jobs")
+
+	list, err := result.ToList()
+	require.NoError(t, err, "results should be a list")
+	require.NotEmpty(t, list.Items, "expect at least one job")
+
+	for _, elem := range list.Items {
+		require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
+
+		state := mustNestedString(elem.Object, "status", "state")
+
+		// Check if state is in accepted states
+		found := false
+		for _, acceptedState := range acceptedStates {
+			if state == acceptedState {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "job %s completed with unexpected state %s (expected one of %v): %+v", elem.GetName(), state, acceptedStates, elem.Object)
 	}
 }
 
@@ -196,6 +323,204 @@ func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
+func (h *provisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
+	t.Helper()
+	t.Logf("=== DEBUG STATE: %s ===", label)
+
+	ctx := context.Background()
+
+	// Log filesystem contents using existing tree function
+	printFileTree(t, h.ProvisioningPath)
+
+	// Log all repositories first
+	t.Logf("All repositories:")
+	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing repositories: %v", err)
+	} else {
+		t.Logf("  Total repositories: %d", len(repos.Items))
+		for i, repository := range repos.Items {
+			t.Logf("  Repository %d: name=%s", i+1, repository.GetName())
+		}
+	}
+
+	// Log repository files for the specific repo
+	t.Logf("Repository '%s' files:", repo)
+	h.logRepositoryFiles(t, ctx, repo, "  ")
+
+	// Log files for all other repositories too
+	if repos != nil && len(repos.Items) > 1 {
+		t.Logf("Files in other repositories:")
+		for _, repository := range repos.Items {
+			if repository.GetName() != repo {
+				t.Logf("  Repository '%s' files:", repository.GetName())
+				h.logRepositoryFiles(t, ctx, repository.GetName(), "    ")
+			}
+		}
+	}
+
+	// Log Grafana dashboards
+	t.Logf("Grafana dashboards:")
+	dashboards, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing dashboards: %v", err)
+	} else {
+		t.Logf("  Total dashboards: %d", len(dashboards.Items))
+		for i, dashboard := range dashboards.Items {
+			t.Logf("  Dashboard %d: name=%s, UID=%s", i+1, dashboard.GetName(), dashboard.GetUID())
+		}
+	}
+
+	// Log Grafana folders
+	t.Logf("Grafana folders:")
+	folders, err := h.Folders.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing folders: %v", err)
+	} else {
+		t.Logf("  Total folders: %d", len(folders.Items))
+		for i, folder := range folders.Items {
+			t.Logf("  Folder %d: name=%s", i+1, folder.GetName())
+		}
+	}
+
+	t.Logf("=== END DEBUG STATE ===")
+}
+
+// logRepositoryFiles logs repository file structure using the files API
+func (h *provisioningTestHelper) logRepositoryFiles(t *testing.T, ctx context.Context, repoName string, prefix string) {
+	t.Helper()
+
+	// Try to list files at root level
+	files, err := h.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files")
+	if err != nil {
+		t.Logf("%sERROR getting repository files: %v", prefix, err)
+		return
+	}
+
+	// The API returns a structured response, we need to extract the actual file data
+	if files.Object != nil {
+		h.logRepositoryObject(t, files.Object, prefix, "")
+	} else {
+		t.Logf("%s(empty repository)", prefix)
+	}
+}
+
+// logRepositoryObject recursively logs repository file structure from API response
+func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[string]interface{}, prefix string, path string) {
+	t.Helper()
+
+	if obj == nil {
+		return
+	}
+
+	// Skip metadata fields and focus on actual content
+	for key, value := range obj {
+		// Skip Kubernetes metadata fields
+		if key == "kind" || key == "apiVersion" || key == "metadata" {
+			continue
+		}
+
+		// Calculate new path for nested objects
+		var newPath string
+		if path != "" {
+			newPath = path + "/" + key
+		} else {
+			newPath = key
+		}
+
+		switch v := value.(type) {
+		case map[string]interface{}:
+			t.Logf("%s├── %s/", prefix, key)
+			h.logRepositoryObject(t, v, prefix+"  ", newPath)
+		case []interface{}:
+			// Handle lists (like items array)
+			if key == "items" && len(v) > 0 {
+				t.Logf("%s%d items:", prefix, len(v))
+				for i, item := range v {
+					if itemMap, ok := item.(map[string]interface{}); ok {
+						t.Logf("%s├── item %d:", prefix, i+1)
+						h.logRepositoryObject(t, itemMap, prefix+"  ", newPath)
+					}
+				}
+			}
+		default:
+			// This could be file content or metadata
+			if key != "kind" && key != "apiVersion" {
+				t.Logf("%s├── %s", prefix, key)
+			}
+		}
+	}
+}
+
+type TestRepo struct {
+	Name               string
+	Target             string
+	Path               string
+	Values             map[string]any
+	Copies             map[string]string
+	ExpectedDashboards int
+	ExpectedFolders    int
+}
+
+func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
+	if repo.Target == "" {
+		repo.Target = "instance"
+	}
+
+	// Use custom path if provided, otherwise use default provisioning path
+	repoPath := h.ProvisioningPath
+	if repo.Path != "" {
+		repoPath = repo.Path
+		// Ensure the directory exists
+		err := os.MkdirAll(repoPath, 0750)
+		require.NoError(t, err, "should be able to create repository path")
+	}
+
+	templateVars := map[string]any{
+		"Name":        repo.Name,
+		"SyncEnabled": true,
+		"SyncTarget":  repo.Target,
+	}
+	if repo.Path != "" {
+		templateVars["Path"] = repoPath
+	}
+
+	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", templateVars)
+
+	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	for from, to := range repo.Copies {
+		if repo.Path != "" {
+			// Copy to custom path
+			fullPath := path.Join(repoPath, to)
+			err := os.MkdirAll(path.Dir(fullPath), 0750)
+			require.NoError(t, err, "failed to create directories for custom path")
+			file := h.LoadFile(from)
+			err = os.WriteFile(fullPath, file, 0600)
+			require.NoError(t, err, "failed to write file to custom path")
+		} else {
+			h.CopyToProvisioningPath(t, from, to)
+		}
+	}
+
+	// Trigger and wait for initial sync to populate resources
+	h.SyncAndWait(t, repo.Name, nil)
+
+	// Debug state after initial sync
+	h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
+
+	// Verify initial state
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
+
+	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+}
+
 type grafanaOption func(opts *testinfra.GrafanaOpts)
 
 // Useful for debugging a test in development.
@@ -219,7 +544,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagKubernetesClientDashboardsFolders,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
@@ -269,10 +593,10 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
 	})
-	dashboardsV2alpha2 := helper.GetResourceClient(apis.ResourceClientArgs{
+	dashboardsV2beta1 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR:       dashboardsV2alpha2.DashboardResourceInfo.GroupVersionResource(),
+		GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
 	})
 
 	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
@@ -312,12 +636,20 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		DashboardsV0:       dashboardsV0,
 		DashboardsV1:       dashboardsV1,
 		DashboardsV2alpha1: dashboardsV2alpha1,
-		DashboardsV2alpha2: dashboardsV2alpha2,
+		DashboardsV2beta1:  dashboardsV2beta1,
 	}
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	v, _, err := unstructured.NestedString(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []string {
+	v, _, err := unstructured.NestedStringSlice(obj, fields...)
 	if err != nil {
 		panic(err)
 	}
@@ -379,4 +711,59 @@ func (h *provisioningTestHelper) postFilesRequest(t *testing.T, repo string, opt
 	require.NoError(t, err)
 
 	return resp
+}
+
+// printFileTree prints the directory structure as a tree for debugging purposes
+func printFileTree(t *testing.T, rootPath string) {
+	t.Helper()
+	t.Logf("File tree for %s:", rootPath)
+
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+
+		if relPath == "." {
+			return nil
+		}
+
+		depth := strings.Count(relPath, string(filepath.Separator))
+		indent := strings.Repeat("  ", depth)
+
+		if d.IsDir() {
+			t.Logf("%s├── %s/", indent, d.Name())
+		} else {
+			info, err := d.Info()
+			if err != nil {
+				t.Logf("%s├── %s (error reading info)", indent, d.Name())
+			} else {
+				t.Logf("%s├── %s (%d bytes)", indent, d.Name(), info.Size())
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Logf("Error walking directory: %v", err)
+	}
+}
+
+// Helper function to count files in a directory recursively
+func countFilesInDir(rootPath string) (int, error) {
+	count := 0
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			count++
+		}
+		return nil
+	})
+	return count, err
 }

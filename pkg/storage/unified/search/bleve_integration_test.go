@@ -21,7 +21,7 @@ func TestBleveSearchBackend(t *testing.T) {
 		backend, err := NewBleveBackend(BleveOptions{
 			Root:          tempDir,
 			FileThreshold: 5,
-		}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+		}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, backend)
 
@@ -44,7 +44,7 @@ func TestSearchBackendBenchmark(t *testing.T) {
 	// Create a new bleve backend
 	backend, err := NewBleveBackend(BleveOptions{
 		Root: tempDir,
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 
