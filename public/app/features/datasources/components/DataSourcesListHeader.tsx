@@ -2,14 +2,12 @@ import { debounce } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
+import PageActionBar, { FilterCheckbox } from 'app/core/components/PageActionBar/PageActionBar';
 import { StoreState, useSelector, useDispatch } from 'app/types/store';
 
 import { setDataSourcesSearchQuery, setIsSortAscending } from '../state/reducers';
 import { getDataSourcesSearchQuery, getDataSourcesSort } from '../state/selectors';
 import { trackDsSearched } from '../tracking';
-
-import { FavoritesCheckbox } from './DataSourcesList';
 
 const ascendingSortValue = 'alpha-asc';
 const descendingSortValue = 'alpha-desc';
@@ -23,10 +21,10 @@ const sortOptions = [
 ];
 
 export interface DataSourcesListHeaderProps {
-  favoritesCheckbox?: FavoritesCheckbox;
+  filterCheckbox?: FilterCheckbox;
 }
 
-export function DataSourcesListHeader({ favoritesCheckbox }: DataSourcesListHeaderProps) {
+export function DataSourcesListHeader({ filterCheckbox }: DataSourcesListHeaderProps) {
   const dispatch = useDispatch();
 
   const debouncedTrackSearch = useMemo(
@@ -66,7 +64,7 @@ export function DataSourcesListHeader({ favoritesCheckbox }: DataSourcesListHead
       setSearchQuery={setSearchQuery}
       key="action-bar"
       sortPicker={sortPicker}
-      favoritesCheckbox={favoritesCheckbox}
+      filterCheckbox={filterCheckbox}
     />
   );
 }

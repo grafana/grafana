@@ -5,11 +5,12 @@ import { config } from '@grafana/runtime';
 
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
 
-import { DataSourcesListView } from './DataSourcesList';
+import { DataSourcesListView, ViewProps } from './DataSourcesList';
 
 // Mock the useFavoriteDatasources hook
 const mockIsFavoriteDatasource = jest.fn();
 const mockUseFavoriteDatasources = jest.fn(() => ({
+  enabled: true,
   isFavoriteDatasource: mockIsFavoriteDatasource,
   favoriteDatasources: [],
   initialFavoriteDataSources: [],
@@ -41,7 +42,7 @@ jest.mock('app/core/hooks/useQueryParams', () => ({
   useQueryParams: () => mockUseQueryParams(),
 }));
 
-const setup = (overrides = {}) => {
+const setup = (overrides: Partial<ViewProps> = {}) => {
   const defaultProps = {
     dataSources: getMockDataSources(3),
     dataSourcesCount: 3,
@@ -92,7 +93,7 @@ describe('<DataSourcesList>', () => {
     });
 
     it('should render favorites checkbox when feature toggle is enabled', async () => {
-      setup();
+      setup({ favoriteDataSources: mockUseFavoriteDatasources() });
 
       const checkbox = await screen.findByRole('checkbox', { name: 'Starred' });
       expect(checkbox).toBeInTheDocument();
@@ -109,7 +110,7 @@ describe('<DataSourcesList>', () => {
     });
 
     it('should render favorites checkbox as checked when value is true', async () => {
-      setup({ showFavoritesOnly: true });
+      setup({ showFavoritesOnly: true, favoriteDataSources: mockUseFavoriteDatasources() });
 
       const checkbox = await screen.findByRole('checkbox', { name: 'Starred' });
       expect(checkbox).toBeChecked();
@@ -121,7 +122,10 @@ describe('<DataSourcesList>', () => {
 
       setup({
         showFavoritesOnly: true,
-        isFavoriteDatasource: mockIsFavoriteDatasource,
+        favoriteDataSources: {
+          ...mockUseFavoriteDatasources(),
+          isFavoriteDatasource: mockIsFavoriteDatasource,
+        },
       });
 
       // Should only show 2 datasources (uid-0 and uid-2) instead of all 3
