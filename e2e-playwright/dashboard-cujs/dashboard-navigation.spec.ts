@@ -12,8 +12,8 @@ test.use({
 
 const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
 
-export const DASHBOARD = 'cuj-dashboard-1';
-export const DASHBOARD_TWO = 'cuj-dashboard-2';
+export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+export const NAVIGATE_TO = 'cuj-dashboard-2';
 
 test.describe(
   'Dashboard navigation CUJs',
@@ -23,7 +23,7 @@ test.describe(
   () => {
     test('Navigate between dashboards', async ({ page, gotoDashboardPage, selectors }) => {
       await test.step('1.Search dashboard', async () => {
-        await gotoDashboardPage({ uid: DASHBOARD });
+        await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await setScopes(page, USE_LIVE_DATA);
 
@@ -44,7 +44,7 @@ test.describe(
       });
 
       await test.step('2.Timeselection persisting', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await setScopes(page, USE_LIVE_DATA);
 
@@ -73,7 +73,7 @@ test.describe(
       });
 
       await test.step('3.See filter/groupby selection persisting when navigating from dashboard to dashboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_TWO });
+        const dashboardPage = await gotoDashboardPage({ uid: NAVIGATE_TO });
 
         await setScopes(page, USE_LIVE_DATA, { title: 'CUJ Dashboard 3', uid: 'cuj-dashboard-3' });
 
@@ -115,7 +115,7 @@ test.describe(
       });
 
       await test.step('4.See filter/groupby selection persisting when navigating from dashboard to dashboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await setScopes(page, USE_LIVE_DATA, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
 

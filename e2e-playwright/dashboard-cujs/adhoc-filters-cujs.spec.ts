@@ -12,7 +12,7 @@ test.use({
 
 const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
 
-export const DASHBOARD = 'cuj-dashboard-1';
+export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
 test.describe(
   'AdHoc Filters CUJs',
@@ -22,7 +22,7 @@ test.describe(
   () => {
     test('Filter data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
       await test.step('1.Apply filtering to a whole dashboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await page.waitForTimeout(500);
 
@@ -89,7 +89,7 @@ test.describe(
       });
 
       await test.step('2.Autocomplete for the filter values', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         if (!USE_LIVE_DATA) {
           // mock the API call to get the labels
@@ -148,7 +148,7 @@ test.describe(
       });
 
       await test.step('3.Choose operators on the filters', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await page.waitForTimeout(500);
 
@@ -221,7 +221,7 @@ test.describe(
       });
 
       await test.step('4.Edit and restore default filters applied to the dashboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const defaultDashboardFilter = page.getByLabel(/^Edit filter with key/).first();
         const pillText = await defaultDashboardFilter.textContent();
@@ -245,7 +245,7 @@ test.describe(
       });
 
       await test.step('5.Edit and restore filters implied by scope', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await page.waitForTimeout(500);
 
@@ -279,7 +279,7 @@ test.describe(
       });
 
       await test.step('6.Add and edit filters through keyboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await page.waitForTimeout(500);
 

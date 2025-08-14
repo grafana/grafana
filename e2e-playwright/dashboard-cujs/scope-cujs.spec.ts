@@ -23,7 +23,7 @@ test.use({
 
 const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
 
-export const DASHBOARD = 'cuj-dashboard-1';
+export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
 test.describe(
   'Scope CUJs',
@@ -33,7 +33,7 @@ test.describe(
   () => {
     test('Choose a scope', async ({ page, gotoDashboardPage }) => {
       await test.step('1.View and select any scope', async () => {
-        await gotoDashboardPage({ uid: DASHBOARD });
+        await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const scopesSelector = page.getByTestId('scopes-selector-input');
 
@@ -64,7 +64,7 @@ test.describe(
       });
 
       await test.step('2.Select a scope across multiple types of production entities', async () => {
-        await gotoDashboardPage({ uid: DASHBOARD });
+        await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const scopesSelector = page.getByTestId('scopes-selector-input');
 
@@ -98,7 +98,7 @@ test.describe(
 
       await test.step('3.View and select a recently viewed scope', async () => {
         // this step depends on the previous ones because they set recent scopes
-        await gotoDashboardPage({ uid: DASHBOARD });
+        await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const scopesSelector = page.getByTestId('scopes-selector-input');
 
@@ -121,7 +121,7 @@ test.describe(
       });
 
       await test.step('4.View and select a scope configured by any team', async () => {
-        await gotoDashboardPage({ uid: DASHBOARD });
+        await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const scopesSelector = page.getByTestId('scopes-selector-input');
 
@@ -152,7 +152,7 @@ test.describe(
       });
 
       await test.step('5.View pre-completed production entity values as I type', async () => {
-        await gotoDashboardPage({ uid: DASHBOARD });
+        await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const scopes = testScopes();
         await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version

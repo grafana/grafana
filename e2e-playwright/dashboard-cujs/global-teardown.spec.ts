@@ -1,18 +1,19 @@
 import { test } from '@playwright/test';
 
-import { GlobalTestData } from './global-setup.spec';
+import { clearDashboardUIDs, getDashboardUIDs } from './dashboardUidsState';
 
 test.describe('Dashboard CUJS Global Teardown', () => {
   test('cleanup test dashboards', async ({ request }) => {
-    // Get the test data from global storage
-    const testData: GlobalTestData = (global as any).dashboardCujsTestData;
+    const dashboardUIDs = getDashboardUIDs();
 
-    if (!testData || !testData.dashboardUIDs) {
+    if (!dashboardUIDs) {
       return;
     }
 
-    for (const dashboardUID of testData.dashboardUIDs) {
+    for (const dashboardUID of dashboardUIDs) {
       await request.delete(`/api/dashboards/uid/${dashboardUID}`);
     }
+
+    clearDashboardUIDs();
   });
 });

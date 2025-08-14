@@ -8,7 +8,7 @@ test.use({
   },
 });
 
-export const DASHBOARD = 'cuj-dashboard-1';
+export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 export const PANEL_UNDER_TEST = 'Panel Title';
 
 test.describe(
@@ -19,7 +19,7 @@ test.describe(
   () => {
     test('View a dashboard', async ({ page, gotoDashboardPage, selectors }) => {
       await test.step('1.Top level selectors', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const groupByVariable = dashboardPage.getByGrafanaSelector(
           selectors.pages.Dashboard.SubMenu.submenuItemLabels('groupBy')
@@ -34,7 +34,7 @@ test.describe(
       });
 
       await test.step('2.View widgets/chargs in fullscreen mode', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const viewPanelBreadcrumb = dashboardPage.getByGrafanaSelector(
           selectors.components.Breadcrumbs.breadcrumb('View panel')
@@ -61,7 +61,7 @@ test.describe(
       });
 
       await test.step('3.Set time range for the dashboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const timePickerButton = dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton);
 
@@ -130,7 +130,7 @@ test.describe(
       });
 
       await test.step('4.Force refresh', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const refreshBtn = dashboardPage.getByGrafanaSelector(selectors.components.RefreshPicker.runButtonV2);
 
@@ -146,7 +146,7 @@ test.describe(
       });
 
       await test.step('4.Force refresh', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD });
+        const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const intervalRefreshBtn = dashboardPage.getByGrafanaSelector(
           selectors.components.RefreshPicker.intervalButtonV2
