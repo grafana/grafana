@@ -7,17 +7,16 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...originalRuntime,
     getBackendSrv: mockBackendSrv,
-    config: {
-      ...originalRuntime.config,
-      bootData: {
-        ...originalRuntime.config.bootData,
-        user: {
-          ...originalRuntime.config.bootData.user,
-          orgId: 'testOrgId',
-        },
-      },
-    },
   };
+});
+
+jest.mock('app/core/services/context_srv', () => {
+  const original = jest.requireActual('app/core/services/context_srv');
+  const mockedContext = { ...original };
+
+  mockedContext.user.orgId = 'testOrgId';
+
+  return mockedContext;
 });
 
 describe('ImpressionSrv', () => {
