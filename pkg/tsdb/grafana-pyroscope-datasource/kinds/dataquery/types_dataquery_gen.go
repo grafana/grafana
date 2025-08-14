@@ -55,5 +55,6 @@ func NewGrafanaPyroscopeDataQuery() *GrafanaPyroscopeDataQuery {
 	return &GrafanaPyroscopeDataQuery{
 		LabelSelector: "{}",
 		GroupBy:       []string{},
+		Annotations:   (func(input bool) *bool { return &input })(true),
 	}
 }

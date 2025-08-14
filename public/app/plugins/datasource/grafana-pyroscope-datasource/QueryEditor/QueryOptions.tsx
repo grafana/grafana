@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
+import {useStyles2, RadioButtonGroup, MultiSelect, Input, InlineSwitch} from '@grafana/ui';
 
 import { Query } from '../types';
 
@@ -131,6 +131,14 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
                 let newValue = parseInt(event.currentTarget.value, 10);
                 newValue = isNaN(newValue) ? 0 : newValue;
                 onQueryChange({ ...query, maxNodes: newValue });
+              }}
+            />
+          </EditorField>
+          <EditorField label={'Annotations'} tooltip={<>Include profiling annotations in the time series.</>}>
+            <InlineSwitch
+              value={query.annotations || false}
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                onQueryChange({ ...query, annotations: event.currentTarget.checked });
               }}
             />
           </EditorField>
