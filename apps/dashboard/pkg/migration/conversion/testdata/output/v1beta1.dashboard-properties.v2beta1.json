@@ -51,6 +51,9 @@
                       "kind": "DataQuery",
                       "group": "prometheus",
                       "version": "v0",
+                      "datasource": {
+                        "name": "default-ds-uid"
+                      },
                       "spec": {}
                     },
                     "refId": "A",

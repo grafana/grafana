@@ -1,11 +1,20 @@
 package conversion
 
+import (
+	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+)
+
 // getDefaultDatasourceType gets the default datasource type using the conversion module's datasource provider
-func getDefaultDatasourceType() string {
+func getDefaultDatasourceRef() dashv2alpha1.DashboardDataSourceRef {
+	defaultGrafanaUID := "-- Grafana --"
+	defaultGrafanaType := "grafana"
 	// Get the datasource info from the conversion module's provider
 	dsProvider := GetDataSourceProvider()
 	if dsProvider == nil {
-		return "grafana"
+		return dashv2alpha1.DashboardDataSourceRef{
+			Uid:  &defaultGrafanaUID,
+			Type: &defaultGrafanaType,
+		}
 	}
 
 	dsInfo := dsProvider.GetDataSourceInfo()
@@ -13,18 +22,24 @@ func getDefaultDatasourceType() string {
 	// Find the default datasource
 	for _, ds := range dsInfo {
 		if ds.Default {
-			return ds.Type
+			return dashv2alpha1.DashboardDataSourceRef{
+				Uid:  &ds.UID,
+				Type: &ds.Type,
+			}
 		}
 	}
 
 	// If no default datasource is found, return "grafana" as fallback
-	return "grafana"
+	return dashv2alpha1.DashboardDataSourceRef{
+		Uid:  &defaultGrafanaUID,
+		Type: &defaultGrafanaType,
+	}
 }
 
 // getDatasourceTypeByUID gets the datasource type by UID using the conversion module's datasource provider
 func getDatasourceTypeByUID(uid string) string {
 	if uid == "" {
-		return getDefaultDatasourceType()
+		return *getDefaultDatasourceRef().Uid
 	}
 
 	// Get the datasource info from the conversion module's provider
@@ -43,5 +58,5 @@ func getDatasourceTypeByUID(uid string) string {
 	}
 
 	// If not found, return the default
-	return getDefaultDatasourceType()
+	return *getDefaultDatasourceRef().Uid
 }

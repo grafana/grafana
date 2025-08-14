@@ -1025,10 +1025,10 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			datasourceType = getDatasourceTypeByUID(datasourceUID)
 		} else if datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = getDefaultDatasourceType()
+			datasourceType = *getDefaultDatasourceRef().Type
 		}
 	} else {
-		datasourceType = getDefaultDatasourceType()
+		datasourceType = *getDefaultDatasourceRef().Type
 	}
 
 	queryVar := &dashv2alpha1.DashboardQueryVariableKind{
@@ -1073,7 +1073,7 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 
 // Datasource Variable
 func buildDatasourceVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
-	pluginId := getDefaultDatasourceType()
+	pluginId := *getDefaultDatasourceRef().Uid
 	if query := varMap["query"]; query != nil {
 		if queryStr, ok := query.(string); ok {
 			pluginId = queryStr
@@ -1221,10 +1221,10 @@ func buildAdhocVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			datasourceType = getDatasourceTypeByUID(datasourceUID)
 		} else if datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = getDefaultDatasourceType()
+			datasourceType = *getDefaultDatasourceRef().Type
 		}
 	} else {
-		datasourceType = getDefaultDatasourceType()
+		datasourceType = *getDefaultDatasourceRef().Type
 	}
 
 	adhocVar := &dashv2alpha1.DashboardAdhocVariableKind{
@@ -1383,10 +1383,10 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 			datasourceType = getDatasourceTypeByUID(datasourceUID)
 		} else if datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = getDefaultDatasourceType()
+			datasourceType = *getDefaultDatasourceRef().Type
 		}
 	} else {
-		datasourceType = getDefaultDatasourceType()
+		datasourceType = *getDefaultDatasourceRef().Type
 	}
 
 	groupByVar := &dashv2alpha1.DashboardGroupByVariableKind{
@@ -1460,7 +1460,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 			datasourceType = getDatasourceTypeByUID(datasourceUID)
 		} else if datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = getDefaultDatasourceType()
+			datasourceType = *getDefaultDatasourceRef().Type
 		}
 
 		if datasourceUID != "" {
@@ -1470,7 +1470,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 			}
 		}
 	} else {
-		datasourceType = getDefaultDatasourceType()
+		datasourceType = *getDefaultDatasourceRef().Type
 	}
 
 	// Build the query from target
@@ -1589,7 +1589,7 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 			dsType = getDatasourceTypeByUID(dsUID)
 		} else if dsType == "" {
 			// If no UID and no type, use default
-			dsType = getDefaultDatasourceType()
+			dsType = *getDefaultDatasourceRef().Type
 		}
 
 		panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
@@ -1622,10 +1622,10 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 
 		// If we have a UID, use it to get the correct type from the datasource service
 		if queryDatasourceUID != "" {
-			queryDatasourceType = getDatasourceTypeByUID(queryDatasourceUID)
+			queryDatasourceType = *getDefaultDatasourceRef().Type
 		} else if queryDatasourceType == "" {
 			// If no UID and no type, use default
-			queryDatasourceType = getDefaultDatasourceType()
+			queryDatasourceType = *getDefaultDatasourceRef().Type
 		}
 	} else if panelDatasource != nil {
 		if panelDatasource.Type != nil {
@@ -1635,7 +1635,8 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 			queryDatasourceUID = *panelDatasource.Uid
 		}
 	} else {
-		queryDatasourceType = getDefaultDatasourceType()
+		queryDatasourceType = *getDefaultDatasourceRef().Type
+		queryDatasourceUID = *getDefaultDatasourceRef().Uid
 	}
 
 	// Build query spec by excluding known fields
@@ -1655,6 +1656,13 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 		Hidden: hidden,
 		Query:  buildDataQueryKind(querySpec, queryDatasourceType, queryDatasourceUID),
 	}
+
+	// // if panelQuerySpec.Query.Datasource is not set, set it to default datasource
+	// if panelQuerySpec.Query.Spec["datasource"] == nil {
+	// 	panelQuerySpec.Query.Spec["datasource"] = map[string]interface{}{
+	// 		"name": queryDatasourceUID,
+	// 	}
+	// }
 
 	// Only include datasource reference if UID is provided
 	if queryDatasourceUID != "" {

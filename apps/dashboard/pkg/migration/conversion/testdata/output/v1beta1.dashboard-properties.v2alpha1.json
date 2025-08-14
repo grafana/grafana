@@ -49,6 +49,10 @@
                       "kind": "prometheus",
                       "spec": {}
                     },
+                    "datasource": {
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
+                    },
                     "refId": "A",
                     "hidden": false
                   }
