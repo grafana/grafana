@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Box, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Stack, TextLink, Text, useStyles2 } from '@grafana/ui';
 
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
@@ -22,7 +22,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
       </div>
       <Box width="60%" flex="1 1 auto" minWidth={CONTAINER_MIN_WIDTH}>
         <Stack direction="column">
-          <Alert severity="info" title="You are viewing a new design for the InfluxDB configuration settings.">
+          <Alert severity="info" title="You are viewing a new design for the InfluxDB configuration settings." style={{ height: "100px" }}>
             <>
               <TextLink
                 href="https://docs.google.com/forms/d/e/1FAIpQLSdi-zyX3c51vh937UKhNYYxhljUnFi6dQSlZv50mES9NrK-ig/viewform"
@@ -34,7 +34,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
               to help us make it even better.
             </>
           </Alert>
-          <i>Fields marked with * are required</i>
+          <Text color="secondary" element="p" italic>Fields marked with * are required</Text>
           <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
           <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>

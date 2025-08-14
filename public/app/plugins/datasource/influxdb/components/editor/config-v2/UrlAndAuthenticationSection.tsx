@@ -84,7 +84,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
         </Text>
 
         <Box direction="column" gap={2} marginTop={3}>
-          <Field label={<div style={{ marginBottom: '5px' }}>URL *</div>} description="Enter" noMargin>
+          <Field label={<div style={{ marginBottom: '5px' }}>URL *</div>} noMargin>
             <Input
               data-testid="influxdb-v2-config-url-input"
               placeholder="example: http://localhost:8086/"
