@@ -232,6 +232,9 @@ type ResourceServerOptions struct {
 
 	Ring           *ring.Ring
 	RingLifecycler *ring.BasicLifecycler
+
+	// Enable strong consistency for searches. When enabled, index is always updated with latest changes before search.
+	SearchAfterWrite bool
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -315,7 +318,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler, opts.SearchAfterWrite)
 		if err != nil {
 			return nil, err
 		}
