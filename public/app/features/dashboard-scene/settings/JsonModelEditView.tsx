@@ -70,13 +70,16 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       meta: dashboard.state.meta,
     };
     const newDashboardScene = transformSaveModelToScene(rsp);
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
     dashboard.pauseTrackingChanges();
     dashboard.setInitialSaveModel(rsp.dashboard);
     dashboard.setState(newState);
 
     this.setState({ jsonText: this.getJsonText() });
+
+    // We also need to resume tracking changes since the change handler won't see any later edit
+    dashboard.resumeTrackingChanges();
   };
 
   static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {
