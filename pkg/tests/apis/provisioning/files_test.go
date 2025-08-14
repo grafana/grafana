@@ -459,13 +459,11 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			return
 		}
 
-		// Check error message contains ownership information (based on NewResourceOwnershipConflictError format)
+		// Check error message contains ownership conflict information
 		errorMsg := err.Error()
 		t.Logf("Error message: %s", errorMsg)
-		require.Contains(t, errorMsg, "is managed by repo", "error should mention current manager type")
-		require.Contains(t, errorMsg, repo1, "error should mention the owning repository")
-		require.Contains(t, errorMsg, "cannot be modified by repo", "error should mention modification restriction")
-		require.Contains(t, errorMsg, repo2, "error should mention the requesting repository")
+		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
+		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
 	// Test: Try to update a file that belongs to a different repository
@@ -497,13 +495,11 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			return
 		}
 
-		// Check error message contains ownership information (based on NewResourceOwnershipConflictError format)
+		// Check error message contains ownership conflict information
 		errorMsg := err.Error()
 		t.Logf("Error message: %s", errorMsg)
-		require.Contains(t, errorMsg, "is managed by repo", "error should mention current manager type")
-		require.Contains(t, errorMsg, repo1, "error should mention the owning repository")
-		require.Contains(t, errorMsg, "cannot be modified by repo", "error should mention modification restriction")
-		require.Contains(t, errorMsg, repo2, "error should mention the requesting repository")
+		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
+		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
 	// Test: Try to delete a file that belongs to a different repository
@@ -546,13 +542,11 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 			return
 		}
 
-		// Check error message contains ownership information (based on NewResourceOwnershipConflictError format)
+		// Check error message contains ownership conflict information
 		errorMsg := err.Error()
 		t.Logf("Error message: %s", errorMsg)
-		require.Contains(t, errorMsg, "is managed by repo", "error should mention current manager type")
-		require.Contains(t, errorMsg, repo1, "error should mention the owning repository")
-		require.Contains(t, errorMsg, "cannot be modified by repo", "error should mention modification restriction")
-		require.Contains(t, errorMsg, repo2, "error should mention the requesting repository")
+		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
+		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
 	// Test: Try to move a file that belongs to a different repository
