@@ -5,7 +5,6 @@ labels:
   products:
     - enterprise
     - oss
-    - cloud
 keywords:
   - grafana
   - plugins
