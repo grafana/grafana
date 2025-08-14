@@ -95,16 +95,10 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		SignedInUser: user,
 		OrgID:        orgId,
 	}
-	if options.Continue != "" {
-		query.Page = paging.page
-		query.Limit = paging.limit
-	} else if options.Limit > 0 {
-		query.Limit = options.Limit
-		query.Page = 1
-		// also need to update the paging token so the continue token is correct
-		paging.limit = options.Limit
-		paging.page = 1
-	}
+
+	// paging is always retrieved from the continue token
+	query.Limit = paging.limit
+	query.Page = paging.page
 
 	if options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
 		query.WithFullpath = true

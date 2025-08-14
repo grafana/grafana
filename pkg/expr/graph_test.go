@@ -239,7 +239,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nodes, err := s.buildPipeline(tt.req)
+			nodes, err := s.buildPipeline(t.Context(), tt.req)
 			if tt.expectErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.expectErrContains)
