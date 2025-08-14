@@ -4443,7 +4443,23 @@
       },
       "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue": {
         "description": "Allow access to a secure value inside",
-        "type": "object",
+        "oneOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "create"
+            ]
+          },
+          {
+            "required": [
+              "remove"
+            ]
+          }
+        ],
         "properties": {
           "create": {
             "description": "Create a secure value -- this is only used for POST/PUT",
@@ -4453,13 +4469,16 @@
           },
           "name": {
             "description": "Name in the secret service (reference)",
-            "type": "string"
+            "type": "string",
+            "maxLength": 253,
+            "minLength": 1
           },
           "remove": {
             "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
             "type": "boolean"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
         "type": "object",
