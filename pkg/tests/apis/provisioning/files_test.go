@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path"
 	"testing"
 
@@ -401,11 +402,8 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	// Create two repositories pointing to different folders to avoid conflicts
-	const repo1 = "ownership-repo-1"
-	const repo2 = "ownership-repo-2"
-
 	// Create first repository targeting "folder-1" with its own subdirectory
+	const repo1 = "ownership-repo-1"
 	helper.CreateRepo(t, TestRepo{
 		Name:   repo1,
 		Path:   path.Join(helper.ProvisioningPath, "repo1"),
@@ -418,9 +416,11 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	})
 
 	// Create second repository targeting "folder-2" with its own subdirectory
+	const repo2 = "ownership-repo-2"
+	path2 := path.Join(helper.ProvisioningPath, "repo2")
 	helper.CreateRepo(t, TestRepo{
 		Name:   repo2,
-		Path:   path.Join(helper.ProvisioningPath, "repo2"),
+		Path:   path2,
 		Target: "folder",
 		Copies: map[string]string{
 			"testdata/timeline-demo.json": "dashboard2.json",
@@ -429,7 +429,6 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		ExpectedFolders:    2, // Total across both repos
 	})
 
-	// Test: Try to create a file in repo2 with the same UID as one owned by repo1
 	t.Run("CREATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		// Try to create a dashboard in repo2 that has the same UID as the one in repo1
 		// The all-panels.json has UID "n1jR8vnnz" which is already owned by repo1
@@ -466,8 +465,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
-	// Test: Try to update a file that belongs to a different repository
-	t.Run("UPDATE file owned by different repository - should fail", func(t *testing.T) {
+	t.Run("UPDATE with UID already owned by different repository - should fail", func(t *testing.T) {
 		// Try to update the dashboard owned by repo1 using repo2
 		result := helper.AdminREST.Put().
 			Namespace("default").
@@ -502,28 +500,22 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
-	// Test: Try to delete a file that belongs to a different repository
-	t.Run("DELETE file owned by different repository - should fail", func(t *testing.T) {
-		// FIXME: This test currently fails with "file not found" because each repo has its own path
-		// We need to test deleting a file by UID, not by file path, since repos have separate directories
-		// For now, try to delete using repo2 a file that has the same UID as repo1's dashboard
-		
-		// First create a file in repo2 with same content (same UID) as repo1's dashboard
-		result := helper.AdminREST.Post().
+	t.Run("DELETE resource owned by different repository - should fail", func(t *testing.T) {
+		// Create a file manually in the second repo which is already in first one
+		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo-2/conflicting-delete.json")
+
+		t.Cleanup(func() {
+			err := os.Remove(path.Join(helper.ProvisioningPath, "repo2", "conflicting-delete.json"))
+			require.NoError(t, err)
+		})
+
+		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo2).
 			SubResource("files", "conflicting-delete.json").
-			Body(helper.LoadFile("testdata/all-panels.json")). // Same UID as repo1
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
-		
-		// This should fail due to ownership conflict
-		t.Logf("Attempting to create file in repo2 with same UID as repo1's file")
-		if result.Error() == nil {
-			t.Logf("Unexpected: File creation succeeded, but should have failed due to UID conflict")
-			return
-		}
 
 		// This should fail with ownership conflict
 		require.Error(t, result.Error(), "deleting resource owned by different repository should fail")
@@ -549,7 +541,6 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
-	// Test: Try to move a file that belongs to a different repository
 	t.Run("MOVE file owned by different repository - should fail", func(t *testing.T) {
 		// FIXME: This test currently fails with "file not found" because we're trying to move
 		// a file from repo1's path using repo2's context. We need to test cross-repo moves differently.
@@ -575,7 +566,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		t.Logf("MOVE operation HTTP status: %d", resp.StatusCode)
 		t.Logf("MOVE operation error response: %s", errorMsg)
 
-		// FIXME: This should return BadRequest (400) but currently returns InternalServerError (500) 
+		// FIXME: This should return BadRequest (400) but currently returns InternalServerError (500)
 		// due to file path issues. The ownership protection would work if the file path was correct.
 		if resp.StatusCode != http.StatusBadRequest {
 			t.Logf("FIXME: Expected BadRequest status (400) but got: %d", resp.StatusCode)
@@ -590,7 +581,6 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
-	// Verify that the original dashboards are still intact and owned by their respective repositories
 	t.Run("verify original resources remain intact", func(t *testing.T) {
 		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json (repo1)
 		const timelineUID = "mIJjFy8Kz"  // UID from timeline-demo.json (repo2)
