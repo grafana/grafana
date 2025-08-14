@@ -6,6 +6,9 @@ import (
 	"strconv"
 
 	"gopkg.in/yaml.v3"
+	openapi "k8s.io/kube-openapi/pkg/common"
+	spec "k8s.io/kube-openapi/pkg/validation/spec"
+	ptr "k8s.io/utils/ptr"
 )
 
 const redacted = "[REDACTED]"
@@ -39,6 +42,48 @@ type InlineSecureValue struct {
 
 func (v InlineSecureValue) IsZero() bool {
 	return v.Create.IsZero() && v.Name == "" && !v.Remove
+}
+
+// OpenAPIDefinition returns the JSONSchema that manually ensures oneOf(create | name | remove) is set.
+func (v InlineSecureValue) OpenAPIDefinition() openapi.OpenAPIDefinition {
+	return openapi.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Allow access to a secure value inside",
+				Type:        []string{"object"},
+				OneOf: []spec.Schema{
+					{SchemaProps: spec.SchemaProps{
+						Properties: map[string]spec.Schema{
+							"create": {
+								SchemaProps: spec.SchemaProps{
+									Description: "Create a secure value -- this is only used for POST/PUT",
+									MinLength:   ptr.To[int64](1),
+									MaxLength:   ptr.To[int64](24576),
+									Type:        []string{"string"},
+									Format:      "",
+								},
+							}}}},
+					{SchemaProps: spec.SchemaProps{
+						Properties: map[string]spec.Schema{
+							"name": {
+								SchemaProps: spec.SchemaProps{
+									Description: "Name in the secret service (reference)",
+									Type:        []string{"string"},
+									Format:      "",
+								},
+							}}}},
+					{SchemaProps: spec.SchemaProps{
+						Properties: map[string]spec.Schema{
+							"remove": {
+								SchemaProps: spec.SchemaProps{
+									Description: "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
+									Type:        []string{"boolean"},
+								},
+							}}}},
+				},
+			},
+		},
+	}
 }
 
 // Collection of secure values
