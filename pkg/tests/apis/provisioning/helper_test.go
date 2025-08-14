@@ -773,7 +773,22 @@ func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
 	t.Helper()
 	ctx := context.Background()
 
-	// First, delete all repositories with retries
+	// First, get all repositories that exist
+	list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil || len(list.Items) == 0 {
+		return // Nothing to clean up
+	}
+
+	// Wait for any active jobs to complete before deleting repositories
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		activeJobs, err := h.Jobs.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "failed to list active jobs") {
+			return
+		}
+		assert.Equal(collect, 0, len(activeJobs.Items), "all active jobs should complete before cleanup")
+	}, time.Second*20, time.Millisecond*100, "active jobs should complete before cleanup")
+
+	// Now delete all repositories with retries
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
 		if !assert.NoError(collect, err) {
