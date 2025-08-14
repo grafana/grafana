@@ -65,8 +65,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        {/* TODO check alignment: space-between */}
-        <Stack gap={2}>
+        <Stack gap={2} basis="100%">
           <div className={styles.meta}>
             <span>
               {avatar}
@@ -132,13 +131,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   meta: css({
     display: 'flex',
-    justifyContent: 'space-between',
+    flexGrow: 1,
+    justifyContent: 'flex-start',
     color: theme.colors.text.primary,
     fontWeight: 400,
   }),
   editControls: css({
     display: 'flex',
-    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'flex-end',
     '> :last-child': {
       marginLeft: 0,
     },
