@@ -32,11 +32,12 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { isInCloneChain } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getEditPanelUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -404,20 +405,18 @@ function getInspectMenuItem(
   if (plugin && !plugin.meta.skipDataQuery) {
     inspectSubMenu.push({
       text: t('panel.header-menu.inspect-data', `Data`),
-      href: getInspectUrl(panel, InspectTab.Data),
       onClick: (e) => {
         e.preventDefault();
-        locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
+        dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Data }));
       },
     });
 
     if (dashboard instanceof DashboardScene && dashboard.state.meta.canEdit) {
       inspectSubMenu.push({
         text: t('panel.header-menu.query', `Query`),
-        href: getInspectUrl(panel, InspectTab.Query),
         onClick: (e) => {
           e.preventDefault();
-          locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Query });
+          dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
         },
       });
     }
@@ -425,10 +424,9 @@ function getInspectMenuItem(
 
   inspectSubMenu.push({
     text: t('panel.header-menu.inspect-json', `Panel JSON`),
-    href: getInspectUrl(panel, InspectTab.JSON),
     onClick: (e) => {
       e.preventDefault();
-      locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.JSON });
+      dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.JSON }));
     },
   });
 
@@ -436,10 +434,9 @@ function getInspectMenuItem(
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
     shortcut: 'i',
-    href: getInspectUrl(panel),
     onClick: (e) => {
       if (!e.isDefaultPrevented()) {
-        locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
+        dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Data }));
       }
     },
     subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
