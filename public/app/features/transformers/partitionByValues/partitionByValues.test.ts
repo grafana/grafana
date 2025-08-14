@@ -35,7 +35,7 @@ describe('Partition by values transformer', () => {
 
     expect(partitioned[0].length).toEqual(3);
     expect(partitioned[0].name).toEqual('Europe');
-    expect(partitioned[0].refId).toEqual('Europe');
+    expect(partitioned[0].refId).toEqual('A-Europe');
     expect(partitioned[0].fields[0].name).toEqual('model');
     expect(partitioned[0].fields[1].name).toEqual('region');
     expect(partitioned[0].fields[0].values).toEqual(['E1', 'E2', 'E3']);
@@ -43,7 +43,7 @@ describe('Partition by values transformer', () => {
 
     expect(partitioned[1].length).toEqual(3);
     expect(partitioned[1].name).toEqual('China');
-    expect(partitioned[1].refId).toEqual('China');
+    expect(partitioned[1].refId).toEqual('A-China');
     expect(partitioned[1].fields[0].name).toEqual('model');
     expect(partitioned[1].fields[1].name).toEqual('region');
     expect(partitioned[1].fields[0].values).toEqual(['C1', 'C2', 'C3']);
@@ -77,7 +77,7 @@ describe('Partition by values transformer', () => {
 
     expect(partitioned[0].length).toEqual(1);
     expect(partitioned[0].name).toEqual('Europe OK');
-    expect(partitioned[0].refId).toEqual('Europe OK');
+    expect(partitioned[0].refId).toEqual('A-Europe OK');
     expect(partitioned[0].fields[0].name).toEqual('model');
     expect(partitioned[0].fields[1].name).toEqual('region');
     expect(partitioned[0].fields[2].name).toEqual('status');
@@ -87,7 +87,7 @@ describe('Partition by values transformer', () => {
 
     expect(partitioned[1].length).toEqual(2);
     expect(partitioned[1].name).toEqual('Europe FAIL');
-    expect(partitioned[1].refId).toEqual('Europe FAIL');
+    expect(partitioned[1].refId).toEqual('A-Europe FAIL');
     expect(partitioned[1].fields[0].name).toEqual('model');
     expect(partitioned[1].fields[1].name).toEqual('region');
     expect(partitioned[1].fields[2].name).toEqual('status');
@@ -97,7 +97,7 @@ describe('Partition by values transformer', () => {
 
     expect(partitioned[2].length).toEqual(2);
     expect(partitioned[2].name).toEqual('China OK');
-    expect(partitioned[2].refId).toEqual('China OK');
+    expect(partitioned[2].refId).toEqual('A-China OK');
     expect(partitioned[2].fields[0].name).toEqual('model');
     expect(partitioned[2].fields[1].name).toEqual('region');
     expect(partitioned[2].fields[2].name).toEqual('status');
@@ -107,7 +107,7 @@ describe('Partition by values transformer', () => {
 
     expect(partitioned[3].length).toEqual(1);
     expect(partitioned[3].name).toEqual('China FAIL');
-    expect(partitioned[3].refId).toEqual('China FAIL');
+    expect(partitioned[3].refId).toEqual('A-China FAIL');
     expect(partitioned[3].fields[0].name).toEqual('model');
     expect(partitioned[3].fields[1].name).toEqual('region');
     expect(partitioned[3].fields[2].name).toEqual('status');
@@ -141,16 +141,16 @@ describe('Partition by values transformer', () => {
     let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
 
     expect(partitioned[0].name).toEqual('region=Europe status=OK');
-    expect(partitioned[0].refId).toEqual('region=Europe status=OK');
+    expect(partitioned[0].refId).toEqual('A-region=Europe status=OK');
 
     expect(partitioned[1].name).toEqual('region=Europe status=FAIL');
-    expect(partitioned[1].refId).toEqual('region=Europe status=FAIL');
+    expect(partitioned[1].refId).toEqual('A-region=Europe status=FAIL');
 
     expect(partitioned[2].name).toEqual('region=China status=OK');
-    expect(partitioned[2].refId).toEqual('region=China status=OK');
+    expect(partitioned[2].refId).toEqual('A-region=China status=OK');
 
     expect(partitioned[3].name).toEqual('region=China status=FAIL');
-    expect(partitioned[3].refId).toEqual('region=China status=FAIL');
+    expect(partitioned[3].refId).toEqual('A-region=China status=FAIL');
   });
 
   it('should partition by multiple fields with custom frame naming {append: true}', () => {
@@ -178,16 +178,16 @@ describe('Partition by values transformer', () => {
     let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
 
     expect(partitioned[0].name).toEqual('XYZ Europe OK');
-    expect(partitioned[0].refId).toEqual('XYZ Europe OK');
+    expect(partitioned[0].refId).toEqual('A-XYZ Europe OK');
 
     expect(partitioned[1].name).toEqual('XYZ Europe FAIL');
-    expect(partitioned[1].refId).toEqual('XYZ Europe FAIL');
+    expect(partitioned[1].refId).toEqual('A-XYZ Europe FAIL');
 
     expect(partitioned[2].name).toEqual('XYZ China OK');
-    expect(partitioned[2].refId).toEqual('XYZ China OK');
+    expect(partitioned[2].refId).toEqual('A-XYZ China OK');
 
     expect(partitioned[3].name).toEqual('XYZ China FAIL');
-    expect(partitioned[3].refId).toEqual('XYZ China FAIL');
+    expect(partitioned[3].refId).toEqual('A-XYZ China FAIL');
   });
 
   it('should partition by multiple fields with custom frame naming {withNames: true, append: true}', () => {
@@ -216,16 +216,16 @@ describe('Partition by values transformer', () => {
     let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
 
     expect(partitioned[0].name).toEqual('XYZ region=Europe status=OK');
-    expect(partitioned[0].refId).toEqual('XYZ region=Europe status=OK');
+    expect(partitioned[0].refId).toEqual('A-XYZ region=Europe status=OK');
 
     expect(partitioned[1].name).toEqual('XYZ region=Europe status=FAIL');
-    expect(partitioned[1].refId).toEqual('XYZ region=Europe status=FAIL');
+    expect(partitioned[1].refId).toEqual('A-XYZ region=Europe status=FAIL');
 
     expect(partitioned[2].name).toEqual('XYZ region=China status=OK');
-    expect(partitioned[2].refId).toEqual('XYZ region=China status=OK');
+    expect(partitioned[2].refId).toEqual('A-XYZ region=China status=OK');
 
     expect(partitioned[3].name).toEqual('XYZ region=China status=FAIL');
-    expect(partitioned[3].refId).toEqual('XYZ region=China status=FAIL');
+    expect(partitioned[3].refId).toEqual('A-XYZ region=China status=FAIL');
   });
 
   it('should partition by multiple fields naming: {asLabels: true}', () => {
@@ -258,10 +258,10 @@ describe('Partition by values transformer', () => {
     expect(partitioned[3].name).toEqual('XYZ');
 
     // all frame refIds are same
-    expect(partitioned[0].refId).toEqual('XYZ');
-    expect(partitioned[1].refId).toEqual('XYZ');
-    expect(partitioned[2].refId).toEqual('XYZ');
-    expect(partitioned[3].refId).toEqual('XYZ');
+    expect(partitioned[0].refId).toEqual('A-XYZ');
+    expect(partitioned[1].refId).toEqual('A-XYZ');
+    expect(partitioned[2].refId).toEqual('A-XYZ');
+    expect(partitioned[3].refId).toEqual('A-XYZ');
 
     // all frames contain all fields
     expect(partitioned[0].fields[0].name).toEqual('model');

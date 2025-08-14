@@ -149,7 +149,7 @@ export function partitionByValues(
 
     return {
       name: frameName,
-      refId: frameName,
+      refId: `${frame.refId}-${frameName}`,
       meta: frame.meta,
       length: idxs.length,
       fields: filteredFields.map((f) => {
