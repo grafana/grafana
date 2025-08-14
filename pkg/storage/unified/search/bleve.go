@@ -145,7 +145,7 @@ func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource) *bleveInd
 	}
 
 	// Index is no longer in the cache, but we need to close it.
-	err := val.index.Close()
+	err := val.closeAndStopUpdates()
 	if err != nil {
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
@@ -206,6 +206,7 @@ func (b *bleveBackend) BuildIndex(
 	fields resource.SearchableDocumentFields,
 	indexBuildReason string,
 	builder func(index resource.ResourceIndex) (int64, error),
+	updater func(ctx context.Context, index resource.ResourceIndex, lastRV int64) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
@@ -312,16 +313,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Batch all the changes
-	idx := &bleveIndex{
-		key:          key,
-		index:        index,
-		indexStorage: newIndexType,
-		fields:       fields,
-		allFields:    allFields,
-		standard:     standardSearchFields,
-		features:     b.features,
-		tracing:      b.tracer,
-	}
+	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater)
 
 	if build {
 		if b.indexMetrics != nil {
@@ -387,7 +379,7 @@ func (b *bleveBackend) BuildIndex(
 			b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
 		}
 
-		err := prev.index.Close()
+		err := prev.closeAndStopUpdates()
 		if err != nil {
 			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
@@ -555,13 +547,17 @@ func (b *bleveBackend) CloseAllIndexes() {
 	defer b.cacheMx.Unlock()
 
 	for key, idx := range b.cache {
-		_ = idx.index.Close()
+		_ = idx.closeAndStopUpdates()
 		delete(b.cache, key)
 
 		if b.indexMetrics != nil {
 			b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
 		}
 	}
+}
+
+type updateRequest struct {
+	callback chan error
 }
 
 type bleveIndex struct {
@@ -583,6 +579,39 @@ type bleveIndex struct {
 	allFields []*resourcepb.ResourceTableColumnDefinition
 	features  featuremgmt.FeatureToggles
 	tracing   trace.Tracer
+
+	updaterFn func(ctx context.Context, index resource.ResourceIndex, lastRV int64) (int64, error)
+
+	updaterMu      sync.Mutex
+	updaterCond    *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
+	updaterEnabled bool               // When set to false, updater is no longer allowed to update index. Toggled on close().
+	updaterQueue   []updateRequest    // Queue of requests for next updater iteration.
+	updaterCancel  context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
+}
+
+func (b *bleveBackend) newBleveIndex(
+	key resource.NamespacedResource,
+	index bleve.Index,
+	newIndexType string,
+	fields resource.SearchableDocumentFields,
+	allFields []*resourcepb.ResourceTableColumnDefinition,
+	standardSearchFields resource.SearchableDocumentFields,
+	updaterFn func(ctx context.Context, index resource.ResourceIndex, lastRV int64,
+	) (int64, error)) *bleveIndex {
+	bi := &bleveIndex{
+		key:            key,
+		index:          index,
+		indexStorage:   newIndexType,
+		fields:         fields,
+		allFields:      allFields,
+		standard:       standardSearchFields,
+		features:       b.features,
+		tracing:        b.tracer,
+		updaterFn:      updaterFn,
+		updaterEnabled: true,
+	}
+	bi.updaterCond = sync.NewCond(&bi.updaterMu)
+	return bi
 }
 
 // BulkIndex implements resource.ResourceIndex.
@@ -1092,6 +1121,111 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+func (b *bleveIndex) closeAndStopUpdates() error {
+	err := b.index.Close()
+
+	b.updaterMu.Lock()
+	b.updaterEnabled = false
+	if b.updaterCancel != nil {
+		b.updaterCancel()
+	}
+	b.updaterCond.Broadcast()
+	b.updaterMu.Unlock()
+
+	// wait for updater to exit?
+	return err
+}
+
+func (b *bleveIndex) UpdateIndex(ctx context.Context) error {
+	// We don't have to do anything if the index cannot be updated (typically in tests).
+	if b.updaterFn == nil {
+		return nil
+	}
+
+	// Use chan with buffer size 1 to ensure that we can always send error back, even if there's no reader anymore.
+	req := updateRequest{callback: make(chan error, 1)}
+
+	// Make sure that the updater goroutine is running.
+	b.updaterMu.Lock()
+	if !b.updaterEnabled {
+		b.updaterMu.Unlock()
+		return fmt.Errorf("cannot update index: index is closed")
+	}
+
+	b.updaterQueue = append(b.updaterQueue, req)
+
+	// If updater is not running, start it.
+	if b.updaterCancel == nil {
+		c, cf := context.WithCancel(context.Background())
+		b.updaterCancel = cf
+		go b.updater(c)
+	}
+	b.updaterCond.Broadcast() // If updater is waiting for next batch, wake it up.
+	b.updaterMu.Unlock()
+
+	// wait for the update to finish
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-req.callback:
+		return err
+	}
+}
+
+const maxWait = 5 * time.Second
+
+func (b *bleveIndex) updater(ctx context.Context) {
+	defer func() {
+		b.updaterMu.Lock()
+		b.updaterCancel()
+		b.updaterCancel = nil
+		b.updaterMu.Unlock()
+	}()
+
+	for {
+		start := time.Now()
+		t := time.AfterFunc(maxWait, b.updaterCond.Broadcast)
+
+		b.updaterMu.Lock()
+		for b.updaterEnabled && ctx.Err() == nil && len(b.updaterQueue) == 0 && time.Since(start) < maxWait {
+			b.updaterCond.Wait()
+		}
+		enabled := b.updaterEnabled
+		batch := b.updaterQueue
+		b.updaterQueue = nil // empty the queue for the next batch
+		b.updaterMu.Unlock()
+
+		t.Stop()
+
+		// Nothing to index after maxWait, exit the goroutine.
+		if len(batch) == 0 {
+			return
+		}
+
+		if !enabled {
+			for _, req := range batch {
+				req.callback <- fmt.Errorf("cannot update index: index is closed")
+			}
+			return
+		}
+
+		var err = ctx.Err()
+		if err == nil {
+			_, err = b.updateIndexWithLatestModifications(ctx)
+		}
+		for _, req := range batch {
+			req.callback <- err
+		}
+	}
+}
+
+func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context) (int64, error) {
+	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"updateIndexWithLatestModifications")
+	defer span.End()
+
+	return b.updaterFn(ctx, b, 0 /* TODO */)
 }
 
 func safeInt64ToInt(i64 int64) (int, error) {

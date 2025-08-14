@@ -551,7 +551,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, rv, info.Fields, "test", writer)
+	}, size, rv, info.Fields, "test", writer, nil)
 	require.NoError(t, err)
 
 	return index
