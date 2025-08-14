@@ -30,6 +30,12 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   const [showDeletedAlert, setShowDeletedAlert] = useState(false);
   const [step, setStep] = useState(1);
 
+  const isEmbeddedInIframe = window.self !== window.top;
+
+  console.log(window.location);
+
+  console.log({ isEmbeddedInIframe });
+
   const { snapshotName, snapshotSharingOptions, selectedExpireOption, panelRef, onDismiss, dashboardRef } =
     model.useState();
 
