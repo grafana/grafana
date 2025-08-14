@@ -436,7 +436,7 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 		// Create second folder sync repository - should succeed
 		folderTestRepo2 := TestRepo{
 			Name:               secondFolderName,
-			Target:             "folder", 
+			Target:             "folder",
 			Copies:             map[string]string{}, // No files needed for this test
 			ExpectedDashboards: 0,
 			ExpectedFolders:    2, // Two folders expected after sync (1 + 1)

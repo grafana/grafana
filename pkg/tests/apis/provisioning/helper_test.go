@@ -794,7 +794,7 @@ func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
 		if !assert.NoError(collect, err) {
 			return
 		}
-		
+
 		for _, repo := range list.Items {
 			err := h.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
 			// Don't fail if already deleted (404 is OK)
