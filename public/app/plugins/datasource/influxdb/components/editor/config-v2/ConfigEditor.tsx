@@ -34,6 +34,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
               to help us make it even better.
             </>
           </Alert>
+          <i>Fields marked with * are required</i>
           <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
           <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>

@@ -20,7 +20,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Database" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
+        <InlineField label="Database *" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
           <Input
             id="database"
             placeholder="mydb"
@@ -31,7 +31,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="User" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
+        <InlineField label="User *" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
           <Input
             id="user"
             placeholder="myuser"
@@ -42,7 +42,12 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Password" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
+        <InlineField
+          label="Password *"
+          labelWidth={DB_SETTINGS_LABEL_WIDTH}
+          tooltip="Enter the token used to query the database. You can find this on the Tokens page in the InfluxDB UI."
+          grow
+        >
           <SecretInput
             id="password"
             isConfigured={Boolean(options.secureJsonFields && options.secureJsonFields.password)}
