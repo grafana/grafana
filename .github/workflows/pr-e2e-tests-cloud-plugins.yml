@@ -45,9 +45,9 @@ jobs:
             AZURE_TENANT=cpp-azure-resourcemanager-credentials:tenant_id
       - id: deploy-resources
         env:
-          AZURE_SP_APP_ID: ${{ steps.vault-secrets.outputs.AZURE_SP_APP_ID }}
-          AZURE_SP_PASSWORD: ${{ steps.vault-secrets.outputs.AZURE_SP_PASSWORD }}
-          AZURE_TENANT: ${{ steps.vault-secrets.outputs.AZURE_TENANT }}
+          AZURE_SP_APP_ID: ${{ env.AZURE_SP_APP_ID}}
+          AZURE_SP_PASSWORD: ${{ env.AZURE_SP_PASSWORD}}
+          AZURE_TENANT: ${{ env.AZURE_TENANT }}
         run: |
           docker container run --name cpp-e2e -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT -e CLOUD us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure ${{ github.ref_name }} deploy
       - id: extract-creds
@@ -77,9 +77,9 @@ jobs:
       - name: Destroy resources
         if: always() && steps.deploy-resources.outcome == 'success'
         env:
-          AZURE_SP_APP_ID: ${{ steps.vault-secrets.outputs.AZURE_SP_APP_ID }}
-          AZURE_SP_PASSWORD: ${{ steps.vault-secrets.outputs.AZURE_SP_PASSWORD }}
-          AZURE_TENANT: ${{ steps.vault-secrets.outputs.AZURE_TENANT }}
+          AZURE_SP_APP_ID: ${{ env.AZURE_SP_APP_ID }}
+          AZURE_SP_PASSWORD: ${{ env.AZURE_SP_PASSWORD }}
+          AZURE_TENANT: ${{ env.AZURE_TENANT }}
         run: |
           docker container run --name cpp-e2e -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT -e CLOUD us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure ${{ github.ref_name }} destroy
   # run-azure-monitor-e2e:
