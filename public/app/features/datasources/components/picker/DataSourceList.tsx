@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config, getTemplateSrv, useFavoriteDatasources } from '@grafana/runtime';
+import { getTemplateSrv, useFavoriteDatasources } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import {
@@ -63,9 +63,8 @@ export function DataSourceList(props: DataSourceListProps) {
   const styles = getStyles(theme, selectedItemCssSelector);
 
   const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
-  const dataSources =
-    props.dataSources ||
-    useDatasources({
+  const dataSources = useDatasources(
+    {
       alerting: props.alerting,
       annotations: props.annotations,
       dashboard: props.dashboard,
@@ -76,16 +75,13 @@ export function DataSourceList(props: DataSourceListProps) {
       tracing: props.tracing,
       type: props.type,
       variables: props.variables,
-    });
+    },
+    props.dataSources
+  );
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
-
-  const favoriteDataSourcesHook = config.featureToggles.favoriteDatasources ? useFavoriteDatasources() : null;
-  const storedFavoriteDataSources = favoriteDataSourcesHook?.initialFavoriteDataSources;
-  const isFavoriteDatasource = favoriteDataSourcesHook?.isFavoriteDatasource;
-  const toggleFavoriteDatasource = favoriteDataSourcesHook
-    ? useToggleFavoriteDatasource(favoriteDataSourcesHook)
-    : undefined;
+  const favoriteDataSources = useFavoriteDatasources();
+  const toggleFavoriteDatasource = useToggleFavoriteDatasource(favoriteDataSources);
 
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
@@ -104,7 +100,7 @@ export function DataSourceList(props: DataSourceListProps) {
             current,
             recentlyUsedDataSources,
             getDataSourceVariableIDs(),
-            storedFavoriteDataSources
+            favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
           )
         )
         .map((ds) => (
@@ -117,8 +113,8 @@ export function DataSourceList(props: DataSourceListProps) {
               onChange(ds);
             }}
             selected={isDataSourceMatch(ds, current)}
-            isFavorite={isFavoriteDatasource ? isFavoriteDatasource(ds.uid) : undefined}
-            onToggleFavorite={toggleFavoriteDatasource}
+            isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
+            onToggleFavorite={favoriteDataSources.enabled ? toggleFavoriteDatasource : undefined}
             {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}

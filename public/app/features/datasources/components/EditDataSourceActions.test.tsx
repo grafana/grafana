@@ -51,10 +51,12 @@ const mockDataSourceInstance = {
 
 // Mock favorite datasources hook return value
 const mockFavoriteHook = {
+  enabled: true,
+  favoriteDatasources: [],
+  initialFavoriteDataSources: [],
   isFavoriteDatasource: jest.fn(),
   addFavoriteDatasource: jest.fn(),
   removeFavoriteDatasource: jest.fn(),
-  initialFavoriteDataSources: [],
 };
 
 // Helper function to create mock plugin link extensions with all required properties
@@ -114,7 +116,7 @@ describe('EditDataSourceActions', () => {
     mockFavoriteHook.removeFavoriteDatasource.mockClear();
 
     // Default: feature toggle disabled, so no favorite hook
-    mockUseFavoriteDatasources.mockReturnValue(null);
+    mockUseFavoriteDatasources.mockReturnValue({ ...mockFavoriteHook, enabled: false });
     config.featureToggles.favoriteDatasources = false;
   });
 
@@ -375,7 +377,7 @@ describe('EditDataSourceActions', () => {
   describe('Favorite Actions', () => {
     it('should not render favorite button when feature toggle is disabled', () => {
       config.featureToggles.favoriteDatasources = false;
-      mockUseFavoriteDatasources.mockReturnValue(null);
+      mockUseFavoriteDatasources.mockReturnValue({ ...mockFavoriteHook, enabled: false });
 
       render(<EditDataSourceActions uid="test-uid" />);
 
