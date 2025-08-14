@@ -121,8 +121,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       if (min === 0) {
         max = 100;
       } else {
-        min = Math.min(min - 10, 0);
-        max! *= 2;
+        min = 0;
+        max *= 2;
       }
     }
 
