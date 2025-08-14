@@ -4,7 +4,6 @@ import { memo } from 'react';
 import {
   Action,
   ActionType,
-  ActionVariable,
   DataSourceInstanceSettings,
   GrafanaTheme2,
   httpMethodOptions,
@@ -13,6 +12,7 @@ import {
   ProxyOptions,
   FetchOptions,
   SupportedDataSourceTypes,
+  ActionVariable,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
@@ -73,32 +73,23 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     const configKey = value.type === ActionType.Proxy ? ActionType.Proxy : ActionType.Fetch;
     const baseConfig = getActionConfig();
 
-    // @TODO revisit
-    const isProxyConfig = (config: FetchOptions | ProxyOptions): config is ProxyOptions =>
-      configKey === ActionType.Proxy && 'datasourceUid' in config;
-
-    if (isProxyConfig(baseConfig)) {
-      const proxyConfig = baseConfig;
-      const updatedConfig = {
-        ...proxyConfig,
-        ...updates,
+    const updatedConfig = {
+      ...baseConfig,
+      ...updates,
+      ...(value.type === ActionType.Proxy && {
         datasourceType: SupportedDataSourceTypes.Infinity,
-        datasourceUid: proxyConfig.datasourceUid || '',
-      };
-      onChange(index, {
-        ...value,
-        [configKey]: updatedConfig,
-      });
-    } else {
-      const updatedConfig = {
-        ...baseConfig,
-        ...updates,
-      };
-      onChange(index, {
-        ...value,
-        [configKey]: updatedConfig,
-      });
-    }
+        datasourceUid: (baseConfig as ProxyOptions).datasourceUid || '',
+      }),
+    };
+
+    onChange(index, {
+      ...value,
+      [configKey]: updatedConfig,
+    });
+  };
+
+  const updateConfig = (field: keyof (FetchOptions & ProxyOptions)) => (newValue: any) => {
+    updateActionConfig({ [field]: newValue });
   };
 
   const onTitleChange = (title: string) => {
@@ -109,22 +100,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     onChange(index, { ...value, confirmation });
   };
 
-  const onOneClickChanged = () => {
-    onChange(index, { ...value, oneClick: !value.oneClick });
-  };
-
-  const onUrlChange = (url: string) => {
-    updateActionConfig({ url });
-  };
-
-  const onBodyChange = (body: string) => {
-    updateActionConfig({ body });
-  };
-
-  const onMethodChange = (method: HttpRequestMethod) => {
-    updateActionConfig({ method });
-  };
-
   const onVariablesChange = (variables: ActionVariable[]) => {
     onChange(index, {
       ...value,
@@ -132,13 +107,15 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
-  const onQueryParamsChange = (queryParams: Array<[string, string]>) => {
-    updateActionConfig({ queryParams });
+  const onOneClickChanged = () => {
+    onChange(index, { ...value, oneClick: !value.oneClick });
   };
 
-  const onHeadersChange = (headers: Array<[string, string]>) => {
-    updateActionConfig({ headers });
-  };
+  const onUrlChange = updateConfig('url');
+  const onBodyChange = updateConfig('body');
+  const onMethodChange = updateConfig('method');
+  const onQueryParamsChange = updateConfig('queryParams');
+  const onHeadersChange = updateConfig('headers');
 
   const onBackgroundColorChange = (backgroundColor: string) => {
     onChange(index, {
@@ -150,16 +127,24 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
-  const onConnectionChange = (connectionType: 'direct' | DataSourceInstanceSettings) => {
-    if (connectionType === 'direct') {
+  const onConnectionChange = (connectionType: string | DataSourceInstanceSettings) => {
+    const baseAction = {
+      title: value.title,
+      confirmation: value.confirmation,
+      oneClick: value.oneClick,
+      variables: value.variables,
+      style: value.style,
+    };
+
+    if (typeof connectionType === 'string') {
       onChange(index, {
-        ...value,
+        ...baseAction,
         type: ActionType.Fetch,
         [ActionType.Fetch]: getActionConfig(),
       });
     } else {
       onChange(index, {
-        ...value,
+        ...baseAction,
         type: ActionType.Proxy,
         [ActionType.Proxy]: {
           ...getActionConfig(),
