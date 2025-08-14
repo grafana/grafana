@@ -5343,6 +5343,7 @@
       "playlist-next": "Sonraki panoya git",
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
+      "read-only": "",
       "refresh": "Panoyu yenile",
       "save": "Panoyu kaydet",
       "save-dashboard": {
@@ -7474,6 +7475,13 @@
       "tooltip-title": "Matematik işleci",
       "tooltip-trigger": "İfade"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "İşlev",
       "label-input": "Girdi",
@@ -7488,6 +7496,11 @@
       "label-resample-to": "Şuna yeniden örnekle:",
       "label-upsample": "Örneklemeyi artır",
       "tooltip-s-m-h": "10 sn, 1 dk, 30 dk, 1 sa"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Girdi"
@@ -7505,7 +7518,8 @@
     "loading": "Klasörler yükleniyor..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10860,7 +10874,6 @@
         "downloads": "İndirmeler",
         "from": "Başlangıç",
         "installedVersion": "Yüklü Sürüm",
-        "lastCommitDate": "Son yürütme tarihi:",
         "latestReleaseDate": "Son yayın tarihi:",
         "latestVersion": "En Son Sürüm",
         "license": "Lisans",
@@ -11413,6 +11426,8 @@
         "subtitle": "Tüm Grafana örneğinizi haricî depolama üzerinden senkronize edip yönetmek istiyorsanız bu seçeneği kullanın."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "etkin işler",
       "column-action": "Eylem",
@@ -11431,6 +11446,7 @@
       "get-repository-meta": {
         "webhook": "Web kancası"
       },
+      "read-only-badge": "",
       "settings": "Ayarlar",
       "view": "Görüntüle"
     },
@@ -11846,6 +11862,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Sorgu satırını daralt",
       "datasource-help": "Veri kaynağı yardımını göster",
       "drag-and-drop": "Yeniden düzenlemek için sürükleyip bırakın",
@@ -11856,7 +11873,11 @@
       "replace-query-from-library": "Kütüphaneden sorguyla değiştir",
       "show-response": "Yanıtı göster"
     },
-    "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
+    "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor.",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12092,7 +12113,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Hizmet hesabı ekle",
-      "message": "Hizmet hesabı bulunamadı",
+      "message": "",
       "more-info": "Diğer uygulamaların API erişimi için özel izinler sağlayabileceğinizi lütfen unutmayın.",
       "title": "Henüz bir hizmet hesabı oluşturmadınız"
     }
@@ -12485,6 +12506,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sırala"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
