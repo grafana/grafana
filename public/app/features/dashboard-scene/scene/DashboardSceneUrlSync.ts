@@ -12,7 +12,6 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { containsCloneKey } from '../utils/clone';
 import { containsPathIdSeparator, findVizPanelByPathId } from '../utils/pathId';
 import { findEditPanel, findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
 
@@ -83,7 +82,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
         // Here we check if the key contains the clone key so we force the repeat processing
         // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
-        if (containsCloneKey(values.inspect)) {
+        if (containsPathIdSeparator(values.inspect)) {
           this._handleInspectRepeatClone(values.inspect);
           return;
         }

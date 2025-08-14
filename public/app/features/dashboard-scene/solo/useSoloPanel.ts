@@ -4,7 +4,7 @@ import { VizPanel, UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardRepeatsProcessedEvent } from '../scene/types/DashboardRepeatsProcessedEvent';
-import { containsCloneKey } from '../utils/clone';
+import { containsPathIdSeparator } from '../utils/pathId';
 import { findVizPanelByKey } from '../utils/utils';
 
 export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPanel | undefined, string | undefined] {
@@ -27,7 +27,7 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
     if (panel) {
       activateParents(panel);
       setPanel(panel);
-    } else if (containsCloneKey(panelId)) {
+    } else if (containsPathIdSeparator(panelId)) {
       findRepeatClone(dashboard, panelId).then((panel) => {
         if (panel) {
           setPanel(panel);
