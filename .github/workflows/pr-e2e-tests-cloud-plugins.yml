@@ -33,7 +33,6 @@ jobs:
         with:
           registry: "us-docker.pkg.dev"
           environment: "dev"
-          delete_credentials_file: true
       - id: pull-docker-image
         run: |
           docker pull us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest
