@@ -36,6 +36,7 @@ jest.mock('@grafana/runtime', () => {
       featureToggles: {
         ...original.config.featureToggles,
         dashboardNewLayouts: false, // Default value
+        reloadDashboardsOnParamsChange: false, // Default value
       },
 
       bootData: {
@@ -122,11 +123,46 @@ const mockDashboardLoader = {
 // Set the mock loader
 setDashboardLoaderSrv(mockDashboardLoader as unknown as DashboardLoaderSrv);
 
+// Test helpers for query parameter processing tests
+const mockTimeAndLocation = (mockNow: Date, queryParams: Record<string, string>) => {
+  const originalDateNow = Date.now;
+  Date.now = jest.fn(() => mockNow.getTime());
+
+  const mockGetSearch = jest.fn().mockReturnValue(new URLSearchParams());
+  const mockGetSearchObject = jest.fn().mockReturnValue(queryParams);
+
+  locationService.getSearch = mockGetSearch;
+  locationService.getSearchObject = mockGetSearchObject;
+
+  return () => {
+    Date.now = originalDateNow;
+  };
+};
+
+const withFeatureToggle = (enabled: boolean, testFn: () => Promise<void>) => async () => {
+  const originalValue = config.featureToggles.reloadDashboardsOnParamsChange;
+  config.featureToggles.reloadDashboardsOnParamsChange = enabled;
+
+  try {
+    await testFn();
+  } finally {
+    config.featureToggles.reloadDashboardsOnParamsChange = originalValue;
+  }
+};
+
+// Test constants
+const MOCK_DASHBOARD = { dashboard: { uid: 'fake-dash', editable: true }, meta: {} };
+const MOCK_NOW = new Date('2023-10-01T12:00:00.000Z');
+
 // Reset the mock between tests
 beforeEach(() => {
   jest.clearAllMocks();
   mockDashboardLoader.loadDashboard.mockReset();
   mockDashboardLoader.loadSnapshot.mockReset();
+
+  // Reset locationService mocks
+  locationService.getSearch = jest.fn().mockReturnValue(new URLSearchParams());
+  locationService.getSearchObject = jest.fn().mockReturnValue({});
 });
 
 describe('DashboardScenePageStateManager v1', () => {
@@ -150,6 +186,109 @@ describe('DashboardScenePageStateManager v1', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(loadDashboardMock.mock.calls.length).toBe(1);
+    });
+
+    describe('reloadDashboardsOnParamsChange feature toggle', () => {
+      it(
+        'should process query params when enabled',
+        withFeatureToggle(true, async () => {
+          const cleanup = mockTimeAndLocation(MOCK_NOW, {
+            from: 'now-1h',
+            to: 'now',
+            timezone: 'UTC',
+            extraParam: 'shouldBeRemoved',
+          });
+
+          const expectedFromISO = '2023-10-01T06:00:00.000Z'; // now-1h (calculated by dateMath)
+          const expectedToISO = '2023-10-01T12:00:00.000Z'; // now
+
+          const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+
+          const loader = new DashboardScenePageStateManager({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          // Verify that loadDashboard was called with processed query params
+          expect(loadDashboardMock).toHaveBeenCalledWith(
+            'db',
+            '',
+            'fake-dash',
+            expect.objectContaining({
+              from: expectedFromISO,
+              to: expectedToISO,
+            })
+          );
+
+          // Verify that extra parameters were filtered out (including timezone)
+          const callArgs = loadDashboardMock.mock.calls[0][3];
+          expect(callArgs).not.toHaveProperty('extraParam');
+          expect(callArgs).not.toHaveProperty('timezone'); // timezone is filtered out by design
+
+          cleanup();
+        })
+      );
+
+      it(
+        'should pass undefined query params when disabled',
+        withFeatureToggle(false, async () => {
+          const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+
+          const loader = new DashboardScenePageStateManager({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          // Verify that loadDashboard was called without query params (3 parameters only)
+          expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+        })
+      );
+
+      it(
+        'should filter parameters correctly when enabled',
+        withFeatureToggle(true, async () => {
+          const cleanup = mockTimeAndLocation(MOCK_NOW, {
+            from: 'now-6h',
+            to: 'now',
+            'var-server': 'web-01',
+            'var-env': 'production',
+            scopes: 'scope1,scope2',
+            version: '2',
+            refresh: '5s', // should be filtered out
+            theme: 'dark', // should be filtered out
+            kiosk: 'true', // should be filtered out
+          });
+
+          const expectedFromISO = '2023-10-01T06:00:00.000Z'; // now-6h
+          const expectedToISO = '2023-10-01T12:00:00.000Z'; // now
+
+          const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+
+          const loader = new DashboardScenePageStateManager({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          const callArgs = loadDashboardMock.mock.calls[0][3];
+
+          // Should keep allowed parameters with specific expected values
+          expect(callArgs).toEqual(
+            expect.objectContaining({
+              from: expectedFromISO,
+              to: expectedToISO,
+              'var-server': 'web-01',
+              'var-env': 'production',
+              scopes: 'scope1,scope2',
+              version: '2',
+            })
+          );
+
+          // Should filter out disallowed parameters
+          expect(callArgs).toEqual(
+            expect.not.objectContaining({
+              refresh: expect.anything(),
+              theme: expect.anything(),
+              kiosk: expect.anything(),
+            })
+          );
+
+          cleanup();
+        })
+      );
     });
 
     it("should error when the dashboard doesn't exist", async () => {
