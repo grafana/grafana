@@ -544,6 +544,20 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 	return nil, "", 0
 }
 
+func (b *bleveBackend) closeAllIndexes() {
+	b.cacheMx.Lock()
+	defer b.cacheMx.Unlock()
+
+	for key, idx := range b.cache {
+		_ = idx.index.Close()
+		delete(b.cache, key)
+
+		if b.indexMetrics != nil {
+			b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+		}
+	}
+}
+
 type bleveIndex struct {
 	key   resource.NamespacedResource
 	index bleve.Index
