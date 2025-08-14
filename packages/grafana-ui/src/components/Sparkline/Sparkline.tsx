@@ -111,8 +111,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     // if noValue is set, ensure that it is included in the range as well
     const noValue = +this.state.alignedDataFrame.fields[1].config?.noValue!;
     if (!Number.isNaN(noValue)) {
-      min = Math.min(min, +noValue);
-      max = Math.max(max, +noValue);
+      min = Math.min(min, noValue);
+      max = Math.max(max, noValue);
     }
 
     // if min and max are equal after all of that, create a range
