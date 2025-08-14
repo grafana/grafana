@@ -249,7 +249,13 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </Tooltip>
 
             <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
-              <Button size="sm" variant="secondary" fill="outline" icon="angle-down" />
+              <Button
+                aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share trace options menu')}
+                size="sm"
+                variant="secondary"
+                fill="outline"
+                icon="angle-down"
+              />
             </Dropdown>
           </ButtonGroup>
         </div>

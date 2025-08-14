@@ -244,6 +244,21 @@
     },
     {
       "metadata": {
+        "name": "alertingImportAlertmanagerUI",
+        "resourceVersion": "1754585847887",
+        "creationTimestamp": "2025-08-07T16:57:27Z"
+      },
+      "spec": {
+        "description": "Enables the UI to see imported Alertmanager configuration",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingImportYAMLUI",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-05-21T15:59:41Z"
@@ -444,14 +459,17 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-27T17:47:33Z"
+        "resourceVersion": "1754657532777",
+        "creationTimestamp": "2025-01-27T17:47:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-08 12:52:12.777935 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1318,6 +1336,19 @@
     },
     {
       "metadata": {
+        "name": "favoriteDatasources",
+        "resourceVersion": "1754648387873",
+        "creationTimestamp": "2025-08-08T10:19:47Z"
+      },
+      "spec": {
+        "description": "Enable favorite datasources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "featureHighlights",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2022-02-03T11:53:23Z"
@@ -1744,6 +1775,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzResourcePermissionApis",
+        "resourceVersion": "1754668670559",
+        "creationTimestamp": "2025-08-08T15:57:50Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ resource permission /apis endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T14:34:23Z"
@@ -1777,6 +1822,19 @@
       },
       "spec": {
         "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesShortURLs",
+        "resourceVersion": "1753722806283",
+        "creationTimestamp": "2025-07-28T17:13:26Z"
+      },
+      "spec": {
+        "description": "Routes short url requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -2085,15 +2143,15 @@
     },
     {
       "metadata": {
-        "name": "nestedFolders",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2022-10-26T14:15:14Z"
+        "name": "newClickhouseConfigPageDesign",
+        "resourceVersion": "1754075145003",
+        "creationTimestamp": "2025-08-01T19:05:45Z"
       },
       "spec": {
-        "description": "Enable folder nesting",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "expression": "true"
+        "description": "Enables new design for the Clickhouse data source configuration page",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {
@@ -2884,7 +2942,8 @@
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-06T16:28:52Z"
+        "creationTimestamp": "2023-06-06T16:28:52Z",
+        "deletionTimestamp": "2025-08-08T12:18:29Z"
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
@@ -2999,9 +3058,23 @@
     },
     {
       "metadata": {
+        "name": "teamFolders",
+        "resourceVersion": "1755099058649",
+        "creationTimestamp": "2025-08-13T15:30:58Z"
+      },
+      "spec": {
+        "description": "Enables team folders functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "teamHttpHeadersMimir",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-13T10:42:47Z"
+        "creationTimestamp": "2025-01-13T10:42:47Z",
+        "deletionTimestamp": "2025-08-06T08:19:47Z"
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
@@ -3200,6 +3273,25 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearchAfterWriteExperimentalAPI",
+        "resourceVersion": "1755089543487",
+        "creationTimestamp": "2025-08-13T12:35:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-13 12:52:23.487521 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable experimental search-after-write guarantees to unified-storage search endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageSearchDualReaderEnabled",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-25T13:06:00Z"
@@ -3210,21 +3302,6 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "unifiedStorageSearchPermissionFiltering",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-22T11:38:37Z"
-      },
-      "spec": {
-        "description": "Enable permission filtering on unified storage search",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true,
-        "expression": "true"
       }
     },
     {

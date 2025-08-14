@@ -64,13 +64,22 @@ export class K8sDashboardV2API
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
-          throw new Error('Failed to load folder');
+          // If user has access to dashboard but not to folder, continue without folder info
+          if (getStatusFromError(e) !== 403) {
+            throw new Error('Failed to load folder');
+          }
         }
       } else if (dashboard.metadata.annotations && !dashboard.metadata.annotations[AnnoKeyFolder]) {
         // Set AnnoKeyFolder to empty string for top-level dashboards
         // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
         // AnnoKeyFolder undefined -> top-level dashboard -> empty string
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
+      }
+
+      // Ensure a consistent dashboard slug
+      if (!dashboard.access?.slug) {
+        dashboard.access = dashboard.access ?? {};
+        dashboard.access.slug = kbn.slugifyForUrl(dashboard.spec.title.trim());
       }
 
       return dashboard;
@@ -145,11 +154,13 @@ export class K8sDashboardV2API
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
+    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
-        slug: kbn.slugifyForUrl(v.spec.title.trim()),
+        slug,
       })
     );
 
@@ -164,7 +175,7 @@ export class K8sDashboardV2API
       id: dashId,
       status: 'success',
       url,
-      slug: '',
+      slug,
     };
   }
 

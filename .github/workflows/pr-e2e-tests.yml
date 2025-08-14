@@ -55,7 +55,7 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
+          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'conf/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
           path: |
             build-dir
 
@@ -206,8 +206,6 @@ jobs:
         include:
           - suite: various-suite
             path: e2e/various-suite
-          - suite: dashboards-suite
-            path: e2e/dashboards-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
             flags: --flags="--env dashboardScene=false"

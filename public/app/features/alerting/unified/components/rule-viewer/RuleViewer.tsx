@@ -48,6 +48,7 @@ import {
   RulePluginOrigin,
   getRulePluginOrigin,
   isFederatedRuleGroup,
+  isGrafanaRuleIdentifier,
   isPausedRule,
   prometheusRuleType,
   rulerRuleType,
@@ -83,11 +84,14 @@ export enum ActiveTab {
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
 
-const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
-
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
+
+  // GMA /api/v1/rules endpoint is strongly consistent, so we don't need to check for consistency
+  const shouldUseConsistencyCheck = isGrafanaRuleIdentifier(identifier)
+    ? false
+    : prometheusRulesPrimary || alertingListViewV2;
 
   // this will be used to track if we are in the process of cloning a rule
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
@@ -301,7 +305,14 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
-      {returnToHref && <LinkButton variant="secondary" icon="angle-left" href={returnTo} />}
+      {returnToHref && (
+        <LinkButton
+          aria-label={t('alerting.rule-viewer.aria-label-return-to', 'Return to previous view')}
+          variant="secondary"
+          icon="angle-left"
+          href={returnTo}
+        />
+      )}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}

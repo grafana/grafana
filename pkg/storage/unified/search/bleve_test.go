@@ -47,7 +47,7 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 
 	rv := int64(10)
@@ -750,7 +750,7 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 		Root:          dir,
 		FileThreshold: int64(fileThreshold),
 		IndexCacheTTL: cacheTTL,
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), metrics)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.closeAllIndexes)
@@ -945,6 +945,12 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), 100, nil, "test", indexTestDocs(ns, firstSize))
 			require.NoError(t, err)
 
+			if testCase.firstInMemory {
+				verifyDirEntriesCount(t, backend.getResourceDir(ns), 0)
+			} else {
+				verifyDirEntriesCount(t, backend.getResourceDir(ns), 1)
+			}
+
 			openInMemoryIndexes := 0
 
 			secondSize := 100
@@ -954,6 +960,12 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			}
 			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), 100, nil, "test", indexTestDocs(ns, secondSize))
 			require.NoError(t, err)
+
+			if testCase.secondInMemory {
+				verifyDirEntriesCount(t, backend.getResourceDir(ns), 0)
+			} else {
+				verifyDirEntriesCount(t, backend.getResourceDir(ns), 1)
+			}
 
 			// Verify that first and second index are different, and first one is now closed.
 			require.NotEqual(t, firstIndex, secondIndex)
@@ -973,6 +985,19 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			`, openInMemoryIndexes, 1-openInMemoryIndexes)), "index_server_open_indexes"))
 		})
 	}
+}
+
+func verifyDirEntriesCount(t *testing.T, dir string, count int) {
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			ents = nil
+			// This is fine, if dir doesn't exist.
+		} else {
+			require.NoError(t, err)
+		}
+	}
+	require.Len(t, ents, count)
 }
 
 func indexTestDocs(ns resource.NamespacedResource, docs int) func(index resource.ResourceIndex) (int64, error) {

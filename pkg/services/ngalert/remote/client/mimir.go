@@ -30,21 +30,26 @@ type MimirClient interface {
 	DeleteGrafanaAlertmanagerState(ctx context.Context) error
 
 	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
-	CreateGrafanaAlertmanagerConfig(ctx context.Context, config *UserGrafanaConfig) error
+	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 
 	TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error)
 	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
+
+	ShouldPromoteConfig() bool
 
 	// Mimir implements an extended version of the receivers API under a different path.
 	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
 }
 
 type Mimir struct {
-	client   client.Requester
-	endpoint *url.URL
-	logger   log.Logger
-	metrics  *metrics.RemoteAlertmanager
+	client        client.Requester
+	endpoint      *url.URL
+	logger        log.Logger
+	metrics       *metrics.RemoteAlertmanager
+	promoteConfig bool
+	externalURL   string
+	smtpConfig    SmtpConfig
 }
 
 type SmtpConfig struct {
@@ -64,7 +69,10 @@ type Config struct {
 	TenantID string
 	Password string
 
-	Logger log.Logger
+	Logger        log.Logger
+	PromoteConfig bool
+	ExternalURL   string
+	Smtp          SmtpConfig
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -102,10 +110,13 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 
 	return &Mimir{
-		endpoint: cfg.URL,
-		client:   trc,
-		logger:   cfg.Logger,
-		metrics:  metrics,
+		endpoint:      cfg.URL,
+		client:        trc,
+		logger:        cfg.Logger,
+		metrics:       metrics,
+		promoteConfig: cfg.PromoteConfig,
+		externalURL:   cfg.ExternalURL,
+		smtpConfig:    cfg.Smtp,
 	}, nil
 }
 

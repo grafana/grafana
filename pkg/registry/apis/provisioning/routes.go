@@ -12,7 +12,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -53,7 +53,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceStats"),
+																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceStats"),
 																},
 															},
 														},
@@ -101,7 +101,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryViewList"),
+																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryViewList"),
 																},
 															},
 														},
