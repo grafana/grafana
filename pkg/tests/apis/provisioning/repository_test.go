@@ -364,20 +364,30 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 
 	// Helper function to clean up repositories between subtests
 	cleanupAllRepos := func() {
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
-		if err == nil && len(list.Items) > 0 {
-			for _, repo := range list.Items {
-				_ = helper.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
+		// First, delete all repositories with retries
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+			if !assert.NoError(collect, err) {
+				return
 			}
-
-			// Wait for repositories to be deleted to ensure clean state
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
-				if assert.NoError(collect, err) {
-					assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
+			
+			for _, repo := range list.Items {
+				err := helper.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
+				// Don't fail if already deleted (404 is OK)
+				if err != nil && !apierrors.IsNotFound(err) {
+					collect.Errorf("Failed to delete repository %s: %v", repo.GetName(), err)
+					return
 				}
-			}, time.Second*5, time.Millisecond*50, "repositories should be cleaned up between subtests")
-		}
+			}
+		}, time.Second*10, time.Millisecond*100, "should be able to delete all repositories")
+
+		// Then wait for repositories to be fully deleted to ensure clean state
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+			if assert.NoError(collect, err) {
+				assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
+			}
+		}, time.Second*15, time.Millisecond*100, "repositories should be cleaned up between subtests")
 	}
 
 	t.Run("single instance sync is allowed", func(t *testing.T) {
