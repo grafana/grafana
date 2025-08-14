@@ -83,7 +83,7 @@ test.describe(
       // Check if we're running in CI
       const CI = process.env.CI;
       if (CI) {
-        const outputs = JSON.parse(readFileSync('outputs.json', 'utf8'));
+        const outputs = JSON.parse(readFileSync('/outputs.json', 'utf8'));
         datasourceConfig = {
           jsonData: {
             cloudName: 'Azure',
