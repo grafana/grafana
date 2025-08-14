@@ -93,7 +93,7 @@ describe('Prepare Sparkline plot frame', () => {
 });
 
 describe('Get y range', () => {
-  const yField: Field = {
+  const defaultYField: Field = {
     name: 'y',
     values: [1, 2, 3, 4, 5],
     type: FieldType.number,
@@ -120,101 +120,58 @@ describe('Get y range', () => {
     type: FieldType.time,
     config: {},
   };
+  const getAlignedFrame = (yField: Field) => ({
+    refId: 'sparkline',
+    fields: [xField, yField],
+    length: yField.values.length,
+  });
   it.each([
     {
       description: 'inferred min and max',
-      field: yField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [xField, yField],
-        length: yField.values.length,
-      },
+      field: defaultYField,
       expected: [1, 5],
     },
     {
       description: 'min from config',
-      field: yField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [xField, { ...yField, config: { min: 3 }, state: { range: { min: 3, max: 5, delta: 2 } } }],
-        length: yField.values.length,
-      },
+      field: { ...defaultYField, config: { min: 3 }, state: { range: { min: 3, max: 5, delta: 2 } } },
       expected: [3, 5],
     },
     {
       description: 'max from config',
-      field: yField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [xField, { ...yField, config: { max: 30 }, state: { range: { min: 1, max: 30, delta: 29 } } }],
-        length: yField.values.length,
-      },
+      field: { ...defaultYField, config: { max: 30 }, state: { range: { min: 1, max: 30, delta: 29 } } },
       expected: [1, 30],
     },
     {
       description: 'no value is set',
-      field: yField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [xField, { ...yField, config: { noValue: '0' } }],
-        length: yField.values.length,
-      },
+      field: { ...defaultYField, config: { noValue: '0' } },
       expected: [0, 5],
     },
     {
       description: 'NaN no value is set',
-      field: yField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [xField, { ...yField, config: { noValue: 'foo' } }],
-        length: yField.values.length,
-      },
+      field: { ...defaultYField, config: { noValue: 'foo' } },
       expected: [1, 5],
     },
     {
       description: 'straight line',
       field: straightLineYField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [xField, straightLineYField],
-        length: straightLineYField.values.length,
-      },
       expected: [0, 4],
     },
     {
       description: 'straight line, negative values',
-      field: straightLineYField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [xField, straightLineNegYField],
-        length: straightLineYField.values.length,
-      },
+      field: straightLineNegYField,
       expected: [-4, 0],
     },
     {
       description: 'straight line with config min and max',
-      field: straightLineYField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [
-          xField,
-          { ...straightLineYField, config: { min: 1, max: 3 }, state: { range: { min: 1, max: 3, delta: 2 } } },
-        ],
-        length: straightLineYField.values.length,
-      },
+      field: { ...straightLineYField, config: { min: 1, max: 3 }, state: { range: { min: 1, max: 3, delta: 2 } } },
       expected: [1, 3],
     },
     {
       description: 'straight line with config no value',
-      field: straightLineYField,
-      alignedFrame: {
-        refId: 'sparkline',
-        fields: [xField, { ...straightLineYField, config: { noValue: '0' } }],
-        length: straightLineYField.values.length,
-      },
+      field: { ...straightLineYField, config: { noValue: '0' } },
       expected: [0, 2],
     },
-  ])(`should return correct range for $description`, ({ field, alignedFrame, expected }) => {
-    expect(getYRange(field, alignedFrame)).toEqual(expected);
+  ])(`should return correct range for $description`, ({ field, expected }) => {
+    expect(getYRange(field, getAlignedFrame(field))).toEqual(expected);
   });
 });
