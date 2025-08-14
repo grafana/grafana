@@ -50,22 +50,6 @@ export interface StyleEditorOptions {
   frameMatcher?: FrameMatcher;
 }
 
-function useOnceId() {
-  // useId is used as the base, but can't be used for conditionally rendered elements
-  const base = useId();
-  const used = new Set();
-  /**
-   * Inline helper to create unique named IDs while ensuring no duplicates
-   */
-  return function getId(name: string) {
-    if (used.has(name)) {
-      throw new Error(`"${name}" has already been used!`);
-    }
-    used.add(name);
-    return `${name}${base}`;
-  };
-}
-
 type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
 
 export const StyleEditor = (props: Props) => {
@@ -79,8 +63,6 @@ export const StyleEditor = (props: Props) => {
   }, [props.context, item.settings]);
 
   const settings = item.settings;
-
-  const getId = useOnceId();
 
   const onSizeChange = (sizeValue: ScaleDimensionConfig | undefined) => {
     onChange({ ...value, size: sizeValue });
@@ -139,6 +121,21 @@ export const StyleEditor = (props: Props) => {
   const hasTextLabel = styleUsesText(value);
   const maxFiles = 2000;
 
+  const symbolId = useId();
+  const rotationAngleId = useId();
+  const colorId = useId();
+  const opacityId = useId();
+  const sizeId = useId();
+  const symbol1Id = useId();
+  const symbolVertId = useId();
+  const color1Id = useId();
+  const fillOpacityId = useId();
+  const rotationAngle1Id = useId();
+  const textId = useId();
+  const fontSizeId = useId();
+  const xOffsetId = useId();
+  const yOffsetId = useId();
+
   // Simple fixed value display
   if (settings?.simpleFixedValues) {
     return (
@@ -148,7 +145,7 @@ export const StyleEditor = (props: Props) => {
             <InlineFieldRow>
               <InlineField label={t('geomap.style-editor.label-symbol', 'Symbol')}>
                 <ResourceDimensionEditor
-                  id={getId('symbol')}
+                  id={symbolId}
                   value={value?.symbol ?? defaultStyleConfig.symbol}
                   context={context}
                   onChange={onSymbolChange}
@@ -174,7 +171,7 @@ export const StyleEditor = (props: Props) => {
             </InlineFieldRow>
             <Field label={t('geomap.style-editor.label-rotation-angle', 'Rotation angle')}>
               <ScalarDimensionEditor
-                id={getId('rotationAngle')}
+                id={rotationAngleId}
                 value={value?.rotation ?? defaultStyleConfig.rotation}
                 context={context}
                 onChange={onRotationChange}
@@ -194,7 +191,7 @@ export const StyleEditor = (props: Props) => {
           <InlineField label={t('geomap.style-editor.label-color', 'Color')} labelWidth={10}>
             <InlineLabel width={4}>
               <ColorPicker
-                id={getId('color')}
+                id={colorId}
                 color={value?.color?.fixed ?? defaultStyleConfig.color.fixed}
                 onChange={(v) => {
                   onColorChange({ fixed: v });
@@ -206,7 +203,7 @@ export const StyleEditor = (props: Props) => {
         <InlineFieldRow>
           <InlineField label={t('geomap.style-editor.label-opacity', 'Opacity')} labelWidth={10} grow>
             <SliderValueEditor
-              id={getId('opacity')}
+              id={opacityId}
               value={value?.opacity ?? defaultStyleConfig.opacity}
               context={context}
               onChange={onOpacityChange}
@@ -230,7 +227,7 @@ export const StyleEditor = (props: Props) => {
     <>
       <Field label={t('geomap.style-editor.label-size', 'Size')}>
         <ScaleDimensionEditor
-          id={getId('size')}
+          id={sizeId}
           value={value?.size ?? defaultStyleConfig.size}
           context={context}
           onChange={onSizeChange}
@@ -248,7 +245,7 @@ export const StyleEditor = (props: Props) => {
         <>
           <Field label={t('geomap.style-editor.label-symbol', 'Symbol')}>
             <ResourceDimensionEditor
-              id={getId('symbol1')}
+              id={symbol1Id}
               value={value?.symbol ?? defaultStyleConfig.symbol}
               context={context}
               onChange={onSymbolChange}
@@ -273,7 +270,7 @@ export const StyleEditor = (props: Props) => {
           </Field>
           <Field label={t('geomap.style-editor.label-symbol-vertical-align', 'Symbol vertical align')}>
             <RadioButtonGroup
-              id={getId('symbolVert')}
+              id={symbolVertId}
               value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
               onChange={onAlignVerticalChange}
               options={[
@@ -313,7 +310,7 @@ export const StyleEditor = (props: Props) => {
       )}
       <Field label={t('geomap.style-editor.label-color', 'Color')}>
         <ColorDimensionEditor
-          id={getId('color1')}
+          id={color1Id}
           value={value?.color ?? defaultStyleConfig.color}
           context={context}
           onChange={onColorChange}
@@ -322,7 +319,7 @@ export const StyleEditor = (props: Props) => {
       </Field>
       <Field label={t('geomap.style-editor.label-fill-opacity', 'Fill opacity')}>
         <SliderValueEditor
-          id={getId('fillOpacity')}
+          id={fillOpacityId}
           value={value?.opacity ?? defaultStyleConfig.opacity}
           context={context}
           onChange={onOpacityChange}
@@ -340,7 +337,7 @@ export const StyleEditor = (props: Props) => {
       {settings?.displayRotation && (
         <Field label={t('geomap.style-editor.label-rotation-angle', 'Rotation angle')}>
           <ScalarDimensionEditor
-            id={getId('rotationAngle1')}
+            id={rotationAngle1Id}
             value={value?.rotation ?? defaultStyleConfig.rotation}
             context={context}
             onChange={onRotationChange}
@@ -357,7 +354,7 @@ export const StyleEditor = (props: Props) => {
       )}
       <Field label={t('geomap.style-editor.label-text-label', 'Text label')}>
         <TextDimensionEditor
-          id={getId('text')}
+          id={textId}
           value={value?.text ?? defaultTextConfig}
           context={context}
           onChange={onTextChange}
@@ -370,7 +367,7 @@ export const StyleEditor = (props: Props) => {
           <HorizontalGroup>
             <Field label={t('geomap.style-editor.label-font-size', 'Font size')}>
               <NumberValueEditor
-                id={getId('fontSize')}
+                id={fontSizeId}
                 value={value?.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
                 context={context}
                 onChange={onTextFontSizeChange}
@@ -379,7 +376,7 @@ export const StyleEditor = (props: Props) => {
             </Field>
             <Field label={t('geomap.style-editor.label-x-offset', 'X offset')}>
               <NumberValueEditor
-                id={getId('xOffset')}
+                id={xOffsetId}
                 value={value?.textConfig?.offsetX ?? defaultStyleConfig.textConfig.offsetX}
                 context={context}
                 onChange={onTextOffsetXChange}
@@ -388,7 +385,7 @@ export const StyleEditor = (props: Props) => {
             </Field>
             <Field label={t('geomap.style-editor.label-y-offset', 'Y offset')}>
               <NumberValueEditor
-                id={getId('yOffset')}
+                id={yOffsetId}
                 value={value?.textConfig?.offsetY ?? defaultStyleConfig.textConfig.offsetY}
                 context={context}
                 onChange={onTextOffsetYChange}
