@@ -118,7 +118,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             break;
         }
       },
-      stateReducer: (state, actionAndChanges) => {
+      stateReducer: (_state, actionAndChanges) => {
         const { changes } = actionAndChanges;
         return {
           ...changes,
@@ -220,7 +220,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             }
             setSelectedItems(newSelectedItems);
           } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
-            removeSelectedItem(newSelectedItem);
+            // Find the actual selected item object that matches the clicked item by value
+            // This is necessary because the clicked item (from async options) may be a different
+            // object reference than the selected item, and useMultipleSelection uses object equality
+            const itemToRemove = selectedItems.find((item) => item.value === newSelectedItem.value);
+            if (itemToRemove) {
+              removeSelectedItem(itemToRemove);
+            }
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }

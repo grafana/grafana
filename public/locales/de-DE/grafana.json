@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "Dieser Ordner ist leer"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Alle Ressourcen wurden erfolgreich gelöscht",
-      "all-moved": "Alle Ressourcen wurden erfolgreich verschoben",
-      "button-done": "Fertig",
-      "progress-title": "Erfolg",
-      "failed-alert_one": "{{count}} Elemente fehlgeschlagen",
-      "failed-alert_other": "{{count}} Elemente fehlgeschlagen"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
       "delete-warning": "Dadurch werden ausgewählte Ordner und deren Unterordner gelöscht. Insgesamt betrifft dies:",
-      "error-path-not-found": "Pfad nicht gefunden"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Abbrechen",
       "button-move": "Verschieben",
       "button-moving": "Wird verschoben ...",
-      "deleting": "Wird gelöscht",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Dateiinhalt nicht gefunden",
-      "error-path-not-found": "Pfad nicht gefunden",
-      "error-target-folder-path-missing": "Zielordnerpfad fehlt",
-      "error-title": "Zielordnerfehler",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Dadurch werden ausgewählte Ordner und deren Unterordner verschoben. Insgesamt betrifft dies:",
-      "moving": "Wird verschoben",
-      "progress": "Fortschritt: {{current}} von {{total}}",
       "target-folder": "Zielordner"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} Elemente"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Ordner einklappen {{title}}",
       "expand-folder-button": "Ordner ausklappen {{title}}",
       "name-column": "Name",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Zeigen oder verbergen Sie {{type}} dynamisch, basierend auf dem Variablenwert.",
           "label": "Vorlagenvariable",
           "name": "Name",
           "operator": {
             "equals": "Gleich",
-            "not-equals": "Ist ungleich"
+            "matches": "",
+            "not-equals": "Ist ungleich",
+            "not-matches": ""
           },
           "value": "Wert"
         }
@@ -5347,6 +5343,7 @@
       "playlist-next": "Zum nächsten Dashboard",
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
+      "read-only": "",
       "refresh": "Dashboard aktualisieren",
       "save": "Dashboard speichern",
       "save-dashboard": {
@@ -5399,6 +5396,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Nach Transformation suchen",
       "show-images": "Bilder anzeigen",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Weitere Transformation hinzufügen",
       "view-all": "Alles anzeigen"
     },
@@ -7475,6 +7475,13 @@
       "tooltip-title": "Mathematik-Operator",
       "tooltip-trigger": "Ausdruck"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Funktion",
       "label-input": "Eingabe",
@@ -7489,6 +7496,11 @@
       "label-resample-to": "Resample zu",
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10 s, 1 min., 30 min., 1 h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Eingabe"
@@ -7506,7 +7518,8 @@
     "loading": "Ordner werden geladen …"
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10861,7 +10874,6 @@
         "downloads": "Downloads",
         "from": "",
         "installedVersion": "Installierte Version",
-        "lastCommitDate": "Letztes Commit-Datum:",
         "latestReleaseDate": "Neuestes Release-Datum:",
         "latestVersion": "Aktuelle Version",
         "license": "Lizenz",
@@ -11414,6 +11426,8 @@
         "subtitle": "Nutzen Sie diese Option, wenn Sie Ihre gesamte Grafana-Instanz über einen externen Speicher synchronisieren und verwalten möchten."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "Aktive Aufträge",
       "column-action": "Aktion",
@@ -11432,6 +11446,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Einstellungen",
       "view": "Anzeigen"
     },
@@ -11442,8 +11457,13 @@
       "title-repository-is-unhealthy": "Repository nicht in Ordnung"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Ihre Ressourcen befinden sich jetzt in Ihrem externen Speicher und werden in Ihrer Instanz bereitgestellt. Von nun an werden Ihre Instanz und der externe Speicher synchronisiert.",
-      "view-repository": "Repository anzeigen"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Geprüft:",
@@ -11842,6 +11862,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
@@ -11852,7 +11873,11 @@
       "replace-query-from-library": "Mit Abfrage von Bibliothek ersetzen",
       "show-response": "Antwort anzeigen "
     },
-    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
+    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12088,7 +12113,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Dienstkonto hinzufügen",
-      "message": "Keine Dienstkonten gefunden",
+      "message": "",
       "more-info": "Bitte beachten Sie, dass Sie bestimmte Berechtigungen für den API-Zugriff auf andere Anwendungen vergeben können",
       "title": "Sie haben noch keine Dienstkonten erstellt"
     }
@@ -12481,6 +12506,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sortieren"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

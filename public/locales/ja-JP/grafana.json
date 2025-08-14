@@ -3506,25 +3506,18 @@
     "browse-view": {
       "this-folder-is-empty": "このフォルダは空です"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "すべてのリソースが正常に削除されました",
-      "all-moved": "すべてのリソースが正常に移動されました",
-      "button-done": "完了",
-      "progress-title": "成功",
-      "failed-alert_other": "{{count}}件の項目が失敗しました"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "キャンセル",
       "button-delete": "削除",
       "button-deleting": "削除中…",
       "delete-warning": "これにより、選択したフォルダとその子フォルダが削除されます。影響のある項目は次のとおりです。",
-      "error-path-not-found": "パスが見つかりませんでした"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "キャンセル",
       "button-move": "移動",
       "button-moving": "移動中…",
-      "deleting": "削除しています",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3532,13 +3525,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "ファイルコンテンツが見つかりません。",
-      "error-path-not-found": "パスが見つかりませんでした",
-      "error-target-folder-path-missing": "ターゲットフォルダパスが見つかりません",
-      "error-title": "ターゲットフォルダエラー",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "これにより、選択したフォルダとその子フォルダが移動されます。影響のある項目は次のとおりです。",
-      "moving": "移動中…",
-      "progress": "進捗状況：{{current}}/{{total}}",
       "target-folder": "移動先フォルダ"
     },
     "counts": {
@@ -3549,6 +3538,9 @@
       "total_other": "{{count}}個のアイテム"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "フォルダ{{title}}を折りたたむ",
       "expand-folder-button": "フォルダ{{title}}を展開する",
       "name-column": "名前",
@@ -4490,12 +4482,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "変数の値に基づいて{{type}}を動的に表示または非表示にします。",
           "label": "テンプレート変数",
           "name": "名前",
           "operator": {
             "equals": "等しい",
-            "not-equals": "等しくない"
+            "matches": "",
+            "not-equals": "等しくない",
+            "not-matches": ""
           },
           "value": "値"
         }
@@ -5327,6 +5324,7 @@
       "playlist-next": "次のダッシュボードに移動",
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
+      "read-only": "",
       "refresh": "ダッシュボードを更新",
       "save": "ダッシュボードを保存",
       "save-dashboard": {
@@ -5379,6 +5377,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "変換を検索",
       "show-images": "画像を表示",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "別の変換を追加",
       "view-all": "すべて表示"
     },
@@ -7453,6 +7454,13 @@
       "tooltip-title": "数学演算子",
       "tooltip-trigger": "式"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "関数",
       "label-input": "入力",
@@ -7467,6 +7475,11 @@
       "label-resample-to": "再サンプリング先",
       "label-upsample": "アップサンプリング",
       "tooltip-s-m-h": "10秒、1分、30分、1時間"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "入力"
@@ -7484,7 +7497,8 @@
     "loading": "フォルダを読み込んでいます..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10828,7 +10842,6 @@
         "downloads": "ダウンロード",
         "from": "開始",
         "installedVersion": "インストールされているバージョン",
-        "lastCommitDate": "最終コミット日：",
         "latestReleaseDate": "最新リリース日：",
         "latestVersion": "最新のバージョン",
         "license": "ライセンス",
@@ -11378,6 +11391,8 @@
         "subtitle": "外部ストレージを通じてGrafanaインスタンス全体を同期・管理したい場合は、このオプションを使用してください。"
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "アクティブなジョブ",
       "column-action": "操作",
@@ -11396,6 +11411,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "設定",
       "view": "表示"
     },
@@ -11406,8 +11422,13 @@
       "title-repository-is-unhealthy": "リポジトリに問題があります"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "リソースが外部ストレージに保存され、インスタンスにプロビジョニングされました。今後、インスタンスと外部ストレージは同期されます。",
-      "view-repository": "リポジトリを表示"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "確認済み：",
@@ -11805,6 +11826,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "クエリ行を折りたたむ",
       "datasource-help": "データソースヘルプを表示",
       "drag-and-drop": "ドラッグアンドドロップで並べ替え",
@@ -11815,7 +11837,11 @@
       "replace-query-from-library": "ライブラリからのクエリに置き換え",
       "show-response": "応答の表示"
     },
-    "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
+    "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12048,7 +12074,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "サービスアカウントを追加",
-      "message": "サービスアカウントが見つかりません",
+      "message": "",
       "more-info": "他のアプリケーションに特定のAPIアクセス権限を提供できることを忘れないでください",
       "title": "まだサービスアカウントを作成していません"
     }
@@ -12440,6 +12466,21 @@
   },
   "sort-picker": {
     "select-aria-label": "並べ替え"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
