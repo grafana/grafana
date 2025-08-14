@@ -27,7 +27,7 @@ export type FavoritesCheckbox = {
 
 export function DataSourcesList() {
   const { isLoading } = useLoadDataSources();
-  const favoriteDataSourcesHook = config.featureToggles.favoriteDatasources ? useFavoriteDatasources() : null;
+  const favoriteDataSources = useFavoriteDatasources();
   const [queryParams, updateQueryParams] = useQueryParams();
   const showFavoritesOnly = !!queryParams.starred;
   const handleFavoritesCheckboxChange = (value: boolean) => {
@@ -50,7 +50,7 @@ export function DataSourcesList() {
       hasExploreRights={hasExploreRights}
       showFavoritesOnly={showFavoritesOnly}
       handleFavoritesCheckboxChange={handleFavoritesCheckboxChange}
-      isFavoriteDatasource={favoriteDataSourcesHook?.isFavoriteDatasource}
+      isFavoriteDatasource={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource : undefined}
     />
   );
 }
