@@ -17,6 +17,16 @@ jest.mock('./userStorage', () => {
   };
 });
 
+jest.mock('../config', () => {
+  return {
+    config: {
+      featureToggles: {
+        favoriteDatasources: true,
+      },
+    },
+  };
+});
+
 describe('useFavoriteDatasources', () => {
   // Test data helpers
   const pluginMetaInfo: PluginMetaInfo = {
