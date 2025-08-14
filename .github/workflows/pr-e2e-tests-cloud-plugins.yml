@@ -18,6 +18,19 @@ on:
 permissions: {}
 
 jobs:
+  pull-docker-image:
+    if: ${{ ! github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: grafana/shared-workflows/actions/login-to-gar@login-to-gar-v0.4.0
+        id: login-to-gar
+        with:
+          registry: "us-docker.pkg.dev"
+          environment: "dev"
+          delete_credentials_file: true
+      - id: pull-docker-image
+        run: |
+          docker pull us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest
   run-azure-monitor-e2e:
     name: E2E tests for azure monitor
     runs-on: ubuntu-latest
@@ -26,7 +39,7 @@ jobs:
       id-token: write
     container:
       image: us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest
-    if: ${{ ! github.event.pull_request.head.repo.fork }}
+    needs: pull-docker-image
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
