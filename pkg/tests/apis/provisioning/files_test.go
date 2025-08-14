@@ -453,15 +453,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 				statusErr.Status().Code, statusErr.Status().Reason, statusErr.Status().Message)
 		}
 
-		// FIXME: This should return BadRequest (400) but currently returns InternalServerError (500)
-		// The ownership protection logic is working (correct error message), but the HTTP status is wrong
+		// Verify it returns BadRequest (400) for ownership conflicts
 		if !apierrors.IsBadRequest(err) {
-			t.Logf("FIXME: Expected BadRequest error but got: %T - %v", err, err)
-			// For now, check if it's at least a server error with the correct message
-			if !apierrors.IsInternalError(err) {
-				t.Errorf("Expected BadRequest or InternalServerError but got: %T - %v", err, err)
-				return
-			}
+			t.Errorf("Expected BadRequest error but got: %T - %v", err, err)
+			return
 		}
 
 		// Check error message contains ownership information (based on NewResourceOwnershipConflictError format)
@@ -496,15 +491,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 				statusErr.Status().Code, statusErr.Status().Reason, statusErr.Status().Message)
 		}
 
-		// FIXME: This should return BadRequest (400) but currently returns InternalServerError (500)
-		// The ownership protection logic is working (correct error message), but the HTTP status is wrong
+		// Verify it returns BadRequest (400) for ownership conflicts
 		if !apierrors.IsBadRequest(err) {
-			t.Logf("FIXME: Expected BadRequest error but got: %T - %v", err, err)
-			// For now, check if it's at least a server error with the correct message
-			if !apierrors.IsInternalError(err) {
-				t.Errorf("Expected BadRequest or InternalServerError but got: %T - %v", err, err)
-				return
-			}
+			t.Errorf("Expected BadRequest error but got: %T - %v", err, err)
+			return
 		}
 
 		// Check error message contains ownership information (based on NewResourceOwnershipConflictError format)
@@ -550,15 +540,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 				statusErr.Status().Code, statusErr.Status().Reason, statusErr.Status().Message)
 		}
 
-		// FIXME: This should return BadRequest (400) but currently returns InternalServerError (500)
-		// The ownership protection logic is working (correct error message), but the HTTP status is wrong
+		// Verify it returns BadRequest (400) for ownership conflicts
 		if !apierrors.IsBadRequest(err) {
-			t.Logf("FIXME: Expected BadRequest error but got: %T - %v", err, err)
-			// For now, check if it's at least a server error with the correct message
-			if !apierrors.IsInternalError(err) {
-				t.Errorf("Expected BadRequest or InternalServerError but got: %T - %v", err, err)
-				return
-			}
+			t.Errorf("Expected BadRequest error but got: %T - %v", err, err)
+			return
 		}
 
 		// Check error message contains ownership information (based on NewResourceOwnershipConflictError format)

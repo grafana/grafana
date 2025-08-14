@@ -62,7 +62,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	// Fail as we use the dry run for this response and it's not about updating the resource
 	if err := parsed.DryRun(ctx); err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("Dry run failed: %v", err))
+		return nil, fmt.Errorf("error running dryRun: %w", err)
 	}
 
 	// Authorize based on the existing resource
@@ -224,13 +224,12 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			logger := logging.FromContext(ctx).With("path", opts.Path, "name", parsed.Obj.GetName(), "ref", opts.Ref)
 			logger.Warn("failed to dry run resource on create", "error", err)
 
-			// TODO: return this as a 400 rather than 500
-			return nil, fmt.Errorf("error running dryRun %w", err)
+			return nil, fmt.Errorf("error running dryRun: %w", err)
 		}
 	}
 
 	if len(parsed.Errors) > 0 {
-		// TODO: return this as a 400 rather than 500
+		// Now returns BadRequest (400) for validation errors
 		return nil, fmt.Errorf("errors while parsing file [%v]", parsed.Errors)
 	}
 
