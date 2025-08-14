@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
+  DataTransformerID,
   FALLBACK_COLOR,
   FieldDisplay,
   formattedValueToString,
@@ -20,6 +21,8 @@ import {
   VizLegend,
   VizLegendItem,
 } from '@grafana/ui';
+
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { PieChart } from './PieChart';
 import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
@@ -83,10 +86,20 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   }
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
+  const panel = getDashboardSrv().getCurrent()?.getPanelById(props.id);
+  let hasTransform = false;
+  panel?.transformations?.forEach((transformation) => {
+    if (transformation.id === DataTransformerID.organize) {
+      hasTransform = true;
+    }
+  });
+
   const legendItems: VizLegendItem[] = displayValues
     // Since the pie chart is always sorted, let's sort the legend as well.
     .sort((a, b) => {
-      if (isNaN(a.display.numeric)) {
+      if (hasTransform) {
+        return 1;
+      } else if (isNaN(a.display.numeric)) {
         return 1;
       } else if (isNaN(b.display.numeric)) {
         return -1;
