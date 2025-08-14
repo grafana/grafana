@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"testing"
 
@@ -502,13 +501,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 
 	t.Run("DELETE resource owned by different repository - should fail", func(t *testing.T) {
 		// Create a file manually in the second repo which is already in first one
-		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo-2/conflicting-delete.json")
-
-		t.Cleanup(func() {
-			err := os.Remove(path.Join(helper.ProvisioningPath, "repo2", "conflicting-delete.json"))
-			require.NoError(t, err)
-		})
-
+		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo2/conflicting-delete.json")
 		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").
@@ -541,22 +534,18 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
 	})
 
-	t.Run("MOVE file owned by different repository - should fail", func(t *testing.T) {
-		// FIXME: This test currently fails with "file not found" because we're trying to move
-		// a file from repo1's path using repo2's context. We need to test cross-repo moves differently.
-		// Try to move the dashboard owned by repo1 using repo2
-		// Move is essentially a POST with originalPath parameter
+	t.Run("MOVE and UPDATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		resp := helper.postFilesRequest(t, repo2, filesPostOptions{
 			targetPath:   "moved-dashboard.json",
-			originalPath: path.Join(helper.ProvisioningPath, "repo1", "dashboard1.json"), // Full path to file in repo1
+			originalPath: path.Join("dashboard2.json"),
 			message:      "attempt to move file from different repository",
+			body:         string(helper.LoadFile("testdata/all-panels.json")), // Content to move with the conflicting UID
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
 
 		// This should fail with ownership conflict
 		require.NotEqual(t, http.StatusOK, resp.StatusCode, "moving resource owned by different repository should fail")
-
 		// Read response body to check error message
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -566,16 +555,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		t.Logf("MOVE operation HTTP status: %d", resp.StatusCode)
 		t.Logf("MOVE operation error response: %s", errorMsg)
 
-		// FIXME: This should return BadRequest (400) but currently returns InternalServerError (500)
-		// due to file path issues. The ownership protection would work if the file path was correct.
-		if resp.StatusCode != http.StatusBadRequest {
-			t.Logf("FIXME: Expected BadRequest status (400) but got: %d", resp.StatusCode)
-			t.Logf("Full response body: %s", errorMsg)
-			// For now, just log the issue and return since this is a path resolution problem
-			t.Logf("This test needs to be redesigned to properly test cross-repository move operations")
-			return
-		}
-
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return BadRequest (400) for ownership conflict")
 		// Check error message contains ownership conflict information
 		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
 		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
