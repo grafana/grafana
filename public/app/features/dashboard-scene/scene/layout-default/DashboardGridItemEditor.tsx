@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -21,7 +22,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
-        id: 'repeat-by-variable-select',
+        id: uuidv4(),
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
@@ -42,11 +43,12 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.max', 'Max per row'),
+        id: uuidv4(),
         useShowIf: () => {
           const { variableName, repeatDirection } = gridItem.useState();
           return Boolean(variableName) && repeatDirection === 'h';
         },
-        render: () => <MaxPerRowOption gridItem={gridItem} />,
+        render: (descriptor) => <MaxPerRowOption id={descriptor.props.id} gridItem={gridItem} />,
       })
     );
 
@@ -81,7 +83,7 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
   );
 }
 
-function MaxPerRowOption({ gridItem }: OptionComponentProps) {
+function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { maxPerRow } = gridItem.useState();
   const maxPerRowOptions: Array<SelectableValue<number>> = [2, 3, 4, 6, 8, 12].map((value) => ({
     label: value.toString(),
@@ -90,6 +92,7 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
 
   return (
     <Select
+      id={id}
       options={maxPerRowOptions}
       value={maxPerRow ?? 4}
       onChange={(value) => {

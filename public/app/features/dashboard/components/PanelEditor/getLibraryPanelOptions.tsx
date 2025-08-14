@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
@@ -24,12 +26,13 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.get-library-panel-options-category.title.name', 'Name'),
+          id: uuidv4(),
           value: panel.libraryPanel.name,
           popularRank: 1,
-          render: function renderName() {
+          render: function renderName(descriptor) {
             return (
               <Input
-                id="LibraryPanelFrameName"
+                id={descriptor.props.id}
                 defaultValue={panel.libraryPanel.name}
                 onBlur={(e) =>
                   onPanelConfigChange('libraryPanel', { ...panel.libraryPanel, name: e.currentTarget.value })
@@ -42,6 +45,7 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.get-library-panel-options-category.title.information', 'Information'),
+          id: uuidv4(),
           render: function renderLibraryPanelInformation() {
             return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
           },

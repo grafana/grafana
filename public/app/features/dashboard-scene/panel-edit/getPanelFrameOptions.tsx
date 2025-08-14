@@ -1,4 +1,5 @@
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { CoreApp } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -37,7 +38,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.title', 'Title'),
-        id: 'PanelFrameTitle',
+        id: uuidv4(),
         value: panel.state.title,
         popularRank: 1,
         render: function renderTitle(descriptor) {
@@ -55,7 +56,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.description', 'Description'),
-        id: 'description-text-area',
+        id: uuidv4(),
         value: panel.state.description,
         render: function renderDescription(descriptor) {
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
@@ -71,7 +72,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.transparent-background', 'Transparent background'),
-        id: 'transparent-background',
+        id: uuidv4(),
         render: function renderTransparent(descriptor) {
           return <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />;
         },
@@ -86,6 +87,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
+          id: uuidv4(),
           render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
         })
       )

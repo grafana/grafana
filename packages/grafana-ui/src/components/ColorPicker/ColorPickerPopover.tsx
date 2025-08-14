@@ -22,6 +22,7 @@ export interface ColorPickerProps extends Themeable2 {
   color: string;
   onChange: ColorPickerChangeHandler;
   enableNamedColors?: boolean;
+  id?: string;
 }
 
 export interface Props<T> extends ColorPickerProps, PopoverContentProps {

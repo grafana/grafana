@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -46,7 +47,8 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.default-layout.row-options.form.title', 'Title'),
-          render: () => <RowTitleInput row={row} />,
+          id: uuidv4(),
+          render: (descriptor) => <RowTitleInput id={descriptor.props.id} row={row} />,
         })
       );
     }, [row]);
@@ -61,7 +63,8 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.default-layout.row-options.repeat.variable.title', 'Variable'),
-          render: () => <RowRepeatSelect row={row} dashboard={dashboard} />,
+          id: uuidv4(),
+          render: (descriptor) => <RowRepeatSelect id={descriptor.props.id} row={row} dashboard={dashboard} />,
         })
       );
     }, [row]);
@@ -78,13 +81,13 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
   }
 }
 
-function RowTitleInput({ row }: { row: SceneGridRow }) {
+function RowTitleInput({ row, id }: { row: SceneGridRow; id?: string }) {
   const { title } = row.useState();
 
-  return <Input value={title} onChange={(e) => row.setState({ title: e.currentTarget.value })} />;
+  return <Input id={id} value={title} onChange={(e) => row.setState({ title: e.currentTarget.value })} />;
 }
 
-function RowRepeatSelect({ row, dashboard }: { row: SceneGridRow; dashboard: DashboardScene }) {
+function RowRepeatSelect({ row, dashboard, id }: { row: SceneGridRow; dashboard: DashboardScene; id?: string }) {
   const { $behaviors, children } = row.useState();
   let repeatBehavior = $behaviors?.find((b) => b instanceof RowRepeaterBehavior);
   const vizPanels = useMemo(
@@ -104,6 +107,7 @@ function RowRepeatSelect({ row, dashboard }: { row: SceneGridRow; dashboard: Das
   return (
     <>
       <RepeatRowSelect2
+        id={id}
         sceneContext={dashboard}
         repeat={repeatBehavior?.state.variableName}
         onChange={(repeat) => {

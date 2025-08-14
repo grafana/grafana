@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -48,13 +49,14 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: uuidv4(),
             render: () => <OpenPanelEditViz panel={this.panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
-            id: 'PanelFrameTitle',
+            id: uuidv4(),
             value: panel.state.title,
             popularRank: 1,
             render: (descriptor) => (
@@ -65,7 +67,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.description', 'Description'),
-            id: 'description-text-area',
+            id: uuidv4(),
             value: panel.state.description,
             render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
           })
@@ -73,7 +75,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            id: 'transparent-background',
+            id: uuidv4(),
             render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
           })
         );
@@ -133,9 +135,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 }
 
-type OpenPanelEditVizProps = {
-  panel: VizPanel;
-};
+type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
   return (

@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { t } from '@grafana/i18n';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -16,7 +18,7 @@ export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[]
   }).addItem(
     new OptionsPaneItemDescriptor({
       title: t('dashboard.auto-grid.item-options.repeat.variable.title', 'Repeat by variable'),
-      id: 'repeat-by-variable-select',
+      id: uuidv4(),
       description: t(
         'dashboard.auto-grid.item-options.repeat.variable.description',
         'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'

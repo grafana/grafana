@@ -95,8 +95,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Cell options Cell value inspect'))
       .first()
-      .locator('label[for="custom.inspect"]')
-      .click();
+      .getByRole('switch', { name: 'Cell value inspect' })
+      .click({ force: true });
     await loremIpsumCell.hover();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 

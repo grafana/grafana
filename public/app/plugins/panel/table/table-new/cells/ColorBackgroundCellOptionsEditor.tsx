@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -26,6 +28,8 @@ export const ColorBackgroundCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
+  const htmlId = useId();
+
   return (
     <>
       <Field
@@ -47,6 +51,7 @@ export const ColorBackgroundCellOptionsEditor = ({
         )}
       >
         <Switch
+          id={htmlId}
           label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Apply to entire row`)}
           value={cellOptions.applyToRow}
           onChange={onColorRowChange}
