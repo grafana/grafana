@@ -72,6 +72,9 @@ func New(cfg app.Config) (app.App, error) {
 			{
 				Kind:       foldersKind.FolderKind(),
 				Reconciler: folderReconciler,
+				ReconcileOptions: simple.BasicReconcileOptions{
+					Namespace: "stacks-8108",
+				},
 			},
 		},
 	}

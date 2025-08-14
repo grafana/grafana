@@ -108,20 +108,12 @@ data:
     [zanzana.server]
     allow_insecure = true
     check_query_cache = true
-    signing_keys_url = http://localhost:6481/jwks
     http_addr = 0.0.0.0:8080
 
     [grpc_server]
     enabled = true
-    address = 0.0.0.0:10000
-
-    [tracing.opentelemetry.otlp]
-    address = tempo.default.svc:4317
-
-    [server]
-    http_port = 3001
-    root_url =
-    router_logging = true
+    address = 0.0.0.0:50051
+    enable_logging = true
 ---
 apiVersion: v1
 kind: Service
@@ -132,15 +124,12 @@ metadata:
     name: zanzana
 spec:
   ports:
-    - name: zanzana-zanzana-metrics
-      port: 3000
-      targetPort: 3000
     - name: http
-      port: 80
+      port: 8080
       targetPort: 8080
     - name: grpc
-      port: 10000
-      targetPort: 10000
+      port: 50051
+      targetPort: 50051
   selector:
     name: zanzana
 ---
@@ -170,16 +159,9 @@ spec:
           env:
             - name: GF_PATHS_CONFIG
               value: /etc/grafana-config/grafana.ini
-          image: grafana/grafana-enterprise:latest
+          image: grafana/grafana-oss-dev:12.2.0-257970
           imagePullPolicy: IfNotPresent
           name: zanzana
-          ports:
-            - containerPort: 3000
-              name: zanzana-metrics
-          resources:
-            requests:
-              cpu: 10m
-              memory: 40Mi
           volumeMounts:
             - mountPath: /etc/grafana-config
               name: zanzana-config

@@ -32,7 +32,7 @@ spec:
             - exec /usr/bin/operator
           env:
             - name: ZANZANA_ADDR
-              value: zanzana.default.svc.cluster.local:10000
+              value: zanzana.default.svc.cluster.local:50051
             - name: FOLDER_APP_URL
               value: https://host.docker.internal:6446
             - name: AUTH_TOKEN_EXCHANGE_URL

@@ -24,8 +24,8 @@ type FolderStore interface {
 
 // PermissionStore interface for managing folder permissions
 type PermissionStore interface {
-	SetFolderParent(ctx context.Context, namespace, folderUID, parentUID string) error
 	GetFolderParents(ctx context.Context, namespace, folderUID string) ([]string, error)
+	SetFolderParent(ctx context.Context, namespace, folderUID, parentUID string) error
 	DeleteFolder(ctx context.Context, namespace, folderUID string) error
 }
 
@@ -110,6 +110,9 @@ func (r *FolderReconciler) reconcile(ctx context.Context, req operator.TypedReco
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
+	logger := logging.FromContext(ctx)
+	logger.Info("Reconciling request", "req", req)
+
 	err := validateFolder(req.Object)
 	if err != nil {
 		return errorWithRetryDefault(ctx, err, "Invalid folder")
@@ -188,7 +191,7 @@ func validateFolder(folder *foldersKind.Folder) error {
 	return nil
 }
 
-const requestRetryTimeout = 10 * time.Second
+const requestRetryTimeout = 60 * time.Second
 
 func errorWithRetry(ctx context.Context, err error, message string, requeueAfter time.Duration) (operator.ReconcileResult, error) {
 	logger := logging.FromContext(ctx)
