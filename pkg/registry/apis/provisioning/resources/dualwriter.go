@@ -105,25 +105,22 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
+
+	// Use the parser's DryRun method like create/update operations
+	if !opts.SkipDryRun {
+		if err := parsed.DryRun(ctx); err != nil {
+			return nil, fmt.Errorf("error running dryRun for delete: %w", err)
+		}
+	}
+
 	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
 		return nil, fmt.Errorf("delete file from repository: %w", err)
 	}
 
-	// Delete the file in the grafana database
+	// Delete the file in the grafana database using the parser's Run method
 	if opts.Ref == "" {
-		ctx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
-		if err != nil {
-			return parsed, err
-		}
-
-		// FIXME: empty folders with no repository files will remain in the system
-		// until the next reconciliation.
-		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
-		if apierrors.IsNotFound(err) {
-			err = nil // ignorable
-		}
-
+		err = parsed.Run(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("delete resource from storage: %w", err)
 		}
@@ -448,6 +445,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	// Perform the move operation in the repository
 	// If we have new content, we need to update the file content as part of the move
 	if len(opts.Data) > 0 {
+		// FIXME: I think we should MOVE + UPDATE instead of Delete / Create
 		// For moves with content updates, we need to delete the old file and create the new one
 		if err = r.repo.Delete(ctx, opts.OriginalPath, opts.Ref, opts.Message); err != nil {
 			return nil, fmt.Errorf("delete original file in repository: %w", err)
