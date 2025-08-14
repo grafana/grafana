@@ -404,9 +404,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	const repo1 = "ownership-repo-1"
 	const repo2 = "ownership-repo-2"
 
-	// Create first repository targeting "folder-1"
+	// Create first repository targeting "folder-1" with its own subdirectory
 	helper.CreateRepo(t, TestRepo{
 		Name:   repo1,
+		Path:   path.Join(helper.ProvisioningPath, "repo1"),
 		Target: "folder-1",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "dashboard1.json",
@@ -415,9 +416,10 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		ExpectedFolders:    1,
 	})
 
-	// Create second repository targeting "folder-2" 
+	// Create second repository targeting "folder-2" with its own subdirectory
 	helper.CreateRepo(t, TestRepo{
 		Name:   repo2,
+		Path:   path.Join(helper.ProvisioningPath, "repo2"),
 		Target: "folder-2",
 		Copies: map[string]string{
 			"testdata/timeline-demo.json": "dashboard2.json",
