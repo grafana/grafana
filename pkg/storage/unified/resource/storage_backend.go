@@ -56,6 +56,11 @@ func NewKvStorageBackend(kv KV) *kvStorageBackend {
 	}
 }
 
+func (k *kvStorageBackend) ListSinceModified(ctx context.Context, key *resourcepb.ResourceKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
+	// TODO
+	panic("not implemented")
+}
+
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {

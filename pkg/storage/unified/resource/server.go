@@ -114,6 +114,9 @@ type StorageBackend interface {
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
+	// ListSinceModified will return all resources that have changed since the given resource version.
+	ListSinceModified(ctx context.Context, key *resourcepb.ResourceKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error)
+
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
