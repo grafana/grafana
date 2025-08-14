@@ -223,7 +223,7 @@
     "msw": "2.10.4",
     "mutationobserver-shim": "0.3.7",
     "node-notifier": "10.0.1",
-    "nx": "20.7.1",
+    "nx": "21.3.11",
     "openapi-types": "^12.1.3",
     "pa11y-ci": "^4.0.0",
     "pdf-parse": "^1.1.1",
@@ -286,11 +286,11 @@
     "@grafana/llm": "0.22.1",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "0.10.8",
+    "@grafana/plugin-ui": "0.10.9",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "6.29.5",
-    "@grafana/scenes-react": "6.29.5",
+    "@grafana/scenes": "6.29.7",
+    "@grafana/scenes-react": "6.29.7",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -300,9 +300,9 @@
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
-    "@locker/near-membrane-dom": "0.13.6",
-    "@locker/near-membrane-shared": "0.13.6",
-    "@locker/near-membrane-shared-dom": "0.13.6",
+    "@locker/near-membrane-dom": "0.14.0",
+    "@locker/near-membrane-shared": "0.14.0",
+    "@locker/near-membrane-shared-dom": "0.14.0",
     "@msagl/core": "^1.1.19",
     "@msagl/parser": "^1.1.19",
     "@opentelemetry/api": "1.9.0",
@@ -448,7 +448,8 @@
     "refractor/prismjs": "^1.27.0",
     "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954",
     "get-document": "github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f",
-    "gitconfiglocal": "2.1.0"
+    "gitconfiglocal": "2.1.0",
+    "tmp@npm:^0.0.33": "~0.2.1"
   },
   "workspaces": {
     "packages": [
@@ -462,6 +463,9 @@
   },
   "packageManager": "yarn@4.9.2",
   "dependenciesMeta": {
+    "nx": {
+      "built": false
+    },
     "prettier@3.6.2": {
       "unplugged": true
     }

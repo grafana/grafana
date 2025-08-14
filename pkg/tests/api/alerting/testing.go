@@ -20,6 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -1052,6 +1053,16 @@ func (a apiClient) GetAlertmanagerConfigWithStatus(t *testing.T) (apimodels.Gett
 	return sendRequestJSON[apimodels.GettableUserConfig](t, req, http.StatusOK)
 }
 
+func (a apiClient) GetAlertmanagerConfigForDatasource(t *testing.T, datasourceUID string) apimodels.GettableUserConfig {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/%s/config/api/v1/alerts", a.url, datasourceUID), nil)
+	require.NoError(t, err)
+
+	config, status, body := sendRequestJSON[apimodels.GettableUserConfig](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, body)
+	return config
+}
+
 func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroups, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/alerts/groups", a.url), nil)
@@ -1460,7 +1471,9 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

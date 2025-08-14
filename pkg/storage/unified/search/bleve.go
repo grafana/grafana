@@ -246,7 +246,7 @@ func (b *bleveBackend) BuildIndex(
 		}
 	}
 
-	resourceDir := filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
+	resourceDir := b.getResourceDir(key)
 
 	var index bleve.Index
 	cachedIndex := b.getCachedIndex(key)
@@ -377,11 +377,18 @@ func (b *bleveBackend) BuildIndex(
 		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
 	}
 
-	// Start a background task to cleanup the old index directories. If we have built a new file-based index,
-	// the new name is ignored. If we have created in-memory index and fileIndexName is empty, all old directories can be removed.
-	go b.cleanOldIndexes(resourceDir, fileIndexName)
+	// Clean up the old index directories. If we have built a new file-based index, the new name is ignored.
+	// If we have created in-memory index and fileIndexName is empty, all old directories can be removed.
+	//
+	// We do the cleanup on the same goroutine as the index building. Using background goroutine could
+	// cleanup new index directory that is being built by new call to BuildIndex.
+	b.cleanOldIndexes(resourceDir, fileIndexName)
 
 	return idx, nil
+}
+
+func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {
+	return filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 }
 
 func cleanFileSegment(input string) string {
