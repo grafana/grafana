@@ -27,8 +27,8 @@ export default function FileHistoryPage() {
   const notFound = (query.isError && isNotFoundError(query.error)) || isPureGit;
 
   const notFoundErrorMsg = isPureGit
-    ? t('', 'File history is not supported for pure git')
-    : t('', 'Repository not found');
+    ? t('i18n.provisioning.file-history-page.pure-git-not-support', 'File history is not supported for pure git')
+    : t('i18n.provisioning.file-history-page.repository-not-found', 'Repository not found');
 
   return (
     <Page

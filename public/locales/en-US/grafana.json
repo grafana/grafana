@@ -8993,6 +8993,14 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "i18n": {
+    "provisioning": {
+      "file-history-page": {
+        "pure-git-not-support": "File history is not supported for pure git",
+        "repository-not-found": "Repository not found"
+      }
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
