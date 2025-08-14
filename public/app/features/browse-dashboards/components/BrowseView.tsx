@@ -47,6 +47,8 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
       return [];
     }
     if (provisioningEnabled) {
+      // loop through settingsData to find all available repo name, and exclude them from select all action
+      // repo root folder is not actionable on browse dashboards page
       return settingsData?.items.map((repo) => repo.name);
     }
 
