@@ -175,15 +175,19 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       style: value.style,
     };
 
+    const fetchConfig = {
+      method: currentConfig.method,
+      url: currentConfig.url,
+      body: currentConfig.body,
+      queryParams: currentConfig.queryParams,
+      headers: currentConfig.headers,
+    };
+
     if (actionType === ActionType.Proxy) {
       const newAction: Action = {
         ...baseAction,
         [ActionType.Proxy]: {
-          method: currentConfig.method,
-          url: currentConfig.url,
-          body: currentConfig.body,
-          queryParams: currentConfig.queryParams,
-          headers: currentConfig.headers,
+          ...fetchConfig,
           datasourceUid: '',
           datasourceType: SupportedDataSourceTypes.Infinity,
         },
@@ -192,13 +196,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     } else {
       const newAction: Action = {
         ...baseAction,
-        [ActionType.Fetch]: {
-          method: currentConfig.method,
-          url: currentConfig.url,
-          body: currentConfig.body,
-          queryParams: currentConfig.queryParams,
-          headers: currentConfig.headers,
-        },
+        [ActionType.Fetch]: fetchConfig,
       };
       onChange(index, newAction);
     }

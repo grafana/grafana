@@ -1,6 +1,7 @@
 import {
   Action,
   ActionModel,
+  ActionType,
   ActionVariableInput,
   AppEvents,
   DataContextScopedVar,
@@ -10,6 +11,7 @@ import {
   FieldType,
   getFieldDataContextClone,
   InterpolateFunction,
+  ProxyOptions,
   ScopedVars,
   textUtil,
   ValueLinkConfig,
@@ -19,6 +21,7 @@ import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
+import { getNextRequestId } from '../query/state/PanelQueryRunner';
 
 /** @internal */
 export const genReplaceActionVars = (
@@ -83,7 +86,13 @@ export const getActions = (
           actionVars
         )(action.confirmation || `Are you sure you want to ${action.title}?`),
       onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
-        let request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        let request = {} as BackendSrvRequest;
+        if (grafanaConfig.featureToggles.vizActionsAuth && action.type === ActionType.Proxy) {
+          request = buildActionProxyRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+        } else if (action.type === ActionType.Fetch) {
+          request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+        }
 
         try {
           getBackendSrv()
@@ -117,39 +126,69 @@ export const getActions = (
 };
 
 /** @internal */
-export const buildActionRequest = (action: Action, replaceVariables: InterpolateFunction) => {
+const processActionConfig = (action: Action, replaceVariables: InterpolateFunction) => {
   const config = action[action.type];
   if (!config) {
     throw new Error('Action does not have the correct configuration');
   }
 
   const url = new URL(getUrl(replaceVariables(config.url)));
+  const data = getData(action, replaceVariables);
 
-  const requestHeaders: Record<string, string> = {};
-
-  let request: BackendSrvRequest = {
-    url: url.toString(),
-    method: config.method,
-    data: getData(action, replaceVariables),
-    headers: requestHeaders,
-  };
+  const processedHeaders: Array<[string, string]> = [];
+  const processedQueryParams: Array<[string, string]> = [];
+  let contentType = 'application/json';
 
   if (config.headers) {
     config.headers.forEach(([name, value]) => {
-      requestHeaders[replaceVariables(name)] = replaceVariables(value);
+      const processedName = replaceVariables(name);
+      const processedValue = replaceVariables(value);
+      processedHeaders.push([processedName, processedValue]);
+
+      if (processedName.toLowerCase() === 'content-type') {
+        contentType = processedValue;
+      }
     });
   }
 
   if (config.queryParams) {
-    config.queryParams?.forEach(([name, value]) => {
-      url.searchParams.append(replaceVariables(name), replaceVariables(value));
+    config.queryParams.forEach(([name, value]) => {
+      processedQueryParams.push([replaceVariables(name), replaceVariables(value)]);
     });
-
-    request.url = url.toString();
   }
 
+  return {
+    config,
+    url,
+    data,
+    processedHeaders,
+    processedQueryParams,
+    contentType,
+  };
+};
+
+/** @internal */
+export const buildActionRequest = (action: Action, replaceVariables: InterpolateFunction) => {
+  const { config, url, data, processedHeaders, processedQueryParams } = processActionConfig(action, replaceVariables);
+
+  const requestHeaders: Record<string, string> = {};
+
+  processedHeaders.forEach(([name, value]) => {
+    requestHeaders[name] = value;
+  });
+
+  processedQueryParams.forEach(([name, value]) => {
+    url.searchParams.append(name, value);
+  });
+
   requestHeaders['X-Grafana-Action'] = '1';
-  request.headers = requestHeaders;
+
+  const request: BackendSrvRequest = {
+    url: url.toString(),
+    method: config.method,
+    data,
+    headers: requestHeaders,
+  };
 
   return request;
 };
@@ -195,3 +234,100 @@ const getData = (action: Action, replaceVariables: InterpolateFunction) => {
 export enum SupportedDataSourceType {
   Infinity = 'yesoreyeram-infinity-datasource',
 }
+
+/** @internal */
+interface DatasourceRequestBuilder {
+  buildRequest(
+    proxyConfig: ProxyOptions,
+    url: URL,
+    data: string | undefined,
+    headers: Array<[string, string]>,
+    queryParams: Array<[string, string]>,
+    contentType: string
+  ): BackendSrvRequest;
+}
+
+/** @internal */
+class InfinityRequestBuilder implements DatasourceRequestBuilder {
+  buildRequest(
+    proxyConfig: ProxyOptions,
+    url: URL,
+    data: string | undefined,
+    headers: Array<[string, string]>,
+    queryParams: Array<[string, string]>,
+    contentType: string
+  ): BackendSrvRequest {
+    const requestId = getNextRequestId();
+    const infinityUrl = `api/ds/query?ds_type=${proxyConfig.datasourceType}&requestId=${requestId}`;
+
+    const requestHeaders: any = [];
+    headers.forEach(([name, value]) => {
+      requestHeaders.push({ key: name, value: value });
+    });
+
+    // Infinity needs [string, string] to {key: string, value: string}
+    const requestQueryParams: any = [];
+    queryParams.forEach(([name, value]) => {
+      requestQueryParams.push({ key: name, value: value });
+    });
+
+    const infinityUrlOptions = {
+      method: proxyConfig.method,
+      data,
+      headers: requestHeaders,
+      params: requestQueryParams,
+      body_type: 'raw',
+      body_content_type: contentType,
+    };
+
+    return {
+      url: infinityUrl,
+      method: HttpRequestMethod.POST,
+      data: {
+        queries: [
+          {
+            refId: 'A',
+            datasource: {
+              type: proxyConfig.datasourceType,
+              uid: proxyConfig.datasourceUid,
+            },
+            type: 'json',
+            source: 'url',
+            format: 'as-is',
+            url,
+            url_options: infinityUrlOptions,
+          },
+        ],
+        from: Date.now().toString(),
+        to: Date.now().toString(),
+      },
+    };
+  }
+}
+
+/** @internal */
+const getDatasourceRequestBuilder = (datasourceType: string): DatasourceRequestBuilder => {
+  switch (datasourceType) {
+    case SupportedDataSourceType.Infinity:
+      return new InfinityRequestBuilder();
+    default:
+      throw new Error(`Unsupported datasource type: ${datasourceType}`);
+  }
+};
+
+export const buildActionProxyRequest = (action: Action, replaceVariables: InterpolateFunction) => {
+  const { config, url, data, processedHeaders, processedQueryParams, contentType } = processActionConfig(
+    action,
+    replaceVariables
+  );
+
+  // @TODO
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const proxyConfig = config as ProxyOptions;
+  if (!proxyConfig.datasourceUid) {
+    throw new Error('Proxy action requires a datasource to be configured');
+  }
+
+  const requestBuilder = getDatasourceRequestBuilder(proxyConfig.datasourceType);
+  return requestBuilder.buildRequest(proxyConfig, url, data, processedHeaders, processedQueryParams, contentType);
+};
