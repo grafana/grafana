@@ -50,13 +50,13 @@ func canReferenceSecureValues(ctx context.Context,
 				"missing name",
 				"secure", k, "name")
 		}
-		if !slices.Contains(names, v.Name) {
-			names = append(names, v.Name) // unique names
-		}
+		names = append(names, v.Name)
 	}
 
 	// This will call the real service to check access, converting any errors to protobuf
 	canReference := func() *resourcepb.ErrorResult {
+		slices.Sort(names)
+		names = slices.Compact(names) //
 		if err := secrets.CanReference(ctx, utils.ToObjectReference(obj), names...); err != nil {
 			return AsErrorResult(err)
 		}
@@ -69,10 +69,7 @@ func canReferenceSecureValues(ctx context.Context,
 	}
 
 	oldSecureValues, err := old.GetSecureValues()
-	if err != nil {
-		return AsErrorResult(err)
-	}
-	if len(secure) != len(oldSecureValues) {
+	if err != nil || len(secure) != len(oldSecureValues) {
 		return canReference()
 	}
 	for k, v := range secure {

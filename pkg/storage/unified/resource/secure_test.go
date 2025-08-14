@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -152,12 +153,36 @@ func TestSecureValues(t *testing.T) {
 				Name: "111",
 			},
 		}
-		old, _ := utils.MetaAccessor(obj)
-		require.NoError(t, err)
 		secureMock := secret.NewMockInlineSecureValueSupport(t)
 
-		pberr := canReferenceSecureValues(context.Background(), obj, old, secureMock)
+		pberr := canReferenceSecureValues(context.Background(), obj, obj, secureMock)
 		require.Nil(t, pberr)
 		secureMock.AssertExpectations(t) // CanReference should not be called
+	})
+
+	t.Run("upstream errors", func(t *testing.T) {
+		raw.Object["secure"] = map[string]any{
+			"A": common.InlineSecureValue{
+				Name: "111",
+			},
+		}
+		secureMock := secret.NewMockInlineSecureValueSupport(t)
+		secureMock.On("CanReference", mock.Anything, owner, "111").
+			Return(fmt.Errorf("nope")).Once() // <<< error in CanReference
+
+		pberr := canReferenceSecureValues(context.Background(), obj, nil, secureMock)
+		require.NotNil(t, pberr)
+		secureMock.AssertExpectations(t)
+
+		// Check CanReference when the old value is invalid
+		old, _ := utils.MetaAccessor(&unstructured.Unstructured{
+			Object: map[string]any{"secure": t}})
+
+		secureMock = secret.NewMockInlineSecureValueSupport(t)
+		secureMock.On("CanReference", mock.Anything, owner, "111").
+			Return(nil).Once()
+		pberr = canReferenceSecureValues(context.Background(), obj, old, secureMock)
+		require.Nil(t, pberr)
+		secureMock.AssertExpectations(t)
 	})
 }
