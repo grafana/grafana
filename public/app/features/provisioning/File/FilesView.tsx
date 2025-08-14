@@ -7,6 +7,8 @@ import { Repository, useGetRepositoryFilesQuery } from 'app/api/clients/provisio
 import { PROVISIONING_URL } from '../constants';
 import { FileDetails } from '../types';
 
+import { isFileHistorySupported } from './utils';
+
 interface FilesViewProps {
   repo: Repository;
 }
@@ -20,6 +22,7 @@ export function FilesView({ repo }: FilesViewProps) {
   const data = [...(query.data?.items ?? [])].filter((file) =>
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const showHistoryBtn = isFileHistorySupported(repo.spec?.type);
 
   const columns: Array<Column<FileDetails>> = [
     {
@@ -57,9 +60,11 @@ export function FilesView({ repo }: FilesViewProps) {
                 <Trans i18nKey="provisioning.files-view.columns.view">View</Trans>
               </LinkButton>
             )}
-            <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>
-              <Trans i18nKey="provisioning.files-view.columns.history">History</Trans>
-            </LinkButton>
+            {showHistoryBtn && (
+              <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}?repo_type=${repo.spec?.type}`}>
+                <Trans i18nKey="provisioning.files-view.columns.history">History</Trans>
+              </LinkButton>
+            )}
           </Stack>
         );
       },
