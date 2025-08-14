@@ -11,8 +11,6 @@ import (
 
 // prepareSecureValues will create any new secure values and register changes inside the provided objectForStorage
 // any call to this function MUST be followed by a call to info.finish(ctx, nil, store) to ensure that the secure values are cleaned up
-//
-// nolint:gocyclo
 func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor, previousObject utils.GrafanaMetaAccessor, v *objectForStorage) (err error) {
 	secure, err := obj.GetSecureValues()
 	if err != nil {
@@ -25,7 +23,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	var previous common.InlineSecureValues
 	if previousObject == nil {
 		if len(secure) == 0 {
-			return nil // create
+			return nil // nothing needs to change
 		}
 		if store == nil {
 			return fmt.Errorf("secure value support is not configured (create)")
@@ -39,7 +37,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		}
 		for _, p := range previous {
 			if p.Name == "" || p.Remove || !p.Create.IsZero() {
-				return fmt.Errorf("invalid state, saved values must always have a name")
+				return fmt.Errorf("invalid state, saved values must only have a name")
 			}
 		}
 
@@ -59,7 +57,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	for k, val := range secure {
 		before := previous[k]
 		if val.Name == "" {
-			if before.Name != "" {
+			if before.Name != "" { // implicitly delete previous secure value if the same field no longer references it
 				v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
 				delete(previous, k)
 			}
@@ -102,6 +100,11 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		}
 	}
 
+	return cleanupSecureValues(v, obj, secure)
+}
+
+// make sure the registered changes are unique and valid
+func cleanupSecureValues(v *objectForStorage, obj utils.GrafanaMetaAccessor, secure common.InlineSecureValues) error {
 	// Make sure the deleted list is unique and does not contain any referenced values
 	if len(v.deleteSecureValues) > 0 && len(secure) > 0 {
 		confirm := v.deleteSecureValues
@@ -125,7 +128,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	return obj.SetSecureValues(secure)
 }
 
-// Mutation hook that will update secure values
+// Mutation hook that will delete secure values
 func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor) error {
 	secure, err := obj.GetSecureValues()
 	if err != nil || len(secure) == 0 {

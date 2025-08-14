@@ -262,18 +262,14 @@
           const theme = window.grafanaBootData.user.theme;
           if (theme === "system") {
             const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-            if (darkQuery.matches) {
-              document.body.classList.add("theme-dark");
-              window.grafanaBootData.user.lightTheme = false;
-            } else {
-              document.body.classList.add("theme-light");
-              window.grafanaBootData.user.lightTheme = true;
-            }
+            window.grafanaBootData.user.lightTheme = !darkQuery.matches;
           }
-          const isLightTheme = window.grafanaBootData.user.lightTheme;
-          cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
 
+          const isLightTheme = window.grafanaBootData.user.lightTheme;
+
+          document.body.classList.add(isLightTheme ? "theme-light" : "theme-dark");
+
+          cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
         }
 
