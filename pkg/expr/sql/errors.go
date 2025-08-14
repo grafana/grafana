@@ -17,23 +17,23 @@ type GoMySQLServerError struct {
 	errorType string
 }
 
-// ErrorWithType is an interface that allows us to categorize errors with a string that can be attached to metrics as a label, logs, and traces.
-type ErrorWithType interface {
+// TypedError is an interface that allows us to categorize errors with a string that can be attached to metrics as a label, logs, and traces.
+type TypedError interface {
 	error
 	ErrorType() string
 }
 
-// et is a concrete implementation of ErrorWithType that holds an error and its type.
-type et struct {
+// ErrorWithType is a concrete implementation of ErrorWithType that holds an error and its type.
+type ErrorWithType struct {
 	errorType string
 	err       error
 }
 
-func (e *et) Error() string {
+func (e *ErrorWithType) Error() string {
 	return e.err.Error()
 }
 
-func (e *et) ErrorType() string {
+func (e *ErrorWithType) ErrorType() string {
 	return e.errorType
 }
 
@@ -107,7 +107,7 @@ var InputLimitExceededError = errutil.NewBase(
 	inputLimitExceededStr,
 	errutil.WithPublic(inputLimitExceededStr))
 
-func MakeInputLimitExceededError(refID string, inputLimit int64) ErrorWithType {
+func MakeInputLimitExceededError(refID string, inputLimit int64) TypedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId":      refID,
@@ -115,7 +115,7 @@ func MakeInputLimitExceededError(refID string, inputLimit int64) ErrorWithType {
 		},
 	}
 
-	return &et{errorType: "input_limit_exceeded", err: InputLimitExceededError.Build(data)}
+	return &ErrorWithType{errorType: "input_limit_exceeded", err: InputLimitExceededError.Build(data)}
 }
 
 var DuplicateStringColumnError = errutil.NewBase(
@@ -124,7 +124,7 @@ var DuplicateStringColumnError = errutil.NewBase(
 	errutil.WithPublic("SQL query returned duplicate combinations of string column values. Use GROUP BY or aggregation to return one row per combination."),
 )
 
-func MakeDuplicateStringColumnError(examples []string) ErrorWithType {
+func MakeDuplicateStringColumnError(examples []string) TypedError {
 	const limit = 5
 	sort.Strings(examples)
 	exampleStr := strings.Join(truncateExamples(examples, limit), ", ")
@@ -136,7 +136,7 @@ func MakeDuplicateStringColumnError(examples []string) ErrorWithType {
 		},
 	}
 
-	return &et{
+	return &ErrorWithType{
 		errorType: "duplicate_string_columns",
 		err:       DuplicateStringColumnError.Build(data),
 	}
@@ -158,7 +158,7 @@ var generalGMSError = errutil.NewBase(
 	generalGMSErrorStr,
 	errutil.WithPublic(generalGMSErrorStr))
 
-func MakeGeneralGMSError(err *GoMySQLServerError, refID string) ErrorWithType {
+func MakeGeneralGMSError(err *GoMySQLServerError, refID string) TypedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId": refID,
@@ -166,7 +166,7 @@ func MakeGeneralGMSError(err *GoMySQLServerError, refID string) ErrorWithType {
 		Error: err,
 	}
 
-	return &et{errorType: err.ErrorType(), err: generalGMSError.Build(data)}
+	return &ErrorWithType{errorType: err.ErrorType(), err: generalGMSError.Build(data)}
 }
 
 var timeoutStr = "query [{{ .Public.refId }}] timed out after {{ .Public.timeout }}"
@@ -177,7 +177,7 @@ var timeoutError = errutil.NewBase(
 	errutil.WithPublic(timeoutStr))
 
 // MakeTimeOutError creates an error for when a query times out because it took longer that the configured timeout.
-func MakeTimeOutError(err error, refID string, timeout time.Duration) ErrorWithType {
+func MakeTimeOutError(err error, refID string, timeout time.Duration) TypedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId":   refID,
@@ -187,7 +187,7 @@ func MakeTimeOutError(err error, refID string, timeout time.Duration) ErrorWithT
 		Error: err,
 	}
 
-	return &et{errorType: "timeout", err: timeoutError.Build(data)}
+	return &ErrorWithType{errorType: "timeout", err: timeoutError.Build(data)}
 }
 
 var CancelStr = "query [{{ .Public.refId }}] was cancelled before completion"
@@ -199,7 +199,7 @@ var cancelError = errutil.NewBase(
 
 // MakeCancelError creates an error for when a query is cancelled before completion.
 // Users won't see this error in the browser, rather an empty response when the browser cancels the connection.
-func MakeCancelError(err error, refID string) ErrorWithType {
+func MakeCancelError(err error, refID string) TypedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId": refID,
@@ -208,5 +208,5 @@ func MakeCancelError(err error, refID string) ErrorWithType {
 		Error: err,
 	}
 
-	return &et{errorType: "cancel", err: cancelError.Build(data)}
+	return &ErrorWithType{errorType: "cancel", err: cancelError.Build(data)}
 }
