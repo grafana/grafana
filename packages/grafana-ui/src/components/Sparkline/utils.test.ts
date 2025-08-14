@@ -172,6 +172,8 @@ describe('Get y range', () => {
       expected: [0, 2],
     },
   ])(`should return correct range for $description`, ({ field, expected }) => {
-    expect(getYRange(field, getAlignedFrame(field))).toEqual(expected);
+    const actual = getYRange(field, getAlignedFrame(field));
+    expect(actual).toEqual(expected);
+    expect(actual[0]).toBeLessThan(actual[1]!);
   });
 });
