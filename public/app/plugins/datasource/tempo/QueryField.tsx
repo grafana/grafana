@@ -58,7 +58,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
         queryType: DEFAULT_QUERY_TYPE,
       });
     }
-
+    // TODO: Remove this automatic check for native histograms once Tempo only supports native histograms https://github.com/grafana/grafana/issues/109708
     // indentify the service map can use native histograms
     const timeRange = this.props.range;
     const nativeHistograms = await this.props.datasource.getNativeHistograms(timeRange);
