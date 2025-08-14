@@ -156,3 +156,30 @@ export const isInteractionEvent = (event: EchoEvent): event is InteractionEchoEv
 export const isExperimentViewEvent = (event: EchoEvent): event is ExperimentViewEchoEvent => {
   return Boolean(event.payload.experimentId);
 };
+
+/**
+ * Describes the payload of a memory usage event.
+ *
+ * @public
+ */
+export interface MemoryUsageEventPayload {
+  totalJSHeapSize: number;
+  usedJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
+/**
+ * Describes memory usage event with predefined {@link EchoEventType.MemoryUsage} type.
+ *
+ * @public
+ */
+export type MemoryUsageEchoEvent = EchoEvent<EchoEventType.MemoryUsage, MemoryUsageEventPayload>;
+
+/**
+ * Memory usage event typeguard.
+ *
+ * @public
+ */
+export const isMemoryUsageEvent = (event: EchoEvent): event is MemoryUsageEchoEvent => {
+  return Boolean(event.payload.totalJSHeapSize);
+};
