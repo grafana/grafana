@@ -59,7 +59,6 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           continue;
         }
 
-        console.log('RowRepeaterBehavior: Row has new panels, performing repeat');
         this.performRepeat(true);
       }
     });
@@ -137,16 +136,14 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       const rowClone = isSourceRow
         ? rowToRepeat
         : rowToRepeat.clone({
+            key: getCloneKey(rowToRepeat.state.key!, rowIndex),
+            repeatSourceKey: rowToRepeat.state.key,
             y: (rowToRepeat.state.y ?? 0) + rowContentHeight * rowIndex + rowIndex,
             $behaviors: [],
             actions: undefined,
           });
 
-      const rowCloneKey = getCloneKey(rowToRepeat.state.key!, rowIndex);
-
       rowClone.setState({
-        key: isSourceRow ? rowToRepeat.state.key : rowCloneKey,
-        repeatSourceKey: isSourceRow ? undefined : rowToRepeat.state.key,
         $variables: new SceneVariableSet({
           variables: [
             new LocalValueVariable({
@@ -165,13 +162,14 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
       for (const sourceItem of rowContent) {
         const sourceItemY = sourceItem.state.y ?? 0;
-
-        const cloneItemY = sourceItemY + (rowContentHeight + 1) * rowIndex;
         const cloneItem = rowIndex > 0 ? sourceItem.clone() : sourceItem;
-        // Needed as all the items and rows exist as siblings in the underlying grid layout
-        const cloneItemKey = rowCloneKey + sourceItem.state.key!;
+        const cloneItemY = sourceItemY + (rowContentHeight + 1) * rowIndex;
 
-        cloneItem.setState({ y: cloneItemY, key: cloneItemKey });
+        // Update grid item keys on clone rows (not needed on source row)
+        // Needed to not have duplicate grid items keys in the same grid
+        if (rowIndex > 0) {
+          cloneItem.setState({ y: cloneItemY, key: rowClone.state.key + sourceItem.state.key! });
+        }
 
         children.push(cloneItem);
 
