@@ -73,18 +73,12 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    bootData: {
-      ...jest.requireActual('@grafana/runtime').config.bootData,
-      settings: {
-        ...jest.requireActual('@grafana/runtime').config.bootData.settings,
-        defaultDatasource: 'ds1',
-        datasources: {
-          ds1: {
-            name: 'ds-uid',
-            meta: {
-              id: 'grafana',
-            },
-          },
+    defaultDatasource: 'ds1',
+    datasources: {
+      ds1: {
+        name: 'ds-uid',
+        meta: {
+          id: 'grafana',
         },
       },
     },
