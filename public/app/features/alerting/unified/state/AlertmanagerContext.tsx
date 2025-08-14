@@ -6,6 +6,7 @@ import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
+import { useAlertmanagerConfig } from '../hooks/useAlertmanagerConfig';
 import { EXTRA_CONFIG_UID, isExtraConfig } from '../utils/alertmanager/extraConfigs';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import {
@@ -37,22 +38,29 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
   const allAvailableAlertManagers = useAlertManagersByPermission(accessType);
   const isExtraConfigEnabled = config.featureToggles.alertingImportAlertmanagerUI ?? false;
 
+  const { data: grafanaConfig } = useAlertmanagerConfig(isExtraConfigEnabled ? GRAFANA_RULES_SOURCE_NAME : undefined, {
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
+  const hasExtraConfigs = Boolean(grafanaConfig?.extra_config && grafanaConfig.extra_config.length > 0);
+
   const availableAlertManagers = React.useMemo(() => {
     const regularAlertManagers = allAvailableAlertManagers.availableInternalDataSources.concat(
       allAvailableAlertManagers.availableExternalDataSources
     );
 
-    const extraConfigDataSource: AlertManagerDataSource[] = isExtraConfigEnabled
-      ? [
-          {
-            name: EXTRA_CONFIG_UID,
-            displayName: 'Grafana (imported)',
-            imgUrl: grafanaIconSvg,
-            hasConfigurationAPI: false,
-            handleGrafanaManagedAlerts: true,
-          },
-        ]
-      : [];
+    const extraConfigDataSource: AlertManagerDataSource[] =
+      isExtraConfigEnabled && hasExtraConfigs
+        ? [
+            {
+              name: EXTRA_CONFIG_UID,
+              displayName: 'Grafana (imported)',
+              imgUrl: grafanaIconSvg,
+              hasConfigurationAPI: false,
+              handleGrafanaManagedAlerts: true,
+            },
+          ]
+        : [];
 
     // list in order: Grafana -> Extra Config -> Extra Alertmanagers
     const grafanaAlertmanager = regularAlertManagers.find((am) => am.name === GRAFANA_RULES_SOURCE_NAME);
@@ -67,7 +75,7 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
     orderedAlertManagers.push(...datasourceAlertmanagers);
 
     return orderedAlertManagers;
-  }, [allAvailableAlertManagers, isExtraConfigEnabled]);
+  }, [allAvailableAlertManagers, isExtraConfigEnabled, hasExtraConfigs]);
 
   const updateSelectedAlertmanager = React.useCallback(
     (selectedAlertManager: string) => {
