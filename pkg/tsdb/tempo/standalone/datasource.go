@@ -6,17 +6,18 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	tempo "github.com/grafana/grafana/pkg/tsdb/tempo"
 )
-
-type Datasource struct {
-	Service *tempo.Service
-}
 
 var (
 	_ backend.QueryDataHandler = (*Datasource)(nil)
 	_ backend.StreamHandler    = (*Datasource)(nil)
 )
+
+type Datasource struct {
+	Service *tempo.Service
+}
 
 func NewDatasource(c context.Context, b backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &Datasource{

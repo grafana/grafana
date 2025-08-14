@@ -130,7 +130,7 @@ func handleConversionError(ctxLogger log.Logger, span trace.Span, err error) (*b
 	return nil, nil
 }
 
-func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *Datasource, model *dataquery.TempoQuery, query backend.DataQuery, span trace.Span) (*http.Response, []byte, error) {
+func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *DatasourceInfo, model *dataquery.TempoQuery, query backend.DataQuery, span trace.Span) (*http.Response, []byte, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	request, err := s.createMetricsQuery(ctx, dsInfo, model, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
 	if err != nil {
@@ -156,7 +156,7 @@ func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *Datasource, m
 	return resp, body, nil
 }
 
-func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *Datasource, query *dataquery.TempoQuery, start int64, end int64) (*http.Request, error) {
+func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *DatasourceInfo, query *dataquery.TempoQuery, start int64, end int64) (*http.Request, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
 	queryType := "query_range"
