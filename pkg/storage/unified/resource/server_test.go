@@ -283,7 +283,7 @@ func TestSimpleServer(t *testing.T) {
 			require.NoError(t, err)
 			secureMock := secret.NewMockInlineSecureValueSupport(t)
 			secureMock.On("CanReference", mock.Anything, owner, "111").
-				Return(true, nil).Once()
+				Return(nil).Once()
 			server.secure = secureMock
 			evt, errResult := server.newEvent(ctx, testUserA, key, objBytes, nil)
 			require.Nil(t, errResult)
