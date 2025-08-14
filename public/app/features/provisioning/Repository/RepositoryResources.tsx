@@ -4,6 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { CellProps, Column, FilterInput, InteractiveTable, Link, LinkButton, Spinner, Stack } from '@grafana/ui';
 import { Repository, ResourceListItem, useGetRepositoryResourcesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { isFileHistorySupported } from '../File/utils';
 import { PROVISIONING_URL } from '../constants';
 
 interface RepoProps {
@@ -24,7 +25,7 @@ export function RepositoryResources({ repo }: RepoProps) {
   );
 
   // hide history button when repo type is pure git as it won't be implemented.
-  const showHistoryBtn = repo.spec?.type !== 'git';
+  const historySupported = isFileHistorySupported(repo.spec?.type);
 
   const columns: Array<Column<ResourceListItem>> = useMemo(
     () => [
@@ -101,7 +102,7 @@ export function RepositoryResources({ repo }: RepoProps) {
                   <Trans i18nKey="provisioning.repository-resources.columns.view-folder">View</Trans>
                 </LinkButton>
               )}
-              {showHistoryBtn && (
+              {historySupported && (
                 <LinkButton
                   href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}?repo_type=${repo.spec?.type}`}
                 >
@@ -113,7 +114,7 @@ export function RepositoryResources({ repo }: RepoProps) {
         },
       },
     ],
-    [repo.metadata?.name, showHistoryBtn, repo.spec?.type]
+    [repo.metadata?.name, historySupported, repo.spec?.type]
   );
 
   if (query.isLoading) {

@@ -15,19 +15,21 @@ import { PROVISIONING_URL } from '../constants';
 import { HistoryListResponse } from '../types';
 import { formatTimestamp } from '../utils/time';
 
+import { isFileHistorySupported } from './utils';
+
 export default function FileHistoryPage() {
   const params = useParams();
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
   const [urlParams] = useUrlParams();
   const repoType = urlParams.get('repo_type');
-  const isPureGit = repoType === 'git';
+  const historyNotSupported = !isFileHistorySupported(repoType);
   const query = useGetRepositoryStatusQuery({ name });
-  const history = useGetRepositoryHistoryWithPathQuery(isPureGit ? skipToken : { name, path });
-  const notFound = (query.isError && isNotFoundError(query.error)) || isPureGit;
+  const history = useGetRepositoryHistoryWithPathQuery(historyNotSupported ? skipToken : { name, path });
+  const notFound = (query.isError && isNotFoundError(query.error)) || historyNotSupported;
 
-  const notFoundErrorMsg = isPureGit
-    ? t('provisioning.file-history-page.pure-git-not-support', 'File history is not supported for pure git')
+  const notFoundErrorMsg = historyNotSupported
+    ? t('provisioning.file-history-page.history-not-supported', 'File history is not supported for this repository')
     : t('provisioning.file-history-page.repository-not-found', 'Repository not found');
 
   return (

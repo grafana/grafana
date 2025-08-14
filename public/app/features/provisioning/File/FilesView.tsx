@@ -7,6 +7,8 @@ import { Repository, useGetRepositoryFilesQuery } from 'app/api/clients/provisio
 import { PROVISIONING_URL } from '../constants';
 import { FileDetails } from '../types';
 
+import { isFileHistorySupported } from './utils';
+
 interface FilesViewProps {
   repo: Repository;
 }
@@ -20,7 +22,7 @@ export function FilesView({ repo }: FilesViewProps) {
   const data = [...(query.data?.items ?? [])].filter((file) =>
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const showHistoryBtn = repo.spec?.type !== 'git';
+  const showHistoryBtn = isFileHistorySupported(repo.spec?.type);
 
   const columns: Array<Column<FileDetails>> = [
     {

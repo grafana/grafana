@@ -11251,7 +11251,7 @@
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
-      "pure-git-not-support": "File history is not supported for pure git",
+      "history-not-supported": "File history is not supported for this repository",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
       "repository-not-found": "Repository not found"
     },
