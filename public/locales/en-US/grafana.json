@@ -11470,6 +11470,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "Compare branch",
+        "open-pull-request": "Open pull request",
+        "view-branch": "View branch",
         "view-repository": "View repository"
       },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
