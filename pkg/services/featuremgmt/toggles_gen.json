@@ -244,6 +244,21 @@
     },
     {
       "metadata": {
+        "name": "alertingImportAlertmanagerUI",
+        "resourceVersion": "1754585847887",
+        "creationTimestamp": "2025-08-07T16:57:27Z"
+      },
+      "spec": {
+        "description": "Enables the UI to see imported Alertmanager configuration",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingImportYAMLUI",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-05-21T15:59:41Z"
@@ -3038,6 +3053,19 @@
         "description": "Use fixed-width numbers globally in the UI",
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamFolders",
+        "resourceVersion": "1755099058649",
+        "creationTimestamp": "2025-08-13T15:30:58Z"
+      },
+      "spec": {
+        "description": "Enables team folders functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "expression": "false"
       }
     },

@@ -1012,6 +1012,11 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
+  * Enables the UI to see imported Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerUI?: boolean;
+  /**
   * Enables image sharing functionality for dashboards
   */
   sharingDashboardImage?: boolean;
@@ -1098,4 +1103,9 @@ export interface FeatureToggles {
   * @default false
   */
   unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
+  /**
+  * Enables team folders functionality
+  * @default false
+  */
+  teamFolders?: boolean;
 }
