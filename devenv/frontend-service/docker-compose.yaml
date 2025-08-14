@@ -41,6 +41,7 @@ services:
       GF_AUTH_LOGIN_COOKIE_NAME: grafana_fs_dev_login # set a custom cookie name to not conflict with other instances running on localhost
       OTEL_SERVICE_NAME: grafana-api
       GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
+      GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: jaeger,w3c
     ports:
       - '3011:3000'
     labels:
@@ -66,6 +67,7 @@ services:
       GF_LOG_LEVEL: info
       OTEL_SERVICE_NAME: frontend-service
       GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
+      GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: jaeger,w3c
 
   postgres:
     image: postgres:16.1-alpine3.19
