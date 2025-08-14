@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "Klasör boş"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Tüm kaynaklar başarıyla silindi",
-      "all-moved": "Tüm kaynaklar başarıyla taşındı",
-      "button-done": "Tamamlandı",
-      "progress-title": "Başarılı",
-      "failed-alert_one": "{{count}} öge başarısız oldu",
-      "failed-alert_other": "{{count}} öge başarısız oldu"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "İptal et",
       "button-delete": "Sil",
       "button-deleting": "Siliniyor...",
       "delete-warning": "Bu işlem, seçilen klasörleri ve alt öğelerini silecektir. Bu işlem toplamda şunları etkileyecektir:",
-      "error-path-not-found": "Yol bulunamadı"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "İptal et",
       "button-move": "Taşı",
       "button-moving": "Taşınıyor...",
-      "deleting": "Siliniyor",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Dosya içeriği bulunamadı",
-      "error-path-not-found": "Yol bulunamadı",
-      "error-target-folder-path-missing": "Hedef klasör yolu eksik",
-      "error-title": "Hedef Klasör Hatası",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Bu işlem, seçilen klasörleri ve alt öğelerini taşıyacaktır. Bu işlem toplamda şunları etkileyecektir:",
-      "moving": "Taşınıyor",
-      "progress": "İlerleme: {{current}} / {{total}}",
       "target-folder": "Hedef Klasör"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} öge"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "{{title}} klasörünü daralt",
       "expand-folder-button": "{{title}} klasörünü genişlet",
       "name-column": "Ad",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Değişken değerine bağlı olarak {{type}} ögesini dinamik şekilde göster veya gizle.",
           "label": "Şablon değişkeni",
           "name": "Ad",
           "operator": {
             "equals": "Eşittir",
-            "not-equals": "Eşit değil"
+            "matches": "",
+            "not-equals": "Eşit değil",
+            "not-matches": ""
           },
           "value": "Değer"
         }
@@ -5347,6 +5343,7 @@
       "playlist-next": "Sonraki panoya git",
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
+      "read-only": "",
       "refresh": "Panoyu yenile",
       "save": "Panoyu kaydet",
       "save-dashboard": {
@@ -5399,6 +5396,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Dönüşüm ara",
       "show-images": "Resimleri göster",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Başka bir dönüşüm ekle",
       "view-all": "Tümünü görüntüle"
     },
@@ -7475,6 +7475,13 @@
       "tooltip-title": "Matematik işleci",
       "tooltip-trigger": "İfade"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "İşlev",
       "label-input": "Girdi",
@@ -7489,6 +7496,11 @@
       "label-resample-to": "Şuna yeniden örnekle:",
       "label-upsample": "Örneklemeyi artır",
       "tooltip-s-m-h": "10 sn, 1 dk, 30 dk, 1 sa"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Girdi"
@@ -7506,7 +7518,8 @@
     "loading": "Klasörler yükleniyor..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10861,7 +10874,6 @@
         "downloads": "İndirmeler",
         "from": "Başlangıç",
         "installedVersion": "Yüklü Sürüm",
-        "lastCommitDate": "Son yürütme tarihi:",
         "latestReleaseDate": "Son yayın tarihi:",
         "latestVersion": "En Son Sürüm",
         "license": "Lisans",
@@ -11414,6 +11426,8 @@
         "subtitle": "Tüm Grafana örneğinizi haricî depolama üzerinden senkronize edip yönetmek istiyorsanız bu seçeneği kullanın."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "etkin işler",
       "column-action": "Eylem",
@@ -11432,6 +11446,7 @@
       "get-repository-meta": {
         "webhook": "Web kancası"
       },
+      "read-only-badge": "",
       "settings": "Ayarlar",
       "view": "Görüntüle"
     },
@@ -11442,8 +11457,13 @@
       "title-repository-is-unhealthy": "Depo iyi durumda değil"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Kaynaklarınız artık harici depolamanızda ve örneğinize sağlanmış durumda. Şu andan itibaren örneğiniz ve harici depolama senkronize edilecektir.",
-      "view-repository": "Depoyu görüntüle"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Kontrol Eden:",
@@ -11842,6 +11862,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Sorgu satırını daralt",
       "datasource-help": "Veri kaynağı yardımını göster",
       "drag-and-drop": "Yeniden düzenlemek için sürükleyip bırakın",
@@ -11852,7 +11873,11 @@
       "replace-query-from-library": "Kütüphaneden sorguyla değiştir",
       "show-response": "Yanıtı göster"
     },
-    "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
+    "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor.",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12088,7 +12113,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Hizmet hesabı ekle",
-      "message": "Hizmet hesabı bulunamadı",
+      "message": "",
       "more-info": "Diğer uygulamaların API erişimi için özel izinler sağlayabileceğinizi lütfen unutmayın.",
       "title": "Henüz bir hizmet hesabı oluşturmadınız"
     }
@@ -12481,6 +12506,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sırala"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
