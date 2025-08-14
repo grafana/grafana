@@ -102,7 +102,9 @@ export function RepositoryResources({ repo }: RepoProps) {
                 </LinkButton>
               )}
               {showHistoryBtn && (
-                <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>
+                <LinkButton
+                  href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}?repo_type=${repo.spec?.type}`}
+                >
                   <Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans>
                 </LinkButton>
               )}
@@ -111,7 +113,7 @@ export function RepositoryResources({ repo }: RepoProps) {
         },
       },
     ],
-    [repo.metadata?.name, showHistoryBtn]
+    [repo.metadata?.name, showHistoryBtn, repo.spec?.type]
   );
 
   if (query.isLoading) {

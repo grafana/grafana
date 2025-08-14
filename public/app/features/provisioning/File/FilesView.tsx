@@ -59,7 +59,7 @@ export function FilesView({ repo }: FilesViewProps) {
               </LinkButton>
             )}
             {showHistoryBtn && (
-              <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>
+              <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}?repo_type=${repo.spec?.type}`}>
                 <Trans i18nKey="provisioning.files-view.columns.history">History</Trans>
               </LinkButton>
             )}
