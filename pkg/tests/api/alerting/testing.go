@@ -329,11 +329,6 @@ func (a apiClient) AssignReceiverPermission(t *testing.T, receiverUID string, cm
 // CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
 func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUID ...string) {
 	t.Helper()
-
-	// Ensure permissions are loaded before attempting folder creation
-	// This prevents race conditions during Grafana startup
-	a.ReloadCachedPermissions(t)
-
 	cmd := folder.CreateFolderCommand{
 		UID:   uID,
 		Title: title,
@@ -355,6 +350,7 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUI
 	}()
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	a.ReloadCachedPermissions(t)
 }
 
 func (a apiClient) ReloadAlertingFileProvisioning(t *testing.T) {
@@ -1483,11 +1479,6 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 
 func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, params *apimodels.ExportQueryParams) (int, string) {
 	t.Helper()
-
-	// Ensure permissions are loaded before attempting provisioning API calls
-	// This prevents race conditions during Grafana startup
-	a.ReloadCachedPermissions(t)
-
 	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s/export", a.url, ruleUID))
 	require.NoError(t, err)
 	if params != nil {
