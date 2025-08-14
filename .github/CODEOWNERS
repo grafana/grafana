@@ -555,10 +555,10 @@
 /packages/grafana-o11y-ds-frontend/src/IntervalInput/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/src/NodeGraph/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
 
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
