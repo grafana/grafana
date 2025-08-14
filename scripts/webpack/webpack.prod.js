@@ -11,7 +11,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 module.exports = (env = {}) =>
   merge(common, {
     mode: 'production',
-    devtool: 'source-map',
+    //devtool: 'source-map',
 
     entry: {
       dark: './public/sass/grafana.dark.scss',
