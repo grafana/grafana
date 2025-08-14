@@ -16,6 +16,12 @@ const emptyFilters = {
   stateTo: 'all',
 };
 
+interface HistoryRecordFilters {
+  labels: string;
+  stateFrom?: string;
+  stateTo?: string;
+}
+
 /**
  * This hook filters the history records based on the label, stateTo and stateFrom filters.
  * @param filterInLabel
@@ -24,12 +30,12 @@ const emptyFilters = {
  * @param stateHistory the original history records
  * @returns the filtered history records
  */
-export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters = emptyFilters) {
+export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
   return useMemo(() => ruleHistoryToRecords(stateHistory, filters), [filters, stateHistory]);
 }
 
-export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters = emptyFilters) {
-  const { labels, stateFrom, stateTo } = filters;
+export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
+  const { labels, stateFrom = 'all', stateTo = 'all' } = filters;
 
   if (!stateHistory?.data) {
     return { historyRecords: [] };

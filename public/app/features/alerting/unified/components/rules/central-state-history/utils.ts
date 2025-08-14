@@ -12,7 +12,6 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/internal';
-import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
@@ -42,14 +41,10 @@ export function parseBackendLabelFilters(labelFilter: string): Record<string, st
 }
 
 interface HistoryFilters {
-  stateTo: string;
-  stateFrom: string;
   labels: string;
 }
 
 const emptyFilters: HistoryFilters = {
-  stateTo: 'all',
-  stateFrom: 'all',
   labels: '',
 };
 
@@ -60,30 +55,17 @@ const emptyFilters: HistoryFilters = {
  * This allows us to be able to filter by labels and states in the groupDataFramesByTime function.
  */
 export function historyResultToDataFrame({ data }: DataFrameJSON, filters = emptyFilters): DataFrame[] {
-  const { stateTo, stateFrom } = filters;
-
   // Extract timestamps and lines from the response
   const [tsValues = [], lines = []] = data?.values ?? [];
   const timestamps = isNumbers(tsValues) ? tsValues : [];
 
-  // Filter log records by state and create a list of log records with the timestamp and line
   const logRecords = timestamps.reduce<LogRecord[]>((acc, timestamp: number, index: number) => {
     const line = lines[index];
     if (!isLine(line)) {
       return acc;
     }
 
-    // we have to filter out by state at that point , because we are going to group by timestamp and these states are going to be lost
-    const baseStateTo = mapStateWithReasonToBaseState(line.current);
-    const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
-    const stateToMatch = stateTo !== StateFilterValues.all ? stateTo === baseStateTo : true;
-    const stateFromMatch = stateFrom !== StateFilterValues.all ? stateFrom === baseStateFrom : true;
-
-    // filter by state
-    if (stateToMatch && stateFromMatch) {
-      acc.push({ timestamp, line });
-    }
-
+    acc.push({ timestamp, line });
     return acc;
   }, []);
 
