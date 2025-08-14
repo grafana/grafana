@@ -88,8 +88,21 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		for _, neededVar := range node.NeedsVars() {
 			if res, ok := vars[neededVar]; ok {
 				if res.Error != nil {
+					var depErr error
+					if node.NodeType() == TypeCMDNode {
+						if node.(*CMDNode).CMDType == TypeSQL {
+							e := sql.MakeSQLDependencyError(node.RefID(), neededVar)
+							
+							// although the SQL expression won't be executed,
+							// we track a dependency error on the metric.
+							s.metrics.SqlCommandCount.WithLabelValues("error", e.ErrorType())
+							depErr = e
+						}
+					} else {
+						depErr = MakeDependencyError(node.RefID(), neededVar)
+					}
 					errResult := mathexp.Results{
-						Error: MakeDependencyError(node.RefID(), neededVar),
+						Error: depErr,
 					}
 					vars[node.RefID()] = errResult
 					hasDepError = true
