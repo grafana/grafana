@@ -216,7 +216,7 @@ export class GrafanaApp {
 
       // Login redirect requires locationUtil to be initialized
       locationUtil.initialize({
-        config,
+        config: window.grafanaBootData.settings,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });

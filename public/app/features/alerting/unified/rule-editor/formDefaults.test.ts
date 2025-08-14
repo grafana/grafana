@@ -1,4 +1,3 @@
-import { GrafanaConfig } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
@@ -201,8 +200,7 @@ describe('getDefaultManualRouting', () => {
 });
 
 describe('getDefaultFormValues', () => {
-  // This is for Typescript. GrafanaBootConfig returns narrower types than GrafanaConfig
-  const grafanaConfig: GrafanaConfig = config;
+  const grafanaConfig = config;
   const uaConfig = grafanaConfig.unifiedAlerting;
 
   const mockGetInstanceSettings = jest.fn();

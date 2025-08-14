@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext } from 'react';
 
-import { GrafanaConfig } from '@grafana/data';
-import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
+import { LocationService, locationService, BackendSrv, GrafanaBootConfig } from '@grafana/runtime';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
@@ -10,7 +9,7 @@ import { KeybindingSrv } from '../services/keybindingSrv';
 export interface GrafanaContextType {
   backend: BackendSrv;
   location: LocationService;
-  config: GrafanaConfig;
+  config: GrafanaBootConfig;
   chrome: AppChromeService;
   keybindings: KeybindingSrv;
   newAssetsChecker: NewFrontendAssetsChecker;

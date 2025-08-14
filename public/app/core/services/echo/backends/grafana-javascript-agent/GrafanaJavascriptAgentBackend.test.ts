@@ -55,8 +55,10 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   });
 
   const buildInfo: BuildInfo = {
+    buildstamp: 12345,
     version: '1.0',
     commit: 'abcd123',
+    commitShort: 'abc',
     env: 'production',
     versionString: 'Grafana v1.0 (abcd123)',
     edition: GrafanaEdition.OpenSource,

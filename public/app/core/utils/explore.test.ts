@@ -7,7 +7,6 @@ import {
   LogsSortOrder,
   serializeStateToUrlParam,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -174,7 +173,7 @@ describe('getExploreUrl', () => {
     afterAll(() => {
       // Reset locationUtil
       locationUtil.initialize({
-        config,
+        config: window.grafanaBootData.settings,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });
