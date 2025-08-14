@@ -657,6 +657,7 @@ func TestMetaAccessor(t *testing.T) {
 		raw.Object["secure"] = t
 		sv, err = obj.GetSecureValues()
 		require.Error(t, err)
+		require.Nil(t, sv)
 		delete(raw.Object, "secure")
 	})
 

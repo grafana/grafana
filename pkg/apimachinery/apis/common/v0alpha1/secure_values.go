@@ -46,7 +46,7 @@ func (v InlineSecureValue) IsZero() bool {
 }
 
 // OpenAPIDefinition returns the JSONSchema that manually ensures oneOf(create | name | remove) is set.
-func (v InlineSecureValue) OpenAPIDefinition() openapi.OpenAPIDefinition {
+func (_ InlineSecureValue) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	return openapi.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

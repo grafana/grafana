@@ -66,8 +66,9 @@ func TestSecureValues(t *testing.T) {
 
 		t.Run("Validate OneOf", func(t *testing.T) {
 			def := common.InlineSecureValue{}.OpenAPIDefinition()
-			// jj, _ := json.MarshalIndent(def.Schema, "", "  ")
-			// fmt.Printf("%s", string(jj))
+			jj, _ := json.MarshalIndent(def.Schema, "", "  ")
+			fmt.Printf("%s", string(jj))
+			t.FailNow()
 
 			validator := validate.NewSchemaValidator(&def.Schema, nil, "", strfmt.Default)
 
