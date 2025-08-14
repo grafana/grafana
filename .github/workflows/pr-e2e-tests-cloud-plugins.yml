@@ -25,6 +25,9 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: grafana/shared-workflows/actions/login-to-gar@login-to-gar-v0.4.0
         id: login-to-gar
         with:
