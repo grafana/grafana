@@ -6,21 +6,27 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { ConditionalRendering } from './ConditionalRendering';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 
-export function useConditionalRenderingEditor(
-  conditionalRendering?: ConditionalRendering,
-  disabledText?: string
-): OptionsPaneCategoryDescriptor {
-  const title = t('dashboard.conditional-rendering.root.title', 'Show / hide rules');
-
-  let conditionalRenderingToRender =
-    conditionalRendering ??
-    new ConditionalRendering({
+let placeholderConditionalRendering: ConditionalRendering | undefined;
+function getPlaceholderConditionalRendering(): ConditionalRendering {
+  if (!placeholderConditionalRendering) {
+    placeholderConditionalRendering = new ConditionalRendering({
       rootGroup: new ConditionalRenderingGroup({
         visibility: 'show',
         condition: 'and',
         value: [],
       }),
     });
+  }
+  return placeholderConditionalRendering;
+}
+
+export function useConditionalRenderingEditor(
+  conditionalRendering?: ConditionalRendering,
+  disabledText?: string
+): OptionsPaneCategoryDescriptor {
+  const title = t('dashboard.conditional-rendering.root.title', 'Show / hide rules');
+
+  const conditionalRenderingToRender = conditionalRendering ?? getPlaceholderConditionalRendering();
 
   return new OptionsPaneCategoryDescriptor({
     title,
@@ -35,9 +41,13 @@ export function useConditionalRenderingEditor(
     renderTitle: () => (
       <Stack direction="row" gap={1} alignItems="center">
         <div>{title}</div>
-        <Tooltip content={conditionalRenderingToRender.info}>
-          <Icon name={!conditionalRenderingToRender.evaluate() ? 'eye-slash' : 'eye'} />
-        </Tooltip>
+        {conditionalRendering ? (
+          <Tooltip content={conditionalRenderingToRender.info}>
+            <Icon name={!conditionalRenderingToRender.evaluate() ? 'eye-slash' : 'eye'} />
+          </Tooltip>
+        ) : (
+          <Icon name="eye-slash" />
+        )}
       </Stack>
     ),
     isOpenDefault: true,
