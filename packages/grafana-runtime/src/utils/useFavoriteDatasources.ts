@@ -2,9 +2,20 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 
+import { config } from '../config';
+
 import { UserStorage } from './userStorage';
 
 const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
+
+export type FavoriteDatasources = {
+  enabled: boolean;
+  favoriteDatasources: string[];
+  initialFavoriteDataSources: string[];
+  addFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
+  removeFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
+  isFavoriteDatasource: (dsUid: string) => boolean;
+};
 
 /**
  * A hook for managing favorite data sources using user storage.
@@ -12,6 +23,7 @@ const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
  * using the backend user storage (with localStorage fallback).
  *
  * @returns An object containing:
+ * - A boolean indicating if the feature is enabled
  * - An array of favorite data source UIDs
  * - An array of favorite data source UIDs that were initially loaded from storage
  * - A function to add a data source to favorites
@@ -19,13 +31,18 @@ const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
  * - A function to check if a data source is favorited
  * @public
  */
-export function useFavoriteDatasources(): {
-  favoriteDatasources: string[];
-  initialFavoriteDataSources: string[];
-  addFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
-  removeFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
-  isFavoriteDatasource: (dsUid: string) => boolean;
-} {
+export function useFavoriteDatasources(): FavoriteDatasources {
+  if (!config.featureToggles.favoriteDatasources) {
+    return {
+      enabled: false,
+      favoriteDatasources: [],
+      initialFavoriteDataSources: [],
+      addFavoriteDatasource: () => {},
+      removeFavoriteDatasource: () => {},
+      isFavoriteDatasource: () => false,
+    };
+  }
+
   const [userStorage] = useState(() => new UserStorage('grafana-runtime'));
   const [favoriteDatasources, setFavoriteDatasources] = useState<string[]>([]);
   const [initialFavoriteDataSources, setInitialFavoriteDataSources] = useState<string[]>([]);
@@ -86,6 +103,7 @@ export function useFavoriteDatasources(): {
   );
 
   return {
+    enabled: true,
     favoriteDatasources,
     addFavoriteDatasource,
     removeFavoriteDatasource,

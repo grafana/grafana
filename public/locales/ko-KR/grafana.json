@@ -5324,6 +5324,7 @@
       "playlist-next": "다음 대시보드로 이동",
       "playlist-previous": "이전 대시보드로 이동",
       "playlist-stop": "플레이리스트 중지",
+      "read-only": "",
       "refresh": "대시보드 새로 고침",
       "save": "대시보드 저장",
       "save-dashboard": {
@@ -7453,6 +7454,13 @@
       "tooltip-title": "수학 연산자",
       "tooltip-trigger": "표현식"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "함수",
       "label-input": "입력",
@@ -7467,6 +7475,11 @@
       "label-resample-to": "리샘플 기준",
       "label-upsample": "업샘플",
       "tooltip-s-m-h": "10초, 1분, 30분, 1시간"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "입력"
@@ -7484,7 +7497,8 @@
     "loading": "폴더 로딩 중..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10828,7 +10842,6 @@
         "downloads": "다운로드",
         "from": "최저",
         "installedVersion": "설치된 버전",
-        "lastCommitDate": "마지막 담당 날짜:",
         "latestReleaseDate": "최신 릴리스 날짜:",
         "latestVersion": "최신 버전",
         "license": "라이선스",
@@ -11378,6 +11391,8 @@
         "subtitle": "외부 스토리지를 통해 전체 Grafana 인스턴스를 동기화하고 관리하려면 이 옵션을 사용하세요."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "활성 작업",
       "column-action": "동작",
@@ -11396,6 +11411,7 @@
       "get-repository-meta": {
         "webhook": "웹훅"
       },
+      "read-only-badge": "",
       "settings": "설정",
       "view": "보기"
     },
@@ -11810,6 +11826,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "쿼리 행 접기",
       "datasource-help": "데이터 소스 도움말 표시",
       "drag-and-drop": "드래그 앤 드롭으로 순서 변경",
@@ -11820,7 +11837,11 @@
       "replace-query-from-library": "라이브러리의 쿼리로 교체",
       "show-response": "응답 표시"
     },
-    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
+    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다.",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12053,7 +12074,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "서비스 계정 추가",
-      "message": "찾은 서비스 계정 없음",
+      "message": "",
       "more-info": "다른 애플리케이션에 대한 API 액세스 권한을 특정할 수 있습니다.",
       "title": "아직 생성된 서비스 계정이 없습니다."
     }
@@ -12445,6 +12466,21 @@
   },
   "sort-picker": {
     "select-aria-label": "정렬"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
