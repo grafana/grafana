@@ -502,6 +502,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	t.Run("DELETE resource owned by different repository - should fail", func(t *testing.T) {
 		// Create a file manually in the second repo which is already in first one
 		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo2/conflicting-delete.json")
+		printFileTree(t, helper.ProvisioningPath)
 		result := helper.AdminREST.Delete().
 			Namespace("default").
 			Resource("repositories").

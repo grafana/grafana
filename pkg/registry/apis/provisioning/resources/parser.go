@@ -121,7 +121,6 @@ type ParsedResource struct {
 	Errors []string
 }
 
-
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
 	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
@@ -169,8 +168,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
 		return nil, apierrors.NewBadRequest("the file namespace does not match target namespace")
 	}
-
 	obj.SetNamespace(r.repo.Namespace)
+
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
 		Identity: r.repo.Name,
@@ -212,7 +211,6 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	return parsed, nil
 }
 
-
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
 		return nil // this already ran (and helpful for testing)
@@ -237,18 +235,18 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	// FIXME: shouldn't we check for the specific error?
 	// Dry run CREATE or UPDATE
 	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
-	
+
 	// Check for ownership conflicts after fetching existing resource
 	requestingManager := utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
 		Identity: f.Repo.Name,
 	}
-	
+
 	// Check for ownership conflicts after fetching existing resource
 	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
-	
+
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
@@ -271,7 +269,6 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to find client")
 	}
 
-
 	// Always use the provisioning identity when writing
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
 	if err != nil {
@@ -288,12 +285,12 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		Kind:     utils.ManagerKindRepo,
 		Identity: f.Repo.Name,
 	}
-	
+
 	// If we don't have existing resource from DryRun, fetch it now
 	if f.DryRunResponse == nil {
 		f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
 	}
-	
+
 	// Check ownership with the existing resource (if any)
 	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
