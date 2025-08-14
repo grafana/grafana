@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -114,15 +113,6 @@ func (s *frontendService) routeGet(m *web.Mux, pattern string, h ...web.Handler)
 
 // Apply the same middleware patterns as the main HTTP server
 func (s *frontendService) addMiddlewares(m *web.Mux) {
-
-	m.Use(func(ctx *web.Context) {
-		args := []interface{}{"path", ctx.Req.URL.Path}
-		for k, v := range ctx.Req.Header {
-			args = append(args, k, strings.Join(v, ","))
-		}
-		s.log.Info("Request headers", args...)
-	})
-
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
 
 	m.Use(requestmeta.SetupRequestMetadata())

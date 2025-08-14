@@ -595,14 +595,6 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
-	m.Use(func(ctx *web.Context) {
-		args := []interface{}{"path", ctx.Req.URL.Path}
-		for k, v := range ctx.Req.Header {
-			args = append(args, k, strings.Join(v, ","))
-		}
-		hs.log.Info("Request headers", args...)
-	})
-
 	m.Use(requestmeta.SetupRequestMetadata())
 	m.Use(middleware.RequestTracing(hs.tracer, middleware.SkipTracingPaths))
 	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
