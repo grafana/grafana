@@ -58,7 +58,7 @@ jobs:
       - id: extract-creds
         # see https://github.com/grafana/oss-plugin-partnerships/blob/a77040d0456003cd258668b61d542dc7c75db5b5/e2e/scripts/deploy.sh#L25 for path
         run: |
-          docker cp cpp-e2e-deploy:/outputs.json /outputs.json
+          docker cp cpp-e2e-deploy:/outputs.json /tmp/outputs.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

@@ -4,12 +4,12 @@ import { Page } from 'playwright-core';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  test,
-  expect,
   CreateDataSourcePageArgs,
+  DashboardPage,
   DataSourceConfigPage,
   E2ESelectorGroups,
-  DashboardPage,
+  expect,
+  test,
 } from '@grafana/plugin-e2e';
 
 import { AzureQueryType } from '../../public/app/plugins/datasource/azuremonitor/dataquery.gen';
@@ -83,7 +83,7 @@ test.describe(
       // Check if we're running in CI
       const CI = process.env.CI;
       if (CI) {
-        const outputs = JSON.parse(readFileSync('/outputs.json', 'utf8'));
+        const outputs = JSON.parse(readFileSync('/tmp/outputs.json', 'utf8'));
         datasourceConfig = {
           jsonData: {
             cloudName: 'Azure',
