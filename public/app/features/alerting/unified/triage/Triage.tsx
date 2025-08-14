@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { scaleUtc } from 'd3-scale';
-import { subDays } from 'date-fns';
+import { subDays, subHours } from 'date-fns';
 import { times } from 'lodash';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -15,7 +15,7 @@ import { EditorColumnHeader } from '../components/contact-points/templates/Edito
 type Domain = [Date, Date];
 
 export const TriagePage = () => {
-  const domain = [subDays(new Date(), 7), new Date()];
+  const domain = [subHours(new Date(), 1), new Date()];
 
   return (
     <AlertingPageWrapper
@@ -40,7 +40,6 @@ const initialSize = 1 / 3;
 
 function Workbench({ domain }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
-  const [flexSize, setFlexSize] = useState<number>(initialSize);
 
   // splitter for template and payload editor
   const splitter = useSplitter({
@@ -48,36 +47,36 @@ function Workbench({ domain }: WorkbenchProps) {
     // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
     initialSize: initialSize,
     dragPosition: 'middle',
-    // by updating the flex size on resize, we can force all of the splitter props to be updated for all divs below
-    // this is a pretty ugly hack but the best we can do for now
-    // @TODO this might make the UI very slow, we'll figure that out later
-    onResizing: (flexSize) => setFlexSize(flexSize),
-    onSizeChanged: (flexSize) => setFlexSize(flexSize),
   });
+
+  // this will measure the size of the left most column of the splitter, so we can use it to set the width of the group items
+  const [ref, rect] = useMeasure<HTMLDivElement>();
+  const leftColumnWidth = rect.width + 2; // +2 for the border
 
   return (
     <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
       {/* dummy splitter to handle flex width of group items */}
       <div {...splitter.containerProps}>
         <div {...splitter.primaryProps}>
-          <div className={cx(styles.containerWithBorderAndRadius, styles.flexFull, styles.minColumnWidth)}>
-            <EditorColumnHeader label={t('alerting.left-column.label-instances', 'Instances')} />
-          </div>
+          <div ref={ref} className={cx(styles.containerWithBorderAndRadius, styles.flexFull, styles.minColumnWidth)} />
         </div>
         <div {...splitter.splitterProps} />
         <div {...splitter.secondaryProps}>
-          <div className={cx(styles.containerWithBorderAndRadius, styles.flexFull, styles.minColumnWidth)}>
-            <EditorColumnHeader>
-              <TimelineHeader domain={domain} />
-            </EditorColumnHeader>
-          </div>
+          <div className={cx(styles.containerWithBorderAndRadius, styles.flexFull, styles.minColumnWidth)} />
         </div>
       </div>
 
-      {/* groups go here */}
+      {/* content goes here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
+        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.stickyHeader)}>
+          <EditorColumnHeader label={t('alerting.left-column.label-instances', 'Instances')} />
+          <EditorColumnHeader>
+            <TimelineHeader domain={domain} />
+          </EditorColumnHeader>
+        </div>
+        {/* Render a lot of group items to test the layout */}
         {times(50, () => (
-          <GroupWrapper flexSize={flexSize} />
+          <GroupWrapper width={leftColumnWidth} />
         ))}
       </div>
     </div>
@@ -85,30 +84,20 @@ function Workbench({ domain }: WorkbenchProps) {
 }
 
 interface GroupWrapperProps {
-  flexSize: number;
+  width: number;
 }
 
-const GroupWrapper = ({ flexSize }: GroupWrapperProps) => {
+const GroupWrapper = ({ width }: GroupWrapperProps) => {
   const styles = useStyles2(getStyles);
 
-  // we have to set the flex size on both left and right columns for the column splitter to work properly
-  const leftColumnFlex = flexSize;
-  const rightColumnFlex = 1 - flexSize;
-
   return (
-    <div className={styles.groupItemWrapper}>
-      <div
-        style={{ minWidth: 'min-content', flexGrow: leftColumnFlex }}
-        className={cx(styles.leftColumn, styles.column)}
-      >
+    <div className={styles.groupItemWrapper(width)}>
+      <div className={cx(styles.leftColumn, styles.column)}>
         <div className={styles.columnContent}>
           <GroupedItem label={t('alerting.group-wrapper.label-my-service', 'My Service')} />
         </div>
       </div>
-      <div
-        style={{ minWidth: 'min-content', flexGrow: rightColumnFlex }}
-        className={cx(styles.rightColumn, styles.column)}
-      >
+      <div style={{ minWidth: 'min-content', flexGrow: 1 }} className={cx(styles.rightColumn, styles.column)}>
         <div className={styles.columnContent}>
           <Trans i18nKey="alerting.workbench.right">right</Trans>
         </div>
@@ -140,10 +129,10 @@ const TimelineHeader = ({ domain }: TimelineProps) => {
   console.log(width);
 
   const ticks = useMemo(() => {
-    const xScale = scaleUtc().domain(domain).range([0, width]);
+    const xScale = scaleUtc().domain(domain).range([0, width]).nice(0);
     const tickFormatter = xScale.tickFormat();
 
-    return xScale.ticks(12).map((value) => ({
+    return xScale.ticks(5).map((value) => ({
       value: tickFormatter(value),
       xOffset: xScale(value),
     }));
@@ -153,7 +142,9 @@ const TimelineHeader = ({ domain }: TimelineProps) => {
     <div ref={ref} style={{ width: '100%' }}>
       <Stack flex={1} direction="row" justifyContent="space-between">
         {ticks.map((tick) => (
-          <Text variant="bodySmall">{tick.value}</Text>
+          <Text variant="bodySmall" color="secondary">
+            {tick.value}
+          </Text>
         ))}
       </Stack>
     </div>
@@ -162,23 +153,27 @@ const TimelineHeader = ({ domain }: TimelineProps) => {
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
+    stickyHeader: css({
+      position: 'sticky',
+      top: 0,
+      zIndex: 1,
+    }),
     groupsContainer: css({
       position: 'absolute',
       width: '100%',
-      height: `calc(100% - ${theme.spacing(4)} - 1px)`, // account for border
+      height: '100%',
 
       display: 'flex',
       flexDirection: 'column',
-      marginTop: `calc(${theme.spacing(4)} + 1px)`, // account for border
 
       overflow: 'scroll',
     }),
-    groupItemWrapper: css({
-      display: 'flex',
-      flexDirection: 'row',
-      flex: 0,
-      gap: theme.spacing(2),
-    }),
+    groupItemWrapper: (width: number) =>
+      css({
+        display: 'grid',
+        gridTemplateColumns: `${width}px auto`,
+        gap: theme.spacing(2),
+      }),
     column: css({
       display: 'flex',
       position: 'relative',
@@ -194,6 +189,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     columnContent: css({
       padding: 5,
+      width: '100%',
     }),
     flexFull: css({
       flex: 1,

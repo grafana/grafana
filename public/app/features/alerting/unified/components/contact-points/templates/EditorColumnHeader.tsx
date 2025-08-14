@@ -30,9 +30,11 @@ export function EditorColumnHeader({ label, actions, id, children }: Props) {
           <Label className={styles.label} id={id}>
             {label}
           </Label>
-          <Stack direction="row" gap={1}>
-            {actions}
-          </Stack>
+          {actions && (
+            <Stack direction="row" gap={1}>
+              {actions}
+            </Stack>
+          )}
         </>
       )}
     </div>
@@ -45,9 +47,12 @@ const editorColumnStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flex: 1,
     padding: theme.spacing(1, 2),
     backgroundColor: theme.colors.background.secondary,
-    borderBottom: `1px solid ${theme.colors.border.medium}`,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderTopLeftRadius: theme.shape.radius.default,
+    borderTopRightRadius: theme.shape.radius.default,
   }),
   label: css({
     margin: 0,
