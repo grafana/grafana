@@ -293,6 +293,12 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		assert.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
 	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be deleted")
 
+	// Wait for repository to be fully deleted before subtests run
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+	}, time.Second*10, time.Millisecond*50, "repository should be deleted before subtests")
+
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
 			name   string
