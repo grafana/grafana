@@ -1,6 +1,8 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
+
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
 
 import { DataSourcesListView } from './DataSourcesList';
@@ -25,7 +27,7 @@ jest.mock('@grafana/runtime', () => {
       ...runtime.config,
       featureToggles: {
         ...runtime.config.featureToggles,
-        favoriteDatasources: false, // Default value
+        favoriteDatasources: true,
       },
     },
   };
@@ -58,9 +60,6 @@ const setup = (overrides = {}) => {
 describe('<DataSourcesList>', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset config to default state
-    const { config } = require('@grafana/runtime');
-    config.featureToggles.favoriteDatasources = false;
     mockUseQueryParams.mockReturnValue([{ starred: undefined }, mockUpdateQueryParams]);
   });
 
@@ -89,7 +88,6 @@ describe('<DataSourcesList>', () => {
 
   describe('Favorites functionality', () => {
     beforeEach(() => {
-      const { config } = require('@grafana/runtime');
       config.featureToggles.favoriteDatasources = true;
     });
 
@@ -102,7 +100,6 @@ describe('<DataSourcesList>', () => {
     });
 
     it('should not render favorites checkbox when feature toggle is disabled', async () => {
-      const { config } = require('@grafana/runtime');
       config.featureToggles.favoriteDatasources = false;
 
       setup();

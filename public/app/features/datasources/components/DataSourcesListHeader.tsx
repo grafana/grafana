@@ -26,7 +26,7 @@ export interface DataSourcesListHeaderProps {
   favoritesCheckbox?: FavoritesCheckbox;
 }
 
-export function DataSourcesListHeader({ favoritesCheckbox }: DataSourcesListHeaderProps = {}) {
+export function DataSourcesListHeader({ favoritesCheckbox }: DataSourcesListHeaderProps) {
   const dispatch = useDispatch();
 
   const debouncedTrackSearch = useMemo(
