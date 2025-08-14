@@ -16,7 +16,7 @@ const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 // as we just want to pull in all of the necessary configuration but not run the rules
 // (this should only be concerned with checking rules that we want to improve,
 // so there's no need to try and run the rules that will be linted properly anyway)
-const { rules, ...baseConfig } = grafanaConfig;
+const { rules, ...baseConfig } = grafanaConfig.find((config) => config?.name === '@grafana/eslint-config/flat');
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
