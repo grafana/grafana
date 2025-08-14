@@ -22,7 +22,11 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
       </div>
       <Box width="60%" flex="1 1 auto" minWidth={CONTAINER_MIN_WIDTH}>
         <Stack direction="column">
-          <Alert severity="info" title="You are viewing a new design for the InfluxDB configuration settings." style={{ height: "100px" }}>
+          <Alert
+            severity="info"
+            title="You are viewing a new design for the InfluxDB configuration settings."
+            style={{ height: '100px' }}
+          >
             <>
               <TextLink
                 href="https://docs.google.com/forms/d/e/1FAIpQLSdi-zyX3c51vh937UKhNYYxhljUnFi6dQSlZv50mES9NrK-ig/viewform"
@@ -34,7 +38,9 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
               to help us make it even better.
             </>
           </Alert>
-          <Text color="secondary" element="p" italic>Fields marked with * are required</Text>
+          <Text color="secondary" element="p" italic>
+            Fields marked with * are required
+          </Text>
           <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
           <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>
