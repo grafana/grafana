@@ -204,6 +204,8 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	require.Error(t, err, "invalid dashboard shouldn't exist")
 	require.True(t, apierrors.IsNotFound(err))
 
+	helper.DebugState(t, repo, "BEFORE PULL JOB WITH INVALID SCHEMA")
+
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},

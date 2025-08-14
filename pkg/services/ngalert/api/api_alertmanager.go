@@ -83,7 +83,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext)
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
 	canSeeAutogen := c.HasRole(org.RoleAdmin)
-	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen)
+	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen, false)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
