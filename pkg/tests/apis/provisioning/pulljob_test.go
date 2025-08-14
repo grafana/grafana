@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,8 +60,9 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		const allPanelsUID = "n1jR8vnnz" // UID from all-panels.json (owned by repo1)
 
 		// Copy the same file (same UID) to repo2's directory to create ownership conflict
-		repo2DashboardPath := path.Join(helper.ProvisioningPath, "repo2", "conflicting-dashboard.json")
-		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", repo2DashboardPath)
+		conflictingFilePath := "repo2/conflicting-dashboard.json"
+		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", conflictingFilePath)
+		printFileTree(t, helper.ProvisioningPath)
 
 		// Step 2: Try to pull repo2 - should fail due to ownership conflict
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
@@ -98,7 +100,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.Equal(t, repo1, originalDashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
 
 		// Clean up the conflicting file for subsequent tests
-		err = os.Remove(repo2DashboardPath)
+		err = os.Remove(filepath.Join(helper.ProvisioningPath, conflictingFilePath))
 		require.NoError(t, err, "should clean up conflicting file")
 	})
 
