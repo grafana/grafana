@@ -176,9 +176,6 @@ The Grafana AWS account then makes a Security Token Service (STS) request to gen
 
 For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html)
 
-
-<!-- The Grafana Assume Role authentication provider lets you authenticate with AWS without having to create and maintain long term AWS users or rotate their access and secret keys. Instead, you can create an IAM role that has permissions to access CloudWatch and a trust relationship with Grafana's AWS account. Grafana's AWS account then makes an STS request to AWS to create temporary credentials to access your AWS data. It makes this STS request by passing along an `externalID` that's unique per Cloud account, to ensure that Grafana Cloud users can only access their own AWS data. For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html). -->
-
 To use the Grafana Assume Role:
 
 1. Grafana Cloud customers must open a support ticket to enable the feature `awsDatasourcesTempCredentials`.

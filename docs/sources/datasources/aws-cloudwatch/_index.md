@@ -78,9 +78,7 @@ The CloudWatch data source can query data from both CloudWatch metrics and Cloud
 
 For details, see the [query editor documentation](query-editor/). -->
 
-## Query caching
 
-When you enable [query and resource caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.
 
 <!-- ## Use template variables
 
