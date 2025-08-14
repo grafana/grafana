@@ -1,5 +1,7 @@
 <!-- openGauss/8.4.2 START -->
 
+# openGauss/8.4.2 (2025-08-14)
+
 ### Features and enhancements
 
 - **Storage:** Adapt to openGauss database and support multi IP configuration of the openGauss database
