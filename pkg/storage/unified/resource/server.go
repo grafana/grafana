@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"maps"
 	"net/http"
-	"reflect"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -505,7 +504,15 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		secureValuesChanged := event.ObjectOld == nil
 		if event.ObjectOld != nil {
 			oldSecureValues, _ := obj.GetSecureValues()
-			secureValuesChanged = reflect.DeepEqual(secure, oldSecureValues)
+			secureValuesChanged = len(secure) != len(oldSecureValues)
+			if !secureValuesChanged {
+				for k, v := range secure {
+					if oldSecureValues[k].Name != v.Name {
+						secureValuesChanged = true
+						break
+					}
+				}
+			}
 		}
 		if secureValuesChanged {
 			names := slices.Collect(maps.Keys(found))

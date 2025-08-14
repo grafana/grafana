@@ -304,7 +304,7 @@ func TestSimpleServer(t *testing.T) {
 			evt, errResult := server.newEvent(ctx, testUserA, key, objBytes, objBytes)
 			require.Nil(t, errResult)
 			require.Equal(t, resourcepb.WatchEvent_MODIFIED, evt.Type)
-			secureMock.AssertExpectations(t)
+			secureMock.AssertExpectations(t) // CanReference should not be called
 		})
 	})
 }
