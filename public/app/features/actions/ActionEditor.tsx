@@ -10,13 +10,11 @@ import {
   httpMethodOptions,
   HttpRequestMethod,
   VariableSuggestion,
-  requestMethodOptions,
   ProxyOptions,
   FetchOptions,
   SupportedDataSourceTypes,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, DataSourcePicker } from '@grafana/runtime';
 import {
   ColorPicker,
   Field,
@@ -24,7 +22,6 @@ import {
   InlineFieldRow,
   JSONFormatter,
   RadioButtonGroup,
-  Select,
   Switch,
   useStyles2,
   useTheme2,
@@ -33,6 +30,7 @@ import {
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
 import { ActionVariablesEditor } from './ActionVariablesEditor';
+import { ConnectionPicker } from './ConnectionPicker';
 import { ParamsEditor } from './ParamsEditor';
 
 interface ActionEditorProps {
@@ -152,53 +150,32 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
-  const onDatasourceChange = (ds: DataSourceInstanceSettings) => {
-    onChange(index, {
-      ...value,
-      [ActionType.Proxy]: {
-        ...getActionConfig(),
-        datasourceUid: ds.uid,
-        datasourceType: SupportedDataSourceTypes.Infinity,
-      },
-    });
-  };
+  const onConnectionChange = (connectionType: 'direct' | DataSourceInstanceSettings) => {
+    if (connectionType === 'direct') {
+      const currentConfig = getActionConfig();
+      const fetchConfig = {
+        method: currentConfig.method,
+        url: currentConfig.url,
+        body: currentConfig.body,
+        queryParams: currentConfig.queryParams,
+        headers: currentConfig.headers,
+      };
 
-  const onActionTypeChange = (actionType: ActionType) => {
-    const currentConfig = getActionConfig();
-
-    const baseAction = {
-      type: actionType,
-      title: value.title,
-      confirmation: value.confirmation,
-      oneClick: value.oneClick,
-      variables: value.variables,
-      style: value.style,
-    };
-
-    const fetchConfig = {
-      method: currentConfig.method,
-      url: currentConfig.url,
-      body: currentConfig.body,
-      queryParams: currentConfig.queryParams,
-      headers: currentConfig.headers,
-    };
-
-    if (actionType === ActionType.Proxy) {
-      const newAction: Action = {
-        ...baseAction,
+      onChange(index, {
+        ...value,
+        type: ActionType.Fetch,
+        [ActionType.Fetch]: fetchConfig,
+      });
+    } else {
+      onChange(index, {
+        ...value,
+        type: ActionType.Proxy,
         [ActionType.Proxy]: {
-          ...fetchConfig,
-          datasourceUid: '',
+          ...getActionConfig(),
+          datasourceUid: connectionType.uid,
           datasourceType: SupportedDataSourceTypes.Infinity,
         },
-      };
-      onChange(index, newAction);
-    } else {
-      const newAction: Action = {
-        ...baseAction,
-        [ActionType.Fetch]: fetchConfig,
-      };
-      onChange(index, newAction);
+      });
     }
   };
 
@@ -253,20 +230,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           )}
         />
       </Field>
-
-      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')}>
-        <InlineField
-          label={t('actions.action-editor.button.style.background-color', 'Color')}
-          labelWidth={LABEL_WIDTH}
-          className={styles.colorPicker}
-        >
-          <ColorPicker
-            color={value?.style?.backgroundColor || theme.colors.secondary.main}
-            onChange={onBackgroundColorChange}
-          />
-        </InlineField>
-      </Field>
-
       {showOneClick && (
         <Field
           label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
@@ -280,28 +243,14 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       )}
 
       <InlineFieldRow>
-        <InlineField label={t('grafana-ui.action-editor.modal.request-type', 'Request type')} labelWidth={LABEL_WIDTH}>
-          <Select
-            value={value.type}
-            options={requestMethodOptions}
-            onChange={(selected) => onActionTypeChange(selected.value!)}
+        <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
+          <ConnectionPicker
+            actionType={value.type}
+            datasourceUid={value?.[ActionType.Proxy]?.datasourceUid}
+            onChange={onConnectionChange}
           />
         </InlineField>
       </InlineFieldRow>
-
-      {config.featureToggles.vizActionsAuth && value.type === ActionType.Proxy && (
-        <InlineFieldRow>
-          <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
-            <DataSourcePicker
-              filter={(ds) => ds.type === SupportedDataSourceTypes.Infinity}
-              current={value?.[ActionType.Proxy]?.datasourceUid ?? undefined}
-              onChange={(ds) => onDatasourceChange(ds)}
-              noDefault={true}
-              placeholder={t('grafana-ui.action-editor.modal.connection-placeholder', 'Select a connection')}
-            />
-          </InlineField>
-        </InlineFieldRow>
-      )}
 
       <InlineFieldRow>
         <InlineField label={t('grafana-ui.action-editor.modal.action-method', 'Method')} labelWidth={LABEL_WIDTH}>
@@ -366,6 +315,19 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           {renderJSON(actionConfig.body)}
         </>
       )}
+
+      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')} style={{ marginTop: '8px' }}>
+        <InlineField
+          label={t('actions.action-editor.button.style.background-color', 'Color')}
+          labelWidth={LABEL_WIDTH}
+          className={styles.colorPicker}
+        >
+          <ColorPicker
+            color={value?.style?.backgroundColor || theme.colors.secondary.main}
+            onChange={onBackgroundColorChange}
+          />
+        </InlineField>
+      </Field>
     </div>
   );
 });

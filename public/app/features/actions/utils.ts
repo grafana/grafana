@@ -315,6 +315,7 @@ const getDatasourceRequestBuilder = (datasourceType: string): DatasourceRequestB
   }
 };
 
+/** @internal */
 export const buildActionProxyRequest = (action: Action, replaceVariables: InterpolateFunction) => {
   const { config, url, data, processedHeaders, processedQueryParams, contentType } = processActionConfig(
     action,
