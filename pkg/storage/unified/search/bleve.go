@@ -324,7 +324,7 @@ func (b *bleveBackend) BuildIndex(
 		}
 
 		start := time.Now()
-		rv, err := builder(idx)
+		_, err = builder(idx)
 		if err != nil {
 			logWithDetails.Error("Failed to build index", "err", err)
 			if b.indexMetrics != nil {
@@ -335,7 +335,7 @@ func (b *bleveBackend) BuildIndex(
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
 
-		err = idx.updateResourceVersion(rv)
+		err = idx.updateResourceVersion(resourceVersion)
 		if err != nil {
 			return nil, fmt.Errorf("fail to persist rv to index: %w", err)
 		}
@@ -347,7 +347,6 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Info("Skipping index build, using existing index")
 
 		idx.resourceVersion, err = getRV(index)
-
 		if err != nil {
 			return nil, fmt.Errorf("failed to get RV from bleve index: %w", err)
 		}
@@ -532,8 +531,8 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 			continue
 		}
 
-		if indexRV <= resourceVersion {
-			b.log.Debug("indexRV is behind requested resourceVersion. ignoring index", "indexName", indexName, "rv", indexRV, "resourceVersion", resourceVersion)
+		if indexRV != resourceVersion {
+			b.log.Debug("indexRV does not match resourceVersion. ignoring index", "indexName", indexName, "rv", indexRV, "resourceVersion", resourceVersion)
 			_ = idx.Close()
 			continue
 		}

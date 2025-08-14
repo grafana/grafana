@@ -815,7 +815,8 @@ func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResou
 
 	// Build an empty index by passing a builder function that doesn't add any documents
 	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, "empty", func(index ResourceIndex) (int64, error) {
-		return 0, nil
+		// Return the resource version without adding any documents to the index
+		return rv, nil
 	})
 }
 
