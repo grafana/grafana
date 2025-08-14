@@ -1,6 +1,4 @@
-import { RepoType } from '../Wizard/types';
-
-export function isFileHistorySupported(repoType?: string) {
-  const supportedRepoTypes: RepoType[] = ['github', 'gitlab', 'bitbucket'];
-  return repoType && repoType in supportedRepoTypes;
+export function isFileHistorySupported(repoType?: string | null): boolean {
+  const supportedRepoTypes = new Set(['github', 'gitlab', 'bitbucket']);
+  return !!repoType && supportedRepoTypes.has(repoType);
 }
