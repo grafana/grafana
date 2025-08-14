@@ -2,9 +2,14 @@ import { css } from '@emotion/css';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, FilterInput, InlineField, Checkbox, useStyles2 } from '@grafana/ui';
-import { FavoritesCheckbox } from 'app/features/datasources/components/DataSourcesList';
 
 import { SortPicker } from '../Select/SortPicker';
+
+export type FilterCheckbox = {
+  onChange: (value: boolean) => void;
+  value: boolean;
+  label?: string;
+};
 
 export interface Props {
   searchQuery: string;
@@ -17,7 +22,7 @@ export interface Props {
     value?: string;
     getSortOptions?: () => Promise<SelectableValue[]>;
   };
-  favoritesCheckbox?: FavoritesCheckbox;
+  filterCheckbox?: FilterCheckbox;
 }
 
 export default function PageActionBar({
@@ -27,7 +32,7 @@ export default function PageActionBar({
   target,
   placeholder = 'Search by name or type',
   sortPicker,
-  favoritesCheckbox,
+  filterCheckbox,
 }: Props) {
   const styles = useStyles2(getStyles);
   const linkProps: Omit<Parameters<typeof LinkButton>[0], 'children'> = {
@@ -44,11 +49,11 @@ export default function PageActionBar({
       <InlineField grow>
         <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={placeholder} />
       </InlineField>
-      {favoritesCheckbox && (
+      {filterCheckbox && (
         <Checkbox
-          label={favoritesCheckbox.label}
-          value={favoritesCheckbox.value}
-          onChange={(event) => favoritesCheckbox.onChange(event.currentTarget.checked)}
+          label={filterCheckbox.label}
+          value={filterCheckbox.value}
+          onChange={(event) => filterCheckbox.onChange(event.currentTarget.checked)}
         />
       )}
       {sortPicker && (

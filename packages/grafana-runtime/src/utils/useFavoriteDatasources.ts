@@ -8,6 +8,15 @@ import { UserStorage } from './userStorage';
 
 const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
 
+export type FavoriteDatasources = {
+  enabled: boolean;
+  favoriteDatasources: string[];
+  initialFavoriteDataSources: string[];
+  addFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
+  removeFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
+  isFavoriteDatasource: (dsUid: string) => boolean;
+};
+
 /**
  * A hook for managing favorite data sources using user storage.
  * This hook provides functionality to store and retrieve a list of favorite data source UIDs
@@ -22,14 +31,7 @@ const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
  * - A function to check if a data source is favorited
  * @public
  */
-export function useFavoriteDatasources(): {
-  enabled: boolean;
-  favoriteDatasources: string[];
-  initialFavoriteDataSources: string[];
-  addFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
-  removeFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
-  isFavoriteDatasource: (dsUid: string) => boolean;
-} {
+export function useFavoriteDatasources(): FavoriteDatasources {
   if (!config.featureToggles.favoriteDatasources) {
     return {
       enabled: false,
