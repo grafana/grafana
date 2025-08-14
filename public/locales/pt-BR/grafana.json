@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "Esta pasta está vazia"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Todos os recursos foram excluídos com sucesso",
-      "all-moved": "Todos os recursos foram movidos com sucesso",
-      "button-done": "Concluído",
-      "progress-title": "Sucesso",
-      "failed-alert_one": "{{count}} itens falharam",
-      "failed-alert_other": "{{count}} itens falharam"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancelar",
       "button-delete": "Excluir",
       "button-deleting": "Excluindo…",
       "delete-warning": "Isso excluirá as pastas selecionadas e as subpastas delas. No total, isso afetará:",
-      "error-path-not-found": "Diretório não encontrado"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "Movendo…",
-      "deleting": "Excluindo",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Conteúdo do arquivo não encontrado",
-      "error-path-not-found": "Diretório não encontrado",
-      "error-target-folder-path-missing": "O diretório da pasta de destino está ausente",
-      "error-title": "Erro na pasta de destino",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Isso moverá as pastas selecionadas e as subpastas delas. No total, isso afetará:",
-      "moving": "Movendo",
-      "progress": "Progresso: {{current}} de {{total}}",
       "target-folder": "Pasta de destino"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} itens"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Recolher pasta {{title}}",
       "expand-folder-button": "Expandir pasta {{title}}",
       "name-column": "Nome",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Mostre ou oculte {{type}} dinamicamente com base no valor da variável.",
           "label": "Variável de modelo",
           "name": "Nome",
           "operator": {
             "equals": "Iguais",
-            "not-equals": "Não igual a"
+            "matches": "",
+            "not-equals": "Não igual a",
+            "not-matches": ""
           },
           "value": "Valor"
         }
@@ -5347,6 +5343,7 @@
       "playlist-next": "Ir para o próximo painel de controle",
       "playlist-previous": "Ir para o painel de controle anterior",
       "playlist-stop": "Parar lista de reprodução",
+      "read-only": "",
       "refresh": "Atualizar painel de controle",
       "save": "Salvar painel de controle",
       "save-dashboard": {
@@ -5399,6 +5396,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Pesquisar por transformação",
       "show-images": "Exibir imagens",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Adicionar outra transformação",
       "view-all": "Ver tudo"
     },
@@ -7475,6 +7475,13 @@
       "tooltip-title": "Operador matemático",
       "tooltip-trigger": "Expressão"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Função",
       "label-input": "Entrada",
@@ -7489,6 +7496,11 @@
       "label-resample-to": "Refazer amostra para",
       "label-upsample": "Aumentar taxa de amostragem",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Entrada"
@@ -7506,7 +7518,8 @@
     "loading": "Carregando pastas..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10861,7 +10874,6 @@
         "downloads": "Downloads",
         "from": "",
         "installedVersion": "Versão instalada",
-        "lastCommitDate": "Data do último commit:",
         "latestReleaseDate": "Data de lançamento mais recente:",
         "latestVersion": "Última versão",
         "license": "Licença",
@@ -11414,6 +11426,8 @@
         "subtitle": "Use esta opção se você quiser sincronizar e gerenciar toda a sua instância da Grafana por meio de armazenamento externo."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "tarefas ativas",
       "column-action": "Ação",
@@ -11432,6 +11446,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Configurações",
       "view": "Visualizar"
     },
@@ -11442,8 +11457,13 @@
       "title-repository-is-unhealthy": "O repositório está instável"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Seus recursos estão agora no seu armazenamento externo e foram provisionados na sua instância. A partir de agora, sua instância e o armazenamento externo serão sincronizados.",
-      "view-repository": "Visualizar repositório"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Verificado:",
@@ -11842,6 +11862,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Recolher linha de consulta",
       "datasource-help": "Mostrar ajuda da fonte de dados",
       "drag-and-drop": "Arraste e solte para reordenar",
@@ -11852,7 +11873,11 @@
       "replace-query-from-library": "Substituir por consulta da biblioteca",
       "show-response": "Mostrar resposta"
     },
-    "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
+    "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12088,7 +12113,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Adicionar conta de serviço",
-      "message": "Nenhuma conta de serviço encontrada",
+      "message": "",
       "more-info": "Lembre-se de que você pode fornecer permissões específicas de acesso à API para outros aplicativos",
       "title": "Você ainda não criou nenhuma conta de serviço"
     }
@@ -12481,6 +12506,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Ordenar"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

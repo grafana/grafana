@@ -3519,26 +3519,18 @@
     "browse-view": {
       "this-folder-is-empty": "A mappa üres"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Minden erőforrás sikeresen törölve lett",
-      "all-moved": "Minden erőforrás sikeresen áthelyezve",
-      "button-done": "Kész",
-      "progress-title": "Sikerült",
-      "failed-alert_one": "{{count}} sikertelen elem",
-      "failed-alert_other": "{{count}} sikertelen elem"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
       "button-deleting": "Törlés...",
       "delete-warning": "Ezzel a művelettel törli a kijelölt mappákat és minden almappájukat. Összességében ez a következőket érinti:",
-      "error-path-not-found": "Az elérési út nem található"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Mégse",
       "button-move": "Áthelyezés",
       "button-moving": "Áthelyezés...",
-      "deleting": "Törlés",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3538,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "A fájl tartalma nem található",
-      "error-path-not-found": "Az elérési út nem található",
-      "error-target-folder-path-missing": "A célmappa elérési útvonala hiányzik",
-      "error-title": "Célmappával kapcsolatos hiba",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Ezzel a művelettel áthelyezi a kijelölt mappákat és minden almappájukat. Összességében ez a következőket érinti:",
-      "moving": "Mozgás",
-      "progress": "Haladás: {{total}}/{{current}}",
       "target-folder": "Célmappa"
     },
     "counts": {
@@ -3568,6 +3556,9 @@
       "total_other": "{{count}} tétel"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "{{title}} mappa összecsukása",
       "expand-folder-button": "{{title}} mappa kibontása",
       "name-column": "Név",
@@ -4509,12 +4500,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "A(z) {{type}} dinamikus megjelenítése vagy elrejtése a változóérték alapján.",
           "label": "Sablonváltozó",
           "name": "Név",
           "operator": {
             "equals": "Egyenlő",
-            "not-equals": "Nem egyenlő"
+            "matches": "",
+            "not-equals": "Nem egyenlő",
+            "not-matches": ""
           },
           "value": "Érték"
         }
@@ -5347,6 +5343,7 @@
       "playlist-next": "Ugrás a következő irányítópulthoz",
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
+      "read-only": "",
       "refresh": "Irányítópult frissítése",
       "save": "Irányítópult mentése",
       "save-dashboard": {
@@ -5399,6 +5396,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Transzformáció keresése",
       "show-images": "Képek megjelenítése",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Másik transzformáció hozzáadása",
       "view-all": "Összes megjelenítése"
     },
@@ -7475,6 +7475,13 @@
       "tooltip-title": "Matematikai operátor",
       "tooltip-trigger": "Kifejezés"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Függvény",
       "label-input": "Bemenet",
@@ -7489,6 +7496,11 @@
       "label-resample-to": "Újbóli mintavételezés ezzel:",
       "label-upsample": "Mintasűrűség növelése",
       "tooltip-s-m-h": "10 mp., 1 p., 30 p., 1 ó."
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Bemenet"
@@ -7506,7 +7518,8 @@
     "loading": "Mappák betöltése..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10861,7 +10874,6 @@
         "downloads": "Letöltések",
         "from": "Kezdet",
         "installedVersion": "Telepített verzió",
-        "lastCommitDate": "Legutóbbi teljesítés dátuma:",
         "latestReleaseDate": "Legújabb kiadás dátuma:",
         "latestVersion": "Legújabb verzió",
         "license": "Licenc",
@@ -11414,6 +11426,8 @@
         "subtitle": "Használja ezt a lehetőséget, ha külső tárolóeszközön keresztül szeretné szinkronizálni és kezelni a teljes Grafana-példányt."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktív feladatok",
       "column-action": "Művelet",
@@ -11432,6 +11446,7 @@
       "get-repository-meta": {
         "webhook": "Webkapocs"
       },
+      "read-only-badge": "",
       "settings": "Beállítások",
       "view": "Nézet"
     },
@@ -11442,8 +11457,13 @@
       "title-repository-is-unhealthy": "Az adattár állapota nem megfelelő"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Az erőforrások most a külső tárolóban vannak, és ki lettek építve a példányba. Mostantól a rendszer szinkronizálja a példányt és a külső tárolót.",
-      "view-repository": "Adattár megtekintése"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Ellenőrzés:",
@@ -11842,6 +11862,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Lekérdezési sor összecsukása",
       "datasource-help": "Adatforrás súgójának megjelenítése",
       "drag-and-drop": "Húzza át az átrendezéshez",
@@ -11852,7 +11873,11 @@
       "replace-query-from-library": "Lecserélés könyvtárból származó lekérdezésre",
       "show-response": "Válasz megjelenítése"
     },
-    "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
+    "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12088,7 +12113,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Szolgáltatási fiók",
-      "message": "Nem találhatók szolgáltatási fiókok",
+      "message": "",
       "more-info": "Ne feledje, hogy speciális engedélyeket adhat meg az API-hozzáféréshez más alkalmazások számára",
       "title": "Még nem hozott létre szolgáltatási fiókokat"
     }
@@ -12481,6 +12506,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Rendezés"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
