@@ -346,5 +346,8 @@ if (!bootData) {
  */
 export const config = new GrafanaBootConfig({
   ...bootData.settings,
+  // need to separately include bootData here
+  // this allows people to access the user object on config.bootData.user and maintains backwards compatibility
+  // TODO expose a user object (similar to `GrafanaBootConfig`) and deprecate this recursive bootData
   bootData,
 });
