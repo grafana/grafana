@@ -155,7 +155,7 @@ To filter column values, follow these steps:
 
    Grafana displays the filter options for that column.
 
-   {{< figure src="/static/img/docs/tables/filter-column-values.png" max-width="300px" alt="Filter column values" class="docs-image--no-shadow" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
 
 1. Click the checkbox next to the values that you want to display or click **Select all**.
 1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
@@ -178,7 +178,8 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 
 Click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle.
-You can sort multiple columns by holding the `Shift` key and clicking the column name.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key
+and clicking the column name.
 
 {{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
@@ -197,15 +198,19 @@ This option is only available when you're editing the panel.
 
 ### Table options
 
-| Option               | Description                                                                                                                                                                                                                                                                 |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Show table header    | Show or hide column names imported from your data source.                                                                                                                                                                                                                   |
-| Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**.                                                                                                                                                                                                |
-| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries.                                                                                 |
+<!-- prettier-ignore-start -->
+| Option               | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| Show table header    | Show or hide column names imported from your data source. |
+| Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
+| Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
+| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
-| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width.                                                                             |
-| Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.                                                                                                                                                            |
-| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering).                                                                                                           |
+| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
+| Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
+| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
+| Wrap header text     | Enables text wrapping for column headers. |
+<!-- prettier-ignore-end -->
 
 ### Table footer options
 
@@ -238,7 +243,7 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Auto](#auto)                             | A basic text and number cell. |
 | [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the cell text is displayed in the appropriate color. |
 | [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the cell background is displayed in the appropriate color. |
-| Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
+| [Data links](#data-links)                 | The cell text reflects the titles of the configured data links.|
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
@@ -283,11 +288,22 @@ The colored background cell type has the following options:
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
-| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
+| Wrap text | Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch. |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 <!-- prettier-ignore-end -->
 
 <!-- The wrap text and cell value inspect descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+
+#### Data links
+
+If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable.
+If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
+
+Data links cells also support text wrapping.
+Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
+
+<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Gauge
 
@@ -370,7 +386,12 @@ The **Pill** cell type displays each item in a comma-separated string in a color
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
+
 Pill cells also support text wrapping.
+Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
+
+<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 The following data formats are supported for the pill cell type:
 
