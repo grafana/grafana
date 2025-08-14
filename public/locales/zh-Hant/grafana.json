@@ -3506,25 +3506,18 @@
     "browse-view": {
       "this-folder-is-empty": "此資料夾為空"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "已成功刪除所有資源",
-      "all-moved": "已成功移動所有資源",
-      "button-done": "完成",
-      "progress-title": "成功",
-      "failed-alert_other": "{{count}} 個項目失敗"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "取消",
       "button-delete": "刪除",
       "button-deleting": "正在刪除…",
       "delete-warning": "這將刪除所選資料夾及其子資料夾。總體而言，這將影響：",
-      "error-path-not-found": "找不到路徑"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "取消",
       "button-move": "移動",
       "button-moving": "正在移動…",
-      "deleting": "正在刪除",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3532,13 +3525,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "找不到檔案內容",
-      "error-path-not-found": "找不到路徑",
-      "error-target-folder-path-missing": "缺少目標資料夾路徑",
-      "error-title": "目標資料夾錯誤",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "這將移動所選資料夾及其子資料夾。總體而言，這將影響：",
-      "moving": "正在移動",
-      "progress": "進度：已完成 {{current}} 個，共 {{total}} 個",
       "target-folder": "目標資料夾"
     },
     "counts": {
@@ -3549,6 +3538,9 @@
       "total_other": "{{count}} 個項目"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "收合資料夾「{{title}}」",
       "expand-folder-button": "展開資料夾「{{title}}」",
       "name-column": "名稱",
@@ -4490,12 +4482,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "根據變數值動態顯示或隱藏{{type}}。",
           "label": "範本變數",
           "name": "名稱（名字）",
           "operator": {
             "equals": "等於",
-            "not-equals": "不等於"
+            "matches": "",
+            "not-equals": "不等於",
+            "not-matches": ""
           },
           "value": "數值"
         }
@@ -5327,6 +5324,7 @@
       "playlist-next": "前往下一個儀表板",
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
+      "read-only": "",
       "refresh": "重新整理儀表板",
       "save": "儲存儀表板",
       "save-dashboard": {
@@ -5379,6 +5377,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "搜尋轉換",
       "show-images": "顯示圖片",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "新增另一個轉換",
       "view-all": "檢視全部"
     },
@@ -7453,6 +7454,13 @@
       "tooltip-title": "數學運算子",
       "tooltip-trigger": "表達式"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "功能",
       "label-input": "輸入",
@@ -7467,6 +7475,11 @@
       "label-resample-to": "重新取樣為",
       "label-upsample": "向上取樣",
       "tooltip-s-m-h": "10 秒、1 分鐘、30 分鐘、1 小時"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "輸入"
@@ -7484,7 +7497,8 @@
     "loading": "正在載入資料夾…"
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -10828,7 +10842,6 @@
         "downloads": "下載量",
         "from": "自",
         "installedVersion": "安裝版本",
-        "lastCommitDate": "上次提交日期：",
         "latestReleaseDate": "最新發佈日期：",
         "latestVersion": "最新版本",
         "license": "授權",
@@ -11378,6 +11391,8 @@
         "subtitle": "若想透過外部儲存空間同步及管理整個 Grafana 執行個體，請使用此選項。"
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "進行中的作業",
       "column-action": "動作",
@@ -11396,6 +11411,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "設定",
       "view": "檢視"
     },
@@ -11406,8 +11422,13 @@
       "title-repository-is-unhealthy": "儲存庫狀態不佳"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "view-repository": ""
+      },
       "grafana-repository-synced": "您的資源現在位於外部儲存空間中，並佈建到您的執行個體中。從現在開始，您的執行個體和外部儲存空間將會同步。",
-      "view-repository": "檢視儲存庫"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "已選取：",
@@ -11805,6 +11826,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "收闔查詢列",
       "datasource-help": "顯示資料來源說明",
       "drag-and-drop": "拖放以重新排序",
@@ -11815,7 +11837,11 @@
       "replace-query-from-library": "替換為來自資料庫的查詢",
       "show-response": "顯示回應"
     },
-    "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
+    "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12048,7 +12074,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "新增服務帳戶",
-      "message": "未找到服務帳戶",
+      "message": "",
       "more-info": "請記住，您可以為 API 存取其他應用程式提供特定權限",
       "title": "您尚未建立任何服務帳戶"
     }
@@ -12440,6 +12466,21 @@
   },
   "sort-picker": {
     "select-aria-label": "排序"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

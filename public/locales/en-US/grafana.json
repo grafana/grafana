@@ -1244,20 +1244,6 @@
       "copy-code": "Copy code",
       "download": "Download"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Alert rule",
-        "all": "All",
-        "error": "Error",
-        "firing": "Firing",
-        "no-data": "No data",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Pending",
-        "recording-rule": "Recording rule",
-        "recovering": "Recovering"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Rule successfully deleted"
       },
+      "health": {
+        "error": "Error",
+        "no-data": "No data",
+        "ok": "OK"
+      },
       "pause-rule": {
         "success": "Rule evaluation paused"
       },
       "resume-rule": {
         "success": "Rule evaluation resumed"
+      },
+      "state": {
+        "firing": "Firing",
+        "normal": "Normal",
+        "pending": "Pending",
+        "recovering": "Recovering",
+        "unknown": "Unknown"
+      },
+      "type": {
+        "alert": "Alert rule",
+        "recording": "Recording rule"
       },
       "update-rule": {
         "success": "Rule updated successfully"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Clear filters",
       "configured-alert-rules": "Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are stored and evaluated in the data source itself.",
+      "contact-point-tooltip": "Filters alert rules which route directly to the selected contact point. Alert rules routed to notification policies will not be displayed.",
+      "contact-point-tooltip-title": "Contact point filter help",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label-show-filters": "Show filters",
-        "label-custom-filter": "Custom filter",
-        "label-saved-searches": "Saved searches"
+        "aria-label": "Filter options",
+        "aria-label-show-filters": "Filter",
+        "placeholder-namespace": "Select namespace",
+        "placeholder-search-input": "Search by name or enter filter query..."
       },
+      "grafana-folder": "Grafana folder",
       "health": "Health",
       "label": {
         "hide": "Hide",
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
+      "no-groups": "No groups available",
+      "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
+      "placeholder-contact-point": "Select contact point",
+      "placeholder-data-sources": "Select data sources",
+      "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
       "rule-type": "Rule type",
       "rulesSearchInput-placeholder-search": "Search",
@@ -2629,9 +2640,6 @@
       "text-federated": "Federated",
       "text-provisioned": "Provisioned"
     },
-    "saved-searches": {
-      "text-default": "Default"
-    },
     "search": {
       "property": {
         "data-source": "Data source",
@@ -2639,11 +2647,10 @@
         "labels": "Labels",
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
-        "rule-name": "Alerting rule name",
+        "rule-name": "Rule name",
         "rule-type": "Type",
         "state": "State"
-      },
-      "save-query": "Save current search"
+      }
     },
     "search-field-input": {
       "clear": "Clear",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "All",
     "apply": "Apply",
     "cancel": "Cancel",
     "clear": "Clear",
-    "close": "Close",
     "collapse": "Collapse",
     "edit": "Edit",
     "help": "Help",
@@ -6583,6 +6590,9 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus, and Loki"
       }
     },
+    "list": {
+      "starred": "Starred"
+    },
     "new-data-source-view": {
       "cancel": "Cancel",
       "placeholder-filter-by-name-or-type": "Filter by name or type"
@@ -7475,6 +7485,13 @@
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "Collapse editor",
+      "tooltip-copy-query": "Copy query",
+      "tooltip-expand-editor": "Expand editor",
+      "tooltip-format-query": "Format query",
+      "tooltip-run-query": "Hit ctrl/cmd+enter to run query"
+    },
     "reduce": {
       "label-function": "Function",
       "label-input": "Input",
@@ -7489,6 +7506,11 @@
       "label-resample-to": "Resample to",
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
+    },
+    "sql-expr": {
+      "button-run-query": "Run query",
+      "modal-title": "SQL Editor",
+      "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
     },
     "threshold": {
       "label-input": "Input"
@@ -7859,7 +7881,8 @@
       "edit-pane": {
         "go-back": "Go back"
       }
-    }
+    },
+    "select-group": "Select group"
   },
   "grafana-data": {
     "valueFormats": {
@@ -9052,6 +9075,7 @@
       "sign-up": "Sign up"
     }
   },
+  "label-dropdown-info": "Can't find your label? Enter it manually",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Drag and drop to reorder",
@@ -11450,6 +11474,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "Compare branch",
+        "open-pull-request": "Open pull request",
+        "view-branch": "View branch",
         "view-repository": "View repository"
       },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
@@ -12105,7 +12132,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
-      "message": "No services accounts found",
+      "message": "No service accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
     }
@@ -12498,6 +12525,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sort"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
+    "ai-explain-title": "AI-powered SQL expression explanation",
+    "ai-suggestions-title": "AI-powered SQL expression suggestions",
+    "apply": "Apply",
+    "code-label": "{{ language }}",
+    "copy": "Copy",
+    "explain-empty-query-tooltip": "Enter a SQL expression to get an explanation",
+    "explain-query": "Explain query",
+    "explanation-modal-title": "SQL Query Explanation",
+    "sql-ai-interaction": "{{text}}",
+    "sql-suggestion-history": "SQL Suggestion History",
+    "suggestions": "Suggestions",
+    "view-explanation": "View explanation"
   },
   "stat": {
     "add-orientation-option": {
