@@ -152,19 +152,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
 
   const onConnectionChange = (connectionType: 'direct' | DataSourceInstanceSettings) => {
     if (connectionType === 'direct') {
-      const currentConfig = getActionConfig();
-      const fetchConfig = {
-        method: currentConfig.method,
-        url: currentConfig.url,
-        body: currentConfig.body,
-        queryParams: currentConfig.queryParams,
-        headers: currentConfig.headers,
-      };
-
       onChange(index, {
         ...value,
         type: ActionType.Fetch,
-        [ActionType.Fetch]: fetchConfig,
+        [ActionType.Fetch]: getActionConfig(),
       });
     } else {
       onChange(index, {
