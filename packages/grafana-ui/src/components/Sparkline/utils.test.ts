@@ -1,6 +1,6 @@
-import { FieldSparkline, FieldType } from '@grafana/data';
+import { Field, FieldSparkline, FieldType } from '@grafana/data';
 
-import { preparePlotFrame } from './utils';
+import { getYRange, preparePlotFrame } from './utils';
 
 describe('Prepare Sparkline plot frame', () => {
   it('should return sorted array if x-axis numeric', () => {
@@ -89,5 +89,91 @@ describe('Prepare Sparkline plot frame', () => {
 
     expect(frame.fields[0].values).toEqual([2, 3, 4, 5, 6, 7]);
     expect(frame.fields[1].values).toEqual([2, null, 3, null, null, 1]);
+  });
+});
+
+describe('Get y range', () => {
+  const defaultYField: Field = {
+    name: 'y',
+    values: [1, 2, 3, 4, 5],
+    type: FieldType.number,
+    config: {},
+    state: { range: { min: 1, max: 5, delta: 4 } },
+  };
+  const straightLineYField: Field = {
+    name: 'y',
+    values: [2, 2, 2, 2, 2],
+    type: FieldType.number,
+    config: {},
+    state: { range: { min: 2, max: 2, delta: 0 } },
+  };
+  const straightLineNegYField: Field = {
+    name: 'y',
+    values: [-2, -2, -2, -2, -2],
+    type: FieldType.number,
+    config: {},
+    state: { range: { min: -2, max: -2, delta: 0 } },
+  };
+  const xField: Field = {
+    name: 'x',
+    values: [1000, 2000, 3000, 4000, 5000],
+    type: FieldType.time,
+    config: {},
+  };
+  const getAlignedFrame = (yField: Field) => ({
+    refId: 'sparkline',
+    fields: [xField, yField],
+    length: yField.values.length,
+  });
+  it.each([
+    {
+      description: 'inferred min and max',
+      field: defaultYField,
+      expected: [1, 5],
+    },
+    {
+      description: 'min from config',
+      field: { ...defaultYField, config: { min: 3 }, state: { range: { min: 3, max: 5, delta: 2 } } },
+      expected: [3, 5],
+    },
+    {
+      description: 'max from config',
+      field: { ...defaultYField, config: { max: 30 }, state: { range: { min: 1, max: 30, delta: 29 } } },
+      expected: [1, 30],
+    },
+    {
+      description: 'no value is set',
+      field: { ...defaultYField, config: { noValue: '0' } },
+      expected: [0, 5],
+    },
+    {
+      description: 'NaN no value is set',
+      field: { ...defaultYField, config: { noValue: 'foo' } },
+      expected: [1, 5],
+    },
+    {
+      description: 'straight line',
+      field: straightLineYField,
+      expected: [0, 4],
+    },
+    {
+      description: 'straight line, negative values',
+      field: straightLineNegYField,
+      expected: [-4, 0],
+    },
+    {
+      description: 'straight line with config min and max',
+      field: { ...straightLineYField, config: { min: 1, max: 3 }, state: { range: { min: 1, max: 3, delta: 2 } } },
+      expected: [1, 3],
+    },
+    {
+      description: 'straight line with config no value',
+      field: { ...straightLineYField, config: { noValue: '0' } },
+      expected: [0, 2],
+    },
+  ])(`should return correct range for $description`, ({ field, expected }) => {
+    const actual = getYRange(field, getAlignedFrame(field));
+    expect(actual).toEqual(expected);
+    expect(actual[0]).toBeLessThan(actual[1]!);
   });
 });
