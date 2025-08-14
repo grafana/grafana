@@ -15,7 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/lib/pq"
+	//_ "github.com/lib/pq"
+	_ "gitcode.com/opengauss/openGauss-connector-go-pq"
 )
 
 var writeCertFileCallNum int

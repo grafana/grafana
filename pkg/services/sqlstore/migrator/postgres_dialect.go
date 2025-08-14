@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/golang-migrate/migrate/v4/database"
-	"github.com/lib/pq"
+	//"github.com/lib/pq"
+	pq "gitcode.com/opengauss/openGauss-connector-go-pq"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
