@@ -42,6 +42,7 @@ export const Messages = {
       },
       mysqlDetails: {
         maxQueryLength: 'Max query length',
+        extraDsnParams: 'Extra DSN Parameters',
       },
       mongodbDetails: {
         maxQueryLength: 'Max query length',
@@ -113,6 +114,7 @@ export const Messages = {
         replicationSet: 'Replication set',
         cluster: 'Cluster',
         customLabels: 'key1:value1\nkey2:value2',
+        extraDsnParams: 'key1:value1\nkey2:value2',
       },
       additionalOptions: {},
     },
@@ -173,6 +175,7 @@ export const Messages = {
       labelsRolesLink: 'custom user roles',
       labelsExisting: 'Editing existing labels may affect your inventory and its data.',
       customLabels: 'Follow the format as exemplified below, one label per line.',
+      extraDsnParams: 'Follow the format as exemplified below, one parameter per line.',
     },
   },
 };

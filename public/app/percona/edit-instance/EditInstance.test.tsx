@@ -5,10 +5,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom-v5-compat';
 import { configureStore } from 'app/store/configureStore';
 
 import { stubWithLabels } from '../inventory/__mocks__/Inventory.service';
+import { CustomLabelsUtils } from '../shared/helpers/customLabels';
 import { wrapWithGrafanaContextMock } from '../shared/helpers/testUtils';
 
 import EditInstancePage from './EditInstance';
-import { fromPayload } from './EditInstance.utils';
 
 jest.mock('app/percona/inventory/Inventory.service');
 
@@ -32,7 +32,9 @@ describe('EditInstance::', () => {
     await waitFor(() => expect(screen.queryByLabelText('Cluster')).toHaveValue(stubWithLabels.cluster));
     await waitFor(() => expect(screen.queryByLabelText('Replication set')).toHaveValue(stubWithLabels.replication_set));
     await waitFor(() =>
-      expect(screen.queryByLabelText('Custom labels')).toHaveValue(fromPayload(stubWithLabels.custom_labels))
+      expect(screen.queryByLabelText('Custom labels')).toHaveValue(
+        CustomLabelsUtils.fromPayload(stubWithLabels.custom_labels)
+      )
     );
   });
 });

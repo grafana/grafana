@@ -3,6 +3,7 @@ import { CancelToken } from 'axios';
 import { PMM_SERVER_NODE_AGENT_ID } from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/NodesAgents/NodesAgents.constants';
 import { Databases } from 'app/percona/shared/core';
 import { apiManagement } from 'app/percona/shared/helpers/api';
+import { CustomLabelsUtils } from 'app/percona/shared/helpers/customLabels';
 
 import { InstanceTypesExtra, InstanceAvailableType } from '../../panel.types';
 
@@ -114,16 +115,11 @@ export const toPayload = (values: any, discoverName?: string, type?: InstanceAva
   const data = { ...values };
 
   if (values.custom_labels) {
-    data.custom_labels = data.custom_labels
-      .split(/[\n\s]/)
-      .filter(Boolean)
-      .reduce((acc: any, val: string) => {
-        const [key, value] = val.split(':');
+    data.custom_labels = CustomLabelsUtils.toPayload(data.custom_labels);
+  }
 
-        acc[key] = value;
-
-        return acc;
-      }, {});
+  if (values.extra_dsn_params) {
+    data.extra_dsn_params = CustomLabelsUtils.toPayload(data.extra_dsn_params);
   }
 
   if (!values.isAzure) {

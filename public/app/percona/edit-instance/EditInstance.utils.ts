@@ -1,4 +1,5 @@
 import { Databases } from '../shared/core';
+import { CustomLabelsUtils } from '../shared/helpers/customLabels';
 import { DbServicePayload } from '../shared/services/services/Services.types';
 
 import { EditInstanceFormValues } from './EditInstance.types';
@@ -11,7 +12,7 @@ export const getInitialValues = (service?: DbServicePayload): EditInstanceFormVa
   if (service) {
     return {
       ...service,
-      custom_labels: fromPayload(service.custom_labels || {}),
+      custom_labels: CustomLabelsUtils.fromPayload(service.custom_labels || {}),
     };
   }
 
@@ -22,20 +23,3 @@ export const getInitialValues = (service?: DbServicePayload): EditInstanceFormVa
     custom_labels: '',
   };
 };
-
-export const fromPayload = (customLabels: Record<string, string>): string =>
-  Object.entries(customLabels)
-    .map(([label, value]) => label + ':' + value)
-    .join('\n');
-
-export const toPayload = (customLabels: string): Record<string, string> =>
-  customLabels
-    .split(/[\n\s]/)
-    .filter(Boolean)
-    .reduce((acc: Record<string, string>, val: string) => {
-      const [key, value] = val.split(':');
-
-      acc[key] = value;
-
-      return acc;
-    }, {});

@@ -78,4 +78,7 @@ export const getStyles = ({ breakpoints, spacing, colors }: GrafanaTheme2) => ({
   link: css`
     color: ${colors.text.link};
   `,
+  extraDsnOptions: css`
+    padding-top: ${spacing(1)};
+  `,
 });

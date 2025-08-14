@@ -15,6 +15,7 @@ import { Labels } from '../add-instance/components/AddRemoteInstance/FormParts';
 import { PMM_EDIT_INSTANCE_PAGE, PMM_SERVICES_PAGE } from '../shared/components/PerconaBootstrapper/PerconaNavigation';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { updateServiceAction } from '../shared/core/reducers/services';
+import { CustomLabelsUtils } from '../shared/helpers/customLabels';
 import { logger } from '../shared/helpers/logger';
 import { DbServicePayload } from '../shared/services/services/Services.types';
 
@@ -22,7 +23,7 @@ import { EDIT_INSTANCE_DOCS_LINK, FETCH_SERVICE_CANCEL_TOKEN } from './EditInsta
 import { Messages } from './EditInstance.messages';
 import { getStyles } from './EditInstance.styles';
 import { EditInstanceFormValues, EditInstanceRouteParams } from './EditInstance.types';
-import { getInitialValues, getService, toPayload } from './EditInstance.utils';
+import { getInitialValues, getService } from './EditInstance.utils';
 
 const EditInstancePage: FC = () => {
   const dispatch = useAppDispatch();
@@ -68,7 +69,7 @@ const EditInstancePage: FC = () => {
             environment: values.environment,
             replication_set: values.replication_set,
           },
-          custom_labels: toPayload(values.custom_labels || ''),
+          custom_labels: CustomLabelsUtils.toPayload(values.custom_labels || ''),
         })
       ).unwrap();
       appEvents.emit(AppEvents.alertSuccess, [
