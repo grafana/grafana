@@ -360,82 +360,43 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 
 	helper := runGrafana(t)
 	ctx := context.Background()
-	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-
-	// Helper function to clean up repositories between subtests
-	cleanupAllRepos := func() {
-		// First, delete all repositories with retries
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			
-			for _, repo := range list.Items {
-				err := helper.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
-				// Don't fail if already deleted (404 is OK)
-				if err != nil {
-					assert.True(collect, apierrors.IsNotFound(err), "Should be able to delete repository %s (or it should already be deleted)", repo.GetName())
-				}
-			}
-		}, time.Second*10, time.Millisecond*100, "should be able to delete all repositories")
-
-		// Then wait for repositories to be fully deleted to ensure clean state
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
-			if !assert.NoError(collect, err) {
-				return
-			}
-			assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
-		}, time.Second*15, time.Millisecond*100, "repositories should be cleaned up between subtests")
-	}
 
 	t.Run("single instance sync is allowed", func(t *testing.T) {
 		// Ensure clean state
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 
 		repoName := "instance-repo-single"
+		testRepo := TestRepo{
+			Name:               repoName,
+			Target:             "instance",
+			Copies:             map[string]string{}, // No files needed for this test
+			ExpectedDashboards: 0,
+			ExpectedFolders:    0,
+		}
 
-		// Create the first instance sync repository - should succeed
-		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        repoName,
-			"SyncEnabled": true,
-			"SyncTarget":  "instance",
-		})
-
-		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, createOptions)
-		require.NoError(t, err, "first instance sync repository should be created successfully")
+		// Create instance sync repository - should succeed
+		helper.CreateRepo(t, testRepo)
 
 		// Clean up at end of test
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 	})
 
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
 		// Ensure clean state
-		cleanupAllRepos()
-
-		// Double-check that we have a clean state before proceeding
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err, "should be able to list repositories")
-		require.Equal(t, 0, len(list.Items), "should start with no repositories")
+		helper.CleanupAllRepos(t)
 
 		existingFolderName := "existing-folder-repo"
 		instanceRepoName := "instance-repo-blocked"
 
 		// Create a folder sync repository first
-		folderRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        existingFolderName,
-			"SyncEnabled": true,
-			"SyncTarget":  "folder",
-		})
-
-		_, err = helper.Repositories.Resource.Create(ctx, folderRepo, createOptions)
-		require.NoError(t, err, "folder sync repository should be created successfully")
-
-		// Verify the folder repository was created
-		list, err = helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err, "should be able to list repositories")
-		require.Equal(t, 1, len(list.Items), "should have exactly one repository after creating folder repo")
+		folderTestRepo := TestRepo{
+			Name:               existingFolderName,
+			Target:             "folder",
+			Copies:             map[string]string{}, // No files needed for this test
+			ExpectedDashboards: 0,
+			ExpectedFolders:    1, // One folder expected after sync
+		}
+		helper.CreateRepo(t, folderTestRepo)
 
 		// Try to create an instance sync repository - should fail because any other repository exists
 		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
@@ -444,7 +405,7 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 			"SyncTarget":  "instance",
 		})
 
-		_, err = helper.Repositories.Resource.Create(ctx, instanceRepo, createOptions)
+		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "instance sync repository should be rejected when any other repository exists")
 
 		// Verify the error message mentions that instance can only be created when no other repositories exist
@@ -452,56 +413,56 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 		require.Contains(t, statusError.Message, "Instance repository can only be created when no other repositories exist. Found: "+existingFolderName)
 
 		// Clean up at end of test
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 	})
 
 	t.Run("multiple folder syncs are allowed", func(t *testing.T) {
 		// Ensure clean state
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 
 		firstFolderName := "folder-repo-multi-1"
 		secondFolderName := "folder-repo-multi-2"
 
 		// Create first folder sync repository
-		folderRepo1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        firstFolderName,
-			"SyncEnabled": true,
-			"SyncTarget":  "folder",
-		})
-
-		_, err := helper.Repositories.Resource.Create(ctx, folderRepo1, createOptions)
-		require.NoError(t, err, "first folder sync repository should be created successfully")
+		folderTestRepo1 := TestRepo{
+			Name:               firstFolderName,
+			Target:             "folder",
+			Copies:             map[string]string{}, // No files needed for this test
+			ExpectedDashboards: 0,
+			ExpectedFolders:    1, // One folder expected after sync
+		}
+		helper.CreateRepo(t, folderTestRepo1)
 
 		// Create second folder sync repository - should succeed
-		folderRepo2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        secondFolderName,
-			"SyncEnabled": true,
-			"SyncTarget":  "folder",
-		})
-
-		_, err = helper.Repositories.Resource.Create(ctx, folderRepo2, createOptions)
-		require.NoError(t, err, "second folder sync repository should be created successfully")
+		folderTestRepo2 := TestRepo{
+			Name:               secondFolderName,
+			Target:             "folder", 
+			Copies:             map[string]string{}, // No files needed for this test
+			ExpectedDashboards: 0,
+			ExpectedFolders:    2, // Two folders expected after sync (1 + 1)
+		}
+		helper.CreateRepo(t, folderTestRepo2)
 
 		// Clean up at end of test
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 	})
 
 	t.Run("folder sync is rejected when instance sync exists", func(t *testing.T) {
 		// Ensure clean state
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 
 		instanceRepoName := "instance-blocking-folder"
 		folderRepoName := "folder-blocked-by-instance"
 
 		// Create instance sync repository first
-		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        instanceRepoName,
-			"SyncEnabled": true,
-			"SyncTarget":  "instance",
-		})
-
-		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, createOptions)
-		require.NoError(t, err, "instance sync repository should be created successfully")
+		instanceTestRepo := TestRepo{
+			Name:               instanceRepoName,
+			Target:             "instance",
+			Copies:             map[string]string{}, // No files needed for this test
+			ExpectedDashboards: 0,
+			ExpectedFolders:    0,
+		}
+		helper.CreateRepo(t, instanceTestRepo)
 
 		// Try to create folder sync repository - should fail
 		folderRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
@@ -510,7 +471,7 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 			"SyncTarget":  "folder",
 		})
 
-		_, err = helper.Repositories.Resource.Create(ctx, folderRepo, createOptions)
+		_, err := helper.Repositories.Resource.Create(ctx, folderRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "folder sync repository should be rejected when instance sync exists")
 
 		// Verify the error message mentions the existing instance repository
@@ -518,25 +479,25 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 		require.Contains(t, statusError.Message, "Cannot create folder repository when instance repository exists: "+instanceRepoName)
 
 		// Clean up at end of test
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 	})
 
 	t.Run("instance sync can only be created when no repositories exist", func(t *testing.T) {
 		// Ensure clean state
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 
 		// This test verifies that instance sync can ONLY be created when there are no other repositories
 		instanceRepoName := "instance-only-when-empty"
 
 		// First, create instance sync repository when no other repositories exist - should succeed
-		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        instanceRepoName,
-			"SyncEnabled": true,
-			"SyncTarget":  "instance",
-		})
-
-		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, createOptions)
-		require.NoError(t, err, "instance sync repository should be created when no other repositories exist")
+		instanceTestRepo := TestRepo{
+			Name:               instanceRepoName,
+			Target:             "instance",
+			Copies:             map[string]string{}, // No files needed for this test
+			ExpectedDashboards: 0,
+			ExpectedFolders:    0,
+		}
+		helper.CreateRepo(t, instanceTestRepo)
 
 		// Now try to create any other repository - should fail
 		otherRepoName := "other-repo-blocked"
@@ -546,34 +507,33 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 			"SyncTarget":  "folder",
 		})
 
-		_, err = helper.Repositories.Resource.Create(ctx, otherRepo, createOptions)
+		_, err := helper.Repositories.Resource.Create(ctx, otherRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "folder sync repository should be rejected when instance sync exists")
 
 		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 		require.Contains(t, statusError.Message, "Cannot create folder repository when instance repository exists: "+instanceRepoName)
 
 		// Clean up at end of test
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 	})
 
 	t.Run("repository limit validation", func(t *testing.T) {
 		// Ensure clean state
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 
 		// This test verifies the 10 repository limit validation by actually creating 10 repositories
 
 		// Create 10 repositories - should all succeed
 		for i := 1; i <= 10; i++ {
 			repoName := fmt.Sprintf("limit-test-repo-%d", i)
-
-			limitTestRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-				"Name":        repoName,
-				"SyncEnabled": true,
-				"SyncTarget":  "folder",
-			})
-
-			_, err := helper.Repositories.Resource.Create(ctx, limitTestRepo, createOptions)
-			require.NoError(t, err, "repository %d should be created successfully", i)
+			limitTestRepo := TestRepo{
+				Name:               repoName,
+				Target:             "folder",
+				Copies:             map[string]string{}, // No files needed for this test
+				ExpectedDashboards: 0,
+				ExpectedFolders:    i, // Each repository creates a folder, so total = i
+			}
+			helper.CreateRepo(t, limitTestRepo)
 		}
 
 		// Try to create the 11th repository - should fail due to limit
@@ -584,7 +544,7 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 			"SyncTarget":  "folder",
 		})
 
-		_, err := helper.Repositories.Resource.Create(ctx, eleventhRepo, createOptions)
+		_, err := helper.Repositories.Resource.Create(ctx, eleventhRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "11th repository should be rejected due to limit")
 
 		// Verify the error message mentions the repository limit
@@ -592,7 +552,7 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 		require.Contains(t, statusError.Message, "Maximum number of 10 repositories reached")
 
 		// Clean up at end of test
-		cleanupAllRepos()
+		helper.CleanupAllRepos(t)
 	})
 }
 

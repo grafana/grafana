@@ -767,3 +767,34 @@ func countFilesInDir(rootPath string) (int, error) {
 	})
 	return count, err
 }
+
+// CleanupAllRepos deletes all repositories and waits for them to be fully removed
+func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
+
+	// First, delete all repositories with retries
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		
+		for _, repo := range list.Items {
+			err := h.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
+			// Don't fail if already deleted (404 is OK)
+			if err != nil {
+				assert.True(collect, apierrors.IsNotFound(err), "Should be able to delete repository %s (or it should already be deleted)", repo.GetName())
+			}
+		}
+	}, time.Second*10, time.Millisecond*100, "should be able to delete all repositories")
+
+	// Then wait for repositories to be fully deleted to ensure clean state
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
+	}, time.Second*15, time.Millisecond*100, "repositories should be cleaned up between subtests")
+}
