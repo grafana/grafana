@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
-import { PullRequestButton } from '../Repository/PullRequestButton';
+import { PullRequestButtons } from '../Repository/PullRequestButtons';
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
 import { StepStatusInfo } from '../Wizard/types';
@@ -98,8 +98,11 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
         )}
         {state === 'success' ? (
           <Stack direction="row" gap={1}>
-            <RepositoryLink name={repoName} jobType={jobType} />
-            <PullRequestButton pullRequestURL={pullRequestURL} jobType={jobType} />
+            {pullRequestURL ? (
+              <PullRequestButtons urls={job.status?.url} jobType={jobType} />
+            ) : (
+              <RepositoryLink name={repoName} jobType={jobType} />
+            )}
           </Stack>
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
