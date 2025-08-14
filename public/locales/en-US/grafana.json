@@ -2051,7 +2051,9 @@
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
     "option-customfield": {
-      "label-custom-template": "Custom template"
+      "label-custom-template": "Custom template",
+      "placeholder": "Enter plain text or reference a template, e.g. {{template \"default.message\" .}}",
+      "placeholder-with-template": "Enter plain text or reference a template, e.g. {{currentTemplate}}"
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "The selected Alertmanager no longer exists or you may not have permission to access it. You can select a different Alertmanager from the dropdown.",
