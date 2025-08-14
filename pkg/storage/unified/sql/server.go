@@ -103,7 +103,7 @@ func NewResourceServer(
 	serverOptions.QOSQueue = opts.QOSQueue
 	serverOptions.Ring = opts.Ring
 	serverOptions.RingLifecycler = opts.RingLifecycler
-	serverOptions.Features = opts.Features
+	serverOptions.SearchAfterWrite = opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI)
 
 	return resource.NewResourceServer(serverOptions)
 }

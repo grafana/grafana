@@ -101,17 +101,17 @@ const tracingPrexfixSearch = "unified_search."
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer       trace.Tracer
-	log          *slog.Logger
-	storage      StorageBackend
-	search       SearchBackend
-	indexMetrics *BleveIndexMetrics
-	access       types.AccessClient
-	builders     *builderCache
-	initWorkers  int
-	initMinSize  int
-	initMaxSize  int
-	features     featuremgmt.FeatureToggles
+	tracer           trace.Tracer
+	log              *slog.Logger
+	storage          StorageBackend
+	search           SearchBackend
+	indexMetrics     *BleveIndexMetrics
+	access           types.AccessClient
+	builders         *builderCache
+	initWorkers      int
+	initMinSize      int
+	initMaxSize      int
+	searchAfterWrite bool
 
 	ring           *ring.Ring
 	ringLifecycler *ring.BasicLifecycler
@@ -135,7 +135,7 @@ var (
 	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ring *ring.Ring, ringLifecycler *ring.BasicLifecycler, features featuremgmt.FeatureToggles) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ring *ring.Ring, ringLifecycler *ring.BasicLifecycler, searchAfterWrite bool) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -157,7 +157,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		initWorkers:           opts.WorkerThreads,
 		initMinSize:           opts.InitMinCount,
 		initMaxSize:           opts.InitMaxCount,
-		features:              features,
+		searchAfterWrite:      searchAfterWrite,
 		indexMetrics:          indexMetrics,
 		clientIndexEventsChan: opts.IndexEventsChan,
 		indexEventsChan:       make(chan *IndexEvent),
@@ -484,7 +484,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 	watchctx := context.Background() // new context?
 	// don't start watcher when SearchAfterWrite changes are enabled
-	if s.features == nil || !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI) {
+	if s.searchAfterWrite {
 		// Now start listening for new events
 		events, err := s.storage.WatchWriteEvents(watchctx)
 		if err != nil {
