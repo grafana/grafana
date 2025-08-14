@@ -15,7 +15,7 @@ type fakeExchanger struct {
 	err  error
 }
 
-func (f *fakeExchanger) Exchange(ctx context.Context, req authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
+func (f *fakeExchanger) Exchange(_ context.Context, req authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
 	return f.resp, f.err
 }
 
@@ -42,18 +42,22 @@ func TestRoundTripper_SetsAccessTokenHeader(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// drain and close body
-	io.Copy(io.Discard, resp.Body)
-	resp.Body.Close()
+	_, _ = io.Copy(io.Discard, resp.Body)
+	_ = resp.Body.Close()
 }
 
 func TestRoundTripper_PropagatesExchangeError(t *testing.T) {
-	tr := NewRoundTripper(&fakeExchanger{err: io.EOF}, roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+	tr := NewRoundTripper(&fakeExchanger{err: io.EOF}, roundTripperFunc(func(_ *http.Request) (*http.Response, error) {
 		t.Fatal("transport should not be called on exchange error")
 		return nil, nil
 	}))
 
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example", nil)
-	if _, err := tr.RoundTrip(req); err == nil {
+	resp, err := tr.RoundTrip(req)
+	if err == nil {
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
+		}
 		t.Fatalf("expected error, got nil")
 	}
 }
