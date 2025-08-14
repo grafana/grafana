@@ -65,7 +65,6 @@ export enum HttpRequestMethod {
 
 export const httpMethodOptions: SelectableValue[] = [
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
-  { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
   { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
 ];
 
