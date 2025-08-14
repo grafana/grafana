@@ -3,7 +3,7 @@ import { useMemo, useCallback, useId } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { Options, MapViewConfig, GeomapInstanceState } from '../types';
@@ -103,13 +103,13 @@ export const MapViewEditor = ({
         </InlineField>
       </InlineFieldRow>
 
-      <VerticalGroup>
+      <Stack direction="column">
         <Button variant="secondary" size="sm" fullWidth onClick={onSetCurrentView}>
           <span>
             <Trans i18nKey="geomap.map-view-editor.use-current-map-settings">Use current map settings</Trans>
           </span>
         </Button>
-      </VerticalGroup>
+      </Stack>
     </>
   );
 };

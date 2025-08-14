@@ -5,7 +5,7 @@ import { StandardEditorProps, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
-import { Alert, HorizontalGroup, Icon, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Select, useStyles2 } from '@grafana/ui';
 
 import { FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 
@@ -105,7 +105,7 @@ export const LocationModeEditor = ({
           onChange(v.value);
         }}
       />
-      <HorizontalGroup className={styles.hGroup}>{dataValidation()}</HorizontalGroup>
+      {dataValidation()}
     </>
   );
 };
