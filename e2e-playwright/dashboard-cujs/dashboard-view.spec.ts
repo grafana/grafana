@@ -140,12 +140,12 @@ test.describe(
 
         await refreshBtn.click();
 
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle');
 
         expect(await panelContent.textContent()).not.toBe(panelContents);
       });
 
-      await test.step('4.Force refresh', async () => {
+      await test.step('5.Turn off refresh', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const intervalRefreshBtn = dashboardPage.getByGrafanaSelector(
@@ -158,19 +158,19 @@ test.describe(
         const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).nth(1);
         const initialPanelContents = await panelContent.textContent();
 
-        await page.waitForTimeout(5100);
+        await expect(panelContent).not.toHaveText(initialPanelContents!, {
+          timeout: 7000,
+        });
 
         const refreshedPanelContents = await panelContent.textContent();
-
-        expect(initialPanelContents).not.toBe(refreshedPanelContents);
 
         await intervalRefreshBtn.click();
         const offBtn = page.locator('button[aria-label="Turn off auto refresh"]');
         await offBtn.click();
 
-        await page.waitForTimeout(5100);
-
-        expect(await panelContent.textContent()).toBe(refreshedPanelContents);
+        await expect(panelContent).toHaveText(refreshedPanelContents!, {
+          timeout: 7000,
+        });
       });
     });
   }

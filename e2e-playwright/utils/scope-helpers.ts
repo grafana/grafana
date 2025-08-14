@@ -176,6 +176,19 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
             });
           }
 
+          // make sure there is always a binding with no group
+          bindings.push({
+            kind: 'ScopeDashboardBinding',
+            apiVersion: 'scope.grafana.app/v0alpha1',
+            metadata: {},
+            spec: {
+              dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
+              scope: `scope-${scope.name}`,
+            },
+            status: {
+              dashboardTitle: (scope.dashboardTitle ?? 'A tall dashboard') + 'U123',
+            },
+          });
           return bindings;
         }),
       }),

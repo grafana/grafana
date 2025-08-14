@@ -153,16 +153,13 @@ test.describe(
         const restoreBtn = page.getByLabel('Restore groupby set by this dashboard.');
         await restoreBtn.click();
 
-        await page.waitForTimeout(500);
-
-        const restoredOptionsCount = await page
+        const restoredOptions = page
           .getByTestId(/^GroupBySelect-/)
           .first()
-          .locator('div:has(+ button)')
-          .count();
+          .locator('div:has(+ button)');
 
-        expect(restoredOptionsCount).not.toBe(afterEditOptionsCount);
-        expect(restoredOptionsCount).toBe(initialSelectedOptionsCount);
+        await expect(restoredOptions).not.toHaveCount(afterEditOptionsCount);
+        await expect(restoredOptions).toHaveCount(initialSelectedOptionsCount);
       });
 
       await test.step('4.Enter multiple values using keyboard only', async () => {

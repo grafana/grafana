@@ -24,7 +24,9 @@ test.describe(
       await test.step('1.Apply filtering to a whole dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[aria-label*="Edit filter with key"]', {
+          state: 'visible',
+        });
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
@@ -64,11 +66,13 @@ test.describe(
         const labelsResponsePromise = page.waitForResponse('**/resources/**/labels*');
         await adHocVariable.click();
         await labelsResponsePromise;
+        await page.waitForSelector('[role="option"]', { state: 'visible' });
         await adHocVariable.press('Enter');
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[role="option"]', { state: 'visible' });
         const valuesResponsePromise = page.waitForResponse('**/resources/**/values*');
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
+        await page.waitForSelector('[role="option"]', { state: 'visible' });
         await adHocVariable.press('Enter');
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(3);
@@ -128,7 +132,7 @@ test.describe(
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[role="option"]', { state: 'visible' });
         const valuesResponsePromise = page.waitForResponse('**/resources/**/values*');
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
@@ -139,7 +143,7 @@ test.describe(
 
         await adHocVariable.fill(firstValue!.slice(0, -1));
 
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[role="option"]', { state: 'visible' });
 
         const newValuesCount = await valuesLocator.count();
         expect(newValuesCount).toBeLessThan(valuesCount);
@@ -150,7 +154,9 @@ test.describe(
       await test.step('3.Choose operators on the filters', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[aria-label*="Edit filter with key"]', {
+          state: 'visible',
+        });
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
@@ -191,7 +197,7 @@ test.describe(
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[role="option"]', { state: 'visible' });
         await adHocVariable.press('ArrowDown');
         await adHocVariable.press('ArrowDown');
         await adHocVariable.press('ArrowDown');
@@ -247,13 +253,15 @@ test.describe(
       await test.step('5.Edit and restore filters implied by scope', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[aria-label*="Edit filter with key"]', {
+          state: 'visible',
+        });
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
         await setScopes(page, USE_LIVE_DATA);
 
-        await page.waitForTimeout(500);
+        await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(3);
 
@@ -281,7 +289,9 @@ test.describe(
       await test.step('6.Add and edit filters through keyboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[aria-label*="Edit filter with key"]', {
+          state: 'visible',
+        });
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
@@ -322,7 +332,7 @@ test.describe(
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
-        await page.waitForTimeout(500);
+        await page.waitForSelector('[role="option"]', { state: 'visible' });
         const valuesResponsePromise = page.waitForResponse('**/resources/**/values*');
         await adHocVariable.press('Enter');
         await valuesResponsePromise;

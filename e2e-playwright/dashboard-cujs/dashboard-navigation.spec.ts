@@ -27,7 +27,7 @@ test.describe(
 
         await setScopes(page, USE_LIVE_DATA);
 
-        await page.waitForTimeout(1000);
+        await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
         const scopeDashboards = page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]');
         const firstDbName = await scopeDashboards.first().textContent();
@@ -38,9 +38,7 @@ test.describe(
         const scopeDashboardSearch = page.getByTestId('scopes-dashboards-search');
         await scopeDashboardSearch.fill(firstDbName!.trim().slice(0, 5));
 
-        await page.waitForTimeout(500);
-
-        expect(await scopeDashboards.count()).not.toBe(scopeDashboardsCount);
+        await expect(scopeDashboards).not.toHaveCount(scopeDashboardsCount);
       });
 
       await test.step('2.Timeselection persisting', async () => {
@@ -48,7 +46,7 @@ test.describe(
 
         await setScopes(page, USE_LIVE_DATA);
 
-        await page.waitForTimeout(1000);
+        await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
         // assert the panel is visible and has the correct value
         const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
@@ -67,8 +65,7 @@ test.describe(
         await page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]').first().click();
         await page.waitForURL('**/d/**');
 
-        await page.waitForTimeout(500);
-
+        await expect(markdownContent).toBeVisible();
         await expect(markdownContent).toContainText(`now-12h`);
       });
 
@@ -77,7 +74,7 @@ test.describe(
 
         await setScopes(page, USE_LIVE_DATA, { title: 'CUJ Dashboard 3', uid: 'cuj-dashboard-3' });
 
-        await page.waitForTimeout(500);
+        await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
         const pills = await page.getByLabel(/^Edit filter with key/).allTextContents();
         const processedPills = pills
@@ -105,9 +102,10 @@ test.describe(
         await groupByVariable.press('Enter');
         await groupByVariable.press('Escape');
 
-        await page.waitForTimeout(500);
+        const scopeDashboards = page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]');
 
-        await page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]').first().click();
+        await expect(scopeDashboards.first()).toBeVisible();
+        await scopeDashboards.first().click();
         await page.waitForURL('**/d/**');
 
         //all values are set after dashboard switch
@@ -119,7 +117,7 @@ test.describe(
 
         await setScopes(page, USE_LIVE_DATA, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
 
-        await page.waitForTimeout(500);
+        await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
         const pills = page.getByLabel(/^Edit filter with key/);
         const pillCount = await pills.count();
@@ -145,7 +143,10 @@ test.describe(
         const oldFilters = `GroupByVar: ${selectedValues}\n\nAdHocVar: ${processedPills}`;
         await expect(markdownContent).toContainText(oldFilters);
 
-        await page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]').first().click();
+        const scopeDashboards = page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]');
+
+        await expect(scopeDashboards.first()).toBeVisible();
+        await scopeDashboards.first().click();
         await page.waitForURL('**/d/**');
 
         const newPillCount = await pills.count();
