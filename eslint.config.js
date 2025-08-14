@@ -68,7 +68,7 @@ module.exports = [
     },
   },
   // Conditionally run the betterer rules if enabled in dev's config
-  // ...(enableBettererRules ? bettererConfig : []),
+  ...(enableBettererRules ? bettererConfig : []),
   // FIXME: Remove filtering once eslint-config-grafana is updated to include correct plugin
   ...grafanaConfig.filter(Boolean),
   {
