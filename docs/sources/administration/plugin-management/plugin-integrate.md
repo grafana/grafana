@@ -20,7 +20,7 @@ weight: 350
 
 # Allow plugin backend communication
 
-By default, you can only communicate with plugin backends remotely. 
+By default, you can only communicate with plugin backends remotely.
 
 However, you can configure your Grafana instance to let the frontends of installed plugins to directly communicate with the backends of other plugins installed locally. You can use this configuration to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
 

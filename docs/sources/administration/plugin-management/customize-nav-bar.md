@@ -5,7 +5,6 @@ labels:
   products:
     - enterprise
     - oss
-    - cloud
 keywords:
   - grafana
   - plugins
@@ -75,7 +74,7 @@ org-example-app = explore 50
 
 ## Find page paths
 
-To move individual pages you need to know their paths. To identify a plugin page path: 
+To move individual pages you need to know their paths. To identify a plugin page path:
 
 - Visit the page in the browser and check the URL in the address bar.
 - Page paths in app plugins follow the format `/a/PLUGIN_ID/PAGE_PATH`
