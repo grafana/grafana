@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,11 +60,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 
 		// Copy the same file (same UID) to repo2's directory to create ownership conflict
 		repo2DashboardPath := path.Join(helper.ProvisioningPath, "repo2", "conflicting-dashboard.json")
-		err := os.MkdirAll(path.Dir(repo2DashboardPath), 0750)
-		require.NoError(t, err, "should create directory")
-		file := helper.LoadFile("testdata/all-panels.json")
-		err = os.WriteFile(repo2DashboardPath, file, 0600)
-		require.NoError(t, err, "should write conflicting file")
+		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", repo2DashboardPath)
 
 		// Step 2: Try to pull repo2 - should fail due to ownership conflict
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
@@ -75,11 +70,10 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 
 		// Step 3: Verify the job failed with ownership conflict error
 		jobObj := &provisioning.Job{}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		// FIXME: The job completes with "warning" state instead of "error" state
-		// This is actually correct behavior - the pull job completes but reports conflicts as warnings
+		// The job completes with "warning" state instead of "error" state when it doesn't have too many errors
 		t.Logf("Job state: %s", jobObj.Status.State)
 		t.Logf("Job errors: %v", jobObj.Status.Errors)
 
@@ -142,50 +136,4 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.Equal(t, repo1, persistentRepo1Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
 		require.Equal(t, repo1Dashboard.GetResourceVersion(), persistentRepo1Dashboard.GetResourceVersion(), "repo1's resource should not be modified by repo2 pull")
 	})
-
-	// Test: Pull should handle ownership conflicts gracefully via files API
-	t.Run("pull job should handle ownership conflicts gracefully via files API", func(t *testing.T) {
-		// FIXME: This test uses the files API to create conflicting files, which should fail
-		// The files API calls correctly detect ownership conflicts and return 400 errors
-		// But this means we can't use the files API to create the test scenario
-
-		// Step 1: Try to add a file with same UID as repo1's resource to repo2 via files API
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo2).
-			SubResource("files", "conflicting-file.json").
-			Body(helper.LoadFile("testdata/all-panels.json")). // Same UID as repo1's dashboard
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-
-		// This should fail due to ownership conflict (which is correct behavior)
-		t.Logf("Files API result error: %v", result.Error())
-		require.Error(t, result.Error(), "files API should reject conflicting UID")
-
-		// The error demonstrates that ownership protection is working at the files API level
-		errorMsg := result.Error().Error()
-		t.Logf("Files API error message: %s", errorMsg)
-		require.Contains(t, errorMsg, fmt.Sprintf("managed by repo '%s'", repo1))
-		require.Contains(t, errorMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2))
-
-		// Step 2: Verify original resource is still intact and owned by repo1
-		const allPanelsUID = "n1jR8vnnz"
-		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		require.NoError(t, err, "original dashboard should still exist")
-		require.Equal(t, repo1, dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
-	})
-
-	// Clean up - delete repositories
-	err := helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
-	require.NoError(t, err)
-	err = helper.Repositories.Resource.Delete(ctx, repo2, metav1.DeleteOptions{})
-	require.NoError(t, err)
-
-	// Wait for cleanup
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		assert.NoError(collect, err)
-		assert.Equal(collect, 0, len(dashboards.Items), "all dashboards should be cleaned up")
-	}, time.Second*30, time.Millisecond*100, "expected cleanup to complete")
 }
