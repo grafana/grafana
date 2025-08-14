@@ -1,7 +1,6 @@
 package search
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -251,6 +250,7 @@ func (b *bleveBackend) BuildIndex(
 	resourceDir := b.getResourceDir(key)
 
 	var index bleve.Index
+	var indexRV int64
 	cachedIndex := b.getCachedIndex(key)
 	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
 	newIndexType := indexStorageMemory
@@ -263,12 +263,12 @@ func (b *bleveBackend) BuildIndex(
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
 		if cachedIndex == nil && resourceVersion > 0 {
-			index, fileIndexName = b.findPreviousFileBasedIndex(resourceDir, resourceVersion, size)
+			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, resourceVersion, size)
 		}
 
 		if index != nil {
 			build = false
-			logWithDetails.Debug("Existing index found on filesystem", "directory", filepath.Join(resourceDir, fileIndexName))
+			logWithDetails.Debug("Existing index found on filesystem", "indexRV", indexRV, "directory", filepath.Join(resourceDir, fileIndexName))
 			defer closeIndexOnExit(index, "") // Close index, but don't delete directory.
 		} else {
 			// Building index from scratch. Index name has a time component in it to be unique, but if
@@ -490,14 +490,13 @@ func (b *bleveBackend) TotalDocs() int64 {
 }
 
 func formatIndexName(now time.Time) string {
-	timestamp := now.Format("20060102-150405")
-	return fmt.Sprintf("%s", timestamp)
+	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVersion int64, size int64) (bleve.Index, string) {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVersion int64, size int64) (bleve.Index, string, int64) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
-		return nil, ""
+		return nil, "", 0
 	}
 
 	for _, ent := range entries {
@@ -509,35 +508,40 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 		indexDir := filepath.Join(resourceDir, indexName)
 		idx, err := bleve.Open(indexDir)
 		if err != nil {
+			b.log.Debug("error opening index", "indexName", indexName, "err", err)
 			continue
 		}
 
 		cnt, err := idx.DocCount()
 		if err != nil {
+			b.log.Debug("error getting count from index", "indexName", indexName, "err", err)
 			_ = idx.Close()
 			continue
 		}
 
 		if uint64(size) != cnt {
+			b.log.Debug("index count mismatch. ignoring index", "indexName", indexName, "size", size, "cnt", cnt)
 			_ = idx.Close()
 			continue
 		}
 
-		rv, err := getRV(idx)
+		indexRV, err := getRV(idx)
 		if err != nil {
+			b.log.Debug("error getting rv from index", "indexName", indexName, "err", err)
 			_ = idx.Close()
 			continue
 		}
 
-		if rv != resourceVersion {
+		if indexRV <= resourceVersion {
+			b.log.Debug("indexRV is behind requested resourceVersion. ignoring index", "indexName", indexName, "rv", indexRV, "resourceVersion", resourceVersion)
 			_ = idx.Close()
 			continue
 		}
 
-		return idx, indexName
+		return idx, indexName, indexRV
 	}
 
-	return nil, ""
+	return nil, "", 0
 }
 
 type bleveIndex struct {
@@ -585,17 +589,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		}
 	}
 
-	err := b.index.Batch(batch)
-	if err != nil {
-		return err
-	}
-
-	err = b.updateResourceVersion(req.ResourceVersion)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return b.index.Batch(batch)
 }
 
 var internalRVKey = []byte("rv")
@@ -611,12 +605,10 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 }
 
 func setRV(index bleve.Index, rv int64) error {
-	var buf bytes.Buffer
-	err := binary.Write(&buf, binary.BigEndian, rv)
-	if err != nil {
-		return err
-	}
-	return index.SetInternal(internalRVKey, buf.Bytes())
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(buf, uint64(rv))
+
+	return index.SetInternal(internalRVKey, buf)
 }
 
 func getRV(index bleve.Index) (int64, error) {
@@ -624,12 +616,7 @@ func getRV(index bleve.Index) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	var rv int64
-	count, err := binary.Decode(raw, binary.BigEndian, &rv)
-	if count == 8 && err == nil {
-		return rv, nil
-	}
-	return 0, err
+	return int64(binary.LittleEndian.Uint64(raw)), nil
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
