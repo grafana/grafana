@@ -193,6 +193,7 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 
 // BuildIndex builds an index from scratch.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
+//nolint:gocyclo
 func (b *bleveBackend) BuildIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
