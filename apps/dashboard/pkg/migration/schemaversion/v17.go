@@ -63,16 +63,9 @@ func migrateMinSpanToMaxPerRow(panel map[string]interface{}) {
 		return
 	}
 
-	// Convert minSpan to a number (could be int, float64, etc.)
-	var minSpan float64
-	switch v := minSpanValue.(type) {
-	case int:
-		minSpan = float64(v)
-	case float64:
-		minSpan = v
-	case int64:
-		minSpan = float64(v)
-	default:
+	// Convert minSpan to a number using shared utility
+	minSpan, ok := ConvertToFloat(minSpanValue)
+	if !ok {
 		// If we can't convert minSpan to a number, just delete it and return
 		delete(panel, "minSpan")
 		return
