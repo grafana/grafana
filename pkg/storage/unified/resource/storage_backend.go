@@ -459,7 +459,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key ResourceMo
 		return 0, fmt.Errorf("sinceRv must be greater than 0")
 	}
 
-	// Generate a new resource version for the list
+	// Generate current resource version
 	listRV := k.snowflake.Generate().Int64()
 
 	historyKeys := make([]DataKey, 0, defaultListBufferSize)
@@ -486,7 +486,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key ResourceMo
 			},
 		},
 		VersionMatchV2:  resourcepb.ResourceVersionMatchV2_NotOlderThan,
-		ResourceVersion: sinceRv + 1,
+		ResourceVersion: sinceRv + 1, // when we filter keys below, it checks if RV >= sinceRv + 1
 	}
 	filteredKeys, err := filterHistoryKeysByVersion(historyKeys, req)
 	if err != nil {
