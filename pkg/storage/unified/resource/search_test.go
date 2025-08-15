@@ -49,8 +49,7 @@ func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourc
 }
 
 func (m *MockResourceIndex) UpdateResourceVersion(rv int64) error {
-	args := m.Called(rv)
-	return args.Error(0)
+	return nil
 }
 
 var _ DocumentBuilder = &MockDocumentBuilder{}
