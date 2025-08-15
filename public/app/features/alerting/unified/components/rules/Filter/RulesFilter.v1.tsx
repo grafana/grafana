@@ -79,30 +79,24 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dataSourceNames' });
   };
 
-  const handleDashboardChange = (dashboardUid: string | undefined) => {
-    updateFilters({ ...filterState, dashboardUid });
-    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dashboardUid' });
-  };
+  type Filters = typeof filterState;
+
+  const updateAndTrack =
+    <K extends keyof Filters>(key: K) =>
+    (value: Filters[K]) => {
+      updateFilters({ ...filterState, [key]: value });
+      trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: key });
+    };
 
   const clearDataSource = () => {
     updateFilters({ ...filterState, dataSourceNames: [] });
     setFilterKey((key) => key + 1);
   };
 
+  // Note: keep explicit logging for alert state filter clicks
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
-    updateFilters({ ...filterState, ruleState: value });
-    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'ruleState' });
-  };
-
-  const handleRuleTypeChange = (ruleType: PromRuleType) => {
-    updateFilters({ ...filterState, ruleType });
-    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'ruleType' });
-  };
-
-  const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
-    updateFilters({ ...filterState, ruleHealth });
-    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'ruleHealth' });
+    updateAndTrack('ruleState')(value);
   };
 
   const handleClearFiltersClick = () => {
@@ -113,8 +107,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   };
 
   const handleContactPointChange = (contactPoint: string) => {
-    updateFilters({ ...filterState, contactPoint });
-    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'contactPoint' });
+    updateAndTrack('contactPoint')(contactPoint);
   };
 
   const searchIcon = <Icon name={'search'} />;
@@ -187,7 +180,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             inputId="filters-dashboard-picker"
             key={filterState.dashboardUid ? 'dashboard-defined' : 'dashboard-not-defined'}
             value={filterState.dashboardUid}
-            onChange={(value) => handleDashboardChange(value?.uid)}
+            onChange={(value) => updateAndTrack('dashboardUid')(value?.uid)}
             isClearable
             cacheOptions
           />
@@ -207,7 +200,11 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
           <Label>
             <Trans i18nKey="alerting.rules-filter.rule-type">Rule type</Trans>
           </Label>
-          <RadioButtonGroup options={RuleTypeOptions} value={filterState.ruleType} onChange={handleRuleTypeChange} />
+          <RadioButtonGroup
+            options={RuleTypeOptions}
+            value={filterState.ruleType}
+            onChange={updateAndTrack('ruleType')}
+          />
         </div>
         <div>
           <Label>
@@ -216,7 +213,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
           <RadioButtonGroup
             options={RuleHealthOptions}
             value={filterState.ruleHealth}
-            onChange={handleRuleHealthChange}
+            onChange={updateAndTrack('ruleHealth')}
           />
         </div>
         {canRenderContactPointSelector && (
