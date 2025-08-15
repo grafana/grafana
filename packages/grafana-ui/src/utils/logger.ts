@@ -1,5 +1,7 @@
 import { throttle } from 'lodash';
 
+import { store } from '@grafana/data';
+
 type Args = Parameters<typeof console.log>;
 
 /**
@@ -24,7 +26,7 @@ export interface Logger {
  * @internal
  */
 interface LoggerOptions {
-  /** localStorage key to check for enabling debug mode. Defaults to 'grafana.debug' */
+  /** store key to check for enabling debug mode. Defaults to 'grafana.debug' */
   storageKey?: string;
   /** Whether to support enable/disable methods that modify internal state. Defaults to true */
   enableToggle?: boolean;
@@ -41,7 +43,7 @@ function createBaseLogger(name: string, options: LoggerOptions = {}) {
   let internalLoggingEnabled = false;
 
   if (typeof window !== 'undefined') {
-    internalLoggingEnabled = window.localStorage.getItem(storageKey) === 'true';
+    internalLoggingEnabled = store.getObject(storageKey) === true;
   }
 
   const isEnabled = () => {
@@ -49,8 +51,8 @@ function createBaseLogger(name: string, options: LoggerOptions = {}) {
       // Legacy behavior: check internal state (can be overridden by enable/disable)
       return internalLoggingEnabled;
     } else {
-      // New behavior: always check localStorage directly (more reliable)
-      return typeof window !== 'undefined' && localStorage.getItem(storageKey) === 'true';
+      // New behavior: always check store directly (more reliable)
+      return store.getObject(storageKey) === true;
     }
   };
 

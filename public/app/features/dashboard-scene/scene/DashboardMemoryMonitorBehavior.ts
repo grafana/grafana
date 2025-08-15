@@ -30,14 +30,27 @@ export class DashboardMemoryMonitorBehavior extends SceneObjectBase<DashboardMem
       return deactivationHandler;
     }
 
-    // Get dashboard UID from scene context
+    // Get dashboard UID and title from scene context
     this.dashboardUid = this.getDashboardUid();
+    const dashboardTitle = this.getDashboardTitle();
 
-    this.logger.logger('activate', false, 'called. Enabled:', this.state.enabled, 'DashboardUid:', this.dashboardUid);
+    this.logger.logger(
+      'activate',
+      false,
+      'called. Enabled:',
+      this.state.enabled,
+      'DashboardUid:',
+      this.dashboardUid,
+      'Title:',
+      dashboardTitle
+    );
 
     if (this.dashboardUid) {
       const memoryMonitor = getDashboardMemoryMonitor();
-      memoryMonitor.startMonitoring({ dashboardUid: this.dashboardUid });
+      memoryMonitor.startMonitoring({
+        dashboardUid: this.dashboardUid,
+        dashboardTitle: dashboardTitle,
+      });
     } else {
       this.logger.logger('activate', false, 'No dashboard UID found, skipping monitoring');
     }
@@ -66,6 +79,19 @@ export class DashboardMemoryMonitorBehavior extends SceneObjectBase<DashboardMem
     if (this.parent && 'state' in this.parent && this.parent.state && 'uid' in this.parent.state) {
       const uid = this.parent.state.uid;
       return typeof uid === 'string' ? uid : undefined;
+    }
+    return undefined;
+  }
+
+  /**
+   * Get dashboard title from the scene context
+   */
+  private getDashboardTitle(): string | undefined {
+    // Since this behavior is always attached to DashboardScene, we can directly access its title
+    // DashboardScene has title in its state, so we can access it via parent
+    if (this.parent && 'state' in this.parent && this.parent.state && 'title' in this.parent.state) {
+      const title = this.parent.state.title;
+      return typeof title === 'string' ? title : undefined;
     }
     return undefined;
   }

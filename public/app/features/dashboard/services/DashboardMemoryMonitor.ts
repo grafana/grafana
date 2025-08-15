@@ -1,5 +1,5 @@
 import { stringToMs } from '@grafana/data';
-import { config, getEchoSrv, EchoEventType } from '@grafana/runtime';
+import { config, getEchoSrv, EchoEventType, logMeasurement } from '@grafana/runtime';
 import { createLogger } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -11,6 +11,7 @@ export interface MemoryMeasurement {
 
 export interface DashboardMemoryMonitorOptions {
   dashboardUid: string;
+  dashboardTitle?: string;
 }
 
 /**
@@ -20,6 +21,7 @@ export interface DashboardMemoryMonitorOptions {
 export class DashboardMemoryMonitor {
   private monitoringTimer?: number;
   private currentDashboardUid?: string;
+  private currentDashboardTitle?: string;
   private intervalMs = 30000; // Default 30s
   private isTabVisible = true;
   private logger = createLogger('DashboardMemoryMonitor', 'grafana.debug.memory');
@@ -33,7 +35,7 @@ export class DashboardMemoryMonitor {
    * Start monitoring memory for a specific dashboard
    */
   startMonitoring(options: DashboardMemoryMonitorOptions): void {
-    const { dashboardUid } = options;
+    const { dashboardUid, dashboardTitle } = options;
 
     this.logger.logger('startMonitoring', false, 'called with:', { dashboardUid });
     this.logger.logger('startMonitoring', false, 'config.dashboardMemoryMonitoring:', config.dashboardMemoryMonitoring);
@@ -47,8 +49,14 @@ export class DashboardMemoryMonitor {
     // Stop existing monitoring if running
     this.stopMonitoring();
 
-    this.logger.logger('startMonitoring', false, 'Starting monitoring for dashboard:', dashboardUid);
+    this.logger.logger('startMonitoring', false, 'Starting monitoring for dashboard:', dashboardUid, dashboardTitle);
     this.currentDashboardUid = dashboardUid;
+    this.currentDashboardTitle = dashboardTitle || undefined;
+
+    // Take immediate measurement when monitoring starts
+    this.takeMemoryMeasurement();
+
+    // Then schedule regular intervals
     this.scheduleNextMeasurement();
   }
 
@@ -61,6 +69,7 @@ export class DashboardMemoryMonitor {
       this.monitoringTimer = undefined;
     }
     this.currentDashboardUid = undefined;
+    this.currentDashboardTitle = undefined;
   }
 
   /**
@@ -83,23 +92,39 @@ export class DashboardMemoryMonitor {
         return;
       }
 
-      this.logger.logger('takeMemoryMeasurement', false, 'Sending memory event to Echo service with payload:', {
+      // Prepare measurement payload for both Echo and Faro
+      const measurementPayload = {
         totalJSHeapSize: memoryInfo.totalJSHeapSize,
         usedJSHeapSize: memoryInfo.usedJSHeapSize,
         jsHeapSizeLimit: memoryInfo.jsHeapSizeLimit,
-      });
+        memoryUsagePercentage: (memoryInfo.usedJSHeapSize / memoryInfo.totalJSHeapSize) * 100,
+      };
 
-      // Send to Echo service - timestamps and session IDs handled by Echo
+      this.logger.logger(
+        'takeMemoryMeasurement',
+        false,
+        'Sending memory measurement to Echo and Faro:',
+        measurementPayload
+      );
+
+      // Send to Echo service for debug logging (existing functionality)
       getEchoSrv().addEvent({
         type: EchoEventType.MemoryUsage,
         payload: {
-          totalJSHeapSize: memoryInfo.totalJSHeapSize,
-          usedJSHeapSize: memoryInfo.usedJSHeapSize,
-          jsHeapSizeLimit: memoryInfo.jsHeapSizeLimit,
+          ...measurementPayload,
+          dashboardUid: this.currentDashboardUid,
+          dashboardTitle: this.currentDashboardTitle,
         },
       });
 
-      this.logger.logger('takeMemoryMeasurement', false, 'Memory event sent to Echo service successfully');
+      // Send to Faro for metrics collection (new functionality)
+      logMeasurement('dashboard_memory', measurementPayload, {
+        dashboard: this.currentDashboardUid || '',
+        title: this.currentDashboardTitle || '',
+        monitoringInterval: this.intervalMs.toString(),
+      });
+
+      this.logger.logger('takeMemoryMeasurement', false, 'Memory measurements sent to both Echo and Faro successfully');
     } catch (error) {
       console.warn('Failed to capture memory measurement:', error);
     }

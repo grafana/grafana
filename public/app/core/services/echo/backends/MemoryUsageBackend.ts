@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+import { store } from '@grafana/data';
 import { EchoBackend, EchoEvent, EchoEventType, MemoryUsageEchoEvent, isMemoryUsageEvent } from '@grafana/runtime';
 import { createLogger } from '@grafana/ui';
 
@@ -30,7 +30,7 @@ export class MemoryUsageBackend implements EchoBackend<MemoryUsageEchoEvent, Mem
     }
 
     // Log to console only when debug mode is enabled
-    const debugEnabled = localStorage.getItem('grafana.debug.memory') === 'true';
+    const debugEnabled = store.getObject('grafana.debug.memory') === true;
     this.logger.logger('flush', false, 'Debug enabled:', debugEnabled);
 
     if (debugEnabled) {
