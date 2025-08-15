@@ -4522,6 +4522,10 @@
           "value": "Value"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
+        "unsupported-item-type": "Conditional rendering not supported for this item type"
+      },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
       },
@@ -11276,7 +11280,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
-      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+      "history-not-supported": "File history is not supported for this repository",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "repository-not-found": "Repository not found"
     },
     "file-status-page": {
       "save": "Save",
