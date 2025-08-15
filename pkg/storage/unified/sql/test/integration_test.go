@@ -81,21 +81,6 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 		}, nil)
 	})
 
-	//testOptions := &unitest.TestOptions{
-	//	SkipTests: map[string]bool{
-	//		unitest.TestHappyPath:                 true,
-	//		unitest.TestWatchWriteEvents:          true,
-	//		unitest.TestList:                      true,
-	//		unitest.TestBlobSupport:               true,
-	//		unitest.TestGetResourceStats:          true,
-	//		unitest.TestListHistory:               true,
-	//		unitest.TestListHistoryErrorReporting: true,
-	//		unitest.TestListModifiedSince:         false,
-	//		unitest.TestListTrash:                 true,
-	//		unitest.TestCreateNewResource:         true,
-	//	},
-	//}
-
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			dbstore := db.InitTestDB(t)

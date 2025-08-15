@@ -500,32 +500,82 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 	require.NoError(t, err)
 	require.Greater(t, rvHistory3, rvHistory2)
 
-	key := resource.ResourceModifiedKey{
-		Namespace: ns,
-		Group:     "group",
-		Resource:  "resource",
-	}
-	latestRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
-		// change 1
-		iter.Next()
-		require.NoError(t, iter.Error())
-		require.Equal(t, rvHistory1, iter.ResourceVersion())
+	t.Run("can list modified events since a given resource version", func(t *testing.T) {
+		key := resource.ResourceModifiedKey{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		}
+		latestRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
+			// change 1
+			iter.Next()
+			require.NoError(t, iter.Error())
+			require.Equal(t, rvHistory1, iter.ResourceVersion())
 
-		// change 2
-		iter.Next()
-		require.NoError(t, iter.Error())
-		require.Equal(t, rvHistory2, iter.ResourceVersion())
+			// change 2
+			iter.Next()
+			require.NoError(t, iter.Error())
+			require.Equal(t, rvHistory2, iter.ResourceVersion())
 
-		// change 3
-		iter.Next()
-		require.NoError(t, iter.Error())
-		require.Equal(t, rvHistory3, iter.ResourceVersion())
+			// change 3
+			iter.Next()
+			require.NoError(t, iter.Error())
+			require.Equal(t, rvHistory3, iter.ResourceVersion())
 
-		return nil
+			return nil
+		})
+
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, latestRv, rvHistory3)
 	})
 
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, latestRv, rvHistory3)
+	t.Run("no events if none after the given resource version", func(t *testing.T) {
+		key := resource.ResourceModifiedKey{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		}
+		latestRv, err := backend.ListModifiedSince(ctx, key, rvHistory3, func(iter resource.ListIterator) error {
+			require.Equal(t, false, iter.Next())
+
+			return nil
+		})
+
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, latestRv, rvHistory3)
+	})
+
+	t.Run("will only return modified events for the given key", func(t *testing.T) {
+		key := resource.ResourceModifiedKey{
+			Namespace: "other-ns",
+			Group:     "group",
+			Resource:  "resource",
+		}
+
+		// Write an event for this tenant for another resource
+		_, err = writeEvent(ctx, backend, "item2-otherTenant", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"), WithResource("other-resource"))
+		require.NoError(t, err)
+
+		// Write an event for this tenant for the resource we are interested in
+		rvOther, err := writeEvent(ctx, backend, "item1-otherTenant", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
+		require.NoError(t, err)
+		require.Greater(t, rvOther, rvHistory3)
+
+		latestRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
+			// Should only get the single new event for this tenant and resource
+			iter.Next()
+			require.NoError(t, iter.Error())
+			require.Equal(t, rvOther, iter.ResourceVersion())
+			require.Equal(t, "other-ns", iter.Namespace())
+
+			require.Equal(t, false, iter.Next())
+
+			return nil
+		})
+
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, latestRv, rvOther)
+	})
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
