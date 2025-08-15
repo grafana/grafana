@@ -505,7 +505,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		Group:     "group",
 		Resource:  "resource",
 	}
-	maxRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
+	latestRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
 		// change 1
 		iter.Next()
 		require.NoError(t, iter.Error())
@@ -525,7 +525,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, rvHistory3, maxRv)
+	require.GreaterOrEqual(t, latestRv, rvHistory3)
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {

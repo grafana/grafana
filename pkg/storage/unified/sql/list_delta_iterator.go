@@ -8,8 +8,7 @@ import (
 var _ resource.ListIterator = (*listDeltaIter)(nil)
 
 type listDeltaIter struct {
-	rows  db.Rows
-	maxRv int64
+	rows db.Rows
 
 	// any error
 	err error
@@ -62,11 +61,6 @@ func (l *listDeltaIter) Value() []byte {
 func (l *listDeltaIter) Next() bool {
 	if l.rows.Next() {
 		l.err = l.rows.Scan(&l.guid, &l.rv, &l.namespace, &l.group, &l.resource, &l.name, &l.folder, &l.value, &l.action)
-
-		// track the max resource version we have seen while iterating
-		if l.rv > l.maxRv {
-			l.maxRv = l.rv
-		}
 
 		return true
 	}

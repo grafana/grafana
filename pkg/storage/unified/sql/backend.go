@@ -635,7 +635,13 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 func (b *backend) ListModifiedSince(ctx context.Context, key resource.ResourceModifiedKey, sinceRv int64, cb func(iterator resource.ListIterator) error) (int64, error) {
 	resIter := &listDeltaIter{}
 
+	var latestRv int64
 	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
+		var err error
+		latestRv, err = b.fetchLatestRV(ctx, tx, b.dialect, key.Group, key.Resource)
+		if err != nil {
+			return fmt.Errorf("fetch latest resource version: %w", err)
+		}
 		query := sqlResourceListModifiedSinceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Namespace:   key.Namespace,
@@ -665,7 +671,7 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.ResourceMo
 		return nil
 	})
 
-	return resIter.maxRv, err
+	return latestRv, err
 }
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
