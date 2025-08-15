@@ -538,9 +538,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	if err != nil {
 		return err
 	}
-	storage[dashboards.StoragePath()] = dashboardStorage{
+	storage[dashboards.StoragePath()] = dashboardStoragePermissionWrapper{
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
-		store:                   dw,
+		Storage:                 dw,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
