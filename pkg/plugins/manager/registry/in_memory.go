@@ -15,7 +15,7 @@ type InMemory struct {
 	mu    sync.RWMutex
 }
 
-func ProvideService() *InMemory {
+func ProvideInMemory() *InMemory {
 	return NewInMemory()
 }
 

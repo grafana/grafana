@@ -1,9 +1,11 @@
 package appinstaller
 
 import (
+	"github.com/spf13/pflag"
+
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/spf13/pflag"
+	"github.com/grafana/grafana/pkg/setting"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 )
 
@@ -15,6 +17,7 @@ type Options interface {
 
 type OptionsProvider interface {
 	GetOptions() Options
+	ApplyGrafanaConfig(cfg *setting.Cfg) error
 }
 
 type optionsAdapter struct {
@@ -34,4 +37,15 @@ func RegisterOptions(
 			opts.APIOptions = append(opts.APIOptions, &optionsAdapter{Options: optionsProvider.GetOptions()})
 		}
 	}
+}
+
+func ApplyGrafanaConfig(cfg *setting.Cfg, installers []appsdkapiserver.AppInstaller) error {
+	for _, installer := range installers {
+		if optionsProvider, ok := installer.(OptionsProvider); ok {
+			if err := optionsProvider.ApplyGrafanaConfig(cfg); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

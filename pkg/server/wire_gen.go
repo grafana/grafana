@@ -339,7 +339,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
 	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService)
-	inMemory := registry.ProvideService()
+	inMemory := registry.ProvideInMemory()
 	rendererManager, err := renderer.ProvideService(pluginManagementCfg, envVarsProvider, inMemory, tracingService)
 	if err != nil {
 		return nil, err
@@ -739,7 +739,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles)
+	inMemoryAdapter := registry.ProvideInMemoryRegistryAdapter(inMemory)
+	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, inMemoryAdapter)
 	if err != nil {
 		return nil, err
 	}
@@ -916,7 +917,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
 	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService)
-	inMemory := registry.ProvideService()
+	inMemory := registry.ProvideInMemory()
 	rendererManager, err := renderer.ProvideService(pluginManagementCfg, envVarsProvider, inMemory, tracingService)
 	if err != nil {
 		return nil, err
@@ -1318,7 +1319,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles)
+	inMemoryAdapter := registry.ProvideInMemoryRegistryAdapter(inMemory)
+	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, inMemoryAdapter)
 	if err != nil {
 		return nil, err
 	}

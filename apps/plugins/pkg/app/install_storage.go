@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 )
 
@@ -71,7 +72,12 @@ func (s *PluginInstallStorage) ConvertToTable(ctx context.Context, object runtim
 
 func (s *PluginInstallStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	list := s.NewList().(*pluginsv0alpha1.PluginInstallList)
-	list.Items = s.pluginRegistry.Plugins(ctx)
+	plugins := s.pluginRegistry.Plugins(ctx)
+	items := make([]resource.Object, 0, len(plugins))
+	for _, plugin := range plugins {
+		items = append(items, plugin.Copy())
+	}
+	list.SetItems(items)
 	return list, nil
 }
 

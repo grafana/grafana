@@ -105,7 +105,9 @@ var WireSet = wire.NewSet(
 	pluginerrs.ProvideStore,
 	wire.Bind(new(plugins.ErrorResolver), new(*pluginerrs.Store)),
 	registry.ProvideService,
-	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	registry.ProvideInMemoryRegistryAdapter,
+	registry.ProvideInMemory,
+	wire.Bind(new(registry.Service), new(*registry.InMemory)), // TODO: switching this to the API registry deadlocks
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	licensing.ProvideLicensing,
