@@ -388,7 +388,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const data: string[] = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
     // Convert string array to Record<string , []>
-    return data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
+    return data?.reduce((ac, a) => ({ ...ac, [a]: '' }), {}) || [];
   };
 
   /**
