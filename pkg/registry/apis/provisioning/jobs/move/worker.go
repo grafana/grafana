@@ -89,6 +89,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		return fmt.Errorf("move files in repository: %w", err)
 	}
 
+	// Set RefURLs if the repository supports it and we have a target ref
+	if opts.Ref != "" {
+		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, opts.Ref); urlErr == nil && refURLs != nil {
+				progress.SetRefURLs(ctx, refURLs)
+			}
+		}
+	}
+
 	if opts.Ref == "" {
 		progress.ResetResults()
 		progress.SetMessage(ctx, "pull resources")

@@ -478,10 +478,10 @@ export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string
 
 export function getDefaultDataSourceRef(): DataSourceRef {
   // we need to return the default datasource configured in the BootConfig
-  const defaultDatasource = config.bootData.settings.defaultDatasource;
+  const defaultDatasource = config.defaultDatasource;
 
   // get default datasource type
-  const dsList = config.bootData.settings.datasources;
+  const dsList = config.datasources;
   const ds = dsList[defaultDatasource];
 
   return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type

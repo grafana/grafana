@@ -61,7 +61,7 @@ func TestService(t *testing.T) {
 
 	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -135,7 +135,7 @@ func TestDSQueryError(t *testing.T) {
 
 	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -200,7 +200,7 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 			req := &Request{Queries: queries, User: &user.SignedInUser{}}
 
 			// Build the pipeline
-			pipeline, err := s.BuildPipeline(req)
+			pipeline, err := s.BuildPipeline(t.Context(), req)
 			require.NoError(t, err)
 
 			node := pipeline[0]

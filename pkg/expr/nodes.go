@@ -107,7 +107,7 @@ func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars
 	return gn.Command.Execute(ctx, now, vars, s.tracer, s.metrics)
 }
 
-func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.Cfg) (*CMDNode, error) {
+func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.Cfg) (*CMDNode, error) {
 	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
@@ -141,7 +141,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.
 		if err != nil {
 			return nil, err
 		}
-		q, err := reader.ReadQuery(data.NewDataQuery(map[string]any{
+		q, err := reader.ReadQuery(ctx, data.NewDataQuery(map[string]any{
 			"refId": rn.RefID,
 			"type":  rn.QueryType,
 		}), iter)
@@ -164,7 +164,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.
 	case TypeThreshold:
 		node.Command, err = UnmarshalThresholdCommand(rn)
 	case TypeSQL:
-		node.Command, err = UnmarshalSQLCommand(rn, cfg)
+		node.Command, err = UnmarshalSQLCommand(ctx, rn, cfg)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
