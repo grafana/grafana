@@ -1244,20 +1244,6 @@
       "copy-code": "Copier le code",
       "download": "Télécharger"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Règle d'alerte",
-        "all": "Tout",
-        "error": "Erreur",
-        "firing": "Déclenchement",
-        "no-data": "Aucune donnée",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "En attente",
-        "recording-rule": "Règle d'enregistrement",
-        "recovering": "En récupération"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "liste-de-règles-filtrées"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Règle supprimée avec succès"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Évaluation de la règle suspendue"
       },
       "resume-rule": {
         "success": "Évaluation de la règle reprise"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Règle mise à jour avec succès"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Supprimer les filtres",
       "configured-alert-rules": "Les sources de données contenant des règles d’alerte configurées sont des sources de données Mimir ou Loki où les règles d’alerte sont stockées et évaluées dans la source de données elle-même.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Tableau de bord",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Aide à la recherche par sources de données",
       "filter-options": {
-        "aria-label-show-filters": "Afficher les filtres",
-        "label-custom-filter": "Filtre personnalisé",
-        "label-saved-searches": "Recherches enregistrées"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Santé",
       "label": {
         "hide": "Masquer",
         "show": "Afficher"
       },
       "manage-alerts": "Dans ces sources de données, vous pouvez sélectionner Gérer les alertes via l’interface utilisateur d’alerte pour pouvoir gérer ces règles d’alerte dans l’interface utilisateur Grafana, ainsi que dans la source de données où elles ont été configurées.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Toutes les sources de données",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Règles de plugin",
       "rule-type": "Type de règle",
       "rulesSearchInput-placeholder-search": "Rechercher",
@@ -2629,9 +2640,6 @@
       "text-federated": "Fédéré",
       "text-provisioned": "Mis en service"
     },
-    "saved-searches": {
-      "text-default": "Par défaut"
-    },
     "search": {
       "property": {
         "data-source": "Source de données",
@@ -2639,11 +2647,10 @@
         "labels": "Étiquettes",
         "namespace": "Dossier/Espace de noms",
         "rule-health": "Santé",
-        "rule-name": "Nom de la règle d'alerte",
+        "rule-name": "",
         "rule-type": "Type",
         "state": "État"
-      },
-      "save-query": "Enregistrer la recherche courante"
+      }
     },
     "search-field-input": {
       "clear": "Effacer",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Appliquer",
     "cancel": "Annuler",
     "clear": "Effacer",
-    "close": "Fermer",
     "collapse": "Réduire",
     "edit": "Modifier",
     "help": "Aide",
@@ -6583,6 +6590,9 @@
         "hosted-graphite-prometheus-and-loki": "Graphite, Prometheus et Loki hébergés"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Annuler",
       "placeholder-filter-by-name-or-type": "Filtrer par nom ou par type"
@@ -7871,7 +7881,8 @@
       "edit-pane": {
         "go-back": "Retour"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9060,6 +9071,7 @@
       "sign-up": "Inscription"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Glisser et déposer pour réorganiser",
@@ -11260,7 +11272,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Retour aux référentiels",
-      "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Enregistrer",
@@ -11458,6 +11472,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Vos ressources sont maintenant dans votre stockage externe et mises en service dans votre instance. À partir de maintenant, votre instance et le stockage externe seront synchronisés.",

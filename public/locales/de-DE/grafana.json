@@ -1244,20 +1244,6 @@
       "copy-code": "Code kopieren",
       "download": "Download"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Warnregel",
-        "all": "Alle",
-        "error": "Fehler",
-        "firing": "Auslösung",
-        "no-data": "Keine Daten",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Ausstehend",
-        "recording-rule": "Aufnahmeregel",
-        "recovering": "Wird wiederhergestellt"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "gefilterte Regelliste"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regel erfolgreich gelöscht"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Regelevaluierung pausiert"
       },
       "resume-rule": {
         "success": "Regelevaluierung fortgesetzt"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regel erfolgreich aktualisiert"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Filter zurücksetzen",
       "configured-alert-rules": "Datenquellen mit konfigurierten Warnregeln sind Mimir- oder Loki-Datenquellen, wobei die Warnregeln in der Datenquelle selbst gespeichert und bewertet werden.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Hilfe für Suche nach Datenquellen",
       "filter-options": {
-        "aria-label-show-filters": "Filter anzeigen",
-        "label-custom-filter": "Benutzerdefinierter Filter",
-        "label-saved-searches": "Gespeicherte Suchen"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Zustand",
       "label": {
         "hide": "Ausblenden",
         "show": "Anzeigen"
       },
       "manage-alerts": "In diesen Datenquellen können Sie über die Alerting-Benutzeroberfläche „Warnungen verwalten“ auswählen, um diese Warnregeln sowohl in der Grafana-Benutzeroberfläche als auch in der Datenquelle, in der sie konfiguriert wurden, verwalten zu können.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Alle Datenquellen",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Plugin-Regeln",
       "rule-type": "Regelart",
       "rulesSearchInput-placeholder-search": "Suche",
@@ -2629,9 +2640,6 @@
       "text-federated": "Verbunden",
       "text-provisioned": "Bereitgestellt"
     },
-    "saved-searches": {
-      "text-default": "Standard"
-    },
     "search": {
       "property": {
         "data-source": "Datenquelle",
@@ -2639,11 +2647,10 @@
         "labels": "Labels",
         "namespace": "Ordner / Namensraum",
         "rule-health": "Zustand",
-        "rule-name": "Name der Warnregel",
+        "rule-name": "",
         "rule-type": "Typ",
         "state": "Status"
-      },
-      "save-query": "Aktuelle Suche speichern"
+      }
     },
     "search-field-input": {
       "clear": "Löschen",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Anwenden",
     "cancel": "Abbrechen",
     "clear": "Löschen",
-    "close": "Schließen",
     "collapse": "Einklappen",
     "edit": "Bearbeiten",
     "help": "Hilfe",
@@ -6583,6 +6590,9 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus und Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Abbrechen",
       "placeholder-filter-by-name-or-type": "Nach Name oder Typ filtern"
@@ -7871,7 +7881,8 @@
       "edit-pane": {
         "go-back": "Zurückgehen"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9060,6 +9071,7 @@
       "sign-up": "Registrieren"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Ziehen und Ablegen zum Neuordnen",
@@ -11260,7 +11272,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
-      "repository-config-exists-configuration": "Achten Sie darauf, dass die Repository-config in der Konfigurationsdatei vorhanden ist."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Achten Sie darauf, dass die Repository-config in der Konfigurationsdatei vorhanden ist.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Speichern",
@@ -11458,6 +11472,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Ihre Ressourcen befinden sich jetzt in Ihrem externen Speicher und werden in Ihrer Instanz bereitgestellt. Von nun an werden Ihre Instanz und der externe Speicher synchronisiert.",
