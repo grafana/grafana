@@ -56,7 +56,7 @@ func NewKvStorageBackend(kv KV) *kvStorageBackend {
 	}
 }
 
-func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key *resourcepb.ResourceKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
+func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
 	// TODO
 	panic("not implemented")
 }

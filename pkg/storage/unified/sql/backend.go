@@ -632,7 +632,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 }
 
 // ListModifiedSince lists all resource changes that have occurred since the given resource version.
-func (b *backend) ListModifiedSince(ctx context.Context, key *resourcepb.ResourceKey, sinceRv int64, cb func(iterator resource.ListIterator) error) (int64, error) {
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.ResourceModifiedKey, sinceRv int64, cb func(iterator resource.ListIterator) error) (int64, error) {
 	resIter := &listDeltaIter{}
 
 	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {

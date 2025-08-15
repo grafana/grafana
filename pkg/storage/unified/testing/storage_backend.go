@@ -500,7 +500,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 	require.NoError(t, err)
 	require.Greater(t, rvHistory3, rvHistory2)
 
-	key := &resourcepb.ResourceKey{
+	key := resource.ResourceModifiedKey{
 		Namespace: ns,
 		Group:     "group",
 		Resource:  "resource",
