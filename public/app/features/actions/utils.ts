@@ -236,6 +236,12 @@ export enum SupportedDataSourceType {
 }
 
 /** @internal */
+interface KeyValuePair {
+  key: string;
+  value: string;
+}
+
+/** @internal */
 interface DatasourceRequestBuilder {
   buildRequest(
     proxyConfig: ProxyOptions,
@@ -260,13 +266,13 @@ class InfinityRequestBuilder implements DatasourceRequestBuilder {
     const requestId = getNextRequestId();
     const infinityUrl = `api/ds/query?ds_type=${proxyConfig.datasourceType}&requestId=${requestId}`;
 
-    const requestHeaders: any = [];
+    const requestHeaders: KeyValuePair[] = [];
     headers.forEach(([name, value]) => {
       requestHeaders.push({ key: name, value: value });
     });
 
     // Infinity needs [string, string] to {key: string, value: string}
-    const requestQueryParams: any = [];
+    const requestQueryParams: KeyValuePair[] = [];
     queryParams.forEach(([name, value]) => {
       requestQueryParams.push({ key: name, value: value });
     });

@@ -78,6 +78,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       ...updates,
       ...(value.type === ActionType.Proxy && {
         datasourceType: SupportedDataSourceTypes.Infinity,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         datasourceUid: (baseConfig as ProxyOptions).datasourceUid || '',
       }),
     };
@@ -88,9 +89,11 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
-  const updateConfig = (field: keyof (FetchOptions & ProxyOptions)) => (newValue: any) => {
-    updateActionConfig({ [field]: newValue });
-  };
+  const updateConfig =
+    <K extends keyof (FetchOptions & ProxyOptions)>(field: K) =>
+    (newValue: (FetchOptions & ProxyOptions)[K]) => {
+      updateActionConfig({ [field]: newValue });
+    };
 
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
