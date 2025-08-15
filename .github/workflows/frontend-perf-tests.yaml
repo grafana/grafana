@@ -58,7 +58,7 @@ jobs:
           GRAFANA_URL: http://fsperfbaseline.grafana-dev.net
           GRAFANA_ADMIN_USER: ${{ env.FSPERFBASELINE_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
-        run: yarn e2e:playwright --grep @performance --reporter json # probably written to wrong place
+        run: yarn e2e:playwright --grep @performance # probably written to wrong place
       
       - name: Bench report
         run: |
