@@ -71,6 +71,9 @@ export const components = {
         type: {
           input: 'data-testid resource-picker-filter-type',
         },
+        location: {
+          input: 'data-testid resource-picker-filter-location',
+        },
       },
     },
     metricsQueryEditor: {

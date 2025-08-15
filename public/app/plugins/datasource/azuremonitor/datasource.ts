@@ -243,6 +243,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     });
   }
 
+  getLocations(subscriptions: string[]) {
+    return this.azureMonitorDatasource.getLocations(subscriptions);
+  }
+
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
     const mapped = queries.map((query) => {
       if (!query.queryType) {

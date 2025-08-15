@@ -2,7 +2,7 @@ import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { resourceTypes } from '../azureMetadata/resourceTypes';
 import Datasource from '../datasource';
-import { AzureMonitorDataSourceInstanceSettings } from '../types/types';
+import { AzureMonitorDataSourceInstanceSettings, AzureMonitorLocations } from '../types/types';
 
 import { createMockInstanceSetttings } from './instanceSettings';
 import { DeepPartial } from './utils';
@@ -75,6 +75,7 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
     getVariablesRaw: jest.fn().mockReturnValue([]),
     getDefaultSubscriptionId: jest.fn().mockReturnValue('defaultSubscriptionId'),
     getMetricNamespaces: jest.fn().mockResolvedValueOnce([]),
+    getLocations: jest.fn().mockResolvedValueOnce([]),
     getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
     getSubscriptions: jest.fn().mockResolvedValue([]),
     getResourceGroups: jest.fn().mockResolvedValueOnce([]),
@@ -87,6 +88,15 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
 
   return jest.mocked(mockDatasource);
 }
+
+export const createMockLocations = (): Promise<Map<string, AzureMonitorLocations>> => {
+  return Promise.resolve(
+    new Map<string, AzureMonitorLocations>([
+      ['northeurope', { displayName: 'North Europe', name: 'northeurope', supportsLogs: true }],
+      ['eastus', { displayName: 'East US', name: 'eastus', supportsLogs: true }],
+    ])
+  );
+};
 export const createMockMetricsNamespaces = (): Promise<
   Array<{
     text: string;
