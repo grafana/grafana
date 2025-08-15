@@ -56,11 +56,6 @@ func NewKvStorageBackend(kv KV) *kvStorageBackend {
 	}
 }
 
-func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
-	// TODO
-	panic("not implemented")
-}
-
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
@@ -453,6 +448,69 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 		}
 	}
 	return pagedKeys
+}
+
+func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" {
+		return 0, fmt.Errorf("group, resource, and namespace are required")
+	}
+
+	if sinceRv <= 0 {
+		return 0, fmt.Errorf("sinceRv must be greater than 0")
+	}
+
+	// Generate a new resource version for the list
+	listRV := k.snowflake.Generate().Int64()
+
+	historyKeys := make([]DataKey, 0, defaultListBufferSize)
+
+	// Use datastore.Keys to get all data keys for this specific resource
+	for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}) {
+		if err != nil {
+			return 0, err
+		}
+		historyKeys = append(historyKeys, dataKey)
+	}
+
+	// filter to get all history keys for this NSR newer than sinceRv
+	req := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+		},
+		VersionMatchV2:  resourcepb.ResourceVersionMatchV2_NotOlderThan,
+		ResourceVersion: sinceRv + 1,
+	}
+	filteredKeys, err := filterHistoryKeysByVersion(historyKeys, req)
+	if err != nil {
+		return 0, err
+	}
+
+	// Sort ascending by resource version
+	sortByResourceVersion(filteredKeys, true)
+
+	iter := kvHistoryIterator{
+		keys:          filteredKeys,
+		currentIndex:  -1,
+		ctx:           ctx,
+		listRV:        listRV,
+		sortAscending: true,
+		dataStore:     k.dataStore,
+	}
+
+	err = cb(&iter)
+	if err != nil {
+		return 0, err
+	}
+
+	return listRV, nil
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
