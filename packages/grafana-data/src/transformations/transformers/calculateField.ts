@@ -693,7 +693,14 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
     }
     case CalculateFieldMode.BinaryOperation: {
       const { binary } = options;
-      const alias = `${binary?.left?.matcher?.options ?? binary?.left?.fixed ?? ''} ${binary?.operator ?? ''} ${binary?.right?.matcher?.options ?? binary?.right?.fixed ?? ''}`;
+      const left = binary?.left?.matcher?.options ?? binary?.left?.fixed ?? '';
+      const right = binary?.right?.matcher?.options ?? binary?.right?.fixed ?? '';
+      const operator = binary?.operator ?? BinaryOperationID.Add;
+
+      let alias = '';
+      if (left && right) {
+        alias = `${left} ${operator} ${right}`;
+      }
 
       // binary calculations with variables will be interpolated on the visualization but we don't want to do that here, so just give a blank placeholder
       const variableFound = /\$/g.test(alias);
