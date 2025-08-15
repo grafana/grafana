@@ -11,12 +11,15 @@ jest.mock('@grafana/runtime', () => {
 });
 
 jest.mock('app/core/services/context_srv', () => {
-  const original = jest.requireActual('app/core/services/context_srv');
-  const mockedContext = { ...original };
-
-  mockedContext.contextSrv.user.orgId = 'testOrgId';
-
-  return mockedContext;
+  return {
+    contextSrv: {
+      ...jest.requireActual('app/core/services/context_srv').contextSrv,
+      user: {
+        ...jest.requireActual('app/core/services/context_srv').contextSrv.user,
+        orgId: 'testOrgId',
+      },
+    },
+  };
 });
 
 describe('ImpressionSrv', () => {
