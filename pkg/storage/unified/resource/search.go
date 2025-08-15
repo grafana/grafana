@@ -656,57 +656,55 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		return nil, err
 	}
 
-	if idx != nil {
-		return idx, nil
-	}
+	if idx == nil {
+		ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
+			// We want to finish building of the index even if original context is canceled.
+			// We reuse original context without cancel to keep the tracing spans correct.
+			ctx := context.WithoutCancel(ctx)
 
-	ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
-		// We want to finish building of the index even if original context is canceled.
-		// We reuse original context without cancel to keep the tracing spans correct.
-		ctx := context.WithoutCancel(ctx)
-
-		// Recheck if some other goroutine managed to build an index in the meantime.
-		// (That is, it finished running this function and stored the index into the cache)
-		idx, err := s.search.GetIndex(ctx, key)
-		if err == nil && idx != nil {
-			return idx, nil
-		}
-
-		// Get correct value of size + RV for building the index. This is important for our Bleve
-		// backend to decide whether to build index in-memory or as file-based.
-		stats, err := s.storage.GetResourceStats(ctx, key.Namespace, 0)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get resource stats: %w", err)
-		}
-
-		size := int64(0)
-		rv := int64(0)
-		for _, stat := range stats {
-			if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
-				size = stat.Count
-				rv = stat.ResourceVersion
-				break
+			// Recheck if some other goroutine managed to build an index in the meantime.
+			// (That is, it finished running this function and stored the index into the cache)
+			idx, err := s.search.GetIndex(ctx, key)
+			if err == nil && idx != nil {
+				return idx, nil
 			}
-		}
 
-		idx, _, err = s.build(ctx, key, size, rv, reason)
-		if err != nil {
-			return nil, fmt.Errorf("error building search index, %w", err)
-		}
-		if idx == nil {
-			return nil, fmt.Errorf("nil index after build")
-		}
-		return idx, nil
-	})
+			// Get correct value of size + RV for building the index. This is important for our Bleve
+			// backend to decide whether to build index in-memory or as file-based.
+			stats, err := s.storage.GetResourceStats(ctx, key.Namespace, 0)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get resource stats: %w", err)
+			}
 
-	select {
-	case res := <-ch:
-		if res.Err != nil {
-			return nil, res.Err
+			size := int64(0)
+			rv := int64(0)
+			for _, stat := range stats {
+				if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
+					size = stat.Count
+					rv = stat.ResourceVersion
+					break
+				}
+			}
+
+			idx, _, err = s.build(ctx, key, size, rv, reason)
+			if err != nil {
+				return nil, fmt.Errorf("error building search index, %w", err)
+			}
+			if idx == nil {
+				return nil, fmt.Errorf("nil index after build")
+			}
+			return idx, nil
+		})
+
+		select {
+		case res := <-ch:
+			if res.Err != nil {
+				return nil, res.Err
+			}
+			idx = res.Val.(ResourceIndex)
+		case <-ctx.Done():
+			return nil, fmt.Errorf("failed to get index: %w", ctx.Err())
 		}
-		idx = res.Val.(ResourceIndex)
-	case <-ctx.Done():
-		return nil, fmt.Errorf("failed to get index: %w", ctx.Err())
 	}
 
 	if s.searchAfterWrite {
