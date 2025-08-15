@@ -49,6 +49,8 @@ type Node interface {
 	RefID() string
 	String() string
 	NeedsVars() []string
+	SetInputTo(refID string)
+	IsInputTo() map[string]struct{}
 }
 
 type ExecutableNode interface {
@@ -386,6 +388,7 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 			}
 
 			edge := dp.NewEdge(neededNode, cmdNode)
+			neededNode.SetInputTo(cmdNode.RefID())
 
 			dp.SetEdge(edge)
 		}

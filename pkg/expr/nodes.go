@@ -34,6 +34,7 @@ var (
 type baseNode struct {
 	id    int64
 	refID string
+	isInputTo map[string]struct{}
 }
 
 type rawNode struct {
@@ -89,6 +90,17 @@ func (b *baseNode) ID() int64 {
 // RefID returns the refId of the node.
 func (b *baseNode) RefID() string {
 	return b.refID
+}
+
+func (b *baseNode) SetInputTo(refID string) {
+	if b.isInputTo == nil {
+		b.isInputTo = make(map[string]struct{})
+	}
+	b.isInputTo[refID] = struct{}{}
+}
+
+func (b *baseNode) IsInputTo() map[string]struct{} {
+	return b.isInputTo
 }
 
 // NodeType returns the data pipeline node type.
@@ -428,10 +440,14 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	var result mathexp.Results
 
-	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
-
-	if err != nil {
-		err = makeConversionError(dn.refID, err)
+	if dn.isInputToSQLExpr {
+		result = handleSqlInput(dn.RefID(), dn.IsInputTo(), dataFrames)
+	} else {
+		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
+		if err != nil {
+			err = makeConversionError(dn.refID, err)
+		}
 	}
+
 	return result, err
 }

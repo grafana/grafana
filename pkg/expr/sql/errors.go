@@ -238,3 +238,26 @@ func MakeSQLDependencyError(refID, depRefID string) TypedError {
 
 	return &ErrorWithType{errorType: "failed_dependency", err: SQLDependencyError.Build(data)}
 }
+
+var sqlInputConvertErrorStr = "did not execute sql expression {{ .Public.forRefID }} due to a failure to convert into a SQL/Tabular format for the results of [{{.Public.refId}}]: {{ .Error }}"
+
+var SQLInputConvertError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.sql.failed_input_conversion").MustTemplate(
+	sqlInputConvertErrorStr,
+	errutil.WithPublic(sqlInputConvertErrorStr))
+
+func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{}) TypedError {
+	forRefIdsSlice := make([]string, 0, len(forRefIDs))
+	for k := range forRefIDs {
+		forRefIdsSlice = append(forRefIdsSlice, k)
+	}
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":    refID,
+			"forRefID": forRefIdsSlice,
+		},
+		Error: err,
+	}
+
+	return &ErrorWithType{errorType: "sse.sql.failed_input_conversion", err: SQLInputConvertError.Build(data)}
+}
