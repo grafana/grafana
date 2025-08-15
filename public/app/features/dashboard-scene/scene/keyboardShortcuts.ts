@@ -10,6 +10,7 @@ import { shareDashboardType } from '../../dashboard/components/ShareModal/utils'
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { findVizPanelByPathId } from '../utils/pathId';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
@@ -31,10 +32,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
 
   function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
     return () => {
-      const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === vizPanelKey);
-      if (vizPanel && vizPanel instanceof VizPanel) {
-        fn(vizPanel);
-        return;
+      if (vizPanelKey) {
+        const vizPanel = findVizPanelByPathId(scene, vizPanelKey);
+
+        if (vizPanel) {
+          fn(vizPanel);
+          return;
+        }
       }
     };
   }
