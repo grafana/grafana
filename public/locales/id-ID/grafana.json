@@ -1238,20 +1238,6 @@
       "copy-code": "Salin kode",
       "download": "Unduh"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Aturan peringatan",
-        "all": "Semua",
-        "error": "Kesalahan",
-        "firing": "Dipicu",
-        "no-data": "Tidak ada data",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Tertunda",
-        "recording-rule": "Aturan pencatatan",
-        "recovering": "Memulihkan"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
     },
@@ -2575,11 +2561,27 @@
       "delete-rule": {
         "success": "Aturan berhasil dihapus"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Evaluasi aturan dijeda"
       },
       "resume-rule": {
         "success": "Evaluasi aturan dilanjutkan"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Aturan berhasil diperbarui"
@@ -2588,20 +2590,29 @@
     "rules-filter": {
       "clear-filters": "Hapus filter",
       "configured-alert-rules": "Sumber data yang berisi aturan peringatan yang dikonfigurasi adalah sumber data Mimir atau Loki tempat aturan peringatan disimpan dan dievaluasi dalam sumber data itu sendiri.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Dasbor",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Cari berdasarkan bantuan sumber data",
       "filter-options": {
-        "aria-label-show-filters": "Tampilkan filter",
-        "label-custom-filter": "Filter kustom",
-        "label-saved-searches": "Pencarian tersimpan"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Kesehatan",
       "label": {
         "hide": "Sembunyikan",
         "show": "Tampilkan"
       },
       "manage-alerts": "Dalam sumber data ini, Anda dapat memilih Kelola peringatan melalui UI Alerting untuk dapat mengelola aturan peringatan ini di UI Grafana serta di sumber data tempat mereka dikonfigurasi.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Semua sumber data",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Aturan plugin",
       "rule-type": "Jenis aturan",
       "rulesSearchInput-placeholder-search": "Cari",
@@ -2616,9 +2627,6 @@
       "text-federated": "Federasi",
       "text-provisioned": "Disediakan"
     },
-    "saved-searches": {
-      "text-default": "Default"
-    },
     "search": {
       "property": {
         "data-source": "Sumber data",
@@ -2626,11 +2634,10 @@
         "labels": "Label",
         "namespace": "Folder / Ruang nama",
         "rule-health": "Kesehatan",
-        "rule-name": "Nama aturan Alerting",
+        "rule-name": "",
         "rule-type": "Jenis",
         "state": "Status"
-      },
-      "save-query": "Simpan pencarian saat ini"
+      }
     },
     "search-field-input": {
       "clear": "Hapus",
@@ -3506,25 +3513,18 @@
     "browse-view": {
       "this-folder-is-empty": "Folder ini kosong"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Semua sumber daya telah berhasil dihapus",
-      "all-moved": "Semua sumber daya telah berhasil dipindahkan",
-      "button-done": "Selesai",
-      "progress-title": "Berhasil",
-      "failed-alert_other": "{{count}} item gagal"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Batal",
       "button-delete": "Hapus",
       "button-deleting": "Menghapus...",
       "delete-warning": "Ini akan menghapus folder yang dipilih dan turunannya. Secara keseluruhan, ini akan memengaruhi:",
-      "error-path-not-found": "Jalur tidak ditemukan"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Batal",
       "button-move": "Pindahkan",
       "button-moving": "Memindahkan...",
-      "deleting": "Menghapus",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3532,13 +3532,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Isi file tidak ditemukan",
-      "error-path-not-found": "Jalur tidak ditemukan",
-      "error-target-folder-path-missing": "Jalur folder target tidak ada",
-      "error-title": "Kesalahan Folder Target",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Ini akan memindahkan folder yang dipilih dan turunannya. Secara keseluruhan, ini akan memengaruhi:",
-      "moving": "Memindahkan",
-      "progress": "Kemajuan: {{current}} dari {{total}}",
       "target-folder": "Folder Target"
     },
     "counts": {
@@ -3549,6 +3545,9 @@
       "total_other": "{{count}} item"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Ciutkan folder {{title}}",
       "expand-folder-button": "Perluas folder {{title}}",
       "name-column": "Nama",
@@ -4086,10 +4085,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Terapkan",
     "cancel": "Batalkan",
     "clear": "Hapus",
-    "close": "Tutup",
     "collapse": "Ciutkan",
     "edit": "Edit",
     "help": "Bantuan",
@@ -4490,12 +4489,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Tampilkan atau sembunyikan {{type}} secara dinamis berdasarkan nilai variabel.",
           "label": "Variabel templat",
           "name": "Nama",
           "operator": {
             "equals": "Sama dengan",
-            "not-equals": "Tidak setara"
+            "matches": "",
+            "not-equals": "Tidak setara",
+            "not-matches": ""
           },
           "value": "Nilai"
         }
@@ -5327,6 +5331,7 @@
       "playlist-next": "Buka dasbor berikutnya",
       "playlist-previous": "Buka dasbor sebelumnya",
       "playlist-stop": "Hentikan daftar putar",
+      "read-only": "",
       "refresh": "Muat ulang dasbor",
       "save": "Simpan dasbor",
       "save-dashboard": {
@@ -5379,6 +5384,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Cari transformasi",
       "show-images": "Tampilkan gambar",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Tambah transformasi lain",
       "view-all": "Lihat semua"
     },
@@ -6561,6 +6569,9 @@
         "hosted-graphite-prometheus-and-loki": "Graphite, Prometheus, dan Loki yang di-hosting"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Batalkan",
       "placeholder-filter-by-name-or-type": "Filter berdasarkan nama atau jenis"
@@ -7453,6 +7464,13 @@
       "tooltip-title": "Operator matematika",
       "tooltip-trigger": "Ekspresi"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Fungsi",
       "label-input": "Input",
@@ -7467,6 +7485,11 @@
       "label-resample-to": "Sampel ulang ke",
       "label-upsample": "Tingkatkan sample",
       "tooltip-s-m-h": "10 dtk, 1 mnt, 30 mnt, 1 jm"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Input"
@@ -7484,7 +7507,8 @@
     "loading": "Memuat folder..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7836,7 +7860,8 @@
       "edit-pane": {
         "go-back": "Kembali"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9023,6 +9048,7 @@
       "sign-up": "Daftar"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Seret dan lepas untuk menyusun ulang",
@@ -10828,7 +10854,6 @@
         "downloads": "Unduhan",
         "from": "Dari",
         "installedVersion": "Versi Terinstal",
-        "lastCommitDate": "Tanggal melakukan terakhir:",
         "latestReleaseDate": "Tanggal rilis terbaru:",
         "latestVersion": "Versi Terbaru",
         "license": "Lisensi",
@@ -11212,7 +11237,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Kembali ke repositori",
-      "repository-config-exists-configuration": "Pastikan konfigurasi repositori ada dalam file konfigurasi."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Pastikan konfigurasi repositori ada dalam file konfigurasi.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Simpan",
@@ -11378,6 +11405,8 @@
         "subtitle": "Gunakan opsi ini jika Anda ingin menyinkronkan dan mengelola seluruh instans Grafana melalui penyimpanan eksternal."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "pekerjaan aktif",
       "column-action": "Tindakan",
@@ -11396,6 +11425,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Pengaturan",
       "view": "Lihat"
     },
@@ -11406,8 +11436,16 @@
       "title-repository-is-unhealthy": "Repositori tidak sehat"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Sumber daya Anda sekarang berada di penyimpanan eksternal dan disediakan ke instans Anda. Mulai sekarang, instans Anda dan penyimpanan eksternal akan disinkronkan.",
-      "view-repository": "Lihat repositori"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Diperiksa:",
@@ -11805,6 +11843,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Ciutkan baris kueri",
       "datasource-help": "Tampilkan bantuan sumber data",
       "drag-and-drop": "Seret dan lepas untuk menyusun ulang",
@@ -11815,7 +11854,11 @@
       "replace-query-from-library": "Ganti dengan kueri dari pustaka",
       "show-response": "Tampilkan respons"
     },
-    "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
+    "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12048,7 +12091,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Tambahkan akun layanan",
-      "message": "Akun layanan tidak ditemukan",
+      "message": "",
       "more-info": "Ingat, Anda dapat memberikan izin khusus untuk akses API ke aplikasi lain",
       "title": "Anda belum membuat akun layanan"
     }
@@ -12440,6 +12483,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Urutkan"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

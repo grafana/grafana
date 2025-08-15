@@ -225,7 +225,7 @@ export const ServiceAccountsListPageUnconnected = ({
         {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
           <EmptyState
             variant="not-found"
-            message={t('service-accounts.empty-state.message', 'No services accounts found')}
+            message={t('service-accounts.empty-state.message', 'No service accounts found')}
           />
         )}
         {!isLoading && noServiceAccountsCreated && (

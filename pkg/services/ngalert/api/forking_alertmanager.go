@@ -1,36 +1,81 @@
 package api
 
 import (
+	"errors"
+	"net/http"
+
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
+
+const withExtraConfigUID = "~grafana-with-extra-config"
+
+type ConvertService interface {
+	RouteConvertPrometheusGetAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response
+}
 
 type AlertmanagerApiHandler struct {
 	AMSvc           *LotexAM
 	GrafanaSvc      *AlertmanagerSrv
+	ConvertSvc      ConvertService
 	DatasourceCache datasources.CacheService
+	FeatureManager  featuremgmt.FeatureToggles
 }
 
 // NewForkingAM implements a set of routes that proxy to various Alertmanager-compatible backends.
-func NewForkingAM(datasourceCache datasources.CacheService, proxy *LotexAM, grafana *AlertmanagerSrv) *AlertmanagerApiHandler {
+func NewForkingAM(datasourceCache datasources.CacheService, proxy *LotexAM, grafana *AlertmanagerSrv, convertSvc ConvertService, featureManager featuremgmt.FeatureToggles) *AlertmanagerApiHandler {
 	return &AlertmanagerApiHandler{
 		AMSvc:           proxy,
 		GrafanaSvc:      grafana,
+		ConvertSvc:      convertSvc,
 		DatasourceCache: datasourceCache,
+		FeatureManager:  featureManager,
 	}
 }
 
 func (f *AlertmanagerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexAM, error) {
-	_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.AlertmanagerBackend)
-	if err != nil {
-		return nil, err
+	// If this is not an extra config request, we should check that the datasource exists and is of the correct type.
+	if isExtra := f.isExtraConfig(ctx); !isExtra {
+		_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.AlertmanagerBackend)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return f.AMSvc, nil
 }
 
+// isExtraConfig checks if the datasourceUID represents an extra config.
+// Extra configs are the alertmanager configurations that were saved using the Prometheus conversion API.
+func (f *AlertmanagerApiHandler) isExtraConfig(ctx *contextmodel.ReqContext) bool {
+	// Only enabled if feature flag is on
+	if !f.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerUI) {
+		return false
+	}
+
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	return datasourceUID == withExtraConfigUID
+}
+
 func (f *AlertmanagerApiHandler) handleRouteGetAMStatus(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		status := apimodels.GettableStatus{
+			Cluster: &amv2.ClusterStatus{
+				Status: util.Pointer("ready"),
+			},
+		}
+		return response.JSON(http.StatusOK, status)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -40,6 +85,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetAMStatus(ctx *contextmodel.ReqCon
 }
 
 func (f *AlertmanagerApiHandler) handleRouteCreateSilence(ctx *contextmodel.ReqContext, body apimodels.PostableSilence, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return response.Error(http.StatusForbidden, "Read-only configuration", nil)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -49,6 +98,10 @@ func (f *AlertmanagerApiHandler) handleRouteCreateSilence(ctx *contextmodel.ReqC
 }
 
 func (f *AlertmanagerApiHandler) handleRouteDeleteAlertingConfig(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return response.Error(http.StatusForbidden, "Read-only configuration", nil)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -58,6 +111,10 @@ func (f *AlertmanagerApiHandler) handleRouteDeleteAlertingConfig(ctx *contextmod
 }
 
 func (f *AlertmanagerApiHandler) handleRouteDeleteSilence(ctx *contextmodel.ReqContext, silenceID string, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return response.Error(http.StatusForbidden, "Read-only configuration", nil)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -67,6 +124,19 @@ func (f *AlertmanagerApiHandler) handleRouteDeleteSilence(ctx *contextmodel.ReqC
 }
 
 func (f *AlertmanagerApiHandler) handleRouteGetAlertingConfig(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		canSeeAutogen := ctx.HasRole(org.RoleAdmin)
+		config, err := f.GrafanaSvc.mam.GetAlertmanagerConfiguration(ctx.Req.Context(), ctx.GetOrgID(), canSeeAutogen, true)
+		if err != nil {
+			if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+				return response.Error(http.StatusNotFound, "No configuration found", err)
+			}
+			return response.Error(http.StatusInternalServerError, "Failed to get merged configuration", err)
+		}
+
+		return response.JSON(http.StatusOK, config)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -76,6 +146,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetAlertingConfig(ctx *contextmodel.
 }
 
 func (f *AlertmanagerApiHandler) handleRouteGetAMAlertGroups(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return f.GrafanaSvc.RouteGetAMAlertGroups(ctx)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -85,6 +159,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetAMAlertGroups(ctx *contextmodel.R
 }
 
 func (f *AlertmanagerApiHandler) handleRouteGetAMAlerts(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return f.GrafanaSvc.RouteGetAMAlerts(ctx)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -94,6 +172,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetAMAlerts(ctx *contextmodel.ReqCon
 }
 
 func (f *AlertmanagerApiHandler) handleRouteGetSilence(ctx *contextmodel.ReqContext, silenceID string, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return f.GrafanaSvc.RouteGetSilence(ctx, silenceID)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -103,6 +185,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetSilence(ctx *contextmodel.ReqCont
 }
 
 func (f *AlertmanagerApiHandler) handleRouteGetSilences(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return f.GrafanaSvc.RouteGetSilences(ctx)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -112,6 +198,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetSilences(ctx *contextmodel.ReqCon
 }
 
 func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *contextmodel.ReqContext, body apimodels.PostableUserConfig, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return response.Error(http.StatusForbidden, "Read-only configuration", nil)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -123,6 +213,10 @@ func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *contextmodel
 }
 
 func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *contextmodel.ReqContext, body apimodels.PostableAlerts, dsUID string) response.Response {
+	if f.isExtraConfig(ctx) {
+		return response.Error(http.StatusForbidden, "Read-only configuration", nil)
+	}
+
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
