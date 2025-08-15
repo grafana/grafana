@@ -6,25 +6,50 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { ConditionalRendering } from './ConditionalRendering';
+import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
+
+let placeholderConditionalRendering: ConditionalRendering | undefined;
+function getPlaceholderConditionalRendering(): ConditionalRendering {
+  if (!placeholderConditionalRendering) {
+    placeholderConditionalRendering = new ConditionalRendering({
+      rootGroup: new ConditionalRenderingGroup({
+        visibility: 'show',
+        condition: 'and',
+        value: [],
+      }),
+    });
+  }
+  return placeholderConditionalRendering;
+}
 
 export function useConditionalRenderingEditor(
-  conditionalRendering?: ConditionalRendering
-): OptionsPaneCategoryDescriptor | null {
-  if (!conditionalRendering) {
-    return null;
-  }
-
+  conditionalRendering?: ConditionalRendering,
+  disabledText?: string
+): OptionsPaneCategoryDescriptor {
   const title = t('dashboard.conditional-rendering.root.title', 'Show / hide rules');
+
+  const conditionalRenderingToRender = conditionalRendering ?? getPlaceholderConditionalRendering();
 
   return new OptionsPaneCategoryDescriptor({
     title,
+    disabledText: conditionalRendering
+      ? undefined
+      : (disabledText ??
+        t(
+          'dashboard.conditional-rendering.editor.unsupported-item-type',
+          'Conditional rendering not supported for this item type'
+        )),
     id: 'conditional-rendering-options',
     renderTitle: () => (
       <Stack direction="row" gap={1} alignItems="center">
         <div>{title}</div>
-        <Tooltip content={conditionalRendering.info}>
-          <Icon name={!conditionalRendering.evaluate() ? 'eye-slash' : 'eye'} />
-        </Tooltip>
+        {conditionalRendering ? (
+          <Tooltip content={conditionalRenderingToRender.info}>
+            <Icon name={!conditionalRenderingToRender.evaluate() ? 'eye-slash' : 'eye'} />
+          </Tooltip>
+        ) : (
+          <Icon name="eye-slash" />
+        )}
       </Stack>
     ),
     isOpenDefault: true,
@@ -32,7 +57,7 @@ export function useConditionalRenderingEditor(
     new OptionsPaneItemDescriptor({
       title,
       id: uuidv4(),
-      render: () => <conditionalRendering.Component model={conditionalRendering} />,
+      render: () => <conditionalRenderingToRender.Component model={conditionalRenderingToRender} />,
     })
   );
 }
