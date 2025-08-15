@@ -22,6 +22,7 @@ import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMonitorResource } from '../../types/query';
+import { ResourceGraphFilters } from '../../types/types';
 import messageFromError from '../../utils/messageFromError';
 
 import AdvancedMulti from './AdvancedMulti';
@@ -68,7 +69,7 @@ const ResourcePicker = ({
   const selectionNoticeText = selectionNotice?.(selectedRows);
   const [subscriptions, setSubscriptions] = useState<Array<ComboboxOption<string>>>([]);
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(false);
-  const [filters, setFilters] = useState<{ subscriptions: string[]; types: string[]; locations: string[] }>({
+  const [filters, setFilters] = useState<ResourceGraphFilters>({
     subscriptions: [],
     types: [],
     locations: [],
@@ -204,7 +205,7 @@ const ResourcePicker = ({
   );
 
   const loadFilteredRows = useCallback(
-    async (filters: { subscriptions: string[]; types: string[]; locations: string[] }) => {
+    async (filters: ResourceGraphFilters) => {
       try {
         setIsLoading(true);
         const filteredRows = await resourcePickerData.fetchFiltered(queryType, filters);
