@@ -1,7 +1,5 @@
 import { CSSProperties, ReactNode } from 'react';
 
-import { config } from '@grafana/runtime';
-
 import { SelectableValue } from './select';
 
 export enum ActionType {
@@ -72,19 +70,6 @@ export const contentTypeOptions: SelectableValue[] = [
   { label: 'text/plain', value: 'text/plain' },
   { label: 'application/xml', value: 'application/xml' },
   { label: 'application/x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
-];
-
-export const requestMethodOptions: SelectableValue[] = [
-  { label: 'Direct', value: ActionType.Fetch },
-  ...(config.featureToggles.vizActionsAuth
-    ? [
-        {
-          label: 'Proxy',
-          value: ActionType.Proxy,
-          description: 'Use configured datasource with authentication',
-        },
-      ]
-    : []),
 ];
 
 export const defaultActionConfig: Action = {

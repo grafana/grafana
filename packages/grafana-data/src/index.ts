@@ -841,7 +841,6 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
-  requestMethodOptions,
   SupportedDataSourceTypes,
   type FetchOptions,
   type ProxyOptions,
