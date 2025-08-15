@@ -1238,20 +1238,6 @@
       "copy-code": "코드 복사",
       "download": "다운로드"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "경고 규칙",
-        "all": "전체",
-        "error": "오류",
-        "firing": "발생 중",
-        "no-data": "데이터 없음",
-        "normal": "정상",
-        "ok": "확인",
-        "pending": "보류 중",
-        "recording-rule": "기록 규칙",
-        "recovering": "복구 중"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "필터링된-규칙-목록"
     },
@@ -2575,11 +2561,27 @@
       "delete-rule": {
         "success": "규칙 삭제 완료"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "규칙 평가 일시 중지됨"
       },
       "resume-rule": {
         "success": "규칙 평가 재개됨"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "규칙 업데이트됨"
@@ -2588,20 +2590,29 @@
     "rules-filter": {
       "clear-filters": "필터 초기화",
       "configured-alert-rules": "구성된 경고 규칙을 포함하는 데이터 소스는 경고 규칙이 데이터 소스 자체에 저장되고 평가되는 Mimir 또는 Loki 데이터 소스입니다.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "대시보드",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "데이터 소스로 검색 도움말",
       "filter-options": {
-        "aria-label-show-filters": "필터 표시",
-        "label-custom-filter": "사용자 지정 필터",
-        "label-saved-searches": "저장된 검색"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "상태",
       "label": {
         "hide": "숨기기",
         "show": "표시"
       },
       "manage-alerts": "이러한 데이터 소스에서 경고 UI를 통해 '경고 관리'를 선택하면 Grafana UI와 경고 규칙이 구성된 데이터 소스에서 이러한 경고 규칙을 관리할 수 있습니다.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "모든 데이터 소스",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "플러그인 규칙",
       "rule-type": "규칙 유형",
       "rulesSearchInput-placeholder-search": "검색",
@@ -2616,9 +2627,6 @@
       "text-federated": "연합됨",
       "text-provisioned": "프로비저닝됨"
     },
-    "saved-searches": {
-      "text-default": "기본값"
-    },
     "search": {
       "property": {
         "data-source": "데이터 소스",
@@ -2626,11 +2634,10 @@
         "labels": "라벨",
         "namespace": "폴더 / 네임스페이스",
         "rule-health": "상태",
-        "rule-name": "경고 규칙 이름",
+        "rule-name": "",
         "rule-type": "유형",
         "state": "상태"
-      },
-      "save-query": "현재 검색 저장"
+      }
     },
     "search-field-input": {
       "clear": "초기화",
@@ -4078,10 +4085,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "적용",
     "cancel": "취소",
     "clear": "초기화",
-    "close": "닫기",
     "collapse": "접기",
     "edit": "편집",
     "help": "도움말",
@@ -6562,6 +6569,9 @@
         "hosted-graphite-prometheus-and-loki": "호스팅된 Graphite, Prometheus, Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "취소",
       "placeholder-filter-by-name-or-type": "이름 또는 유형으로 필터링"
@@ -7850,7 +7860,8 @@
       "edit-pane": {
         "go-back": "뒤로 가기"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9037,6 +9048,7 @@
       "sign-up": "회원 가입"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "드래그 앤 드롭으로 순서 변경",
@@ -11225,7 +11237,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
-      "repository-config-exists-configuration": "리포지토리 구성이 구성 파일에 있는지 확인하세요."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "리포지토리 구성이 구성 파일에 있는지 확인하세요.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "저장",
@@ -11423,6 +11437,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "이제 리소스가 외부 스토리지에 있으며 인스턴스에 프로비저닝됩니다. 이제부터 인스턴스와 외부 스토리지가 동기화됩니다.",
