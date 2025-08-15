@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
+import { DataFrameType, GrafanaTheme2, LinkModel, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
@@ -58,6 +58,7 @@ export const LogLineDetailsComponent = memo(({ focusLogLine, log, logs }: LogLin
         })),
     [extensionLinks, log.labels]
   );
+  console.log(getDataSourceAndQueryFromLink(fieldsWithLinks.links[0].links[0]));
   const groupedLabels = useMemo(
     () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
     [labelsWithLinks, log]
@@ -201,3 +202,36 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0, 1, 1, 1),
   }),
 });
+
+type EmbeddedInternalLink = {
+  dsUID: string;
+  query: string;
+};
+function getDataSourceAndQueryFromLink(link: LinkModel): EmbeddedInternalLink | undefined {
+  if (!link.href) {
+    return undefined;
+  }
+  const paramsStrings = link.href.split('?')[1];
+  if (!paramsStrings) {
+    return undefined;
+  }
+  const params = Object.values(Object.fromEntries(new URLSearchParams(paramsStrings)));
+  try {
+    const parsed = JSON.parse(params[0]);
+    const dsUID: string = 'datasource' in parsed && typeof parsed.datasource === 'string' ? parsed.datasource : '';
+    const query: string =
+      'queries' in parsed &&
+      Array.isArray(parsed.queries) &&
+      'query' in parsed.queries[0] &&
+      typeof parsed.queries[0].query === 'string'
+        ? parsed.queries[0].query
+        : '';
+    return dsUID && query
+      ? {
+          dsUID,
+          query,
+        }
+      : undefined;
+  } catch (e) {}
+  return undefined;
+}
