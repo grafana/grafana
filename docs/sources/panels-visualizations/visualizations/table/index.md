@@ -438,7 +438,7 @@ When you toggle on the switch, the **Tooltip placement** option, which controls 
 Select one of the following options: **Auto**, **Top**, **Right**, **Bottom**, and **Left**.
 
 The content of the tooltip is determined by the values of the source field and can't be directly edited.
-However, you can affect the display of the value using overrides like value mappings, as shown in the [Tooltip from field with value mappings](#tooltip-from-field-with-value-mappings) section.
+However, you can affect the display of the value using overrides like value mappings, as shown in the [Example: Tooltip from field with value mappings](#example-tooltip-from-field-with-value-mappings) section.
 
 While you can turn on this option under **Cell options**, and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
 This is demonstrated in the example in the following section.
@@ -461,7 +461,7 @@ Now, when you hover the cursor over the chip in the "Short text" column, the cor
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-v12.2.png" max-width="750px" alt="Info field value in the tooltip of the Short text cell upon hover" >}}
 
-##### Tooltip from field with value mappings
+##### Example: Tooltip from field with value mappings
 
 While the content of the tooltip is determined by the values of the source field and can't be directly edited, you can use field overrides on the source field to manipulate the display of that value.
 
