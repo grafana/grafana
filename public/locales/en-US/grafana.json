@@ -4518,6 +4518,10 @@
           "value": "Value"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
+        "unsupported-item-type": "Conditional rendering not supported for this item type"
+      },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
       },
