@@ -115,7 +115,8 @@ const ResourcePicker = ({
     }
 
     setIsLoadingLocations(true);
-    const locations = await datasource.getLocations(subscriptions.map((s) => s.value));
+    // We only retrieve locations from the first 3 subscriptions to avoid performance issues.
+    const locations = await datasource.getLocations(subscriptions.map((s) => s.value).slice(0, 3));
     setLocations(
       Array.from(locations.values()).map((location) => ({
         label: location.displayName,
