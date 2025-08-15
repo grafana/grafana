@@ -30,6 +30,7 @@ interface MultiComboboxBaseProps<T extends string | number>
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;
   enableAllOption?: boolean;
+  portalContainer?: HTMLElement;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
@@ -49,6 +50,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     createCustomValue = false,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
+    portalContainer,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -118,7 +120,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             break;
         }
       },
-      stateReducer: (state, actionAndChanges) => {
+      stateReducer: (_state, actionAndChanges) => {
         const { changes } = actionAndChanges;
         return {
           ...changes,
@@ -197,6 +199,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
+          // Don't allow selection of info options
+          if (newSelectedItem?.infoOption) {
+            break;
+          }
+
           // Handle All functionality
           if (newSelectedItem?.value === ALL_OPTION_VALUE) {
             // TODO: fix bug where if the search filtered items list is the
@@ -204,12 +211,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             const isAllFilteredSelected = selectedItems.length === options.length - 1;
 
             // if every option is already selected, clear the selection.
-            // otherwise, select all the options (excluding the first ALL_OTION)
-            const realOptions = options.slice(1);
+            // otherwise, select all the options (excluding the first ALL_OPTION and info options)
+            const realOptions = options.slice(1).filter((option) => !option.infoOption);
             let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
             if (!isAllFilteredSelected && inputValue !== '') {
-              // Select all currently filtered items and deduplicate
               newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
             }
 
@@ -220,7 +226,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             }
             setSelectedItems(newSelectedItems);
           } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
-            removeSelectedItem(newSelectedItem);
+            // Find the actual selected item object that matches the clicked item by value
+            // This is necessary because the clicked item (from async options) may be a different
+            // object reference than the selected item, and useMultipleSelection uses object equality
+            const itemToRemove = selectedItems.find((item) => item.value === newSelectedItem.value);
+            if (itemToRemove) {
+              removeSelectedItem(itemToRemove);
+            }
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }
@@ -323,12 +335,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           </div>
         </span>
       </div>
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{
             ...floatStyles,
             width: floatStyles.width + 24, // account for checkbox
+            pointerEvents: 'auto', // Override container's pointer-events: none
           }}
           {...getMenuProps({ ref: floatingRef })}
         >
