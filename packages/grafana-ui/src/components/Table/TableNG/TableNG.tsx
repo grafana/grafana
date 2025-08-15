@@ -80,6 +80,7 @@ import {
   getJustifyContent,
   getVisibleFields,
   isCellInspectEnabled,
+  predicateByName,
   shouldTextOverflow,
   shouldTextWrap,
   withDataLinksActionsTooltip,
@@ -494,9 +495,7 @@ export function TableNG(props: TableNGProps) {
 
         const tooltipFieldName = field.config.custom?.tooltip?.field;
         if (tooltipFieldName) {
-          const tooltipField = data.fields.find(
-            (f) => f.name === tooltipFieldName || getDisplayName(f) === tooltipFieldName
-          );
+          const tooltipField = data.fields.find(predicateByName(tooltipFieldName));
 
           if (tooltipField) {
             const tooltipCellOptions = getCellOptions(tooltipField);

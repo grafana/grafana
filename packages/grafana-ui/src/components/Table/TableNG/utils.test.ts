@@ -44,6 +44,8 @@ import {
   getDataLinksCounter,
   getPillLineCounter,
   getDefaultRowHeight,
+  getDisplayName,
+  predicateByName,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1266,6 +1268,56 @@ describe('TableNG utils', () => {
         { time: 1, value: 10 },
         { time: 2, value: 30 },
       ]);
+    });
+  });
+
+  describe('getDisplayName', () => {
+    it('should return the display name if set', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        state: { displayName: 'Test Display Name' },
+        values: [],
+      };
+      expect(getDisplayName(field)).toBe('Test Display Name');
+    });
+
+    it('should return the field name if no display name is set', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        state: {},
+        config: {},
+        values: [],
+      };
+      expect(getDisplayName(field)).toBe('test');
+    });
+  });
+
+  describe('predicateByName', () => {
+    it('should return true for matching field names', () => {
+      const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
+      const predicate = predicateByName('test');
+      expect(predicate(field)).toBe(true);
+    });
+
+    it('should return true for a matching display name', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        state: { displayName: 'Test Display Name' },
+        values: [],
+      };
+      const predicate = predicateByName('Test Display Name');
+      expect(predicate(field)).toBe(true);
+    });
+
+    it('should return false for non-matching field names', () => {
+      const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
+      const predicate = predicateByName('other');
+      expect(predicate(field)).toBe(false);
     });
   });
 });

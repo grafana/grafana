@@ -815,6 +815,11 @@ export const getDisplayName = (field: Field): string => {
 };
 
 /**
+ * @internal given a field name or display name, returns a predicate function that checks if a field matches that name.
+ */
+export const predicateByName = (name: string) => (f: Field) => f.name === name || getDisplayName(f) === name;
+
+/**
  * @internal
  * returns only fields that are not nested tables and not explicitly hidden
  */
