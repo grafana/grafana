@@ -1,8 +1,7 @@
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { WorkflowOption } from 'app/features/provisioning/types';
-
-import { DashboardTreeSelection } from '../../types';
 
 export type BulkActionFormData = {
   comment: string;

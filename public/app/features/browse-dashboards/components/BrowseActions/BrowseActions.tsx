@@ -5,6 +5,11 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
+import {
+  BulkDeleteProvisionedResource,
+  BulkMoveProvisionedResource,
+  useSelectionProvisioningStatus,
+} from 'app/features/provisioning';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -14,13 +19,10 @@ import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDa
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
-import { BulkDeleteProvisionedResource } from '../BulkActions/BulkDeleteProvisionedResource';
-import { BulkMoveProvisionedResource } from '../BulkActions/BulkMoveProvisionedResource';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
 import { SelectedMixResourcesMsgModal } from './SelectedMixResourcesMsgModal';
-import { useSelectionProvisioningStatus } from './useSelectionProvisioningStatus';
 
 export interface Props {
   folderDTO?: FolderDTO;

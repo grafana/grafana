@@ -24,23 +24,6 @@ export interface DashboardChangeInfo {
   hasMigratedToV2?: boolean;
 }
 
-export interface BaseProvisionedFormData {
-  ref?: string;
-  path: string;
-  comment?: string;
-  repo: string;
-  workflow?: WorkflowOption;
-  title: string;
-}
-
-export interface ProvisionedDashboardFormData extends BaseProvisionedFormData {
-  description: string;
-  folder: {
-    uid?: string;
-    title?: string;
-  };
-}
-
 export function isVersionMismatchError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'version-mismatch';
 }

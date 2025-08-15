@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-import { ProvisionedDashboardFormData } from '../shared';
+import { ProvisionedDashboardFormData } from '../types';
 
 import { getDefaultWorkflow, getWorkflowOptions } from './defaults';
 import { generatePath } from './utils/path';

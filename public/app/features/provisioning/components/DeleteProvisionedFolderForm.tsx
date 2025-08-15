@@ -8,20 +8,17 @@ import { Box, Button, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
-import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
-import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
-import {
-  useProvisionedRequestHandler,
-  ProvisionedOperationInfo,
-} from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
+import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
+import { getFolderURL } from 'app/features/browse-dashboards/components/utils';
 import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
+import { BaseProvisionedFormData } from '../types';
+import { buildResourceBranchRedirectUrl } from '../utils/redirect';
 
-import { DescendantCount } from './BrowseActions/DescendantCount';
 import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
-import { getFolderURL } from './utils';
+import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;

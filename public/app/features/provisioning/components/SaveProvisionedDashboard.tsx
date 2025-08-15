@@ -1,6 +1,6 @@
-import { DashboardScene } from '../../scene/DashboardScene';
-import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
-import { DashboardChangeInfo } from '../shared';
+import { SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
+import { DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { useProvisionedDashboardData } from './hooks';

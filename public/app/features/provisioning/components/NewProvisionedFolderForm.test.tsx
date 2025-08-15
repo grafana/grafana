@@ -8,9 +8,8 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
 
+import { NewProvisionedFolderForm } from '../../browse-dashboards/components/NewProvisionedFolderForm';
 import { ProvisionedFolderFormDataResult, useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
-
-import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');

@@ -12,19 +12,16 @@ import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
 import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
-import {
-  useProvisionedRequestHandler,
-  ProvisionedOperationInfo,
-} from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
 
+import { validateFolderName } from '../../browse-dashboards/components/NewFolderForm';
+import { formatFolderName, hasFolderNameCharactersToReplace } from '../../browse-dashboards/components/utils';
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
 
 import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
-import { validateFolderName } from './NewFolderForm';
-import { formatFolderName, hasFolderNameCharactersToReplace } from './utils';
 
 interface FormProps extends Props {
   initialValues: BaseProvisionedFormData;

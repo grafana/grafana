@@ -3,11 +3,11 @@ import { useMemo } from 'react';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
-import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
+import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
-import { BaseProvisionedFormData } from '../../dashboard-scene/saving/shared';
+import { generateTimestamp } from '../components/utils/timestamp';
+import { BaseProvisionedFormData } from '../types';
 
 export interface UseProvisionedFolderFormDataProps {
   folderUid?: string;

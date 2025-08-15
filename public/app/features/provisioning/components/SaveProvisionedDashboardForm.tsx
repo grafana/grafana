@@ -11,18 +11,21 @@ import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
-import { RepoInvalidStateBanner } from 'app/features/browse-dashboards/components/BulkActions/RepoInvalidStateBanner';
+import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { RepoInvalidStateBanner } from 'app/features/provisioning';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
+import {
+  ProvisionedOperationInfo,
+  useProvisionedRequestHandler,
+} from 'app/features/provisioning/hooks/useProvisionedRequestHandler';
 
-import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
-import { buildResourceBranchRedirectUrl } from '../../settings/utils';
-import { getDashboardUrl } from '../../utils/getDashboardUrl';
-import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
-import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
-import { ProvisionedDashboardFormData } from '../shared';
+import { ProvisionedDashboardFormData } from '../types';
+import { buildResourceBranchRedirectUrl } from '../utils/redirect';
 
+import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 import { getProvisionedMeta } from './utils/getProvisionedMeta';
 

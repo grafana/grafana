@@ -3,8 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { RepositoryView } from '../../../../api/clients/provisioning/v0alpha1';
-import { ProvisionedDashboardFormData } from '../../saving/shared';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+
+import { ProvisionedDashboardFormData } from '../types';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 

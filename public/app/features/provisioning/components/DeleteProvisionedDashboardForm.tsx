@@ -6,15 +6,15 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { RepoInvalidStateBanner } from 'app/features/browse-dashboards/components/BulkActions/RepoInvalidStateBanner';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
-import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
-import { ProvisionedDashboardFormData } from '../saving/shared';
-import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler, ProvisionedOperationInfo } from '../utils/useProvisionedRequestHandler';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
+import { ProvisionedDashboardFormData } from '../types';
+import { buildResourceBranchRedirectUrl } from '../utils/redirect';
 
-import { buildResourceBranchRedirectUrl } from './utils';
+import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
+import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
 export interface Props {
   dashboard: DashboardScene;

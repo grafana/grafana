@@ -2,13 +2,12 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
+import { findItem } from 'app/features/browse-dashboards/state/utils';
+import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { getIsReadOnlyRepo, getItemRepositoryUid } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';
 
-import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
-import { findItem } from '../../state/utils';
-import { DashboardTreeSelection } from '../../types';
-import { getItemRepositoryUid } from '../utils';
+import { useChildrenByParentUIDState, rootItemsSelector } from '../../browse-dashboards/state/hooks';
 
 // This hook is responsible for validating if all selected resources (dashboard folders and dashboards) are in the same repository
 export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {

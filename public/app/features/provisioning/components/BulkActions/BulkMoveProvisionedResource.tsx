@@ -10,9 +10,9 @@ import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
-import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
+import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 

@@ -2,6 +2,7 @@ import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
+import { SaveProvisionedDashboard } from 'app/features/provisioning';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -9,7 +10,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
-import { SaveProvisionedDashboard } from './provisioned/SaveProvisionedDashboard';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
