@@ -8,6 +8,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.40.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250428110029-a8ea72012bde
 	github.com/spf13/pflag v1.0.7
+	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3
 )
@@ -68,6 +69,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.23.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.65.0 // indirect

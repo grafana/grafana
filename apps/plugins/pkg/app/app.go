@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -11,6 +12,10 @@ import (
 
 	pluginsapi "github.com/grafana/grafana/apps/plugins/pkg/apis"
 )
+
+func ToName(id, version string) string {
+	return fmt.Sprintf("%s-%s", id, version)
+}
 
 func New(cfg app.Config) (app.App, error) {
 	managedKinds := []simple.AppManagedKind{}
