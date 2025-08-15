@@ -3,7 +3,7 @@ import { Resizable } from 're-resizable';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, Icon, Tab, TabsBar, useStyles2 } from '@grafana/ui';
@@ -17,12 +17,14 @@ export interface Props {
   containerElement: HTMLDivElement;
   focusLogLine: (log: LogListModel) => void;
   logs: LogListModel[];
+  timeRange: TimeRange;
+  timeZone: string;
   onResize(): void;
 }
 
 export type LogLineDetailsMode = 'inline' | 'sidebar';
 
-export const LogLineDetails = memo(({ containerElement, focusLogLine, logs, onResize }: Props) => {
+export const LogLineDetails = memo(({ containerElement, focusLogLine, logs, timeRange, timeZone, onResize }: Props) => {
   const { detailsWidth, noInteractions, setDetailsWidth } = useLogListContext();
   const styles = useStyles2(getStyles, 'sidebar');
   const dragStyles = useStyles2(getDragStyles);
@@ -57,75 +59,83 @@ export const LogLineDetails = memo(({ containerElement, focusLogLine, logs, onRe
       maxWidth={maxWidth}
     >
       <div className={styles.container} ref={containerRef}>
-        <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} />
+        <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} timeRange={timeRange} timeZone={timeZone} />
       </div>
     </Resizable>
   );
 });
 LogLineDetails.displayName = 'LogLineDetails';
 
-const LogLineDetailsTabs = memo(({ focusLogLine, logs }: Pick<Props, 'focusLogLine' | 'logs'>) => {
-  const { app, closeDetails, noInteractions, showDetails, toggleDetails } = useLogListContext();
-  const [currentLog, setCurrentLog] = useState(showDetails[0]);
-  const previousShowDetails = usePrevious(showDetails);
-  const styles = useStyles2(getStyles, 'sidebar');
+const LogLineDetailsTabs = memo(
+  ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
+    const { app, closeDetails, noInteractions, showDetails, toggleDetails } = useLogListContext();
+    const [currentLog, setCurrentLog] = useState(showDetails[0]);
+    const previousShowDetails = usePrevious(showDetails);
+    const styles = useStyles2(getStyles, 'sidebar');
 
-  useEffect(() => {
-    focusLogLine(currentLog);
-    if (!noInteractions) {
-      reportInteraction('logs_log_line_details_displayed', {
-        mode: 'sidebar',
-        app,
-      });
-    }
-    // Once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    useEffect(() => {
+      focusLogLine(currentLog);
+      if (!noInteractions) {
+        reportInteraction('logs_log_line_details_displayed', {
+          mode: 'sidebar',
+          app,
+        });
+      }
+      // Once
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-  useEffect(() => {
-    if (!showDetails.length) {
-      closeDetails();
-      return;
-    }
-    // Focus on the recently open
-    if (!previousShowDetails || showDetails.length > previousShowDetails.length) {
-      setCurrentLog(showDetails[showDetails.length - 1]);
-      return;
-    } else if (!showDetails.find((log) => log.uid === currentLog.uid)) {
-      setCurrentLog(showDetails[showDetails.length - 1]);
-    }
-  }, [closeDetails, currentLog.uid, previousShowDetails, showDetails]);
+    useEffect(() => {
+      if (!showDetails.length) {
+        closeDetails();
+        return;
+      }
+      // Focus on the recently open
+      if (!previousShowDetails || showDetails.length > previousShowDetails.length) {
+        setCurrentLog(showDetails[showDetails.length - 1]);
+        return;
+      } else if (!showDetails.find((log) => log.uid === currentLog.uid)) {
+        setCurrentLog(showDetails[showDetails.length - 1]);
+      }
+    }, [closeDetails, currentLog.uid, previousShowDetails, showDetails]);
 
-  return (
-    <>
-      {showDetails.length > 1 && (
-        <TabsBar>
-          {showDetails.map((log) => {
-            return (
-              <Tab
-                key={log.uid}
-                truncate
-                label={log.entry.substring(0, 25)}
-                active={currentLog.uid === log.uid}
-                onChangeTab={() => setCurrentLog(log)}
-                suffix={() => (
-                  <Icon
-                    name="times"
-                    aria-label={t('logs.log-line-details.remove-log', 'Remove log')}
-                    onClick={() => toggleDetails(log)}
-                  />
-                )}
-              />
-            );
-          })}
-        </TabsBar>
-      )}
-      <div className={styles.scrollContainer}>
-        <LogLineDetailsComponent focusLogLine={focusLogLine} log={currentLog} logs={logs} />
-      </div>
-    </>
-  );
-});
+    return (
+      <>
+        {showDetails.length > 1 && (
+          <TabsBar>
+            {showDetails.map((log) => {
+              return (
+                <Tab
+                  key={log.uid}
+                  truncate
+                  label={log.entry.substring(0, 25)}
+                  active={currentLog.uid === log.uid}
+                  onChangeTab={() => setCurrentLog(log)}
+                  suffix={() => (
+                    <Icon
+                      name="times"
+                      aria-label={t('logs.log-line-details.remove-log', 'Remove log')}
+                      onClick={() => toggleDetails(log)}
+                    />
+                  )}
+                />
+              );
+            })}
+          </TabsBar>
+        )}
+        <div className={styles.scrollContainer}>
+          <LogLineDetailsComponent
+            focusLogLine={focusLogLine}
+            log={currentLog}
+            logs={logs}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
+        </div>
+      </>
+    );
+  }
+);
 LogLineDetailsTabs.displayName = 'LogLineDetailsTabs';
 
 export interface InlineLogLineDetailsProps {
