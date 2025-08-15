@@ -21,7 +21,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Organization *" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
+        <InlineField label="Organization" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow required>
           <Input
             id="organization"
             placeholder="myorg"
@@ -32,7 +32,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Default Bucket *" grow>
+        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Default Bucket" grow required>
           <Input
             id="default-bucket"
             onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
@@ -43,7 +43,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token *" grow>
+        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token" grow required>
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}

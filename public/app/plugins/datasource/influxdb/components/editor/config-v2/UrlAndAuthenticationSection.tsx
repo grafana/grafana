@@ -84,7 +84,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
         </Text>
 
         <Box direction="column" gap={2} marginTop={3}>
-          <Field label={<div style={{ marginBottom: '5px' }}>URL *</div>} noMargin>
+          <Field label={<div style={{ marginBottom: '5px' }}>URL *</div>} noMargin required>
             <Input
               data-testid="influxdb-v2-config-url-input"
               placeholder="example: http://localhost:8086/"
@@ -97,7 +97,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           <Box marginTop={2}>
             <Stack direction="row" gap={2}>
               <Box flex={1}>
-                <Field label={<div style={{ marginBottom: '5px' }}>Product *</div>} noMargin>
+                <Field label={<div style={{ marginBottom: '5px' }}>Product *</div>} noMargin required>
                   <Combobox
                     data-testid="influxdb-v2-config-product-select"
                     value={options.jsonData.product}
