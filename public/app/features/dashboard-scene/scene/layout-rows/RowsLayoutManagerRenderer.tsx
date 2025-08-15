@@ -7,7 +7,7 @@ import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { isInCloneChain } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
@@ -21,7 +21,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const styles = useStyles2(getStyles);
   const { hasCopiedRow } = useClipboardState();
 
-  const isClone = isInCloneChain(rows[0]?.state.key || '');
+  const isClone = isRepeatCloneOrChildOf(model);
 
   return (
     <DragDropContext

@@ -12,15 +12,6 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
-import {
-  containsCloneKey,
-  getCloneKey,
-  getLastKeyFromClone,
-  getOriginalKey,
-  isClonedKey,
-  isClonedKeyOf,
-  joinCloneKeys,
-} from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -138,16 +129,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    return this.clone({
-      tabs: this.state.tabs.map((tab) => {
-        const key = joinCloneKeys(ancestorKey, tab.state.key!);
-
-        return tab.clone({
-          key,
-          layout: tab.state.layout.cloneLayout(key, isSource),
-        });
-      }),
-    });
+    return this.clone();
   }
 
   public getOutlineChildren() {
@@ -257,19 +239,19 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     let destinationTab = allTabs[toIndex];
     let selectionIndex = toIndex;
 
-    if (containsCloneKey(getLastKeyFromClone(destinationTab.state.key!))) {
-      if (isClonedKeyOf(destinationTab.state.key!, objectToMove.state.key!)) {
+    if (destinationTab.state.repeatSourceKey) {
+      if (destinationTab.state.repeatSourceKey === objectToMove.state.repeatSourceKey) {
         // moving tab between its clones
         return;
       }
-      const originalTabKey = getCloneKey(getOriginalKey(destinationTab.state.key!), 0);
-      const originalTabIndex = allTabs.findIndex((tab) => tab.state.key === originalTabKey);
 
-      if (originalTabIndex !== -1) {
-        destinationTab = allTabs[originalTabIndex];
+      const sourceTabIndx = allTabs.findIndex((tab) => tab.state.key === destinationTab.state.repeatSourceKey);
+
+      if (sourceTabIndx !== -1) {
+        destinationTab = allTabs[sourceTabIndx];
 
         const isMovingLeft = toIndex < fromIndex;
-        selectionIndex = originalTabIndex + (isMovingLeft ? 0 : destinationTab.state.repeatedTabs?.length || 0);
+        selectionIndex = sourceTabIndx + (isMovingLeft ? 0 : destinationTab.state.repeatedTabs?.length || 0);
       }
     }
 
@@ -319,7 +301,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
     if (layout instanceof RowsLayoutManager) {
       for (const row of layout.state.rows) {
-        if (isClonedKey(row.state.key!)) {
+        if (row.state.repeatSourceKey) {
           continue;
         }
 

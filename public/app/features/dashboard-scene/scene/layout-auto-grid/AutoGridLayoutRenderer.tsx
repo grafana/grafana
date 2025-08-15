@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { useHasClonedParents } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
@@ -14,7 +14,6 @@ import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden } = model.useState();
-  const hasClonedParents = useHasClonedParents(model);
   const styles = useStyles2(getStyles, model.state);
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
@@ -24,7 +23,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     return null;
   }
 
-  const showCanvasActions = !hasClonedParents && isEditing;
+  const showCanvasActions = !isRepeatCloneOrChildOf(model) && isEditing;
 
   return (
     <div

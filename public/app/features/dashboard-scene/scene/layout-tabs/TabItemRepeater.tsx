@@ -70,9 +70,7 @@ export function TabItemRepeater({
   return (
     <>
       <tab.Component model={tab} key={tab.state.key!} />
-      {repeatedTabs?.map((tabClone) => (
-        <tabClone.Component model={tabClone} key={tabClone.state.key!} />
-      ))}
+      {repeatedTabs?.map((tabClone) => <tabClone.Component model={tabClone} key={tabClone.state.key!} />)}
     </>
   );
 }
@@ -158,12 +156,17 @@ export function createTabRepeats({
     const tabCloneKey = getCloneKey(tab.state.key!, tabIndex);
     const tabClone = isSourceTab
       ? tab
-      : tab.clone({ repeatByVariable: undefined, repeatedTabs: undefined, layout: undefined });
+      : tab.clone({
+          key: tabCloneKey,
+          repeatSourceKey: tab.state.key,
+          repeatByVariable: undefined,
+          repeatedTabs: undefined,
+          layout: undefined,
+        });
 
     const layout = isSourceTab ? tab.getLayout() : tab.getLayout().cloneLayout(tabCloneKey, false);
 
     tabClone.setState({
-      key: tabCloneKey,
       $variables: new SceneVariableSet({
         variables: [
           new LocalValueVariable({

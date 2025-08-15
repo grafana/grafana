@@ -4,10 +4,9 @@ import { VizPanel, UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardRepeatsProcessedEvent } from '../scene/types/DashboardRepeatsProcessedEvent';
-import { containsPathIdSeparator } from '../utils/pathId';
-import { findVizPanelByKey } from '../utils/utils';
+import { containsPathIdSeparator, findVizPanelByPathId } from '../utils/pathId';
 
-export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPanel | undefined, string | undefined] {
+export function useSoloPanel(dashboard: DashboardScene, pathId: string): [VizPanel | undefined, string | undefined] {
   const [panel, setPanel] = useState<VizPanel>();
   const [error, setError] = useState<string | undefined>();
 
@@ -19,7 +18,7 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
 
     let panel: VizPanel | null = null;
     try {
-      panel = findVizPanelByKey(dashboard, panelId);
+      panel = findVizPanelByPathId(dashboard, pathId);
     } catch (e) {
       // do nothing, just the panel is not found or not a VizPanel
     }
@@ -27,8 +26,8 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
     if (panel) {
       activateParents(panel);
       setPanel(panel);
-    } else if (containsPathIdSeparator(panelId)) {
-      findRepeatClone(dashboard, panelId).then((panel) => {
+    } else if (containsPathIdSeparator(pathId)) {
+      findRepeatClone(dashboard, pathId).then((panel) => {
         if (panel) {
           setPanel(panel);
         } else {
@@ -40,7 +39,7 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
     }
 
     return cleanUp;
-  }, [dashboard, panelId]);
+  }, [dashboard, pathId]);
 
   return [panel, error];
 }
@@ -54,10 +53,10 @@ function activateParents(panel: VizPanel) {
   }
 }
 
-function findRepeatClone(dashboard: DashboardScene, panelId: string): Promise<VizPanel | undefined> {
+function findRepeatClone(dashboard: DashboardScene, pathId: string): Promise<VizPanel | undefined> {
   return new Promise((resolve) => {
     dashboard.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
-      const panel = findVizPanelByKey(dashboard, panelId);
+      const panel = findVizPanelByPathId(dashboard, pathId);
       if (panel) {
         resolve(panel);
       } else {

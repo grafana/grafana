@@ -34,7 +34,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { isInCloneChain } from '../utils/clone';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
@@ -73,7 +73,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
     const exploreMenuItem = await getExploreMenuItem(panel);
-    const isReadOnlyRepeat = isInCloneChain(panel.state.key!);
+    const isReadOnlyRepeat = isRepeatCloneOrChildOf(panel);
 
     // For embedded dashboards we only have explore action for now
     if (isEmbedded) {

@@ -45,6 +45,8 @@ export interface RowItemState extends SceneObjectState {
   conditionalRendering?: ConditionalRendering;
   repeatByVariable?: string;
   repeatedRows?: RowItem[];
+  /** Marks object as a repeated object and a key pointer to source object */
+  repeatSourceKey?: string;
 }
 
 export class RowItem
