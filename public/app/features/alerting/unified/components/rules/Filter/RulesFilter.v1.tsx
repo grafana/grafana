@@ -11,15 +11,12 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import {
-  LogMessages,
-  logInfo,
-  trackRulesSearchComponentInteraction,
-  trackRulesSearchInputInteraction,
-} from '../../../Analytics';
+import { LogMessages, logInfo } from '../../../Analytics';
+import { trackAlertRuleFilterEvent } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
+import { getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
@@ -79,12 +76,12 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     });
 
     setFilterKey((key) => key + 1);
-    trackRulesSearchComponentInteraction('dataSourceNames');
+    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dataSourceNames' });
   };
 
   const handleDashboardChange = (dashboardUid: string | undefined) => {
     updateFilters({ ...filterState, dashboardUid });
-    trackRulesSearchComponentInteraction('dashboardUid');
+    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dashboardUid' });
   };
 
   const clearDataSource = () => {
@@ -95,17 +92,17 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
     updateFilters({ ...filterState, ruleState: value });
-    trackRulesSearchComponentInteraction('ruleState');
+    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'ruleState' });
   };
 
   const handleRuleTypeChange = (ruleType: PromRuleType) => {
     updateFilters({ ...filterState, ruleType });
-    trackRulesSearchComponentInteraction('ruleType');
+    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'ruleType' });
   };
 
   const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
     updateFilters({ ...filterState, ruleHealth });
-    trackRulesSearchComponentInteraction('ruleHealth');
+    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'ruleHealth' });
   };
 
   const handleClearFiltersClick = () => {
@@ -117,7 +114,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
 
   const handleContactPointChange = (contactPoint: string) => {
     updateFilters({ ...filterState, contactPoint });
-    trackRulesSearchComponentInteraction('contactPoint');
+    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'contactPoint' });
   };
 
   const searchIcon = <Icon name={'search'} />;
@@ -271,7 +268,10 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             onSubmit={handleSubmit((data) => {
               setSearchQuery(data.searchQuery);
               searchQueryRef.current?.blur();
-              trackRulesSearchInputInteraction({ oldQuery: searchQuery, newQuery: data.searchQuery });
+              trackAlertRuleFilterEvent({
+                filterMethod: 'search-input',
+                filter: getSearchFilterFromQuery(data.searchQuery),
+              });
             })}
           >
             <Field

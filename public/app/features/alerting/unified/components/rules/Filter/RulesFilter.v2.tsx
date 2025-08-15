@@ -23,7 +23,13 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { trackFilterButtonApplyClick, trackFilterButtonClearClick, trackFilterButtonClick } from '../../../Analytics';
+import {
+  trackAlertRuleFilterEvent,
+  trackFilterButtonApplyClick,
+  trackFilterButtonClearClick,
+  trackFilterButtonClick,
+  trackRulesSearchInputCleared,
+} from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { PopupCard } from '../../HoverCard';
@@ -92,6 +98,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);
+    trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter });
     updateFilters(parsedFilter);
   };
 
@@ -172,10 +179,15 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
                 'Search by name or enter filter query...'
               )}
               name="searchQuery"
-              onChange={(string) => setValue('query', string)}
+              onChange={(next) => {
+                const prev = getValues('query');
+                trackRulesSearchInputCleared(prev, next);
+                setValue('query', next);
+              }}
               onBlur={() => {
                 const currentQuery = getValues('query');
                 const parsedFilter = getSearchFilterFromQuery(currentQuery);
+                trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter });
                 updateFilters(parsedFilter);
               }}
               value={watch('query')}
