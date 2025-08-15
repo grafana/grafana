@@ -106,15 +106,13 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 
 	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
-	ctx := context.Background()
-
 	// Initialize the OpenFeature feature flag system
 	if err := featuremgmt.InitOpenFeatureWithCfg(cfg); err != nil {
 		return err
 	}
 
 	s, err := server.Initialize(
-		ctx,
+		cli.Context,
 		cfg,
 		server.Options{
 			PidFile:     PidFile,
@@ -128,7 +126,7 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 		return err
 	}
 
-	go listenToSystemSignals(ctx, s)
+	go listenToSystemSignals(cli.Context, s)
 	return s.Run()
 }
 
