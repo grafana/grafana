@@ -430,9 +430,7 @@ All table fields are included in the drop-down list, whether visible or hidden.
 When a tooltip from a field has been added to a cell, a chip is displayed in the top-right or top-left corner of the cell.
 Hover your mouse over the chip to display the tooltip.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-chip-1-v12.2.png" max-width="750px" alt="Tooltip chip" caption="Option 1" >}}
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-chip-2-v12.2.png" max-width="750px" alt="Tooltip chip" caption="Option 2" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-chip-1-v12.2.png" max-width="500px" alt="Tooltip chip" >}}
 
 The tooltip displays the value from the source field for that data row.
 The content of the tooltip is determined by the values of the source field and can't be directly edited.
