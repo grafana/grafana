@@ -1,5 +1,6 @@
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
+import { resourceTypes } from '../azureMetadata/resourceTypes';
 import Datasource from '../datasource';
 import { AzureMonitorDataSourceInstanceSettings } from '../types/types';
 
@@ -86,3 +87,11 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
 
   return jest.mocked(mockDatasource);
 }
+export const createMockMetricsNamespaces = (): Promise<
+  Array<{
+    text: string;
+    value: string;
+  }>
+> => {
+  return Promise.resolve(resourceTypes.map((type) => ({ text: type, value: type })));
+};

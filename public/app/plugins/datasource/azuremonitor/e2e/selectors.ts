@@ -68,6 +68,9 @@ export const components = {
         subscription: {
           input: 'data-testid resource-picker-filter-subscription',
         },
+        type: {
+          input: 'data-testid resource-picker-filter-type',
+        },
       },
     },
     metricsQueryEditor: {
