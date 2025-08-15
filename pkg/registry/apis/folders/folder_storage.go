@@ -127,7 +127,22 @@ func (s *folderStorage) Update(ctx context.Context,
 
 // GracefulDeleter
 func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return s.store.Delete(ctx, name, deleteValidation, options)
+	obj, async, err := s.store.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		return obj, async, err
+	}
+
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return obj, async, err
+	}
+
+	err = s.folderPermissionsSvc.DeleteResourcePermissions(ctx, info.OrgID, name)
+	if err != nil {
+		return obj, async, err
+	}
+
+	return obj, async, err
 }
 
 // GracefulDeleter

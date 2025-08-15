@@ -589,10 +589,12 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 			return err
 		}
 
-		// remove all access control permission with folder scope
-		err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID))
-		if err != nil {
-			return err
+		if !cmd.SkipRemovePermissions {
+			// remove all access control permission with folder scope
+			err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID))
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {

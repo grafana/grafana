@@ -277,10 +277,19 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// we want to delete from legacy first, otherwise if the delete from unistore was successful,
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
+
+	mustDeleteFromStorage := d.readUnified || !d.errorIsOK
+	if mustDeleteFromStorage {
+		ctx = context.WithValue(ctx, "SkipRemovePermissions", "true")
+	}
+
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
 		return nil, false, err
 	}
+
+	ctx = context.WithValue(ctx, "SkipRemovePermissions", "false")
+
 	// If unified storage is our primary store, just delete it and return
 	if d.readUnified {
 		objFromStorage, asyncStorage, err := d.unified.Delete(ctx, name, deleteValidation, options)
