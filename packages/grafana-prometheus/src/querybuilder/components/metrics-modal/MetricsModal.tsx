@@ -44,7 +44,7 @@ import {
 } from './state/state';
 import { getStyles } from './styles';
 import { MetricsData, PromFilterOption } from './types';
-import { debouncedFuzzySearch } from './uFuzzy';
+import { debouncedPromqlCompliantMatch } from './uFuzzy';
 
 export type MetricsModalProps = {
   datasource: PrometheusDatasource;
@@ -135,9 +135,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
       // search either the names or all metadata
       // fuzzy search go!
       if (fullMetaSearchVal) {
-        debouncedFuzzySearch(Object.keys(state.metaHaystackDictionary), query, fuzzyMetaDispatch);
+        debouncedPromqlCompliantMatch(Object.keys(state.metaHaystackDictionary), query, fuzzyMetaDispatch);
       } else {
-        debouncedFuzzySearch(Object.keys(state.nameHaystackDictionary), query, fuzzyNameDispatch);
+        debouncedPromqlCompliantMatch(Object.keys(state.nameHaystackDictionary), query, fuzzyNameDispatch);
       }
     }
   }

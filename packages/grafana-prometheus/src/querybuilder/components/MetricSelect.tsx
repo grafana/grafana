@@ -31,6 +31,7 @@ import { PromVisualQuery } from '../types';
 
 import { MetricsModal } from './metrics-modal/MetricsModal';
 import { tracking } from './metrics-modal/state/helpers';
+import { convertToPromqlCompliantString } from './metrics-modal/uFuzzy';
 
 // We are matching words split with space
 const splitSeparator = ' ';
@@ -73,7 +74,7 @@ export function MetricSelect({
     {
       value: 'BrowseMetrics',
       label: 'Metrics explorer',
-      description: 'Browse and filter all metrics and metadata with a fuzzy search',
+      description: 'Browse and filter all metrics and metadata',
     },
   ];
 
@@ -89,7 +90,7 @@ export function MetricSelect({
         return true;
       }
 
-      const searchWords = searchQuery.split(splitSeparator);
+      const searchWords = searchQuery.split(splitSeparator).map(convertToPromqlCompliantString);
 
       return searchWords.reduce((acc, cur) => {
         const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
