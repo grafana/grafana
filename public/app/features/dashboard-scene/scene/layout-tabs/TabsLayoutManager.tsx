@@ -71,6 +71,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
+  public merge(other: DashboardLayoutManager) {
+    throw new Error('Not implemented');
+  }
+
   public duplicate(): DashboardLayoutManager {
     // Maybe not needed, depending on if we want nested tabs or tabs within rows
     throw new Error('Method not implemented.');

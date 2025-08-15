@@ -92,6 +92,31 @@ export class DefaultGridLayoutManager
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  public merge(other: DashboardLayoutManager) {
+    if (!(other instanceof DefaultGridLayoutManager)) {
+      throw new Error('Cannot merge non-default grid layout');
+    }
+
+    let offset = 0;
+    for (const child of this.state.grid.state.children) {
+      const newOffset = (child.state.y ?? 0) + (child.state.height ?? 0);
+      if (newOffset > offset) {
+        offset = newOffset;
+      }
+    }
+
+    this.state.grid.setState({
+      children: [
+        ...this.state.grid.state.children,
+        ...otherLayout.state.grid.state.children.map((child) => {
+          return child.clone({
+            y: (child.state.y ?? 0) + offset,
+          });
+        }),
+      ],
+    });
+  }
+
   private _activationHandler() {
     if (config.featureToggles.dashboardNewLayouts) {
       this._subs.add(

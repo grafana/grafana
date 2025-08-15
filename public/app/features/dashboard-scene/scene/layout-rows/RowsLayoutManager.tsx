@@ -14,10 +14,12 @@ import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -136,6 +138,77 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     }
 
     return outlineChildren;
+  }
+
+  public merge(other: DashboardLayoutManager) {
+    throw new Error('Not implemented');
+  }
+
+  public convertAllRowsLayouts(gridLayoutType: 'auto-grid' | 'custom-grid') {
+    for (const row of this.state.rows) {
+      switch (gridLayoutType) {
+        case 'auto-grid':
+          if (!(row.getLayout() instanceof AutoGridLayoutManager)) {
+            row.switchLayout(AutoGridLayoutManager.createFromLayout(row.getLayout()));
+          }
+          break;
+        case 'custom-grid':
+          if (!(row.getLayout() instanceof DefaultGridLayoutManager)) {
+            row.switchLayout(DefaultGridLayoutManager.createFromLayout(row.getLayout()));
+          }
+          break;
+      }
+    }
+  }
+
+  public ungroupRows(gridLayoutType: 'auto-grid' | 'custom-grid', hasConfirmed = false) {
+    const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
+    const gridTypes = findAllGridTypes(this);
+
+    if (!hasConfirmed) {
+      if (hasNonGridLayout) {
+        const confirm = window.confirm('Need to ungroup all nested groups, continue?');
+        if (!confirm) {
+          return;
+        }
+      }
+
+      if (new Set(gridTypes).size > 1) {
+        const confirm = window.confirm('All grids must be converted to the same type, continue?');
+        if (!confirm) {
+          return;
+        }
+      }
+    }
+
+    if (hasNonGridLayout) {
+      for (const row of this.state.rows) {
+        const layout = row.getLayout();
+        if (!layout.descriptor.isGridLayout) {
+          if (layout instanceof RowsLayoutManager) {
+            layout.ungroupRows(gridLayoutType, true);
+          } else {
+            throw new Error('Not implemented');
+          }
+        }
+      }
+    }
+
+    this.convertAllRowsLayouts(gridLayoutType);
+
+    const firstRow = this.state.rows[0];
+    const firstRowLayout = firstRow.getLayout();
+    const otherRows = this.state.rows.slice(1);
+
+    for (const row of otherRows) {
+      firstRowLayout.merge(row.getLayout());
+    }
+
+    this.setState({
+      rows: [firstRow],
+    });
+
+    this.removeRow(firstRow);
   }
 
   public removeRow(row: RowItem) {

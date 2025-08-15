@@ -197,6 +197,18 @@ export class AutoGridLayoutManager
     });
   }
 
+  public merge(other: DashboardLayoutManager) {
+    if (!(other instanceof AutoGridLayoutManager)) {
+      throw new Error('Cannot merge non-auto grid layout');
+    }
+
+    const otherLayout = other;
+
+    this.state.layout.setState({
+      children: [...this.state.layout.state.children, ...otherLayout.state.layout.state.children],
+    });
+  }
+
   public duplicatePanel(panel: VizPanel) {
     const gridItem = panel.parent;
     if (!(gridItem instanceof AutoGridItem)) {
