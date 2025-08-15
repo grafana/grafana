@@ -1244,20 +1244,6 @@
       "copy-code": "Kopiera kod",
       "download": "Ladda ner"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Varningsregel",
-        "all": "Alla",
-        "error": "Fel",
-        "firing": "Utlöst",
-        "no-data": "Inga data",
-        "normal": "Normal ",
-        "ok": "OK",
-        "pending": "Väntande",
-        "recording-rule": "Inspelningsregel",
-        "recovering": "Återställer"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtrerad regellista"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regeln har raderats"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Regelutvärdering pausad"
       },
       "resume-rule": {
         "success": "Regelutvärdering återupptagen"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regeln uppdaterades"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Rensa filter",
       "configured-alert-rules": "Datakällor som innehåller konfigurerade larmregler är Mimir- eller Loki-datakällor där larmregler lagras och utvärderas i själva datakällan.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Instrumentpanel",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Hjälp för sökning efter datakällor",
       "filter-options": {
-        "aria-label-show-filters": "Visa filter",
-        "label-custom-filter": "Anpassa filter",
-        "label-saved-searches": "Sparade sökningar"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Hälsa",
       "label": {
         "hide": "Dölj",
         "show": "Visa"
       },
       "manage-alerts": "I dessa datakällor kan du välja Hantera larm via larmgränssnittet för att kunna hantera dessa larmregler i Grafana-gränssnittet samt i datakällan där de konfigurerades.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Alla datakällor",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Tilläggsregler",
       "rule-type": "Typ av regel",
       "rulesSearchInput-placeholder-search": "Sök",
@@ -2629,9 +2640,6 @@
       "text-federated": "Federerade",
       "text-provisioned": "Provisionerad"
     },
-    "saved-searches": {
-      "text-default": "Standard"
-    },
     "search": {
       "property": {
         "data-source": "Datakälla",
@@ -2639,11 +2647,10 @@
         "labels": "Etiketter",
         "namespace": "Mapp/namnområde",
         "rule-health": "Hälsa",
-        "rule-name": "Namn för varningsregel",
+        "rule-name": "",
         "rule-type": "Typ",
         "state": "Tillstånd"
-      },
-      "save-query": "Spara aktuell sökning"
+      }
     },
     "search-field-input": {
       "clear": "Rensa",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Tillämpa",
     "cancel": "Avbryt",
     "clear": "Rensa",
-    "close": "Stäng",
     "collapse": "Minimera",
     "edit": "Redigera",
     "help": "Hjälp",
@@ -5343,6 +5350,7 @@
       "playlist-next": "Gå till nästa instrumentpanel",
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
+      "read-only": "",
       "refresh": "Uppdatera instrumentpanel",
       "save": "Spara instrumentpanel",
       "save-dashboard": {
@@ -6582,6 +6590,9 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus och Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Avbryt",
       "placeholder-filter-by-name-or-type": "Filtrera efter namn eller typ"
@@ -7474,6 +7485,13 @@
       "tooltip-title": "Matematisk operator",
       "tooltip-trigger": "Uttryck"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Funktion",
       "label-input": "Ingång",
@@ -7488,6 +7506,11 @@
       "label-resample-to": "Sampla om till",
       "label-upsample": "Sampla upp",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Ingång"
@@ -7505,7 +7528,8 @@
     "loading": "Laddar mappar…"
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7857,7 +7881,8 @@
       "edit-pane": {
         "go-back": "Tillbaka"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9046,6 +9071,7 @@
       "sign-up": "Registrera dig"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Ändra ordning genom dra och släpp",
@@ -10860,7 +10886,6 @@
         "downloads": "Nedladdningar",
         "from": "Från",
         "installedVersion": "Installerad version",
-        "lastCommitDate": "Senaste åtagandedatum:",
         "latestReleaseDate": "Senaste utgivningsdatum:",
         "latestVersion": "Senaste versionen",
         "license": "Licens",
@@ -11247,7 +11272,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
-      "repository-config-exists-configuration": "Verifiera att lagringsplatskonfigurationen finns i konfigurationsfilen."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Verifiera att lagringsplatskonfigurationen finns i konfigurationsfilen.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Spara",
@@ -11413,6 +11440,8 @@
         "subtitle": "Använd det här alternativet om du vill synkronisera och hantera hela din Grafana-instans via extern lagring."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "aktiva jobb",
       "column-action": "Åtgärd",
@@ -11431,6 +11460,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Inställningar",
       "view": "Visa"
     },
@@ -11442,6 +11472,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Dina resurser finns nu i din externa lagring och provisioneras till din instans. Från och med nu kommer din instans och den externa lagringen att synkroniseras.",
@@ -11846,6 +11879,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Dölj frågeraden",
       "datasource-help": "Visa hjälp med datakälla",
       "drag-and-drop": "Ändra ordning genom dra och släpp",
@@ -11856,7 +11890,11 @@
       "replace-query-from-library": "Ersätt med fråga från biblioteket",
       "show-response": "Visa svar"
     },
-    "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
+    "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12092,7 +12130,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Lägg till servicekonto",
-      "message": "Inga servicekonton hittades",
+      "message": "",
       "more-info": "Kom ihåg att du kan ange specifika behörigheter för API-åtkomst till andra applikationer",
       "title": "Du har inte skapat några servicekonton ännu"
     }
@@ -12485,6 +12523,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sortera"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

@@ -241,9 +241,12 @@ type ResourceServerOptions struct {
 
 	Ring           *ring.Ring
 	RingLifecycler *ring.BasicLifecycler
+
+	// Enable strong consistency for searches. When enabled, index is always updated with latest changes before search.
+	SearchAfterWrite bool
 }
 
-func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
 	}
@@ -324,7 +327,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler, opts.SearchAfterWrite)
 		if err != nil {
 			return nil, err
 		}
@@ -482,17 +485,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	}
 
 	// Verify that this resource can reference secure values
-	secure, err := obj.GetSecureValues()
-	if err != nil {
-		return nil, AsErrorResult(err)
-	}
-	if len(secure) > 0 {
-		if s.secure == nil {
-			return nil, NewBadRequestError("secure storage not configured")
-		}
-
-		// See: https://github.com/grafana/grafana/pull/107803
-		return nil, NewBadRequestError("Saving secure values is not yet supported")
+	if err := canReferenceSecureValues(ctx, obj, event.ObjectOld, s.secure); err != nil {
+		return nil, err
 	}
 
 	if key.Namespace != obj.GetNamespace() {
