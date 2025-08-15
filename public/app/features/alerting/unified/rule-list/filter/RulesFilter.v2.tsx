@@ -20,6 +20,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import type { AdvancedFilters } from 'app/features/alerting/unified/rule-list/filter/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -29,49 +30,26 @@ import {
   trackFilterButtonClearClick,
   trackFilterButtonClick,
   trackRulesSearchInputCleared,
-} from '../../../Analytics';
-import { useRulesFilter } from '../../../hooks/useFilteredRules';
-import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
-import { PopupCard } from '../../HoverCard';
-
-import { RulesFilterProps } from './RulesFilter';
-import { RulesViewModeSelector } from './RulesViewModeSelector';
+} from '../../Analytics';
+import { PopupCard } from '../../components/HoverCard';
+import { RulesFilterProps } from '../../components/rules/Filter/RulesFilter';
+import { RulesViewModeSelector } from '../../components/rules/Filter/RulesViewModeSelector';
 import {
   useAlertingDataSourceOptions,
   useLabelOptions,
   useNamespaceAndGroupOptions,
-} from './useRuleFilterAutocomplete';
+} from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import {
   emptyAdvancedFilters,
   formAdvancedFiltersToRuleFilter,
   searchQueryToDefaultValues,
   usePluginsFilterStatus,
   usePortalContainer,
-} from './utils';
+} from '../../components/rules/Filter/utils';
+import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
-
-/**
- * Custom hook that creates a DOM container for rendering dropdowns outside of popup stacking contexts.
- * This prevents dropdowns from appearing behind modals/popups due to CSS stacking context limitations.
- *
- * @param zIndex - The z-index value for the portal container
- * @returns HTMLDivElement container appended to document.body, or undefined during initial render
- */
-
-export type AdvancedFilters = {
-  namespace?: string | null;
-  groupName?: string | null;
-  ruleName?: string;
-  ruleType?: PromRuleType | '*';
-  ruleState: PromAlertingRuleState | '*';
-  dataSourceNames: string[];
-  labels: string[];
-  ruleHealth?: RuleHealth | '*';
-  dashboardUid?: string;
-  plugins?: 'show' | 'hide';
-  contactPoint?: string | null;
-};
 
 type SearchQueryForm = {
   query: string;

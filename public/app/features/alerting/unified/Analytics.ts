@@ -7,8 +7,8 @@ import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
-import { AdvancedFilters } from './components/rules/Filter/RulesFilter.v2';
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
+import { AdvancedFilters } from './rule-list/filter/types';
 import { RulesFilter } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 

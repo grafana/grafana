@@ -9,6 +9,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../Analytics';
+import RulesFilter from '../../components/rules/Filter/RulesFilter';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
@@ -40,8 +41,7 @@ jest.mock('../../hooks/useFilteredRules', () => ({
   })),
 }));
 
-import RulesFilter from './Filter/RulesFilter';
-import RulesFilterV2 from './Filter/RulesFilter.v2';
+import RulesFilterV2 from './RulesFilter.v2';
 
 const useRulesFilterMock = useRulesFilter as jest.MockedFunction<typeof useRulesFilter>;
 
@@ -63,8 +63,8 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-jest.mock('./MultipleDataSourcePicker', () => {
-  const original = jest.requireActual('./MultipleDataSourcePicker');
+jest.mock('../../components/rules/MultipleDataSourcePicker', () => {
+  const original = jest.requireActual('../../components/rules/MultipleDataSourcePicker');
   return {
     ...original,
     MultipleDataSourcePicker: () => null,
