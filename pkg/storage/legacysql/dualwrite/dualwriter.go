@@ -281,7 +281,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// By setting RemovePermissions to true in the context, we will skip the deletion of permissions
 	// in the legacy store. This is needed as otherwise the permissions would be missing when executing
 	// the delete operation in the unified storage store.
-	ctx = context.WithValue(ctx, "RemovePermissions", "false")
+	ctx = utils.SetFolderRemovePermissions(ctx, false)
 
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
@@ -289,7 +289,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	}
 
 	// We can now flip it again.
-	ctx = context.WithValue(ctx, "RemovePermissions", "true")
+	ctx = utils.SetFolderRemovePermissions(ctx, true)
 
 	// If unified storage is our primary store, just delete it and return
 	if d.readUnified {
