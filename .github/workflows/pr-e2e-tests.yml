@@ -365,15 +365,6 @@ jobs:
         run: |
           docker cp cpp-e2e-deploy:/outputs.json /tmp/outputs.json
 
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Install dependencies
-        run: yarn install --immutable
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
-
       - uses: actions/download-artifact@v4
         with:
           name: grafana-tar-gz
@@ -382,7 +373,7 @@ jobs:
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --playwright-command="yarn e2e:playwright:cloud-plugins"
+          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --playwright-command="yarn e2e:playwright:cloud-plugins" --cloud-plugin-creds="/tmp/outputs.json"
 
       - name: Destroy resources
         if: always() && steps.deploy-resources.outcome == 'success'

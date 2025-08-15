@@ -24,6 +24,7 @@ type RunTestOpts struct {
 	BlobReportExportDir  string
 	TestResultsExportDir string
 	PlaywrightCommand    string
+	CloudPluginCreds     *dagger.File
 }
 
 func RunTest(
@@ -52,6 +53,10 @@ func RunTest(
 		WithExec(playwrightCommand, dagger.ContainerWithExecOpts{
 			Expect: dagger.ReturnTypeAny,
 		})
+
+	if opts.CloudPluginCreds != nil {
+		e2eContainer = e2eContainer.WithMountedFile("/tmp/outputs.json", opts.CloudPluginCreds)
+	}
 
 	if opts.TestResultsExportDir != "" {
 		_, err := e2eContainer.Directory(testResultsDir).Export(ctx, opts.TestResultsExportDir)
