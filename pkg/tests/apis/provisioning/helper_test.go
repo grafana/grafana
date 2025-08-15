@@ -164,8 +164,16 @@ func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 	t.Helper()
 	job = h.AwaitJob(t, ctx, job)
 	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
-	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	lastState := mustNestedString(job.Object, "status", "state")
+
+	repo := job.GetLabels()[jobs.LabelRepository]
+
+	// Debug state if job failed
+	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
+	}
+
+	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
 		"historic job '%s' was not successful", job.GetName())
 }
@@ -181,14 +189,13 @@ func (h *provisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 		result, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(job.GetUID()))
 
-		if apierrors.IsNotFound(err) {
+		if !assert.False(collect, apierrors.IsNotFound(err)) {
 			collect.Errorf("job '%s' not found, still waiting for it to complete", job.GetName())
-			return // continue trying
+			return
 		}
 
+		assert.NoError(collect, err, "failed to get job '%s' to be found", job.GetName())
 		if err != nil {
-			collect.Errorf("failed to get job '%s': %v", job.GetName(), err)
-			collect.FailNow()
 			return
 		}
 
@@ -208,9 +215,11 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 		if assert.NoError(collect, err, "failed to list active jobs") {
 			for _, elem := range list.Items {
 				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
-				require.NoError(t, err)
-				if repo == repoName {
-					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
+				if !assert.NoError(collect, err, "failed to get repository from job spec") {
+					return
+				}
+
+				if !assert.NotEqual(collect, repoName, repo, "there are still remaining jobs for %s: %+v", repoName, elem) {
 					return
 				}
 			}
@@ -243,9 +252,11 @@ func (h *provisioningTestHelper) AwaitJobsWithStates(t *testing.T, repoName stri
 		if assert.NoError(collect, err, "failed to list active jobs") {
 			for _, elem := range list.Items {
 				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
-				require.NoError(t, err)
-				if repo == repoName {
-					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
+				if !assert.NoError(collect, err, "failed to get repository from job spec") {
+					return
+				}
+
+				if !assert.NotEqual(collect, repoName, repo, "there are still remaining jobs for %s: %+v", repoName, elem) {
 					return
 				}
 			}
@@ -304,6 +315,7 @@ func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 // The from path is relative to test file's directory.
 func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
 	fullPath := path.Join(h.ProvisioningPath, to)
+	t.Logf("Copying file from '%s' to provisioning path '%s'", from, fullPath)
 	err := os.MkdirAll(path.Dir(fullPath), 0750)
 	require.NoError(t, err, "failed to create directories for provisioning path")
 
@@ -312,9 +324,146 @@ func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
+func (h *provisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
+	t.Helper()
+	t.Logf("=== DEBUG STATE: %s ===", label)
+
+	ctx := context.Background()
+
+	// Log filesystem contents using existing tree function
+	printFileTree(t, h.ProvisioningPath)
+
+	// Log all repositories first
+	t.Logf("All repositories:")
+	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing repositories: %v", err)
+	} else {
+		t.Logf("  Total repositories: %d", len(repos.Items))
+		for i, repository := range repos.Items {
+			t.Logf("  Repository %d: name=%s", i+1, repository.GetName())
+		}
+	}
+
+	// Log repository files for the specific repo
+	t.Logf("Repository '%s' files:", repo)
+	h.logRepositoryFiles(t, ctx, repo, "  ")
+
+	// Log files for all other repositories too
+	if repos != nil && len(repos.Items) > 1 {
+		t.Logf("Files in other repositories:")
+		for _, repository := range repos.Items {
+			if repository.GetName() != repo {
+				t.Logf("  Repository '%s' files:", repository.GetName())
+				h.logRepositoryFiles(t, ctx, repository.GetName(), "    ")
+			}
+		}
+	}
+
+	// Log Grafana dashboards
+	t.Logf("Grafana dashboards:")
+	dashboards, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing dashboards: %v", err)
+	} else {
+		t.Logf("  Total dashboards: %d", len(dashboards.Items))
+		for i, dashboard := range dashboards.Items {
+			t.Logf("  Dashboard %d: name=%s, UID=%s", i+1, dashboard.GetName(), dashboard.GetUID())
+		}
+	}
+
+	// Log Grafana folders
+	t.Logf("Grafana folders:")
+	folders, err := h.Folders.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("  ERROR listing folders: %v", err)
+	} else {
+		t.Logf("  Total folders: %d", len(folders.Items))
+		for i, folder := range folders.Items {
+			t.Logf("  Folder %d: name=%s", i+1, folder.GetName())
+		}
+	}
+
+	t.Logf("=== END DEBUG STATE ===")
+}
+
+// logRepositoryFiles logs repository file structure using the files API
+func (h *provisioningTestHelper) logRepositoryFiles(t *testing.T, ctx context.Context, repoName string, prefix string) {
+	t.Helper()
+
+	// Try to list files at root level
+	files, err := h.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files")
+	if err != nil {
+		t.Logf("%sERROR getting repository files: %v", prefix, err)
+		return
+	}
+
+	// The API returns a structured response, we need to extract the actual file data
+	if files.Object != nil {
+		h.logRepositoryObject(t, files.Object, prefix, "")
+	} else {
+		t.Logf("%s(empty repository)", prefix)
+	}
+}
+
+// logRepositoryObject recursively logs repository file structure from API response
+func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[string]interface{}, prefix string, path string) {
+	t.Helper()
+
+	if obj == nil {
+		return
+	}
+
+	// Skip metadata fields and focus on actual content
+	for key, value := range obj {
+		// Skip Kubernetes metadata fields
+		if key == "kind" || key == "apiVersion" || key == "metadata" {
+			continue
+		}
+
+		// Calculate new path for nested objects
+		var newPath string
+		if path != "" {
+			newPath = path + "/" + key
+		} else {
+			newPath = key
+		}
+
+		switch v := value.(type) {
+		case map[string]interface{}:
+			t.Logf("%s├── %s/", prefix, key)
+			h.logRepositoryObject(t, v, prefix+"  ", newPath)
+		case []interface{}:
+			// Handle lists (like items array)
+			if key == "items" && len(v) > 0 {
+				t.Logf("%s%d items:", prefix, len(v))
+				for i, item := range v {
+					if itemMap, ok := item.(map[string]interface{}); ok {
+						// Try to get the actual file path from the item
+						if pathVal, exists := itemMap["path"]; exists {
+							t.Logf("%s├── %v", prefix, pathVal)
+						} else {
+							t.Logf("%s├── item %d:", prefix, i+1)
+						}
+						h.logRepositoryObject(t, itemMap, prefix+"  ", newPath)
+					}
+				}
+			}
+		default:
+			// This could be file content or metadata
+			// Skip common metadata fields that are not useful for debugging
+			if key != "kind" && key != "apiVersion" && key != "path" && key != "size" && key != "hash" {
+				t.Logf("%s├── %s: %v", prefix, key, value)
+			}
+		}
+	}
+}
+
 type TestRepo struct {
 	Name               string
 	Target             string
+	Path               string
 	Values             map[string]any
 	Copies             map[string]string
 	ExpectedDashboards int
@@ -326,21 +475,48 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		repo.Target = "instance"
 	}
 
-	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+	// Use custom path if provided, otherwise use default provisioning path
+	repoPath := h.ProvisioningPath
+	if repo.Path != "" {
+		repoPath = repo.Path
+		// Ensure the directory exists
+		err := os.MkdirAll(repoPath, 0750)
+		require.NoError(t, err, "should be able to create repository path")
+	}
+
+	templateVars := map[string]any{
 		"Name":        repo.Name,
 		"SyncEnabled": true,
 		"SyncTarget":  repo.Target,
-	})
+	}
+	if repo.Path != "" {
+		templateVars["Path"] = repoPath
+	}
+
+	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", templateVars)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	for from, to := range repo.Copies {
-		h.CopyToProvisioningPath(t, from, to)
+		if repo.Path != "" {
+			// Copy to custom path
+			fullPath := path.Join(repoPath, to)
+			err := os.MkdirAll(path.Dir(fullPath), 0750)
+			require.NoError(t, err, "failed to create directories for custom path")
+			file := h.LoadFile(from)
+			err = os.WriteFile(fullPath, file, 0600)
+			require.NoError(t, err, "failed to write file to custom path")
+		} else {
+			h.CopyToProvisioningPath(t, from, to)
+		}
 	}
 
 	// Trigger and wait for initial sync to populate resources
 	h.SyncAndWait(t, repo.Name, nil)
+
+	// Debug state after initial sync
+	h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
 
 	// Verify initial state
 	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
@@ -597,4 +773,50 @@ func countFilesInDir(rootPath string) (int, error) {
 		return nil
 	})
 	return count, err
+}
+
+// CleanupAllRepos deletes all repositories and waits for them to be fully removed
+func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
+
+	// First, get all repositories that exist
+	list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil || len(list.Items) == 0 {
+		return // Nothing to clean up
+	}
+
+	// Wait for any active jobs to complete before deleting repositories
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		activeJobs, err := h.Jobs.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "failed to list active jobs") {
+			return
+		}
+		assert.Equal(collect, 0, len(activeJobs.Items), "all active jobs should complete before cleanup")
+	}, time.Second*20, time.Millisecond*100, "active jobs should complete before cleanup")
+
+	// Now delete all repositories with retries
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		for _, repo := range list.Items {
+			err := h.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
+			// Don't fail if already deleted (404 is OK)
+			if err != nil {
+				assert.True(collect, apierrors.IsNotFound(err), "Should be able to delete repository %s (or it should already be deleted)", repo.GetName())
+			}
+		}
+	}, time.Second*10, time.Millisecond*100, "should be able to delete all repositories")
+
+	// Then wait for repositories to be fully deleted to ensure clean state
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
+	}, time.Second*15, time.Millisecond*100, "repositories should be cleaned up between subtests")
 }

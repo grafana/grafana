@@ -244,6 +244,21 @@
     },
     {
       "metadata": {
+        "name": "alertingImportAlertmanagerUI",
+        "resourceVersion": "1754585847887",
+        "creationTimestamp": "2025-08-07T16:57:27Z"
+      },
+      "spec": {
+        "description": "Enables the UI to see imported Alertmanager configuration",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingImportYAMLUI",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-05-21T15:59:41Z"
@@ -2941,7 +2956,8 @@
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-06T16:28:52Z"
+        "creationTimestamp": "2023-06-06T16:28:52Z",
+        "deletionTimestamp": "2025-08-08T12:18:29Z"
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
@@ -3051,6 +3067,19 @@
         "description": "Use fixed-width numbers globally in the UI",
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamFolders",
+        "resourceVersion": "1755099058649",
+        "creationTimestamp": "2025-08-13T15:30:58Z"
+      },
+      "spec": {
+        "description": "Enables team folders functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "expression": "false"
       }
     },
@@ -3254,6 +3283,25 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageSearchAfterWriteExperimentalAPI",
+        "resourceVersion": "1755089543487",
+        "creationTimestamp": "2025-08-13T12:35:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-13 12:52:23.487521 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable experimental search-after-write guarantees to unified-storage search endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
