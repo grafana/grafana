@@ -56,7 +56,6 @@ func LoadKubeConfigFromFolderAppURL(folderAppURL, exchangeUrl, authToken, namesp
 
 // LoadKubeConfigFromFile loads a NamespacedConfig from a file on-disk (such as a mounted secret)
 func LoadKubeConfigFromFile(configPath string) (*kubeconfig.NamespacedConfig, error) {
-
 	// Load the kubeconfig file
 	config, err := clientcmd.LoadFromFile(configPath)
 	if err != nil {

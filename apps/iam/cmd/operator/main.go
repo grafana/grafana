@@ -28,12 +28,16 @@ func main() {
 
 	// Set up tracing
 	if cfg.OTelConfig.Host != "" {
-		simple.SetTraceProvider(simple.OpenTelemetryConfig{
+		err = simple.SetTraceProvider(simple.OpenTelemetryConfig{
 			Host:        cfg.OTelConfig.Host,
 			Port:        cfg.OTelConfig.Port,
-			ConnType:    simple.OTelConnType(cfg.OTelConfig.ConnType),
+			ConnType:    cfg.OTelConfig.ConnType,
 			ServiceName: cfg.OTelConfig.ServiceName,
 		})
+		if err != nil {
+			logging.DefaultLogger.With("error", err).Error("Unable to set trace provider")
+			panic(err)
+		}
 	}
 
 	// Create the operator config and the runner
@@ -74,5 +78,4 @@ func main() {
 		panic(err)
 	}
 	logging.DefaultLogger.Info("Normal operator exit")
-
 }
