@@ -1244,20 +1244,6 @@
       "copy-code": "Kopieer code",
       "download": "Downloaden"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Waarschuwingsregel",
-        "all": "Alle",
-        "error": "Fout",
-        "firing": "Geactiveerd",
-        "no-data": "Geen gegevens",
-        "normal": "Normaal",
-        "ok": "OK",
-        "pending": "In afwachting",
-        "recording-rule": "Opnameregel",
-        "recovering": "Herstellen"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "gefilterde-regels-lijst"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regel is verwijderd"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Regelevaluatie is gepauzeerd"
       },
       "resume-rule": {
         "success": "Regelevaluatie is hervat"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regel is aangepast"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Filters wissen",
       "configured-alert-rules": "Gegevensbronnen met geconfigureerde waarschuwingsregels zijn Mimir- of Loki-gegevensbronnen waar waarschuwingsregels worden opgeslagen en geëvalueerd in de gegevensbron zelf.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Zoeken op hulp bij gegevensbronnen",
       "filter-options": {
-        "aria-label-show-filters": "Filters tonen",
-        "label-custom-filter": "Aangepaste filter",
-        "label-saved-searches": "Opgeslagen zoekopdrachten"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Gezondheid",
       "label": {
         "hide": "Verbergen",
         "show": "Tonen"
       },
       "manage-alerts": "In deze gegevensbronnen kun je waarschuwingen beheren via de waarschuwingsinterface om deze waarschuwingsregels te kunnen beheren in de Grafana-gebruikersinterface en in de gegevensbron waar ze zijn geconfigureerd.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Alle gegevensbronnen",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Plug-inregels",
       "rule-type": "Regeltype",
       "rulesSearchInput-placeholder-search": "Zoeken",
@@ -2629,9 +2640,6 @@
       "text-federated": "Federatief",
       "text-provisioned": "Provisioned"
     },
-    "saved-searches": {
-      "text-default": "Standaard"
-    },
     "search": {
       "property": {
         "data-source": "Gegevensbron",
@@ -2639,11 +2647,10 @@
         "labels": "Labels",
         "namespace": "Map/Naamruimte",
         "rule-health": "Gezondheid",
-        "rule-name": "Naam waarschuwingsregel",
+        "rule-name": "",
         "rule-type": "Type",
         "state": "Status"
-      },
-      "save-query": "Huidige zoekopdracht opslaan"
+      }
     },
     "search-field-input": {
       "clear": "Wissen",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Toepassen",
     "cancel": "Annuleren",
     "clear": "Wissen",
-    "close": "Sluiten",
     "collapse": "Samenvouwen",
     "edit": "Bewerken",
     "help": "Help",
@@ -6583,6 +6590,9 @@
         "hosted-graphite-prometheus-and-loki": "Gehost Graphite, Prometheus en Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Annuleren",
       "placeholder-filter-by-name-or-type": "Filteren op naam of type"
@@ -7871,7 +7881,8 @@
       "edit-pane": {
         "go-back": "Ga terug"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9060,6 +9071,7 @@
       "sign-up": "Registreren"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Versleep om opnieuw te rangschikken",
@@ -11260,7 +11272,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Terug naar repositories",
-      "repository-config-exists-configuration": "Zorg ervoor dat de repository-configuratie in het configuratiebestand bestaat."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Zorg ervoor dat de repository-configuratie in het configuratiebestand bestaat.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Opslaan",
@@ -11458,6 +11472,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Je bronnen bevinden zich nu in je externe opslag en zijn ingericht in je instantie. Vanaf nu worden je instantie en de externe opslag gesynchroniseerd.",
