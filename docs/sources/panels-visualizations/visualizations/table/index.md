@@ -457,7 +457,7 @@ The following table has five visible fields (columns) as well as a hidden field 
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-override-2-v12.2.png" max-width="300px" alt="Override to use the Info field values as tooltips for the Short text column" >}}
 
-Now when you hover the cursor over the chip in the "Short text" column, the corresponding values from the "Info" column appear in the tooltip:
+Now, when you hover the cursor over the chip in the "Short text" column, the corresponding values from the "Info" column appear in the tooltip:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-v12.2.png" max-width="750px" alt="Info field value in the tooltip of the Short text cell upon hover" >}}
 
@@ -470,9 +470,12 @@ In this case, the value "up" is mapped to the word "Good":
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-value-map-v12.2.png" max-width="750px" alt="Info field value up being mapped to the value Good in an override" >}}
 
-Now when you hover the cursor over the chip in the "Short text" cell, the mapped value appears in the tooltip:
+Now, when you hover the cursor over the chip in the "Short text" cell, the mapped value appears in the tooltip:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-2-v12.2.png" max-width="750px" alt="Info field mapped to a new value in the tooltip of the Short text cell upon hover" >}}
+
+You can use all field overrides to affect the display of the tooltip.
+For example, the **Table > Column width** or **Cell options > Cell type** overrides can change the cell width or visual display of the data.
 
 ### Standard options
 
