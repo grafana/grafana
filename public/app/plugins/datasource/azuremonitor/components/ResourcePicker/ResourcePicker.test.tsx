@@ -62,10 +62,17 @@ function createMockResourcePickerData(
 
 const queryType: ResourcePickerQueryType = 'logs';
 
+const resourcePickerData = createMockResourcePickerData();
 const defaultProps = {
   templateVariables: [],
   resources: [],
-  resourcePickerData: createMockResourcePickerData(),
+  resourcePickerData,
+  datasource: createMockDatasource({
+    resourcePickerData,
+    getSubscriptions: jest
+      .fn()
+      .mockResolvedValue(createMockSubscriptions().map((sub) => ({ label: sub.name, value: sub.id }))),
+  }),
   onCancel: noop,
   onApply: noop,
   selectableEntryTypes: [

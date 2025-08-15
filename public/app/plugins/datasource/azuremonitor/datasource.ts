@@ -35,6 +35,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
   currentUserAuth: boolean;
   currentUserAuthFallbackAvailable: boolean;
+  defaultSubscriptionId?: string;
 
   pseudoDatasource: {
     [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
@@ -78,6 +79,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
       this.currentUserAuthFallbackAvailable = false;
     }
+
+    this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
@@ -284,6 +287,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       }
     }
     return { ...query, azureLogAnalytics: { ...query.azureLogAnalytics, query: expression } };
+  }
+
+  getDefaultSubscriptionId() {
+    return this.defaultSubscriptionId || '';
   }
 }
 

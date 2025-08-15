@@ -29,6 +29,7 @@ const Search = ({ searchFn }: { searchFn: (searchPhrase: string) => void }) => {
       }}
       placeholder={t('components.search.placeholder-resource-search', 'Search for a resource')}
       data-testid={selectors.components.queryEditor.resourcePicker.search.input}
+      style={{ marginBottom: '10px' }}
     />
   );
 };

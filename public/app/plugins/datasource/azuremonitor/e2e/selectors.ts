@@ -64,6 +64,11 @@ export const components = {
           input: 'data-testid resource-picker-resource',
         },
       },
+      filters: {
+        subscription: {
+          input: 'data-testid resource-picker-filter-subscription',
+        },
+      },
     },
     metricsQueryEditor: {
       container: { input: 'data-testid azure-monitor-metrics-query-editor-with-experimental-ui' },
