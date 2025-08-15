@@ -7,6 +7,7 @@ aliases:
   - ../panels/reference-standard-field-definitions/
   - ../panels/standard-field-definitions/
   - ../panels/working-with-panels/format-standard-fields/
+  - ../panels/field-configuration-options/ # /docs/grafana/latest/panels/field-configuration-options/
 keywords:
   - panel
   - dashboard
