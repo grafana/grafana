@@ -16,6 +16,7 @@ import {
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
   RawAzureSubscriptionItem,
+  ResourceGraphFilters,
 } from '../types/types';
 import { interpolateVariable, replaceTemplateVariables, routeNames } from '../utils/common';
 
@@ -108,7 +109,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     }
   }
 
-  async getSubscriptions(filters?: { subscriptions: string[]; types: string[]; locations: string[] }) {
+  async getSubscriptions(filters?: ResourceGraphFilters) {
     const filtersQuery = filters ? createFilter(filters) : '';
     const query = `
         resources
@@ -127,11 +128,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     return subscriptions;
   }
 
-  async getResourceGroups(
-    subscriptionId: string,
-    metricNamespacesFilter?: string,
-    filters?: { subscriptions: string[]; types: string[]; locations: string[] }
-  ) {
+  async getResourceGroups(subscriptionId: string, metricNamespacesFilter?: string, filters?: ResourceGraphFilters) {
     // When retrieving resource groups we only need to filter by the input subscription ID
     const filtersQuery = filters ? createFilter({ ...filters, subscriptions: [subscriptionId] }) : '';
     // We can use subscription ID for the filtering here as they're unique
@@ -161,7 +158,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   async getResourceNames(
     query: AzureGetResourceNamesQuery,
     metricNamespacesFilter?: string,
-    resourceFilters?: { subscriptions: string[]; types: string[]; locations: string[] }
+    resourceFilters?: ResourceGraphFilters
   ) {
     const promises = replaceTemplateVariables(this.templateSrv, query).map(
       async ({ metricNamespace, subscriptionId, resourceGroup, region, uri }) => {

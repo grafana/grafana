@@ -1238,20 +1238,6 @@
       "copy-code": "코드 복사",
       "download": "다운로드"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "경고 규칙",
-        "all": "전체",
-        "error": "오류",
-        "firing": "발생 중",
-        "no-data": "데이터 없음",
-        "normal": "정상",
-        "ok": "확인",
-        "pending": "보류 중",
-        "recording-rule": "기록 규칙",
-        "recovering": "복구 중"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "필터링된-규칙-목록"
     },
@@ -2575,11 +2561,27 @@
       "delete-rule": {
         "success": "규칙 삭제 완료"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "규칙 평가 일시 중지됨"
       },
       "resume-rule": {
         "success": "규칙 평가 재개됨"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "규칙 업데이트됨"
@@ -2588,20 +2590,29 @@
     "rules-filter": {
       "clear-filters": "필터 초기화",
       "configured-alert-rules": "구성된 경고 규칙을 포함하는 데이터 소스는 경고 규칙이 데이터 소스 자체에 저장되고 평가되는 Mimir 또는 Loki 데이터 소스입니다.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "대시보드",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "데이터 소스로 검색 도움말",
       "filter-options": {
-        "aria-label-show-filters": "필터 표시",
-        "label-custom-filter": "사용자 지정 필터",
-        "label-saved-searches": "저장된 검색"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "상태",
       "label": {
         "hide": "숨기기",
         "show": "표시"
       },
       "manage-alerts": "이러한 데이터 소스에서 경고 UI를 통해 '경고 관리'를 선택하면 Grafana UI와 경고 규칙이 구성된 데이터 소스에서 이러한 경고 규칙을 관리할 수 있습니다.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "모든 데이터 소스",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "플러그인 규칙",
       "rule-type": "규칙 유형",
       "rulesSearchInput-placeholder-search": "검색",
@@ -2616,9 +2627,6 @@
       "text-federated": "연합됨",
       "text-provisioned": "프로비저닝됨"
     },
-    "saved-searches": {
-      "text-default": "기본값"
-    },
     "search": {
       "property": {
         "data-source": "데이터 소스",
@@ -2626,11 +2634,10 @@
         "labels": "라벨",
         "namespace": "폴더 / 네임스페이스",
         "rule-health": "상태",
-        "rule-name": "경고 규칙 이름",
+        "rule-name": "",
         "rule-type": "유형",
         "state": "상태"
-      },
-      "save-query": "현재 검색 저장"
+      }
     },
     "search-field-input": {
       "clear": "초기화",
@@ -3506,25 +3513,18 @@
     "browse-view": {
       "this-folder-is-empty": "이 폴더는 비어 있습니다"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "모든 리소스가 성공적으로 삭제되었습니다",
-      "all-moved": "모든 리소스가 성공적으로 이동되었습니다",
-      "button-done": "완료됨",
-      "progress-title": "성공",
-      "failed-alert_other": "{{count}}개 항목 실패"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "취소",
       "button-delete": "삭제",
       "button-deleting": "삭제 중…",
       "delete-warning": "이렇게 하면 선택하신 폴더와 하위 폴더가 삭제되며, 전체적으로 다음에 영향을 미칩니다.",
-      "error-path-not-found": "경로를 찾을 수 없습니다"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "취소",
       "button-move": "이동",
       "button-moving": "이동 중...",
-      "deleting": "삭제 중",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3532,13 +3532,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "파일 내용을 찾을 수 없습니다",
-      "error-path-not-found": "경로를 찾을 수 없습니다",
-      "error-target-folder-path-missing": "대상 폴더 경로가 누락되었습니다",
-      "error-title": "대상 폴더 오류",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "이렇게 하면 선택하신 폴더와 하위 폴더가 이동되며, 전체적으로 다음에 영향을 미칩니다.",
-      "moving": "이동 중",
-      "progress": "진행 상태: {{current}}/{{total}}",
       "target-folder": "대상 폴더"
     },
     "counts": {
@@ -3549,6 +3545,9 @@
       "total_other": "항목 {{count}}개"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "{{title}} 폴더 접기",
       "expand-folder-button": "{{title}} 폴더 펼치기",
       "name-column": "이름",
@@ -4086,10 +4085,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "적용",
     "cancel": "취소",
     "clear": "초기화",
-    "close": "닫기",
     "collapse": "접기",
     "edit": "편집",
     "help": "도움말",
@@ -4490,12 +4489,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "변수 값에 따라 {{type}}을(를) 동적으로 표시하거나 숨깁니다.",
           "label": "템플릿 변수",
           "name": "이름",
           "operator": {
             "equals": "동일함",
-            "not-equals": "다음과 동일하지 않음"
+            "matches": "",
+            "not-equals": "다음과 동일하지 않음",
+            "not-matches": ""
           },
           "value": "값"
         }
@@ -5327,6 +5331,7 @@
       "playlist-next": "다음 대시보드로 이동",
       "playlist-previous": "이전 대시보드로 이동",
       "playlist-stop": "플레이리스트 중지",
+      "read-only": "",
       "refresh": "대시보드 새로 고침",
       "save": "대시보드 저장",
       "save-dashboard": {
@@ -5379,6 +5384,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "변환 검색",
       "show-images": "이미지 표시",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "다른 변환 추가",
       "view-all": "모두 보기"
     },
@@ -6561,6 +6569,9 @@
         "hosted-graphite-prometheus-and-loki": "호스팅된 Graphite, Prometheus, Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "취소",
       "placeholder-filter-by-name-or-type": "이름 또는 유형으로 필터링"
@@ -7453,6 +7464,13 @@
       "tooltip-title": "수학 연산자",
       "tooltip-trigger": "표현식"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "함수",
       "label-input": "입력",
@@ -7467,6 +7485,11 @@
       "label-resample-to": "리샘플 기준",
       "label-upsample": "업샘플",
       "tooltip-s-m-h": "10초, 1분, 30분, 1시간"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "입력"
@@ -7484,7 +7507,8 @@
     "loading": "폴더 로딩 중..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7836,7 +7860,8 @@
       "edit-pane": {
         "go-back": "뒤로 가기"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9023,6 +9048,7 @@
       "sign-up": "회원 가입"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "드래그 앤 드롭으로 순서 변경",
@@ -10828,7 +10854,6 @@
         "downloads": "다운로드",
         "from": "최저",
         "installedVersion": "설치된 버전",
-        "lastCommitDate": "마지막 담당 날짜:",
         "latestReleaseDate": "최신 릴리스 날짜:",
         "latestVersion": "최신 버전",
         "license": "라이선스",
@@ -11212,7 +11237,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
-      "repository-config-exists-configuration": "리포지토리 구성이 구성 파일에 있는지 확인하세요."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "리포지토리 구성이 구성 파일에 있는지 확인하세요.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "저장",
@@ -11378,6 +11405,8 @@
         "subtitle": "외부 스토리지를 통해 전체 Grafana 인스턴스를 동기화하고 관리하려면 이 옵션을 사용하세요."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "활성 작업",
       "column-action": "동작",
@@ -11396,6 +11425,7 @@
       "get-repository-meta": {
         "webhook": "웹훅"
       },
+      "read-only-badge": "",
       "settings": "설정",
       "view": "보기"
     },
@@ -11406,8 +11436,16 @@
       "title-repository-is-unhealthy": "리포지토리 상태가 좋지 않습니다"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
+        "view-repository": ""
+      },
       "grafana-repository-synced": "이제 리소스가 외부 스토리지에 있으며 인스턴스에 프로비저닝됩니다. 이제부터 인스턴스와 외부 스토리지가 동기화됩니다.",
-      "view-repository": "리포지토리 보기"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "확인됨:",
@@ -11805,6 +11843,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "쿼리 행 접기",
       "datasource-help": "데이터 소스 도움말 표시",
       "drag-and-drop": "드래그 앤 드롭으로 순서 변경",
@@ -11815,7 +11854,11 @@
       "replace-query-from-library": "라이브러리의 쿼리로 교체",
       "show-response": "응답 표시"
     },
-    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
+    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다.",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12048,7 +12091,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "서비스 계정 추가",
-      "message": "찾은 서비스 계정 없음",
+      "message": "",
       "more-info": "다른 애플리케이션에 대한 API 액세스 권한을 특정할 수 있습니다.",
       "title": "아직 생성된 서비스 계정이 없습니다."
     }
@@ -12440,6 +12483,21 @@
   },
   "sort-picker": {
     "select-aria-label": "정렬"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

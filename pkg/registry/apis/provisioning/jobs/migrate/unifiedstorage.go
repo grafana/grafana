@@ -32,6 +32,24 @@ func NewUnifiedStorageMigrator(
 
 func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := repo.Config().GetNamespace()
+
+	// For folder-type repositories, only run sync (skip export and cleaner)
+	if repo.Config().Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
+		progress.SetMessage(ctx, "pull resources")
+		syncJob := provisioning.Job{
+			Spec: provisioning.JobSpec{
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: false,
+				},
+			},
+		}
+		if err := m.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
+			return fmt.Errorf("pull resources: %w", err)
+		}
+		return nil
+	}
+
+	// For instance-type repositories, run the full workflow: export -> sync -> clean
 	progress.SetMessage(ctx, "export resources")
 	progress.StrictMaxErrors(1) // strict as we want the entire instance to be managed
 
@@ -48,8 +66,8 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	// Reset the results after the export as pull will operate on the same resources
 	progress.ResetResults()
-	progress.SetMessage(ctx, "pull resources")
 
+	progress.SetMessage(ctx, "pull resources")
 	syncJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Pull: &provisioning.SyncJobOptions{
@@ -57,7 +75,6 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 			},
 		},
 	}
-
 	if err := m.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
 		return fmt.Errorf("pull resources: %w", err)
 	}

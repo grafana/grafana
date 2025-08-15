@@ -5,6 +5,7 @@ import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
+import { RepoType } from '../Wizard/types';
 import { getIsReadOnlyRepo } from '../utils/repository';
 
 interface GetResourceRepositoryArgs {
@@ -14,6 +15,7 @@ interface GetResourceRepositoryArgs {
 
 interface RepositoryViewData {
   repository?: RepositoryView;
+  repoType?: RepoType;
   folder?: Folder;
   isLoading?: boolean;
   isInstanceManaged: boolean;
@@ -26,6 +28,7 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
   const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(
     !provisioningEnabled ? skipToken : undefined
   );
+
   const skipFolderQuery = !folderName || !provisioningEnabled;
   const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
     skipFolderQuery ? skipToken : { name: folderName }
@@ -93,5 +96,6 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
     folder,
     isInstanceManaged,
     isReadOnlyRepo: getIsReadOnlyRepo(instanceRepo),
+    repoType: instanceRepo?.type,
   };
 };
