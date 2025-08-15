@@ -8,7 +8,7 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
-import { ProvisionedDashboardFormData } from '../types';
+import { ProvisionedDashboardFormData } from '../types/form';
 
 import { getDefaultWorkflow, getWorkflowOptions } from './defaults';
 import { generatePath } from './utils/path';

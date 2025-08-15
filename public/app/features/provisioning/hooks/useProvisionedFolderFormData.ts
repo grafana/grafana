@@ -7,9 +7,9 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisionin
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { generateTimestamp } from '../components/utils/timestamp';
-import { BaseProvisionedFormData } from '../types';
+import { BaseProvisionedFormData } from '../types/form';
 
-export interface UseProvisionedFolderFormDataProps {
+interface UseProvisionedFolderFormDataProps {
   folderUid?: string;
   action: 'create' | 'delete';
   title?: string;

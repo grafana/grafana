@@ -14,7 +14,7 @@ import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
-import { BaseProvisionedFormData } from '../types';
+import { BaseProvisionedFormData } from '../types/form';
 import { buildResourceBranchRedirectUrl } from '../utils/redirect';
 
 import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';

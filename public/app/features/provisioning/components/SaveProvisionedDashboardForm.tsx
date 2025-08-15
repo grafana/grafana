@@ -14,7 +14,6 @@ import { Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { RepoInvalidStateBanner } from 'app/features/provisioning';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import {
@@ -22,9 +21,10 @@ import {
   useProvisionedRequestHandler,
 } from 'app/features/provisioning/hooks/useProvisionedRequestHandler';
 
-import { ProvisionedDashboardFormData } from '../types';
+import { ProvisionedDashboardFormData } from '../types/form';
 import { buildResourceBranchRedirectUrl } from '../utils/redirect';
 
+import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 import { getProvisionedMeta } from './utils/getProvisionedMeta';

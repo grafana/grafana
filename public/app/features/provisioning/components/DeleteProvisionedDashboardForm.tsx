@@ -10,7 +10,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
-import { ProvisionedDashboardFormData } from '../types';
+import { ProvisionedDashboardFormData } from '../types/form';
 import { buildResourceBranchRedirectUrl } from '../utils/redirect';
 
 import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';

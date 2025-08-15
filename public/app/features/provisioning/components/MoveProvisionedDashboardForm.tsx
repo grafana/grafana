@@ -13,14 +13,14 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { getTargetFolderPathInRepo } from 'app/features/browse-dashboards/components/BulkActions/utils';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
-import { ProvisionedDashboardFormData } from '../saving/shared';
-import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler, ProvisionedOperationInfo } from '../utils/useProvisionedRequestHandler';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
+import { ProvisionedDashboardFormData } from '../types/form';
+import { buildResourceBranchRedirectUrl } from '../utils/redirect';
 
-import { buildResourceBranchRedirectUrl } from './utils';
+import { getTargetFolderPathInRepo } from './BulkActions/utils';
+import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
 export interface Props {
   dashboard: DashboardScene;

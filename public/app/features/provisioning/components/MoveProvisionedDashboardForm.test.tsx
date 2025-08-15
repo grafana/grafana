@@ -8,9 +8,9 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
 
 import { MoveProvisionedDashboardForm, Props } from './MoveProvisionedDashboardForm';
 

@@ -1,4 +1,4 @@
-export type ResourceBranchUrlOptions = {
+type ResourceBranchUrlOptions = {
   baseUrl?: string;
   paramName?: string;
   paramValue?: string;
