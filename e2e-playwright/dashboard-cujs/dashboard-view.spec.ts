@@ -66,7 +66,8 @@ test.describe(
         const timePickerButton = dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton);
 
         await test.step('3.1.Click on Quick range', async () => {
-          expect.soft(await timePickerButton.textContent()).toContain('Last 6 hours');
+          await page.mouse.move(0, 0);
+          await expect.soft(timePickerButton).toContainText('Last 6 hours');
           await timePickerButton.click();
 
           const label = page.getByText('Last 5 minutes');

@@ -43,7 +43,7 @@ export async function scopeNodeChildrenRequest(
             ...(parentName && {
               parentName,
             }),
-            ...(scope.addLinks && {
+            ...((scope.addLinks || scope.children) && {
               linkType: 'scope',
               linkId: `scope-${scope.name}`,
             }),

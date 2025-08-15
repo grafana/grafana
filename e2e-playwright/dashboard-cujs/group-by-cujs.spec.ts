@@ -204,8 +204,8 @@ test.describe(
 
         await page.keyboard.press('Escape');
 
-        await expect(page.getByText(textOne!, { exact: false })).toBeVisible();
-        await expect(page.getByText(textTwo!, { exact: false })).toBeVisible();
+        await expect(page.getByText(textOne!, { exact: false }).first()).toBeVisible();
+        await expect(page.getByText(textTwo!, { exact: false }).first()).toBeVisible();
       });
     });
   }
