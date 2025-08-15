@@ -8,9 +8,8 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { ConvertFrameTypeTransformerOptions } from '@grafana/data/internal';
+import { ConvertFrameTypeTransformerOptions, FrameType } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { DataTopic } from '@grafana/schema';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -19,22 +18,22 @@ export const ConvertFrameTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFrameTypeTransformerOptions>) => {
-  const dataTopicOptions: Array<SelectableValue<DataTopic>> = [
+  const dataTopicOptions: Array<SelectableValue<FrameType>> = [
     {
-      label: t('transformers.convert-frame-type-transformer-editor.label.annotations', 'Annotations'),
-      value: DataTopic.Annotations,
+      label: t('transformers.convert-frame-type-transformer-editor.label.exemplar', 'Exemplar'),
+      value: FrameType.Exemplar,
       description: t(
-        'transformers.convert-frame-type-transformer-editor.label.annotations-description',
-        'Convert to annotations format'
+        'transformers.convert-frame-type-transformer-editor.label.exemplar-description',
+        'Convert to Exemplar frame(s)'
       ),
     },
   ];
 
   const onSelectDataTopic = useCallback(
-    (value: SelectableValue<DataTopic>) => {
+    (value: SelectableValue<FrameType>) => {
       onChange({
         ...options,
-        targetDataTopic: value.value || DataTopic.Annotations,
+        targetType: value.value,
       });
     },
     [onChange, options]
@@ -48,7 +47,7 @@ export const ConvertFrameTypeTransformerEditor = ({
         >
           <Select
             options={dataTopicOptions}
-            value={options.targetDataTopic}
+            value={options.targetType}
             placeholder={t(
               'transformers.convert-frame-type-transformer-editor.placeholder.data-topic',
               'Select data topic'

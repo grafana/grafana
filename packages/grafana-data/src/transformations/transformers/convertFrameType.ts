@@ -7,17 +7,29 @@ import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
+/*
+"schema": {
+  "meta": {
+    "custom": {
+      "resultType": "exemplar"
+    }
+  },
+*/
+// ResultType?
+export enum FrameType {
+  Exemplar = 'exemplar',
+  TimeRegion = 'timeRegion',
+  Annotation = 'annotation',
+}
+
 export interface ConvertFrameTypeTransformerOptions {
-  targetDataTopic: DataTopic;
+  targetType?: FrameType;
 }
 
 export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTransformerOptions> = {
   id: DataTransformerID.convertFrameType,
   name: 'Convert frame type',
-  description: 'Convert frame data topic.',
-  defaultOptions: {
-    targetDataTopic: DataTopic.Annotations,
-  },
+  description: 'Convert data frame(s) to another type.',
 
   operator: (options, ctx) => (source) => source.pipe(map((data) => {
     console.log(data);
@@ -32,8 +44,8 @@ export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTr
  * @returns dataframe(s) with converted frame types
  */
 export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
-  const { targetDataTopic = DataTopic.Annotations } = options;
-  return targetDataTopic === DataTopic.Annotations ? frames.map(convertSeriesToAnnotations) : frames;
+  const { targetType } = options;
+  return targetType === FrameType.Exemplar ? frames.map(convertSeriesToExemplar) : frames;
 }
 
 /**
@@ -41,7 +53,7 @@ export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, f
  * @param frame - series DataFrame to convert
  * @returns DataFrame formatted as annotations/exemplars
  */
-function convertSeriesToAnnotations(frame: DataFrame): DataFrame {
+function convertSeriesToExemplar(frame: DataFrame): DataFrame {
   // TODO: ensure time field
   // TODO: ensure value field
 
