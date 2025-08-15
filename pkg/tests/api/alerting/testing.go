@@ -1398,6 +1398,45 @@ func (a apiClient) UpdateNamespaceRules(t *testing.T, folder string, body *apimo
 	return m, resp.StatusCode, string(b)
 }
 
+func (a apiClient) GetProvisioningAlertRule(t *testing.T, ruleUID string) (apimodels.ProvisionedAlertRule, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.ProvisionedAlertRule](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, params *apimodels.ExportQueryParams) (int, string) {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s/export", a.url, ruleUID))
+	require.NoError(t, err)
+	if params != nil {
+		q := url.Values{}
+		if params.Format != "" {
+			q.Set("format", params.Format)
+		}
+		if params.Download {
+			q.Set("download", "true")
+		}
+		u.RawQuery = q.Encode()
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
+}
+
 func sendRequestRaw(t *testing.T, req *http.Request) ([]byte, int, error) {
 	t.Helper()
 	client := &http.Client{}

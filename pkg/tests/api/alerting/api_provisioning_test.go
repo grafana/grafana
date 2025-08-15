@@ -1019,6 +1019,15 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 		require.Equal(t, http.StatusOK, status)
 		require.Greater(t, len(data), 0)
 
+		t.Run("provisioned alert rules should have proper data", func(t *testing.T) {
+			provisionedRule, status, _ := apiClient.GetProvisioningAlertRule(t, "my_id_1")
+			require.Equal(t, http.StatusOK, status)
+
+			require.Equal(t, model.Duration(time.Second*120), provisionedRule.KeepFiringFor)
+			require.NotNil(t, provisionedRule.MissingSeriesEvalsToResolve)
+			require.Equal(t, 3, *provisionedRule.MissingSeriesEvalsToResolve)
+		})
+
 		t.Run("exported alert rules should escape $ characters", func(t *testing.T) {
 			// call export endpoint
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &definitions.AlertRulesExportParameters{
