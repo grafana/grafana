@@ -35,7 +35,7 @@ import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
