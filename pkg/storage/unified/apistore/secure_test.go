@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -48,6 +49,7 @@ func TestSecureLifecycle(t *testing.T) {
 		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
 		require.NoError(t, err)
 		require.True(t, info.hasChanged)
+		slices.Sort(info.createdSecureValues) // keep a predictable order
 		require.Equal(t, []string{"NameForA", "NameForB"}, info.createdSecureValues)
 		secure, err := obj.GetSecureValues()
 		require.NoError(t, err)
