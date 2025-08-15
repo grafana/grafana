@@ -81,6 +81,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		provisioning,
 		nil, // no librarypanels.Service
 		sort.ProvideService(),
+		nil, // we don't delete during migration, and this is only need to delete permission.
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		featureToggles,
 	)

@@ -170,7 +170,8 @@ type DeleteFolderCommand struct {
 	OrgID            int64  `json:"orgId" xorm:"org_id"`
 	ForceDeleteRules bool   `json:"forceDeleteRules"`
 
-	SignedInUser identity.Requester `json:"-"`
+	SignedInUser      identity.Requester `json:"-"`
+	RemovePermissions bool               `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
