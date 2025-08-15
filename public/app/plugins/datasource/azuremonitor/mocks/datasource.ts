@@ -1,6 +1,6 @@
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { resourceTypes } from '../azureMetadata/resourceTypes';
+import { resourceTypeDisplayNames, resourceTypes } from '../azureMetadata/resourceTypes';
 import Datasource from '../datasource';
 import { AzureMonitorDataSourceInstanceSettings, AzureMonitorLocations } from '../types/types';
 
@@ -103,5 +103,5 @@ export const createMockMetricsNamespaces = (): Promise<
     value: string;
   }>
 > => {
-  return Promise.resolve(resourceTypes.map((type) => ({ text: type, value: type })));
+  return Promise.resolve(resourceTypes.map((type) => ({ text: resourceTypeDisplayNames[type], value: type })));
 };
