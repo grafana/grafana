@@ -413,7 +413,7 @@
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
-/e2e-playwright/ @grafana/grafana-frontend-platform
+/e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/dashboard-new-layouts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-browse-nested.spec.ts @grafana/grafana-search-navigate-organise
 /e2e-playwright/dashboards-suite/dashboard-browse.spec.ts @grafana/grafana-search-navigate-organise
@@ -462,7 +462,32 @@
 /e2e-playwright/panels-suite/table-sparkline.spec.ts @grafana/dataviz-squad
 /e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
-/e2e-playwright/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
+/e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform
+/e2e-playwright/start-server @grafana/grafana-frontend-platform
+/e2e-playwright/storybook/ @grafana/grafana-frontend-platform
+/e2e-playwright/test-plugins/ @grafana/plugins-platform-frontend
+/e2e-playwright/unauthenticated/login.spec.ts @grafana/grafana-frontend-platform
+/e2e-playwright/utils/ @grafana/grafana-frontend-platform
+/e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/bookmarks.spec.ts @grafana/grafana-search-navigate-organise
+/e2e-playwright/various-suite/exemplars.spec.ts @grafana/observability-traces-and-profiling
+/e2e-playwright/various-suite/explore.spec.ts @grafana/observability-traces-and-profiling
+/e2e-playwright/various-suite/filter-annotations.spec.ts @grafana/dashboards-squad
+/e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/plugins-platform-frontend
+/e2e-playwright/various-suite/gauge.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/graph-auto-migrate.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/inspect-drawer.spec.ts @grafana/dashboards-squad
+/e2e-playwright/various-suite/keybinds.spec.ts @grafana/grafana-frontend-platform
+/e2e-playwright/various-suite/loki-query-builder.spec.ts @grafana/oss-big-tent
+/e2e-playwright/various-suite/loki-table-explore-to-dash.spec.ts @grafana/oss-big-tent
+/e2e-playwright/various-suite/navigation.spec.ts @grafana/grafana-search-navigate-organise
+/e2e-playwright/various-suite/pie-chart.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/prometheus-annotations.spec.ts @grafana/oss-big-tent
+/e2e-playwright/various-suite/query-editor.spec.ts @grafana/observability-traces-and-profiling
+/e2e-playwright/various-suite/return-to-previous.spec.ts @grafana/grafana-search-navigate-organise
+/e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
+/e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
+/e2e-playwright/various-suite/visualization-suggestions.spec.ts @grafana/dashboards-squad
 
 # Packages
 /packages/README.md @grafana/grafana-frontend-platform
