@@ -47,7 +47,7 @@ import {
   InstantQueryRefIdIndex,
   SUGGESTIONS_LIMIT,
 } from './constants';
-import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
+import { interpolateQueryExpr, prometheusRegularEscape } from './escaping';
 import {
   exportToAbstractQuery,
   importFromAbstractQuery,
@@ -379,22 +379,7 @@ export class PrometheusDatasource
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) {
-    // if no multi or include all do not regexEscape
-    if (!variable.multi && !variable.includeAll) {
-      return prometheusRegularEscape(value);
-    }
-
-    if (typeof value === 'string') {
-      return prometheusSpecialRegexEscape(value);
-    }
-
-    const escapedValues = value.map((val) => prometheusSpecialRegexEscape(val));
-
-    if (escapedValues.length === 1) {
-      return escapedValues[0];
-    }
-
-    return '(' + escapedValues.join('|') + ')';
+    return interpolateQueryExpr(value, variable);
   }
 
   targetContainsTemplate(target: PromQuery) {
