@@ -29,7 +29,6 @@ import { TableCellOptions } from '../types';
 import { inferPills } from './Cells/PillCell';
 import { COLUMN, TABLE } from './constants';
 import {
-  CellColors,
   TableRow,
   ColumnTypes,
   FrameToRowsConverter,
@@ -489,18 +488,17 @@ const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
  * @internal
  * Returns the text and background colors for a table cell based on its options and display value.
  */
-export function getCellColors(
+export function getCellColorInlineStyles(
   theme: GrafanaTheme2,
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
-): CellColors {
+): CSSProperties {
   // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = theme.isDark ? 1 : -0.7;
 
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
-  // let bgHoverColor: string | undefined = undefined;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
@@ -510,23 +508,16 @@ export function getCellColors(
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-      // bgHoverColor = tinycolor(displayValue.color)
-      //   .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
-      //   .toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      // const hoverColor = tinycolor(displayValue.color)
-      //   .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
-      //   .toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
         .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
         .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-      // bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
     }
   }
 
-  return { textColor, bgColor };
+  return { color: textColor, background: bgColor };
 }
 
 /**
@@ -879,7 +870,7 @@ export function computeColWidths(fields: Field[], availWidth: number) {
  * @internal
  * if applyToRow is true in any field, return a function that gets the row background color
  */
-export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
+export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CSSProperties) | void {
   for (const field of fields) {
     const cellOptions = getCellOptions(field);
     const fieldDisplay = field.display;
@@ -888,7 +879,7 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
       cellOptions.type === TableCellDisplayMode.ColorBackground &&
       cellOptions.applyToRow === true
     ) {
-      return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
+      return (rowIndex: number) => getCellColorInlineStyles(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
     }
   }
 }
@@ -903,7 +894,10 @@ export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDis
 }
 
 /** @internal */
-export function canFieldBeColorized(cellType: TableCellDisplayMode, applyToRowBgFn?: (rowIndex: number) => CellColors) {
+export function canFieldBeColorized(
+  cellType: TableCellDisplayMode,
+  applyToRowBgFn?: (rowIndex: number) => CSSProperties
+) {
   return (
     cellType === TableCellDisplayMode.ColorBackground ||
     cellType === TableCellDisplayMode.ColorText ||

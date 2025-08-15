@@ -23,7 +23,7 @@ import {
   extractPixelValue,
   frameToRecords,
   getAlignmentFactor,
-  getCellColors,
+  getCellColorInlineStyles,
   getCellLinks,
   getCellOptions,
   getComparator,
@@ -112,9 +112,9 @@ describe('TableNG utils', () => {
 
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
-      const colors = getCellColors(theme, field, displayValue);
-      expect(colors.bgColor).toBe('rgb(255, 0, 0)');
-      expect(colors.textColor).toBe('rgb(247, 248, 250)');
+      const colors = getCellColorInlineStyles(theme, field, displayValue);
+      expect(colors.background).toBe('rgb(255, 0, 0)');
+      expect(colors.color).toBe('rgb(247, 248, 250)');
     });
 
     it('should handle color background gradient mode', () => {
@@ -125,9 +125,9 @@ describe('TableNG utils', () => {
 
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
-      const colors = getCellColors(theme, field, displayValue);
-      expect(colors.bgColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
-      expect(colors.textColor).toBe('rgb(247, 248, 250)');
+      const colors = getCellColorInlineStyles(theme, field, displayValue);
+      expect(colors.background).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
+      expect(colors.color).toBe('rgb(247, 248, 250)');
     });
   });
 

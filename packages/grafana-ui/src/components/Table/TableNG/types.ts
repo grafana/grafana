@@ -231,12 +231,6 @@ export interface GeoCellProps {
   height: number;
 }
 
-export interface CellColors {
-  textColor?: string;
-  bgColor?: string;
-  bgHoverColor?: string;
-}
-
 export interface AutoCellProps {
   field: Field;
   value: TableCellValue;

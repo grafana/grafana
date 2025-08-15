@@ -71,7 +71,7 @@ import {
   frameToRecords,
   getAlignment,
   getApplyToRowBgFn,
-  getCellColors,
+  getCellColorInlineStyles,
   getCellLinks,
   getCellOptions,
   getDefaultRowHeight,
@@ -412,9 +412,7 @@ export function TableNG(props: TableNGProps) {
 
             // generate shared styles for whole row
             if (applyToRowBgFn != null) {
-              let { textColor, bgColor } = applyToRowBgFn(rowIdx);
-              rowCellStyle.color = textColor;
-              rowCellStyle.background = bgColor;
+              rowCellStyle = { ...rowCellStyle, ...applyToRowBgFn(rowIdx) };
             }
           }
 
@@ -422,16 +420,10 @@ export function TableNG(props: TableNGProps) {
 
           if (rowCellStyle.color != null || rowCellStyle.background != null) {
             style = rowCellStyle;
-          }
-          // apply background for cell types which can have a background and have proper
-          else if (canBeColorized) {
+          } else if (canBeColorized) {
             const value = props.row[props.column.key];
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-            let { textColor, bgColor } = getCellColors(theme, cellOptions, displayValue);
-            style = {
-              color: textColor,
-              background: bgColor,
-            };
+            style = getCellColorInlineStyles(theme, cellOptions, displayValue);
           }
 
           return (
@@ -496,8 +488,8 @@ export function TableNG(props: TableNGProps) {
         const tooltipFieldName = field.config.custom?.tooltip?.field;
         if (tooltipFieldName) {
           const tooltipField = data.fields.find(predicateByName(tooltipFieldName));
-
           if (tooltipField) {
+            const tooltipDisplayName = getDisplayName(tooltipField);
             const tooltipCellOptions = getCellOptions(tooltipField);
             const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
             const tooltipCellStyleOptions = {
@@ -548,13 +540,8 @@ export function TableNG(props: TableNGProps) {
               const height = rowHeightFn(props.row);
               let tooltipStyle: CSSProperties | undefined;
               if (tooltipCanBeColorized) {
-                const tooltipDisplayName = getDisplayName(tooltipField);
                 const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
-                const { textColor, bgColor } = getCellColors(theme, tooltipCellOptions, tooltipDisplayValue);
-                tooltipStyle = {
-                  color: textColor,
-                  background: bgColor,
-                };
+                tooltipStyle = getCellColorInlineStyles(theme, tooltipCellOptions, tooltipDisplayValue);
               }
 
               return (
