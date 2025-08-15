@@ -1,7 +1,6 @@
 import { isEqual } from 'lodash';
 
 import {
-  LocalValueVariable,
   MultiValueVariable,
   sceneGraph,
   SceneGridItemLike,
@@ -9,7 +8,6 @@ import {
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
 } from '@grafana/scenes';
