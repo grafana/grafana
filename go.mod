@@ -165,7 +165,6 @@ require (
 	github.com/shopspring/decimal v1.4.0 // @grafana/grafana-datasources-core-services
 	github.com/spf13/cobra v1.9.1 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.7 // @grafana-app-platform-squad
-	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group
@@ -195,7 +194,6 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
 	gocloud.dev v0.42.0 // @grafana/grafana-app-platform-squad
-	gocloud.dev/secrets/hashivault v0.42.0 // @grafana/grafana-operator-experience-squad
 	golang.org/x/crypto v0.40.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // @grafana/alerting-backend
 	golang.org/x/mod v0.26.0 // indirect; @grafana/grafana-backend-group
@@ -331,7 +329,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/kms v1.38.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.3 // indirect
@@ -439,17 +436,12 @@ require (
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/hashicorp/go-msgpack/v2 v2.1.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
-	github.com/hashicorp/go-secure-stdlib/parseutil v0.2.0 // indirect
-	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
-	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.2 // indirect
 	github.com/hashicorp/serf v0.10.2 // indirect
-	github.com/hashicorp/vault/api v1.16.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
@@ -501,12 +493,10 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.6.0 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
-	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
@@ -518,7 +508,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
@@ -539,7 +529,6 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
