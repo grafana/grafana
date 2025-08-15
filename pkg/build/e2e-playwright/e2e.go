@@ -23,6 +23,7 @@ type RunTestOpts struct {
 	HTMLReportExportDir  string
 	BlobReportExportDir  string
 	TestResultsExportDir string
+	PlaywrightCommand    string
 }
 
 func RunTest(
@@ -89,14 +90,14 @@ func buildPlaywrightCommand(opts RunTestOpts) []string {
 		playwrightReporters = append(playwrightReporters, "blob")
 	}
 
-	playwrightCommand := []string{
-		"yarn",
-		"e2e:playwright",
+	playwrightExec := strings.Split(opts.PlaywrightCommand, " ")
+
+	playwrightCommand := append(playwrightExec,
 		"--reporter",
 		strings.Join(playwrightReporters, ","),
 		"--output",
 		testResultsDir,
-	}
+	)
 
 	if opts.Shard != "" {
 		playwrightCommand = append(playwrightCommand, "--shard", opts.Shard)
