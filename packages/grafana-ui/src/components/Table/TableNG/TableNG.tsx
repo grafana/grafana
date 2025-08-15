@@ -328,7 +328,7 @@ export function TableNG(props: TableNGProps) {
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent);
-        const renderFieldCell = getCellRenderer(field, cellOptions);
+        const CellType = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
@@ -409,21 +409,21 @@ export function TableNG(props: TableNGProps) {
 
           return (
             <>
-              {renderFieldCell({
-                cellOptions,
-                frame,
-                field,
-                height,
-                rowIdx,
-                theme,
-                value,
-                width,
-                timeRange,
-                cellInspect,
-                showFilters,
-                getActions: getCellActions,
-                disableSanitizeHtml,
-              })}
+              <CellType
+                cellOptions={cellOptions}
+                frame={frame}
+                field={field}
+                height={height}
+                rowIdx={rowIdx}
+                theme={theme}
+                value={value}
+                width={width}
+                timeRange={timeRange}
+                cellInspect={cellInspect}
+                showFilters={showFilters}
+                getActions={getCellActions}
+                disableSanitizeHtml={disableSanitizeHtml}
+              />
               {showActions && (
                 <TableCellActions
                   field={field}
