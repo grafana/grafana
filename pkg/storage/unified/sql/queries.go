@@ -37,7 +37,7 @@ var (
 	sqlResourceStats                    = mustTemplate("resource_stats.sql")
 	sqlResourceList                     = mustTemplate("resource_list.sql")
 	sqlResourceHistoryList              = mustTemplate("resource_history_list.sql")
-	sqlResourceHistoryListSinceModified = mustTemplate("resource_history_list_since_modified.sql")
+	sqlResourceHistoryListModifiedSince = mustTemplate("resource_history_list_since_modified.sql")
 	sqlResourceUpdateRV                 = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead              = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryReadLatestRV      = mustTemplate("resource_history_read_latest_rv.sql")

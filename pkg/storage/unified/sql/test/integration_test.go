@@ -90,7 +90,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	//		unitest.TestGetResourceStats:          true,
 	//		unitest.TestListHistory:               true,
 	//		unitest.TestListHistoryErrorReporting: true,
-	//		unitest.TestListSinceModified:         false,
+	//		unitest.TestListModifiedSince:         false,
 	//		unitest.TestListTrash:                 true,
 	//		unitest.TestCreateNewResource:         true,
 	//	},

@@ -35,7 +35,7 @@ const (
 	TestGetResourceStats          = "get resource stats"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
-	TestListSinceModified         = "list events since rv"
+	TestListModifiedSince         = "list events since rv"
 	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
 )
@@ -79,7 +79,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestListTrash, runTestIntegrationBackendTrash},
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
-		{TestListSinceModified, runTestIntegrationBackendListSinceModified},
+		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 	}
 
 	for _, tc := range cases {
@@ -484,7 +484,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 	})
 }
 
-func runTestIntegrationBackendListSinceModified(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 	ns := nsPrefix + "-history-ns"
 	rv1, _ := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))

@@ -74,7 +74,7 @@ type cdkBackend struct {
 	stream      chan<- *WrittenEvent
 }
 
-func (s *cdkBackend) ListSinceModified(ctx context.Context, key *resourcepb.ResourceKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
+func (s *cdkBackend) ListModifiedSince(ctx context.Context, key *resourcepb.ResourceKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
 	//TODO implement me
 	panic("implement me")
 }
