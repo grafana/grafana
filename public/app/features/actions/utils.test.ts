@@ -1,8 +1,17 @@
-import { Action, ActionType, ActionVariableInput, ActionVariableType } from '@grafana/data';
+import {
+  Action,
+  ActionType,
+  ActionVariableInput,
+  ActionVariableType,
+  HttpRequestMethod,
+  SupportedDataSourceTypes,
+} from '@grafana/data';
 
-import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
+import { buildActionRequest, buildActionProxyRequest, genReplaceActionVars } from './utils';
 
-import { buildActionRequest, genReplaceActionVars } from './utils';
+jest.mock('../query/state/PanelQueryRunner', () => ({
+  getNextRequestId: jest.fn(() => 'test-request-id-123'),
+}));
 
 describe('interpolateActionVariables', () => {
   const actionMock = (): Action => ({
@@ -147,5 +156,111 @@ describe('interpolateActionVariables', () => {
       'http://test.com/api/thermostats/T-001/sync/$thermostat2?primary=Device-T-001&secondary=Room-%24thermostat2&mode=sync'
     );
     expect(JSON.parse(request.data).data.secondary).toBe('Room-$thermostat2');
+  });
+});
+
+describe('Infinity connections', () => {
+  const mockReplaceVariables = jest.fn((str) => str);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('buildActionProxyRequest', () => {
+    const createProxyConnectionAction = (overrides = {}): Action => ({
+      title: 'Infinity API Call',
+      type: ActionType.Proxy,
+      [ActionType.Proxy]: {
+        method: HttpRequestMethod.POST,
+        url: 'https://api.example.com/data',
+        body: '{"test": "data"}',
+        headers: [
+          ['Content-Type', 'application/json'],
+          ['Authorization', 'Bearer token123'],
+        ],
+        queryParams: [
+          ['filter', 'active'],
+          ['limit', '10'],
+        ],
+        datasourceUid: 'infinity-ds-uid',
+        datasourceType: SupportedDataSourceTypes.Infinity,
+        ...overrides,
+      },
+    });
+
+    it('should build Infinity proxy request with all parameters', () => {
+      const action = createProxyConnectionAction();
+
+      const request = buildActionProxyRequest(action, mockReplaceVariables);
+
+      expect(request).toEqual({
+        url: 'api/ds/query?ds_type=yesoreyeram-infinity-datasource&requestId=test-request-id-123',
+        method: HttpRequestMethod.POST,
+        data: {
+          queries: [
+            {
+              refId: 'A',
+              datasource: {
+                type: SupportedDataSourceTypes.Infinity,
+                uid: 'infinity-ds-uid',
+              },
+              type: 'json',
+              source: 'url',
+              format: 'as-is',
+              url: new URL('https://api.example.com/data'),
+              url_options: {
+                method: HttpRequestMethod.POST,
+                data: '{"test": "data"}',
+                headers: [
+                  { key: 'Content-Type', value: 'application/json' },
+                  { key: 'Authorization', value: 'Bearer token123' },
+                ],
+                params: [
+                  { key: 'filter', value: 'active' },
+                  { key: 'limit', value: '10' },
+                ],
+                body_type: 'raw',
+                body_content_type: 'application/json',
+              },
+            },
+          ],
+          from: expect.any(String),
+          to: expect.any(String),
+        },
+      });
+    });
+
+    it('should handle GET requests without body', () => {
+      const action = createProxyConnectionAction({
+        method: HttpRequestMethod.GET,
+        body: '',
+      });
+
+      const request = buildActionProxyRequest(action, mockReplaceVariables);
+
+      expect(request.data.queries[0].url_options.method).toBe(HttpRequestMethod.GET);
+      expect(request.data.queries[0].url_options.data).toBeUndefined();
+    });
+
+    it('should throw error for missing datasource UID', () => {
+      const action = createProxyConnectionAction({
+        datasourceUid: '',
+      });
+
+      expect(() => {
+        buildActionProxyRequest(action, mockReplaceVariables);
+      }).toThrow('Proxy action requires a datasource to be configured');
+    });
+
+    it('should throw error for unsupported datasource type', () => {
+      const action = createProxyConnectionAction({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        datasourceType: 'unsupported-datasource' as any,
+      });
+
+      expect(() => {
+        buildActionProxyRequest(action, mockReplaceVariables);
+      }).toThrow('Unsupported datasource type: unsupported-datasource');
+    });
   });
 });
