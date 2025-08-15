@@ -75,8 +75,7 @@ export const ApplyNoValue: StoryFn<StoryProps> = ({
       type: FieldType.number,
       state: { range: { min: 1, max: 4, delta: 3 } },
       config: {
-        // we no longer apply noValue in getYRange.
-        noValue: '1',
+        noValue: '0',
       },
     },
   };
