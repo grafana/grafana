@@ -30,7 +30,7 @@ import (
 
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
-	ListAlertRulesStore
+	ListAlertRulesStoreV2
 }
 
 type RuleGroupAccessControlService interface {
@@ -292,7 +292,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
-	ruleResponse = PrepareRuleGroupStatuses(
+	ruleResponse = PrepareRuleGroupStatusesV2(
 		srv.log,
 		srv.store,
 		RuleGroupStatusesOptions{
