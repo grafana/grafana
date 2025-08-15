@@ -14,7 +14,7 @@ jest.mock('app/core/services/context_srv', () => {
   const original = jest.requireActual('app/core/services/context_srv');
   const mockedContext = { ...original };
 
-  mockedContext.user.orgId = 'testOrgId';
+  mockedContext.contextSrv.user.orgId = 'testOrgId';
 
   return mockedContext;
 });
