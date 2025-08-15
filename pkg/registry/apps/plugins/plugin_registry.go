@@ -13,20 +13,20 @@ import (
 )
 
 var (
-	_ pluginsapp.PluginRegistry = (*RegistryAdapter)(nil)
+	_ pluginsapp.PluginRegistry = (*InMemoryRegistryAdapter)(nil)
 )
 
-type RegistryAdapter struct {
+type InMemoryRegistryAdapter struct {
 	pluginRegistry registry.Service
 }
 
-func NewRegistryAdapter(pluginRegistry registry.Service) *RegistryAdapter {
-	return &RegistryAdapter{
+func NewInMemoryRegistryAdapter(pluginRegistry registry.Service) *InMemoryRegistryAdapter {
+	return &InMemoryRegistryAdapter{
 		pluginRegistry: pluginRegistry,
 	}
 }
 
-func (r *RegistryAdapter) Plugin(ctx context.Context, name string) (*pluginsv0alpha1.PluginInstall, bool) {
+func (r *InMemoryRegistryAdapter) Plugin(ctx context.Context, name string) (*pluginsv0alpha1.PluginInstall, bool) {
 	plugin, ok := r.pluginRegistry.Plugin(ctx, name, "")
 	if !ok {
 		return nil, false
@@ -34,7 +34,7 @@ func (r *RegistryAdapter) Plugin(ctx context.Context, name string) (*pluginsv0al
 	return toPluginInstall(plugin), true
 }
 
-func (r *RegistryAdapter) Plugins(ctx context.Context) []pluginsv0alpha1.PluginInstall {
+func (r *InMemoryRegistryAdapter) Plugins(ctx context.Context) []pluginsv0alpha1.PluginInstall {
 	plugins := r.pluginRegistry.Plugins(ctx)
 	pluginInstalls := make([]pluginsv0alpha1.PluginInstall, 0, len(plugins))
 	for _, plugin := range plugins {
@@ -54,6 +54,26 @@ func toPluginInstall(plugin *plugins.Plugin) *pluginsv0alpha1.PluginInstall {
 		Spec: pluginsv0alpha1.PluginInstallSpec{
 			Id:      plugin.ID,
 			Version: plugin.Info.Version,
+		},
+	}
+}
+
+// TODO
+type InstallAPIRegistryProvider struct {
+	installClient pluginsapp.InstallClient
+}
+
+func NewAPIRegistryProvider() *InstallAPIRegistryProvider {
+	return nil
+}
+
+func fromPluginInstall(pluginInstall *pluginsv0alpha1.PluginInstall) *plugins.Plugin {
+	return &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: pluginInstall.Spec.Id,
+			Info: plugins.Info{
+				Version: pluginInstall.Spec.Version,
+			},
 		},
 	}
 }

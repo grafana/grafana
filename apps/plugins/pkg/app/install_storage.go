@@ -15,11 +15,6 @@ import (
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 )
 
-type PluginRegistry interface {
-	Plugin(ctx context.Context, name string) (*pluginsv0alpha1.PluginInstall, bool)
-	Plugins(ctx context.Context) []pluginsv0alpha1.PluginInstall
-}
-
 var (
 	_ rest.Scoper               = (*PluginInstallStorage)(nil)
 	_ rest.SingularNameProvider = (*PluginInstallStorage)(nil)

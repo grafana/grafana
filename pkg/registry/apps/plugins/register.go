@@ -27,25 +27,24 @@ var (
 
 type PluginsAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg *setting.Cfg
-	reg registry.Service
+	cfg          *setting.Cfg
+	reg          registry.Service
+	pluginConfig *pluginsapp.Config
 }
 
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	registry registry.Service,
 ) (*PluginsAppInstaller, error) {
 	installer := &PluginsAppInstaller{
 		cfg: cfg,
-		reg: registry,
 	}
-	specificConfig := any(nil)
-	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, pluginsapp.New)
+	installer.pluginConfig = &pluginsapp.Config{}
+	provider := simple.NewAppProvider(apis.LocalManifest(), installer.pluginConfig, pluginsapp.New)
 	appConfig := app.Config{
 		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
 		ManifestData:   *apis.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
+		SpecificConfig: installer.pluginConfig,
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
 	if err != nil {
@@ -69,13 +68,13 @@ func (p *PluginsAppInstaller) InstallAPIs(
 		pluginMetaGVR: pluginsapp.NewPluginMetaStorage(request.GetNamespaceMapper(p.cfg)),
 	}
 
-	if r, ok := p.reg.(*registry.InMemory); ok {
+	if p.pluginConfig.InMemoryRegistry != nil {
 		pluginInstallGVR := schema.GroupVersionResource{
 			Group:    pluginsv0alpha1.GroupVersion.Group,
 			Version:  pluginsv0alpha1.GroupVersion.Version,
 			Resource: pluginsv0alpha1.PluginInstallKind().Plural(),
 		}
-		registryAdapter := NewRegistryAdapter(r)
+		registryAdapter := p.pluginConfig.InMemoryRegistry
 		replacedStorage[pluginInstallGVR] = pluginsapp.NewPluginInstallStorage(request.GetNamespaceMapper(p.cfg), registryAdapter)
 	}
 
@@ -89,4 +88,9 @@ func (p *PluginsAppInstaller) InstallAPIs(
 // GetAuthorizer returns the authorizer for the plugins app.
 func (p *PluginsAppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return pluginsapp.GetAuthorizer()
+}
+
+// GetOptions returns the options for the plugins app.
+func (p *PluginsAppInstaller) GetOptions() pluginsapp.Options {
+	return *pluginsapp.NewOptions()
 }
