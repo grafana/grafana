@@ -316,8 +316,10 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
 
-	skipRemovePermissionsStr, _ := ctx.Value("SkipRemovePermissions").(string)
-	skipRemovePermissions := skipRemovePermissionsStr == "true"
+	removePermissions := true
+	if removePermissionsStr, ok := ctx.Value("RemovePermissions").(string); ok {
+		removePermissions = removePermissionsStr == "true"
+	}
 
 	err = s.service.DeleteLegacy(ctx, &folder.DeleteFolderCommand{
 		UID:          name,
@@ -325,8 +327,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		SignedInUser: user,
 
 		// This would cascade delete into alert rules
-		ForceDeleteRules:      false,
-		SkipRemovePermissions: skipRemovePermissions,
+		ForceDeleteRules:  false,
+		RemovePermissions: removePermissions,
 	})
 	return p, true, err // true is instant delete
 }

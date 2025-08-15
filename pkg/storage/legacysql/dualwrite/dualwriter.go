@@ -278,17 +278,18 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
 
-	mustDeleteFromStorage := d.readUnified || !d.errorIsOK
-	if mustDeleteFromStorage {
-		ctx = context.WithValue(ctx, "SkipRemovePermissions", "true")
-	}
+	// By setting RemovePermissions to true in the context, we will skip the deletion of permissions
+	// in the legacy store. This is needed as otherwise the permissions would be missing when executing
+	// the delete operation in the unified storage store.
+	ctx = context.WithValue(ctx, "RemovePermissions", "false")
 
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
 		return nil, false, err
 	}
 
-	ctx = context.WithValue(ctx, "SkipRemovePermissions", "false")
+	// We can now flip it again.
+	ctx = context.WithValue(ctx, "RemovePermissions", "true")
 
 	// If unified storage is our primary store, just delete it and return
 	if d.readUnified {

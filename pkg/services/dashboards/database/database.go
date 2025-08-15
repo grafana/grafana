@@ -589,16 +589,20 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 			return err
 		}
 
-		if !cmd.SkipRemovePermissions {
-			// remove all access control permission with folder scope
-			err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID))
-			if err != nil {
+		// While migrating to unified storage, we might execute commands in both stores, so we delete the permissions
+		// only when the command is executed on both stores, thus we can skip it here.
+		if cmd.RemovePermissions {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID)); err != nil {
 				return err
 			}
 		}
 	} else {
-		if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
-			return err
+		// While migrating to unified storage, we might execute commands in both stores, so we delete the permissions
+		// only when the command is executed on both stores, thus we can skip it here.
+		if cmd.RemovePermissions {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
+				return err
+			}
 		}
 	}
 
