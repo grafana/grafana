@@ -11,13 +11,14 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-s
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { DescendantCount } from '../BrowseActions/DescendantCount';
+import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
 import { collectSelectedItems } from '../utils';
 
 import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { useFolderNameFromSelection } from './useFolderNameFromSelection';
 import { BulkActionFormData, BulkActionProvisionResourceProps } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
@@ -117,9 +118,14 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkActionProvisionResourceProps) {
-  const folderName = useFolderNameFromSelection({ folderUid, selectedItems });
-  const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName });
+  // Check if we're on the root browser dashboards page
+  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+  const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
 
+  // For root provisioned folders, the folder UID is the repository name
+  const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({
+    folderName: isRootPage ? selectedItemsRepoUID : folderUid,
+  });
   const workflowOptions = getWorkflowOptions(repository);
   const timestamp = generateTimestamp();
 

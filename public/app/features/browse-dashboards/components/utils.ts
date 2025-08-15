@@ -1,7 +1,15 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
+import { ManagerKind } from 'app/features/apiserver/types';
+import { DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardTreeSelection, DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
+import { findItem } from '../state/utils';
+import {
+  DashboardTreeSelection,
+  DashboardViewItemWithUIItems,
+  BrowseDashboardsPermissions,
+  BrowseDashboardsState,
+} from '../types';
 
 import { ResourceRef } from './BulkActions/useBulkActionJob';
 
@@ -95,4 +103,36 @@ export function canSelectItems(permissions: BrowseDashboardsPermissions) {
   const canSelectFolders = canEditFolders || canDeleteFolders;
   const canSelectDashboards = canEditDashboards || canDeleteDashboards;
   return Boolean(canSelectFolders || canSelectDashboards);
+}
+
+/**
+ * Finds the repository name for an item by traversing up the tree to find the root provisioned folder (managed by ManagerKind.Repo)
+ * This should be an edge case where user have multiple provisioned folders and try to managing resources on root folder
+ */
+export function getItemRepositoryUid(
+  item: DashboardViewItem,
+  rootItems: DashboardViewItem[],
+  childrenByParentUID: BrowseDashboardsState['childrenByParentUID']
+): string {
+  // For root provisioned folders, the UID is the repository name
+  if (item.managedBy === ManagerKind.Repo && !item.parentUID && item.kind === 'folder') {
+    return item.uid;
+  }
+
+  // Traverse up the tree to find the root provisioned folder
+  let currentItem = item;
+  while (currentItem.parentUID) {
+    const parent = findItem(rootItems, childrenByParentUID, currentItem.parentUID);
+    if (!parent) {
+      break;
+    }
+
+    if (parent.managedBy === ManagerKind.Repo && !parent.parentUID) {
+      return currentItem.parentUID;
+    }
+
+    currentItem = parent;
+  }
+
+  return 'non_provisioned';
 }

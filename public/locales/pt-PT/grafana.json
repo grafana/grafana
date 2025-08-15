@@ -1244,20 +1244,6 @@
       "copy-code": "Copiar código",
       "download": "Transferir"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Regra de alerta",
-        "all": "Todos",
-        "error": "Erro",
-        "firing": "Ativado",
-        "no-data": "Sem dados",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Pendente",
-        "recording-rule": "Regra de gravação",
-        "recovering": "A recuperar"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "lista de regras filtradas"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regra eliminada com sucesso"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Avaliação de regra pausada"
       },
       "resume-rule": {
         "success": "Avaliação de regra retomada"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regra atualizada com sucesso"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Limpar filtros",
       "configured-alert-rules": "As origens de dados que contêm regras de alerta configuradas são origens de dados Mimir ou Loki onde as regras de alerta são armazenadas e avaliadas na própria origem de dados.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Painel de controlo",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Ajuda para pesquisar por origens de dados",
       "filter-options": {
-        "aria-label-show-filters": "Mostrar filtros",
-        "label-custom-filter": "Filtro personalizado",
-        "label-saved-searches": "Pesquisas guardadas"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Saúde",
       "label": {
         "hide": "Ocultar",
         "show": "Mostrar"
       },
       "manage-alerts": "Nestas origens de dados, pode selecionar Gerir alertas através da interface do utilizador Alerting para poder gerir estas regras de alerta na interface do utilizador Grafana, bem como na origem de dados onde foram configuradas.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Todas as origens de dados",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Regras de plugin",
       "rule-type": "Tipo de regra",
       "rulesSearchInput-placeholder-search": "Pesquisar",
@@ -2629,9 +2640,6 @@
       "text-federated": "Federado",
       "text-provisioned": "Aprovisionado"
     },
-    "saved-searches": {
-      "text-default": "Predefinição"
-    },
     "search": {
       "property": {
         "data-source": "Origem dos dados",
@@ -2639,11 +2647,10 @@
         "labels": "Etiquetas",
         "namespace": "Pasta/Espaço de nomes",
         "rule-health": "Saúde",
-        "rule-name": "Nome da regra de alerta",
+        "rule-name": "",
         "rule-type": "Tipo",
         "state": "Estado"
-      },
-      "save-query": "Guardar a pesquisa atual"
+      }
     },
     "search-field-input": {
       "clear": "Limpar",
@@ -3519,26 +3526,18 @@
     "browse-view": {
       "this-folder-is-empty": "Esta pasta está vazia"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Todos os recursos foram eliminados com sucesso",
-      "all-moved": "Todos os recursos foram movidos com sucesso",
-      "button-done": "Concluído",
-      "progress-title": "Sucesso",
-      "failed-alert_one": "{{count}} elementos falharam",
-      "failed-alert_other": "{{count}} elementos falharam"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "A eliminar...",
       "delete-warning": "Isto eliminará as pastas selecionadas e as suas descendentes. No total, isto afetará:",
-      "error-path-not-found": "Caminho não encontrado"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "A mover...",
-      "deleting": "A eliminar",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3545,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Conteúdo do ficheiro não encontrado",
-      "error-path-not-found": "Caminho não encontrado",
-      "error-target-folder-path-missing": "O caminho da pasta de destino está em falta",
-      "error-title": "Erro de pasta de destino",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Isto eliminará as pastas selecionadas e as suas descendentes. No total, isto afetará:",
-      "moving": "Mudança de local",
-      "progress": "Progresso: {{current}} de {{total}}",
       "target-folder": "Pasta de destino"
     },
     "counts": {
@@ -3568,6 +3563,9 @@
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Recolher pasta {{title}}",
       "expand-folder-button": "Expandir pasta {{title}}",
       "name-column": "Nome",
@@ -4105,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Aplicar",
     "cancel": "Cancelar",
     "clear": "Limpar",
-    "close": "Fechar",
     "collapse": "Recolher",
     "edit": "Editar",
     "help": "Ajuda",
@@ -4509,12 +4507,17 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Mostrar ou ocultar o elemento {{type}} de forma dinâmica com base no valor da variável.",
           "label": "Variável do modelo",
           "name": "Nome",
           "operator": {
             "equals": "Igual a",
-            "not-equals": "Não é igual a"
+            "matches": "",
+            "not-equals": "Não é igual a",
+            "not-matches": ""
           },
           "value": "Valor"
         }
@@ -5347,6 +5350,7 @@
       "playlist-next": "Ir para o próximo painel de controlo",
       "playlist-previous": "Ir para o painel de controlo anterior",
       "playlist-stop": "Parar a lista de reprodução",
+      "read-only": "",
       "refresh": "Atualizar o painel de controlo",
       "save": "Guardar o painel de controlo",
       "save-dashboard": {
@@ -5399,6 +5403,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Pesquisar por transformação",
       "show-images": "Mostrar imagens",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Adicionar outra transformação",
       "view-all": "Ver tudo"
     },
@@ -6583,6 +6590,9 @@
         "hosted-graphite-prometheus-and-loki": "Graphite, Prometheus e Loki hospedados"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Cancelar",
       "placeholder-filter-by-name-or-type": "Filtrar por nome ou tipo"
@@ -7475,6 +7485,13 @@
       "tooltip-title": "Operador matemático",
       "tooltip-trigger": "Expressão"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Função",
       "label-input": "Entrada",
@@ -7489,6 +7506,11 @@
       "label-resample-to": "Refazer amostra para",
       "label-upsample": "Aumentar a quantidade de amostras",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Entrada"
@@ -7506,7 +7528,8 @@
     "loading": "A carregar pastas..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7858,7 +7881,8 @@
       "edit-pane": {
         "go-back": "Voltar"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9047,6 +9071,7 @@
       "sign-up": "Registe-se"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Arrastar e largar para reordenar",
@@ -10861,7 +10886,6 @@
         "downloads": "Transferências",
         "from": "De",
         "installedVersion": "Versão instalada",
-        "lastCommitDate": "Data do último compromisso:",
         "latestReleaseDate": "Data de lançamento mais recente:",
         "latestVersion": "Versão mais recente",
         "license": "Licença",
@@ -11248,7 +11272,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Voltar aos repositórios",
-      "repository-config-exists-configuration": "Certifique-se de que a configuração do repositório existe no ficheiro de configuração."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Certifique-se de que a configuração do repositório existe no ficheiro de configuração.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Guardar",
@@ -11414,6 +11440,8 @@
         "subtitle": "Utilize esta opção se pretender sincronizar e gerir toda a sua instância Grafana através de um armazenamento externo."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "trabalhos ativos",
       "column-action": "Ação",
@@ -11432,6 +11460,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Definições",
       "view": "Ver"
     },
@@ -11442,8 +11471,16 @@
       "title-repository-is-unhealthy": "O repositório não está em bom estado"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Os seus recursos estão agora no seu armazenamento externo e aprovisionados na sua instância. A partir de agora, a sua instância e o armazenamento externo serão sincronizados.",
-      "view-repository": "Ver repositório"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Verificado:",
@@ -11842,6 +11879,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Recolher linha de consulta",
       "datasource-help": "Mostrar ajuda da origem de dados",
       "drag-and-drop": "Arrastar e largar para reordenar",
@@ -11852,7 +11890,11 @@
       "replace-query-from-library": "Substituir por consulta da biblioteca",
       "show-response": "Mostrar resposta"
     },
-    "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas"
+    "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12088,7 +12130,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Adicionar conta de serviço",
-      "message": "Não foram encontradas contas de serviços",
+      "message": "",
       "more-info": "Lembre-se de que pode fornecer permissões específicas para acesso à API a outras aplicações",
       "title": "Ainda não criou qualquer conta de serviço"
     }
@@ -12481,6 +12523,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Ordenar"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

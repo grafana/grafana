@@ -56,14 +56,14 @@ func TestSQLService(t *testing.T) {
 	t.Run("no feature flag no queries for you", func(t *testing.T) {
 		s, req := newMockQueryService(resp, newABSQLQueries(""))
 
-		_, err := s.BuildPipeline(req)
+		_, err := s.BuildPipeline(t.Context(), req)
 		require.Error(t, err, "should not be able to build pipeline without feature flag")
 	})
 
 	t.Run("with feature flag basic select works", func(t *testing.T) {
 		s, req := newMockQueryService(resp, newABSQLQueries("SELECT * FROM A"))
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-		pl, err := s.BuildPipeline(req)
+		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
 		res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -83,7 +83,7 @@ func TestSQLService(t *testing.T) {
 
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
 
-		pl, err := s.BuildPipeline(req)
+		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
 		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -100,7 +100,7 @@ func TestSQLService(t *testing.T) {
 
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
 
-		pl, err := s.BuildPipeline(req)
+		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
 		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)

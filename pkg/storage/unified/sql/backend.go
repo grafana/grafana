@@ -599,7 +599,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{}
+	iter := &listIter{sortAsc: false}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -637,7 +637,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	defer span.End()
 
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion}
+	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {

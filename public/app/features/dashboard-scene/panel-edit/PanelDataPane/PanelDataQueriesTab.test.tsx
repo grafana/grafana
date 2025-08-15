@@ -18,12 +18,12 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
-import { InspectTab } from 'app/features/inspector/types';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
+import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../../utils/utils';
@@ -604,12 +604,10 @@ describe('PanelDataQueriesTab', () => {
 
     describe('query inspection', () => {
       it('allows query inspection from the tab', async () => {
-        const { queriesTab } = await setupScene('panel-1');
+        const { queriesTab, scene } = await setupScene('panel-1');
         queriesTab.onOpenInspector();
 
-        const params = locationService.getSearchObject();
-        expect(params.inspect).toBe('1');
-        expect(params.inspectTab).toBe(InspectTab.Query);
+        expect(scene.state.overlay).toBeInstanceOf(PanelInspectDrawer);
       });
     });
 
