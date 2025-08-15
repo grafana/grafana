@@ -11272,7 +11272,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
-      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+      "history-not-supported": "File history is not supported for this repository",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "repository-not-found": "Repository not found"
     },
     "file-status-page": {
       "save": "Save",
@@ -11470,6 +11472,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "Compare branch",
+        "open-pull-request": "Open pull request",
+        "view-branch": "View branch",
         "view-repository": "View repository"
       },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
