@@ -259,5 +259,5 @@ func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{
 		Error: err,
 	}
 
-	return &ErrorWithType{errorType: "sse.sql.failed_input_conversion", err: SQLInputConvertError.Build(data)}
+	return &ErrorWithType{errorType: "input_conversion", err: SQLInputConvertError.Build(data)}
 }
