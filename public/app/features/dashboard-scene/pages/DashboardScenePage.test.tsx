@@ -212,7 +212,7 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
 
-    act(() => locationService.partial({ inspect: null }));
+    await userEvent.click(screen.getByTestId(selectors.components.Drawer.General.close));
 
     expect(screen.queryByText('Inspect: Panel B')).not.toBeInTheDocument();
   });
