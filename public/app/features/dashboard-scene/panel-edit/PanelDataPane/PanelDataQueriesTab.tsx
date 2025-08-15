@@ -21,6 +21,7 @@ import { dataSource as expressionDatasource } from 'app/features/expressions/Exp
 import { ExpressionTypeDropdown } from 'app/features/expressions/components/ExpressionTypeDropdown';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
+import { InspectTab } from 'app/features/inspector/types';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
@@ -32,6 +33,7 @@ import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/Mixe
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
+import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
@@ -171,10 +173,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 
   public onOpenInspector = () => {
-    const panel = this.state.panelRef.resolve();
-    const panelId = getPanelIdForVizPanel(panel);
-
-    locationService.partial({ inspect: panelId, inspectTab: 'query' });
+    const dashboard = getDashboardSceneFor(this);
+    dashboard.showModal(new PanelInspectDrawer({ panelRef: this.state.panelRef, currentTab: InspectTab.Query }));
   };
 
   public onChangeDataSource = async (newSettings: DataSourceInstanceSettings, defaultQueries?: SceneDataQuery[]) => {

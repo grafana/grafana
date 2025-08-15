@@ -291,7 +291,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'question-circle',
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
-          onInspectPanel(panel, InspectTab.Help);
+          dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Help }));
         },
       });
     }
@@ -579,10 +579,3 @@ export function toggleVizPanelLegend(vizPanel: VizPanel): void {
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
   return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
 }
-
-const onInspectPanel = (vizPanel: VizPanel, tab?: InspectTab) => {
-  locationService.partial({
-    inspect: vizPanel.state.key,
-    inspectTab: tab,
-  });
-};
