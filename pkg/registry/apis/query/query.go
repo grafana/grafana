@@ -246,7 +246,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	instance, err := b.clientSupplier.GetInstance(ctx)
+	instance, err := b.instanceProvider.GetInstance(ctx, headers)
 	if err != nil {
 		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		responder.Error(err)
@@ -257,10 +257,9 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger).New("ruleuid", headers["X-Rule-Uid"])
 
-	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
+	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithInstance(
 		instance,
 		ctx,
-		headers,
 		dsQuerierLoggerWithSlug,
 	)
 
@@ -280,6 +279,10 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	)
 
 	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, mtDsClientBuilder, headers)
+
+	// tell the `instance` structure that it can now report
+	// metrics that are only reported once during a request
+	instance.ReportMetrics()
 
 	if err != nil {
 		return qdr, err

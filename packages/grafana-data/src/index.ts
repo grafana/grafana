@@ -451,8 +451,11 @@ export { getLinksSupplier } from './field/fieldOverrides';
 // Types
 export { isUnsignedPluginSignature } from './types/pluginSignature';
 export type {
+  AzureSettings,
+  AzureCloudInfo,
   CurrentUserDTO,
   AnalyticsSettings,
+  AppPluginConfig,
   BootData,
   OAuth,
   OAuthSettings,
@@ -460,6 +463,8 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
+  PreinstalledPlugin,
+  UnifiedAlertingConfig,
 } from './types/config';
 export { availableIconsIndex, type IconName, isIconName, toIconName } from './types/icon';
 export type { WithAccessControlMetadata } from './types/accesscontrol';
@@ -567,6 +572,8 @@ export {
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionDataSourceConfigActionsContext,
+  type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
