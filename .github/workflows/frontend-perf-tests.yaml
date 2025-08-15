@@ -14,7 +14,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-x64
+    runs-on: ubuntu-x64-large
 
     steps:
       - name: Checkout repo
@@ -44,14 +44,26 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
+      - name: Cache Node.js modules
+        uses: actions/cache@v4
+        id: nm-cache
+        with:
+          path: ~/.cache/yarn
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
       - name: Yarn install
         run: yarn install --immutable
+        if: ${{ !steps.nm-cache.outputs.cache-hit }}
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
           CYPRESS_INSTALL_BINARY: 0
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: yarn playwright install chromium --with-deps
+      
+      - run: tree -aL 2
 
       - name: Run Playwright tests
         env:
@@ -59,6 +71,9 @@ jobs:
           GRAFANA_ADMIN_USER: ${{ env.FSPERFBASELINE_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
         run: yarn e2e:playwright --grep @performance # probably written to wrong place
+
+      - run: tree -aL 2
+        if: always()
       
       - name: Bench report
         run: |
