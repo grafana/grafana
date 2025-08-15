@@ -50,6 +50,8 @@ setupMswServer();
 jest.spyOn(analytics, 'trackFilterButtonClick');
 jest.spyOn(analytics, 'trackFilterButtonApplyClick');
 jest.spyOn(analytics, 'trackFilterButtonClearClick');
+jest.spyOn(analytics, 'trackAlertRuleFilterEvent');
+jest.spyOn(analytics, 'trackRulesSearchInputCleared');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -347,6 +349,40 @@ describe('RulesFilterV2', () => {
       await user.click(ui.applyButton.get());
 
       expect(analytics.trackFilterButtonApplyClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should track search input submit with parsed filter payload', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.type(ui.searchInput.get(), 'rule:test state:firing');
+      await user.keyboard('{Enter}');
+
+      expect(analytics.trackAlertRuleFilterEvent).toHaveBeenCalled();
+      const callArg = (analytics.trackAlertRuleFilterEvent as jest.Mock).mock.calls.at(-1)?.[0];
+      expect(callArg.filterMethod).toBe('search-input');
+      expect(callArg.filter).toMatchObject({ ruleName: 'test', ruleState: 'firing' });
+    });
+
+    it('Should track search input blur with parsed filter payload', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.type(ui.searchInput.get(), 'state:firing');
+      await user.click(document.body);
+
+      expect(analytics.trackAlertRuleFilterEvent).toHaveBeenCalled();
+      const callArg = (analytics.trackAlertRuleFilterEvent as jest.Mock).mock.calls.at(-1)?.[0];
+      expect(callArg.filterMethod).toBe('search-input');
+      expect(callArg.filter).toMatchObject({ ruleState: 'firing' });
+    });
+
+    it('Should track search input clear when input transitions to empty', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.type(ui.searchInput.get(), 'abc');
+      expect(ui.searchInput.get()).toHaveValue('abc');
+      await user.clear(ui.searchInput.get());
+
+      expect(analytics.trackRulesSearchInputCleared).toHaveBeenCalled();
     });
 
     it('Should not track filter button click when filter button is clicked to close popup', async () => {

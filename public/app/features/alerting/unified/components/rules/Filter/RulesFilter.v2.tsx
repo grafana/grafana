@@ -184,6 +184,12 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
                 trackRulesSearchInputCleared(prev, next);
                 setValue('query', next);
               }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === 'NumpadEnter') {
+                  event.preventDefault();
+                  handleSubmit(submitHandler)();
+                }
+              }}
               onBlur={() => {
                 const currentQuery = getValues('query');
                 const parsedFilter = getSearchFilterFromQuery(currentQuery);
