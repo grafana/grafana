@@ -423,49 +423,53 @@ Configure the API call with the following options:
 
 #### Tooltip from field
 
-Toggle the **Tooltip from field** to render the value from another field (or column) in a tooltip.
-You do this by selecting the source field in the drop-down list.
-All table fields are in the drop-down list, whether visible or hidden.
+Toggle the **Tooltip from field** to render the values from another field (or column) in a tooltip.
+When you toggle the switch on, all the fields in the table are available for selection in the drop-down list to be used as the source of the tooltip content.
+All table fields are included in the drop-down list, whether visible or hidden.
 
-To see the tooltip, hover over the chip in the top-right or top-left corner of the cell.
+When a tooltip from a field has been added to a cell, a chip is displayed in the top-right or top-left corner of the cell.
+Hover your mouse over the chip to display the tooltip.
 
-{{< admonition type="note" >}}
-The placement of the chip follows the column header alignment to avoid interfering with other options.
-{{< /admonition >}}
+screenshot maybe?
 
-The tooltip displays the value from the source field from that data row
+The tooltip displays the value from the source field for that data row.
+The content of the tooltip is determined by the values of the source field and can't be directly edited.
+
+When you toggle on the switch, the **Tooltip placement** option, which controls where the tooltip box opens upon hover, is also displayed.
+Select one of the following options: **Auto**, **Top**, **Right**, **Bottom**, and **Left**.
+
 If you set it as a cell option, it's applied to all cells in the table.
 Typically this is used as an override on a sub-set of cells as in the following example.
 
-For example, the following table has....
+##### Example: Tooltip from field using overrides
 
-![screenshot]()
+The following table has five columns visible columns, as well as a hidden field called "Info."
 
-It includes a column for status, but that column is currently hidden using the [x option under x]().
-However, you can use the status values as a tooltips for another column by using the tooltip from field as an override.
-In this case, tooltip by field option is set up as an override for the x column as shown in the following image.
-![screenshot]()
-Now when you hover the cursor over the chip in the x column, the corresponding values from the Status column appear in the tooltip.
+- The "Info" field is hidden using the **Table > Hide in table** override property.
 
-The content of the tooltip is determined by the values of the source field and cannot be directly edited.
-You can, however, use field overrides like a value mappings on the source field to manipulate the display of that value.
-For example, if the status column is being used as the source field for the tooltip values, you could set up a value mapping for the status values. 
-In this case, the status values are mapped to the word Good, Bad, and Okay:
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-table-1-v12.2.png" max-width="750px" alt="Table that includes a hidden column" >}}
 
-![screenshot]()
+- The values from the "Info" field are used as tooltip text for the "Short text" column cells using the **Cell options > Tooltip by field** override property.
+- In addition, the **Cell options > Tooltip placement** override property is set to control the placement of the tooltip.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-override-v12.2.png" max-width="300px" alt="Override to use the Info field values as tooltips for the Short text column" >}}
+
+Now when you hover the cursor over the chip in the "Short text" column, the corresponding values from the "Info" column appear in the tooltip:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-v12.2.png" max-width="750px" alt="Info field value in the tooltip of the Short text cell upon hover" >}}
+
+##### Tooltip from field with value mappings
+
+While the content of the tooltip is determined by the values of the source field and cannot be directly edited, you can use field overrides like a value mappings on the source field to manipulate the display of that value.
+
+For example, if the "Info" column is being used as the source field for the tooltip values, you could set up a value mapping for the values.
+In this case, the value "up" is mapped to the word "Good":
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-value-map-v12.2.png" max-width="750px" alt="Info field value up being mapped to the value Good in an override" >}}
 
 Now when you hover the cursor over the chip in the x column, the mapped values appear in the tooltip
 
-![screenshot]()
-
-When you toggle on the switch, the **Tooltip placement** option is displayed, which controls where the tooltip box opens upon hover.
-Select one of the following options:
-
-- Auto
-- Top
-- Right
-- Bottom
-- Left
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-2-v12.2.png" max-width="750px" alt="Info field mapped to a new value in the tooltip of the Short text cell upon hover" >}}
 
 ### Standard options
 
