@@ -411,7 +411,7 @@ also toggle on **Pagination** to avoid performance issues in larger tables, sinc
 Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
 
 By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
-in these cells if the [`disable_sanitize_html`](../../../setup-grafana/configure-grafana/_index.md#disable_sanitize_html) option is set to true for your Grafana instance.
+in these cells if the [`disable_sanitize_html`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html) option is set to true for your Grafana instance.
 
 #### Image
 
