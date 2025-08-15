@@ -1256,20 +1256,6 @@
       "copy-code": "Kopírovat kód",
       "download": "Stáhnout"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Pravidlo výstrahy",
-        "all": "Vše",
-        "error": "Chyba",
-        "firing": "Spuštěno",
-        "no-data": "Žádná data",
-        "normal": "Normální",
-        "ok": "OK",
-        "pending": "Nevyřízeno",
-        "recording-rule": "Pravidlo nahrávání",
-        "recovering": "Probíhá obnovení"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "seznam filtrovaných pravidel"
     },
@@ -2614,11 +2600,27 @@
       "delete-rule": {
         "success": "Pravidlo bylo úspěšně odstraněno"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Hodnocení pravidla bylo pozastaveno"
       },
       "resume-rule": {
         "success": "Hodnocení pravidla bylo obnoveno"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Pravidlo bylo úspěšně aktualizováno"
@@ -2627,20 +2629,29 @@
     "rules-filter": {
       "clear-filters": "Vymazat filtry",
       "configured-alert-rules": "Zdroje dat obsahující nakonfigurovaná pravidla výstrah jsou zdroje dat Mimir nebo Loki, kde jsou pravidla výstrah uložena a vyhodnocena přímo ve zdroji dat.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Nástěnka",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Nápověda pro hledání podle zdrojů dat",
       "filter-options": {
-        "aria-label-show-filters": "Zobrazit filtry",
-        "label-custom-filter": "Vlastní filtr",
-        "label-saved-searches": "Uložená hledání"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Kondice",
       "label": {
         "hide": "Skrýt",
         "show": "Zobrazit"
       },
       "manage-alerts": "V těchto zdrojích dat můžete prostřednictvím uživatelského rozhraní upozorňování vybrat možnost Správa upozorňování. Odtud můžete spravovat tato pravidla výstrah v uživatelském rozhraní Grafana i ve zdroji dat, kde byla nakonfigurována.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Všechny zdroje dat",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Pravidla pluginu",
       "rule-type": "Typ pravidla",
       "rulesSearchInput-placeholder-search": "Hledat",
@@ -2655,9 +2666,6 @@
       "text-federated": "Federované",
       "text-provisioned": "Zajištěno"
     },
-    "saved-searches": {
-      "text-default": "Výchozí"
-    },
     "search": {
       "property": {
         "data-source": "Zdroj dat",
@@ -2665,11 +2673,10 @@
         "labels": "Štítky",
         "namespace": "Složka / jmenný prostor",
         "rule-health": "Kondice",
-        "rule-name": "Název pravidla výstrahy",
+        "rule-name": "",
         "rule-type": "Typ",
         "state": "Stav"
-      },
-      "save-query": "Uložit současné hledání"
+      }
     },
     "search-field-input": {
       "clear": "Vymazat",
@@ -4132,10 +4139,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Použít",
     "cancel": "Zrušit",
     "clear": "Vymazat",
-    "close": "Zavřít",
     "collapse": "Sbalit",
     "edit": "Upravit",
     "help": "Nápověda",
@@ -6625,6 +6632,9 @@
         "hosted-graphite-prometheus-and-loki": "Hostuje Graphite, Prometheus a Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Zrušit",
       "placeholder-filter-by-name-or-type": "Filtrovat podle názvu nebo typu"
@@ -7913,7 +7923,8 @@
       "edit-pane": {
         "go-back": "Přejít zpět"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9106,6 +9117,7 @@
       "sign-up": "Registrovat se"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Přetažením změníte pořadí",
@@ -11330,7 +11342,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Zpět na úložiště",
-      "repository-config-exists-configuration": "Ujistěte se, že konfigurace úložiště existuje v konfiguračním souboru."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Ujistěte se, že konfigurace úložiště existuje v konfiguračním souboru.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Uložit",
@@ -11528,6 +11542,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Zdroje nyní najdete ve svém externím úložišti a jsou zajištěny ve vaší instanci. Od nynějška budou vaše instance a externí úložiště synchronizovány.",

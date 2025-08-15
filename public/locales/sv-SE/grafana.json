@@ -1244,20 +1244,6 @@
       "copy-code": "Kopiera kod",
       "download": "Ladda ner"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Varningsregel",
-        "all": "Alla",
-        "error": "Fel",
-        "firing": "Utlöst",
-        "no-data": "Inga data",
-        "normal": "Normal ",
-        "ok": "OK",
-        "pending": "Väntande",
-        "recording-rule": "Inspelningsregel",
-        "recovering": "Återställer"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtrerad regellista"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regeln har raderats"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Regelutvärdering pausad"
       },
       "resume-rule": {
         "success": "Regelutvärdering återupptagen"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regeln uppdaterades"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Rensa filter",
       "configured-alert-rules": "Datakällor som innehåller konfigurerade larmregler är Mimir- eller Loki-datakällor där larmregler lagras och utvärderas i själva datakällan.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Instrumentpanel",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Hjälp för sökning efter datakällor",
       "filter-options": {
-        "aria-label-show-filters": "Visa filter",
-        "label-custom-filter": "Anpassa filter",
-        "label-saved-searches": "Sparade sökningar"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Hälsa",
       "label": {
         "hide": "Dölj",
         "show": "Visa"
       },
       "manage-alerts": "I dessa datakällor kan du välja Hantera larm via larmgränssnittet för att kunna hantera dessa larmregler i Grafana-gränssnittet samt i datakällan där de konfigurerades.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Alla datakällor",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Tilläggsregler",
       "rule-type": "Typ av regel",
       "rulesSearchInput-placeholder-search": "Sök",
@@ -2629,9 +2640,6 @@
       "text-federated": "Federerade",
       "text-provisioned": "Provisionerad"
     },
-    "saved-searches": {
-      "text-default": "Standard"
-    },
     "search": {
       "property": {
         "data-source": "Datakälla",
@@ -2639,11 +2647,10 @@
         "labels": "Etiketter",
         "namespace": "Mapp/namnområde",
         "rule-health": "Hälsa",
-        "rule-name": "Namn för varningsregel",
+        "rule-name": "",
         "rule-type": "Typ",
         "state": "Tillstånd"
-      },
-      "save-query": "Spara aktuell sökning"
+      }
     },
     "search-field-input": {
       "clear": "Rensa",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Tillämpa",
     "cancel": "Avbryt",
     "clear": "Rensa",
-    "close": "Stäng",
     "collapse": "Minimera",
     "edit": "Redigera",
     "help": "Hjälp",
@@ -6583,6 +6590,9 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus och Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Avbryt",
       "placeholder-filter-by-name-or-type": "Filtrera efter namn eller typ"
@@ -7871,7 +7881,8 @@
       "edit-pane": {
         "go-back": "Tillbaka"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9060,6 +9071,7 @@
       "sign-up": "Registrera dig"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Ändra ordning genom dra och släpp",
@@ -11260,7 +11272,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
-      "repository-config-exists-configuration": "Verifiera att lagringsplatskonfigurationen finns i konfigurationsfilen."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Verifiera att lagringsplatskonfigurationen finns i konfigurationsfilen.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Spara",
@@ -11458,6 +11472,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Dina resurser finns nu i din externa lagring och provisioneras till din instans. Från och med nu kommer din instans och den externa lagringen att synkroniseras.",

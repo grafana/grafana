@@ -1244,20 +1244,6 @@
       "copy-code": "Kód másolása",
       "download": "Letöltés"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Riasztási szabály",
-        "all": "Összes",
-        "error": "Hiba",
-        "firing": "Aktív",
-        "no-data": "Nincs adat",
-        "normal": "Normál",
-        "ok": "OK",
-        "pending": "Függőben",
-        "recording-rule": "Felvételi szabály",
-        "recovering": "Helyreállítás"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "szűrt-szabálylista"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Szabály törlése sikeres"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Szabályértékelés szüneteltetve"
       },
       "resume-rule": {
         "success": "Szabályértékelés folytatva"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Szabály sikeresen frissítve"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Szűrők törlése",
       "configured-alert-rules": "A konfigurált riasztási szabályokat tartalmazó adatforrások a Mimir- vagy Loki-adatforrások, ahol a riasztási szabályokat magában az adatforrásban tárolja és értékeli a rendszer.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Irányítópult",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Adatforrások alapján történő keresés súgója",
       "filter-options": {
-        "aria-label-show-filters": "Szűrők megjelenítése",
-        "label-custom-filter": "Egyéni szűrő",
-        "label-saved-searches": "Mentett keresések"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Állapot",
       "label": {
         "hide": "Elrejtés",
         "show": "Megjelenítés"
       },
       "manage-alerts": "Ezekben az adatforrásokban kiválaszthatja a Riasztások kezelése az Alerting felületén keresztül lehetőséget, hogy kezelhesse ezeket a riasztási szabályokat a Grafana kezelőfelületén, valamint abban az adatforrásban, ahol konfigurálták őket.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Összes adatforrás",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Bővítményszabályok",
       "rule-type": "Szabálytípus",
       "rulesSearchInput-placeholder-search": "Keresés",
@@ -2629,9 +2640,6 @@
       "text-federated": "Összevont",
       "text-provisioned": "Kiépítve"
     },
-    "saved-searches": {
-      "text-default": "Alapértelmezett"
-    },
     "search": {
       "property": {
         "data-source": "Adatforrás",
@@ -2639,11 +2647,10 @@
         "labels": "Címkék",
         "namespace": "Mappa/névtér",
         "rule-health": "Állapot",
-        "rule-name": "Riasztási szabály neve",
+        "rule-name": "",
         "rule-type": "Típus",
         "state": "Állapot"
-      },
-      "save-query": "Aktuális keresés mentése"
+      }
     },
     "search-field-input": {
       "clear": "Törlés",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Alkalmaz",
     "cancel": "Mégse",
     "clear": "Törlés",
-    "close": "Bezárás",
     "collapse": "Összecsukás",
     "edit": "Szerkesztés",
     "help": "Súgó",
@@ -6583,6 +6590,9 @@
         "hosted-graphite-prometheus-and-loki": "Üzemeltetett Graphite, Prometheus és Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Mégse",
       "placeholder-filter-by-name-or-type": "Szűrés név vagy típus alapján"
@@ -7871,7 +7881,8 @@
       "edit-pane": {
         "go-back": "Visszalépés"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9060,6 +9071,7 @@
       "sign-up": "Regisztráció"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Húzza át az átrendezéshez",
@@ -11260,7 +11272,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Vissza az adattárakhoz",
-      "repository-config-exists-configuration": "Győződjön meg arról, hogy a tároló konfigurációja létezik a konfigurációs fájlban."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Győződjön meg arról, hogy a tároló konfigurációja létezik a konfigurációs fájlban.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Mentés",
@@ -11458,6 +11472,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Az erőforrások most a külső tárolóban vannak, és ki lettek építve a példányba. Mostantól a rendszer szinkronizálja a példányt és a külső tárolót.",
