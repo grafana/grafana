@@ -26,7 +26,7 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.e2e }}
-      cloud_plugins_changed: ${{ steps.detect-changes.outputs.cloud_plugins }}
+      cloud_plugins_changed: ${{ steps.detect-changes.outputs.e2e-cloud-plugins }}
     steps:
       - uses: actions/checkout@v4
         with:
