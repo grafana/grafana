@@ -315,6 +315,7 @@ func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 // The from path is relative to test file's directory.
 func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
 	fullPath := path.Join(h.ProvisioningPath, to)
+	t.Logf("Copying file from '%s' to provisioning path '%s'", from, fullPath)
 	err := os.MkdirAll(path.Dir(fullPath), 0750)
 	require.NoError(t, err, "failed to create directories for provisioning path")
 
@@ -439,15 +440,21 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 				t.Logf("%s%d items:", prefix, len(v))
 				for i, item := range v {
 					if itemMap, ok := item.(map[string]interface{}); ok {
-						t.Logf("%s├── item %d:", prefix, i+1)
+						// Try to get the actual file path from the item
+						if pathVal, exists := itemMap["path"]; exists {
+							t.Logf("%s├── %v", prefix, pathVal)
+						} else {
+							t.Logf("%s├── item %d:", prefix, i+1)
+						}
 						h.logRepositoryObject(t, itemMap, prefix+"  ", newPath)
 					}
 				}
 			}
 		default:
 			// This could be file content or metadata
-			if key != "kind" && key != "apiVersion" {
-				t.Logf("%s├── %s", prefix, key)
+			// Skip common metadata fields that are not useful for debugging
+			if key != "kind" && key != "apiVersion" && key != "path" && key != "size" && key != "hash" {
+				t.Logf("%s├── %s: %v", prefix, key, value)
 			}
 		}
 	}
@@ -766,4 +773,50 @@ func countFilesInDir(rootPath string) (int, error) {
 		return nil
 	})
 	return count, err
+}
+
+// CleanupAllRepos deletes all repositories and waits for them to be fully removed
+func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
+
+	// First, get all repositories that exist
+	list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil || len(list.Items) == 0 {
+		return // Nothing to clean up
+	}
+
+	// Wait for any active jobs to complete before deleting repositories
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		activeJobs, err := h.Jobs.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err, "failed to list active jobs") {
+			return
+		}
+		assert.Equal(collect, 0, len(activeJobs.Items), "all active jobs should complete before cleanup")
+	}, time.Second*20, time.Millisecond*100, "active jobs should complete before cleanup")
+
+	// Now delete all repositories with retries
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		for _, repo := range list.Items {
+			err := h.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
+			// Don't fail if already deleted (404 is OK)
+			if err != nil {
+				assert.True(collect, apierrors.IsNotFound(err), "Should be able to delete repository %s (or it should already be deleted)", repo.GetName())
+			}
+		}
+	}, time.Second*10, time.Millisecond*100, "should be able to delete all repositories")
+
+	// Then wait for repositories to be fully deleted to ensure clean state
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
+	}, time.Second*15, time.Millisecond*100, "repositories should be cleaned up between subtests")
 }
