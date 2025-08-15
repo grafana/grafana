@@ -35,8 +35,8 @@ import {
   FrameToRowsConverter,
   Comparator,
   TypographyCtx,
-  LineCounter,
-  LineCounterEntry,
+  MeasureCellHeight,
+  MeasureCellHeightEntry,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -113,29 +113,30 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
     fontFamily,
     letterSpacing,
     avgCharWidth,
-    estimateLines: getTextLineEstimator(avgCharWidth),
-    wrappedCount: wrapUwrapCount(count),
+    estimateHeight: getTextHeightEstimator(avgCharWidth),
+    measureHeight: getTextHeightMeasurerFromUwrapCount(count),
   };
 }
 
 /**
  * @internal wraps the uwrap count function to ensure that it is given a string.
  */
-export function wrapUwrapCount(count: Count): LineCounter {
-  return (value, width) => {
+export function getTextHeightMeasurerFromUwrapCount(count: Count): MeasureCellHeight {
+  return (value, width, _field, _rowIdx, lineHeight) => {
     if (value == null) {
-      return 1;
+      return lineHeight;
     }
 
-    return count(String(value), width);
+    const lines = count(String(value), width);
+    return lines * lineHeight;
   };
 }
 
 /**
- * @internal returns a line counter which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
+ * @internal returns a measurer which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
  */
-export function getTextLineEstimator(avgCharWidth: number): LineCounter {
-  return (value, width) => {
+export function getTextHeightEstimator(avgCharWidth: number): MeasureCellHeight {
+  return (value, width, _field, _rowIdx, lineHeight) => {
     if (!value) {
       return -1;
     }
@@ -148,20 +149,21 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
     }
 
     const charsPerLine = width / avgCharWidth;
-    return strValue.length / charsPerLine;
+    const lines = Math.ceil(strValue.length / charsPerLine);
+    return lines * lineHeight;
   };
 }
 
 /**
  * @internal
  */
-export function getDataLinksCounter(): LineCounter {
+export function getDataLinksHeightMeasurer(): MeasureCellHeight {
   const linksCountCache: Record<string, number> = {};
 
   // when we render links, we need to filter out the invalid links. since the call to `getLinks` is expensive,
   // we'll cache the result and reuse it for every row in the table. this cache is cleared when line counts are
   // rebuilt anytime from the `useRowHeight` hook, and that includes adding and removing data links.
-  return (_value, _width, field) => {
+  return (_value, _width, field, _rowIdx, lineHeight) => {
     const cacheKey = getDisplayName(field);
     if (linksCountCache[cacheKey] === undefined) {
       let count = 0;
@@ -173,7 +175,7 @@ export function getDataLinksCounter(): LineCounter {
       linksCountCache[cacheKey] = count;
     }
 
-    return linksCountCache[cacheKey];
+    return linksCountCache[cacheKey] * lineHeight;
   };
 }
 
@@ -181,10 +183,10 @@ const PILLS_FONT_SIZE = 12;
 const PILLS_SPACING = 12; // 6px horizontal padding on each side
 const PILLS_GAP = 4; // gap between pills
 
-export function getPillLineCounter(measureWidth: (value: string) => number): LineCounter {
+export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
   const widthCache: Record<string, number> = {};
 
-  return (value, width) => {
+  return (value, width, _field, _rowIdx, lineHeight) => {
     if (value == null) {
       return 0;
     }
@@ -213,14 +215,19 @@ export function getPillLineCounter(measureWidth: (value: string) => number): Lin
       }
     }
 
-    return lines;
+    // default line height happens to be the height of a pill, but maybe we need a custom
+    // const here to make sure this doesn't get out of sync with the actual pill height.
+    return lines * lineHeight + (lines - 1) * PILLS_GAP;
   };
 }
 
 /**
- * @internal return a text line counter for every field which has wrapHeaderText enabled.
+ * @internal return a text measurer for every field which has wrapHeaderText enabled.
  */
-export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
+export function buildHeaderHeightMeasurers(
+  fields: Field[],
+  typographyCtx: TypographyCtx
+): MeasureCellHeightEntry[] | undefined {
   const wrappedColIdxs = fields.reduce((acc: number[], field, idx) => {
     if (field.config?.custom?.wrapHeaderText) {
       acc.push(idx);
@@ -234,18 +241,37 @@ export function buildHeaderLineCounters(fields: Field[], typographyCtx: Typograp
 
   // don't bother with estimating the line counts for the headers, because it's punishing
   // when we get it wrong and there won't be that many compared to how many rows a table might contain.
-  return [{ counter: typographyCtx.wrappedCount, fieldIdxs: wrappedColIdxs }];
+  return [{ measure: typographyCtx.measureHeight, fieldIdxs: wrappedColIdxs }];
 }
 
 const spaceRegex = /[\s-]/;
 
 /**
- * @internal return a text line counter for every field which has wrapHeaderText enabled. we do this once as we're rendering
+ * @internal return a text height measurer for every field which has wrapHeaderText enabled. we do this once as we're rendering
  * the table, and then getRowHeight uses the output of this to caluclate the height of each row.
  */
-export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
-  const result: Record<string, LineCounterEntry> = {};
+export function buildCellHeightMeasurers(
+  fields: Field[],
+  typographyCtx: TypographyCtx
+): MeasureCellHeightEntry[] | undefined {
+  const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
+
+  const setupMeasurerForIdx = (
+    cellType: TableCellDisplayMode,
+    fieldIdx: number,
+    setup: () => [MeasureCellHeight, MeasureCellHeight | undefined]
+  ) => {
+    if (!result[cellType]) {
+      const [measure, estimate] = setup();
+      result[cellType] = {
+        measure,
+        estimate,
+        fieldIdxs: [],
+      };
+    }
+    result[cellType].fieldIdxs.push(fieldIdx);
+  };
 
   for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
     const field = fields[fieldIdx];
@@ -254,36 +280,27 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
 
       const cellType = getCellOptions(field).type;
       if (cellType === TableCellDisplayMode.DataLinks) {
-        result.dataLinksCounter = result.dataLinksCounter ?? {
-          counter: getDataLinksCounter(),
-          fieldIdxs: [],
-        };
-        result.dataLinksCounter.fieldIdxs.push(fieldIdx);
+        setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx, () => [getDataLinksHeightMeasurer(), undefined]);
       } else if (cellType === TableCellDisplayMode.Pill) {
-        if (!result.pillCounter) {
+        setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx, () => {
           const pillTypographyCtx = createTypographyContext(
             PILLS_FONT_SIZE,
             typographyCtx.fontFamily,
             typographyCtx.letterSpacing
           );
-
-          result.pillCounter = {
-            estimate: getPillLineCounter((value) => value.length * pillTypographyCtx.avgCharWidth),
-            counter: getPillLineCounter((value) => pillTypographyCtx.ctx.measureText(value).width),
-            fieldIdxs: [],
-          };
-        }
-        result.pillCounter.fieldIdxs.push(fieldIdx);
+          return [
+            getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width),
+            getPillCellHeightMeasurer((value) => value.length * pillTypographyCtx.avgCharWidth),
+          ];
+        });
       }
 
       // for string fields, we estimate the length of a line using `avgCharWidth` to limit expensive calls `count`.
       else if (field.type === FieldType.string) {
-        result.textCounter = result.textCounter ?? {
-          counter: typographyCtx.wrappedCount,
-          estimate: typographyCtx.estimateLines,
-          fieldIdxs: [],
-        };
-        result.textCounter.fieldIdxs.push(fieldIdx);
+        setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx, () => [
+          typographyCtx.measureHeight,
+          typographyCtx.estimateHeight,
+        ]);
       }
     }
   }
@@ -295,10 +312,10 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
   return Object.values(result);
 }
 
-// in some cases, the estimator might return a value that is less than 1, but when measured by the counter, it actually
+// in some cases, the estimator might return a value that is less than 1, but when calculated by the measurer, it actually
 // realizes that it's a multi-line cell. to avoid this, we want to give a little buffer away from 1 before we fully trust
 // the estimator to have told us that a cell is single-line.
-export const SINGLE_LINE_ESTIMATE_THRESHOLD = 0.85;
+export const SINGLE_LINE_ESTIMATE_THRESHOLD = 18.5;
 
 /**
  * @internal
@@ -310,27 +327,25 @@ export function getRowHeight(
   rowIdx: number,
   columnWidths: number[],
   defaultHeight: number,
-  lineCounters?: LineCounterEntry[],
+  measurers?: MeasureCellHeightEntry[],
   lineHeight = TABLE.LINE_HEIGHT,
-  // when this is a function, the field which was measured as the maximum size will be returned, as well as the
-  // calculated number of lines, so that the consumer can use it in case the vertical padding value differs field-by-field.
-  verticalPadding: number | ((field: Field, numLines: number) => number) = TABLE.CELL_PADDING
+  verticalPadding = TABLE.CELL_PADDING * 2
 ): number {
-  if (!lineCounters?.length) {
+  if (!measurers?.length) {
     return defaultHeight;
   }
 
-  let maxLines = -1;
+  let maxHeight = -1;
   let maxValue = '';
   let maxWidth = 0;
   let maxField: Field | undefined;
-  let preciseCounter: LineCounter | undefined;
+  let preciseMeasurer: MeasureCellHeight | undefined;
 
-  for (const { estimate, counter, fieldIdxs } of lineCounters) {
-    // for some of the line counters, getting the precise count of the lines is expensive. those line counters
-    // set both an "estimate" and a "counter" function. if the cell we find to be the max was estimated, we will
-    // get the "true" value right before calculating the row height by hanging onto a reference to the counter fn.
-    const count = estimate ?? counter;
+  for (const { estimate, measure, fieldIdxs } of measurers) {
+    // for some of the cell height measurers, getting the precise height is expensive. those entries set
+    // both "estimate" and "measure" functions. if the cell we find to be the max was estimated, we will
+    // get the "true" value right before calculating the row height by keeping a reference to the measure fn.
+    const measurer = (estimate ?? measure) satisfies MeasureCellHeight;
     const isEstimating = estimate !== undefined;
 
     for (const fieldIdx of fieldIdxs) {
@@ -339,38 +354,35 @@ export function getRowHeight(
       const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellValueRaw != null) {
         const colWidth = columnWidths[fieldIdx];
-        const approxLines = count(cellValueRaw, colWidth, field, rowIdx);
-        if (approxLines > maxLines) {
-          maxLines = approxLines;
+        const estimatedHeight = measurer(cellValueRaw, colWidth, field, rowIdx, lineHeight);
+        if (estimatedHeight > maxHeight) {
+          maxHeight = estimatedHeight;
           maxValue = cellValueRaw;
           maxWidth = colWidth;
           maxField = field;
-          preciseCounter = isEstimating ? counter : undefined;
+          preciseMeasurer = isEstimating ? measure : undefined;
         }
       }
     }
   }
 
   // if the value is -1 or the estimate for the max cell was less than the SINGLE_LINE_ESTIMATE_THRESHOLD, we trust
-  // that the estimator correctly identified that no text wrapping is needed for this row, skipping the preciseCounter.
-  if (maxField === undefined || maxLines < SINGLE_LINE_ESTIMATE_THRESHOLD) {
+  // that the estimator correctly identified that no text wrapping is needed for this row, skipping the preciseMeasurer.
+  if (maxField === undefined || maxHeight < SINGLE_LINE_ESTIMATE_THRESHOLD) {
     return defaultHeight;
   }
 
   // if we finished this row height loop with an estimate, we need to call
-  // the `preciseCounter` method to get the exact line count.
-  if (preciseCounter !== undefined) {
-    maxLines = preciseCounter(maxValue, maxWidth, maxField, rowIdx);
+  // the `preciseMeasurer` method to get the exact line count.
+  if (preciseMeasurer !== undefined) {
+    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, rowIdx, lineHeight);
   }
 
   // round up to the nearest line before doing math
-  maxLines = Math.ceil(maxLines);
+  maxHeight = Math.ceil(maxHeight);
 
-  // adjust for vertical padding and line height, and clamp to a minimum default height
-  const verticalPaddingValue =
-    typeof verticalPadding === 'function' ? verticalPadding(maxField, maxLines) : verticalPadding;
-  const totalHeight = maxLines * lineHeight + verticalPaddingValue;
-  return Math.max(totalHeight, defaultHeight);
+  // adjust for vertical padding, and clamp to a minimum default height
+  return Math.max(maxHeight + verticalPadding, defaultHeight);
 }
 
 /**
