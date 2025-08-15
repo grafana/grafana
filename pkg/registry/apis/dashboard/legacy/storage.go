@@ -88,6 +88,11 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	case resourcepb.WatchEvent_DELETED:
 		{
 			_, _, err = a.DeleteDashboard(ctx, info.OrgID, event.Key.Name)
+			if err == nil {
+				if accessErr := a.dashboardPermissionSvc.DeleteResourcePermissions(ctx, info.OrgID, event.Key.Name); accessErr != nil {
+					a.log.Warn("failed to delete dashboard permission after successfully deleting dashboard resource", "dashboard", event.Key.Name, "error", accessErr)
+				}
+			}
 			//rv = ???
 		}
 	// The difference depends on embedded internal ID
