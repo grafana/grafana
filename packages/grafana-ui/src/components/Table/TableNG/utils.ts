@@ -200,10 +200,11 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
     let currentLineUse = width;
 
     for (const pillValue of pillValues) {
-      let rawWidth = widthCache[pillValue];
+      const strPill = String(pillValue);
+      let rawWidth = widthCache[strPill];
       if (rawWidth === undefined) {
-        rawWidth = measureWidth(pillValue);
-        widthCache[pillValue] = rawWidth;
+        rawWidth = measureWidth(strPill);
+        widthCache[strPill] = rawWidth;
       }
       const pillWidth = rawWidth + PILLS_SPACING;
 
@@ -257,20 +258,37 @@ export function buildCellHeightMeasurers(
   const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
 
-  const setupMeasurerForIdx = (
-    cellType: TableCellDisplayMode,
-    fieldIdx: number,
-    setup: () => [MeasureCellHeight, MeasureCellHeight | undefined]
-  ) => {
-    if (!result[cellType]) {
-      const [measure, estimate] = setup();
-      result[cellType] = {
+  const measurerFactory: Record<
+    TableCellDisplayMode.Auto | TableCellDisplayMode.DataLinks | TableCellDisplayMode.Pill,
+    () => [MeasureCellHeight, MeasureCellHeight?]
+  > = {
+    // for string fields, we estimate the length of a line using `avgCharWidth` to limit expensive calls `count`.
+    [TableCellDisplayMode.Auto]: () => [typographyCtx.measureHeight, typographyCtx.estimateHeight],
+    [TableCellDisplayMode.DataLinks]: () => [getDataLinksHeightMeasurer(), undefined],
+    // pills use a different font size, so they require their own typography context.
+    [TableCellDisplayMode.Pill]: () => {
+      const pillTypographyCtx = createTypographyContext(
+        PILLS_FONT_SIZE,
+        typographyCtx.fontFamily,
+        typographyCtx.letterSpacing
+      );
+      return [
+        getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width),
+        getPillCellHeightMeasurer((value) => value.length * pillTypographyCtx.avgCharWidth),
+      ];
+    },
+  } as const;
+
+  const setupMeasurerForIdx = (measurerFactoryKey: keyof typeof measurerFactory, fieldIdx: number) => {
+    if (!result[measurerFactoryKey]) {
+      const [measure, estimate] = measurerFactory[measurerFactoryKey]();
+      result[measurerFactoryKey] = {
         measure,
         estimate,
         fieldIdxs: [],
       };
     }
-    result[cellType].fieldIdxs.push(fieldIdx);
+    result[measurerFactoryKey].fieldIdxs.push(fieldIdx);
   };
 
   for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
@@ -280,27 +298,11 @@ export function buildCellHeightMeasurers(
 
       const cellType = getCellOptions(field).type;
       if (cellType === TableCellDisplayMode.DataLinks) {
-        setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx, () => [getDataLinksHeightMeasurer(), undefined]);
+        setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
-        setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx, () => {
-          const pillTypographyCtx = createTypographyContext(
-            PILLS_FONT_SIZE,
-            typographyCtx.fontFamily,
-            typographyCtx.letterSpacing
-          );
-          return [
-            getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width),
-            getPillCellHeightMeasurer((value) => value.length * pillTypographyCtx.avgCharWidth),
-          ];
-        });
-      }
-
-      // for string fields, we estimate the length of a line using `avgCharWidth` to limit expensive calls `count`.
-      else if (field.type === FieldType.string) {
-        setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx, () => [
-          typographyCtx.measureHeight,
-          typographyCtx.estimateHeight,
-        ]);
+        setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
+      } else if (field.type === FieldType.string) {
+        setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
       }
     }
   }
