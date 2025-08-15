@@ -57,7 +57,11 @@ const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGro
 };
 
 test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] }, () => {
-  test('Tests word wrap, hover overflow, and cell inspect', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Tests word wrap, hover overflow, max cell height, and cell inspect', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -75,10 +79,18 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // text wrapping is enabled by default on this panel.
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
-    // FIXME very bad selector to get the correct "wrap text" toggle here.
+    // FIXME very bad selector to get the correct field override for the "Long text" field.
     // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
-    await page
-      .locator('[id="Override 13"]')
+    const longTextFieldOverrides = page.locator('[id="Override 13"]');
+    const maxCellHeightInput = longTextFieldOverrides.locator(
+      `[data-testid="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Max cell height')}"]`
+    );
+
+    await maxCellHeightInput.fill('80');
+    await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+    await maxCellHeightInput.clear();
+
+    await longTextFieldOverrides
       .locator(`[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`)
       .click();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);

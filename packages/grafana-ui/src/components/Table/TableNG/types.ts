@@ -263,6 +263,7 @@ export interface TableCellStyleOptions {
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
+  maxHeight?: number;
 }
 
 export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;

@@ -69,6 +69,7 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
+  getMaxHeight,
   getVisibleFields,
   isCellInspectEnabled,
   shouldTextOverflow,
@@ -382,13 +383,15 @@ export function TableNG(props: TableNGProps) {
           cellType === TableCellDisplayMode.ColorBackground ||
           cellType === TableCellDisplayMode.ColorText ||
           Boolean(applyToRowBgFn);
-        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
+        const maxHeight = getMaxHeight(field);
+        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow, maxHeight };
 
         result.colsWithTooltip[displayName] = withTooltip;
 
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
         const linkStyles = getLinkStyles(theme, canBeColorized);
+        const cellParentStyles = clsx(defaultCellStyles, cellSpecificStyles, linkStyles);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -431,7 +434,7 @@ export function TableNG(props: TableNGProps) {
             <Cell
               key={key}
               {...props}
-              className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
+              className={clsx(props.className, { [cellParentStyles]: maxHeight == null })}
               style={style}
             />
           );
@@ -450,7 +453,7 @@ export function TableNG(props: TableNGProps) {
           const height = rowHeightFn(props.row);
           const frame = data;
 
-          return (
+          let result = (
             <>
               {renderFieldCell({
                 cellOptions,
@@ -482,6 +485,16 @@ export function TableNG(props: TableNGProps) {
               )}
             </>
           );
+
+          if (maxHeight != null) {
+            result = (
+              <div className={clsx(styles.cellClamp, cellParentStyles)} style={{ maxHeight }}>
+                {result}
+              </div>
+            );
+          }
+
+          return result;
         };
 
         const column: TableColumn = {
