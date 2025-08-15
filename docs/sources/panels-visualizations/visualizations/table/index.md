@@ -455,7 +455,7 @@ The following table has five visible fields (columns) as well as a hidden field 
   - The values from the "Info" field are used as tooltip text for the "Short text" cells using the **Cell options > Tooltip from field** override property.
   - The **Cell options > Tooltip placement** override property is set to control the placement of the tooltip.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-override-v12.2.png" max-width="300px" alt="Override to use the Info field values as tooltips for the Short text column" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-override-2-v12.2.png" max-width="300px" alt="Override to use the Info field values as tooltips for the Short text column" >}}
 
 Now when you hover the cursor over the chip in the "Short text" column, the corresponding values from the "Info" column appear in the tooltip:
 
