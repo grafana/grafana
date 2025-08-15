@@ -5,18 +5,25 @@ import { SceneObject } from '@grafana/scenes';
 import { ConditionalRendering } from './ConditionalRendering';
 import { ConditionalRenderingOverlay } from './ConditionalRenderingOverlay';
 
-export function useIsConditionallyHidden(scene: SceneObject): [boolean, string | undefined, ReactNode | null] {
+function protectedUseIsConditionallyHidden(
+  conditionalRendering: ConditionalRendering
+): [boolean, string | undefined, ReactNode | null, boolean] {
+  const { result, renderHidden } = conditionalRendering.useState();
+
+  return [
+    !result,
+    result ? undefined : 'dashboard-visible-hidden-element',
+    result ? null : <ConditionalRenderingOverlay />,
+    renderHidden,
+  ];
+}
+
+export function useIsConditionallyHidden(scene: SceneObject): [boolean, string | undefined, ReactNode | null, boolean] {
   const state = scene.useState();
 
   if (!('conditionalRendering' in state) || !(state.conditionalRendering instanceof ConditionalRendering)) {
-    return [false, undefined, null];
+    return [false, undefined, null, true];
   }
 
-  const value = state.conditionalRendering.evaluate() ?? true;
-
-  return [
-    !value,
-    value ? undefined : 'dashboard-visible-hidden-element',
-    value ? null : <ConditionalRenderingOverlay />,
-  ];
+  return protectedUseIsConditionallyHidden(state.conditionalRendering);
 }

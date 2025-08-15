@@ -7,12 +7,8 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { ConditionalRendering } from './ConditionalRendering';
 
-export function useConditionalRenderingEditor(
-  conditionalRendering?: ConditionalRendering
-): OptionsPaneCategoryDescriptor | null {
-  if (!conditionalRendering) {
-    return null;
-  }
+function protectedUseConditionalRenderingEditor(conditionalRendering: ConditionalRendering) {
+  const { result } = conditionalRendering.useState();
 
   const title = t('dashboard.conditional-rendering.root.title', 'Show / hide rules');
 
@@ -23,7 +19,7 @@ export function useConditionalRenderingEditor(
       <Stack direction="row" gap={1} alignItems="center">
         <div>{title}</div>
         <Tooltip content={conditionalRendering.info}>
-          <Icon name={!conditionalRendering.evaluate() ? 'eye-slash' : 'eye'} />
+          <Icon name={!result ? 'eye-slash' : 'eye'} />
         </Tooltip>
       </Stack>
     ),
@@ -35,4 +31,14 @@ export function useConditionalRenderingEditor(
       render: () => <conditionalRendering.Component model={conditionalRendering} />,
     })
   );
+}
+
+export function useConditionalRenderingEditor(
+  conditionalRendering?: ConditionalRendering
+): OptionsPaneCategoryDescriptor | null {
+  if (!conditionalRendering) {
+    return null;
+  }
+
+  return protectedUseConditionalRenderingEditor(conditionalRendering);
 }

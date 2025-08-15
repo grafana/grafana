@@ -1,16 +1,20 @@
 import { useMemo } from 'react';
 
-import { PanelData } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneDataProvider, sceneGraph, VizPanel } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { ConditionalRenderingSerializerRegistryItem, DataConditionValue, ItemsWithConditionalRendering } from './types';
+import {
+  ConditionalRenderingSerializerRegistryItem,
+  ConditionEvaluationResult,
+  DataConditionValue,
+  ItemsWithConditionalRendering,
+} from './types';
 import { translatedItemType } from './utils';
 
 type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
@@ -26,6 +30,8 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 
   public readonly supportedItemTypes: ItemsWithConditionalRendering[] = ['panel'];
 
+  public readonly renderHidden = true;
+
   public get title(): string {
     return t('dashboard.conditional-rendering.conditions.data.label', 'Query result');
   }
@@ -38,6 +44,9 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     );
   }
 
+  private _dataProvider: SceneDataProvider | undefined = undefined;
+  private _isItemSupported = true;
+
   public constructor(state: ConditionalRenderingDataState) {
     super(state);
 
@@ -45,50 +54,65 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   private _activationHandler() {
-    if (!this.isItemSupported()) {
+    this._isItemSupported = this.isItemSupported();
+
+    if (!this._isItemSupported) {
       return;
     }
 
-    const item = this.getItem();
+    this._dataProvider = this._getItemDataProvider();
 
-    if (item instanceof AutoGridItem) {
-      const dataProvider = sceneGraph.getData(item.state.body);
-
-      if (!dataProvider) {
-        return;
-      }
-
-      this._subs.add(dataProvider.subscribeToState(() => this.notifyChange()));
+    if (!this._dataProvider) {
+      return;
     }
+
+    this._subs.add(this._dataProvider.subscribeToState(() => this.recalculateResult()));
   }
 
-  public evaluate(): boolean {
-    if (!this.isItemSupported()) {
-      return true;
+  public evaluate(): ConditionEvaluationResult {
+    if (
+      !this._isItemSupported ||
+      !this._dataProvider ||
+      !this._dataProvider.state.data ||
+      this._dataProvider.state.data.state === LoadingState.Loading ||
+      this._dataProvider.state.data.state === LoadingState.NotStarted
+    ) {
+      return undefined;
     }
 
     const hasData = this._hasData();
-    return (this.state.value && hasData) || (!this.state.value && !hasData);
+
+    // The logic here is pretty simple:
+    // If value is true (meaning "has data"), then we check if the item has data
+    // If value is false (meaning "no data"), then we check if the item doesn't have data
+    return this.state.value === hasData;
   }
 
   public serialize(): ConditionalRenderingDataKind {
     return { kind: 'ConditionalRenderingData', spec: { value: this.state.value } };
   }
 
-  private _hasData(): boolean {
+  private _getItemDataProvider(): SceneDataProvider | undefined {
     const item = this.getItem();
 
-    let data: PanelData | undefined;
+    let panel: VizPanel | undefined;
 
-    if (item instanceof AutoGridItem) {
-      data = sceneGraph.getData(item.state.body).state.data;
+    for (const val of Object.values(item.state)) {
+      if (val instanceof VizPanel) {
+        panel = val;
+        break;
+      }
     }
 
-    if (!data) {
-      return false;
+    if (!panel) {
+      return undefined;
     }
 
-    const series = data?.series ?? [];
+    return sceneGraph.getData(panel) ?? undefined;
+  }
+
+  private _hasData(): boolean {
+    const series = this._dataProvider?.state.data?.series ?? [];
 
     for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
       if (series[seriesIdx].length > 0) {
@@ -100,11 +124,11 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   public static deserialize(model: ConditionalRenderingDataKind): ConditionalRenderingData {
-    return new ConditionalRenderingData({ value: model.spec.value });
+    return new ConditionalRenderingData({ value: model.spec.value, result: undefined });
   }
 
   public static createEmpty(): ConditionalRenderingData {
-    return new ConditionalRenderingData({ value: true });
+    return new ConditionalRenderingData({ value: true, result: undefined });
   }
 }
 
@@ -132,8 +156,8 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
         dashboardEditActions.edit({
           description: t('dashboard.edit-actions.edit-query-result-rule', 'Change query result rule'),
           source: model,
-          perform: () => model.setStateAndNotify({ value: Boolean(val) }),
-          undo: () => model.setStateAndNotify({ value }),
+          perform: () => model.setStateAndRecalculate({ value: Boolean(val) }),
+          undo: () => model.setStateAndRecalculate({ value }),
         });
       }}
     />

@@ -13,6 +13,7 @@ import { dashboardEditActions } from '../edit-pane/shared';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import {
   ConditionalRenderingSerializerRegistryItem,
+  ConditionEvaluationResult,
   VariableConditionValue,
   VariableConditionValueOperator,
 } from './types';
@@ -44,20 +45,24 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
   protected _variableDependency = new VariableDependencyConfig(this, {
     onAnyVariableChanged: (v) => {
       if (v.state.name === this.state.value.name) {
-        this.notifyChange();
+        this.recalculateResult();
       }
     },
   });
 
-  public evaluate(): boolean {
+  public constructor(state: ConditionalRenderingVariableState) {
+    super(state);
+  }
+
+  public evaluate(): ConditionEvaluationResult {
     if (!this.state.value.name) {
-      return true;
+      return undefined;
     }
 
     const variable = sceneGraph.getVariables(this).getByName(this.state.value.name);
 
     if (!variable) {
-      return true;
+      return undefined;
     }
 
     const variableValue = variable.getValue() ?? '';
@@ -100,11 +105,12 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
         operator: ConditionalRenderingVariable._getShortOperator(model.spec.operator),
         value: model.spec.value,
       },
+      result: undefined,
     });
   }
 
   public static createEmpty(name: string): ConditionalRenderingVariable {
-    return new ConditionalRenderingVariable({ value: { name, operator: '=', value: '' } });
+    return new ConditionalRenderingVariable({ value: { name, operator: '=', value: '' }, result: undefined });
   }
 
   private _getLongOperator(operator: VariableConditionValueOperator): ConditionalRenderingVariableSpec['operator'] {
@@ -205,8 +211,8 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
                 dashboardEditActions.edit({
                   description: undoText,
                   source: model,
-                  perform: () => model.setStateAndNotify({ value: { ...value, name: option.value } }),
-                  undo: () => model.setStateAndNotify({ value: { ...value, name: value.name } }),
+                  perform: () => model.setStateAndRecalculate({ value: { ...value, name: option.value } }),
+                  undo: () => model.setStateAndRecalculate({ value: { ...value, name: value.name } }),
                 });
               }
             }}
@@ -223,8 +229,8 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
               dashboardEditActions.edit({
                 description: undoText,
                 source: model,
-                perform: () => model.setStateAndNotify({ value: { ...value, operator: option.value } }),
-                undo: () => model.setStateAndNotify({ value: { ...value, operator: value.operator } }),
+                perform: () => model.setStateAndRecalculate({ value: { ...value, operator: option.value } }),
+                undo: () => model.setStateAndRecalculate({ value: { ...value, operator: value.operator } }),
               });
             }
           }}
@@ -244,8 +250,8 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
               dashboardEditActions.edit({
                 description: undoText,
                 source: model,
-                perform: () => model.setStateAndNotify({ value: { ...value, value: actualValue } }),
-                undo: () => model.setStateAndNotify({ value: { ...value, value: value.value } }),
+                perform: () => model.setStateAndRecalculate({ value: { ...value, value: actualValue } }),
+                undo: () => model.setStateAndRecalculate({ value: { ...value, value: value.value } }),
               });
             }
           }}

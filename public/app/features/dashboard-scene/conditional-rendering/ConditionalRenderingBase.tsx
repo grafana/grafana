@@ -11,19 +11,23 @@ import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 import {
   ConditionalRenderingConditions,
   ConditionalRenderingKindTypes,
+  ConditionEvaluationResult,
   ConditionValues,
   ItemsWithConditionalRendering,
 } from './types';
 
 export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
   value: V;
+  result: ConditionEvaluationResult;
 }
 
 export abstract class ConditionalRenderingBase<
   S extends ConditionalRenderingBaseState = ConditionalRenderingBaseState,
 > extends SceneObjectBase<S> {
-  public constructor(state: S) {
-    super(state);
+  private _conditionalRenderingRoot: ConditionalRendering | undefined;
+
+  protected constructor(state: S) {
+    super({ ...state, result: undefined });
 
     this.addActivationHandler(() => this._baseActivationHandler());
   }
@@ -43,14 +47,29 @@ export abstract class ConditionalRenderingBase<
 
   public abstract readonly title: string;
 
+  // Property that controls if a hidden element should still be rendered in the DOM
+  // Useful for cases like data conditions
+  public readonly renderHidden: boolean = false;
+
   public abstract get info(): string | undefined;
 
   public abstract serialize(): ConditionalRenderingKindTypes;
 
-  public abstract evaluate(): boolean;
+  public abstract evaluate(): ConditionEvaluationResult;
+
+  public recalculateResult(): ConditionEvaluationResult {
+    const result = this.evaluate();
+
+    if (result !== this.state.result) {
+      this.setState({ ...this.state, result });
+      this.getConditionalLogicRoot().recalculateResult();
+    }
+
+    return result;
+  }
 
   public onDelete() {
-    this._getConditionalLogicRoot().deleteItem(this);
+    this.getConditionalLogicRoot().deleteItem(this);
   }
 
   public render(withWrapper = true): ReactElement {
@@ -58,11 +77,11 @@ export abstract class ConditionalRenderingBase<
   }
 
   public getItem(): SceneObject {
-    return this._getConditionalLogicRoot().getItem();
+    return this.getConditionalLogicRoot().getItem();
   }
 
   public getItemType(): ItemsWithConditionalRendering {
-    return this._getConditionalLogicRoot().getItemType();
+    return this.getConditionalLogicRoot().getItemType();
   }
 
   public isItemSupported(): boolean {
@@ -73,13 +92,9 @@ export abstract class ConditionalRenderingBase<
     return this.supportedItemTypes.includes(this.getItemType());
   }
 
-  public notifyChange() {
-    this._getConditionalLogicRoot().notifyChange();
-  }
-
-  public setStateAndNotify(state: Partial<S>) {
+  public setStateAndRecalculate(state: Partial<S>) {
     this.setState(state);
-    this.notifyChange();
+    this.recalculateResult();
   }
 
   public findRule() {
@@ -90,16 +105,18 @@ export abstract class ConditionalRenderingBase<
     const group = this.getRenderingGroup();
     const restoredState = [...group.state.value];
     restoredState.splice(index, 0, rule);
-    group.setStateAndNotify({ value: restoredState });
+    group.setStateAndRecalculate({ value: restoredState });
   }
 
   private getRenderingGroup(): ConditionalRenderingGroup {
     // TODO: Adjust once nested rules are introduced to get relevant ConditionalRenderingGroup
-    return this._getConditionalLogicRoot().state.rootGroup;
+    return this.getConditionalLogicRoot().state.rootGroup;
   }
 
-  private _getConditionalLogicRoot(): ConditionalRendering {
-    return sceneGraph.getAncestor(this, ConditionalRendering);
+  private getConditionalLogicRoot(): ConditionalRendering {
+    this._conditionalRenderingRoot =
+      this._conditionalRenderingRoot ?? sceneGraph.getAncestor(this, ConditionalRendering);
+    return this._conditionalRenderingRoot;
   }
 }
 

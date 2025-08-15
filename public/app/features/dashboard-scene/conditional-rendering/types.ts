@@ -11,6 +11,8 @@ import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 
+export type ConditionEvaluationResult = boolean | undefined;
+
 export type ItemsWithConditionalRendering = 'panel' | 'row' | 'tab' | 'element';
 
 export type DataConditionValue = boolean;

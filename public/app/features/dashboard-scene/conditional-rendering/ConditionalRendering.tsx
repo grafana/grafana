@@ -6,11 +6,13 @@ import { ConditionalRenderingChangedEvent } from '../edit-pane/shared';
 
 import { ConditionalRenderingBase } from './ConditionalRenderingBase';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
-import { ItemsWithConditionalRendering } from './types';
+import { ConditionEvaluationResult, ItemsWithConditionalRendering } from './types';
 import { getItemType, translatedItemType } from './utils';
 
 export interface ConditionalRenderingState extends SceneObjectState {
   rootGroup: ConditionalRenderingGroup;
+  result: boolean;
+  renderHidden: boolean;
 }
 
 export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingState> {
@@ -40,13 +42,16 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
     });
   }
 
-  public evaluate(): boolean {
-    return this.state.rootGroup.evaluate();
-  }
+  public recalculateResult(): ConditionEvaluationResult {
+    const result = this.state.rootGroup.recalculateResult();
+    const renderHidden = this.state.renderHidden;
 
-  public notifyChange() {
-    this.parent?.forceRender();
-    this.parent?.publishEvent(new ConditionalRenderingChangedEvent(this), true);
+    if (this.state.result !== result || this.state.renderHidden !== renderHidden) {
+      this.setState({ result, renderHidden });
+      this.parent?.publishEvent(new ConditionalRenderingChangedEvent(this), true);
+    }
+
+    return result;
   }
 
   public deleteItem<T extends ConditionalRenderingBase>(item: T) {
@@ -66,7 +71,11 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
   }
 
   public static createEmpty(): ConditionalRendering {
-    return new ConditionalRendering({ rootGroup: ConditionalRenderingGroup.createEmpty() });
+    return new ConditionalRendering({
+      rootGroup: ConditionalRenderingGroup.createEmpty(),
+      result: true,
+      renderHidden: false,
+    });
   }
 }
 

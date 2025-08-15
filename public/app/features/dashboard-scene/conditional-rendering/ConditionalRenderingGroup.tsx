@@ -23,6 +23,7 @@ import {
   GroupConditionItemType,
   GroupConditionVisibility,
   GroupConditionValue,
+  ConditionEvaluationResult,
   ConditionalRenderingConditions,
 } from './types';
 import { translatedItemType } from './utils';
@@ -30,6 +31,7 @@ import { translatedItemType } from './utils';
 export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
   visibility: GroupConditionVisibility;
   condition: GroupConditionCondition;
+  renderHidden: boolean;
 }
 
 export class ConditionalRenderingGroup extends ConditionalRenderingBase<ConditionalRenderingGroupState> {
@@ -49,25 +51,48 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     return undefined;
   }
 
-  public evaluate(): boolean {
-    if (this.state.value.length === 0) {
-      return true;
+  private _shouldShow: boolean;
+  private _shouldMatchAll: boolean;
+
+  public constructor(state: ConditionalRenderingGroupState) {
+    super(state);
+    this._shouldShow = state.visibility === 'show';
+    this._shouldMatchAll = state.condition === 'and';
+  }
+
+  public recalculateResult(): ConditionEvaluationResult {
+    const result = this.evaluate();
+
+    if (result !== this.state.result) {
+      this.setState({ ...this.state, result });
+      this.getConditionalLogicRoot().recalculateResult();
     }
 
-    const value =
-      this.state.condition === 'and'
-        ? this.state.value.every((entry) => entry.evaluate())
-        : this.state.value.some((entry) => entry.evaluate());
+    return result;
+  }
 
-    return this.state.visibility === 'show' ? value : !value;
+  public evaluate(): ConditionEvaluationResult {
+    if (this.state.value.length === 0) {
+      return undefined;
+    }
+
+    return this._shouldMatchAll
+      ? this.state.value.every((item) => this._evaluateItem(item))
+      : this.state.value.some((item) => this._evaluateItem(item));
   }
 
   public changeVisibility(visibility: GroupConditionVisibility) {
-    this.setStateAndNotify({ visibility });
+    if (visibility !== this.state.visibility) {
+      this._shouldShow = visibility === 'show';
+      this.setStateAndRecalculate({ visibility });
+    }
   }
 
   public changeCondition(condition: GroupConditionCondition) {
-    this.setStateAndNotify({ condition });
+    if (condition !== this.state.condition) {
+      this._shouldMatchAll = condition === 'and';
+      this.setStateAndRecalculate({ condition });
+    }
   }
 
   public createItem(itemType: GroupConditionItemType): ConditionalRenderingConditions {
@@ -84,25 +109,29 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   }
 
   public addItem(item: ConditionalRenderingConditions) {
+    const value = [...this.state.value, item];
+
     // We don't use `setStateAndNotify` here because
     // We need to set a parent and activate the new condition before notifying the root
-    this.setState({ value: [...this.state.value, item] });
+    this.setState({ value, renderHidden: ConditionalRenderingGroup._calculateRenderHidden(value) });
 
     if (this.isActive && !item.isActive) {
       item.activate();
     }
 
-    this.notifyChange();
+    this.recalculateResult();
   }
 
   public removeItem(key: string) {
-    this.setStateAndNotify({ value: this.state.value.filter((condition) => condition.state.key !== key) });
+    const value = this.state.value.filter((condition) => condition.state.key !== key);
+
+    this.setStateAndRecalculate({ value, renderHidden: ConditionalRenderingGroup._calculateRenderHidden(value) });
   }
 
   public removeLastItem() {
     const newValues = [...this.state.value];
     newValues.pop();
-    this.setStateAndNotify({ value: newValues });
+    this.setStateAndRecalculate({ value: newValues });
   }
 
   public getRule(key: string) {
@@ -128,24 +157,49 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     };
   }
 
+  private _evaluateItem(item: ConditionalRenderingConditions): boolean {
+    const { result } = item.state;
+
+    // When the result is undefined, we consider it to be truthy
+    if (result === undefined) {
+      return true;
+    }
+
+    return result === this._shouldShow;
+  }
+
   public static deserialize(model: ConditionalRenderingGroupKind): ConditionalRenderingGroup {
+    const value = model.spec.items.map((item: ConditionalRenderingKindTypes) => {
+      const serializerRegistryItem = conditionalRenderingSerializerRegistry.getIfExists(item.kind);
+
+      if (!serializerRegistryItem) {
+        throw new Error(`No serializer found for conditional rendering kind: ${item.kind}`);
+      }
+
+      return serializerRegistryItem.deserialize(item);
+    });
+
     return new ConditionalRenderingGroup({
       condition: model.spec.condition,
       visibility: model.spec.visibility,
-      value: model.spec.items.map((item: ConditionalRenderingKindTypes) => {
-        const serializerRegistryItem = conditionalRenderingSerializerRegistry.getIfExists(item.kind);
-
-        if (!serializerRegistryItem) {
-          throw new Error(`No serializer found for conditional rendering kind: ${item.kind}`);
-        }
-
-        return serializerRegistryItem.deserialize(item);
-      }),
+      value,
+      renderHidden: ConditionalRenderingGroup._calculateRenderHidden(value),
+      result: undefined,
     });
   }
 
   public static createEmpty(): ConditionalRenderingGroup {
-    return new ConditionalRenderingGroup({ condition: 'and', visibility: 'show', value: [] });
+    return new ConditionalRenderingGroup({
+      condition: 'and',
+      visibility: 'show',
+      value: [],
+      result: undefined,
+      renderHidden: false,
+    });
+  }
+
+  private static _calculateRenderHidden(conditions: ConditionalRenderingConditions[]): boolean {
+    return conditions.some((condition) => condition.renderHidden);
   }
 }
 

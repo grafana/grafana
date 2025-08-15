@@ -10,7 +10,11 @@ import { Field, Select, useStyles2 } from '@grafana/ui';
 import { dashboardEditActions } from '../edit-pane/shared';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { ConditionalRenderingSerializerRegistryItem, TimeRangeSizeConditionValue } from './types';
+import {
+  ConditionalRenderingSerializerRegistryItem,
+  ConditionEvaluationResult,
+  TimeRangeSizeConditionValue
+} from './types';
 import { translatedItemType } from './utils';
 
 type ConditionalRenderingTimeRangeSizeState = ConditionalRenderingBaseState<TimeRangeSizeConditionValue>;
@@ -43,26 +47,22 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
   }
 
   private _activationHandler() {
-    this._subs.add(sceneGraph.getTimeRange(this).subscribeToState(() => this.notifyChange()));
+    this._subs.add(sceneGraph.getTimeRange(this).subscribeToState(() => this.recalculateResult()));
   }
 
-  public evaluate(): boolean {
+  public evaluate(): ConditionEvaluationResult {
     try {
       if (!validateIntervalRegex.test(this.state.value)) {
-        return true;
+        return undefined;
       }
 
       const interval = rangeUtil.intervalToSeconds(this.state.value);
       const timeRange = sceneGraph.getTimeRange(this);
 
-      if (timeRange.state.value.to.unix() - timeRange.state.value.from.unix() <= interval) {
-        return true;
-      }
+      return timeRange.state.value.to.unix() - timeRange.state.value.from.unix() <= interval;
     } catch {
-      return false;
+      return undefined;
     }
-
-    return false;
   }
 
   public serialize(): ConditionalRenderingTimeRangeSizeKind {
@@ -70,11 +70,11 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
   }
 
   public static deserialize(model: ConditionalRenderingTimeRangeSizeKind): ConditionalRenderingTimeRangeSize {
-    return new ConditionalRenderingTimeRangeSize({ value: model.spec.value });
+    return new ConditionalRenderingTimeRangeSize({ value: model.spec.value, result: undefined });
   }
 
   public static createEmpty(): ConditionalRenderingTimeRangeSize {
-    return new ConditionalRenderingTimeRangeSize({ value: '7d' });
+    return new ConditionalRenderingTimeRangeSize({ value: '7d', result: undefined });
   }
 }
 
@@ -200,8 +200,8 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
       dashboardEditActions.edit({
         description: t('dashboard.edit-actions.edit-time-range-rule', 'Change time range rule'),
         source: model,
-        perform: () => model.setStateAndNotify({ value: newValue }),
-        undo: () => model.setStateAndNotify({ value }),
+        perform: () => model.setStateAndRecalculate({ value: newValue }),
+        undo: () => model.setStateAndRecalculate({ value }),
       });
     },
     [model, value]
