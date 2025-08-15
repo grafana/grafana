@@ -614,9 +614,14 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 		return nil
 	}
 
+
+	if err := setRV(b.index, rv); err != nil {
+		return err
+	}
+
 	b.resourceVersion = rv
 
-	return setRV(b.index, rv)
+	return nil
 }
 
 func setRV(index bleve.Index, rv int64) error {
