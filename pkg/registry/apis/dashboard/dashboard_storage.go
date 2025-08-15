@@ -20,11 +20,11 @@ type dashboardStoragePermissionWrapper struct {
 }
 
 func (d dashboardStoragePermissionWrapper) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	obj, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-	if err != nil {
-		return obj, async, err
-	}
 	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+	obj, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		return obj, async, err
 	}
