@@ -337,7 +337,6 @@ func (b *bleveBackend) BuildIndex(
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
 
-		err = idx.updateResourceVersion(resourceVersion)
 		if err != nil {
 			return nil, fmt.Errorf("fail to persist rv to index: %w", err)
 		}
@@ -509,32 +508,32 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 		indexDir := filepath.Join(resourceDir, indexName)
 		idx, err := bleve.Open(indexDir)
 		if err != nil {
-			b.log.Debug("error opening index", "indexName", indexName, "err", err)
+			b.log.Debug("error opening index", "indexDir", indexDir, "err", err)
 			continue
 		}
 
 		cnt, err := idx.DocCount()
 		if err != nil {
-			b.log.Debug("error getting count from index", "indexName", indexName, "err", err)
+			b.log.Debug("error getting count from index", "indexDir", indexDir, "err", err)
 			_ = idx.Close()
 			continue
 		}
 
 		if uint64(size) != cnt {
-			b.log.Debug("index count mismatch. ignoring index", "indexName", indexName, "size", size, "cnt", cnt)
+			b.log.Debug("index count mismatch. ignoring index", "indexDir", indexDir, "size", size, "cnt", cnt)
 			_ = idx.Close()
 			continue
 		}
 
 		indexRV, err := getRV(idx)
 		if err != nil {
-			b.log.Debug("error getting rv from index", "indexName", indexName, "err", err)
+			b.log.Debug("error getting rv from index", "indexDir", indexDir, "err", err)
 			_ = idx.Close()
 			continue
 		}
 
-		if indexRV != resourceVersion {
-			b.log.Debug("indexRV does not match resourceVersion. ignoring index", "indexName", indexName, "rv", indexRV, "resourceVersion", resourceVersion)
+		if indexRV < resourceVersion {
+			b.log.Debug("indexRV is less than requested resourceVersion. ignoring index", "indexDir", indexDir, "rv", indexRV, "resourceVersion", resourceVersion)
 			_ = idx.Close()
 			continue
 		}
@@ -609,7 +608,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 var internalRVKey = []byte("rv")
 
-func (b *bleveIndex) updateResourceVersion(rv int64) error {
+func (b *bleveIndex) UpdateResourceVersion(rv int64) error {
 	if rv == 0 {
 		return nil
 	}
@@ -625,7 +624,7 @@ func (b *bleveIndex) updateResourceVersion(rv int64) error {
 
 func setRV(index bleve.Index, rv int64) error {
 	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buf, uint64(rv))
+	binary.BigEndian.PutUint64(buf, uint64(rv))
 
 	return index.SetInternal(internalRVKey, buf)
 }
@@ -635,7 +634,7 @@ func getRV(index bleve.Index) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return int64(binary.LittleEndian.Uint64(raw)), nil
+	return int64(binary.BigEndian.Uint64(raw)), nil
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
