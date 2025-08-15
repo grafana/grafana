@@ -83,6 +83,7 @@ type DashboardsAPIBuilder struct {
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	dashboardPermissions         dashboards.PermissionsRegistrationService
+	dashboardPermissionsSvc      accesscontrol.DashboardPermissionsService
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 	dashStore                    dashboards.Store
@@ -132,6 +133,7 @@ func RegisterAPIService(
 
 		dashboardService:             dashboardService,
 		dashboardPermissions:         dashboardPermissions,
+		dashboardPermissionsSvc:      dashboardPermissionsSvc,
 		features:                     features,
 		accessControl:                accessControl,
 		accessClient:                 accessClient,
@@ -532,9 +534,13 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	gr := dashboards.GroupResource()
-	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(gr, legacyStore, store)
+	dw, err := opts.DualWriteBuilder(gr, legacyStore, store)
 	if err != nil {
 		return err
+	}
+	storage[dashboards.StoragePath()] = dashboardStorage{
+		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+		store:                   dw,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
