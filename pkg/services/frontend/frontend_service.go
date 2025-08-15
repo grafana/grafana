@@ -113,6 +113,17 @@ func (s *frontendService) routeGet(m *web.Mux, pattern string, h ...web.Handler)
 
 // Apply the same middleware patterns as the main HTTP server
 func (s *frontendService) addMiddlewares(m *web.Mux) {
+	m.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			traceparent := r.Header.Get("Traceparent")
+			jaeger := r.Header.Get("uber-trace-id")
+			serverTiming := r.Header.Get("server-timing")
+
+			s.log.Warn("request headers", "path", r.URL.Path, "Traceparent", traceparent, "uber-trace-id", jaeger, "Server-Timing", serverTiming)
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
 
 	m.Use(requestmeta.SetupRequestMetadata())
@@ -120,6 +131,20 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 
 	m.Use(middleware.RequestTracing(s.tracer, middleware.TraceAllPaths))
 	m.Use(middleware.RequestMetrics(s.features, s.cfg, s.promRegister))
+
+	m.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			span := trace.SpanFromContext(r.Context())
+			if span != nil {
+				sc := span.SpanContext()
+				if sc.IsValid() {
+					w.Header().Set("fs-grafana-traceid", sc.TraceID().String())
+				}
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	m.UseMiddleware(loggermiddleware.Middleware())
 
 	m.UseMiddleware(middleware.Recovery(s.cfg, s.license))
