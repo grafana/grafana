@@ -34,7 +34,7 @@ export function useConditionalRenderingEditor(
       ? undefined
       : (disabledText ??
         t(
-          'dashboard.conditional-rendering-not-supported.item-type',
+          'dashboard.conditional-rendering.editor.unsupported-item-type',
           'Conditional rendering not supported for this item type'
         )),
     id: 'conditional-rendering-options',

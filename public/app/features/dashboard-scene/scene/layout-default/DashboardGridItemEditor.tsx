@@ -54,7 +54,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
   const conditionalRenderingCategory = useConditionalRenderingEditor(
     undefined,
     t(
-      'dashboard.conditional-rendering-not-supported.custom-grid-item',
+      'dashboard.conditional-rendering.editor.not-supported-for-custom-grid',
       'Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.'
     )
   );
