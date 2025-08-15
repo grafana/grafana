@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -435,3 +436,132 @@ func (m *MockDynamicResourceInterface) ApplyStatus(ctx context.Context, name str
 
 // Ensure MockDynamicResourceInterface implements dynamic.ResourceInterface
 var _ dynamic.ResourceInterface = (*MockDynamicResourceInterface)(nil)
+
+func TestCheckResourceOwnership(t *testing.T) {
+	tests := []struct {
+		name              string
+		existingResource  *unstructured.Unstructured
+		requestingManager utils.ManagerProperties
+		expectError       bool
+		expectedMessage   string
+	}{
+		{
+			name:             "no existing resource - allow operation",
+			existingResource: nil, // Explicitly nil to represent non-existing resource
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "existing resource with no manager - allow operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "same manager - allow operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     "repo",
+							utils.AnnoKeyManagerIdentity: "repo-1",
+						},
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "different manager but allows edits - allow operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:        "repo",
+							utils.AnnoKeyManagerIdentity:    "repo-1",
+							utils.AnnoKeyManagerAllowsEdits: "true",
+						},
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-2",
+			},
+			expectError: false,
+		},
+		{
+			name: "different manager and doesn't allow edits - deny operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     "repo",
+							utils.AnnoKeyManagerIdentity: "repo-1",
+						},
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-2",
+			},
+			expectError:     true,
+			expectedMessage: "resource 'test-resource' is managed by repo 'repo-1' and cannot be modified by repo 'repo-2'",
+		},
+		{
+			name: "different manager types - deny operation",
+			existingResource: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "test-resource",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     "terraform",
+							utils.AnnoKeyManagerIdentity: "tf-stack-1",
+						},
+					},
+				},
+			},
+			requestingManager: utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError:     true,
+			expectedMessage: "resource 'test-resource' is managed by terraform 'tf-stack-1' and cannot be modified by repo 'repo-1'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test the package-level ownership check function directly
+			err := CheckResourceOwnership(tt.existingResource, "test-resource", tt.requestingManager)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedMessage)
+				assert.True(t, apierrors.IsBadRequest(err))
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

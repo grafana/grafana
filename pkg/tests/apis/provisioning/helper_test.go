@@ -315,6 +315,7 @@ func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 // The from path is relative to test file's directory.
 func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
 	fullPath := path.Join(h.ProvisioningPath, to)
+	t.Logf("Copying file from '%s' to provisioning path '%s'", from, fullPath)
 	err := os.MkdirAll(path.Dir(fullPath), 0750)
 	require.NoError(t, err, "failed to create directories for provisioning path")
 
@@ -439,15 +440,21 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 				t.Logf("%s%d items:", prefix, len(v))
 				for i, item := range v {
 					if itemMap, ok := item.(map[string]interface{}); ok {
-						t.Logf("%s├── item %d:", prefix, i+1)
+						// Try to get the actual file path from the item
+						if pathVal, exists := itemMap["path"]; exists {
+							t.Logf("%s├── %v", prefix, pathVal)
+						} else {
+							t.Logf("%s├── item %d:", prefix, i+1)
+						}
 						h.logRepositoryObject(t, itemMap, prefix+"  ", newPath)
 					}
 				}
 			}
 		default:
 			// This could be file content or metadata
-			if key != "kind" && key != "apiVersion" {
-				t.Logf("%s├── %s", prefix, key)
+			// Skip common metadata fields that are not useful for debugging
+			if key != "kind" && key != "apiVersion" && key != "path" && key != "size" && key != "hash" {
+				t.Logf("%s├── %s: %v", prefix, key, value)
 			}
 		}
 	}

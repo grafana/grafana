@@ -135,7 +135,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case http.MethodGet:
 			resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
 			if err != nil {
-				responder.Error(err)
+				respondWithError(responder, err)
 				return
 			}
 			obj = resource.AsResourceWrapper()
@@ -153,7 +153,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 				resource, err := dualReadWriter.MoveResource(ctx, opts)
 				if err != nil {
-					responder.Error(err)
+					respondWithError(responder, err)
 					return
 				}
 				obj = resource.AsResourceWrapper()
@@ -169,7 +169,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				var resource *resources.ParsedResource
 				resource, err = dualReadWriter.CreateResource(ctx, opts)
 				if err != nil {
-					responder.Error(err)
+					respondWithError(responder, err)
 					return
 				}
 				obj = resource.AsResourceWrapper()
@@ -187,7 +187,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 				resource, err := dualReadWriter.UpdateResource(ctx, opts)
 				if err != nil {
-					responder.Error(err)
+					respondWithError(responder, err)
 					return
 				}
 				obj = resource.AsResourceWrapper()
@@ -195,7 +195,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case http.MethodDelete:
 			resource, err := dualReadWriter.Delete(ctx, opts)
 			if err != nil {
-				responder.Error(err)
+				respondWithError(responder, err)
 				return
 			}
 			obj = resource.AsResourceWrapper()
