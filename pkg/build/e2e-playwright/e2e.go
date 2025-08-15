@@ -55,6 +55,7 @@ func RunTest(
 		})
 
 	if opts.CloudPluginCreds != nil {
+		fmt.Println("DEBUG: CloudPluginCreds file is provided, mounting to /tmp/outputs.json")
 		e2eContainer = e2eContainer.WithMountedFile("/tmp/outputs.json", opts.CloudPluginCreds)
 	}
 
