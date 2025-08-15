@@ -71,8 +71,11 @@ jobs:
           GRAFANA_ADMIN_USER: ${{ env.FSPERFBASELINE_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
         run: yarn e2e:playwright --grep @performance # probably written to wrong place
+      
+      - run: jq -r '.[][] | "\(.name) \(.expires)"' playwright/.auth/admin.json
+        if: always()
 
-      - run: tree -aL 2
+      - run: tree -a playwright
         if: always()
       
       - name: Bench report
