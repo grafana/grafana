@@ -225,7 +225,7 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/various-suite'),
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
+        storageState: `playwright/.auth/${process.env.GRAFANA_ADMIN_USER}.json`,
       },
       dependencies: ['authenticate'],
     },
