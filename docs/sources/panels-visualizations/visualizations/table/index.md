@@ -452,7 +452,7 @@ The following table has five visible fields (columns) as well as a hidden field 
 - The "Info" field is hidden using the **Table > Hide in table** override property.
 - The following overrides have been applied to the "Short text" field:
 
-  - The values from the "Info" field are used as tooltip text for the "Short text" cells using the **Cell options > Tooltip by field** override property.
+  - The values from the "Info" field are used as tooltip text for the "Short text" cells using the **Cell options > Tooltip from field** override property.
   - The **Cell options > Tooltip placement** override property is set to control the placement of the tooltip.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-override-v12.2.png" max-width="300px" alt="Override to use the Info field values as tooltips for the Short text column" >}}
