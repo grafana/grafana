@@ -36,6 +36,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+import { createDashboardMemoryMonitorBehavior } from '../scene/DashboardMemoryMonitorBehavior';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -317,6 +318,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
     }),
+    createDashboardMemoryMonitorBehavior(oldModel.uid),
   ];
 
   let body: DashboardLayoutManager;
