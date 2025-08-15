@@ -260,17 +260,9 @@ export class DashboardModel implements TimeModel {
     // get panel save models
     copy.panels = this.getPanelSaveModels();
 
-    console.log('copy.panels - before', {
-      panels: copy.panels,
-    });
-
     //  sort by keys
     copy = sortedDeepCloneWithoutNulls(copy);
     copy.getVariables = () => copy.templating.list;
-
-    console.log('copy.panels - after', {
-      panels: copy.panels,
-    });
 
     return copy;
   }
@@ -361,11 +353,6 @@ export class DashboardModel implements TimeModel {
   private getTemplatingSaveModel(options: CloneOptions) {
     const originalVariables = this.originalTemplating?.list ?? [];
     const currentVariables = this.getVariablesFromState(this.uid);
-
-    console.log({
-      originalVariables,
-      currentVariables,
-    });
 
     const saveModels = currentVariables.map((variable) => {
       const variableSaveModel = variableAdapters.get(variable.type).getSaveModel(variable, options.saveVariables);

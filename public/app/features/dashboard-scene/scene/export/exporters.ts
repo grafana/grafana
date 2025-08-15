@@ -19,7 +19,7 @@ import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers'
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
-import { variableRegex } from 'app/features/variables/utils';
+import { variableRegexExec } from 'app/features/variables/utils';
 import { dispatch } from 'app/store/store';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
@@ -110,6 +110,8 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     variableLookup[variable.name] = variable;
   }
 
+  const datasourceVariableRefNameMap: { [key: string]: string } = {};
+
   const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
     if (obj.datasource === undefined) {
       obj.datasource = fallback;
@@ -120,11 +122,11 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     let datasourceVariable: any = null;
 
     const datasourceUid: string | undefined = datasource?.uid;
-    const match = datasourceUid && variableRegex.exec(datasourceUid);
+    const match = datasourceUid && variableRegexExec(datasourceUid);
+    let varName: string | undefined;
 
-    // ignore data source properties that contain a variable
     if (match) {
-      const varName = match[1] || match[2] || match[4];
+      varName = match[1] || match[2] || match[4];
       datasourceVariable = variableLookup[varName];
       if (datasourceVariable && datasourceVariable.current) {
         datasource = datasourceVariable.current.value;
@@ -146,14 +148,10 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           version: ds.meta.info.version || '1.0.0',
         };
 
-        // if used via variable we can skip templatizing usage
-        if (datasourceVariable) {
-          return;
-        }
-
         const libraryPanel = obj.libraryPanel;
         const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
         let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+        const templatedUid = '${' + refName + '}';
 
         datasources[refName] = {
           name: refName,
@@ -174,21 +172,23 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           };
         }
 
-        console.log('obj - after', obj);
-        obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
+        // if it panel or query is relying on a datasource variable
+        // skip templating datasource uid but save the reference so we can set datasource variable's current prop
+        if (datasourceVariable && varName) {
+          datasourceVariableRefNameMap[varName] = '${' + refName + '}';
+          return;
+        }
+
+        obj.datasource = { type: ds.meta.id, uid: templatedUid };
       });
   };
 
   const processPanel = async (panel: PanelModel) => {
     if (panel.type !== 'row') {
-      console.log('running panel');
       await templateizeDatasourceUsage(panel);
 
       if (panel.targets) {
         for (const target of panel.targets) {
-          console.log('running target', {
-            target,
-          });
           await templateizeDatasourceUsage(target, panel.datasource!);
         }
       }
@@ -226,7 +226,6 @@ export async function makeExportableV1(dashboard: DashboardModel) {
   try {
     // check up panel data sources
     for (const panel of saveModel.panels) {
-      console.log('calling panel in try', { panel });
       await processPanel(panel);
 
       // handle collapsed rows
@@ -246,7 +245,16 @@ export async function makeExportableV1(dashboard: DashboardModel) {
         variable.refresh =
           variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       } else if (variable.type === 'datasource') {
-        variable.current = {};
+        const templateizedUID = datasourceVariableRefNameMap[variable.name];
+        if (templateizedUID) {
+          variable.current = {
+            text: '',
+            value: templateizedUID,
+            selected: true,
+          };
+        } else {
+          variable.current = {};
+        }
       } else if (variable.type === 'adhoc') {
         await templateizeDatasourceUsage(variable);
       }
