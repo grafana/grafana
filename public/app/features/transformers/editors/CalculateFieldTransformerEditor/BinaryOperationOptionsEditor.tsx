@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { BinaryOperationID, binaryOperators, FieldMatcherID, FieldType, SelectableValue } from '@grafana/data';
 import {
   BinaryValue,
@@ -17,16 +19,19 @@ export const BinaryOperationOptionsEditor = (props: {
   names: string[];
 }) => {
   const { options, onChange } = props;
-  const newLeft = checkBinaryValueType(props.options.binary?.left ?? '', props.names);
-  const newRight = checkBinaryValueType(props.options.binary?.right ?? '', props.names);
-  // If there is a change due to migration, update save model
-  if (newLeft !== props.options.binary?.left || newRight !== props.options.binary?.right) {
-    onChange({
-      ...options,
-      mode: CalculateFieldMode.BinaryOperation,
-      binary: { operator: options.binary?.operator!, left: newLeft, right: newRight },
-    });
-  }
+
+  // Handle migration logic in useEffect to avoid updating during render
+  useEffect(() => {
+    const newLeft = checkBinaryValueType(props.options.binary?.left ?? '', props.names);
+    const newRight = checkBinaryValueType(props.options.binary?.right ?? '', props.names);
+    if (newLeft !== props.options.binary?.left || newRight !== props.options.binary?.right) {
+      onChange({
+        ...options,
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: { operator: options.binary?.operator!, left: newLeft, right: newRight },
+      });
+    }
+  }, [props.options.binary?.left, props.options.binary?.right, props.names, options, onChange]);
 
   const { binary } = options;
 
@@ -89,13 +94,16 @@ export const BinaryOperationOptionsEditor = (props: {
     });
   };
 
-  // if the operator is missing, set a default value
-  if (!binary?.operator) {
-    updateBinaryOptions({
-      ...binary!,
-      operator: ops[0].value,
-    });
-  }
+  useEffect(() => {
+    if (!binary?.operator) {
+      setTimeout(() => {
+        updateBinaryOptions({
+          ...binary!,
+          operator: ops[0].value,
+        });
+      }, 0);
+    }
+  });
 
   const onBinaryLeftChanged = (v: SelectableValue<string>) => {
     const vObject: BinaryValue = JSON.parse(v.value ?? '');
@@ -156,7 +164,12 @@ export const BinaryOperationOptionsEditor = (props: {
           />
         </InlineField>
         <InlineField>
-          <Select className="width-4" options={ops} value={binary?.operator} onChange={onBinaryOperationChanged} />
+          <Select
+            className="width-4"
+            options={ops}
+            value={binary?.operator ?? ops[0].value}
+            onChange={onBinaryOperationChanged}
+          />
         </InlineField>
         <InlineField>
           <Select
