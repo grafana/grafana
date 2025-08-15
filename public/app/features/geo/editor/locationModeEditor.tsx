@@ -5,7 +5,7 @@ import { StandardEditorProps, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
-import { Alert, HorizontalGroup, Icon, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Select, useStyles2 } from '@grafana/ui';
 
 import { FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 
@@ -21,6 +21,7 @@ export const LocationModeEditor = ({
   onChange,
   context,
   item,
+  id,
 }: StandardEditorProps<string, ModeEditorSettings, unknown, unknown>) => {
   const [info, setInfo] = useState<FrameGeometryField>();
 
@@ -97,13 +98,14 @@ export const LocationModeEditor = ({
   return (
     <>
       <Select
+        inputId={id}
         options={MODE_OPTIONS}
         value={value}
         onChange={(v) => {
           onChange(v.value);
         }}
       />
-      <HorizontalGroup className={styles.hGroup}>{dataValidation()}</HorizontalGroup>
+      {dataValidation()}
     </>
   );
 };
