@@ -12,7 +12,9 @@ interface ValuePointer {
   index: number;
 }
 
-export interface MergeTransformerOptions {}
+export interface MergeTransformerOptions {
+  frameAlias?: string;
+}
 
 export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   id: DataTransformerID.merge,
@@ -43,8 +45,10 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         const fieldNames = new Set<string>();
         const fieldIndexByName: Record<string, Record<number, number>> = {};
         const fieldNamesForKey: string[] = [];
+        const newRefId =
+          options.frameAlias ?? `${DataTransformerID.merge}-${data.map((frame) => frame.refId).join('-')}`;
         const dataFrame = new MutableDataFrame({
-          refId: `${DataTransformerID.merge}-${data.map((frame) => frame.refId).join('-')}`,
+          refId: newRefId,
           fields: [],
         });
 
