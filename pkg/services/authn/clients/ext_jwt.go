@@ -221,10 +221,14 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 	}
 
 	var claims jwt.Claims
-	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
+	// Verify the JWT signature using the configured verification key
+	key := s.cfg.ExtJWTAuth.VerificationKey
+	if key == nil {
 		return false
 	}
-
+	if err := parsedToken.Claims(key, &claims); err != nil {
+		return false
+	}
 	return true
 }
 
