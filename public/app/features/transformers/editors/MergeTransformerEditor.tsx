@@ -1,3 +1,5 @@
+import { useCallback, ChangeEvent } from 'react';
+
 import {
   DataTransformerID,
   standardTransformers,
@@ -7,13 +9,23 @@ import {
 } from '@grafana/data';
 import { MergeTransformerOptions } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
-import { FieldValidationMessage } from '@grafana/ui';
+import { FieldValidationMessage, InlineField, Input } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/merge.svg';
 import lightImage from '../images/light/merge.svg';
 
 export const MergeTransformerEditor = ({ input, options, onChange }: TransformerUIProps<MergeTransformerOptions>) => {
+  const onChangeFrameAlias = useCallback(
+    (evt: ChangeEvent<HTMLInputElement>) => {
+      onChange({
+        ...options,
+        frameAlias: evt.target.value,
+      });
+    },
+    [onChange, options]
+  );
+
   if (input.length <= 1) {
     // Show warning that merge is useless only apply on a single frame
     return (
@@ -24,7 +36,15 @@ export const MergeTransformerEditor = ({ input, options, onChange }: Transformer
       </FieldValidationMessage>
     );
   }
-  return null;
+  return (
+    <InlineField
+      htmlFor="frame-alias"
+      labelWidth={16}
+      label={t('transformers.reduce-transformer-editor.label-frame-alias', 'Frame Alias')}
+    >
+      <Input id="frame-alias" value={options.frameAlias ?? ''} onChange={onChangeFrameAlias} />
+    </InlineField>
+  );
 };
 
 export const getMergeTransformerRegistryItem: () => TransformerRegistryItem<MergeTransformerOptions> = () => ({

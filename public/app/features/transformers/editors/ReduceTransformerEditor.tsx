@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { ChangeEvent, useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -12,7 +12,7 @@ import {
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
+import { InlineField, Select, StatsPicker, InlineSwitch, Input } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/reduce.svg';
@@ -65,6 +65,16 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
     });
   }, [onChange, options]);
 
+  const onChangeFrameAlias = useCallback(
+    (evt: ChangeEvent<HTMLInputElement>) => {
+      onChange({
+        ...options,
+        frameAlias: evt.target.value,
+      });
+    },
+    [onChange, options]
+  );
+
   return (
     <>
       <InlineField
@@ -107,13 +117,22 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
         </InlineField>
       )}
       {options.mode !== ReduceTransformerMode.ReduceFields && (
-        <InlineField
-          htmlFor="labels-to-fields"
-          labelWidth={16}
-          label={t('transformers.reduce-transformer-editor.label-labels-to-fields', 'Labels to fields')}
-        >
-          <InlineSwitch id="labels-to-fields" value={!!options.labelsToFields} onChange={onToggleLabels} />
-        </InlineField>
+        <>
+          <InlineField
+            htmlFor="labels-to-fields"
+            labelWidth={16}
+            label={t('transformers.reduce-transformer-editor.label-labels-to-fields', 'Labels to fields')}
+          >
+            <InlineSwitch id="labels-to-fields" value={!!options.labelsToFields} onChange={onToggleLabels} />
+          </InlineField>
+          <InlineField
+            htmlFor="frame-alias"
+            labelWidth={16}
+            label={t('transformers.reduce-transformer-editor.label-frame-alias', 'Frame Alias')}
+          >
+            <Input id="frame-alias" value={options.frameAlias ?? ''} onChange={onChangeFrameAlias} />
+          </InlineField>
+        </>
       )}
     </>
   );

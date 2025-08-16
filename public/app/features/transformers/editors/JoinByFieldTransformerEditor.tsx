@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { ChangeEvent, useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -11,7 +11,7 @@ import {
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
+import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -75,6 +75,16 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
     [onChange, options]
   );
 
+  const onChangeFrameAlias = useCallback(
+    (evt: ChangeEvent<HTMLInputElement>) => {
+      onChange({
+        ...options,
+        frameAlias: evt.target.value,
+      });
+    },
+    [onChange, options]
+  );
+
   return (
     <>
       <InlineFieldRow>
@@ -101,6 +111,13 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
             placeholder="time"
             isClearable
           />
+        </InlineField>
+        <InlineField
+          htmlFor="frame-alias"
+          labelWidth={16}
+          label={t('transformers.reduce-transformer-editor.label-frame-alias', 'Frame Alias')}
+        >
+          <Input id="frame-alias" value={options.frameAlias ?? ''} onChange={onChangeFrameAlias} />
         </InlineField>
       </InlineFieldRow>
     </>
