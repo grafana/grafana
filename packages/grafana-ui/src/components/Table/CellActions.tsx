@@ -40,7 +40,7 @@ export function CellActions({
   const onFilterFor = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       if (onCellFilterAdded) {
-        onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value });
+        onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value.toString() });
       }
     },
     [cell, field, onCellFilterAdded]
@@ -48,7 +48,7 @@ export function CellActions({
   const onFilterOut = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       if (onCellFilterAdded) {
-        onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value });
+        onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value.toString() });
       }
     },
     [cell, field, onCellFilterAdded]
