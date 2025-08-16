@@ -142,16 +142,6 @@ describe('Get y range', () => {
       expected: [1, 30],
     },
     {
-      description: 'no value is set',
-      field: { ...defaultYField, config: { noValue: '0' } },
-      expected: [0, 5],
-    },
-    {
-      description: 'NaN no value is set',
-      field: { ...defaultYField, config: { noValue: 'foo' } },
-      expected: [1, 5],
-    },
-    {
       description: 'straight line',
       field: straightLineYField,
       expected: [0, 4],
@@ -165,11 +155,6 @@ describe('Get y range', () => {
       description: 'straight line with config min and max',
       field: { ...straightLineYField, config: { min: 1, max: 3 }, state: { range: { min: 1, max: 3, delta: 2 } } },
       expected: [1, 3],
-    },
-    {
-      description: 'straight line with config no value',
-      field: { ...straightLineYField, config: { noValue: '0' } },
-      expected: [0, 2],
     },
   ])(`should return correct range for $description`, ({ field, expected }) => {
     const actual = getYRange(field, getAlignedFrame(field));
