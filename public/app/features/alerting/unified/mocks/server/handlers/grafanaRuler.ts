@@ -204,9 +204,50 @@ export const rulerRuleVersionHistoryHandler = () => {
   });
 };
 
+const filterHistoryByState = (data: ReturnType<typeof getHistoryResponse>, previous?: string, current?: string) => {
+  if (!previous && !current) {
+    return data;
+  }
+
+  const stateMap: Record<string, string> = {
+    firing: 'Alerting',
+    normal: 'Normal',
+    pending: 'Pending',
+  };
+
+  const filteredRecords: unknown[] = [];
+  const filteredTimes: number[] = [];
+  const filteredLabels: unknown[] = [];
+
+  (data.data.values[1] as Array<Record<string, unknown>>).forEach((record: Record<string, unknown>, index: number) => {
+    const matchesPrevious = !previous || record.previous === (stateMap[previous.toLowerCase()] || previous);
+    const matchesCurrent = !current || record.current === (stateMap[current.toLowerCase()] || current);
+
+    if (matchesPrevious && matchesCurrent) {
+      filteredRecords.push(record);
+      filteredTimes.push((data.data.values[0] as number[])[index]);
+      filteredLabels.push((data.data.values[2] as unknown[])[index]);
+    }
+  });
+
+  return {
+    ...data,
+    data: {
+      values: [filteredTimes, filteredRecords, filteredLabels],
+    },
+  };
+};
+
 export const historyHandler = () => {
-  return http.get('/api/v1/rules/history', () => {
-    return HttpResponse.json(getHistoryResponse([time_0, time_0, time_plus_30, time_plus_30]));
+  return http.get('/api/v1/rules/history', ({ request }) => {
+    const url = new URL(request.url);
+    const previous = url.searchParams.get('previous');
+    const current = url.searchParams.get('current');
+
+    const fullData = getHistoryResponse([time_0, time_0, time_plus_30, time_plus_30]);
+    const filteredData = filterHistoryByState(fullData, previous || undefined, current || undefined);
+
+    return HttpResponse.json(filteredData);
   });
 };
 
