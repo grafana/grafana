@@ -42,6 +42,7 @@ import {
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
+  setAddToDashboardService,
 } from '@grafana/runtime';
 import {
   setGetObservablePluginComponents,
@@ -70,6 +71,7 @@ import { loadTranslations } from './core/internationalization/loadTranslations';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { AddToDashboardService } from './core/services/AddToDashboardService';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -169,6 +171,8 @@ export class GrafanaApp {
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
+      // set the singleton that exposes the add to dashboard component
+      setAddToDashboardService(new AddToDashboardService());
 
       initAuthConfig();
 

@@ -68,3 +68,8 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
+export {
+  type AddToDashboardService,
+  getAddToDashboardService,
+  setAddToDashboardService,
+} from './services/AddToDashboardService';
