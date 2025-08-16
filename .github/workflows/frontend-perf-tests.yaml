@@ -71,7 +71,7 @@ jobs:
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
         run: yarn e2e:playwright --grep @performance --reporter json
       
-      - run: ./fsperfbaseline-metrics.txt
+      - run: cat ./fsperfbaseline-metrics.txt
         if: always()
         continue-on-error: true
 
@@ -86,7 +86,7 @@ jobs:
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERF_PASSWORD }}
         run: yarn e2e:playwright --grep @performance --reporter json
 
-      - run: ./fsperf-metrics.txt
+      - run: cat ./fsperf-metrics.txt
         if: always()
         continue-on-error: true
 
