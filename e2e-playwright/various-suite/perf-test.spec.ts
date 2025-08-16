@@ -50,7 +50,7 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
   promRegistry.setDefaultLabels({ instance: process.env.GRAFANA_URL });
   const metricsText = await promRegistry.metrics();
   console.log(metricsText);
-  fs.writeFileSync('/tmp/asset-metrics.txt', metricsText);
+  fs.writeFileSync(process.env.METRICS_OUTPUT_PATH || '/tmp/asset-metrics.txt', metricsText);
 
   stopListening();
   page.close();

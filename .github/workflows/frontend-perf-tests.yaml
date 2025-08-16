@@ -48,9 +48,7 @@ jobs:
         id: nm-cache
         with:
           path: node_modules
-          key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node_modules-
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('yarn.lock') }}
 
       - name: Yarn install
         run: yarn install --immutable
@@ -60,28 +58,28 @@ jobs:
           CYPRESS_INSTALL_BINARY: 0
 
       - name: Install Playwright browsers
-        env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
         run: yarn playwright install chromium --with-deps
 
       - name: Run Playwright tests
         env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ./playwright-results.json
+          METRICS_OUTPUT_PATH: ./asset-metrics.txt
           GRAFANA_URL: https://fsperfbaseline.grafana-dev.net
           GRAFANA_ADMIN_USER: ${{ env.FSPERFBASELINE_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
-        run: yarn e2e:playwright --grep @performance # probably written to wrong place
+        run: yarn e2e:playwright --grep @performance --reporter json # probably written to wrong place
       
-      - run: cat /tmp/playwright-results.json
+      - run: cat ./playwright-results.json
         if: always()
-      - run: cat /tmp/asset-metrics.txt
+      - run: cat ./asset-metrics.txt
         if: always()
       
       - name: Bench report
         run: |
           docker run \
             --rm \
-            --volume="/tmp/playwright-results.json:/tmp/playwright-results.json" \
-            --volume="/tmp/asset-metrics.txt:/tmp/asset-metrics.txt" \
+            --volume="./playwright-results.json:/tmp/playwright-results.json" \
+            --volume="./asset-metrics.txt:/tmp/asset-metrics.txt" \
             -e PROMETHEUS_URL=$PROMETHEUS_URL \
             -e PROMETHEUS_USER=$PROMETHEUS_USER \
             -e PROMETHEUS_PASSWORD=$PROMETHEUS_TOKEN \
