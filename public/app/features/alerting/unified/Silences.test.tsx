@@ -4,7 +4,7 @@ import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testin
 
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
@@ -16,6 +16,8 @@ import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
+
+import { contextSrv } from '../../../core/services/context_srv';
 
 import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
@@ -89,8 +91,8 @@ const ui = {
 };
 
 const setUserLogged = (isLogged: boolean) => {
-  config.bootData.user.isSignedIn = isLogged;
-  config.bootData.user.name = isLogged ? 'admin' : '';
+  contextSrv.user.isSignedIn = isLogged;
+  contextSrv.user.name = isLogged ? 'admin' : '';
 };
 
 const enterSilenceLabel = async (index: number, name: string, matcher: MatcherOperator, value: string) => {

@@ -1,4 +1,4 @@
-import { BuildInfo, CurrentUserDTO } from '@grafana/data';
+import { BuildInfo } from '@grafana/data';
 import {
   EchoBackend,
   EchoEventType,
@@ -8,6 +8,7 @@ import {
   PageviewEchoEvent,
 } from '@grafana/runtime';
 
+import { User } from '../../../context_srv';
 import { loadScript } from '../../utils';
 
 type Properties = Record<string, string | boolean | number>;
@@ -37,7 +38,7 @@ export interface RudderstackBackendOptions {
   writeKey: string;
   dataPlaneUrl: string;
   buildInfo: BuildInfo;
-  user?: CurrentUserDTO;
+  user?: User;
   sdkUrl?: string;
   configUrl?: string;
   integrationsUrl?: string;

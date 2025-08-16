@@ -131,11 +131,11 @@ export class GrafanaApp {
       window.parent.postMessage('GrafanaAppInit', '*');
       const regionalFormat = config.featureToggles.localeFormatPreference
         ? config.regionalFormat
-        : config.bootData.user.language;
+        : contextSrv.user.language;
 
       const initI18nPromise = initializeI18n(
         {
-          language: config.bootData.user.language,
+          language: contextSrv.user.language,
           ns: NAMESPACES,
           module: loadTranslations,
         },
@@ -158,7 +158,7 @@ export class GrafanaApp {
       startMeasure('frontend_app_init');
 
       setLocale(config.regionalFormat);
-      setWeekStart(config.bootData.user.weekStart);
+      setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
@@ -166,7 +166,7 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
-      setTimeZoneResolver(() => config.bootData.user.timezone);
+      setTimeZoneResolver(() => contextSrv.user.timezone);
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
 
@@ -366,8 +366,8 @@ async function initEchoSrv() {
         },
         buildInfo: config.buildInfo,
         user: {
-          id: String(config.bootData.user?.id),
-          email: config.bootData.user?.email,
+          id: String(contextSrv.user?.id),
+          email: contextSrv.user?.email,
         },
         ignoreUrls: rudderstackUrls,
       })
@@ -399,7 +399,7 @@ async function initEchoSrv() {
       new RudderstackBackend({
         writeKey: config.rudderstackWriteKey,
         dataPlaneUrl: config.rudderstackDataPlaneUrl,
-        user: config.bootData.user,
+        user: contextSrv.user,
         sdkUrl: config.rudderstackSdkUrl,
         configUrl: config.rudderstackConfigUrl,
         integrationsUrl: config.rudderstackIntegrationsUrl,
