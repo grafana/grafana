@@ -6,16 +6,16 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
-import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
-import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
+import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
+import { collectSelectedItems } from 'app/features/browse-dashboards/components/utils';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
-import { DescendantCount } from '../BrowseActions/DescendantCount';
-import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
-import { collectSelectedItems } from '../utils';
+import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { ResourceEditFormSharedFields } from '../ResourceEditFormSharedFields';
+import { getDefaultWorkflow, getWorkflowOptions } from '../defaults';
+import { generateTimestamp } from '../utils/timestamp';
 
 import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';

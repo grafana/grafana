@@ -7,6 +7,7 @@ import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/DeleteProvisionedFolderForm';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -18,7 +19,6 @@ import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
-import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
 interface Props {
   folder: FolderDTO;

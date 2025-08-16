@@ -12,10 +12,10 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
+import { DashboardPreviewBanner } from 'app/features/provisioning/components/DashboardPreviewBanner';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
-import { DashboardPreviewBanner } from '../saving/provisioned/DashboardPreviewBanner';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';

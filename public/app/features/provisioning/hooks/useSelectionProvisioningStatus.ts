@@ -9,8 +9,8 @@ import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsP
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useSelector } from 'app/types/store';
 
-import { findItem } from '../../state/utils';
-import { DashboardTreeSelection } from '../../types';
+import { findItem } from '../../browse-dashboards/state/utils';
+import { DashboardTreeSelection } from '../../browse-dashboards/types';
 
 // TODO: This will soon be remove after bulk action is merged in
 

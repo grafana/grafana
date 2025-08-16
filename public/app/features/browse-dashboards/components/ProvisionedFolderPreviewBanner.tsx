@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
-import { CommonBannerProps } from 'app/features/dashboard-scene/saving/provisioned/DashboardPreviewBanner';
-import { PreviewBannerViewPR } from 'app/features/dashboard-scene/saving/provisioned/PreviewBannerViewPR';
+import { CommonBannerProps } from 'app/features/provisioning/components/DashboardPreviewBanner';
+import { PreviewBannerViewPR } from 'app/features/provisioning/components/PreviewBannerViewPR';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProps) {
