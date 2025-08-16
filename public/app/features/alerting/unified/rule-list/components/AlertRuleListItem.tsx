@@ -470,6 +470,7 @@ const DataSourceLogo = forwardRef<HTMLImageElement, DataSourceLogoProps>(({ data
     />
   );
 });
+DataSourceLogo.displayName = 'DataSourceLogo';
 
 const dataSourceLogoStyles = (theme: GrafanaTheme2) => ({
   logo: css({

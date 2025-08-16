@@ -104,3 +104,4 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
     );
   }
 );
+DashboardPicker.displayName = 'DashboardPicker';

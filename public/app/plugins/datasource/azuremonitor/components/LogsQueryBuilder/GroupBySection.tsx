@@ -131,6 +131,7 @@ const makeRenderGroupBy = (
   onDeleteGroupBy: (propertyName: string) => void,
   templateVariableOptions: SelectableValue<string>
 ) => {
+  // eslint-disable-next-line react/display-name
   return (
     item: BuilderQueryEditorGroupByExpression,
     onChangeItem: (updatedItem: BuilderQueryEditorGroupByExpression) => void,

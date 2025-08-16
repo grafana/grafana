@@ -24,6 +24,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
   const Wrapper = useMemo(
     () =>
+      // eslint-disable-next-line react/display-name
       memo(
         ({
           item,

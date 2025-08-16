@@ -285,7 +285,12 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
                 <>
                   <div ref={provided.innerRef} className={styles.labelsDraggable} {...provided.droppableProps}>
                     {uiOrderByItems.map((item, idx) => (
-                      <DraggableUIOrderByItem item={item} index={idx} onChangeSort={onChangeSort} />
+                      <DraggableUIOrderByItem
+                        item={item}
+                        index={idx}
+                        onChangeSort={onChangeSort}
+                        key={`${item.name}-${item.type}`}
+                      />
                     ))}
                   </div>
                   {provided.placeholder}

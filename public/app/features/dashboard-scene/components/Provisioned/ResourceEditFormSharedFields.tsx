@@ -100,3 +100,4 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     );
   }
 );
+ResourceEditFormSharedFields.displayName = 'ResourceEditFormSharedFields';

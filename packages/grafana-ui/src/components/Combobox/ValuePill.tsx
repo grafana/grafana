@@ -38,6 +38,7 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
     );
   }
 );
+ValuePill.displayName = 'ValuePill';
 
 const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
   wrapper: css({
