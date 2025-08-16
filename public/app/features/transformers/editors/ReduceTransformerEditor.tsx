@@ -130,7 +130,7 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
             labelWidth={16}
             label={t('transformers.reduce-transformer-editor.label-frame-alias', 'Frame Alias')}
           >
-            <Input id="frame-alias" value={options.frameAlias ?? ''} onChange={onChangeFrameAlias} />
+            <Input id="frame-alias" value={options.frameAlias} onChange={onChangeFrameAlias} />
           </InlineField>
         </>
       )}
