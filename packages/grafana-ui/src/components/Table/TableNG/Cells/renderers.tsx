@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { ReactNode } from 'react';
+import { ReactNode, memo } from 'react';
 
 import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
@@ -33,7 +33,7 @@ const AUTO_RENDERER: TableCellRenderer = (props) => (
   <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
-const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
+const SPARKLINE_RENDERER: TableCellRenderer = memo((props) => (
   <SparklineCell
     value={props.value}
     field={props.field}
@@ -42,7 +42,7 @@ const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
     theme={props.theme}
     width={props.width}
   />
-);
+));
 
 const GEO_RENDERER: TableCellRenderer = (props) => <GeoCell value={props.value} height={props.height} />;
 
