@@ -1,6 +1,7 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
 import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { ExtraConfiguration } from 'app/features/alerting/unified/utils/alertmanager/extraConfigs';
 
 export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
 
@@ -11,6 +12,7 @@ export type AlertManagerCortexConfig = {
   template_file_provenances?: Record<string, string>;
   last_applied?: string;
   id?: number;
+  extra_config?: ExtraConfiguration[];
 };
 
 export type TLSConfig = {

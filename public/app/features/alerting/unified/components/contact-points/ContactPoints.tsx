@@ -23,6 +23,7 @@ import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbili
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -140,8 +141,12 @@ const ContactPointsTab = () => {
       ) : (
         <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
       )}
+
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
-      {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
+      {/* Extra configs also don't support global config */}
+      {!isGrafanaManagedAlertmanager && !isExtraConfig(selectedAlertmanager!) && (
+        <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />
+      )}
       {ExportDrawer}
     </>
   );
