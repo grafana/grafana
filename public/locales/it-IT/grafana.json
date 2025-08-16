@@ -4522,6 +4522,10 @@
           "value": "Valore"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
+      },
       "overlay": {
         "tooltip": "L'elemento è nascosto a causa del rendering condizionale."
       },

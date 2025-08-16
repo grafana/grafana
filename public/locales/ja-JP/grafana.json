@@ -4504,6 +4504,10 @@
           "value": "値"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
+      },
       "overlay": {
         "tooltip": "条件付きレンダリング設定のため、要素は非表示になっています。"
       },

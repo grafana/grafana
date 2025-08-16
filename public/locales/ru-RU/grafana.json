@@ -4558,6 +4558,10 @@
           "value": "Значение"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
+      },
       "overlay": {
         "tooltip": "Элемент скрыт из-за условной визуализации."
       },

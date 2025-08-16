@@ -4558,6 +4558,10 @@
           "value": "Wartość"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
+      },
       "overlay": {
         "tooltip": "Element jest ukryty z powodu renderowania warunkowego."
       },
