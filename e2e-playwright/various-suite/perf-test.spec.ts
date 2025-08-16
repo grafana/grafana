@@ -47,11 +47,12 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
   bootTimeSecondsGauge.set(Math.round(end - start) / 1000);
   usedJSHeapSizeGauge.set(+usedJSHeapSize.toFixed(1));
 
-  promRegistry.setDefaultLabels({ instance: process.env.GRAFANA_URL });
+  const instance = new URL(process.env.GRAFANA_URL || 'http://undefined').host;
+  promRegistry.setDefaultLabels({ instance });
   const metricsText = await promRegistry.metrics();
   console.log(metricsText);
   fs.writeFileSync(process.env.METRICS_OUTPUT_PATH || '/tmp/asset-metrics.txt', metricsText);
 
-  stopListening();
+  await stopListening();
   page.close();
 });
