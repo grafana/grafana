@@ -3,6 +3,15 @@ package kinds
 manifest: {
 	appName: 	   "iam"
 	groupOverride: "iam.grafana.app"
+	extraPermissions: {
+		accessKinds: [
+			{
+				group: "folder.grafana.app"
+				resource: "folders"
+				actions: ["list","watch"]
+			}
+		]
+	}
 	versions: {
 	    "v0alpha1": v0alpha1
 	}
@@ -10,7 +19,7 @@ manifest: {
 
 v0alpha1: {
     kinds: [
-		globalrolev0alpha1, 
+		globalrolev0alpha1,
 		globalrolebindingv0alpha1,
 		corerolev0alpha1,
 		rolev0alpha1,

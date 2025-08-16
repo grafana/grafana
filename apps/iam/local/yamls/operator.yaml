@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: operator
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iam-app-operator
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: iam-app-operator
+  template:
+    metadata:
+      labels:
+        name: iam-app-operator
+    spec:
+      serviceAccount: operator
+      containers:
+        - image: localhost/github.com/grafana/grafana/apps/iam/operator:latest
+          imagePullPolicy: IfNotPresent
+          name: iam-app-operator
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - exec /usr/bin/operator
+          env:
+            - name: ZANZANA_ADDR
+              value: zanzana.default.svc.cluster.local:50051
+            - name: FOLDER_APP_URL
+              value: https://host.docker.internal:6446
+            - name: AUTH_TOKEN_EXCHANGE_URL
+              value: http://host.docker.internal:8080/v1/sign-access-token
+            - name: AUTH_TOKEN
+              value: ""
+            - name: FOLDER_APP_NAMESPACE
+              value: "grafana-folder"

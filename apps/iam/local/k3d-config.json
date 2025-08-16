@@ -1,0 +1,16 @@
+{
+  "apiVersion": "k3d.io/v1alpha3",
+  "kind": "Simple",
+  "kubeAPI": {
+    "hostPort": "8556"
+  },
+  "options": {
+    "k3d": {
+      "wait": true
+    },
+    "kubeconfig": {
+      "switchCurrentContext": true,
+      "updateDefaultKubeconfig": true
+    }
+  }
+}

@@ -18,6 +18,15 @@ import (
 var appManifestData = app.ManifestData{
 	AppName: "iam",
 	Group:   "iam.grafana.app",
+	ExtraPermissions: &app.Permissions{
+		AccessKinds: []app.KindPermission{
+			{
+				Group:    "folder.grafana.app",
+				Resource: "Folders",
+				Actions:  []app.KindPermissionAction{"list", "watch"},
+			},
+		},
+	},
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
