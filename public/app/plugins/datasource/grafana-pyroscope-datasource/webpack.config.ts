@@ -1,3 +1,5 @@
+import { merge } from 'webpack-merge';
+
 import config, { type Env } from '@grafana/plugin-configs/webpack.config.ts';
 
 const configWithFallback = async (env: Env) => {
@@ -9,7 +11,9 @@ const configWithFallback = async (env: Env) => {
       string_decoder: false,
     };
   }
-  return response;
+  return merge(response, {
+    externals: ['grafana/assistant'],
+  });
 };
 
 export default configWithFallback;
