@@ -23,6 +23,8 @@ type RunTestOpts struct {
 	HTMLReportExportDir  string
 	BlobReportExportDir  string
 	TestResultsExportDir string
+	PlaywrightCommand    string
+	CloudPluginCreds     *dagger.File
 }
 
 func RunTest(
@@ -51,6 +53,11 @@ func RunTest(
 		WithExec(playwrightCommand, dagger.ContainerWithExecOpts{
 			Expect: dagger.ReturnTypeAny,
 		})
+
+	if opts.CloudPluginCreds != nil {
+		fmt.Println("DEBUG: CloudPluginCreds file is provided, mounting to /tmp/outputs.json")
+		e2eContainer = e2eContainer.WithMountedFile("/tmp/outputs.json", opts.CloudPluginCreds)
+	}
 
 	if opts.TestResultsExportDir != "" {
 		_, err := e2eContainer.Directory(testResultsDir).Export(ctx, opts.TestResultsExportDir)
@@ -89,14 +96,14 @@ func buildPlaywrightCommand(opts RunTestOpts) []string {
 		playwrightReporters = append(playwrightReporters, "blob")
 	}
 
-	playwrightCommand := []string{
-		"yarn",
-		"e2e:playwright",
+	playwrightExec := strings.Split(opts.PlaywrightCommand, " ")
+
+	playwrightCommand := append(playwrightExec,
 		"--reporter",
 		strings.Join(playwrightReporters, ","),
 		"--output",
 		testResultsDir,
-	}
+	)
 
 	if opts.Shard != "" {
 		playwrightCommand = append(playwrightCommand, "--shard", opts.Shard)
