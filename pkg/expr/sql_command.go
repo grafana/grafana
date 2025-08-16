@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -116,20 +117,29 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	sqlLogger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
 	tc := int64(0)
 	rsp := mathexp.Results{}
+	errorType := "none"
 
 	defer func() {
 		duration := float64(time.Since(start).Milliseconds())
-
 		statusLabel := "ok"
 		if rsp.Error != nil {
+			e := &sql.ErrorWithType{}
+			if errors.As(rsp.Error, &e) {
+				errorType = e.ErrorType()
+			} else {
+				errorType = "unknown"
+			}
 			statusLabel = "error"
 			span.RecordError(rsp.Error)
 			span.SetStatus(codes.Error, rsp.Error.Error())
-			sqlLogger.Error("SQL command execution failed", "error", rsp.Error.Error())
+			span.SetAttributes(
+				attribute.String("error.type", errorType),
+			)
+			sqlLogger.Error("SQL command execution failed", "error", rsp.Error.Error(), "error_type", errorType)
 		}
 		span.End()
 
-		metrics.SqlCommandCount.WithLabelValues(statusLabel).Inc()
+		metrics.SqlCommandCount.WithLabelValues(statusLabel, errorType).Inc()
 		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
 		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
 	}()
@@ -149,11 +159,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	// limit of 0 or less means no limit (following convention)
 	if gr.inputLimit > 0 && tc > gr.inputLimit {
-		rsp.Error = fmt.Errorf(
-			"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
-			gr.inputLimit,
-			tc,
-		)
+		rsp.Error = sql.MakeInputLimitExceededError(gr.refID, gr.inputLimit)
 		return rsp, nil
 	}
 
@@ -293,7 +299,7 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 	}
 
 	if len(duplicates) > 0 {
-		return nil, makeDuplicateStringColumnError(duplicates)
+		return nil, sql.MakeDuplicateStringColumnError(duplicates)
 	}
 
 	// Build final result
@@ -306,4 +312,71 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 	}
 
 	return numbers, nil
+}
+
+// handleSqlInput normalizes input DataFrames into a single dataframe with no labels for use with SQL expressions.
+//
+// It handles three cases:
+//  1. If the input declares a supported time series or numeric kind in the wide or multi format (via FrameMeta.Type), it converts to a full-long formatted table using ConvertToFullLong.
+//  2. If the input is a single frame (no labels, no declared type), it passes through as-is.
+//  3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
+func handleSqlInput(refID string, forRefIDs map[string]struct{}, dataFrames data.Frames) mathexp.Results {
+	var result mathexp.Results
+
+	// dataframes len > 0 is checked in the caller -- Convert
+	first := dataFrames[0]
+
+	// Single Frame no data case
+	// Note: In the case of a support Frame Type, we may want to return the matching schema
+	// with no rows (e.g. include the `__value__` column). But not sure about this at this time.
+	if len(dataFrames) == 1 && len(first.Fields) == 0 {
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: first},
+		}
+
+		return result
+	}
+
+	var metaType data.FrameType
+	if first.Meta != nil {
+		metaType = first.Meta.Type
+	}
+
+	if supportedToLongConversion(metaType) {
+		convertedFrames, err := ConvertToFullLong(dataFrames)
+		if err != nil {
+			result.Error = sql.MakeInputConvertError(err, refID, forRefIDs)
+		}
+
+		if len(convertedFrames) == 0 {
+			result.Error = fmt.Errorf("conversion succeeded but returned no frames")
+			return result
+		}
+
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: convertedFrames[0]},
+		}
+
+		return result
+	}
+
+	// If Meta.Type is not supported, but there are labels or more than 1 frame, fail fast
+	if len(dataFrames) > 1 {
+		result.Error = fmt.Errorf("response has more than one frame but frame type is missing or unsupported for sql conversion")
+		return result
+	}
+	for _, frame := range dataFrames {
+		for _, field := range frame.Fields {
+			if len(field.Labels) > 0 {
+				result.Error = sql.MakeInputConvertError(fmt.Errorf("frame has labels but frame type is missing or unsupported for sql conversion"), frame.RefID, forRefIDs)
+				return result
+			}
+		}
+	}
+
+	// Can pass through as table without conversion
+	result.Values = mathexp.Values{
+		mathexp.TableData{Frame: first},
+	}
+	return result
 }

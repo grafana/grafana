@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,8 +33,9 @@ var (
 
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
-	id    int64
-	refID string
+	id        int64
+	refID     string
+	isInputTo map[string]struct{}
 }
 
 type rawNode struct {
@@ -89,6 +91,17 @@ func (b *baseNode) ID() int64 {
 // RefID returns the refId of the node.
 func (b *baseNode) RefID() string {
 	return b.refID
+}
+
+func (b *baseNode) SetInputTo(refID string) {
+	if b.isInputTo == nil {
+		b.isInputTo = make(map[string]struct{})
+	}
+	b.isInputTo[refID] = struct{}{}
+}
+
+func (b *baseNode) IsInputTo() map[string]struct{} {
+	return b.isInputTo
 }
 
 // NodeType returns the data pipeline node type.
@@ -428,10 +441,26 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	var result mathexp.Results
 
-	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
-
-	if err != nil {
-		err = makeConversionError(dn.refID, err)
+	if dn.isInputToSQLExpr {
+		result = handleSqlInput(dn.RefID(), dn.IsInputTo(), dataFrames)
+		if result.Error != nil {
+			// The SQL expression won't be run so we increment the sql expression metric
+			// since there was an attempt to run an SQL expression.
+			var ce *sql.ErrorWithType
+			if errors.As(result.Error, &ce) {
+				// TODO: want to capture specific input error types for different types
+				// of errors?
+				s.metrics.SqlCommandCount.WithLabelValues("error", ce.ErrorType()).Inc()
+			} else {
+				s.metrics.SqlCommandCount.WithLabelValues("error", "input_conversion").Inc()
+			}
+		}
+	} else {
+		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
+		if err != nil {
+			err = makeConversionError(dn.refID, err)
+		}
 	}
+
 	return result, err
 }

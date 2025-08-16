@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"github.com/zeebo/assert"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -169,6 +170,88 @@ func TestSQLCommandMetrics(t *testing.T) {
 
 	// Verify cell count was recorded
 	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCellCount), "Expected cell count metric to be recorded")
+}
+
+func TestHandleSqlInput(t *testing.T) {
+	tests := []struct {
+		name        string
+		frames      data.Frames
+		expectErr   string
+		expectFrame bool
+	}{
+		{
+			name:        "single frame with no fields and no type is passed through",
+			frames:      data.Frames{data.NewFrame("")},
+			expectFrame: true,
+		},
+		{
+			name:        "single frame with no fields but type timeseries-multi is passed through",
+			frames:      data.Frames{data.NewFrame("").SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})},
+			expectFrame: true,
+		},
+		{
+			name: "single frame, no labels, no type → passes through",
+			frames: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", nil, []*float64{fp(2)}),
+				),
+			},
+			expectFrame: true,
+		},
+		{
+			name: "single frame with labels, but missing FrameMeta.Type → error",
+			frames: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", data.Labels{"foo": "bar"}, []*float64{fp(2)}),
+				),
+			},
+			expectErr: "frame has labels but frame type is missing or unsupported",
+		},
+		{
+			name: "multiple frames, no type → error",
+			frames: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", nil, []*float64{fp(2)}),
+				),
+				data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", nil, []*float64{fp(2)}),
+				),
+			},
+			expectErr: "response has more than one frame but frame type is missing or unsupported",
+		},
+		{
+			name: "supported type (timeseries-multi) triggers ConvertToFullLong",
+			frames: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", data.Labels{"host": "a"}, []*float64{fp(2)}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			},
+			expectFrame: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			res := handleSqlInput("a", map[string]struct{}{"b": {}}, tc.frames)
+
+			if tc.expectErr != "" {
+				require.Error(t, res.Error)
+				require.ErrorContains(t, res.Error, tc.expectErr)
+			} else {
+				require.NoError(t, res.Error)
+				if tc.expectFrame {
+					require.Len(t, res.Values, 1)
+					require.IsType(t, mathexp.TableData{}, res.Values[0])
+					assert.NotNil(t, res.Values[0].(mathexp.TableData).Frame)
+				}
+			}
+		})
+	}
 }
 
 type testTracer struct {
