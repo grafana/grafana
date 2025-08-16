@@ -120,6 +120,7 @@ export const ImportDashboardFormV2 = ({
                         [input.pluginId]: {
                           uid: ds.uid,
                           type: ds.type,
+                          name: ds.name,
                         },
                       }));
                     }}
