@@ -4522,6 +4522,10 @@
           "value": "Değer"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
+      },
       "overlay": {
         "tooltip": "Koşullu oluşturma nedeniyle öge gizlendi."
       },

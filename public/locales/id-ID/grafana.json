@@ -4504,6 +4504,10 @@
           "value": "Nilai"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
+      },
       "overlay": {
         "tooltip": "Elemen disembunyikan karena rendering bersyarat."
       },

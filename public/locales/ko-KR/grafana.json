@@ -4504,6 +4504,10 @@
           "value": "값"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
+      },
       "overlay": {
         "tooltip": "조건부 렌더링으로 인해 요소가 숨겨져 있습니다."
       },
