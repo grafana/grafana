@@ -218,6 +218,77 @@ Memory usage measurements for dashboard: {
 }
 ```
 
+### ASCII Memory Graph Visualization
+
+For visual debugging of memory trends, the dashboard memory monitoring system provides an on-demand ASCII graph generator available through the browser debug interface.
+
+#### Enable Graph Visualization
+
+First, enable memory debug logging:
+
+```javascript
+localStorage.setItem('grafana.debug.memory', 'true');
+```
+
+#### Generate ASCII Graph
+
+Access the graph visualization functions via the debug interface:
+
+```javascript
+// Render ASCII memory graph
+_debug.dashboardMemory.drawGraph();
+
+// Get raw measurement history data
+_debug.dashboardMemory.getHistory();
+```
+
+#### Example ASCII Graph Output
+
+```
+📊 Memory Usage (MB) [Dashboard: my-dashboard-title] [Last 15 measurements]
+ 280 |                          .  .     .
+ 260 |    .  . .   .         . .      . .
+ 240 | .  .    .   . . .   .         .   . .
+ 220 |.              .   .               .
+     └───────────────────────────────────────────
+     0    5    10   15   20   25   30   (count)
+Usage: 224MB/4096MB (5%) → +0.1MB/min
+📈 Call: _debug.dashboardMemory.getHistory() for raw data
+```
+
+#### Graph Features
+
+- **Automatic Scaling**: Y-axis scales automatically based on memory range
+- **Dashboard Context**: Shows current dashboard name and UID
+- **Growth Indicators**: Displays memory trend with arrows (↗ ↘ →)
+- **Usage Summary**: Current memory, heap limit, percentage, and growth rate
+- **Rolling History**: Maintains last 30 measurements for visualization
+- **On-Demand**: Graph renders immediately without waiting for measurement intervals
+
+#### Graph Interpretation
+
+- **Datapoints (.)**: Each dot represents a memory measurement
+- **Y-axis**: Memory usage in megabytes (MB)
+- **X-axis**: Measurement sequence (newest on right)
+- **Growth Rate**: Memory change per minute (MB/min)
+- **Percentage**: Current usage vs. browser heap limit
+
+#### Debug Interface Commands
+
+| Command                               | Description                             |
+| ------------------------------------- | --------------------------------------- |
+| `_debug.dashboardMemory.drawGraph()`  | Render ASCII memory trend visualization |
+| `_debug.dashboardMemory.getHistory()` | Return array of raw measurement data    |
+
+#### Browser Compatibility
+
+The ASCII graph visualization requires:
+
+- Debug mode enabled (`localStorage.getItem('grafana.debug.memory') === 'true'`)
+- Memory monitoring active on current dashboard
+- Browser console access
+- At least one memory measurement recorded
+
 ## Troubleshooting
 
 ### Common Issues

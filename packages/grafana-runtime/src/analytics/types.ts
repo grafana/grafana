@@ -166,6 +166,9 @@ export interface MemoryUsageEventPayload {
   totalJSHeapSize: number;
   usedJSHeapSize: number;
   jsHeapSizeLimit: number;
+  memoryUsagePercentage?: number;
+  dashboardUid?: string;
+  dashboardTitle?: string;
 }
 
 /**

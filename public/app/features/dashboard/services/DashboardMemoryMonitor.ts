@@ -97,7 +97,7 @@ export class DashboardMemoryMonitor {
         totalJSHeapSize: memoryInfo.totalJSHeapSize,
         usedJSHeapSize: memoryInfo.usedJSHeapSize,
         jsHeapSizeLimit: memoryInfo.jsHeapSizeLimit,
-        memoryUsagePercentage: (memoryInfo.usedJSHeapSize / memoryInfo.totalJSHeapSize) * 100,
+        memoryUsagePercentage: (memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit) * 100,
       };
 
       this.logger.logger(
