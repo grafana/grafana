@@ -8,7 +8,7 @@
 
   "metrics": true,
   "alerting": false,
-  "annotations": false,
+  "annotations": true,
   "logs": false,
   "streaming": false,
   "tracing": false,

@@ -46,6 +46,7 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
 }
 
 export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
+  annotations: true,
   groupBy: [],
   labelSelector: '{}',
   spanSelector: [],
