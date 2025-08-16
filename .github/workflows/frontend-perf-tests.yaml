@@ -61,7 +61,7 @@ jobs:
         run: yarn playwright install chromium --with-deps
 
       - name: Run Playwright tests (fsperfbaseline)
-        id: fsperfbaseline
+        id: pw-fsperfbaseline
         continue-on-error: true
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: ./fsperfbaseline-pw-results.json
@@ -72,7 +72,7 @@ jobs:
         run: yarn e2e:playwright --grep @performance --reporter json
 
       - name: Run Playwright tests (fsperf)
-        id: fsperf
+        id: pw-fsperf
         continue-on-error: true
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: ./fsperf-pw-results.json
@@ -81,15 +81,16 @@ jobs:
           GRAFANA_ADMIN_USER: ${{ env.FSPERF_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERF_PASSWORD }}
         run: yarn e2e:playwright --grep @performance --reporter json
-      
-      - name: Bench report
-        if: steps.fsperfbaseline.conclusion == 'success'
+
+      - name: Bench report (fsperfbaseline)
+        id: bench-fsperfbaseline
+        if: steps.pw-fsperfbaseline.outcome == 'success'
         continue-on-error: true
         run: |
           docker run \
             --rm \
             --volume="./fsperfbaseline-pw-results.json:/pw-results.json" \
-            --volume="./fsperfbaseline-metrics.txt:/metricx.txt" \
+            --volume="./fsperfbaseline-metrics.txt:/metrics.txt" \
             -e PROMETHEUS_URL=$PROMETHEUS_URL \
             -e PROMETHEUS_USER=$PROMETHEUS_USER \
             -e PROMETHEUS_PASSWORD=$PROMETHEUS_TOKEN \
@@ -102,9 +103,11 @@ jobs:
               --run-metrics-file "/metrics.txt" \
               --log-level DEBUG \
               /pw-results.json
-      
-      - name: Bench report
-        if: steps.fsperf.conclusion == 'success'
+
+      - name: Bench report (fsperf)
+        id: bench-fsperf
+        if: steps.pw-fsperf.outcome == 'success'
+        continue-on-error: true
         run: |
           docker run \
             --rm \
@@ -122,4 +125,22 @@ jobs:
               --run-metrics-file "/metrics.txt" \
               --log-level DEBUG \
               /pw-results.json
+
+      - name: Check status
+        env:
+          FSPERF_PW_OUTCOME: ${{ steps.pw-fsperf.outcome }}
+          FSPERF_PW_BASELINE_OUTCOME: ${{ steps.pw-fsperfbaseline.outcome }}
+          FSPERF_BENCH_OUTCOME: ${{ steps.bench-fsperf.outcome }}
+          FSPERF_BENCH_BASELINE_OUTCOME: ${{ steps.bench-fsperfbaseline.outcome }}
+
+        run: |
+          echo "FSPERF_PW_OUTCOME: $FSPERF_PW_OUTCOME"
+          echo "FSPERF_PW_BASELINE_OUTCOME: $FSPERF_PW_BASELINE_OUTCOME"
+          echo "FSPERF_BENCH_OUTCOME: $FSPERF_BENCH_OUTCOME"
+          echo "FSPERF_BENCH_BASELINE_OUTCOME: $FSPERF_BENCH_BASELINE_OUTCOME"
+
+          if [[ "$FSPERF_PW_OUTCOME" != "success" || "$FSPERF_PW_BASELINE_OUTCOME" != "success" || "$FSPERF_BENCH_OUTCOME" != "success" || "$FSPERF_BENCH_BASELINE_OUTCOME" != "success" ]]; then
+            echo "One or more test steps failed."
+            exit 1
+          fi
 
