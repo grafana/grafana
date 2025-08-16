@@ -241,3 +241,5 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e-playwright/test-plugins/*/dist
+
+/apps/provisioning/cmd/repository-controller/bin/
