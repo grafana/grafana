@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react';
 
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
+import { AdvancedFilters } from '../../../rule-list/filter/types';
 import { RulesFilter } from '../../../search/rulesSearchParser';
-
-import { AdvancedFilters } from './RulesFilter.v2';
 
 export function formAdvancedFiltersToRuleFilter(values: AdvancedFilters): RulesFilter {
   return {
