@@ -290,6 +290,7 @@ func (s *service) start(ctx context.Context) error {
 	groupVersions = append(groupVersions, additionalGroupVersions...)
 
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
+	appinstaller.RegisterOptions(o, s.appInstallers)
 
 	// Register admission plugins from app installers after options are created
 	if err := appinstaller.RegisterAdmissionPlugins(ctx, s.appInstallers, o); err != nil {

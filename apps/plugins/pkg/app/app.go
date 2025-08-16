@@ -2,15 +2,20 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
 
 	pluginsapi "github.com/grafana/grafana/apps/plugins/pkg/apis"
 )
+
+func ToName(id, version string) string {
+	return fmt.Sprintf("%s-%s", id, version)
+}
 
 func New(cfg app.Config) (app.App, error) {
 	managedKinds := []simple.AppManagedKind{}
@@ -22,12 +27,16 @@ func New(cfg app.Config) (app.App, error) {
 		}
 	}
 
+	// set the app config so that clients can use it
+	appConfig = &cfg
+	close(configReady)
+
 	simpleConfig := simple.AppConfig{
 		Name:       "plugins",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
+				logging.FromContext(ctx).Error("informer processing error", "error", err)
 			},
 		},
 		ManagedKinds: managedKinds,
