@@ -49,12 +49,12 @@ interface Pill {
 const SPLIT_RE = /\s*,\s*/;
 const TRANSPARENT = 'rgba(0,0,0,0)';
 
-function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): Pill[] {
+function createPills(pillValues: unknown[], field: Field, theme: GrafanaTheme2): Pill[] {
   return pillValues.map((pill, index) => {
     const bgColor = getPillColor(pill, field, theme);
     const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
     return {
-      value: pill,
+      value: String(pill),
       key: `${pill}-${index}`,
       bgColor,
       color: textColor,
@@ -62,7 +62,7 @@ function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): 
   });
 }
 
-export function inferPills(rawValue: TableCellValue): string[] {
+export function inferPills(rawValue: TableCellValue): unknown[] {
   if (rawValue === '' || rawValue == null) {
     return [];
   }
@@ -81,7 +81,7 @@ export function inferPills(rawValue: TableCellValue): string[] {
 }
 
 // FIXME: this does not yet support "shades of a color"
-function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string {
+function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): string {
   const cfg = field.config;
 
   if (cfg.mappings?.length ?? 0 > 0) {
@@ -101,7 +101,7 @@ function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string
     }
   }
 
-  return getColorByStringHash(colors, value);
+  return getColorByStringHash(colors, String(value));
 }
 
 export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow }) =>

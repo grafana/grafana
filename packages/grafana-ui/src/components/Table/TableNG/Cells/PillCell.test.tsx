@@ -61,6 +61,17 @@ describe('PillCell', () => {
         `
       );
     });
+
+    it('non-string values', () => {
+      expectHTML(
+        render(<PillCell field={fieldWithValues(['[100,200,300]'])} rowIdx={0} theme={theme} />),
+        `
+        <span style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">100</span>
+        <span style="background-color: rgb(222, 218, 247); color: rgb(0, 0, 0);">200</span>
+        <span style="background-color: rgb(249, 217, 249); color: rgb(0, 0, 0);">300</span>
+        `
+      );
+    });
   });
 
   describe('Color by value mappings', () => {
