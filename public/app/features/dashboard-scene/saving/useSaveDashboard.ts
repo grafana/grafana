@@ -41,6 +41,7 @@ export function useSaveDashboard(isCopy = false) {
             copyTags: options.copyTags,
           });
         }
+        debugger;
 
         const result = await saveDashboardRtkQuery({
           dashboard: saveModel,

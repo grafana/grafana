@@ -719,6 +719,7 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
+	displayInDropdownMenu?: bool
 	query:        DataQueryKind
 	regex:        string | *""
 	sort:         VariableSort
@@ -731,6 +732,7 @@ QueryVariableSpec: {
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
+	displayInDropdownMenu?: bool
 }
 
 // Query variable kind
@@ -751,6 +753,7 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	displayInDropdownMenu?: bool
 }
 
 // Text variable kind
@@ -771,6 +774,7 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	displayInDropdownMenu?: bool
 }
 
 // Constant variable kind
@@ -798,6 +802,7 @@ DatasourceVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	displayInDropdownMenu?: bool
 }
 
 // Datasource variable kind
@@ -823,6 +828,7 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	displayInDropdownMenu?: bool
 }
 
 // Interval variable kind
@@ -845,6 +851,7 @@ CustomVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	displayInDropdownMenu?: bool
 }
 
 // Custom variable kind
@@ -867,6 +874,7 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	displayInDropdownMenu?: bool
 }
 
 // Group variable kind
@@ -890,6 +898,7 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	displayInDropdownMenu?: bool
 }
 
 // Define the MetricFindValue type
