@@ -60,26 +60,45 @@ jobs:
       - name: Install Playwright browsers
         run: yarn playwright install chromium --with-deps
 
-      - name: Run Playwright tests
+      - name: Run Playwright tests (fsperfbaseline)
+        id: pw-fsperfbaseline
+        continue-on-error: true
         env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: ./playwright-results.json
-          METRICS_OUTPUT_PATH: ./asset-metrics.txt
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ./fsperfbaseline-pw-results.json
+          METRICS_OUTPUT_PATH: ./fsperfbaseline-metrics.txt
           GRAFANA_URL: https://fsperfbaseline.grafana-dev.net
           GRAFANA_ADMIN_USER: ${{ env.FSPERFBASELINE_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
-        run: yarn e2e:playwright --grep @performance --reporter json # probably written to wrong place
+        run: yarn e2e:playwright --grep @performance --reporter json
       
-      - run: cat ./playwright-results.json
+      - run: cat ./fsperfbaseline-metrics.txt
         if: always()
-      - run: cat ./asset-metrics.txt
+        continue-on-error: true
+
+      - name: Run Playwright tests (fsperf)
+        id: pw-fsperf
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ./fsperf-pw-results.json
+          METRICS_OUTPUT_PATH: ./fsperf-metrics.txt
+          GRAFANA_URL: https://fsperf.grafana-dev.net
+          GRAFANA_ADMIN_USER: ${{ env.FSPERF_USERNAME }}
+          GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERF_PASSWORD }}
+        run: yarn e2e:playwright --grep @performance --reporter json
+
+      - run: cat ./fsperf-metrics.txt
         if: always()
-      
-      - name: Bench report
+        continue-on-error: true
+
+      - name: Bench report (fsperfbaseline)
+        id: bench-fsperfbaseline
+        if: always()
+        continue-on-error: true
         run: |
           docker run \
             --rm \
-            --volume="./playwright-results.json:/tmp/playwright-results.json" \
-            --volume="./asset-metrics.txt:/tmp/asset-metrics.txt" \
+            --volume="./fsperfbaseline-pw-results.json:/pw-results.json" \
+            --volume="./fsperfbaseline-metrics.txt:/metrics.txt" \
             -e PROMETHEUS_URL=$PROMETHEUS_URL \
             -e PROMETHEUS_USER=$PROMETHEUS_USER \
             -e PROMETHEUS_PASSWORD=$PROMETHEUS_TOKEN \
@@ -89,6 +108,47 @@ jobs:
               --report-input playwright \
               --report-output log \
               --prometheus-metrics \
-              --run-metrics-file "/tmp/asset-metrics.txt" \
+              --run-metrics-file "/metrics.txt" \
               --log-level DEBUG \
-              /tmp/playwright-results.json
+              /pw-results.json
+
+      - name: Bench report (fsperf)
+        id: bench-fsperf
+        if: always()
+        continue-on-error: true
+        run: |
+          docker run \
+            --rm \
+            --volume="./fsperf-pw-results.json:/pw-results.json" \
+            --volume="./fsperf-metrics.txt:/metrics.txt" \
+            -e PROMETHEUS_URL=$PROMETHEUS_URL \
+            -e PROMETHEUS_USER=$PROMETHEUS_USER \
+            -e PROMETHEUS_PASSWORD=$PROMETHEUS_TOKEN \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.0 report \
+              --grafana-url "http://fsperf.grafana-dev.net" \
+              --test-suite-name "FrontendPerfTests" \
+              --report-input playwright \
+              --report-output log \
+              --prometheus-metrics \
+              --run-metrics-file "/metrics.txt" \
+              --log-level DEBUG \
+              /pw-results.json
+
+      - name: Check status
+        env:
+          FSPERF_PW_OUTCOME: ${{ steps.pw-fsperf.outcome }}
+          FSPERF_PW_BASELINE_OUTCOME: ${{ steps.pw-fsperfbaseline.outcome }}
+          FSPERF_BENCH_OUTCOME: ${{ steps.bench-fsperf.outcome }}
+          FSPERF_BENCH_BASELINE_OUTCOME: ${{ steps.bench-fsperfbaseline.outcome }}
+
+        run: |
+          echo "FSPERF_PW_OUTCOME: $FSPERF_PW_OUTCOME"
+          echo "FSPERF_PW_BASELINE_OUTCOME: $FSPERF_PW_BASELINE_OUTCOME"
+          echo "FSPERF_BENCH_OUTCOME: $FSPERF_BENCH_OUTCOME"
+          echo "FSPERF_BENCH_BASELINE_OUTCOME: $FSPERF_BENCH_BASELINE_OUTCOME"
+
+          if [[ "$FSPERF_PW_OUTCOME" != "success" || "$FSPERF_PW_BASELINE_OUTCOME" != "success" || "$FSPERF_BENCH_OUTCOME" != "success" || "$FSPERF_BENCH_BASELINE_OUTCOME" != "success" ]]; then
+            echo "One or more test steps failed."
+            exit 1
+          fi
+

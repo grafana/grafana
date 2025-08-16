@@ -21,13 +21,14 @@ export class RequestsRecorder {
 
   #documentHasLoaded = false;
 
-  #responsesInFlight = 0;
+  #requestsInFlight = 0;
 
   #currentRequests: Set<Request> = new Set<Request>();
 
   #inflatedSizeBytesCounter: prom.Counter<'type'>;
   #transferSizeBytesCounter: prom.Counter<'type'>;
   #requestCountCounter: prom.Counter<'type'>;
+  #resolve?: () => void;
 
   constructor(page: Page) {
     this.#page = page;
@@ -61,9 +62,18 @@ export class RequestsRecorder {
     this.#page.on('response', handler);
 
     return () => {
-      console.log('Removing response listener');
       this.#page.off('response', handler);
       this.#page.off('request', reqHandler);
+
+      if (this.#requestsInFlight === 0) {
+        return Promise.resolve();
+      }
+
+      console.log('waiting for', this.#requestsInFlight, 'requests to finish');
+
+      return new Promise<void>((resolve) => {
+        this.#resolve = resolve;
+      });
     };
   }
 
@@ -105,7 +115,7 @@ export class RequestsRecorder {
       return;
     }
 
-    this.#responsesInFlight += 1;
+    this.#requestsInFlight += 1;
 
     // Attempting to get the body of an empty response results in an error, so guess if the response will be empty or not
     const statusCode = response.status();
@@ -120,26 +130,12 @@ export class RequestsRecorder {
 
     this.#transferSizeBytesCounter.inc({ type }, sizes.responseBodySize + sizes.responseHeadersSize);
     this.#requestCountCounter.inc({ type });
-    this.#responsesInFlight -= 1;
-  }
 
-  waitForResponsesToFinish() {
-    console.log('Waiting for all responses to finish');
-    return new Promise<void>((resolve) => {
-      const check = () => {
-        console.log(this.#responsesInFlight, 'responses in flight');
+    this.#requestsInFlight -= 1;
 
-        if (this.#responsesInFlight === 0) {
-          console.log('All responses finished, resolving');
-          resolve();
-        } else {
-          console.log('NOT all responses finished, checking again in 100ms');
-          setTimeout(check, 100);
-        }
-      };
-
-      check();
-    });
+    if (this.#requestsInFlight === 0 && this.#resolve) {
+      this.#resolve();
+    }
   }
 
   getMetrics() {
