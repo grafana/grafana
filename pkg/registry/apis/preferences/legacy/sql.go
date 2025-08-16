@@ -18,18 +18,18 @@ type dashboardStars struct {
 	Dashboards []string
 }
 
-type legacyStarSQL struct {
+type legacySQL struct {
 	db legacysql.LegacyDatabaseProvider
 }
 
 // NOTE: this does not support paging -- lets check if that will be a problem in cloud
-func (s *legacyStarSQL) GetStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
+func (s *legacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
 	sql, err := s.db(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	req := newQueryReq(sql, user, orgId)
+	req := newStarQueryReq(sql, user, orgId)
 
 	q, err := sqltemplate.Execute(sqlStarsQuery, req)
 	if err != nil {

@@ -35,7 +35,7 @@ var (
 func NewStarsStorage(namespacer request.NamespaceMapper, db legacysql.LegacyDatabaseProvider) *starsStorage {
 	return &starsStorage{
 		namespacer: namespacer,
-		sql:        &legacyStarSQL{db: db},
+		sql:        &legacySQL{db: db},
 		tableConverter: utils.NewTableConverter(
 			schema.GroupResource{
 				Group:    preferences.APIGroup,
@@ -44,7 +44,6 @@ func NewStarsStorage(namespacer request.NamespaceMapper, db legacysql.LegacyData
 			utils.TableColumns{
 				Definition: []metav1.TableColumnDefinition{
 					{Name: "Name", Type: "string", Format: "name"},
-					{Name: "Title", Type: "string", Format: "string", Description: "The preferences name"},
 					{Name: "Created At", Type: "date"},
 				},
 				Reader: func(obj any) ([]any, error) {
@@ -54,7 +53,6 @@ func NewStarsStorage(namespacer request.NamespaceMapper, db legacysql.LegacyData
 					}
 					return []any{
 						m.Name,
-						"???",
 						m.CreationTimestamp.UTC().Format(time.RFC3339),
 					}, nil
 				},
@@ -65,7 +63,7 @@ func NewStarsStorage(namespacer request.NamespaceMapper, db legacysql.LegacyData
 type starsStorage struct {
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-	sql            *legacyStarSQL
+	sql            *legacySQL
 }
 
 func (s *starsStorage) New() runtime.Object {
@@ -136,59 +134,6 @@ func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.Get
 	obj := asResource(info.Value, &found[0])
 	return &obj, nil
 }
-
-// func (s *starsStorage) Create(ctx context.Context,
-// 	obj runtime.Object,
-// 	createValidation rest.ValidateObjectFunc,
-// 	options *metav1.CreateOptions,
-// ) (runtime.Object, error) {
-// 	info, err := request.NamespaceInfoFrom(ctx, true)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	stars, ok := obj.(*preferences.Stars)
-// 	if !ok {
-// 		return nil, fmt.Errorf("expected stars")
-// 	}
-
-// 	fmt.Printf("CREATE: %+v // %+v\n", stars, info)
-
-// 	return nil, fmt.Errorf("TODO...")
-// }
-
-// func (s *starsStorage) Update(ctx context.Context,
-// 	name string,
-// 	objInfo rest.UpdatedObjectInfo,
-// 	createValidation rest.ValidateObjectFunc,
-// 	updateValidation rest.ValidateObjectUpdateFunc,
-// 	forceAllowCreate bool,
-// 	options *metav1.UpdateOptions,
-// ) (runtime.Object, bool, error) {
-// 	info, err := request.NamespaceInfoFrom(ctx, true)
-// 	if err != nil {
-// 		return nil, false, err
-// 	}
-
-// 	old, err := s.Get(ctx, name, nil)
-// 	if err != nil {
-// 		return nil, false, err
-// 	}
-
-// 	obj, err := objInfo.UpdatedObject(ctx, old)
-// 	if err != nil {
-// 		return nil, false, err
-// 	}
-
-// 	stars, ok := obj.(*preferences.Stars)
-// 	if !ok {
-// 		return nil, false, fmt.Errorf("expected stars")
-// 	}
-
-// 	fmt.Printf("UPDATE: %+v // %+v\n", stars, info)
-
-// 	return nil, false, fmt.Errorf("TODO...")
-// }
 
 func asResource(ns string, v *dashboardStars) preferences.Stars {
 	return preferences.Stars{

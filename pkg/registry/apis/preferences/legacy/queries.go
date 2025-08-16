@@ -26,11 +26,13 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlStarsQuery = mustTemplate("stars_query.sql")
-	sqlStarsRV    = mustTemplate("stars_rv.sql")
+	sqlStarsQuery       = mustTemplate("sql_stars_query.sql")
+	sqlStarsRV          = mustTemplate("sql_stars_rv.sql")
+	sqlPreferencesQuery = mustTemplate("sql_preferences_query.sql")
+	sqlPreferencesRV    = mustTemplate("sql_preferences_rv.sql")
 )
 
-type sqlQuery struct {
+type starQuery struct {
 	sqltemplate.SQLTemplate
 
 	OrgID   int64 // >= 1 if UserID != ""
@@ -38,18 +40,17 @@ type sqlQuery struct {
 
 	StarTable string
 	UserTable string
-	TeamTable string
 }
 
-func (r sqlQuery) Validate() error {
+func (r starQuery) Validate() error {
 	if r.UserUID != "" && r.OrgID < 1 {
 		return fmt.Errorf("requests with a userid, must include an orgID")
 	}
 	return nil
 }
 
-func newQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int64) sqlQuery {
-	return sqlQuery{
+func newStarQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int64) starQuery {
+	return starQuery{
 		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
 
 		UserUID: user,
@@ -57,6 +58,38 @@ func newQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int64) 
 
 		StarTable: sql.Table("star"),
 		UserTable: sql.Table("user"),
-		TeamTable: sql.Table("team"),
+	}
+}
+
+type preferencesQuery struct {
+	sqltemplate.SQLTemplate
+
+	OrgID   int64 // required
+	UserUID string
+	TeamUID string
+	Teams   []string // also requires user UID
+
+	UserTable        string
+	TeamTable        string
+	PreferencesTable string
+}
+
+func (r preferencesQuery) Validate() error {
+	if r.OrgID < 1 {
+		return fmt.Errorf("must include an orgID")
+	}
+	return nil
+}
+
+func newPreferencesQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int64) preferencesQuery {
+	return preferencesQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+
+		UserUID: user,
+		OrgID:   orgId,
+
+		PreferencesTable: sql.Table("preferences"),
+		UserTable:        sql.Table("user"),
+		TeamTable:        sql.Table("team"),
 	}
 }

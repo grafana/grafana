@@ -17,8 +17,14 @@ func TestStarsQueries(t *testing.T) {
 		},
 	}
 
-	getQuery := func(user string, orgId int64) sqltemplate.SQLTemplate {
-		v := newQueryReq(nodb, user, orgId)
+	getStarQuery := func(user string, orgId int64) sqltemplate.SQLTemplate {
+		v := newStarQueryReq(nodb, user, orgId)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getPreferencesQuery := func(user string, orgId int64) sqltemplate.SQLTemplate {
+		v := newPreferencesQueryReq(nodb, user, orgId)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -30,21 +36,33 @@ func TestStarsQueries(t *testing.T) {
 			sqlStarsQuery: {
 				{
 					Name: "all",
-					Data: getQuery("", 0),
+					Data: getStarQuery("", 0),
 				},
 				{
 					Name: "org",
-					Data: getQuery("", 3),
+					Data: getStarQuery("", 3),
 				},
 				{
 					Name: "user",
-					Data: getQuery("abc", 3),
+					Data: getStarQuery("abc", 3),
 				},
 			},
 			sqlStarsRV: {
 				{
 					Name: "get",
-					Data: getQuery("", 0),
+					Data: getStarQuery("", 0),
+				},
+			},
+			sqlPreferencesQuery: {
+				{
+					Name: "all",
+					Data: getPreferencesQuery("", 1),
+				},
+			},
+			sqlPreferencesRV: {
+				{
+					Name: "get",
+					Data: getPreferencesQuery("", 1),
 				},
 			},
 		},
