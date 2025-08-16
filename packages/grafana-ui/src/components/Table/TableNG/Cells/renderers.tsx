@@ -1,10 +1,10 @@
 import { clsx } from 'clsx';
-import { ReactNode } from 'react';
 
 import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
 import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
-import { TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
+import { TableCellRenderer, TableCellStyleOptions, TableCellStyles } from '../types';
+import { getCellOptions } from '../utils';
 
 import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';
 import { AutoCell, getStyles as getAutoCellStyles, getJsonCellStyles } from './AutoCell';
@@ -15,8 +15,6 @@ import { ImageCell, getStyles as getImageStyles } from './ImageCell';
 import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell';
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
-
-export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
 
 const GAUGE_RENDERER: TableCellRenderer = (props) => (
   <BarGaugeCell
@@ -141,7 +139,10 @@ const STRING_ONLY_RENDERERS = new Set<TableCellOptions['type']>([
 ]);
 
 /** @internal */
-export function getCellRenderer(field: Field, cellOptions: TableCellOptions): TableCellRenderer {
+export function getCellRenderer(
+  field: Field,
+  cellOptions: TableCellOptions = getCellOptions(field)
+): TableCellRenderer {
   const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
   if (cellType === TableCellDisplayMode.Auto) {
     return CELL_RENDERERS[getAutoRendererDisplayMode(field)].renderer;

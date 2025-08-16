@@ -493,6 +493,14 @@ export const versionedComponents = {
             '12.1.0': 'data-testid tableng filter select-all',
           },
         },
+        Tooltip: {
+          Wrapper: {
+            '12.2.0': 'data-testid tableng tooltip wrapper',
+          },
+          Caret: {
+            '12.2.0': 'data-testid tableng tooltip caret',
+          },
+        },
       },
     },
   },
