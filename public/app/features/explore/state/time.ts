@@ -1,9 +1,13 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { isString } from 'lodash';
 
 import {
   AbsoluteTimeRange,
   AppEvents,
+  DateTime,
+  dateTime,
   dateTimeForTimeZone,
+  isDateTime,
   LoadingState,
   RawTimeRange,
   TimeRange,
@@ -179,7 +183,11 @@ export function zoomOut(scale: number): ThunkResult<void> {
 export function copyTimeRangeToClipboard(): ThunkResult<void> {
   return (dispatch, getState) => {
     const range = getState().explore.panes[Object.keys(getState().explore.panes)[0]]!.range.raw;
-    navigator.clipboard.writeText(JSON.stringify(range));
+    const clipboardPayload = {
+      from: isDateTime(range.from) ? range.from.toISOString() : range.from,
+      to: isDateTime(range.to) ? range.to.toISOString() : range.to,
+    };
+    navigator.clipboard.writeText(JSON.stringify(clipboardPayload));
 
     appEvents.emit(AppEvents.alertSuccess, [
       t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
@@ -199,15 +207,20 @@ export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
       return;
     }
 
+    const utcRange = {
+      from: ensureUtcDateTime(range.from),
+      to: ensureUtcDateTime(range.to),
+    };
+
     const panesSynced = getState().explore.syncedTimes;
 
     if (panesSynced) {
-      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
-      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: range }));
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: utcRange }));
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: utcRange }));
       return;
     }
 
-    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
+    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: utcRange }));
   };
 }
 
@@ -254,3 +267,10 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
 
   return state;
 };
+
+function ensureUtcDateTime(value: string | DateTime): string | DateTime {
+  if (isString(value) && value.indexOf('Z') >= 0) {
+    value = dateTime(value).utc();
+  }
+  return value;
+}
