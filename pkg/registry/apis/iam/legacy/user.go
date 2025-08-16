@@ -2,7 +2,6 @@ package legacy
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"text/template"
 	"time"
@@ -48,9 +47,50 @@ func (r getUserInternalIDQuery) Validate() error {
 	return nil // TODO
 }
 
+// getUserInternalID can be used to lookup a user's internal ID using either a transaction or regular session.
+func (s *legacySQLStore) getUserInternalID(ctx context.Context, sess session.SessionQuerier, sql *legacysql.LegacyDatabaseHelper, orgID int64, uid string) (int64, error) {
+	userLookupReq := newGetUserInternalID(sql, &GetUserInternalIDQuery{
+		OrgID: orgID,
+		UID:   uid,
+	})
+
+	userQuery, err := sqltemplate.Execute(sqlQueryUserInternalIDTemplate, userLookupReq)
+	if err != nil {
+		return 0, fmt.Errorf("execute user lookup template: %w", err)
+	}
+
+	rows, err := sess.Query(ctx, userQuery, userLookupReq.GetArgs()...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to check if user exists: %w", err)
+	}
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	var userID int64
+	if !rows.Next() {
+		if err := rows.Err(); err != nil {
+			return 0, fmt.Errorf("failed to read user lookup rows: %w", err)
+		}
+		return 0, fmt.Errorf("user not found")
+	}
+	if err := rows.Scan(&userID); err != nil {
+		return 0, fmt.Errorf("failed to scan user ID: %w", err)
+	}
+
+	// Close rows to avoid connection issues
+	if rows != nil {
+		_ = rows.Close()
+	}
+
+	return userID, nil
+}
+
 func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetUserInternalIDQuery) (*GetUserInternalIDResult, error) {
 	query.OrgID = ns.OrgID
-	if query.OrgID == 0 {
+	if ns.OrgID == 0 {
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
@@ -59,34 +99,13 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 		return nil, err
 	}
 
-	req := newGetUserInternalID(sql, &query)
-	q, err := sqltemplate.Execute(sqlQueryUserInternalIDTemplate, req)
+	userID, err := s.getUserInternalID(ctx, sql.DB.GetSqlxSession(), sql, query.OrgID, query.UID)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUserInternalIDTemplate.Name(), err)
-	}
-
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !rows.Next() {
-		return nil, errors.New("user not found")
-	}
-
-	var id int64
-	if err := rows.Scan(&id); err != nil {
 		return nil, err
 	}
 
 	return &GetUserInternalIDResult{
-		id,
+		ID: userID,
 	}, nil
 }
 
@@ -334,8 +353,26 @@ type DeleteUserResult struct {
 	Success bool
 }
 
+type UpdateUserCommand struct {
+	UID           string
+	Email         string
+	Login         string
+	Name          string
+	OrgID         int64
+	IsAdmin       bool
+	IsDisabled    bool
+	EmailVerified bool
+	IsProvisioned bool
+	Updated       time.Time
+}
+
+type UpdateUserResult struct {
+	User user.User
+}
+
 var sqlCreateUserTemplate = mustTemplate("create_user.sql")
 var sqlCreateOrgUserTemplate = mustTemplate("create_org_user.sql")
+var sqlUpdateUserTemplate = mustTemplate("update_user.sql")
 var sqlDeleteUserTemplate = mustTemplate("delete_user.sql")
 var sqlDeleteOrgUserTemplate = mustTemplate("delete_org_user.sql")
 
@@ -506,6 +543,30 @@ func (r deleteUserQuery) Validate() error {
 	return nil
 }
 
+func newUpdateUser(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateUserCommand) updateUserQuery {
+	return updateUserQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		Command:     cmd,
+	}
+}
+
+type updateUserQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable string
+	Command   *UpdateUserCommand
+}
+
+func (r updateUserQuery) Validate() error {
+	if r.Command.UID == "" {
+		return fmt.Errorf("user UID is required")
+	}
+	if r.Command.OrgID == 0 {
+		return fmt.Errorf("org ID is required")
+	}
+	return nil
+}
+
 // DeleteUser implements LegacyIdentityStore.
 func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) (*DeleteUserResult, error) {
 	if ns.OrgID == 0 {
@@ -532,41 +593,9 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		userLookupReq := newGetUserInternalID(sql, &GetUserInternalIDQuery{
-			OrgID: ns.OrgID,
-			UID:   req.Query.UID,
-		})
-
-		userQuery, err := sqltemplate.Execute(sqlQueryUserInternalIDTemplate, userLookupReq)
+		userID, err := s.getUserInternalID(ctx, st, sql, ns.OrgID, req.Query.UID)
 		if err != nil {
-			return fmt.Errorf("execute user lookup template: %w", err)
-		}
-
-		rows, err := st.Query(ctx, userQuery, userLookupReq.GetArgs()...)
-		if err != nil {
-			return fmt.Errorf("failed to check if user exists: %w", err)
-		}
-		defer func() {
-			if rows != nil {
-				_ = rows.Close()
-			}
-		}()
-
-		var userID int64
-		if !rows.Next() {
-			if err := rows.Err(); err != nil {
-				return fmt.Errorf("failed to read user lookup rows: %w", err)
-			}
-			// User not found, nothing to delete
-			return fmt.Errorf("user not found")
-		}
-		if err := rows.Scan(&userID); err != nil {
-			return fmt.Errorf("failed to scan user ID: %w", err)
-		}
-
-		// Close rows to avoid the bad connection error
-		if rows != nil {
-			_ = rows.Close()
+			return err
 		}
 
 		orgUserReq := deleteOrgUserQuery{
@@ -612,4 +641,80 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	return &DeleteUserResult{Success: true}, nil
+}
+
+// UpdateUser implements LegacyIdentityStore.
+func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserCommand) (*UpdateUserResult, error) {
+	if ns.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	if cmd.UID == "" {
+		return nil, fmt.Errorf("user UID is required")
+	}
+
+	cmd.OrgID = ns.OrgID
+	cmd.Updated = time.Now()
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newUpdateUser(sql, &cmd)
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	var updatedUser user.User
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		userID, err := s.getUserInternalID(ctx, st, sql, ns.OrgID, cmd.UID)
+		if err != nil {
+			return err
+		}
+
+		// Execute the update
+		updateQuery, err := sqltemplate.Execute(sqlUpdateUserTemplate, req)
+		if err != nil {
+			return fmt.Errorf("execute update template %q: %w", sqlUpdateUserTemplate.Name(), err)
+		}
+
+		result, err := st.Exec(ctx, updateQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to update user: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+		}
+
+		if rowsAffected == 0 {
+			return fmt.Errorf("user not found or no changes made")
+		}
+
+		// Build the updated user object
+		updatedUser = user.User{
+			ID:               userID,
+			UID:              cmd.UID,
+			Login:            cmd.Login,
+			Email:            cmd.Email,
+			Name:             cmd.Name,
+			OrgID:            cmd.OrgID,
+			IsAdmin:          cmd.IsAdmin,
+			IsDisabled:       cmd.IsDisabled,
+			EmailVerified:    cmd.EmailVerified,
+			IsProvisioned:    cmd.IsProvisioned,
+			Updated:          cmd.Updated,
+			IsServiceAccount: false, // We're only updating regular users, not service accounts
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UpdateUserResult{User: updatedUser}, nil
 }
