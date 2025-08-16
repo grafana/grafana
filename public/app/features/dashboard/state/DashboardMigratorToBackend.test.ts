@@ -73,6 +73,24 @@ const dataSources = {
     uid: MIXED_DATASOURCE_NAME,
     isDefault: false,
   }),
+  influx: mockDataSource({
+    name: 'InfluxDB Test Datasource',
+    uid: 'influx-uid',
+    type: 'influxdb',
+    isDefault: false,
+  }),
+  cloudwatch: mockDataSource({
+    name: 'CloudWatch Test Datasource',
+    uid: 'cloudwatch-uid',
+    type: 'cloudwatch',
+    isDefault: false,
+  }),
+  grafana: mockDataSource({
+    name: '-- Grafana --',
+    uid: '-- Grafana --',
+    type: 'grafana',
+    isDefault: false,
+  }),
 };
 
 describe('Backend / Frontend result comparison', () => {

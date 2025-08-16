@@ -446,7 +446,7 @@ describe('ResponseTransformers', () => {
           vizConfig: {
             kind: 'VizConfig',
             group: 'timeseries',
-            version: undefined,
+            version: '',
             spec: {
               fieldConfig: {
                 defaults: {},
@@ -478,15 +478,7 @@ describe('ResponseTransformers', () => {
                   },
                 },
               ],
-              queryOptions: {
-                cacheTimeout: undefined,
-                hideTimeOverride: undefined,
-                interval: undefined,
-                maxDataPoints: undefined,
-                queryCachingTTL: undefined,
-                timeFrom: undefined,
-                timeShift: undefined,
-              },
+              queryOptions: {},
               transformations: [],
             },
           },

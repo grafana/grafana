@@ -24,6 +24,9 @@ import (
 )
 
 func TestConversionMatrixExist(t *testing.T) {
+	// Initialize the converter with a test data source provider
+	Initialize(testutil.GetTestDataSourceProvider())
+
 	// Initialize the migrator with a test data source provider
 	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
@@ -75,6 +78,9 @@ func TestDeepCopyValid(t *testing.T) {
 }
 
 func TestDashboardConversionToAllVersions(t *testing.T) {
+	// Initialize the converter with a test data source provider
+	Initialize(testutil.GetTestDataSourceProvider())
+
 	// Initialize the migrator with a test data source provider
 	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
@@ -113,6 +119,17 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			parts := strings.Split(apiVersion, "/")
 			require.Equal(t, 2, len(parts), "apiVersion should be in format 'group/version'")
 			sourceVersion := parts[1]
+
+			// Validate that the input file starts with the apiVersion declared in the object
+			expectedPrefix := fmt.Sprintf("%s.", sourceVersion)
+			if !strings.HasPrefix(file.Name(), expectedPrefix) {
+				t.Fatalf(
+					"Input file %s does not match its declared apiVersion %s. "+
+						"Expected filename to start with \"%s\". "+
+						"Example: if apiVersion is \"dashboard.grafana.app/v1beta1\", "+
+						"filename should start with \"v1beta1.<descriptive-name>.json\"",
+					file.Name(), apiVersion, expectedPrefix)
+			}
 
 			// Create source object based on version
 			var sourceDash v1.Object
