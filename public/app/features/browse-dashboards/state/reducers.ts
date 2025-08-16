@@ -145,9 +145,9 @@ export function setItemSelectionState(
 
 export function setAllSelection(
   state: BrowseDashboardsState,
-  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined }>
+  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeUIDs?: string[] }>
 ) {
-  const { isSelected, folderUID: folderUIDArg } = action.payload;
+  const { isSelected, folderUID: folderUIDArg, excludeUIDs } = action.payload;
 
   // If we're in the folder view for sharedwith me (currently not supported)
   // bail and don't select anything
@@ -184,8 +184,8 @@ export function setAllSelection(
           continue;
         }
 
-        // Skip all provisioned resources during "select all" on root level
-        if (child.managedBy === ManagerKind.Repo && !child.parentUID) {
+        // Skip items in the exclude list
+        if (excludeUIDs?.includes(child.uid)) {
           continue;
         }
 
