@@ -91,6 +91,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 
   // Use the repository-type and resource-type aware provisioned request handler
   useProvisionedRequestHandler<FolderDTO>({
+    folderUID: folder?.metadata.name,
     request,
     workflow,
     repository,

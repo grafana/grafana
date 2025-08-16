@@ -7,6 +7,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoInvalidStateBanner } from 'app/features/browse-dashboards/components/BulkActions/RepoInvalidStateBanner';
+import { getFolderURL } from 'app/features/browse-dashboards/components/utils';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
@@ -78,8 +79,7 @@ export function DeleteProvisionedDashboardForm({
   const onWriteSuccess = () => {
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
-    // TODO reset search state instead
-    window.location.href = '/dashboards';
+    window.location.href = getFolderURL(defaultValues.folder.uid || '');
   };
 
   const onBranchSuccess = (path: string, info: ProvisionedOperationInfo, urls?: Record<string, string>) => {

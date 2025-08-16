@@ -13,9 +13,10 @@ export interface FinishedJobProps {
   repositoryName: string;
   jobType: 'sync' | 'delete' | 'move';
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onSuccess?: () => void;
 }
 
-export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange }: FinishedJobProps) {
+export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange, onSuccess }: FinishedJobProps) {
   const hasRetried = useRef(false);
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
@@ -54,6 +55,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
             title: t('provisioning.job-status.status.title-success-running-job', 'Job completed successfully'),
           },
         });
+        onSuccess?.();
       } else if (state === 'warning') {
         onStatusChange?.({
           status: 'warning',
@@ -70,7 +72,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
         clearTimeout(timeoutId);
       }
     };
-  }, [finishedQuery, job, onStatusChange]);
+  }, [finishedQuery, job, onStatusChange, onSuccess]);
 
   if (retryFailed) {
     onStatusChange?.({

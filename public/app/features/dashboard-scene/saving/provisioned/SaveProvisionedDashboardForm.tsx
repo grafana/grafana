@@ -114,6 +114,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   useProvisionedRequestHandler<Dashboard>({
+    folderUID: defaultValues.folder?.uid,
     request,
     workflow,
     resourceType: 'dashboard',
