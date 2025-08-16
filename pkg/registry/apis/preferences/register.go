@@ -23,30 +23,31 @@ import (
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 
 type APIBuilder struct {
-	service    pref.Service
-	calculator *calculator
-
 	namespacer request.NamespaceMapper
-	db         legacysql.LegacyDatabaseProvider
+	sql        *legacy.LegacySQL
+
+	prefs      pref.Service
+	calculator *calculator // joins all preferences
 }
 
 func RegisterAPIService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	apiregistration builder.APIRegistrar,
 	db db.DB,
-	service pref.Service,
+	prefs pref.Service,
+	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil
 	}
 
+	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		service:    service,
+		prefs:      prefs, // for writing
 		namespacer: request.GetNamespaceMapper(cfg),
-		db:         legacysql.NewDatabaseProvider(db),
-		calculator: newCalculator(service, cfg),
+		sql:        sql,
+		calculator: newCalculator(cfg, sql),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -76,7 +77,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage := map[string]rest.Storage{}
 
 	stars := preferences.StarsResourceInfo
-	storage[stars.StoragePath()] = legacy.NewStarsStorage(b.namespacer, b.db)
+	storage[stars.StoragePath()] = legacy.NewStarsStorage(b.namespacer, b.sql)
 
 	prefs := preferences.PreferencesResourceInfo
 	// Unified storage
@@ -84,7 +85,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// if err != nil {
 	// 	return err
 	// }
-	storage[prefs.StoragePath()] = NewLegacyStorage(b.service)
+	storage[prefs.StoragePath()] = legacy.NewPreferencesStorage(b.namespacer, b.sql)
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil

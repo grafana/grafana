@@ -30,6 +30,7 @@ var (
 	sqlStarsRV          = mustTemplate("sql_stars_rv.sql")
 	sqlPreferencesQuery = mustTemplate("sql_preferences_query.sql")
 	sqlPreferencesRV    = mustTemplate("sql_preferences_rv.sql")
+	sqlTeams            = mustTemplate("sql_teams.sql")
 )
 
 type starQuery struct {
@@ -64,10 +65,10 @@ func newStarQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int
 type preferencesQuery struct {
 	sqltemplate.SQLTemplate
 
-	OrgID   int64 // required
-	UserUID string
-	TeamUID string
-	Teams   []string // also requires user UID
+	OrgID     int64 // required
+	UserUID   string
+	UserTeams []string // also requires user UID
+	TeamUID   string
 
 	UserTable        string
 	TeamTable        string
@@ -78,18 +79,53 @@ func (r preferencesQuery) Validate() error {
 	if r.OrgID < 1 {
 		return fmt.Errorf("must include an orgID")
 	}
+	if len(r.UserTeams) > 0 && r.UserUID == "" {
+		return fmt.Errorf("user required when filtering by a set of teams")
+	}
 	return nil
 }
 
-func newPreferencesQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int64) preferencesQuery {
+func newPreferencesQueryReq(sql *legacysql.LegacyDatabaseHelper, orgId int64) preferencesQuery {
 	return preferencesQuery{
 		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
 
-		UserUID: user,
-		OrgID:   orgId,
+		OrgID: orgId,
 
 		PreferencesTable: sql.Table("preferences"),
 		UserTable:        sql.Table("user"),
 		TeamTable:        sql.Table("team"),
+	}
+}
+
+type teamQuery struct {
+	sqltemplate.SQLTemplate
+
+	OrgID   int64
+	UserUID string
+	IsAdmin bool
+
+	TeamMemberTable string
+	TeamTable       string
+	UserTable       string
+}
+
+func (r teamQuery) Validate() error {
+	if r.UserUID != "" && r.OrgID < 1 {
+		return fmt.Errorf("requests with a userid, must include an orgID")
+	}
+	return nil
+}
+
+func newTeamsQueryReq(sql *legacysql.LegacyDatabaseHelper, orgId int64, user string, admin bool) teamQuery {
+	return teamQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+
+		OrgID:   orgId,
+		UserUID: user,
+		IsAdmin: admin,
+
+		TeamMemberTable: sql.Table("team_member"),
+		TeamTable:       sql.Table("team"),
+		UserTable:       sql.Table("user"),
 	}
 }

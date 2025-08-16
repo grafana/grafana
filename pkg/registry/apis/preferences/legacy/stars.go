@@ -10,15 +10,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var (
@@ -32,38 +29,18 @@ var (
 	// _ rest.GracefulDeleter      = (*starsStorage)(nil)
 )
 
-func NewStarsStorage(namespacer request.NamespaceMapper, db legacysql.LegacyDatabaseProvider) *starsStorage {
+func NewStarsStorage(namespacer request.NamespaceMapper, sql *LegacySQL) *starsStorage {
 	return &starsStorage{
-		namespacer: namespacer,
-		sql:        &legacySQL{db: db},
-		tableConverter: utils.NewTableConverter(
-			schema.GroupResource{
-				Group:    preferences.APIGroup,
-				Resource: preferences.StarsKind().Plural(),
-			},
-			utils.TableColumns{
-				Definition: []metav1.TableColumnDefinition{
-					{Name: "Name", Type: "string", Format: "name"},
-					{Name: "Created At", Type: "date"},
-				},
-				Reader: func(obj any) ([]any, error) {
-					m, ok := obj.(*preferences.Stars)
-					if !ok {
-						return nil, fmt.Errorf("expected preferences")
-					}
-					return []any{
-						m.Name,
-						m.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				},
-			}),
+		namespacer:     namespacer,
+		sql:            sql,
+		tableConverter: preferences.StarsResourceInfo.TableConverter(),
 	}
 }
 
 type starsStorage struct {
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-	sql            *legacySQL
+	sql            *LegacySQL
 }
 
 func (s *starsStorage) New() runtime.Object {
@@ -105,7 +82,7 @@ func (s *starsStorage) List(ctx context.Context, options *internalversion.ListOp
 		return nil, err
 	}
 	for _, v := range found {
-		list.Items = append(list.Items, asResource(s.namespacer(v.OrgID), &v))
+		list.Items = append(list.Items, asStarsResource(s.namespacer(v.OrgID), &v))
 	}
 	if rv > 0 {
 		list.ResourceVersion = strconv.FormatInt(rv, 10)
@@ -131,11 +108,11 @@ func (s *starsStorage) Get(ctx context.Context, name string, options *metav1.Get
 	if err != nil || len(found) == 0 {
 		return nil, err
 	}
-	obj := asResource(info.Value, &found[0])
+	obj := asStarsResource(info.Value, &found[0])
 	return &obj, nil
 }
 
-func asResource(ns string, v *dashboardStars) preferences.Stars {
+func asStarsResource(ns string, v *dashboardStars) preferences.Stars {
 	return preferences.Stars{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              fmt.Sprintf("user:%s", v.UserUID),

@@ -1,59 +1,61 @@
-package preferences
+package utils_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 )
 
 func TestLegacyAuthorizer(t *testing.T) {
 	tests := []struct {
 		name   string
 		input  string
-		output OwnerReference
+		output utils.OwnerReference
 		found  bool
 	}{
 		{
 			name:   "invalid",
 			input:  "xxx:yyy",
-			output: OwnerReference{},
+			output: utils.OwnerReference{},
 			found:  false,
 		},
 		{
 			name:   "with user",
 			input:  "user:a",
-			output: OwnerReference{Owner: UserResourceOwner, Name: "a"},
+			output: utils.OwnerReference{Owner: utils.UserResourceOwner, Name: "a"},
 			found:  true,
 		},
 		{
 			name:   "missing user",
 			input:  "user:",
-			output: OwnerReference{},
+			output: utils.OwnerReference{},
 			found:  false,
 		},
 		{
 			name:   "with team",
 			input:  "team:b",
-			output: OwnerReference{Owner: TeamResourceOwner, Name: "b"},
+			output: utils.OwnerReference{Owner: utils.TeamResourceOwner, Name: "b"},
 			found:  true,
 		},
 		{
 			name:   "missing team",
 			input:  "team:",
-			output: OwnerReference{},
+			output: utils.OwnerReference{},
 			found:  false,
 		},
 		{
 			name:   "for namespace",
 			input:  "namespace",
-			output: OwnerReference{Owner: NamespaceResourceOwner},
+			output: utils.OwnerReference{Owner: utils.NamespaceResourceOwner},
 			found:  true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			output, found := ParseOwnerFromName(tt.input)
+			output, found := utils.ParseOwnerFromName(tt.input)
 			require.Equal(t, tt.output, output)
 			require.Equal(t, tt.found, found)
 			if tt.found {

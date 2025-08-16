@@ -10,4 +10,13 @@ SELECT p.id, p.json_data,
  LEFT JOIN {{ .Ident .UserTable }} as u ON p.user_id = u.id
  LEFT JOIN {{ .Ident .TeamTable }} as t ON p.team_id = t.id
 WHERE p.org_id = {{ .Arg .OrgID }} 
-ORDER BY p.id asc;
+{{ if .TeamUID }}
+  AND t.uid = {{ .Arg .TeamUID }}
+{{ else if .UserUID }}
+  AND (u.uid = {{ .Arg .UserUID }}
+  {{ if .UserTeams }}
+    OR t.uid IN ({{ .ArgList .UserTeams }})
+  {{ end }}
+  )
+{{ end }}
+ORDER BY p.user_id asc, p.team_id asc; -- matches existing storage order

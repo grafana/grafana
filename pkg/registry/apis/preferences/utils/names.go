@@ -1,4 +1,4 @@
-package preferences
+package utils
 
 import "strings"
 

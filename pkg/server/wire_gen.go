@@ -805,7 +805,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, apiserverService, sqlStore, prefService)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, apiserverService)
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
@@ -1385,7 +1385,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, apiserverService, sqlStore, prefService)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, apiserverService)
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)

@@ -17,14 +17,21 @@ func TestStarsQueries(t *testing.T) {
 		},
 	}
 
-	getStarQuery := func(user string, orgId int64) sqltemplate.SQLTemplate {
+	getStarQuery := func(orgId int64, user string) sqltemplate.SQLTemplate {
 		v := newStarQueryReq(nodb, user, orgId)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
 
-	getPreferencesQuery := func(user string, orgId int64) sqltemplate.SQLTemplate {
-		v := newPreferencesQueryReq(nodb, user, orgId)
+	getPreferencesQuery := func(orgId int64, cb func(q *preferencesQuery)) sqltemplate.SQLTemplate {
+		v := newPreferencesQueryReq(nodb, orgId)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		cb(&v)
+		return &v
+	}
+
+	getTeamQuery := func(orgId int64, user string, admin bool) sqltemplate.SQLTemplate {
+		v := newTeamsQueryReq(nodb, orgId, user, admin)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -36,33 +43,62 @@ func TestStarsQueries(t *testing.T) {
 			sqlStarsQuery: {
 				{
 					Name: "all",
-					Data: getStarQuery("", 0),
+					Data: getStarQuery(0, ""),
 				},
 				{
 					Name: "org",
-					Data: getStarQuery("", 3),
+					Data: getStarQuery(3, ""),
 				},
 				{
 					Name: "user",
-					Data: getStarQuery("abc", 3),
+					Data: getStarQuery(3, "abc"),
 				},
 			},
 			sqlStarsRV: {
 				{
 					Name: "get",
-					Data: getStarQuery("", 0),
+					Data: getStarQuery(0, ""),
 				},
 			},
 			sqlPreferencesQuery: {
 				{
 					Name: "all",
-					Data: getPreferencesQuery("", 1),
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {}),
+				},
+				{
+					Name: "current", // user + user teams
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.UserUID = "uuu"
+						q.UserTeams = []string{"a", "b", "c"}
+					}),
+				},
+				{
+					Name: "user",
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.UserUID = "uuu"
+					}),
+				},
+				{
+					Name: "team",
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.TeamUID = "ttt"
+					}),
 				},
 			},
 			sqlPreferencesRV: {
 				{
 					Name: "get",
-					Data: getPreferencesQuery("", 1),
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {}),
+				},
+			},
+			sqlTeams: {
+				{
+					Name: "members",
+					Data: getTeamQuery(1, "uuu", false),
+				},
+				{
+					Name: "admin",
+					Data: getTeamQuery(1, "uuu", true),
 				},
 			},
 		},

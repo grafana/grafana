@@ -1,0 +1,190 @@
+package legacy
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
+
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	utilsorig "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+)
+
+var (
+	_ rest.Scoper               = (*preferenceStorage)(nil)
+	_ rest.SingularNameProvider = (*preferenceStorage)(nil)
+	_ rest.Getter               = (*preferenceStorage)(nil)
+	_ rest.Lister               = (*preferenceStorage)(nil)
+	_ rest.Storage              = (*preferenceStorage)(nil)
+	// _ rest.Creater              = (*preferenceStorage)(nil)
+	// _ rest.Updater              = (*preferenceStorage)(nil)
+	// _ rest.GracefulDeleter      = (*preferenceStorage)(nil)
+)
+
+func NewPreferencesStorage(namespacer request.NamespaceMapper, sql *LegacySQL) *preferenceStorage {
+	return &preferenceStorage{
+		namespacer:     namespacer,
+		sql:            sql,
+		tableConverter: preferences.PreferencesResourceInfo.TableConverter(),
+	}
+}
+
+type preferenceStorage struct {
+	namespacer     request.NamespaceMapper
+	tableConverter rest.TableConvertor
+	sql            *LegacySQL
+}
+
+func (s *preferenceStorage) New() runtime.Object {
+	return preferences.StarsKind().ZeroValue()
+}
+
+func (s *preferenceStorage) Destroy() {}
+
+func (s *preferenceStorage) NamespaceScoped() bool {
+	return true // namespace == org
+}
+
+func (s *preferenceStorage) GetSingularName() string {
+	return strings.ToLower(preferences.StarsKind().Kind())
+}
+
+func (s *preferenceStorage) NewList() runtime.Object {
+	return preferences.StarsKind().ZeroListValue()
+}
+
+func (s *preferenceStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
+}
+
+func (s *preferenceStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ns := k8srequest.NamespaceValue(ctx)
+	userID := user.GetUID()
+	if user.GetIsGrafanaAdmin() {
+		userID = "" // everything in the namespace
+	}
+	return s.sql.ListPreferences(ctx, ns, userID)
+}
+
+func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	owner, ok := utils.ParseOwnerFromName(name)
+	if !ok {
+		return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
+	}
+
+	found, _, err := s.sql.listPreferences(ctx, ns.OrgID, func(req *preferencesQuery) (bool, error) {
+		switch owner.Owner {
+		case utils.UserResourceOwner:
+			req.UserUID = owner.Name
+			return false, nil
+		case utils.TeamResourceOwner:
+			req.TeamUID = owner.Name
+			return false, nil
+		}
+		return false, fmt.Errorf("unsupported name")
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(found) == 1 {
+		v := asPreferencesResource(ns.Value, &found[0])
+		return &v, nil
+	}
+	return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
+}
+
+func asPreferencesResource(ns string, p *preferenceModel) preferences.Preferences {
+	owner := utils.OwnerReference{}
+	if p.TeamUID != "" {
+		owner.Owner = utils.TeamResourceOwner
+		owner.Name = p.TeamUID
+	} else {
+		owner.Owner = utils.UserResourceOwner
+		owner.Name = p.UserUID
+	}
+	obj := preferences.Preferences{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              owner.AsName(),
+			Namespace:         ns,
+			ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
+			CreationTimestamp: metav1.NewTime(p.Created.UTC()),
+		},
+		Spec: preferences.PreferencesSpec{
+			Theme:            asPointer(p.Theme),
+			HomeDashboardUID: asPointer(p.HomeDashboardUID),
+			Timezone:         asPointer(p.Timezone),
+			WeekStart:        asPointer(p.WeekStart),
+		},
+	}
+
+	if !p.Created.Equal(p.Updated) {
+		obj.ObjectMeta.Annotations = map[string]string{
+			utilsorig.AnnoKeyUpdatedTimestamp: p.Updated.UTC().Format(time.RFC3339),
+		}
+	}
+
+	if p.JSONData != nil {
+		obj.Spec.Language = asPointer(p.JSONData.Language)
+		obj.Spec.RegionalFormat = asPointer(p.JSONData.RegionalFormat)
+
+		if p.JSONData.QueryHistory.HomeTab != "" {
+			obj.Spec.QueryHistory = &preferences.PreferencesQueryHistoryPreference{
+				HomeTab: &p.JSONData.QueryHistory.HomeTab,
+			}
+		}
+
+		if len(p.JSONData.CookiePreferences) > 0 {
+			// Analytics   interface{} `json:"analytics,omitempty"`
+			// Performance interface{} `json:"performance,omitempty"`
+			// Functional  interface{} `json:"functional,omitempty"`
+			obj.Spec.CookiePreferences = preferences.NewPreferencesCookiePreferences()
+			v, ok := p.JSONData.CookiePreferences["analytics"]
+			if ok {
+				obj.Spec.CookiePreferences.Analytics = v
+			}
+			v, ok = p.JSONData.CookiePreferences["performance"]
+			if ok {
+				obj.Spec.CookiePreferences.Performance = v
+			}
+			v, ok = p.JSONData.CookiePreferences["functional"]
+			if ok {
+				obj.Spec.CookiePreferences.Functional = v
+			}
+		}
+
+		if len(p.JSONData.Navbar.BookmarkUrls) > 0 {
+			obj.Spec.Navbar = &preferences.PreferencesNavbarPreference{
+				BookmarkUrls: p.JSONData.Navbar.BookmarkUrls,
+			}
+		}
+	}
+
+	return obj
+}
+
+func asPointer(v string) *string {
+	if v == "" {
+		return nil
+	}
+	return &v
+}

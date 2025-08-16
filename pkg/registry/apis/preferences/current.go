@@ -6,28 +6,27 @@ import (
 
 	"dario.cat/mergo"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 type calculator struct {
-	service  pref.Service
 	defaults preferences.PreferencesSpec
-	store    *legacyStorage
+	sql      *legacy.LegacySQL
 }
 
-func newCalculator(service pref.Service, cfg *setting.Cfg) *calculator {
+func newCalculator(cfg *setting.Cfg, sql *legacy.LegacySQL) *calculator {
 	return &calculator{
-		service: service,
-		store:   NewLegacyStorage(service),
+		sql: sql,
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
@@ -48,8 +47,9 @@ func (s *calculator) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *bui
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
+							OperationId: "currentPreferences",
 							Tags:        []string{"Preferences"},
-							Description: "Get preferences for requester",
+							Description: "Get preferences for requester.  This combines the user preferences with the team and global defaults",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -97,7 +97,7 @@ func (s *calculator) Current(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ns := user.GetNamespace()
+	ns := request.NamespaceValue(ctx)
 	p := preferences.Preferences{
 		TypeMeta: preferences.PreferencesResourceInfo.TypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
@@ -107,7 +107,7 @@ func (s *calculator) Current(w http.ResponseWriter, r *http.Request) {
 		Spec: s.defaults,
 	}
 
-	list, err := s.store.fetchRelevantValues(ctx, user)
+	list, err := s.sql.ListPreferences(ctx, ns, user.GetUID())
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
