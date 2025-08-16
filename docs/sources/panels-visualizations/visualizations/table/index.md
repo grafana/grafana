@@ -442,6 +442,62 @@ Configure the API call with the following options:
 | Payload | Enter the body of the API call. |
 <!-- prettier-ignore-end -->
 
+#### Tooltip from field
+
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+
+When you toggle the switch on, you can select from a drop-down list any of the fields in the table to be used as the source of the tooltip content.
+All table fields are included in the drop-down list, whether visible or hidden.
+
+When a tooltip from a field has been added to a cell, a chip is displayed in the top-right or top-left corner of the cell:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-chip-1-v12.2.png" max-width="500px" alt="Tooltip chip" >}}
+
+Hover your mouse over the chip to display the tooltip.
+
+When you toggle on the switch, the **Tooltip placement** option, which controls where the tooltip box opens upon hover, is also displayed.
+Select one of the following options: **Auto**, **Top**, **Right**, **Bottom**, and **Left**.
+
+The content of the tooltip is determined by the values of the source field and can't be directly edited.
+However, you can affect the display of the value using overrides like value mappings, as shown in the [Example: Tooltip from field with value mappings](#example-tooltip-from-field-with-value-mappings) section.
+
+While you can turn on this option under **Cell options**, and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
+This is demonstrated in the example in the following section.
+
+##### Example: Tooltip from field using overrides
+
+The following table has five visible fields (columns) as well as a hidden field called "Info":
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-table-1-v12.2.png" max-width="750px" alt="Table that includes a hidden column" >}}
+
+- The "Info" field is hidden using the **Table > Hide in table** override property.
+- The following overrides have been applied to the "Short text" field:
+
+  - The values from the "Info" field are used as tooltip text for the "Short text" cells using the **Cell options > Tooltip from field** override property.
+  - The **Cell options > Tooltip placement** override property is set to control the placement of the tooltip.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-override-2-v12.2.png" max-width="300px" alt="Override to use the Info field values as tooltips for the Short text column" >}}
+
+Now, when you hover the cursor over the chip in the "Short text" column, the corresponding values from the "Info" column appear in the tooltip:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-v12.2.png" max-width="750px" alt="Info field value in the tooltip of the Short text cell upon hover" >}}
+
+##### Example: Tooltip from field with value mappings
+
+While the content of the tooltip is determined by the values of the source field and can't be directly edited, you can use field overrides on the source field to manipulate the display of that value.
+
+For example, if the "Info" column is being used as the source field for the tooltip values, you could set up a value mapping.
+In this case, the value "up" is mapped to the word "Good":
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-value-map-v12.2.png" max-width="750px" alt="Info field value up being mapped to the value Good in an override" >}}
+
+Now, when you hover the cursor over the chip in the "Short text" cell, the mapped value appears in the tooltip:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-tooltip-on-hover-2-v12.2.png" max-width="750px" alt="Info field mapped to a new value in the tooltip of the Short text cell upon hover" >}}
+
+You can use all field overrides to affect the display of the tooltip.
+For example, the **Table > Column width** or **Cell options > Cell type** overrides can change the cell width or visual display of the data.
+
 ### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
