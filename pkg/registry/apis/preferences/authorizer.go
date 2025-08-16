@@ -17,7 +17,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
-			if !attr.IsResourceRequest() || user.GetIsGrafanaAdmin() || "" == attr.GetName() {
+			if !attr.IsResourceRequest() || user.GetIsGrafanaAdmin() || attr.GetName() == "" {
 				return authorizer.DecisionAllow, "", nil
 			}
 
@@ -45,6 +45,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 				}
 				return authorizer.DecisionDeny, "not a team member", nil
+
+			default:
 			}
 
 			return authorizer.DecisionDeny, "invalid name", nil

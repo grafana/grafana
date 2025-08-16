@@ -10,12 +10,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	utilsorig "github.com/grafana/grafana/pkg/apimachinery/utils"
+	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
@@ -72,7 +72,7 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 	if err != nil {
 		return nil, err
 	}
-	ns := k8srequest.NamespaceValue(ctx)
+	ns := requestK8s.NamespaceValue(ctx)
 	userID := user.GetUID()
 	if user.GetIsGrafanaAdmin() {
 		userID = "" // everything in the namespace
@@ -137,8 +137,8 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 	}
 
 	if !p.Created.Equal(p.Updated) {
-		obj.ObjectMeta.Annotations = map[string]string{
-			utilsorig.AnnoKeyUpdatedTimestamp: p.Updated.UTC().Format(time.RFC3339),
+		obj.Annotations = map[string]string{
+			utilsOrig.AnnoKeyUpdatedTimestamp: p.Updated.UTC().Format(time.RFC3339),
 		}
 	}
 

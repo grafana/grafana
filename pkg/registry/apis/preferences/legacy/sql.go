@@ -180,6 +180,7 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 	}
 
 	if needsRV {
+		fmt.Printf("TODO... get RV\n")
 		// req.Reset()
 		// q, err = sqltemplate.Execute(sqlPreferencesRV, req)
 		// if err != nil {
