@@ -14,11 +14,41 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
+func BuildArtifacts(ctx context.Context, parallel int64, log *slog.Logger, artifacts []*pipeline.Artifact, opts *pipeline.ArtifactContainerOpts) error {
+	wg := &errgroup.Group{}
+	sm := semaphore.NewWeighted(parallel)
+
+	// Build each artifact and their dependencies, essentially constructing a dag using Dagger.
+	for _, v := range artifacts {
+		filename, err := v.Handler.Filename(ctx)
+		if err != nil {
+			return fmt.Errorf("error processing artifact string '%s': %w", v.ArtifactString, err)
+		}
+		log := log.With("filename", filename, "artifact", v.ArtifactString)
+		log.Info("Adding artifact to dag...")
+
+		wg.Go(func() error {
+			if err := sm.Acquire(ctx, 1); err != nil {
+				return err
+			}
+			defer sm.Release(1)
+			if err := BuildArtifact(ctx, log, parallel, v, opts); err != nil {
+				return err
+			}
+
+			return nil
+		})
+
+		log.Info("Done adding artifact")
+	}
+
+	return wg.Wait()
+}
+
 func Action(r Registerer, c *cli.Context) error {
 	// ArtifactStrings represent an artifact with a list of boolean options, like
 	// targz:linux/amd64:enterprise
 	artifactStrings := c.StringSlice("artifacts")
-
 	logLevel := slog.LevelInfo
 	if c.Bool("verbose") {
 		logLevel = slog.LevelDebug
@@ -78,25 +108,16 @@ func Action(r Registerer, c *cli.Context) error {
 	store := pipeline.NewArtifactStore(log)
 
 	opts := &pipeline.ArtifactContainerOpts{
-		Client:   client,
-		Log:      log,
-		State:    state,
-		Platform: platform,
-		Store:    store,
+		Client:     client,
+		Log:        log,
+		State:      state,
+		Platform:   platform,
+		Store:      store,
+		CLIContext: c,
 	}
 
-	// Build each artifact and their dependencies, essentially constructing a dag using Dagger.
-	for i, v := range artifacts {
-		filename, err := v.Handler.Filename(ctx)
-		if err != nil {
-			return fmt.Errorf("error processing artifact string '%s': %w", artifactStrings[i], err)
-		}
-		log := log.With("filename", filename, "artifact", v.ArtifactString)
-		log.Info("Adding artifact to dag...")
-		if err := BuildArtifact(ctx, log, v, opts); err != nil {
-			return err
-		}
-		log.Info("Done adding artifact")
+	if err := BuildArtifacts(ctx, parallel, log, artifacts, opts); err != nil {
+		return err
 	}
 
 	wg := &errgroup.Group{}
@@ -118,7 +139,7 @@ func Action(r Registerer, c *cli.Context) error {
 	return wg.Wait()
 }
 
-func BuildArtifact(ctx context.Context, log *slog.Logger, a *pipeline.Artifact, opts *pipeline.ArtifactContainerOpts) error {
+func BuildArtifact(ctx context.Context, log *slog.Logger, parallel int64, a *pipeline.Artifact, opts *pipeline.ArtifactContainerOpts) error {
 	store := opts.Store
 	exists, err := store.Exists(ctx, a)
 	if err != nil {
@@ -136,15 +157,8 @@ func BuildArtifact(ctx context.Context, log *slog.Logger, a *pipeline.Artifact, 
 
 	// Get the files / directories that the dependencies define,
 	// and store the result for re-use.
-	for _, v := range dependencies {
-		f, err := v.Handler.Filename(ctx)
-		if err != nil {
-			return err
-		}
-		log := log.With("artifact", v.ArtifactString, "filename", f)
-		if err := BuildArtifact(ctx, log, v, opts); err != nil {
-			return err
-		}
+	if err := BuildArtifacts(ctx, parallel, log, dependencies, opts); err != nil {
+		return err
 	}
 
 	switch a.Type {

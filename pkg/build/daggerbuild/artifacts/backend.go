@@ -45,7 +45,7 @@ type Backend struct {
 	ViceroyVersion string
 
 	GoBuildCache *dagger.CacheVolume
-	GoModCache   *dagger.CacheVolume
+	GoModDir     *pipeline.Artifact
 	// Version is embedded in the binary at build-time
 	Version string
 }
@@ -57,16 +57,15 @@ func (b *Backend) Builder(ctx context.Context, opts *pipeline.ArtifactContainerO
 		b.Distribution,
 		b.BuildOpts,
 		opts.Platform,
-		b.Src,
 		b.GoVersion,
 		b.ViceroyVersion,
-		b.GoBuildCache,
-		b.GoModCache,
 	)
 }
 
 func (b *Backend) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
-	return nil, nil
+	return []*pipeline.Artifact{
+		b.GoModDir,
+	}, nil
 }
 
 func (b *Backend) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
@@ -79,6 +78,11 @@ func (b *Backend) BuildDir(ctx context.Context, builder *dagger.Container, opts 
 		return nil, err
 	}
 
+	goModules, err := opts.Store.Directory(ctx, b.GoModDir)
+	if err != nil {
+		return nil, err
+	}
+
 	return backend.Build(
 		opts.Client,
 		builder,
@@ -86,6 +90,8 @@ func (b *Backend) BuildDir(ctx context.Context, builder *dagger.Container, opts 
 		b.Distribution,
 		f,
 		b.BuildOpts,
+		b.GoBuildCache,
+		goModules,
 	), nil
 }
 
@@ -118,6 +124,10 @@ func (b *Backend) VerifyFile(ctx context.Context, client *dagger.Client, file *d
 func (b *Backend) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
 	// Nothing to do (yet)
 	return nil
+}
+
+func (b *Backend) String() string {
+	return "backend"
 }
 
 type NewBackendOpts struct {
@@ -192,6 +202,11 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 		return nil, err
 	}
 
+	goModDir, err := NewGoModDir(ctx, log, artifact, src, p.Version, goModCache)
+	if err != nil {
+		return nil, err
+	}
+
 	goCacheProg := ""
 	// If the caller has GOCACHEPROG set, then reuse it
 	if val, ok := os.LookupEnv("GOCACHEPROG"); ok {
@@ -219,13 +234,18 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 			GoVersion:      goVersion,
 			ViceroyVersion: viceroyVersion,
 			Src:            src,
-			GoModCache:     goModCache,
+			GoModDir:       goModDir,
 			GoBuildCache:   goBuildCache,
 		},
 	})
 }
 
 func NewBackend(ctx context.Context, log *slog.Logger, artifact string, opts *NewBackendOpts) (*pipeline.Artifact, error) {
+	goModules, err := NewGoModDir(ctx, log, artifact, opts.Src, opts.Version, opts.GoModCache)
+	if err != nil {
+		return nil, err
+	}
+
 	bopts := &backend.BuildOpts{
 		Version:           opts.Version,
 		Enterprise:        opts.Enterprise,
@@ -247,7 +267,7 @@ func NewBackend(ctx context.Context, log *slog.Logger, artifact string, opts *Ne
 			GoVersion:      opts.GoVersion,
 			ViceroyVersion: opts.ViceroyVersion,
 			Src:            opts.Src,
-			GoModCache:     opts.GoModCache,
+			GoModDir:       goModules,
 			GoBuildCache:   opts.GoBuildCache,
 		},
 	})

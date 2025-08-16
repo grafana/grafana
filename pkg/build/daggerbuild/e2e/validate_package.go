@@ -8,7 +8,7 @@ import (
 )
 
 func ValidatePackage(ctx context.Context, d *dagger.Client, service *dagger.Service, src *dagger.Directory, yarnCacheVolume *dagger.CacheVolume, nodeVersion string) (*dagger.Container, error) {
-	c, err := e2eutil.WithFrontendContainer(ctx, d, src)
+	c, err := e2eutil.WithFrontendContainer(ctx, d, src, yarnCacheVolume)
 	if err != nil {
 		return nil, err
 	}
