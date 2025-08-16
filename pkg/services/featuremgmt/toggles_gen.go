@@ -1002,4 +1002,8 @@ const (
 	// FlagTeamFolders
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
+
+	// FlagAzureResourcePickerUpdates
+	// Enables the updated Azure Monitor resource picker
+	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
 )
