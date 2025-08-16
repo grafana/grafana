@@ -111,16 +111,20 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 		if err != nil {
 			return nil, 0, fmt.Errorf("execute template %q: %w", sqlStarsRV.Name(), err)
 		}
-		err = sess.Select(ctx, &updated, q)
+		err = sess.Get(ctx, &updated, q)
 	}
 
 	return stars, updated.UnixMilli(), err
 }
 
 // List all defined preferences in an org (valid for admin users only)
-func (s *LegacySQL) listPreferences(ctx context.Context, orgId int64,
+func (s *LegacySQL) listPreferences(ctx context.Context,
+	ns string, orgId int64,
 	cb func(req *preferencesQuery) (bool, error),
-) ([]preferenceModel, int64, error) {
+) ([]preferences.Preferences, int64, error) {
+	var results []preferences.Preferences
+	var rv sql.NullTime
+
 	sql, err := s.db(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -137,8 +141,6 @@ func (s *LegacySQL) listPreferences(ctx context.Context, orgId int64,
 		return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesQuery.Name(), err)
 	}
 
-	var results []preferenceModel
-	var rv time.Time
 	sess := sql.DB.GetSqlxSession()
 	rows, err := sess.Query(ctx, q, req.GetArgs()...)
 	defer func() {
@@ -170,42 +172,45 @@ func (s *LegacySQL) listPreferences(ctx context.Context, orgId int64,
 		if err != nil {
 			return nil, 0, err
 		}
-
-		if pref.Updated.After(rv) {
-			rv = pref.Updated
+		if pref.Updated.After(rv.Time) {
+			rv.Time = pref.Updated
 		}
-		results = append(results, pref)
+
+		results = append(results, asPreferencesResource(ns, &pref))
 	}
 
 	if needsRV {
-		q, err = sqltemplate.Execute(sqlPreferencesRV, req)
-		if err != nil {
-			return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesRV.Name(), err)
-		}
-		err = sess.Select(ctx, &rv, q)
+		// req.Reset()
+		// q, err = sqltemplate.Execute(sqlPreferencesRV, req)
+		// if err != nil {
+		// 	return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesRV.Name(), err)
+		// }
+		// err = sess.Get(ctx, &rv, q)
+		// if err != nil {
+		// 	return nil, 0, fmt.Errorf("unable to get RV %w", err)
+		// }
 	}
-	return results, rv.UnixMilli(), err
+	return results, rv.Time.UnixMilli(), err
 }
 
-func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user string) (*preferences.PreferencesList, error) {
+func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user string, needsRV bool) (*preferences.PreferencesList, error) {
 	info, err := authlib.ParseNamespace(ns)
 	if err != nil {
 		return nil, err
 	}
 
-	list := &preferences.PreferencesList{}
-	found, rv, err := s.listPreferences(ctx, info.OrgID, func(req *preferencesQuery) (bool, error) {
+	found, rv, err := s.listPreferences(ctx, ns, info.OrgID, func(req *preferencesQuery) (bool, error) {
 		if req.UserUID != "" {
 			req.UserUID = user
 			req.UserTeams, err = s.GetTeams(ctx, info.OrgID, user, false)
 		}
-		return true, err
+		return needsRV, err
 	})
 	if err != nil {
 		return nil, err
 	}
-	for _, v := range found {
-		list.Items = append(list.Items, asPreferencesResource(ns, &v))
+	list := &preferences.PreferencesList{
+		Items: found,
 	}
 	if rv > 0 {
 		list.ResourceVersion = strconv.FormatInt(rv, 10)

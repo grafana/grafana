@@ -77,7 +77,7 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 	if user.GetIsGrafanaAdmin() {
 		userID = "" // everything in the namespace
 	}
-	return s.sql.ListPreferences(ctx, ns, userID)
+	return s.sql.ListPreferences(ctx, ns, userID, true)
 }
 
 func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -91,7 +91,7 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 		return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
 	}
 
-	found, _, err := s.sql.listPreferences(ctx, ns.OrgID, func(req *preferencesQuery) (bool, error) {
+	found, _, err := s.sql.listPreferences(ctx, ns.Value, ns.OrgID, func(req *preferencesQuery) (bool, error) {
 		switch owner.Owner {
 		case utils.UserResourceOwner:
 			req.UserUID = owner.Name
@@ -107,8 +107,7 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	}
 
 	if len(found) == 1 {
-		v := asPreferencesResource(ns.Value, &found[0])
-		return &v, nil
+		return &found[0], nil
 	}
 	return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
 }

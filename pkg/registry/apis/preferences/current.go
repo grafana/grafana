@@ -107,7 +107,7 @@ func (s *calculator) Current(w http.ResponseWriter, r *http.Request) {
 		Spec: s.defaults,
 	}
 
-	list, err := s.sql.ListPreferences(ctx, ns, user.GetUID())
+	list, err := s.sql.ListPreferences(ctx, ns, user.GetUID(), false)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
