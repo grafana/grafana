@@ -68,6 +68,7 @@ type OAuthInfo struct {
 	ApiUrl                      string            `mapstructure:"api_url" toml:"api_url"`
 	AuthStyle                   string            `mapstructure:"auth_style" toml:"auth_style"`
 	AuthUrl                     string            `mapstructure:"auth_url" toml:"auth_url"`
+	AuthorizationErrorMessage   string            `mapstructure:"authorization_error_message" toml:"authorization_error_message"`
 	AutoLogin                   bool              `mapstructure:"auto_login" toml:"auto_login"`
 	ClientAuthentication        string            `mapstructure:"client_authentication" toml:"client_authentication"`
 	ClientId                    string            `mapstructure:"client_id" toml:"client_id"`
@@ -131,6 +132,10 @@ func (o *OAuthInfo) IsSkipOrgRoleSyncEnabled() bool {
 
 func (o *OAuthInfo) IsAllowAssignGrafanaAdminEnabled() bool {
 	return o.AllowAssignGrafanaAdmin
+}
+
+func (o *OAuthInfo) GetAuthorizationErrorMessage() string {
+	return o.AuthorizationErrorMessage
 }
 
 type BasicUserInfo struct {
