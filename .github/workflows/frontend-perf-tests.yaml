@@ -71,7 +71,9 @@ jobs:
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
         run: yarn e2e:playwright --grep @performance # probably written to wrong place
       
-      - run: tree -aL 2
+      - run: cat /tmp/playwright-results.json
+        if: always()
+      - run: cat /tmp/asset-metrics.txt
         if: always()
       
       - name: Bench report

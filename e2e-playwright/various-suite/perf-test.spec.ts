@@ -1,34 +1,29 @@
 import fs from 'fs';
+import * as prom from 'prom-client';
 
 import { test, expect } from '@grafana/plugin-e2e';
+
+import { RequestsRecorder } from '../utils/RequestsRecorder';
 
 const DASH_PATH = '/d/bds35fot3cv7kb/mostly-blank-dashboard';
 
 test('payload-size', { tag: '@performance' }, async ({ page }) => {
-  let inflatedSize = 0;
-  let transferSize = 0;
-  let requests = 0;
+  const promRegistry = new prom.Registry();
 
-  //page.on('console', msg => console.log(msg.text()));
+  const bootTimeSecondsGauge = new prom.Gauge({
+    name: 'boot_time_seconds',
+    help: 'The time it took for the application to boot',
+    registers: [promRegistry],
+  });
 
-  const addSize = async (response) => {
-    if (response.status() === 200) {
-      try {
-        let body = await response.body();
-        inflatedSize += body.length;
+  const usedJSHeapSizeGauge = new prom.Gauge({
+    name: 'used_js_heap_size_bytes',
+    help: 'The amount of memory used by the JavaScript heap',
+    registers: [promRegistry],
+  });
 
-        const sizes = await response.request().sizes();
-
-        transferSize += sizes.responseBodySize + sizes.responseHeadersSize;
-
-        requests++;
-      } catch (err) {
-        console.error('Error calculating response:', err);
-      }
-    }
-  };
-
-  page.on('response', addSize);
+  const recorder = new RequestsRecorder(page);
+  const stopListening = recorder.listen();
 
   let start = performance.now();
 
@@ -36,9 +31,6 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
 
   let el = page.getByTestId('data-testid header-container');
   await el.waitFor();
-
-  // weird but random expect() is required so this whole thing doesn't go tits up with
-  // "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?"
   await expect(el).toBeVisible();
 
   let end = performance.now();
@@ -47,69 +39,19 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
   await client.send('HeapProfiler.collectGarbage');
   let usedJSHeapSize = (await client.send('Runtime.getHeapUsage')).usedSize;
 
-  // Create performance data object
-  const metricsWithLabels: PerformanceMetrics = {
-    boot_time_seconds: {
-      value: Math.round(end - start) / 1000,
-    },
-    requests_total: {
-      value: requests,
-    },
-    inflated_size_bytes: {
-      value: +inflatedSize.toFixed(1),
-    },
-    transfer_size_bytes: {
-      value: +transferSize.toFixed(1),
-    },
-    used_js_heap_size_bytes: {
-      value: +usedJSHeapSize.toFixed(1),
-    },
-  };
-
-  // Write json data to file
-  const textExpositionData = convertToPrometheusFormat(metricsWithLabels);
-  console.log(textExpositionData);
-  fs.writeFileSync('/tmp/asset-metrics.txt', textExpositionData);
-
-  // if we don't remove the listener the "test" will error.
-  page.removeListener('response', addSize);
-  //client.detach();
-  page.close();
-});
-
-// DISCLAIMER. I had claude write all of this so it's probably terrible.
-
-type PerformanceMetrics = Record<string, { value: number }>;
-
-/**
- * Converts performance data with integrated labels to Prometheus exposition text format
- * https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md#text-format-example
- * @param {Object} metrics - Object containing metrics with their values and labels
- * @returns {string} - Formatted Prometheus exposition text
- */
-function convertToPrometheusFormat(metrics: PerformanceMetrics) {
-  const lines: string[] = [];
-  const timestamp = Date.now();
-
-  // Process each metric
-  for (const [metricName, metricData] of Object.entries(metrics)) {
-    // Extract value and labels
-    const { value, ...labels } = metricData;
-
-    // Format labels as key="value" pairs
-    let labelString = '';
-    const formattedLabels = Object.entries(labels).map(([key, val]) => `${key}="${val}"`);
-
-    if (formattedLabels.length > 0) {
-      labelString = `{${formattedLabels.join(',')}}`;
-    }
-
-    // Add metric line - format: metric_name{label="value",...} value timestamp
-    lines.push(`${metricName}${labelString} ${value} ${timestamp}`);
-
-    // Add blank line. discovered the promlint parser needs this by accident.
-    lines.push();
+  const responseMetrics = recorder.getMetrics();
+  for (const metric of responseMetrics) {
+    promRegistry.registerMetric(metric);
   }
 
-  return lines.join('\n');
-}
+  bootTimeSecondsGauge.set(Math.round(end - start) / 1000);
+  usedJSHeapSizeGauge.set(+usedJSHeapSize.toFixed(1));
+
+  promRegistry.setDefaultLabels({ instance: process.env.GRAFANA_URL });
+  const metricsText = await promRegistry.metrics();
+  console.log(metricsText);
+  fs.writeFileSync('/tmp/asset-metrics.txt', metricsText);
+
+  stopListening();
+  page.close();
+});
