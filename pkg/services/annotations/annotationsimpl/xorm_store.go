@@ -278,10 +278,46 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				r.title as alert_name
 			FROM annotation
 			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("user") + ` as usr on usr.id = annotation.user_id
-			LEFT OUTER JOIN alert_rule as r on r.id = annotation.alert_id
+			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("alert_rule") + ` as r on r.id = annotation.alert_id
 			INNER JOIN (
 				SELECT a.id from annotation a
 			`)
+
+		if len(query.Tags) > 0 {
+			tags := tag.ParseTagPairs(query.Tags)
+
+			keyValueFilters := make([]string, 0, len(tags))
+			for _, tag := range tags {
+				if tag.Value == "" {
+					keyValueFilters = append(keyValueFilters, "(tag."+r.db.GetDialect().Quote("key")+" = ?)")
+					params = append(params, tag.Key)
+				} else {
+					keyValueFilters = append(keyValueFilters, "(tag."+r.db.GetDialect().Quote("key")+" = ? AND tag."+r.db.GetDialect().Quote("value")+" = ?)")
+					params = append(params, tag.Key, tag.Value)
+				}
+			}
+
+			if len(tags) > 0 {
+				sql.WriteString(fmt.Sprintf(`
+					JOIN (
+						SELECT
+							annotation_tag.annotation_id
+						FROM annotation_tag
+						JOIN `+r.db.GetDialect().Quote("tag")+` ON tag.id = annotation_tag.tag_id
+						WHERE
+							%s
+						GROUP BY annotation_tag.annotation_id
+					`,
+					strings.Join(keyValueFilters, " OR "),
+				))
+
+				if !query.MatchAny {
+					sql.WriteString(fmt.Sprintf("HAVING COUNT(DISTINCT tag.id) = %d", len(tags)))
+				}
+				sql.WriteString(`) at ON at.annotation_id = a.id
+				`)
+			}
+		}
 
 		sql.WriteString(`WHERE a.org_id = ?`)
 		params = append(params, query.OrgID)
@@ -332,38 +368,6 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			sql.WriteString(` AND a.alert_id > 0`)
 		case "annotation":
 			sql.WriteString(` AND a.alert_id = 0`)
-		}
-
-		if len(query.Tags) > 0 {
-			keyValueFilters := []string{}
-
-			tags := tag.ParseTagPairs(query.Tags)
-			for _, tag := range tags {
-				if tag.Value == "" {
-					keyValueFilters = append(keyValueFilters, "(tag."+r.db.GetDialect().Quote("key")+" = ?)")
-					params = append(params, tag.Key)
-				} else {
-					keyValueFilters = append(keyValueFilters, "(tag."+r.db.GetDialect().Quote("key")+" = ? AND tag."+r.db.GetDialect().Quote("value")+" = ?)")
-					params = append(params, tag.Key, tag.Value)
-				}
-			}
-
-			if len(tags) > 0 {
-				tagsSubQuery := fmt.Sprintf(`
-			SELECT SUM(1) FROM annotation_tag `+r.db.Quote("at")+`
-			INNER JOIN tag on tag.id = `+r.db.Quote("at")+`.tag_id
-			WHERE `+r.db.Quote("at")+`.annotation_id = a.id
-				AND (
-				%s
-				)
-		`, strings.Join(keyValueFilters, " OR "))
-
-				if query.MatchAny {
-					sql.WriteString(fmt.Sprintf(" AND (%s) > 0 ", tagsSubQuery))
-				} else {
-					sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
-				}
-			}
 		}
 
 		acFilter, acParams := r.getAccessControlFilter(query.SignedInUser, accessResources)
