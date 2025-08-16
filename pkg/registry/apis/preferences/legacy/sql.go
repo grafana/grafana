@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"time"
@@ -25,13 +26,13 @@ type dashboardStars struct {
 type preferenceModel struct {
 	ID               int64
 	OrgID            int64
-	UserUID          string
-	TeamUID          string
+	UserUID          sql.NullString
+	TeamUID          sql.NullString
 	JSONData         *pref.PreferenceJSONData
-	HomeDashboardUID string
-	Timezone         string
-	Theme            string
-	WeekStart        string
+	HomeDashboardUID sql.NullString
+	Timezone         sql.NullString
+	Theme            sql.NullString
+	WeekStart        sql.NullString
 	Created          time.Time
 	Updated          time.Time
 }
@@ -131,9 +132,9 @@ func (s *LegacySQL) listPreferences(ctx context.Context, orgId int64,
 		return nil, 0, err
 	}
 
-	q, err := sqltemplate.Execute(sqlStarsQuery, req)
+	q, err := sqltemplate.Execute(sqlPreferencesQuery, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("execute template %q: %w", sqlStarsQuery.Name(), err)
+		return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesQuery.Name(), err)
 	}
 
 	var results []preferenceModel
@@ -147,9 +148,24 @@ func (s *LegacySQL) listPreferences(ctx context.Context, orgId int64,
 	}()
 
 	for rows.Next() {
+		// SELECT p.id, p.org_id,
+		//   p.json_data,
+		//   p.timezone,
+		//   p.theme,
+		//   p.week_start,
+		//   p.home_dashboard_uid,
+		//   u.uid as user_uid,
+		//   t.uid as team_uid,
+		//   p.created, p.updated
+
 		pref := preferenceModel{}
-		err := rows.Scan(&pref.ID, &pref.OrgID, &pref.UserUID, &pref.TeamUID, &pref.JSONData,
-			&pref.HomeDashboardUID, &pref.Timezone, &pref.Theme, &pref.WeekStart,
+		err := rows.Scan(&pref.ID, &pref.OrgID,
+			&pref.JSONData,
+			&pref.Timezone,
+			&pref.Theme,
+			&pref.WeekStart,
+			&pref.HomeDashboardUID,
+			&pref.UserUID, &pref.TeamUID,
 			&pref.Created, &pref.Updated)
 		if err != nil {
 			return nil, 0, err

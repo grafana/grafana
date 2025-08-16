@@ -46,7 +46,7 @@ type preferenceStorage struct {
 }
 
 func (s *preferenceStorage) New() runtime.Object {
-	return preferences.StarsKind().ZeroValue()
+	return preferences.PreferencesKind().ZeroValue()
 }
 
 func (s *preferenceStorage) Destroy() {}
@@ -56,11 +56,11 @@ func (s *preferenceStorage) NamespaceScoped() bool {
 }
 
 func (s *preferenceStorage) GetSingularName() string {
-	return strings.ToLower(preferences.StarsKind().Kind())
+	return strings.ToLower(preferences.PreferencesKind().Kind())
 }
 
 func (s *preferenceStorage) NewList() runtime.Object {
-	return preferences.StarsKind().ZeroListValue()
+	return preferences.PreferencesKind().ZeroListValue()
 }
 
 func (s *preferenceStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -115,12 +115,12 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 
 func asPreferencesResource(ns string, p *preferenceModel) preferences.Preferences {
 	owner := utils.OwnerReference{}
-	if p.TeamUID != "" {
+	if p.TeamUID.Valid {
 		owner.Owner = utils.TeamResourceOwner
-		owner.Name = p.TeamUID
+		owner.Name = p.TeamUID.String
 	} else {
 		owner.Owner = utils.UserResourceOwner
-		owner.Name = p.UserUID
+		owner.Name = p.UserUID.String
 	}
 	obj := preferences.Preferences{
 		ObjectMeta: metav1.ObjectMeta{
@@ -130,10 +130,10 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 			CreationTimestamp: metav1.NewTime(p.Created.UTC()),
 		},
 		Spec: preferences.PreferencesSpec{
-			Theme:            asPointer(p.Theme),
-			HomeDashboardUID: asPointer(p.HomeDashboardUID),
-			Timezone:         asPointer(p.Timezone),
-			WeekStart:        asPointer(p.WeekStart),
+			Theme:            asPointer(p.Theme.String),
+			HomeDashboardUID: asPointer(p.HomeDashboardUID.String),
+			Timezone:         asPointer(p.Timezone.String),
+			WeekStart:        asPointer(p.WeekStart.String),
 		},
 	}
 
