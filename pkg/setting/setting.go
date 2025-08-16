@@ -28,6 +28,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
@@ -67,7 +68,6 @@ var (
 	EnterpriseBuildCommit string
 	BuildBranch           string
 	BuildStamp            int64
-	IsEnterprise          bool
 
 	// packaging
 	Packaging = "unknown"
@@ -1145,7 +1145,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.EnterpriseBuildCommit = EnterpriseBuildCommit
 	cfg.BuildStamp = BuildStamp
 	cfg.BuildBranch = BuildBranch
-	cfg.IsEnterprise = IsEnterprise
+	cfg.IsEnterprise = extensions.IsEnterprise
 	cfg.Packaging = Packaging
 
 	cfg.ErrTemplateName = "error"
