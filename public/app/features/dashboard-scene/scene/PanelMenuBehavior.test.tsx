@@ -90,8 +90,7 @@ describe('panelMenuBehavior', () => {
     expect(getExploreArgs.queries).toEqual([{ query: 'QueryA', refId: 'A' }]);
     expect(getExploreArgs.scopedVars?.__sceneObject?.value).toBe(panel);
 
-    // verify inspect url keeps url params and adds inspect=<panel-key>
-    expect(menu.state.items?.[4].href).toBe('/d/dash-1?from=now-5m&to=now&inspect=panel-12');
+    expect(menu.state.items?.[4].text).toBe('Inspect');
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);

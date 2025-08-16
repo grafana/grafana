@@ -1244,20 +1244,6 @@
       "copy-code": "Copiar código",
       "download": "Descargar"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Regla de alerta",
-        "all": "Todo",
-        "error": "Error",
-        "firing": "Activada",
-        "no-data": "Sin datos",
-        "normal": "Normal",
-        "ok": "Aceptar",
-        "pending": "Pendiente",
-        "recording-rule": "Registrando regla",
-        "recovering": "En recuperación"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "lista-reglas-filtradas"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regla eliminada correctamente"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Evaluación de reglas en pausa"
       },
       "resume-rule": {
         "success": "Evaluación de reglas reanudada"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regla actualizada correctamente"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Borrar filtros",
       "configured-alert-rules": "Las fuentes de datos que contienen reglas de alerta configuradas son fuentes de datos Mimir o Loki donde las reglas de alerta se almacenan y evalúan en la propia fuente de datos.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Panel de control",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Ayuda para buscar por fuentes de datos",
       "filter-options": {
-        "aria-label-show-filters": "Mostrar filtros",
-        "label-custom-filter": "Filtro personalizado",
-        "label-saved-searches": "Búsquedas guardadas"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Salud",
       "label": {
         "hide": "Ocultar",
         "show": "Mostrar"
       },
       "manage-alerts": "En estas fuentes de datos, puedes seleccionar Gestionar alertas a través de la interfaz de usuario de Alerting para poder administrar estas reglas de alerta en la interfaz de usuario de Grafana, así como en la fuente de datos donde se configuraron.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Todas las fuentes de datos",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Reglas del plugin",
       "rule-type": "Tipo de regla",
       "rulesSearchInput-placeholder-search": "Buscar",
@@ -2629,9 +2640,6 @@
       "text-federated": "Federado",
       "text-provisioned": "Provisionado"
     },
-    "saved-searches": {
-      "text-default": "Por defecto"
-    },
     "search": {
       "property": {
         "data-source": "Fuente de datos",
@@ -2639,11 +2647,10 @@
         "labels": "Etiquetas",
         "namespace": "Carpeta/espacio de nombre",
         "rule-health": "Salud",
-        "rule-name": "Nombre de la regla de alerta",
+        "rule-name": "",
         "rule-type": "Tipo",
         "state": "Estado"
-      },
-      "save-query": "Guardar búsqueda actual"
+      }
     },
     "search-field-input": {
       "clear": "Borrar",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Aplicar",
     "cancel": "Cancelar",
     "clear": "Borrar",
-    "close": "Cerrar",
     "collapse": "Contraer",
     "edit": "Editar",
     "help": "Ayuda",
@@ -4514,6 +4521,10 @@
           },
           "value": "Valor"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "El elemento está oculto debido al renderizado condicional."
@@ -5343,6 +5354,7 @@
       "playlist-next": "Ir al siguiente panel de control",
       "playlist-previous": "Ir al panel de control anterior",
       "playlist-stop": "Detener la lista de reproducción",
+      "read-only": "",
       "refresh": "Actualizar panel de control",
       "save": "Guardar panel de control",
       "save-dashboard": {
@@ -6582,6 +6594,9 @@
         "hosted-graphite-prometheus-and-loki": "Graphite, Prometheus y Loki alojados"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Cancelar",
       "placeholder-filter-by-name-or-type": "Filtrar por nombre o tipo"
@@ -7474,6 +7489,13 @@
       "tooltip-title": "Operador matemático",
       "tooltip-trigger": "Expresión"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Función",
       "label-input": "Entrada",
@@ -7488,6 +7510,11 @@
       "label-resample-to": "Remuestrear a",
       "label-upsample": "Aumentar tamaño",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Entrada"
@@ -7505,7 +7532,8 @@
     "loading": "Cargando carpetas..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7857,7 +7885,8 @@
       "edit-pane": {
         "go-back": "Volver"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9046,6 +9075,7 @@
       "sign-up": "Regístrate"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Arrastrar y soltar para reordenar",
@@ -10860,7 +10890,6 @@
         "downloads": "Descargas",
         "from": "",
         "installedVersion": "Versión instalada",
-        "lastCommitDate": "Fecha de la última confirmación:",
         "latestReleaseDate": "Fecha último lanzamiento:",
         "latestVersion": "Versión más reciente",
         "license": "Licencia",
@@ -11247,7 +11276,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Volver a los repositorios",
-      "repository-config-exists-configuration": "Asegúrate de que la configuración del repositorio exista en el archivo de configuración."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Asegúrate de que la configuración del repositorio exista en el archivo de configuración.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Guardar",
@@ -11413,6 +11444,8 @@
         "subtitle": "Utiliza esta opción si quieres sincronizar y administrar toda tu instancia de Grafana a través de un almacenamiento externo."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "trabajos activos",
       "column-action": "Acción",
@@ -11431,6 +11464,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Configuración",
       "view": "Vista"
     },
@@ -11442,6 +11476,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Tus recursos están ahora en tu almacenamiento externo y aprovisionados en tu instancia. A partir de ahora, tu instancia y el almacenamiento externo estarán sincronizados.",
@@ -11846,6 +11883,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Contraer la fila de la consulta",
       "datasource-help": "Mostrar la ayuda de la fuente de datos",
       "drag-and-drop": "Arrastrar y soltar para reordenar",
@@ -11856,7 +11894,11 @@
       "replace-query-from-library": "Reemplazar con consulta de la librería",
       "show-response": "Mostrar respuesta"
     },
-    "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
+    "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12092,7 +12134,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Añadir cuenta de servicio",
-      "message": "No se han encontrado cuentas de servicio",
+      "message": "",
       "more-info": "Recuerda que puedes proporcionar permisos específicos para el acceso a la API a otras aplicaciones",
       "title": "Aún no has creado ninguna cuenta de servicio"
     }
@@ -12485,6 +12527,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Ordenar"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

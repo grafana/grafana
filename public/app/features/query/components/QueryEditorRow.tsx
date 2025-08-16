@@ -290,6 +290,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.onToggleHelp();
   };
 
+  onSelectQueryFromLibrary = (query: DataQuery) => {
+    this.props.onQueryReplacedFromLibrary?.();
+    this.props.onReplace?.(query);
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -378,13 +383,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const {
-      query,
-      hideHideQueryButton: hideHideQueryButton = false,
-      onReplace,
-      onQueryReplacedFromLibrary,
-      queryLibraryRef,
-    } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -398,16 +397,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           query={query}
           queryLibraryRef={queryLibraryRef}
           app={this.props.app}
+          onSelectQuery={this.onSelectQueryFromLibrary}
           onUpdateSuccess={this.onExitQueryLibraryEditingMode}
         />
 
         {!isEditingQueryLibrary && (
           <ReplaceQueryFromLibrary
             datasourceFilters={datasource?.name ? [datasource.name] : []}
-            onSelectQuery={(query) => {
-              onQueryReplacedFromLibrary?.();
-              onReplace?.(query);
-            }}
+            onSelectQuery={this.onSelectQueryFromLibrary}
             app={this.props.app}
           />
         )}
@@ -606,9 +603,16 @@ function MaybeQueryLibrarySaveButton(props: {
   app?: CoreApp;
   queryLibraryRef?: string;
   onUpdateSuccess?: () => void;
+  onSelectQuery: (query: DataQuery) => void;
 }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app, props.queryLibraryRef, props.onUpdateSuccess);
+  return renderSaveQueryButton(
+    props.query,
+    props.app,
+    props.queryLibraryRef,
+    props.onUpdateSuccess,
+    props.onSelectQuery
+  );
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
@@ -625,7 +629,7 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onReplaceQueryFromLibrary = () => {
-    openDrawer(datasourceFilters, onSelectQuery, { isReplacingQuery: true, context: app });
+    openDrawer({ datasourceFilters, onSelectQuery, options: { isReplacingQuery: true, context: app } });
   };
 
   return queryLibraryEnabled ? (

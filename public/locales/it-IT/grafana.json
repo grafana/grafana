@@ -1244,20 +1244,6 @@
       "copy-code": "Copia codice",
       "download": "Scarica"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Regola avviso",
-        "all": "Tutti",
-        "error": "Errore",
-        "firing": "In attivazione",
-        "no-data": "Nessun dato",
-        "normal": "Normale",
-        "ok": "OK",
-        "pending": "In sospeso",
-        "recording-rule": "Regola di registrazione",
-        "recovering": "Recupero in corso"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "elenco-regole-filtrate"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regola eliminata correttamente"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Valutazione della regola sospesa"
       },
       "resume-rule": {
         "success": "Valutazione della regola ripresa"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regola aggiornata con successo"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Cancella i filtri",
       "configured-alert-rules": "Le origini dei dati contenenti regole di avviso configurate sono origini dati Mimir o Loki in cui le regole di avviso vengono archiviate e valutate nell'origine dei dati stessa.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Guida per la ricerca in base alle fonti dei dati",
       "filter-options": {
-        "aria-label-show-filters": "Mostra filtri",
-        "label-custom-filter": "Filtro personalizzato",
-        "label-saved-searches": "Ricerche salvate"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Stato",
       "label": {
         "hide": "Nascondi",
         "show": "Mostra"
       },
       "manage-alerts": "In queste origini dei dati, è possibile selezionare Gestisci avvisi tramite l'interfaccia utente di avviso per poter gestire queste regole di avviso nell'interfaccia utente di Grafana e nell'origine dei dati in cui sono state configurate.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Tutte le fonti dei dati",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Regole dei componenti aggiuntivi",
       "rule-type": "Tipo di regola",
       "rulesSearchInput-placeholder-search": "Cerca",
@@ -2629,9 +2640,6 @@
       "text-federated": "Federato",
       "text-provisioned": "Fornito"
     },
-    "saved-searches": {
-      "text-default": "Predefinito"
-    },
     "search": {
       "property": {
         "data-source": "Sorgente dati",
@@ -2639,11 +2647,10 @@
         "labels": "Etichette",
         "namespace": "Cartella/Spazio dei nomi",
         "rule-health": "Stato",
-        "rule-name": "Nome della regola di avviso",
+        "rule-name": "",
         "rule-type": "Tipo",
         "state": "Stato"
-      },
-      "save-query": "Salva ricerca corrente"
+      }
     },
     "search-field-input": {
       "clear": "Cancella",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Applica",
     "cancel": "Annulla",
     "clear": "Cancella",
-    "close": "Chiudi",
     "collapse": "Riduci",
     "edit": "Modifica",
     "help": "Guida",
@@ -4514,6 +4521,10 @@
           },
           "value": "Valore"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "L'elemento è nascosto a causa del rendering condizionale."
@@ -5343,6 +5354,7 @@
       "playlist-next": "Vai al dashboard successivo",
       "playlist-previous": "Vai al dashboard precedente",
       "playlist-stop": "Interrompi playlist",
+      "read-only": "",
       "refresh": "Aggiorna dashboard",
       "save": "Salva dashboard",
       "save-dashboard": {
@@ -6582,6 +6594,9 @@
         "hosted-graphite-prometheus-and-loki": "Graphite, Prometheus e Loki in hosting"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Annulla",
       "placeholder-filter-by-name-or-type": "Filtra per nome o tipo"
@@ -7474,6 +7489,13 @@
       "tooltip-title": "Operatore matematico",
       "tooltip-trigger": "Espressione"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Funzione",
       "label-input": "Inserisci",
@@ -7488,6 +7510,11 @@
       "label-resample-to": "Ricampiona a",
       "label-upsample": "Aumenta campionamento",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Inserisci"
@@ -7505,7 +7532,8 @@
     "loading": "Caricamento delle cartelle in corso..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7857,7 +7885,8 @@
       "edit-pane": {
         "go-back": "Torna indietro"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9046,6 +9075,7 @@
       "sign-up": "Registrati"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Trascina e rilascia per riordinare",
@@ -10860,7 +10890,6 @@
         "downloads": "Download",
         "from": "Da",
         "installedVersion": "Versione installata",
-        "lastCommitDate": "Data dell'ultimo commit:",
         "latestReleaseDate": "Data dell'ultima versione:",
         "latestVersion": "Versione più recente",
         "license": "Licenza",
@@ -11247,7 +11276,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Torna ai repository",
-      "repository-config-exists-configuration": "Assicurati che la configurazione del repository esista nel file di configurazione."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Assicurati che la configurazione del repository esista nel file di configurazione.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Salva",
@@ -11413,6 +11444,8 @@
         "subtitle": "Utilizza questa opzione se desideri sincronizzare e gestire l'intera istanza di Grafana tramite la memoria esterna."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "attività attive",
       "column-action": "Azione",
@@ -11431,6 +11464,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Impostazioni",
       "view": "Visualizza"
     },
@@ -11442,6 +11476,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Le tue risorse sono ora nella tua memoria esterna e fornite nella tua istanza. D'ora in poi, l'istanza e la memoria esterna saranno sincronizzate.",
@@ -11846,6 +11883,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Riduci riga della query",
       "datasource-help": "Mostra la guida dell'origine dati",
       "drag-and-drop": "Trascina e rilascia per riordinare",
@@ -11856,7 +11894,11 @@
       "replace-query-from-library": "Sostituisci con query dalla libreria",
       "show-response": "Mostra la risposta"
     },
-    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
+    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12092,7 +12134,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Aggiungi account di servizio",
-      "message": "Nessun account di servizio trovato",
+      "message": "",
       "more-info": "Ricorda, puoi fornire autorizzazioni specifiche per l'accesso API ad altre applicazioni",
       "title": "Non hai ancora creato nessun account di servizio"
     }
@@ -12485,6 +12527,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Ordina"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

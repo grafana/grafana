@@ -48,7 +48,7 @@ receivers:
 		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig)
 		require.NoError(t, err)
 
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 		require.Equal(t, extraConfig.Identifier, gettableConfig.ExtraConfigs[0].Identifier)
@@ -98,7 +98,7 @@ receivers:
 		require.NoError(t, err)
 
 		// Verify only one config exists with updated content
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 		require.Equal(t, identifier, gettableConfig.ExtraConfigs[0].Identifier)
@@ -172,14 +172,14 @@ receivers:
 		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig)
 		require.NoError(t, err)
 
-		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 
 		err = mam.DeleteExtraConfiguration(ctx, orgID, identifier)
 		require.NoError(t, err)
 
-		gettableConfig, err = mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		gettableConfig, err = mam.GetAlertmanagerConfiguration(ctx, orgID, false, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 0)
 	})
