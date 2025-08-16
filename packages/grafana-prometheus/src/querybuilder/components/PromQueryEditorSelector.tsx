@@ -89,6 +89,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
   const [dataIsStale, setDataIsStale] = useState(false);
   const delayTrigger = useMemo(() => new DelayedTriggerState(onRunQuery), [onRunQuery]);
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
+  const [hideBuilderMode, setHideBuilderMode] = useState<boolean>(false);
 
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.. Pull in the defaults once
@@ -121,6 +122,17 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     };
   }, []);
 
+  useEffect(() => {
+    const result = buildVisualQueryFromString(query.expr || '');
+    // If there are errors, give user a chance to decide if they want to go to builder as that can lose some data.
+    if (result.errors.length) {
+      setHideBuilderMode(true);
+    } else {
+      setHideBuilderMode(false);
+    }
+  }, [query.expr]);
+
+  console.log(hideBuilderMode);
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
       reportInteraction('user_grafana_prometheus_editor_mode_clicked', {
@@ -243,7 +255,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         )}
         <PromQueryCodeEditorAutocompleteInfo datasourceUid={props.datasource.uid} editorMode={editorMode} />
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.editorToggle}>
-          <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
+          <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} hideBuilder={hideBuilderMode} />
         </div>
       </EditorHeader>
       <Space v={0.5} />
