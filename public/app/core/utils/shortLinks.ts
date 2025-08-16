@@ -8,6 +8,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
+import { getVizPanelPathId } from 'app/features/dashboard-scene/utils/pathId';
 import { dispatch } from 'app/store/store';
 
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
@@ -99,7 +100,7 @@ export const getShareUrlParams = (
   const urlParamsUpdate: UrlQueryMap = {};
 
   if (panel) {
-    urlParamsUpdate.viewPanel = panel.state.key;
+    urlParamsUpdate.viewPanel = getVizPanelPathId(panel);
   }
 
   if (opts.useAbsoluteTimeRange) {

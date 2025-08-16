@@ -4,11 +4,12 @@ import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { getExploreUrl } from 'app/core/utils/explore';
 
+import { getVizPanelPathId } from './pathId';
 import { getQueryRunnerFor } from './utils';
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), {
-    viewPanel: vizPanel.state.key,
+    viewPanel: getVizPanelPathId(vizPanel),
     editPanel: undefined,
   });
 }

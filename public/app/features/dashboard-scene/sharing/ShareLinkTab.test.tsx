@@ -6,7 +6,7 @@ import { dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
-import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { LocalValueVariable, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -46,7 +46,7 @@ describe('ShareLinkTab', () => {
       buildAndRenderScenario({});
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12'
+        'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=A$panel-12'
       );
     });
   });
@@ -57,7 +57,7 @@ describe('ShareLinkTab', () => {
       await act(() => tab.onToggleLockedTime());
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://dashboards.grafana.com/grafana/d/dash-1?from=now-6h&to=now&viewPanel=panel-12'
+        'http://dashboards.grafana.com/grafana/d/dash-1?from=now-6h&to=now&viewPanel=A$panel-12'
       );
     });
   });
@@ -67,7 +67,7 @@ describe('ShareLinkTab', () => {
     await act(() => tab.onThemeChange('light'));
 
     expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-      'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12&theme=light'
+      'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=A$panel-12&theme=light'
     );
   });
 
@@ -102,6 +102,15 @@ function buildAndRenderScenario(options: ScenarioOptions) {
     title: 'Panel A',
     pluginId: 'table',
     key: 'panel-12',
+    $variables: new SceneVariableSet({
+      variables: [
+        new LocalValueVariable({
+          name: 'server',
+          value: 'A',
+          text: 'A',
+        }),
+      ],
+    }),
   });
   const tab = new ShareLinkTab({ panelRef: panel.getRef() });
   const scene = new DashboardScene({
