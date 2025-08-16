@@ -1,7 +1,6 @@
 package sqlstore_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -21,9 +20,10 @@ func TestIntegrationTempDatabaseConnect(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithoutMigrator())
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := sqlStore.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
 		_, err := sess.Query("SELECT 1")
 		return err
 	})
@@ -37,6 +37,7 @@ func TestIntegrationTempDatabaseOSSMigrate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	_ = sqlstore.NewTestStore(t, sqlstore.WithOSSMigrations())
 }
@@ -45,6 +46,7 @@ func TestIntegrationUniqueConstraintViolation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	testCases := []struct {
 		desc string
@@ -82,8 +84,9 @@ func TestIntegrationUniqueConstraintViolation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
 			store := sqlstore.NewTestStore(t)
-			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err := store.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
 				return tc.f(t, sess, store.GetDialect())
 			})
 			require.Error(t, err)
@@ -96,12 +99,13 @@ func TestIntegrationTruncateDatabase(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Parallel()
 
 	migrator := &truncateDatabaseSetup{}
 	store := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator), sqlstore.WithTruncation())
 
 	var beans []*truncateBean
-	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := store.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
 		return sess.Find(&beans)
 	})
 	require.NoError(t, err, "could not find truncateBeans")
