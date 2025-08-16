@@ -70,15 +70,15 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		name string
 		fn   func(*testing.T, resource.StorageBackend, string)
 	}{
-		//{TestHappyPath, runTestIntegrationBackendHappyPath},
-		//{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEvents},
-		//{TestList, runTestIntegrationBackendList},
-		//{TestBlobSupport, runTestIntegrationBlobSupport},
-		//{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
-		//{TestListHistory, runTestIntegrationBackendListHistory},
-		//{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
-		//{TestListTrash, runTestIntegrationBackendTrash},
-		//{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
+		{TestHappyPath, runTestIntegrationBackendHappyPath},
+		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEvents},
+		{TestList, runTestIntegrationBackendList},
+		{TestBlobSupport, runTestIntegrationBlobSupport},
+		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
+		{TestListHistory, runTestIntegrationBackendListHistory},
+		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
+		{TestListTrash, runTestIntegrationBackendTrash},
+		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 	}
 
