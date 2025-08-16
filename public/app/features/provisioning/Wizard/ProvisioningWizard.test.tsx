@@ -22,13 +22,6 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: () => ({
-    publish: jest.fn(),
-  }),
-}));
-
 jest.mock('../hooks/useCreateOrUpdateRepository');
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
@@ -36,10 +29,6 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesQuery: jest.fn(),
   useGetResourceStatsQuery: jest.fn(),
   useCreateRepositoryJobsMutation: jest.fn(),
-}));
-
-jest.mock('app/features/browse-dashboards/api/services', () => ({
-  PAGE_SIZE: 20,
 }));
 
 const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.MockedFunction<
