@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"strconv"
 	"strings"
 
@@ -41,11 +42,15 @@ const (
 )
 
 func ProvideService(sql db.DB) *AccessControlStore {
-	return &AccessControlStore{sql}
+	return &AccessControlStore{
+		sql,
+		log.New("accesscontrol.store"),
+	}
 }
 
 type AccessControlStore struct {
-	sql db.DB
+	sql    db.DB
+	logger log.Logger
 }
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {

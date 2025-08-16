@@ -88,6 +88,10 @@ type FakeStore struct {
 	ExpectedErr                   error
 }
 
+func (s *AccessControlStore) GetUsageStats(ctx context.Context) map[string]any {
+	return make(map[string]interface{})
+}
+
 func (f FakeStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	return f.ExpectedUserPermissions, f.ExpectedErr
 }
