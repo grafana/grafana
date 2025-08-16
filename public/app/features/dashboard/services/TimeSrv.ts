@@ -12,6 +12,7 @@ import {
   IntervalValues,
   AppEvents,
   dateTimeForTimeZone,
+  DateTime,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -97,14 +98,17 @@ export class TimeSrv {
     return this.contextSrv.getValidIntervals(intervals);
   }
 
+  private ensureUtcDateTime(value: string | DateTime) {
+    if (isString(value) && value.indexOf('Z') >= 0) {
+      value = dateTime(value).utc();
+    }
+    return value;
+  }
+
   private parseTime() {
     // when absolute time is saved in json it is turned to a string
-    if (isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
-      this.time.from = dateTime(this.time.from).utc();
-    }
-    if (isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
-      this.time.to = dateTime(this.time.to).utc();
-    }
+    this.time.from = this.ensureUtcDateTime(this.time.from);
+    this.time.to = this.ensureUtcDateTime(this.time.to);
   }
 
   private parseUrlParam(value: string, timeZone?: string) {
@@ -378,7 +382,11 @@ export class TimeSrv {
 
   copyTimeRangeToClipboard() {
     const { raw } = this.timeRange();
-    navigator.clipboard.writeText(JSON.stringify({ from: raw.from, to: raw.to }));
+    const clipboardPayload = {
+      from: isDateTime(raw.from) ? raw.from.toISOString() : raw.from,
+      to: isDateTime(raw.to) ? raw.to.toISOString() : raw.to,
+    };
+    navigator.clipboard.writeText(JSON.stringify(clipboardPayload));
     appEvents.emit(AppEvents.alertSuccess, [
       t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
     ]);
@@ -395,7 +403,11 @@ export class TimeSrv {
       return;
     }
 
-    const { from, to } = range;
+    let { from, to } = range;
+
+    // if ISO-8601 UTC string (which include 'Z') is pasted, convert them to DateTime.utc
+    from = this.ensureUtcDateTime(from);
+    to = this.ensureUtcDateTime(to);
 
     this.setTime({ from, to }, updateUrl);
   }
