@@ -160,7 +160,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
             <Input
               {...register('title', {
                 required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
-                validate: validateFolderName,
+                validate: (newFolderName) => validateFolderName(newFolderName, folder?.metadata.name),
               })}
               placeholder={t(
                 'browse-dashboards.new-provisioned-folder-form.folder-name-input-placeholder-enter-folder-name',

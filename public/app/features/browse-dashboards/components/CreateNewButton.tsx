@@ -123,7 +123,11 @@ export default function CreateNewButton({
           {parentFolder?.managedBy === ManagerKind.Repo || isProvisionedInstance ? (
             <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
           ) : (
-            <NewFolderForm onConfirm={onCreateFolder} onCancel={() => setShowNewFolderDrawer(false)} />
+            <NewFolderForm
+              onConfirm={onCreateFolder}
+              onCancel={() => setShowNewFolderDrawer(false)}
+              parentFolder={parentFolder}
+            />
           )}
         </Drawer>
       )}
