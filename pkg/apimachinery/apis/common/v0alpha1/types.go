@@ -54,6 +54,8 @@ type Scope struct {
 type ScopeSpec struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	// Provides a default parent for the scope. This refers to a node in the selector. This is used to display the title next to the selected scope.
+	DefaultParent string `json:"defaultParent,omitempty"`
 
 	// +listType=atomic
 	Filters []ScopeFilter `json:"filters"`
