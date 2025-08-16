@@ -45,7 +45,7 @@ func (s *legacyStorage) New() runtime.Object {
 func (s *legacyStorage) Destroy() {}
 
 func (s *legacyStorage) NamespaceScoped() bool {
-	return true // namespace == org
+	return true // namespace == stack | org
 }
 
 func (s *legacyStorage) GetSingularName() string {

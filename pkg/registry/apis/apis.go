@@ -28,7 +28,7 @@ func ProvideRegistryServiceSink(
 	_ *iam.IdentityAccessManagementAPIBuilder,
 	_ *query.QueryAPIBuilder,
 	_ *userstorage.UserStorageAPIBuilder,
-	_ *preferences.PreferencesAPIBuilder,
+	_ *preferences.APIBuilder,
 	_ *provisioning.APIBuilder,
 	_ *ofrep.APIBuilder,
 	_ *secret.DependencyRegisterer,

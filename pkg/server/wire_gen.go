@@ -805,7 +805,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	preferencesAPIBuilder := preferences.RegisterAPIService(cfg, featureToggles, apiserverService, prefService)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, apiserverService, sqlStore, prefService)
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
@@ -821,7 +821,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3, cfg)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, repositorySecrets, tracingService, v4)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, repositorySecrets, tracingService, v4)
 	if err != nil {
 		return nil, err
 	}
@@ -834,7 +834,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, preferencesAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
@@ -1385,7 +1385,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	preferencesAPIBuilder := preferences.RegisterAPIService(cfg, featureToggles, apiserverService, prefService)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, apiserverService, sqlStore, prefService)
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
@@ -1401,7 +1401,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3, cfg)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, repositorySecrets, tracingService, v4)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, repositorySecrets, tracingService, v4)
 	if err != nil {
 		return nil, err
 	}
@@ -1414,7 +1414,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, preferencesAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err

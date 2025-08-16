@@ -1,56 +1,67 @@
 package preferences
 
 import (
-	"context"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-var _ builder.APIGroupBuilder = (*PreferencesAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 
-type PreferencesAPIBuilder struct {
+type APIBuilder struct {
 	service    pref.Service
 	calculator *calculator
+
+	namespacer request.NamespaceMapper
+	db         legacysql.LegacyDatabaseProvider
 }
 
 func RegisterAPIService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
+	db db.DB,
 	service pref.Service,
-) *PreferencesAPIBuilder {
-	builder := &PreferencesAPIBuilder{
+) *APIBuilder {
+	// Requires development settings and clearly experimental
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		return nil
+	}
+
+	builder := &APIBuilder{
 		service:    service,
-		calculator: newCalculator(service, cfg, features),
+		namespacer: request.GetNamespaceMapper(cfg),
+		db:         legacysql.NewDatabaseProvider(db),
+		calculator: newCalculator(service, cfg),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 // AllowedV0Alpha1Resources implements builder.APIGroupBuilder.
-func (b *PreferencesAPIBuilder) AllowedV0Alpha1Resources() []string {
+func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
 	return nil
 }
 
-func (b *PreferencesAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return preferences.GroupVersion
 }
 
-func (b *PreferencesAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := preferences.GroupVersion
 	err := preferences.AddToScheme(scheme)
 	if err != nil {
@@ -61,41 +72,29 @@ func (b *PreferencesAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func (b *PreferencesAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	resourceInfo := preferences.PreferencesResourceInfo
+func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
+	stars := preferences.StarsResourceInfo
+	storage[stars.StoragePath()] = legacy.NewStarsStorage(b.namespacer, b.db)
+
+	prefs := preferences.PreferencesResourceInfo
 	// Unified storage
 	// store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 	// if err != nil {
 	// 	return err
 	// }
-	storage[resourceInfo.StoragePath()] = NewLegacyStorage(b.service)
+	storage[prefs.StoragePath()] = NewLegacyStorage(b.service)
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
 }
 
-func (b *PreferencesAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return preferences.GetOpenAPIDefinitions
 }
 
-func (b *PreferencesAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.calculator.GetAPIRoutes(defs)
-}
-
-func (b *PreferencesAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			// require a user
-			_, err = identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "valid user is required", err
-			}
-
-			// TODO, verify User against the request (required for dual write)
-
-			return authorizer.DecisionAllow, "", nil
-		})
 }

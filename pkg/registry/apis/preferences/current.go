@@ -13,7 +13,6 @@ import (
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -21,16 +20,14 @@ import (
 
 type calculator struct {
 	service  pref.Service
-	features featuremgmt.FeatureToggles
 	defaults preferences.PreferencesSpec
 	store    *legacyStorage
 }
 
-func newCalculator(service pref.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *calculator {
+func newCalculator(service pref.Service, cfg *setting.Cfg) *calculator {
 	return &calculator{
-		service:  service,
-		features: features,
-		store:    NewLegacyStorage(service),
+		service: service,
+		store:   NewLegacyStorage(service),
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
