@@ -8,7 +8,7 @@ import { Modal, Button, Text, Space, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
 
-import { useDeleteItemsMutation } from '../../../browse-dashboards/api/browseDashboardsAPI';
+import { useDeleteDashboardsMutation } from '../../../browse-dashboards/api/browseDashboardsAPI';
 import { DeleteDashboardModal as DeleteModal } from '../../../dashboard-scene/settings/DeleteDashboardButton';
 
 type DeleteDashboardModalProps = {
@@ -26,7 +26,7 @@ type Props = DeleteDashboardModalProps & ConnectedProps<typeof connector>;
 
 const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariables, dashboard }: Props) => {
   const isProvisioned = dashboard.meta.provisioned;
-  const [deleteItems] = useDeleteItemsMutation();
+  const [deleteDashboards] = useDeleteDashboardsMutation();
 
   const [, onConfirm] = useAsyncFn(async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -36,14 +36,7 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
       source: 'dashboard_settings',
       restore_enabled: Boolean(config.featureToggles.restoreDashboards),
     });
-    await deleteItems({
-      selectedItems: {
-        dashboard: {
-          [dashboard.uid]: true,
-        },
-        folder: {},
-      },
-    });
+    await deleteDashboards({ dashboardUIDs: [dashboard.uid] });
     cleanUpDashboardAndVariables();
     hideModal();
     locationService.replace('/');
