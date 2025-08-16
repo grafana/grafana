@@ -19,7 +19,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Database" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
+        <InlineField label="Database" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow required>
           <Input
             id="database"
             placeholder="mydb"
@@ -30,7 +30,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token" grow>
+        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token" grow required>
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}

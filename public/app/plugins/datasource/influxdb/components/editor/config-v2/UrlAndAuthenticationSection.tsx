@@ -80,19 +80,14 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       >
         <Text color="secondary">
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
-          available settings and authentication methods in the next steps. If you are unsure what product you are using,
-          view the{' '}
-          <TextLink href="https://docs.influxdata.com/" external>
-            InfluxDB Docs
-          </TextLink>
-          .
+          available settings and authentication methods in the next steps.
         </Text>
 
         <Box direction="column" gap={2} marginTop={3}>
-          <Field label={<div style={{ marginBottom: '5px' }}>URL</div>} noMargin>
+          <Field label={<div style={{ marginBottom: '5px' }}>URL *</div>} noMargin required>
             <Input
               data-testid="influxdb-v2-config-url-input"
-              placeholder="http://localhost:8086/"
+              placeholder="example: http://localhost:8086/"
               onChange={onUrlChange}
               value={options.url || ''}
               onBlur={trackInfluxDBConfigV2URLInputField}
@@ -102,7 +97,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           <Box marginTop={2}>
             <Stack direction="row" gap={2}>
               <Box flex={1}>
-                <Field label={<div style={{ marginBottom: '5px' }}>Product</div>} noMargin>
+                <Field label={<div style={{ marginBottom: '5px' }}>Product *</div>} noMargin required>
                   <Combobox
                     data-testid="influxdb-v2-config-product-select"
                     value={options.jsonData.product}
@@ -112,7 +107,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                 </Field>
               </Box>
               <Box flex={1}>
-                <Field label={<div style={{ marginBottom: '5px' }}>Query language</div>} noMargin>
+                <Field label={<div style={{ marginBottom: '5px' }}>Query language *</div>} noMargin>
                   <Combobox
                     data-testid="influxdb-v2-config-query-language-select"
                     value={options.jsonData.product !== '' ? options.jsonData.version : ''}
