@@ -31,7 +31,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	}, middleware.ReqSignedIn)
 }
 
-// swagger:route POST /datasources/uid/{sourceUID}/correlations correlations createCorrelation
+// swagger:route POST /datasources/uid/{sourceUID}/correlations datasources correlations createCorrelation
 //
 // Add correlation.
 //
@@ -77,7 +77,7 @@ type CreateCorrelationResponse struct {
 	Body CreateCorrelationResponseBody `json:"body"`
 }
 
-// swagger:route DELETE /datasources/uid/{uid}/correlations/{correlationUID} correlations deleteCorrelation
+// swagger:route DELETE /datasources/uid/{uid}/correlations/{correlationUID} datasources correlations deleteCorrelation
 //
 // Delete a correlation.
 //
@@ -130,7 +130,7 @@ type DeleteCorrelationResponse struct {
 	Body DeleteCorrelationResponseBody `json:"body"`
 }
 
-// swagger:route PATCH /datasources/uid/{sourceUID}/correlations/{correlationUID} correlations updateCorrelation
+// swagger:route PATCH /datasources/uid/{sourceUID}/correlations/{correlationUID} datasources correlations updateCorrelation
 //
 // Updates a correlation.
 //
@@ -193,7 +193,7 @@ type UpdateCorrelationResponse struct {
 	Body UpdateCorrelationResponseBody `json:"body"`
 }
 
-// swagger:route GET /datasources/uid/{sourceUID}/correlations/{correlationUID} correlations getCorrelation
+// swagger:route GET /datasources/uid/{sourceUID}/correlations/{correlationUID} datasources correlations getCorrelation
 //
 // Gets a correlation.
 //
@@ -240,7 +240,7 @@ type GetCorrelationResponse struct {
 	Body Correlation `json:"body"`
 }
 
-// swagger:route GET /datasources/uid/{sourceUID}/correlations correlations getCorrelationsBySourceUID
+// swagger:route GET /datasources/uid/{sourceUID}/correlations datasources correlations getCorrelationsBySourceUID
 //
 // Gets all correlations originating from the given data source.
 //
@@ -283,7 +283,7 @@ type GetCorrelationsBySourceUIDResponse struct {
 	Body []Correlation `json:"body"`
 }
 
-// swagger:route GET /datasources/correlations correlations getCorrelations
+// swagger:route GET /datasources/correlations datasources correlations getCorrelations
 //
 // Gets all correlations.
 //
