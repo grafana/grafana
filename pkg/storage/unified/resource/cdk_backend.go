@@ -74,6 +74,11 @@ type cdkBackend struct {
 	stream      chan<- *WrittenEvent
 }
 
+func (s *cdkBackend) ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s *cdkBackend) getPath(key *resourcepb.ResourceKey, rv int64) string {
 	var buffer bytes.Buffer
 	buffer.WriteString(s.root)

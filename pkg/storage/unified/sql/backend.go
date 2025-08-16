@@ -631,6 +631,49 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 	return iter.listRV, err
 }
 
+// ListModifiedSince lists all resource changes that have occurred since the given resource version.
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.ResourceModifiedKey, sinceRv int64, cb func(iterator resource.ListIterator) error) (int64, error) {
+	resIter := &listDeltaIter{}
+
+	var latestRv int64
+	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
+		var err error
+		latestRv, err = b.fetchLatestRV(ctx, tx, b.dialect, key.Group, key.Resource)
+		if err != nil {
+			return fmt.Errorf("fetch latest resource version: %w", err)
+		}
+		query := sqlResourceListModifiedSinceRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Namespace:   key.Namespace,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			SinceRv:     sinceRv,
+		}
+
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryListModifiedSince, query)
+		if rows != nil {
+			defer func() {
+				if err := rows.Close(); err != nil {
+					b.log.Warn("listSinceModified error closing rows", "error", err)
+				}
+			}()
+		}
+		if err != nil {
+			return err
+		}
+
+		resIter.rows = rows
+		err = cb(resIter)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return latestRv, err
+}
+
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"listAtRevision")

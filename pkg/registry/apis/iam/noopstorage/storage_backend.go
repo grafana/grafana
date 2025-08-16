@@ -36,6 +36,10 @@ func (c *StorageBackendImpl) ListIterator(context.Context, *resourcepb.ListReque
 	return 0, errNoopStorage
 }
 
+func (c *StorageBackendImpl) ListModifiedSince(ctx context.Context, key resource.ResourceModifiedKey, sinceRv int64, cb func(iterator resource.ListIterator) error) (int64, error) {
+	return 0, errNoopStorage
+}
+
 // ReadResource implements resource.StorageBackend.
 func (c *StorageBackendImpl) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	return &resource.BackendReadResponse{

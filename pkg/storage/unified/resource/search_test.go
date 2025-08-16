@@ -98,6 +98,10 @@ func (m *mockStorageBackend) ListHistory(ctx context.Context, req *resourcepb.Li
 	return 0, nil
 }
 
+func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
+	return 0, nil
+}
+
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
 	mu                   sync.Mutex

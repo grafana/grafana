@@ -234,6 +234,11 @@ func (a *dashboardSqlAccess) ListHistory(ctx context.Context, req *resourcepb.Li
 	return a.ListIterator(ctx, req, cb)
 }
 
+func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource.ResourceModifiedKey, sinceRv int64, cb func(iterator resource.ListIterator) error) (int64, error) {
+	// TODO
+	panic("implement me")
+}
+
 // List implements StorageBackend.
 func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	if req.ResourceVersion != 0 {
