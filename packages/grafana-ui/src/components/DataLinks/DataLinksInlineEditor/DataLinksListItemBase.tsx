@@ -32,7 +32,7 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   const { title = '', oneClick = false } = item;
 
   // @ts-ignore - https://github.com/microsoft/TypeScript/issues/27808
-  const url = item.url ?? item.fetch?.url ?? '';
+  const url = item.url ?? item[item.type]?.url ?? '';
 
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';

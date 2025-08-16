@@ -4,6 +4,7 @@ import { SelectableValue } from './select';
 
 export enum ActionType {
   Fetch = 'fetch',
+  Proxy = 'proxy',
 }
 
 type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
@@ -11,11 +12,8 @@ type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
 export interface Action {
   type: ActionType;
   title: string;
-
-  // Options for the selected type
-  // Currently this is required because there is only one valid type (fetch)
-  // once multiple types are valid, usage of this will need to be optional
-  [ActionType.Fetch]: FetchOptions;
+  [ActionType.Fetch]?: FetchOptions;
+  [ActionType.Proxy]?: ProxyOptions;
   confirmation?: string;
   oneClick?: boolean;
   variables?: ActionVariable[];
@@ -44,7 +42,7 @@ export enum ActionVariableType {
   String = 'string',
 }
 
-interface FetchOptions {
+export interface FetchOptions {
   method: HttpRequestMethod;
   url: string;
   body?: string;
@@ -52,15 +50,18 @@ interface FetchOptions {
   headers?: Array<[string, string]>;
 }
 
+export interface ProxyOptions extends FetchOptions {
+  datasourceType: SupportedDataSourceTypes;
+  datasourceUid: string;
+}
+
 export enum HttpRequestMethod {
   POST = 'POST',
-  PUT = 'PUT',
   GET = 'GET',
 }
 
 export const httpMethodOptions: SelectableValue[] = [
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
-  { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
   { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
 ];
 
@@ -74,7 +75,7 @@ export const contentTypeOptions: SelectableValue[] = [
 export const defaultActionConfig: Action = {
   type: ActionType.Fetch,
   title: '',
-  fetch: {
+  [ActionType.Fetch]: {
     url: '',
     method: HttpRequestMethod.POST,
     body: '{}',
@@ -84,3 +85,7 @@ export const defaultActionConfig: Action = {
 };
 
 export type ActionVariableInput = { [key: string]: string };
+
+export enum SupportedDataSourceTypes {
+  Infinity = 'yesoreyeram-infinity-datasource',
+}

@@ -1074,6 +1074,14 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:              "vizActionsAuth",
+			Description:       "Allows authenticated API calls in actions",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             grafanaDatavizSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:         "alertingPrometheusRulesPrimary",
 			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
 			Stage:        FeatureStageExperimental,

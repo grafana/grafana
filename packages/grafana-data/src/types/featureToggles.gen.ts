@@ -624,6 +624,10 @@ export interface FeatureToggles {
   */
   tableNextGen?: boolean;
   /**
+  * Allows authenticated API calls in actions
+  */
+  vizActionsAuth?: boolean;
+  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
