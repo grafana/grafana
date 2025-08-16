@@ -31,6 +31,7 @@ export interface TempoJsonData extends DataSourceJsonData {
 
 export interface TempoQuery extends TempoBase {
   queryType: TempoQueryType;
+  serviceMapUseNativeHistograms?: boolean;
 }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}
